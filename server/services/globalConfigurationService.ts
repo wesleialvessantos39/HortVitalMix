@@ -110,7 +110,17 @@ export class GlobalConfigurationService {
       return { ...DEFAULT_GLOBAL_CONFIGURATION, requestId };
     }
 
-    const persisted = await this.options.repository.getCurrent();
+    let persisted: PersistedGlobalConfiguration | null;
+    try {
+      persisted = await this.options.repository.getCurrent();
+    } catch {
+      throw new ApplicationError(
+        503,
+        'CONFIGURATION_UNAVAILABLE',
+        'A configuração global está temporariamente indisponível.',
+      );
+    }
+
     if (!persisted) {
       throw new ApplicationError(
         503,
@@ -140,7 +150,17 @@ export class GlobalConfigurationService {
       );
     }
 
-    const currentPersisted = await this.options.repository.getCurrent();
+    let currentPersisted: PersistedGlobalConfiguration | null;
+    try {
+      currentPersisted = await this.options.repository.getCurrent();
+    } catch {
+      throw new ApplicationError(
+        503,
+        'CONFIGURATION_UNAVAILABLE',
+        'A configuração global está temporariamente indisponível.',
+      );
+    }
+
     if (!currentPersisted) {
       throw new ApplicationError(
         503,
@@ -168,22 +188,31 @@ export class GlobalConfigurationService {
       audit.after.revision = current.revision;
     }
 
-    const result = await this.options.repository.update({
-      actorId: principal.actorId,
-      requestId,
-      commandId: input.commandId,
-      expectedRevision: input.expectedRevision,
-      payloadHash: hashPayload(input),
-      changed: effectiveChange,
-      next: {
-        brand: next.brand,
-        contacts: next.contacts,
-        region: next.region,
-        parameters: next.parameters,
-      },
-      beforeAudit: audit.before,
-      afterAudit: audit.after,
-    });
+    let result;
+    try {
+      result = await this.options.repository.update({
+        actorId: principal.actorId,
+        requestId,
+        commandId: input.commandId,
+        expectedRevision: input.expectedRevision,
+        payloadHash: hashPayload(input),
+        changed: effectiveChange,
+        next: {
+          brand: next.brand,
+          contacts: next.contacts,
+          region: next.region,
+          parameters: next.parameters,
+        },
+        beforeAudit: audit.before,
+        afterAudit: audit.after,
+      });
+    } catch {
+      throw new ApplicationError(
+        503,
+        'CONFIGURATION_UNAVAILABLE',
+        'A configuração global está temporariamente indisponível.',
+      );
+    }
 
     if (result.kind === 'unavailable') {
       throw new ApplicationError(
