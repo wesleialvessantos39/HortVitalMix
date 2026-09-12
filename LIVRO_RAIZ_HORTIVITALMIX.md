@@ -142,3 +142,13 @@ A implementação segue a OE-001-002 do Manual Mestre Técnico Greenfield v6: ma
 
 ### Decisão
 A OE-001-002 está **IMPLEMENTADA, porém EM HOMOLOGAÇÃO**. A OE-001-003 permanece **NÃO LIBERADA** até o fechamento do gate de build/test/Preview. O registro detalhado está em `docs/orders/OE-001-002.md`.
+
+
+### Hardening complementar — OE-001-002
+- Idempotência corrigida para que a repetição do mesmo `commandId` seja reconhecida antes da comparação de revisão.
+- Comandos no-op são auditados sem criar revisão artificial.
+- Falhas reais do repositório de configuração agora resultam em `503 CONFIGURATION_UNAVAILABLE` e não vazam a mensagem interna do banco.
+- Boundary público da configuração permanece estrito e rejeita propriedades privadas inesperadas.
+- Testes foram ampliados para idempotência, reutilização indevida de commandId e indisponibilidade do PostgreSQL.
+- A integração Vercel foi testada inclusive com um deployment mínimo independente do HortiVitalMix; ela também retornou um deployment em `INITIALIZING` e imediatamente passou a responder `Deployment not found`. Assim, o gate de build permanece pendente por ausência de evidência positiva, e não é classificado como falha comprovada do código.
+- A OE-001-003 continua bloqueada até existir execução comprovada de typecheck, testes, build e verificação visual.
