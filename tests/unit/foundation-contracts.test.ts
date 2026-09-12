@@ -31,12 +31,12 @@ const publicConfig = {
 
 describe('foundation contracts & runtime configuration', () => {
   it('rejects accidental credential fields at the public boundary in publicConfigSchema', () => {
-    const parsed = publicConfigSchema.parse({
+    const parsed = publicConfigSchema.safeParse({
       ...publicConfig,
       databaseUrl: 'postgresql://should-not-be-present',
     });
 
-    expect('databaseUrl' in parsed).toBe(false);
+    expect(parsed.success).toBe(false);
   });
 
   it('validates health response schema correctly', () => {
