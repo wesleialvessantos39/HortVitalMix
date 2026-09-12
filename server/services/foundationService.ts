@@ -3,7 +3,7 @@ import type {
   HealthResponse,
   ReadinessResponse,
 } from '../../shared/contracts/foundation';
-import type { AppEnvironment } from '../config/runtime';
+import type { AppEnvironment } from '../../shared/domain';
 import type { FoundationRepository } from '../repositories/postgresHealthRepository';
 
 export interface FoundationServiceOptions {
