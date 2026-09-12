@@ -1,6 +1,5 @@
 {
   "name": "HortiVitalMix",
   "description": "HortiVitalMix — do produtor local para a sua mesa.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "requestFramePermissions": []
 }
