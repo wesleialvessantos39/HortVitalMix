@@ -1,10 +1,13 @@
+import type { PublicConfig } from '../../../shared/contracts/configuration';
+
 interface BrandLogoProps {
+  brand: PublicConfig['brand'];
   compact?: boolean;
 }
 
-export function BrandLogo({ compact = false }: BrandLogoProps) {
+export function BrandLogo({ brand, compact = false }: BrandLogoProps) {
   return (
-    <div className="brand-logo" aria-label="HortiVitalMix">
+    <div className="brand-logo" aria-label={brand.logoAltText}>
       <svg className="brand-mark" viewBox="0 0 48 48" aria-hidden="true">
         <rect width="48" height="48" rx="14" fill="currentColor" opacity="0.08" />
         <path d="M24 34V17" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
@@ -13,7 +16,7 @@ export function BrandLogo({ compact = false }: BrandLogoProps) {
       </svg>
       <div className="brand-wording">
         <strong>HortiVital<span>Mix</span></strong>
-        {!compact && <small>Do produtor local para a sua mesa</small>}
+        {!compact && <small>{brand.tagline}</small>}
       </div>
     </div>
   );

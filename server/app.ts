@@ -1,16 +1,30 @@
 import express, { type Express } from 'express';
+import {
+  anonymousPrincipalResolver,
+  type PrincipalResolver,
+} from './authorization/principal';
 import { loadRuntimeConfig, type RuntimeConfig } from './config/runtime';
 import { createDatabasePool, type DatabasePool } from './db/pool';
 import { errorHandler, apiNotFoundHandler } from './middleware/errorHandler';
 import { requestIdMiddleware } from './middleware/requestId';
-import { PostgresFoundationRepository, type FoundationRepository } from './repositories/postgresHealthRepository';
+import {
+  PostgresGlobalConfigRepository,
+  type GlobalConfigRepository,
+} from './repositories/globalConfigRepository';
+import {
+  PostgresFoundationRepository,
+  type FoundationRepository,
+} from './repositories/postgresHealthRepository';
 import { createFoundationRouter } from './routes/foundationRoutes';
 import { FoundationService } from './services/foundationService';
+import { GlobalConfigurationService } from './services/globalConfigurationService';
 
 export interface CreateAppOptions {
   runtime?: RuntimeConfig;
   pool?: DatabasePool | null;
   repository?: FoundationRepository;
+  configurationRepository?: GlobalConfigRepository;
+  principalResolver?: PrincipalResolver;
 }
 
 export interface HortiVitalMixApp {
@@ -22,18 +36,34 @@ export interface HortiVitalMixApp {
 export function createApp(options: CreateAppOptions = {}): HortiVitalMixApp {
   const runtime = options.runtime ?? loadRuntimeConfig();
   const pool = options.pool === undefined ? createDatabasePool(runtime) : options.pool;
-  const repository = options.repository ?? new PostgresFoundationRepository(pool);
-  const service = new FoundationService({
+  const foundationRepository = options.repository ?? new PostgresFoundationRepository(pool);
+  const configurationRepository =
+    options.configurationRepository ?? new PostgresGlobalConfigRepository(pool);
+  const principalResolver = options.principalResolver ?? anonymousPrincipalResolver;
+
+  const foundationService = new FoundationService({
     environment: runtime.environment,
     databaseConfigured: Boolean(runtime.databaseUrl),
-    repository,
+    repository: foundationRepository,
+  });
+
+  const configurationService = new GlobalConfigurationService({
+    databaseConfigured: Boolean(runtime.databaseUrl),
+    repository: configurationRepository,
   });
 
   const app = express();
   app.disable('x-powered-by');
   app.use(requestIdMiddleware);
   app.use(express.json({ limit: '256kb', strict: true }));
-  app.use('/api', createFoundationRouter(service));
+  app.use(
+    '/api',
+    createFoundationRouter(
+      foundationService,
+      configurationService,
+      principalResolver,
+    ),
+  );
   app.use('/api', apiNotFoundHandler);
   app.use(errorHandler);
 

@@ -1,4 +1,5 @@
 import type { ErrorRequestHandler, RequestHandler, Response } from 'express';
+import { ApplicationError } from '../errors/applicationError';
 import { getRequestId } from './requestId';
 
 interface ErrorWithType extends Error {
@@ -25,6 +26,11 @@ export const apiNotFoundHandler: RequestHandler = (_req, res) => {
 };
 
 export const errorHandler: ErrorRequestHandler = (error: ErrorWithType, _req, res, _next) => {
+  if (error instanceof ApplicationError) {
+    sendError(res, error.status, error.code, error.publicMessage);
+    return;
+  }
+
   const isTooLarge = error.type === 'entity.too.large' || error.status === 413 || error.statusCode === 413;
   if (isTooLarge) {
     sendError(res, 413, 'PAYLOAD_TOO_LARGE', 'O corpo da requisição excede o limite permitido.');

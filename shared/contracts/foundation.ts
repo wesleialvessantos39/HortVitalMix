@@ -23,21 +23,6 @@ export const readinessResponseSchema = z.object({
 });
 export type ReadinessResponse = z.infer<typeof readinessResponseSchema>;
 
-export const publicConfigSchema = z.object({
-  brand: z.object({
-    name: z.literal('HortiVitalMix'),
-    tagline: z.string().min(1).max(120),
-  }),
-  locale: z.literal('pt-BR'),
-  market: z.object({
-    city: z.string().min(1).max(80),
-    state: z.string().length(2),
-  }),
-  presentationMode: z.boolean(),
-  requestId: requestIdSchema,
-});
-export type PublicConfig = z.infer<typeof publicConfigSchema>;
-
 export const environmentResponseSchema = z.object({
   environment: z.enum(['development', 'homologation', 'production']),
   databaseConfigured: z.boolean(),
@@ -53,3 +38,14 @@ export const apiErrorSchema = z.object({
   requestId: requestIdSchema,
 });
 export type ApiError = z.infer<typeof apiErrorSchema>;
+
+export {
+  publicConfigDataSchema,
+  publicConfigSchema,
+  updateGlobalConfigurationResponseSchema,
+  updateGlobalConfigurationSchema,
+  type PublicConfigData,
+  type PublicConfig,
+  type UpdateGlobalConfigurationInput,
+  type UpdateGlobalConfigurationResponse,
+} from './configuration';

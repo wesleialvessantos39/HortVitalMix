@@ -1,7 +1,6 @@
 import type {
   EnvironmentResponse,
   HealthResponse,
-  PublicConfig,
   ReadinessResponse,
 } from '../../shared/contracts/foundation';
 import type { AppEnvironment } from '../config/runtime';
@@ -34,22 +33,6 @@ export class FoundationService {
       dependencies: {
         database: ready ? 'ready' : 'unavailable',
       },
-      requestId,
-    };
-  }
-
-  public publicConfig(requestId: string): PublicConfig {
-    return {
-      brand: {
-        name: 'HortiVitalMix',
-        tagline: 'Do produtor local para a sua mesa',
-      },
-      locale: 'pt-BR',
-      market: {
-        city: 'Ariquemes',
-        state: 'RO',
-      },
-      presentationMode: true,
       requestId,
     };
   }
