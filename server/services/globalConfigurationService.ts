@@ -11,6 +11,7 @@ import {
 import type { AuthorizationPrincipal } from '../authorization/principal';
 import { ApplicationError } from '../errors/applicationError';
 import type {
+  ConfigurationUpdateResult,
   GlobalConfigRepository,
   PersistedGlobalConfiguration,
 } from '../repositories/globalConfigRepository';
@@ -188,7 +189,7 @@ export class GlobalConfigurationService {
       audit.after.revision = current.revision;
     }
 
-    let result;
+    let result: ConfigurationUpdateResult;
     try {
       result = await this.options.repository.update({
         actorId: principal.actorId,
