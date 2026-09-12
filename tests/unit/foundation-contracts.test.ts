@@ -9,14 +9,30 @@ import {
 } from '../../shared/contracts/foundation';
 import { loadRuntimeConfig } from '../../server/config/runtime';
 
+const publicConfig = {
+  revision: 1,
+  source: 'database' as const,
+  brand: {
+    name: 'HortiVitalMix' as const,
+    tagline: 'Do produtor local para a sua mesa',
+    pageTitle: 'HortiVitalMix | Do produtor local para a sua mesa',
+    logoAltText: 'HortiVitalMix - do produtor local para a sua mesa',
+    theme: {
+      primary: '#0F4D2F',
+      secondary: '#78A936',
+      accent: '#EF6500',
+    },
+  },
+  contacts: { email: null, phone: null, whatsapp: null },
+  region: { countryCode: 'BR', stateCode: 'RO', city: 'Ariquemes' },
+  parameters: { locale: 'pt-BR', currency: 'BRL', timezone: 'America/Porto_Velho' },
+  requestId: '9e3d22d3-c00d-4f06-b5df-f96b76bb2330',
+};
+
 describe('foundation contracts & runtime configuration', () => {
   it('rejects accidental credential fields at the public boundary in publicConfigSchema', () => {
     const parsed = publicConfigSchema.parse({
-      brand: { name: 'HortiVitalMix', tagline: 'Do produtor local para a sua mesa' },
-      locale: 'pt-BR',
-      market: { city: 'Ariquemes', state: 'RO' },
-      presentationMode: true,
-      requestId: '9e3d22d3-c00d-4f06-b5df-f96b76bb2330',
+      ...publicConfig,
       databaseUrl: 'postgresql://should-not-be-present',
     });
 
@@ -29,7 +45,7 @@ describe('foundation contracts & runtime configuration', () => {
       service: 'hortivitalmix-api',
       presentation: 'available',
       database: 'ready',
-      requestId: '9e3d22d3-c00d-4f06-b5df-f96b76bb2330',
+      requestId: publicConfig.requestId,
     });
     expect(valid.success).toBe(true);
   });
@@ -38,14 +54,14 @@ describe('foundation contracts & runtime configuration', () => {
     const ready = readinessResponseSchema.safeParse({
       status: 'ready',
       dependencies: { database: 'ready' },
-      requestId: '9e3d22d3-c00d-4f06-b5df-f96b76bb2330',
+      requestId: publicConfig.requestId,
     });
     expect(ready.success).toBe(true);
 
     const unavailable = readinessResponseSchema.safeParse({
       status: 'unavailable',
       dependencies: { database: 'unavailable' },
-      requestId: '9e3d22d3-c00d-4f06-b5df-f96b76bb2330',
+      requestId: publicConfig.requestId,
     });
     expect(unavailable.success).toBe(true);
   });
@@ -54,7 +70,7 @@ describe('foundation contracts & runtime configuration', () => {
     const env = environmentResponseSchema.safeParse({
       environment: 'development',
       databaseConfigured: false,
-      requestId: '9e3d22d3-c00d-4f06-b5df-f96b76bb2330',
+      requestId: publicConfig.requestId,
     });
     expect(env.success).toBe(true);
   });
@@ -62,14 +78,14 @@ describe('foundation contracts & runtime configuration', () => {
   it('validates api error schema with standardized codes', () => {
     const err = apiErrorSchema.safeParse({
       error: { code: 'API_NOT_FOUND', message: 'Recurso inexistente' },
-      requestId: '9e3d22d3-c00d-4f06-b5df-f96b76bb2330',
+      requestId: publicConfig.requestId,
     });
     expect(err.success).toBe(true);
   });
 
   it('enforces uuid validation in requestIdSchema', () => {
     expect(requestIdSchema.safeParse('not-a-uuid').success).toBe(false);
-    expect(requestIdSchema.safeParse('9e3d22d3-c00d-4f06-b5df-f96b76bb2330').success).toBe(true);
+    expect(requestIdSchema.safeParse(publicConfig.requestId).success).toBe(true);
   });
 
   it('loads safe defaults without requiring environment variables', () => {
