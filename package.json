@@ -4,9 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0 --port 3000",
+    "dev": "concurrently -k -n web,api \"vite --host 0.0.0.0 --port 3000\" \"tsx watch server/index.ts\"",
+    "dev:web": "vite --host 0.0.0.0 --port 3000",
     "dev:api": "tsx watch server/index.ts",
-    "dev:full": "concurrently -k -n web,api \"npm:dev\" \"npm:dev:api\"",
+    "dev:full": "npm run dev",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
