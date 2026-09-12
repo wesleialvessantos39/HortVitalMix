@@ -59,7 +59,12 @@ class MemoryConfigRepository implements GlobalConfigRepository {
     const existing = this.commands.get(command.commandId);
     if (existing) {
       if (existing !== command.payloadHash) return { kind: 'command_conflict' };
-      return { kind: 'updated', record: structuredClone(this.record), idempotent: true };
+      return {
+        kind: 'updated',
+        record: structuredClone(this.record),
+        idempotent: true,
+        changed: false,
+      };
     }
 
     if (this.record.data.revision !== command.expectedRevision) {
@@ -67,6 +72,16 @@ class MemoryConfigRepository implements GlobalConfigRepository {
     }
 
     this.commands.set(command.commandId, command.payloadHash);
+
+    if (!command.changed) {
+      return {
+        kind: 'updated',
+        record: structuredClone(this.record),
+        idempotent: false,
+        changed: false,
+      };
+    }
+
     this.record = {
       id: this.record.id,
       data: {
@@ -75,7 +90,12 @@ class MemoryConfigRepository implements GlobalConfigRepository {
         ...command.next,
       },
     };
-    return { kind: 'updated', record: structuredClone(this.record), idempotent: false };
+    return {
+      kind: 'updated',
+      record: structuredClone(this.record),
+      idempotent: false,
+      changed: true,
+    };
   }
 }
 
@@ -162,6 +182,53 @@ describe('OE-001-002 configuration API', () => {
     expect(response.status).toBe(200);
     expect(response.body.changed).toBe(false);
     expect(response.body.config.revision).toBe(1);
+  });
+
+  it('makes a repeated command idempotent without creating a second revision', async () => {
+    const repository = new MemoryConfigRepository();
+    const app = makeApp(repository, true);
+    const payload = {
+      commandId: '5519066b-281f-4b2a-9a38-47f7da8399dd',
+      expectedRevision: 1,
+      changes: { region: { city: 'Cacaulândia' } },
+    };
+
+    const first = await request(app).patch('/api/v1/admin/configuration').send(payload);
+    const retry = await request(app).patch('/api/v1/admin/configuration').send(payload);
+
+    expect(first.status).toBe(200);
+    expect(first.body.changed).toBe(true);
+    expect(first.body.config.revision).toBe(2);
+    expect(retry.status).toBe(200);
+    expect(retry.body.idempotent).toBe(true);
+    expect(retry.body.changed).toBe(false);
+    expect(retry.body.config.revision).toBe(2);
+  });
+
+  it('rejects commandId reuse with a different payload', async () => {
+    const repository = new MemoryConfigRepository();
+    const app = makeApp(repository, true);
+    const commandId = '1ded0f69-a3bc-4f36-956d-ab65cd302a86';
+
+    const first = await request(app)
+      .patch('/api/v1/admin/configuration')
+      .send({
+        commandId,
+        expectedRevision: 1,
+        changes: { region: { city: 'Cacaulândia' } },
+      });
+
+    const conflictingReuse = await request(app)
+      .patch('/api/v1/admin/configuration')
+      .send({
+        commandId,
+        expectedRevision: 1,
+        changes: { region: { city: 'Alto Paraíso' } },
+      });
+
+    expect(first.status).toBe(200);
+    expect(conflictingReuse.status).toBe(409);
+    expect(conflictingReuse.body.error.code).toBe('COMMAND_ID_REUSED');
   });
 
   it('rejects an invalid region without leaking it to the public configuration', async () => {
