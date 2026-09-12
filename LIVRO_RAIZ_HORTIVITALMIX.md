@@ -13,7 +13,7 @@ Documento permanente de rastreabilidade técnica do projeto greenfield. Fonte no
 | Ordem | Escopo | Estado |
 | --- | --- | --- |
 | OE-001-001 | Estrutura | IMPLEMENTADA — Google AI Studio corrigido; CI bloqueado antes da alocação do runner pelo GitHub |
-| OE-001-002 | Configuração global | PENDENTE |
+| OE-001-002 | Configuração global | IMPLEMENTADA — EM HOMOLOGAÇÃO; typecheck/test/build/Preview ainda sem evidência executada |
 | OE-001-003 | Ambientes | PENDENTE |
 | OE-001-004 | Banco | PENDENTE |
 
@@ -92,3 +92,53 @@ OE-001-002 — Configuração global. Iniciar somente após manter registrada es
 - O problema do runner continua registrado como pendência externa de infraestrutura e **não será usado para bloquear as próximas OEs**.
 - A aplicação, banco Neon, migrations, frontend e backend continuam sendo tratados normalmente; quando o runner do GitHub voltar a executar etapas, o CI será reativado para `push` e `pull_request`.
 - Esta decisão não mascara o problema: ela apenas impede que cada commit gere uma nova execução vermelha que não chega a rodar nenhuma etapa.
+
+
+## 2026-09-12 — OE-001-002 — Configuração global
+
+### Base normativa aplicada
+A implementação segue a OE-001-002 do Manual Mestre Técnico Greenfield v6: marca, contatos, região e parâmetros consistentes; configuração revisionada; GET público sem segredo; escrita administrativa com `platform.configuration.manage`, `expectedRevision`, idempotência e auditoria minimizada.
+
+### Frontend
+- Página pública ligada à configuração canônica revisionada.
+- Título, idioma, identidade, slogan, localização e contatos usam a mesma versão.
+- Criada tela responsiva `/admin/configuracao` com desktop, tablet e mobile.
+- Estados observáveis: banco indisponível, salvando, sucesso, conflito de revisão, acesso negado e erro.
+- A UI nunca trata falha como confirmação.
+- Marca HortiVitalMix e tema principal permanecem protegidos; o painel só edita os campos permitidos.
+
+### Backend
+- Contratos compartilhados + Zod para leitura e escrita.
+- `GET /api/v1/config` público.
+- `PATCH /api/v1/admin/configuration` protegido no servidor por `platform.configuration.manage`.
+- Sem principal autenticado real, a escrita retorna 403; nenhum token/admin fictício foi criado.
+- Concorrência otimista por `expectedRevision`.
+- Idempotência por `commandId`, lock transacional e hash de payload.
+- Repetição do mesmo comando não cria nova revisão; reutilização do commandId com payload diferente gera conflito.
+- Configuração inválida é rejeitada antes da persistência.
+
+### Neon
+- Migration: `0002_oe_001_002_global_configuration.sql`.
+- SHA-256: `e8c77e4a32c7006a1d4d8292586b695895b528786021f97c8e54e9bf94a98e68`.
+- Aplicada em development e homologation.
+- `app_global_config` criada como singleton revisionado.
+- `app_audit_events` criada para auditoria append-only da configuração.
+- Índices e constraints conferidos nos dois branches.
+- Teste real de concorrência em homologation comprovou que duas alterações baseadas na mesma revisão não sobrescrevem uma à outra.
+- Prova real de persistência/auditoria em homologation alterou revisão 1→2, registrou auditoria, restaurou contato para NULL em revisão 3 e registrou nova auditoria.
+- Estado atual comprovado de homologation: revisão 3, Ariquemes/RO, BRL, contato público nulo.
+
+### Vercel e validação executável
+- Código permanece preparado para Vercel com Vite + Express Function + `vercel.json` e região `gru1`.
+- Foram iniciadas tentativas de Preview pela integração Vercel para rodar typecheck/check.
+- A integração forneceu IDs de deployment, mas em seguida devolveu `Deployment not found`, e os projetos não apareceram na listagem da conta conectada.
+- Por esse motivo não existe ainda evidência válida de conclusão de typecheck, testes, build ou inspeção visual do artefato.
+- O GitHub Actions permanece com a falha externa anterior de runner antes das etapas; não será confundido com falha da implementação.
+
+### Gate de homologação
+**Aprovado:** frontend, backend, contratos, persistência Neon real, migration, constraints, índices, concorrência, auditoria, segurança pública, idempotência, responsividade e ausência de placeholders/TODO no caminho principal.
+
+**Pendente:** execução comprovada de `npm run typecheck`, `npm run test`, `npm run build` e verificação visual do Preview.
+
+### Decisão
+A OE-001-002 está **IMPLEMENTADA, porém EM HOMOLOGAÇÃO**. A OE-001-003 permanece **NÃO LIBERADA** até o fechamento do gate de build/test/Preview. O registro detalhado está em `docs/orders/OE-001-002.md`.
