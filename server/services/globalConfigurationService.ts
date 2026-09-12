@@ -81,7 +81,8 @@ function buildAuditDiff(
 
     for (const [key, nextValue] of Object.entries(next[section])) {
       if (key === 'theme' || key === 'name') continue;
-      const currentValue = (current[section] as Record<string, unknown>)[key];
+      const currentSection = current[section] as unknown as Record<string, unknown>;
+      const currentValue = currentSection[key];
       if (JSON.stringify(currentValue) !== JSON.stringify(nextValue)) {
         beforeSection[key] = currentValue;
         afterSection[key] = nextValue;
@@ -149,13 +150,6 @@ export class GlobalConfigurationService {
     }
 
     const current = this.validatePersisted(currentPersisted);
-    if (current.revision !== input.expectedRevision) {
-      throw new ApplicationError(
-        409,
-        'CONFIG_REVISION_CONFLICT',
-        'A configuração foi alterada por outra sessão. Atualize os dados e tente novamente.',
-      );
-    }
 
     let next: PublicConfigData;
     try {
@@ -169,14 +163,9 @@ export class GlobalConfigurationService {
     }
 
     const audit = buildAuditDiff(current, next);
-    if (!hasEffectiveChange(audit)) {
-      return {
-        status: 'confirmed',
-        config: { ...current, requestId },
-        changed: false,
-        idempotent: true,
-        requestId,
-      };
+    const effectiveChange = hasEffectiveChange(audit);
+    if (!effectiveChange) {
+      audit.after.revision = current.revision;
     }
 
     const result = await this.options.repository.update({
@@ -185,6 +174,7 @@ export class GlobalConfigurationService {
       commandId: input.commandId,
       expectedRevision: input.expectedRevision,
       payloadHash: hashPayload(input),
+      changed: effectiveChange,
       next: {
         brand: next.brand,
         contacts: next.contacts,
@@ -223,7 +213,7 @@ export class GlobalConfigurationService {
     return {
       status: 'confirmed',
       config: { ...validated, requestId },
-      changed: true,
+      changed: result.changed,
       idempotent: result.idempotent,
       requestId,
     };
