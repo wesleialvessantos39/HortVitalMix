@@ -2,15 +2,23 @@ name: HortiVitalMix CI
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: read
 
+concurrency:
+  group: hortivitalmix-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   foundation:
     name: OE-001 foundation validation
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Runner handshake
         run: |
@@ -20,13 +28,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Runtime versions
-        run: |
-          node --version
-          npm --version
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Typecheck
         run: npm run typecheck
