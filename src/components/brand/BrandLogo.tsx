@@ -1,11 +1,15 @@
 import type { PublicConfig } from '../../../shared/contracts/configuration';
+import { DEFAULT_GLOBAL_CONFIGURATION } from '../../../shared/config/defaultConfiguration';
 
 interface BrandLogoProps {
-  brand: PublicConfig['brand'];
+  brand?: PublicConfig['brand'];
   compact?: boolean;
 }
 
-export function BrandLogo({ brand, compact = false }: BrandLogoProps) {
+export function BrandLogo({
+  brand = DEFAULT_GLOBAL_CONFIGURATION.brand,
+  compact = false,
+}: BrandLogoProps) {
   return (
     <div className="brand-logo" aria-label={brand.logoAltText}>
       <svg className="brand-mark" viewBox="0 0 48 48" aria-hidden="true">
