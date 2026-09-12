@@ -1,6 +1,0 @@
-{
-  "name": "Base Application",
-  "description": "Estrutura inicial da aplicação com arquitetura modular, tipagem estrita e componentes base.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
