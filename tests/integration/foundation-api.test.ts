@@ -44,4 +44,31 @@ describe('OE-001-001 API behavior', () => {
     expect(response.status).toBe(413);
     expect(response.body.error.code).toBe('PAYLOAD_TOO_LARGE');
   });
+
+  it('preserves a valid request id in header and payload', async () => {
+    const repository: FoundationRepository = { isAvailable: async () => true };
+    const { app } = createApp({ runtime: runtime('postgresql://configured'), pool: null, repository });
+    const requestId = '9e3d22d3-c00d-4f06-b5df-f96b76bb2330';
+    const response = await request(app).get('/api/health').set('x-request-id', requestId);
+    expect(response.status).toBe(200);
+    expect(response.headers['x-request-id']).toBe(requestId);
+    expect(response.body.requestId).toBe(requestId);
+  });
+
+  it('does not expose a connection string or internal dependency message on failure', async () => {
+    const repository: FoundationRepository = {
+      isAvailable: async () => {
+        throw new Error('postgresql://user:secret@private-host/database');
+      },
+    };
+    const { app } = createApp({ runtime: runtime('postgresql://configured'), pool: null, repository });
+    const response = await request(app).get('/api/ready');
+    const serialized = JSON.stringify(response.body);
+
+    expect(response.status).toBe(500);
+    expect(response.body.error.code).toBe('INTERNAL_ERROR');
+    expect(serialized).not.toContain('postgresql://');
+    expect(serialized).not.toContain('private-host');
+    expect(serialized).not.toContain('secret');
+  });
 });
