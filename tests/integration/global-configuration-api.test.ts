@@ -127,6 +127,24 @@ describe('OE-001-002 configuration API', () => {
     expect(JSON.stringify(response.body)).not.toContain('postgresql://');
   });
 
+  it('returns 503 when the configured persistence dependency fails', async () => {
+    const failingRepository: GlobalConfigRepository = {
+      getCurrent: async () => {
+        throw new Error('database offline');
+      },
+      update: async () => {
+        throw new Error('database offline');
+      },
+    };
+    const app = makeApp(failingRepository);
+
+    const response = await request(app).get('/api/v1/config');
+
+    expect(response.status).toBe(503);
+    expect(response.body.error.code).toBe('CONFIGURATION_UNAVAILABLE');
+    expect(JSON.stringify(response.body)).not.toContain('database offline');
+  });
+
   it('returns 403 for a direct administrative write without permission', async () => {
     const app = makeApp(new MemoryConfigRepository());
     const response = await request(app)
