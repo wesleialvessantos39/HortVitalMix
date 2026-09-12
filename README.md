@@ -21,3 +21,11 @@ A conexão com o Neon é uma configuração **somente do servidor/deploy**. Quan
 
 ## Segurança
 Segredos de banco nunca devem ser adicionados ao código, ao frontend ou a arquivos de exemplo rastreados pelo Git. A variável de conexão deve existir apenas no ambiente seguro do backend/deploy.
+
+
+## Configuração global — OE-001-002
+A configuração pública da plataforma é lida em `GET /api/v1/config` e usa uma fonte revisionada quando o Neon está conectado. A escrita administrativa fica em `PATCH /api/v1/admin/configuration` e exige autorização server-side com `platform.configuration.manage`, revisão esperada e commandId idempotente.
+
+A tela `/admin/configuracao` já possui os estados visuais da configuração global, mas nenhuma identidade administrativa fictícia é criada nesta etapa: sem autenticação/principal real, a API de escrita retorna 403.
+
+A migration `0002_oe_001_002_global_configuration.sql` cria a configuração singleton e a auditoria necessária. Contatos não confirmados permanecem nulos.
