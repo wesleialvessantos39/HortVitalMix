@@ -13,7 +13,7 @@ async function closePool(): Promise<void> {
     console.error(JSON.stringify({
       level: 'error',
       event: 'vercel.pool_shutdown_failed',
-      message: error instanceof Error ? error.message : 'unknown',
+      errorName: error instanceof Error ? error.name : 'UnknownError',
     }));
   }
 }
