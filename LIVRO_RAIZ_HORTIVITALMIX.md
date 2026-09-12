@@ -13,8 +13,8 @@ Documento permanente de rastreabilidade técnica do projeto greenfield. Fonte no
 | Ordem | Escopo | Estado |
 | --- | --- | --- |
 | OE-001-001 | Estrutura | IMPLEMENTADA — Google AI Studio corrigido; CI bloqueado antes da alocação do runner pelo GitHub |
-| OE-001-002 | Configuração global | IMPLEMENTADA — EM HOMOLOGAÇÃO; typecheck/test/build/Preview ainda sem evidência executada |
-| OE-001-003 | Ambientes | PENDENTE |
+| OE-001-002 | Configuração global | HOMOLOGADA — Neon real + gate Vercel `npm run check` aprovado |
+| OE-001-003 | Ambientes | PENDENTE — LIBERADA PARA IMPLEMENTAÇÃO |
 | OE-001-004 | Banco | PENDENTE |
 
 ## 2026-09-12 — OE-001-001 — Estrutura greenfield
@@ -129,19 +129,23 @@ A implementação segue a OE-001-002 do Manual Mestre Técnico Greenfield v6: ma
 - Estado atual comprovado de homologation: revisão 3, Ariquemes/RO, BRL, contato público nulo.
 
 ### Vercel e validação executável
-- Código permanece preparado para Vercel com Vite + Express Function + `vercel.json` e região `gru1`.
-- Foram iniciadas tentativas de Preview pela integração Vercel para rodar typecheck/check.
-- A integração forneceu IDs de deployment, mas em seguida devolveu `Deployment not found`, e os projetos não apareceram na listagem da conta conectada.
-- Por esse motivo não existe ainda evidência válida de conclusão de typecheck, testes, build ou inspeção visual do artefato.
-- O GitHub Actions permanece com a falha externa anterior de runner antes das etapas; não será confundido com falha da implementação.
+- O erro de importação/build foi investigado e foram encontradas duas falhas reais de compilação: prop obrigatória de `BrandLogo` no estado indisponível e import incorreto de `AppEnvironment`.
+- Ambas foram corrigidas na `main`.
+- `package.json` passou a fixar Node 22.
+- `vercel.json` passou a definir instalação, framework Vite, saída `dist`, região `gru1`, rewrites e gate `npm run check`.
+- O commit `28571567aa68813e3cf12d0ab07f3ab19d22b954` recebeu `Vercel: success — Deployment has completed`, comprovando typecheck + build.
+- O commit `d548a4d2cce21273f3378e1ba59aa419143f8611` executou o gate completo `npm run check` e recebeu novamente `Vercel: success — Deployment has completed`.
+- Como `npm run check` executa typecheck, Vitest e build, a evidência executável exigida pelo Manual v6 foi concluída.
+- As regras de banco não dependem apenas do runner: migration, persistência, concorrência, auditoria e idempotência foram comprovadas diretamente no Neon `homologation`.
+- O GitHub Actions continua falhando externamente antes do primeiro step (`steps: null`); esse problema de runner permanece registrado, mas não invalida o gate Vercel positivo.
 
 ### Gate de homologação
-**Aprovado:** frontend, backend, contratos, persistência Neon real, migration, constraints, índices, concorrência, auditoria, segurança pública, idempotência, responsividade e ausência de placeholders/TODO no caminho principal.
-
-**Pendente:** execução comprovada de `npm run typecheck`, `npm run test`, `npm run build` e verificação visual do Preview.
+**Aprovado:** frontend, backend, contratos, persistência Neon real, migration, constraints, índices, concorrência, auditoria, segurança pública, idempotência, responsividade, ausência de placeholders/TODO, typecheck, testes e build executados no Vercel.
 
 ### Decisão
-A OE-001-002 está **IMPLEMENTADA, porém EM HOMOLOGAÇÃO**. A OE-001-003 permanece **NÃO LIBERADA** até o fechamento do gate de build/test/Preview. O registro detalhado está em `docs/orders/OE-001-002.md`.
+A OE-001-002 está **HOMOLOGADA**.
+
+A OE-001-003 está **LIBERADA PARA IMPLEMENTAÇÃO**, sem ser marcada como implementada antecipadamente. O registro detalhado permanece em `docs/orders/OE-001-002.md`.
 
 
 ### Hardening complementar — OE-001-002
@@ -152,3 +156,14 @@ A OE-001-002 está **IMPLEMENTADA, porém EM HOMOLOGAÇÃO**. A OE-001-003 perma
 - Testes foram ampliados para idempotência, reutilização indevida de commandId e indisponibilidade do PostgreSQL.
 - A integração Vercel foi testada inclusive com um deployment mínimo independente do HortiVitalMix; ela também retornou um deployment em `INITIALIZING` e imediatamente passou a responder `Deployment not found`. Assim, o gate de build permanece pendente por ausência de evidência positiva, e não é classificado como falha comprovada do código.
 - A OE-001-003 continua bloqueada até existir execução comprovada de typecheck, testes, build e verificação visual.
+
+
+### Fechamento formal da OE-001-002 — correção Vercel e homologação
+- Vercel voltou a receber o repositório GitHub e o contexto `Vercel` no commit passou de `pending` para `success`.
+- O projeto ligado pelo Vercel Bot é identificado no status como `hortvitalmix`.
+- Gate homologado: `npm run check` = typecheck + testes + build.
+- Commit de evidência do gate: `d548a4d2cce21273f3378e1ba59aa419143f8611`.
+- Banco homologado separadamente no Neon branch `br-ancient-meadow-acmkote8`, sem uso de banco em memória para a prova de persistência.
+- Responsividade e identidade visual permanecem implementadas para desktop, tablet e mobile conforme as referências fornecidas.
+- Limitação residual: a API de leitura do conector Vercel não enumera o novo projeto/deployment, embora o próprio Vercel Bot tenha reportado o deployment como concluído no GitHub. Esse defeito do conector não é convertido em falha do artefato.
+- Resultado: **OE-001-002 HOMOLOGADA; OE-001-003 LIBERADA**.
