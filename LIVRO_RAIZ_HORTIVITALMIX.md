@@ -12,7 +12,7 @@ Documento permanente de rastreabilidade técnica do projeto greenfield. Fonte no
 ## Estado do Módulo 001 — Fundação e Configuração
 | Ordem | Escopo | Estado |
 | --- | --- | --- |
-| OE-001-001 | Estrutura | IMPLEMENTADA — homologação técnica concluída; CI externo com bloqueio de runner |
+| OE-001-001 | Estrutura | IMPLEMENTADA — Google AI Studio corrigido; CI bloqueado antes da alocação do runner pelo GitHub |
 | OE-001-002 | Configuração global | PENDENTE |
 | OE-001-003 | Ambientes | PENDENTE |
 | OE-001-004 | Banco | PENDENTE |
@@ -70,3 +70,13 @@ OE-001-002 — Configuração global. Iniciar somente após manter registrada es
 - Tratamento de erros e encerramento do pool revisados para não registrar mensagens potencialmente portadoras de credenciais/segredos.
 - Último commit funcional desta OE: `9635fc034468b37911b0c1054739cad0687b333b`.
 - GitHub Actions continuou encerrando o job antes de executar qualquer etapa, portanto o bloqueio permanece externo ao fluxo de typecheck/test/build e não foi mascarado como sucesso.
+
+
+### Correção de 2026-09-12 — Google AI Studio e CI
+- Removido o arquivo `.env.example` que fazia o Google AI Studio interpretar `APP_ENV`, `APP_BASE_URL`, `API_PORT` e `DATABASE_URL` como variáveis obrigatórias para iniciar o preview.
+- `metadata.json` deixou de declarar capacidade de Gemini server-side, pois o HortiVitalMix não depende dessa capacidade nesta OE.
+- `server/config/runtime.ts` passou a utilizar defaults seguros de desenvolvimento sem exigir variáveis de ambiente; a conexão do Neon permanece opcional e exclusivamente server-side.
+- Nenhum segredo foi colocado no repositório para contornar o prompt.
+- O workflow de CI foi simplificado, alterado para runner explícito `ubuntu-24.04` e ganhou uma primeira etapa `Runner handshake`.
+- Execução automática nº 8 (`34698424135`) falhou novamente antes de qualquer etapa: a API do GitHub retornou `steps: null` e `logs_url: null`. Isso demonstra que a falha acontece antes da execução do código/workflow no runner.
+- Como a integração disponível não possui acesso administrativo às configurações de GitHub Actions, a ativação/política do runner precisa ser verificada na interface do repositório em **Settings → Actions → General**. O workflow está pronto para ser reexecutado assim que o Actions permitir alocação do runner.
