@@ -39,13 +39,19 @@ export interface ConfigurationUpdateCommand {
   commandId: string;
   expectedRevision: number;
   payloadHash: string;
+  changed: boolean;
   next: Omit<PublicConfigData, 'revision' | 'source'>;
   beforeAudit: Record<string, unknown>;
   afterAudit: Record<string, unknown>;
 }
 
 export type ConfigurationUpdateResult =
-  | { kind: 'updated'; record: PersistedGlobalConfiguration; idempotent: boolean }
+  | {
+      kind: 'updated';
+      record: PersistedGlobalConfiguration;
+      idempotent: boolean;
+      changed: boolean;
+    }
   | { kind: 'revision_conflict'; currentRevision: number }
   | { kind: 'command_conflict' }
   | { kind: 'unavailable' };
@@ -151,7 +157,7 @@ export class PostgresGlobalConfigRepository implements GlobalConfigRepository {
         const current = await this.readCurrent(client);
         await client.query('COMMIT');
         return current
-          ? { kind: 'updated', record: current, idempotent: true }
+          ? { kind: 'updated', record: current, idempotent: true, changed: false }
           : { kind: 'unavailable' };
       }
 
@@ -166,6 +172,40 @@ export class PostgresGlobalConfigRepository implements GlobalConfigRepository {
       if (currentRevision !== command.expectedRevision) {
         await client.query('ROLLBACK');
         return { kind: 'revision_conflict', currentRevision };
+      }
+
+      if (!command.changed) {
+        await client.query(
+          `INSERT INTO app_audit_events(
+             id, event_type, resource_type, resource_id, actor_id, request_id, command_id,
+             before_data, after_data, metadata
+           ) VALUES (
+             $1, 'global_configuration.confirmed_noop', 'app_global_config', $2, $3, $4, $5,
+             $6::jsonb, $7::jsonb, $8::jsonb
+           )`,
+          [
+            randomUUID(),
+            currentRow.id,
+            command.actorId,
+            command.requestId,
+            command.commandId,
+            JSON.stringify(command.beforeAudit),
+            JSON.stringify(command.afterAudit),
+            JSON.stringify({
+              payloadHash: command.payloadHash,
+              previousRevision: currentRevision,
+              resultingRevision: currentRevision,
+              changed: false,
+            }),
+          ],
+        );
+        await client.query('COMMIT');
+        return {
+          kind: 'updated',
+          record: mapRow(currentRow),
+          idempotent: false,
+          changed: false,
+        };
       }
 
       const nextRevision = currentRevision + 1;
@@ -247,6 +287,7 @@ export class PostgresGlobalConfigRepository implements GlobalConfigRepository {
             payloadHash: command.payloadHash,
             previousRevision: currentRevision,
             resultingRevision: nextRevision,
+            changed: true,
           }),
         ],
       );
@@ -254,7 +295,12 @@ export class PostgresGlobalConfigRepository implements GlobalConfigRepository {
       await client.query('COMMIT');
       const updatedRow = updated.rows[0];
       return updatedRow
-        ? { kind: 'updated', record: mapRow(updatedRow), idempotent: false }
+        ? {
+            kind: 'updated',
+            record: mapRow(updatedRow),
+            idempotent: false,
+            changed: true,
+          }
         : { kind: 'unavailable' };
     } catch (error) {
       await client.query('ROLLBACK');
