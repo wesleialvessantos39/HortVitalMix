@@ -40,7 +40,7 @@ export const errorHandler: ErrorRequestHandler = (error: ErrorWithType, _req, re
     level: 'error',
     code: 'UNHANDLED_ERROR',
     requestId: getRequestId(res),
-    message: error.message,
+    errorName: error.name || 'Error',
   }));
 
   sendError(res, 500, 'INTERNAL_ERROR', 'Não foi possível concluir a operação.');
