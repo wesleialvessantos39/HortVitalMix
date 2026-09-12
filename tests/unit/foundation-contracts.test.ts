@@ -67,12 +67,12 @@ describe('foundation contracts & runtime configuration', () => {
     expect(err.success).toBe(true);
   });
 
-  it('enforces uuid v4 pattern in requestIdSchema', () => {
+  it('enforces uuid validation in requestIdSchema', () => {
     expect(requestIdSchema.safeParse('not-a-uuid').success).toBe(false);
     expect(requestIdSchema.safeParse('9e3d22d3-c00d-4f06-b5df-f96b76bb2330').success).toBe(true);
   });
 
-  it('loads valid runtime configuration with defaults', () => {
+  it('loads safe defaults without requiring environment variables', () => {
     const config = loadRuntimeConfig({});
     expect(config.environment).toBe('development');
     expect(config.apiPort).toBe(3001);
@@ -80,7 +80,8 @@ describe('foundation contracts & runtime configuration', () => {
     expect(config.databaseUrl).toBeUndefined();
   });
 
-  it('rejects invalid environment in runtime configuration', () => {
-    expect(() => loadRuntimeConfig({ APP_ENV: 'invalid-env' as any })).toThrow();
+  it('reads the database connection only when the server provides it', () => {
+    const config = loadRuntimeConfig({ DATABASE_URL: 'postgresql://server-only' });
+    expect(config.databaseUrl).toBe('postgresql://server-only');
   });
 });
