@@ -86,3 +86,9 @@ OE-001-002 — Configuração global. Iniciar somente após manter registrada es
 - A reexecução foi aceita pelo GitHub (`run_attempt: 2`), porém terminou novamente em `failure`.
 - O job `OE-001 foundation validation` retornou `steps: null` e `logs_url: null`, confirmando que o runner ainda não chegou a iniciar nenhuma etapa do workflow.
 - A próxima investigação deve ser feita sobre a anotação administrativa do GitHub associada ao job, com atenção especial a bloqueios de conta/billing/Actions entitlement, pois o workflow continua não alcançando sequer o handshake inicial.
+
+### Decisão operacional — CI não bloqueante
+- Para evitar novas falhas automáticas sem valor enquanto o GitHub não aloca o runner, o workflow `HortiVitalMix CI` passou temporariamente a aceitar apenas `workflow_dispatch` (execução manual).
+- O problema do runner continua registrado como pendência externa de infraestrutura e **não será usado para bloquear as próximas OEs**.
+- A aplicação, banco Neon, migrations, frontend e backend continuam sendo tratados normalmente; quando o runner do GitHub voltar a executar etapas, o CI será reativado para `push` e `pull_request`.
+- Esta decisão não mascara o problema: ela apenas impede que cada commit gere uma nova execução vermelha que não chega a rodar nenhuma etapa.
