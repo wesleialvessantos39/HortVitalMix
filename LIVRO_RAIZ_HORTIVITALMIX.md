@@ -80,3 +80,9 @@ OE-001-002 — Configuração global. Iniciar somente após manter registrada es
 - O workflow de CI foi simplificado, alterado para runner explícito `ubuntu-24.04` e ganhou uma primeira etapa `Runner handshake`.
 - Execução automática nº 8 (`34698424135`) falhou novamente antes de qualquer etapa: a API do GitHub retornou `steps: null` e `logs_url: null`. Isso demonstra que a falha acontece antes da execução do código/workflow no runner.
 - Como a integração disponível não possui acesso administrativo às configurações de GitHub Actions, a ativação/política do runner precisa ser verificada na interface do repositório em **Settings → Actions → General**. O workflow está pronto para ser reexecutado assim que o Actions permitir alocação do runner.
+
+### Reexecução após habilitação manual do GitHub Actions
+- Após a confirmação do usuário de que **Settings → Actions → General** foi ajustado, a execução nº `34698424135` foi reexecutada pela integração GitHub.
+- A reexecução foi aceita pelo GitHub (`run_attempt: 2`), porém terminou novamente em `failure`.
+- O job `OE-001 foundation validation` retornou `steps: null` e `logs_url: null`, confirmando que o runner ainda não chegou a iniciar nenhuma etapa do workflow.
+- A próxima investigação deve ser feita sobre a anotação administrativa do GitHub associada ao job, com atenção especial a bloqueios de conta/billing/Actions entitlement, pois o workflow continua não alcançando sequer o handshake inicial.
