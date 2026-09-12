@@ -65,3 +65,8 @@ A base anterior de template foi substituída pela arquitetura exigida no Manual 
 
 ### Próxima ordem
 OE-001-002 — Configuração global. Iniciar somente após manter registrada esta evidência e sem antecipar tabelas/fluxos funcionais das OEs seguintes.
+
+### Hardening final da OE-001-001
+- Tratamento de erros e encerramento do pool revisados para não registrar mensagens potencialmente portadoras de credenciais/segredos.
+- Último commit funcional desta OE: `9635fc034468b37911b0c1054739cad0687b333b`.
+- GitHub Actions continuou encerrando o job antes de executar qualquer etapa, portanto o bloqueio permanece externo ao fluxo de typecheck/test/build e não foi mascarado como sucesso.
