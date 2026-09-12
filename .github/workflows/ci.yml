@@ -9,26 +9,33 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: hortivitalmix-ci-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   foundation:
-    runs-on: ubuntu-latest
+    name: OE-001 foundation validation
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
+      - name: Runner handshake
+        run: |
+          echo "runner=online"
+          uname -a
+
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
+
+      - name: Runtime versions
+        run: |
+          node --version
+          npm --version
+
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+
       - name: Typecheck
         run: npm run typecheck
-      - name: Tests
+
+      - name: Unit and integration tests
         run: npm run test
-      - name: Build
+
+      - name: Production build
         run: npm run build
