@@ -27,7 +27,7 @@ async function shutdown(signal: string): Promise<void> {
       console.error(JSON.stringify({
         level: 'error',
         event: 'server.shutdown_failed',
-        message: error instanceof Error ? error.message : 'unknown',
+        errorName: error instanceof Error ? error.name : 'UnknownError',
       }));
       process.exit(1);
     }
