@@ -2,17 +2,9 @@ name: HortiVitalMix CI
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
 
 permissions:
   contents: read
-
-concurrency:
-  group: hortivitalmix-ci-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
   foundation:
