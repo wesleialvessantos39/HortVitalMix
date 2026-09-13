@@ -14,8 +14,8 @@ Documento permanente de rastreabilidade técnica do projeto greenfield. Fonte no
 | --- | --- | --- |
 | OE-001-001 | Estrutura | IMPLEMENTADA — Google AI Studio corrigido; CI bloqueado antes da alocação do runner pelo GitHub |
 | OE-001-002 | Configuração global | HOMOLOGADA — Neon real + gate Vercel `npm run check` aprovado |
-| OE-001-003 | Ambientes | PENDENTE — LIBERADA PARA IMPLEMENTAÇÃO |
-| OE-001-004 | Banco | PENDENTE |
+| OE-001-003 | Ambientes | HOMOLOGADA — três ambientes isolados + gate Vercel aprovado |
+| OE-001-004 | Banco | PENDENTE — LIBERADA PARA IMPLEMENTAÇÃO |
 
 ## 2026-09-12 — OE-001-001 — Estrutura greenfield
 A base anterior de template foi substituída pela arquitetura exigida no Manual v6, sem reutilizar status do projeto legado como evidência.
@@ -167,3 +167,32 @@ A OE-001-003 está **LIBERADA PARA IMPLEMENTAÇÃO**, sem ser marcada como imple
 - Responsividade e identidade visual permanecem implementadas para desktop, tablet e mobile conforme as referências fornecidas.
 - Limitação residual: a API de leitura do conector Vercel não enumera o novo projeto/deployment, embora o próprio Vercel Bot tenha reportado o deployment como concluído no GitHub. Esse defeito do conector não é convertido em falha do artefato.
 - Resultado: **OE-001-002 HOMOLOGADA; OE-001-003 LIBERADA**.
+
+
+## 2026-09-12 — OE-001-003 — Ambientes
+
+### Resultado
+**HOMOLOGADA.**
+
+- development, homologation e production existem como branches Neon isoladas.
+- production: `br-royal-block-ac90e4db`.
+- Migration `0003_oe_001_003_environments.sql` aplicada nos três ambientes.
+- Checksum: `d4ed92b4d50d7944aab2dd06b987e100a236c8bbc0431e6b5aef69de5fe158a3`.
+- `app_releases` criada com constraint de ambiente, commit SHA e único release corrente.
+- Os três bancos registram o mesmo artefato `170d8b08089de99a8d3b1f38488bc1bf0354d1cc`, cada um com seu próprio ambiente.
+- `/api/ready` agora bloqueia banco de ambiente incorreto com 503/mismatch.
+- Runtime e migration usam URLs separadas.
+- COR 05 para porta vazia resolvida.
+- Preview Vercel mapeia para homologation; produção Vercel mapeia para production.
+- development/homologation usam noindex; production permite indexação.
+- homologation/production aplicam TLS/HSTS e política de cookie secure.
+- tokens de teste ficam restritos a development.
+- Frontend recebeu aviso responsivo de ambiente fora de production.
+- Vercel existente ligado ao GitHub retornou `success` no commit do artefato; `npm run check` cobre typecheck + testes + build.
+- Nenhum projeto ou deployment paralelo foi criado para esta implementação.
+- A tentativa de marcar a branch production como protected foi recusada pelo Neon por limite do plano; o isolamento da branch permanece ativo.
+
+Registro detalhado: `docs/orders/OE-001-003.md`.
+
+### Gate
+OE-001-004 liberada somente após este fechamento formal.

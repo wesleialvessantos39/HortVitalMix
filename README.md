@@ -29,3 +29,19 @@ A configuração pública da plataforma é lida em `GET /api/v1/config` e usa um
 A tela `/admin/configuracao` já possui os estados visuais da configuração global, mas nenhuma identidade administrativa fictícia é criada nesta etapa: sem autenticação/principal real, a API de escrita retorna 403.
 
 A migration `0002_oe_001_002_global_configuration.sql` cria a configuração singleton e a auditoria necessária. Contatos não confirmados permanecem nulos.
+
+
+## Ambientes — OE-001-003
+O HortiVitalMix possui três perfis: development, homologation e production.
+
+- Vercel Preview resolve para homologation.
+- Vercel Production resolve para production.
+- Execução local sem seleção explícita resolve para development.
+- Runtime usa `DATABASE_URL`.
+- Migração exige `MIGRATION_ENV` + `DATABASE_MIGRATION_URL`; não reutiliza a URL de runtime.
+- `/api/ready` valida a identidade do banco e retorna 503 se um ambiente apontar para o banco de outro.
+- development e homologation são noindex.
+- homologation e production exigem política TLS/cookie secure.
+- tokens de teste são permitidos somente em development.
+
+A produção continua sendo atualizada pelo projeto Vercel já ligado ao GitHub; não é necessário criar deployments paralelos.
