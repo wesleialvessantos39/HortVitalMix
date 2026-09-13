@@ -12,6 +12,7 @@ import {
 import type { PublicConfig } from '../../../shared/contracts/configuration';
 import type { EnvironmentResponse } from '../../../shared/contracts/foundation';
 import { BrandLogo } from '../../components/brand/BrandLogo';
+import { DatabaseIntegrityCard } from '../../components/environment/DatabaseIntegrityCard';
 import { EnvironmentNotice } from '../../components/environment/EnvironmentNotice';
 import { FoundationApiError, foundationApi } from '../../services/foundationApi';
 
@@ -223,6 +224,7 @@ export function AdminConfigurationPage({
         )}
 
         <div className="admin-grid">
+          <DatabaseIntegrityCard environment={environment} />
           <section className="config-card">
             <div className="config-card-heading">
               <Palette aria-hidden="true" />
