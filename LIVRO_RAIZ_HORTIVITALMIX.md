@@ -15,7 +15,7 @@ Documento permanente de rastreabilidade técnica do projeto greenfield. Fonte no
 | OE-001-001 | Estrutura | IMPLEMENTADA — Google AI Studio corrigido; CI bloqueado antes da alocação do runner pelo GitHub |
 | OE-001-002 | Configuração global | HOMOLOGADA — Neon real + gate Vercel `npm run check` aprovado |
 | OE-001-003 | Ambientes | HOMOLOGADA — três ambientes isolados + gate Vercel aprovado |
-| OE-001-004 | Banco | PENDENTE — LIBERADA PARA IMPLEMENTAÇÃO |
+| OE-001-004 | Banco | HOMOLOGADA — histórico remoto, atomicidade e restauração comprovados |
 
 ## 2026-09-12 — OE-001-001 — Estrutura greenfield
 A base anterior de template foi substituída pela arquitetura exigida no Manual v6, sem reutilizar status do projeto legado como evidência.
@@ -207,3 +207,35 @@ OE-001-004 liberada somente após este fechamento formal.
 - Sem Neon configurado no preview, a apresentação funciona e informa corretamente banco indisponível; readiness permanece 503.
 - Vercel continua usando exclusivamente a Function `api/index.ts`; nenhum projeto/deployment paralelo foi criado.
 - Teste específico do preview local adicionado.
+
+
+## 2026-09-12/13 — OE-001-004 — Banco
+
+### Resultado
+**HOMOLOGADA.**
+
+- Divergência legada 0014 analisada antes da evolução: ela não existe no repositório/bancos greenfield atuais; não foi importado nem fabricado checksum legado.
+- Arquivos 0001–0003 preservados integralmente.
+- Migration nova `0004_oe_001_004_database_foundation.sql`.
+- SHA256: `1aa13dcf29dc9c535c5d8efbc707746957724761437589959752d9e9f452454e`.
+- Criada `app_feature_flags`, completando as fontes do contrato do Módulo 001.
+- `app_releases` passou a registrar `schema_version` e `migration_history_hash`.
+- Manifesto imutável de migrations e verificador de histórico remoto implementados.
+- Runner usa SHA256 dos bytes integrais, advisory lock de sessão e transação por migration.
+- Drift de nome/checksum/versão remota inesperada bloqueia evolução.
+- Readiness exige ambiente, migration history, schema e release coerentes.
+- Frontend administrativo exibe integridade do banco em card responsivo.
+- Migration testada primeiro na branch isolada `br-nameless-poetry-ackj15gm`.
+- Ensaio de falha transacional comprovou rollback total.
+- Snapshot real `snap-hidden-night-acbc524a` restaurado em `br-green-meadow-aco4j8gx`; migrations, release e configuração foram recuperados.
+- Development, homologation e production possuem versões 1–4 idênticas.
+- Hash canônico do histórico: `6593aac76cb473ab64e40d6de8bd093d1df88f21724025a1189d8649d4eb68f3`.
+- Release corrente nos três ambientes: `oe-001-004`, schema 4.
+- Commit de gate: `73d4118febab8d84e38cbf29113a7a1e03f36ada`.
+- Vercel existente ligado ao GitHub: **success** no gate `npm run check`.
+- Nenhum projeto/deployment Vercel paralelo foi criado.
+
+Registro completo: `docs/orders/OE-001-004.md`.
+
+### Próxima ordem
+Módulo 001 concluído nas OEs 001–004. **OE-002-001 — Cadastro e login** liberada para implementação futura mediante solicitação do usuário.

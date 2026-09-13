@@ -57,3 +57,17 @@ Consequências:
 - sem `DATABASE_URL`, a API continua real e informa banco indisponível, sem fingir persistência;
 - `npm run dev:api` permanece disponível quando for necessário executar somente o backend;
 - no Vercel nada muda: a API continua sendo servida pela Function em `api/index.ts`.
+
+
+## Banco e migrations — OE-001-004
+O banco possui um manifesto canônico de migrations. Arquivos já aplicados são imutáveis e seus SHA256 são comparados com o histórico remoto antes de qualquer migration futura.
+
+Regras:
+- migrations em `db/migrations` seguem sequência de quatro dígitos;
+- `npm run migrate` exige `MIGRATION_ENV`, `DATABASE_MIGRATION_URL` e `MIGRATION_COMMIT_SHA`;
+- `npm run db:verify` compara arquivos locais, histórico remoto e release corrente;
+- o runner usa advisory lock de sessão;
+- cada migration é transacional;
+- readiness só fica pronta quando ambiente, histórico, schema e release coincidem;
+- `app_feature_flags` pertence à fundação do Módulo 001;
+- nenhuma migration aplicada deve ser editada ou ter checksum regravado para forçar concordância.
