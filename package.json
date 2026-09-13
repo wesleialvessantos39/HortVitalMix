@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "concurrently -k -n web,api \"vite --host 0.0.0.0 --port 3000\" \"tsx watch server/index.ts\"",
+    "dev": "vite --host 0.0.0.0 --port 3000",
     "dev:web": "vite --host 0.0.0.0 --port 3000",
     "dev:api": "tsx watch server/index.ts",
     "dev:full": "npm run dev",
@@ -33,7 +33,6 @@
     "@types/react-dom": "^19.1.9",
     "@types/supertest": "^6.0.3",
     "@vitejs/plugin-react": "^5.0.4",
-    "concurrently": "^9.2.1",
     "supertest": "^7.1.4",
     "tsx": "^4.21.0",
     "typescript": "~5.8.3",

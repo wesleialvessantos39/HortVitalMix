@@ -196,3 +196,14 @@ Registro detalhado: `docs/orders/OE-001-003.md`.
 
 ### Gate
 OE-001-004 liberada somente após este fechamento formal.
+
+
+### Correção operacional — Google AI Studio após OE-001-003
+- Sintoma observado no preview: tela “Não foi possível consultar a API do HortiVitalMix”.
+- Causa: frontend Vite dependia de proxy para um segundo backend em `localhost:3001`, processo que o preview do Google AI Studio não garante expor.
+- Correção: Vite passou a montar a aplicação Express canônica no mesmo processo e mesma origem durante desenvolvimento.
+- `npm run dev` agora é processo único para frontend + backend.
+- Nenhum mock, API simulada ou credencial foi introduzido.
+- Sem Neon configurado no preview, a apresentação funciona e informa corretamente banco indisponível; readiness permanece 503.
+- Vercel continua usando exclusivamente a Function `api/index.ts`; nenhum projeto/deployment paralelo foi criado.
+- Teste específico do preview local adicionado.

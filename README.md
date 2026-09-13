@@ -45,3 +45,15 @@ O HortiVitalMix possui três perfis: development, homologation e production.
 - tokens de teste são permitidos somente em development.
 
 A produção continua sendo atualizada pelo projeto Vercel já ligado ao GitHub; não é necessário criar deployments paralelos.
+
+
+## Google AI Studio — execução local sem segundo processo
+O preview do Google AI Studio utiliza o servidor Vite como processo público. Para evitar falha de API causada por um segundo processo inacessível em `localhost:3001`, o Vite monta a **mesma aplicação Express real** diretamente no middleware de desenvolvimento.
+
+Consequências:
+- `npm run dev` inicia frontend + API no mesmo processo/mesma origem;
+- não existe proxy obrigatório para `localhost:3001`;
+- nenhuma variável de ambiente é exigida para a apresentação;
+- sem `DATABASE_URL`, a API continua real e informa banco indisponível, sem fingir persistência;
+- `npm run dev:api` permanece disponível quando for necessário executar somente o backend;
+- no Vercel nada muda: a API continua sendo servida pela Function em `api/index.ts`.
