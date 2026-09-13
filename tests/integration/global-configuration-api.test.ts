@@ -109,7 +109,10 @@ function makeApp(configRepository: GlobalConfigRepository, authorized = false) {
     probe: async () => ({
       databaseAvailable: true,
       databaseEnvironment: 'homologation',
-      releaseVersion: 'oe-001-003',
+      releaseVersion: 'oe-001-004',
+      schemaVersion: 4,
+      migrationIntegrity: 'valid',
+      releaseHistoryHashMatches: true,
     }),
   };
   return createApp({
