@@ -17,6 +17,13 @@ const bindingLabels = {
   mismatch: 'banco de outro ambiente',
 } as const;
 
+const migrationLabels = {
+  valid: 'migrações verificadas',
+  incomplete: 'migrações pendentes',
+  drift: 'histórico divergente',
+  unavailable: 'histórico indisponível',
+} as const;
+
 export function EnvironmentNotice({ environment }: EnvironmentNoticeProps) {
   if (environment.environment === 'production') return null;
 
@@ -28,7 +35,11 @@ export function EnvironmentNotice({ environment }: EnvironmentNoticeProps) {
     >
       <strong>{labels[environment.environment]}</strong>
       <span>{bindingLabels[environment.databaseBinding]}</span>
-      <small>Indexação pública desativada.</small>
+      <span>{migrationLabels[environment.migrationIntegrity]}</span>
+      <small>
+        Schema {environment.schemaVersion ?? '—'} / {environment.expectedSchemaVersion} •
+        {' '}Indexação pública desativada.
+      </small>
     </aside>
   );
 }
