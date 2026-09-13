@@ -1,17 +1,15 @@
+import {
+  EXPECTED_RELEASE_VERSION,
+  EXPECTED_SCHEMA_VERSION,
+} from '../../shared/database/migrationManifest';
 import type {
   EnvironmentResponse,
   HealthResponse,
   ReadinessResponse,
 } from '../../shared/contracts/foundation';
-import type {
-  AppEnvironment,
-  DatabaseBindingStatus,
-} from '../../shared/domain';
+import type { AppEnvironment, DatabaseBindingStatus } from '../../shared/domain';
 import type { DeploymentSource } from '../../shared/environment/policy';
-import type {
-  FoundationProbe,
-  FoundationRepository,
-} from '../repositories/postgresHealthRepository';
+import type { FoundationProbe, FoundationRepository } from '../repositories/postgresHealthRepository';
 
 export interface FoundationServiceOptions {
   environment: AppEnvironment;
@@ -27,12 +25,16 @@ export interface FoundationServiceOptions {
 interface BindingInspection {
   probe: FoundationProbe;
   binding: DatabaseBindingStatus;
+  ready: boolean;
 }
 
 const unavailableProbe: FoundationProbe = {
   databaseAvailable: false,
   databaseEnvironment: null,
   releaseVersion: null,
+  schemaVersion: null,
+  migrationIntegrity: 'unavailable',
+  releaseHistoryHashMatches: false,
 };
 
 export class FoundationService {
@@ -45,24 +47,26 @@ export class FoundationService {
       service: 'hortivitalmix-api',
       presentation: 'available',
       environment: this.options.environment,
-      database: inspection.binding === 'ready' ? 'ready' : 'unavailable',
+      database: inspection.ready ? 'ready' : 'unavailable',
       databaseBinding: inspection.binding,
+      migrationIntegrity: inspection.probe.migrationIntegrity,
       requestId,
     };
   }
 
   public async readiness(requestId: string): Promise<ReadinessResponse> {
     const inspection = await this.inspectBinding();
-    const ready = inspection.binding === 'ready';
     return {
-      status: ready ? 'ready' : 'unavailable',
+      status: inspection.ready ? 'ready' : 'unavailable',
       environment: this.options.environment,
-      dependencies: {
-        database: ready ? 'ready' : 'unavailable',
-      },
+      dependencies: { database: inspection.ready ? 'ready' : 'unavailable' },
       databaseBinding: inspection.binding,
+      migrationIntegrity: inspection.probe.migrationIntegrity,
       expectedDatabaseEnvironment: this.options.environment,
       actualDatabaseEnvironment: inspection.probe.databaseEnvironment,
+      expectedSchemaVersion: EXPECTED_SCHEMA_VERSION,
+      actualSchemaVersion: inspection.probe.schemaVersion,
+      expectedReleaseVersion: EXPECTED_RELEASE_VERSION,
       releaseVersion: inspection.probe.releaseVersion,
       requestId,
     };
@@ -76,6 +80,10 @@ export class FoundationService {
       databaseConfigured: this.options.databaseConfigured,
       databaseBinding: inspection.binding,
       databaseEnvironment: inspection.probe.databaseEnvironment,
+      migrationIntegrity: inspection.probe.migrationIntegrity,
+      expectedSchemaVersion: EXPECTED_SCHEMA_VERSION,
+      schemaVersion: inspection.probe.schemaVersion,
+      expectedReleaseVersion: EXPECTED_RELEASE_VERSION,
       releaseVersion: inspection.probe.releaseVersion,
       indexing: this.options.indexingAllowed ? 'index' : 'noindex',
       tlsRequired: this.options.tlsRequired,
@@ -87,28 +95,23 @@ export class FoundationService {
 
   private async inspectBinding(): Promise<BindingInspection> {
     if (!this.options.databaseConfigured) {
-      return { probe: unavailableProbe, binding: 'unavailable' };
+      return { probe: unavailableProbe, binding: 'unavailable', ready: false };
     }
-
     let probe: FoundationProbe;
     try {
       probe = await this.options.repository.probe();
     } catch {
-      return { probe: unavailableProbe, binding: 'unavailable' };
+      return { probe: unavailableProbe, binding: 'unavailable', ready: false };
     }
+    if (!probe.databaseAvailable) return { probe, binding: 'unavailable', ready: false };
+    if (!probe.databaseEnvironment) return { probe, binding: 'unbound', ready: false };
+    if (probe.databaseEnvironment !== this.options.environment) return { probe, binding: 'mismatch', ready: false };
 
-    if (!probe.databaseAvailable) {
-      return { probe, binding: 'unavailable' };
-    }
-
-    if (!probe.databaseEnvironment) {
-      return { probe, binding: 'unbound' };
-    }
-
-    if (probe.databaseEnvironment !== this.options.environment) {
-      return { probe, binding: 'mismatch' };
-    }
-
-    return { probe, binding: 'ready' };
+    const ready =
+      probe.migrationIntegrity === 'valid'
+      && probe.schemaVersion === EXPECTED_SCHEMA_VERSION
+      && probe.releaseVersion === EXPECTED_RELEASE_VERSION
+      && probe.releaseHistoryHashMatches;
+    return { probe, binding: 'ready', ready };
   }
 }
