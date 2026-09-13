@@ -16,9 +16,14 @@ const actorId = '72f4557c-b20c-4ed0-92fe-417829e03401';
 function runtime() {
   return {
     environment: 'homologation' as const,
+    deploymentSource: 'explicit' as const,
     appBaseUrl: 'https://homologation.example.test',
     apiPort: 3001,
     databaseUrl: 'postgresql://configured',
+    indexingAllowed: false,
+    tlsRequired: true,
+    secureCookies: true,
+    testTokensEnabled: false,
   };
 }
 
@@ -100,7 +105,13 @@ class MemoryConfigRepository implements GlobalConfigRepository {
 }
 
 function makeApp(configRepository: GlobalConfigRepository, authorized = false) {
-  const healthRepository: FoundationRepository = { isAvailable: async () => true };
+  const healthRepository: FoundationRepository = {
+    probe: async () => ({
+      databaseAvailable: true,
+      databaseEnvironment: 'homologation',
+      releaseVersion: 'oe-001-003',
+    }),
+  };
   return createApp({
     runtime: runtime(),
     pool: null,

@@ -1,6 +1,8 @@
 import {
+  environmentResponseSchema,
   healthResponseSchema,
   readinessResponseSchema,
+  type EnvironmentResponse,
   type HealthResponse,
   type ReadinessResponse,
 } from '../../shared/contracts/foundation';
@@ -64,6 +66,10 @@ export const foundationApi = {
 
   getReadiness(): Promise<ReadinessResponse> {
     return getJson('/api/ready', (value) => readinessResponseSchema.parse(value));
+  },
+
+  getEnvironment(): Promise<EnvironmentResponse> {
+    return getJson('/api/v1/environment', (value) => environmentResponseSchema.parse(value));
   },
 
   async updateConfiguration(

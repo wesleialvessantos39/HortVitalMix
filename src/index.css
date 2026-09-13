@@ -231,3 +231,56 @@ button:disabled { cursor: not-allowed; opacity: .45; }
   .admin-savebar { display: grid; bottom: 8px; }
   .save-config-button { width: 100%; }
 }
+
+
+/* OE-001-003 — identificação segura de ambiente */
+.environment-notice {
+  width: min(1180px, calc(100% - 40px));
+  margin: 16px auto 0;
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 11px 14px;
+  border: 1px solid #cddbcf;
+  border-radius: 14px;
+  background: #f4f8f3;
+  color: #355447;
+  font-size: 12px;
+}
+.environment-notice strong {
+  color: var(--green-950);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.environment-notice span {
+  font-weight: 800;
+}
+.environment-notice small {
+  justify-self: end;
+  color: #66766d;
+}
+.environment-notice.binding-mismatch,
+.environment-notice.binding-unbound,
+.environment-notice.binding-unavailable {
+  border-color: #efcf99;
+  background: #fff7e7;
+}
+.admin-shell > .environment-notice {
+  width: 100%;
+  margin: 0 0 20px;
+}
+
+@media (max-width: 680px) {
+  .environment-notice {
+    width: min(100% - 24px, 620px);
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .environment-notice small {
+    justify-self: start;
+  }
+  .admin-shell > .environment-notice {
+    width: 100%;
+  }
+}

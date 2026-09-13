@@ -11,10 +11,13 @@ import {
   Truck,
 } from 'lucide-react';
 import type { PublicConfig } from '../../../shared/contracts/configuration';
+import type { EnvironmentResponse } from '../../../shared/contracts/foundation';
+import { EnvironmentNotice } from '../../components/environment/EnvironmentNotice';
 import { PublicHeader } from '../../components/layout/PublicHeader';
 
 interface PublicHomeProps {
   config: PublicConfig;
+  environment: EnvironmentResponse;
   databaseReady: boolean;
 }
 
@@ -25,12 +28,18 @@ const journey = [
   { icon: Truck, title: 'Entrega planejada', text: 'A proposta conecta escolha, preparo e entrega local.' },
 ];
 
-export function PublicHome({ config, databaseReady }: PublicHomeProps) {
+export function PublicHome({ config, environment, databaseReady }: PublicHomeProps) {
   const location = `${config.region.city} - ${config.region.stateCode}`;
 
   return (
-    <div id="inicio" className="site-page" data-config-revision={config.revision}>
+    <div
+      id="inicio"
+      className="site-page"
+      data-config-revision={config.revision}
+      data-environment={environment.environment}
+    >
       <PublicHeader config={config} />
+      <EnvironmentNotice environment={environment} />
       <main>
         <section className="hero page-shell" aria-labelledby="hero-title">
           <div className="hero-copy">

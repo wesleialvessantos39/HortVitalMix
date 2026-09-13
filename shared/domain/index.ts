@@ -9,5 +9,8 @@ export type AppEnvironment = (typeof APP_ENVIRONMENTS)[number];
 export const DEPENDENCY_STATUSES = ['ready', 'unavailable'] as const;
 export type DependencyStatus = (typeof DEPENDENCY_STATUSES)[number];
 
+export const DATABASE_BINDING_STATUSES = ['ready', 'unavailable', 'unbound', 'mismatch'] as const;
+export type DatabaseBindingStatus = (typeof DATABASE_BINDING_STATUSES)[number];
+
 export const SERVICE_STATUSES = ['ok', 'unavailable'] as const;
 export type ServiceStatus = (typeof SERVICE_STATUSES)[number];

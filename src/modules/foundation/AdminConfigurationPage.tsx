@@ -10,11 +10,14 @@ import {
   Save,
 } from 'lucide-react';
 import type { PublicConfig } from '../../../shared/contracts/configuration';
+import type { EnvironmentResponse } from '../../../shared/contracts/foundation';
 import { BrandLogo } from '../../components/brand/BrandLogo';
+import { EnvironmentNotice } from '../../components/environment/EnvironmentNotice';
 import { FoundationApiError, foundationApi } from '../../services/foundationApi';
 
 interface AdminConfigurationPageProps {
   config: PublicConfig;
+  environment: EnvironmentResponse;
   databaseReady: boolean;
   onConfigUpdated: (config: PublicConfig) => void;
   onReload: () => void;
@@ -67,6 +70,7 @@ function nullable(value: string): string | null {
 
 export function AdminConfigurationPage({
   config,
+  environment,
   databaseReady,
   onConfigUpdated,
   onReload,
@@ -161,6 +165,7 @@ export function AdminConfigurationPage({
       </header>
 
       <div className="admin-shell">
+        <EnvironmentNotice environment={environment} />
         <section className="admin-heading">
           <div>
             <p className="eyebrow">Configuração da plataforma</p>

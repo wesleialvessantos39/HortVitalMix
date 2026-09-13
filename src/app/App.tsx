@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { PublicConfig } from '../../shared/contracts/configuration';
+import type { EnvironmentResponse } from '../../shared/contracts/foundation';
 import { AdminConfigurationPage } from '../modules/foundation/AdminConfigurationPage';
 import { PublicHome } from '../modules/foundation/PublicHome';
 import { UnavailablePage } from '../modules/foundation/UnavailablePage';
@@ -7,8 +8,22 @@ import { foundationApi } from '../services/foundationApi';
 
 type BootState =
   | { status: 'loading' }
-  | { status: 'ready'; config: PublicConfig; databaseReady: boolean }
+  | { status: 'ready'; config: PublicConfig; environment: EnvironmentResponse; databaseReady: boolean }
   | { status: 'error' };
+
+function applyEnvironmentMetadata(environment: EnvironmentResponse): void {
+  document.documentElement.dataset.environment = environment.environment;
+
+  let robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
+  if (!robots) {
+    robots = document.createElement('meta');
+    robots.name = 'robots';
+    document.head.appendChild(robots);
+  }
+  robots.content = environment.indexing === 'index'
+    ? 'index, follow'
+    : 'noindex, nofollow, noarchive';
+}
 
 function applyGlobalConfiguration(config: PublicConfig): void {
   document.title = config.brand.pageTitle;
@@ -29,12 +44,20 @@ export default function App() {
   const boot = useCallback(async () => {
     setState({ status: 'loading' });
     try {
-      const [config, health] = await Promise.all([
+      const [config, health, environment] = await Promise.all([
         foundationApi.getConfig(),
         foundationApi.getHealth(),
+        foundationApi.getEnvironment(),
       ]);
       applyGlobalConfiguration(config);
-      setState({ status: 'ready', config, databaseReady: health.database === 'ready' });
+      applyEnvironmentMetadata(environment);
+      setState({
+        status: 'ready',
+        config,
+        environment,
+        databaseReady:
+          health.database === 'ready' && environment.databaseBinding === 'ready',
+      });
     } catch {
       setState({ status: 'error' });
     }
@@ -61,6 +84,7 @@ export default function App() {
     return (
       <AdminConfigurationPage
         config={state.config}
+        environment={state.environment}
         databaseReady={state.databaseReady}
         onConfigUpdated={(config) => {
           applyGlobalConfiguration(config);
@@ -75,5 +99,11 @@ export default function App() {
     );
   }
 
-  return <PublicHome config={state.config} databaseReady={state.databaseReady} />;
+  return (
+    <PublicHome
+      config={state.config}
+      environment={state.environment}
+      databaseReady={state.databaseReady}
+    />
+  );
 }

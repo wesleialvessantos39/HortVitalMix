@@ -5,29 +5,49 @@ export const requestIdSchema = z.string().uuid();
 export const dependencyStatusSchema = z.enum(['ready', 'unavailable']);
 export type DependencyStatus = z.infer<typeof dependencyStatusSchema>;
 
+export const databaseBindingStatusSchema = z.enum(['ready', 'unavailable', 'unbound', 'mismatch']);
+export type DatabaseBindingStatus = z.infer<typeof databaseBindingStatusSchema>;
+
+export const appEnvironmentSchema = z.enum(['development', 'homologation', 'production']);
+
 export const healthResponseSchema = z.object({
   status: z.literal('ok'),
   service: z.literal('hortivitalmix-api'),
   presentation: z.literal('available'),
+  environment: appEnvironmentSchema,
   database: dependencyStatusSchema,
+  databaseBinding: databaseBindingStatusSchema,
   requestId: requestIdSchema,
-});
+}).strict();
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
 
 export const readinessResponseSchema = z.object({
   status: z.enum(['ready', 'unavailable']),
+  environment: appEnvironmentSchema,
   dependencies: z.object({
     database: dependencyStatusSchema,
-  }),
+  }).strict(),
+  databaseBinding: databaseBindingStatusSchema,
+  expectedDatabaseEnvironment: appEnvironmentSchema,
+  actualDatabaseEnvironment: appEnvironmentSchema.nullable(),
+  releaseVersion: z.string().nullable(),
   requestId: requestIdSchema,
-});
+}).strict();
 export type ReadinessResponse = z.infer<typeof readinessResponseSchema>;
 
 export const environmentResponseSchema = z.object({
-  environment: z.enum(['development', 'homologation', 'production']),
+  environment: appEnvironmentSchema,
+  deploymentSource: z.enum(['explicit', 'vercel', 'local']),
   databaseConfigured: z.boolean(),
+  databaseBinding: databaseBindingStatusSchema,
+  databaseEnvironment: appEnvironmentSchema.nullable(),
+  releaseVersion: z.string().nullable(),
+  indexing: z.enum(['index', 'noindex']),
+  tlsRequired: z.boolean(),
+  secureCookies: z.boolean(),
+  testTokensEnabled: z.boolean(),
   requestId: requestIdSchema,
-});
+}).strict();
 export type EnvironmentResponse = z.infer<typeof environmentResponseSchema>;
 
 export const apiErrorSchema = z.object({

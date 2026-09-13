@@ -6,6 +6,7 @@ import {
 import { loadRuntimeConfig, type RuntimeConfig } from './config/runtime';
 import { createDatabasePool, type DatabasePool } from './db/pool';
 import { errorHandler, apiNotFoundHandler } from './middleware/errorHandler';
+import { createEnvironmentSecurityMiddleware } from './middleware/environmentSecurity';
 import { requestIdMiddleware } from './middleware/requestId';
 import {
   PostgresGlobalConfigRepository,
@@ -43,7 +44,12 @@ export function createApp(options: CreateAppOptions = {}): HortiVitalMixApp {
 
   const foundationService = new FoundationService({
     environment: runtime.environment,
+    deploymentSource: runtime.deploymentSource,
     databaseConfigured: Boolean(runtime.databaseUrl),
+    indexingAllowed: runtime.indexingAllowed,
+    tlsRequired: runtime.tlsRequired,
+    secureCookies: runtime.secureCookies,
+    testTokensEnabled: runtime.testTokensEnabled,
     repository: foundationRepository,
   });
 
@@ -54,7 +60,9 @@ export function createApp(options: CreateAppOptions = {}): HortiVitalMixApp {
 
   const app = express();
   app.disable('x-powered-by');
+  app.set('trust proxy', 1);
   app.use(requestIdMiddleware);
+  app.use(createEnvironmentSecurityMiddleware(runtime));
   app.use(express.json({ limit: '256kb', strict: true }));
   app.use(
     '/api',

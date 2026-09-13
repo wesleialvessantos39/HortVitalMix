@@ -9,6 +9,8 @@ import {
 } from '../../shared/contracts/foundation';
 import { loadRuntimeConfig } from '../../server/config/runtime';
 
+const requestId = '9e3d22d3-c00d-4f06-b5df-f96b76bb2330';
+
 const publicConfig = {
   revision: 1,
   source: 'database' as const,
@@ -26,66 +28,68 @@ const publicConfig = {
   contacts: { email: null, phone: null, whatsapp: null },
   region: { countryCode: 'BR', stateCode: 'RO', city: 'Ariquemes' },
   parameters: { locale: 'pt-BR', currency: 'BRL', timezone: 'America/Porto_Velho' },
-  requestId: '9e3d22d3-c00d-4f06-b5df-f96b76bb2330',
+  requestId,
 };
 
 describe('foundation contracts & runtime configuration', () => {
   it('rejects accidental credential fields at the public boundary in publicConfigSchema', () => {
-    const parsed = publicConfigSchema.safeParse({
+    expect(publicConfigSchema.safeParse({
       ...publicConfig,
       databaseUrl: 'postgresql://should-not-be-present',
-    });
-
-    expect(parsed.success).toBe(false);
+    }).success).toBe(false);
   });
 
   it('validates health response schema correctly', () => {
-    const valid = healthResponseSchema.safeParse({
+    expect(healthResponseSchema.safeParse({
       status: 'ok',
       service: 'hortivitalmix-api',
       presentation: 'available',
+      environment: 'homologation',
       database: 'ready',
-      requestId: publicConfig.requestId,
-    });
-    expect(valid.success).toBe(true);
+      databaseBinding: 'ready',
+      requestId,
+    }).success).toBe(true);
   });
 
-  it('validates readiness response schema correctly for ready and unavailable states', () => {
-    const ready = readinessResponseSchema.safeParse({
+  it('validates readiness response schema correctly', () => {
+    expect(readinessResponseSchema.safeParse({
       status: 'ready',
+      environment: 'homologation',
       dependencies: { database: 'ready' },
-      requestId: publicConfig.requestId,
-    });
-    expect(ready.success).toBe(true);
-
-    const unavailable = readinessResponseSchema.safeParse({
-      status: 'unavailable',
-      dependencies: { database: 'unavailable' },
-      requestId: publicConfig.requestId,
-    });
-    expect(unavailable.success).toBe(true);
+      databaseBinding: 'ready',
+      expectedDatabaseEnvironment: 'homologation',
+      actualDatabaseEnvironment: 'homologation',
+      releaseVersion: 'oe-001-003',
+      requestId,
+    }).success).toBe(true);
   });
 
   it('validates environment response schema correctly', () => {
-    const env = environmentResponseSchema.safeParse({
+    expect(environmentResponseSchema.safeParse({
       environment: 'development',
+      deploymentSource: 'local',
       databaseConfigured: false,
-      requestId: publicConfig.requestId,
-    });
-    expect(env.success).toBe(true);
+      databaseBinding: 'unavailable',
+      databaseEnvironment: null,
+      releaseVersion: null,
+      indexing: 'noindex',
+      tlsRequired: false,
+      secureCookies: false,
+      testTokensEnabled: false,
+      requestId,
+    }).success).toBe(true);
   });
 
   it('validates api error schema with standardized codes', () => {
-    const err = apiErrorSchema.safeParse({
+    expect(apiErrorSchema.safeParse({
       error: { code: 'API_NOT_FOUND', message: 'Recurso inexistente' },
-      requestId: publicConfig.requestId,
-    });
-    expect(err.success).toBe(true);
+      requestId,
+    }).success).toBe(true);
   });
 
   it('enforces uuid validation in requestIdSchema', () => {
     expect(requestIdSchema.safeParse('not-a-uuid').success).toBe(false);
-    expect(requestIdSchema.safeParse(publicConfig.requestId).success).toBe(true);
+    expect(requestIdSchema.safeParse(requestId).success).toBe(true);
   });
 
   it('loads safe defaults without requiring environment variables', () => {
@@ -94,9 +98,10 @@ describe('foundation contracts & runtime configuration', () => {
     expect(config.apiPort).toBe(3001);
     expect(config.appBaseUrl).toBe('http://localhost:3000');
     expect(config.databaseUrl).toBeUndefined();
+    expect(config.indexingAllowed).toBe(false);
   });
 
-  it('reads the database connection only when the server provides it', () => {
+  it('reads the runtime database connection only when the server provides it', () => {
     const config = loadRuntimeConfig({ DATABASE_URL: 'postgresql://server-only' });
     expect(config.databaseUrl).toBe('postgresql://server-only');
   });

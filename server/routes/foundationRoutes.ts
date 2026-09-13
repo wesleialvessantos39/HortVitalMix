@@ -76,8 +76,12 @@ export function createFoundationRouter(
     },
   );
 
-  router.get('/v1/environment', (_req, res) => {
-    res.status(200).json(foundationService.environment(getRequestId(res)));
+  router.get('/v1/environment', async (_req, res, next) => {
+    try {
+      res.status(200).json(await foundationService.environment(getRequestId(res)));
+    } catch (error) {
+      next(error);
+    }
   });
 
   return router;

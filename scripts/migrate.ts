@@ -2,15 +2,13 @@ import { createHash } from 'node:crypto';
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Pool } from 'pg';
+import { loadMigrationConfig } from './migrationConfig';
 
-const databaseUrl = process.env.DATABASE_URL;
-if (!databaseUrl) {
-  throw new Error('DATABASE_URL is required to run migrations.');
-}
+const migrationConfig = loadMigrationConfig();
 
 const migrationsDir = path.resolve(process.cwd(), 'db/migrations');
 const files = (await readdir(migrationsDir)).filter((name) => /^\d+_.+\.sql$/.test(name)).sort();
-const pool = new Pool({ connectionString: databaseUrl, max: 1 });
+const pool = new Pool({ connectionString: migrationConfig.databaseUrl, max: 1 });
 
 try {
   for (const file of files) {
@@ -45,7 +43,7 @@ try {
     } finally {
       client.release();
     }
-    console.log(`Applied migration ${version}: ${name}`);
+    console.log(`Applied migration ${version}: ${name} to ${migrationConfig.environment}`);
   }
 } finally {
   await pool.end();
