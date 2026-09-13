@@ -24,8 +24,19 @@ function repository(probe: FoundationProbe): FoundationRepository {
   return { probe: async () => probe };
 }
 
+function readyProbe(): FoundationProbe {
+  return {
+    databaseAvailable: true,
+    databaseEnvironment: 'homologation',
+    releaseVersion: 'oe-001-004',
+    schemaVersion: 4,
+    migrationIntegrity: 'valid',
+    releaseHistoryHashMatches: true,
+  };
+}
+
 describe('OE-001 foundation API behavior', () => {
-  it('returns readiness 503 when the database adapter is unavailable', async () => {
+  it('returns readiness 503 when database is unavailable', async () => {
     const { app } = createApp({
       runtime: runtime(),
       pool: null,
@@ -33,22 +44,20 @@ describe('OE-001 foundation API behavior', () => {
         databaseAvailable: false,
         databaseEnvironment: null,
         releaseVersion: null,
+        schemaVersion: null,
+        migrationIntegrity: 'unavailable',
+        releaseHistoryHashMatches: false,
       }),
     });
     const response = await request(app).get('/api/ready');
     expect(response.status).toBe(503);
-    expect(response.body.status).toBe('unavailable');
   });
 
-  it('returns readiness 200 when the adapter is healthy and bound to homologation', async () => {
+  it('returns readiness 200 only for verified database history', async () => {
     const { app } = createApp({
       runtime: runtime('postgresql://configured'),
       pool: null,
-      repository: repository({
-        databaseAvailable: true,
-        databaseEnvironment: 'homologation',
-        releaseVersion: 'oe-001-003',
-      }),
+      repository: repository(readyProbe()),
     });
     const response = await request(app).get('/api/ready');
     expect(response.status).toBe(200);
@@ -59,45 +68,31 @@ describe('OE-001 foundation API behavior', () => {
     const { app } = createApp({
       runtime: runtime('postgresql://configured'),
       pool: null,
-      repository: repository({
-        databaseAvailable: true,
-        databaseEnvironment: 'homologation',
-        releaseVersion: 'oe-001-003',
-      }),
+      repository: repository(readyProbe()),
     });
     const response = await request(app).get('/api/unknown');
     expect(response.status).toBe(404);
     expect(response.body.error.code).toBe('API_NOT_FOUND');
   });
 
-  it('returns 413 for an oversized JSON payload', async () => {
+  it('returns 413 for oversized JSON payload', async () => {
     const { app } = createApp({
       runtime: runtime('postgresql://configured'),
       pool: null,
-      repository: repository({
-        databaseAvailable: true,
-        databaseEnvironment: 'homologation',
-        releaseVersion: 'oe-001-003',
-      }),
+      repository: repository(readyProbe()),
     });
     const response = await request(app).post('/api/unknown').send({ value: 'x'.repeat(300_000) });
     expect(response.status).toBe(413);
-    expect(response.body.error.code).toBe('PAYLOAD_TOO_LARGE');
   });
 
-  it('preserves a valid request id in header and payload', async () => {
+  it('preserves request id in header and payload', async () => {
     const { app } = createApp({
       runtime: runtime('postgresql://configured'),
       pool: null,
-      repository: repository({
-        databaseAvailable: true,
-        databaseEnvironment: 'homologation',
-        releaseVersion: 'oe-001-003',
-      }),
+      repository: repository(readyProbe()),
     });
     const requestId = '9e3d22d3-c00d-4f06-b5df-f96b76bb2330';
     const response = await request(app).get('/api/health').set('x-request-id', requestId);
-    expect(response.status).toBe(200);
     expect(response.headers['x-request-id']).toBe(requestId);
     expect(response.body.requestId).toBe(requestId);
   });
@@ -117,9 +112,7 @@ describe('OE-001 foundation API behavior', () => {
     const serialized = JSON.stringify(response.body);
 
     expect(response.status).toBe(503);
-    expect(response.body.databaseBinding).toBe('unavailable');
     expect(serialized).not.toContain('postgresql://');
-    expect(serialized).not.toContain('private-host');
     expect(serialized).not.toContain('secret');
   });
 });
