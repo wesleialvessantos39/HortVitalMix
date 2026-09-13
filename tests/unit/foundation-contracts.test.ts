@@ -47,6 +47,7 @@ describe('foundation contracts & runtime configuration', () => {
       environment: 'homologation',
       database: 'ready',
       databaseBinding: 'ready',
+      migrationIntegrity: 'valid',
       requestId,
     }).success).toBe(true);
   });
@@ -57,9 +58,13 @@ describe('foundation contracts & runtime configuration', () => {
       environment: 'homologation',
       dependencies: { database: 'ready' },
       databaseBinding: 'ready',
+      migrationIntegrity: 'valid',
       expectedDatabaseEnvironment: 'homologation',
       actualDatabaseEnvironment: 'homologation',
-      releaseVersion: 'oe-001-003',
+      expectedSchemaVersion: 4,
+      actualSchemaVersion: 4,
+      expectedReleaseVersion: 'oe-001-004',
+      releaseVersion: 'oe-001-004',
       requestId,
     }).success).toBe(true);
   });
@@ -71,6 +76,10 @@ describe('foundation contracts & runtime configuration', () => {
       databaseConfigured: false,
       databaseBinding: 'unavailable',
       databaseEnvironment: null,
+      migrationIntegrity: 'unavailable',
+      expectedSchemaVersion: 4,
+      schemaVersion: null,
+      expectedReleaseVersion: 'oe-001-004',
       releaseVersion: null,
       indexing: 'noindex',
       tlsRequired: false,
