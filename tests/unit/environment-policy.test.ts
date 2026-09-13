@@ -57,9 +57,12 @@ describe('OE-001-003 environment policy', () => {
       MIGRATION_ENV: 'homologation',
       DATABASE_MIGRATION_URL: 'postgresql://migration-only',
       DATABASE_URL: 'postgresql://runtime-only',
+      MIGRATION_COMMIT_SHA: '0123456789abcdef0123456789abcdef01234567',
     })).toEqual({
       environment: 'homologation',
       databaseUrl: 'postgresql://migration-only',
+      commitSha: '0123456789abcdef0123456789abcdef01234567',
+      artifactRef: null,
     });
   });
 });
