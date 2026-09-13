@@ -2,28 +2,25 @@ import { Pool } from 'pg';
 import { loadMigrationConfig } from './migrationConfig';
 import {
   acquireMigrationLock,
-  applyPendingMigrations,
+  assertRemoteHistory,
   loadAndVerifyLocalMigrations,
-  registerCurrentRelease,
+  readRemoteMigrationHistory,
   releaseMigrationLock,
   verifyCurrentRelease,
 } from './migrationRunner';
 
 const config = loadMigrationConfig();
-const migrations = await loadAndVerifyLocalMigrations();
+await loadAndVerifyLocalMigrations();
 const pool = new Pool({ connectionString: config.databaseUrl, max: 1 });
 const client = await pool.connect();
 
 try {
   await acquireMigrationLock(client);
   try {
-    await applyPendingMigrations(client, migrations, config.environment);
-    await registerCurrentRelease(client, {
-      environment: config.environment,
-      commitSha: config.commitSha,
-      artifactRef: config.artifactRef,
-    });
+    const remote = await readRemoteMigrationHistory(client);
+    assertRemoteHistory(remote, true);
     await verifyCurrentRelease(client, config.environment);
+    console.log(`Database verified for ${config.environment}: ${remote.length} migrations and current release match.`);
   } finally {
     await releaseMigrationLock(client);
   }
