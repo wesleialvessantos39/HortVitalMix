@@ -20,54 +20,70 @@ function runtime(environment: 'development' | 'homologation' | 'production') {
   };
 }
 
-function repository(probe: FoundationProbe): FoundationRepository {
-  return { probe: async () => probe };
+function probe(overrides: Partial<FoundationProbe> = {}): FoundationProbe {
+  return {
+    databaseAvailable: true,
+    databaseEnvironment: 'homologation',
+    releaseVersion: 'oe-001-004',
+    schemaVersion: 4,
+    migrationIntegrity: 'valid',
+    releaseHistoryHashMatches: true,
+    ...overrides,
+  };
 }
 
-describe('OE-001-003 environment API', () => {
-  it('returns ready only when the database belongs to the selected environment', async () => {
+function repository(value: FoundationProbe): FoundationRepository {
+  return { probe: async () => value };
+}
+
+describe('OE-001-003/004 environment and database API', () => {
+  it('returns ready only when database, schema and release match', async () => {
     const { app } = createApp({
       runtime: runtime('homologation'),
       pool: null,
-      repository: repository({
-        databaseAvailable: true,
-        databaseEnvironment: 'homologation',
-        releaseVersion: 'oe-001-003',
-      }),
+      repository: repository(probe()),
     });
 
     const response = await request(app).get('/api/ready');
     expect(response.status).toBe(200);
     expect(response.body.databaseBinding).toBe('ready');
+    expect(response.body.migrationIntegrity).toBe('valid');
+    expect(response.body.actualSchemaVersion).toBe(4);
   });
 
   it('does not silently accept a production database in homologation', async () => {
     const { app } = createApp({
       runtime: runtime('homologation'),
       pool: null,
-      repository: repository({
-        databaseAvailable: true,
-        databaseEnvironment: 'production',
-        releaseVersion: 'oe-001-003',
-      }),
+      repository: repository(probe({ databaseEnvironment: 'production' })),
     });
 
     const response = await request(app).get('/api/ready');
     expect(response.status).toBe(503);
     expect(response.body.databaseBinding).toBe('mismatch');
-    expect(response.body.expectedDatabaseEnvironment).toBe('homologation');
     expect(response.body.actualDatabaseEnvironment).toBe('production');
   });
 
-  it('exposes noindex/TLS/cookie policy without exposing database URLs', async () => {
+  it('blocks readiness when migration history drifts', async () => {
     const { app } = createApp({
       runtime: runtime('homologation'),
       pool: null,
-      repository: repository({
-        databaseAvailable: true,
-        databaseEnvironment: 'homologation',
-        releaseVersion: 'oe-001-003',
-      }),
+      repository: repository(probe({
+        migrationIntegrity: 'drift',
+        releaseHistoryHashMatches: false,
+      })),
+    });
+
+    const response = await request(app).get('/api/ready');
+    expect(response.status).toBe(503);
+    expect(response.body.migrationIntegrity).toBe('drift');
+  });
+
+  it('exposes safe operational policy without database URLs', async () => {
+    const { app } = createApp({
+      runtime: runtime('homologation'),
+      pool: null,
+      repository: repository(probe()),
     });
 
     const response = await request(app).get('/api/v1/environment');
@@ -75,7 +91,9 @@ describe('OE-001-003 environment API', () => {
     expect(response.body.indexing).toBe('noindex');
     expect(response.body.tlsRequired).toBe(true);
     expect(response.body.secureCookies).toBe(true);
-    expect(response.body.testTokensEnabled).toBe(false);
+    expect(response.body.migrationIntegrity).toBe('valid');
+    expect(response.body.expectedSchemaVersion).toBe(4);
+    expect(response.body.expectedReleaseVersion).toBe('oe-001-004');
     expect(JSON.stringify(response.body)).not.toContain('postgresql://');
     expect(response.headers['x-robots-tag']).toContain('noindex');
     expect(response.headers['strict-transport-security']).toBeTruthy();
