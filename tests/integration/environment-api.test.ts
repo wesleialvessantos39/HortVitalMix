@@ -1,6 +1,8 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { createApp } from '../../server/app';
+import { EXPECTED_MIGRATIONS } from '../../shared/database/migrationManifest';
+import { inspectMigrationHistory } from '../../server/db/migrationIntegrity';
 import type {
   FoundationProbe,
   FoundationRepository,
@@ -77,6 +79,21 @@ describe('OE-001-003/004 environment and database API', () => {
     const response = await request(app).get('/api/ready');
     expect(response.status).toBe(503);
     expect(response.body.migrationIntegrity).toBe('drift');
+  });
+
+  it('detects a changed checksum in an already-applied migration history', () => {
+    const changed = EXPECTED_MIGRATIONS.map((item, index) => ({
+      version: item.version,
+      name: item.name,
+      checksum: index === 1
+        ? '0000000000000000000000000000000000000000000000000000000000000000'
+        : item.checksum,
+    }));
+
+    const inspection = inspectMigrationHistory(changed);
+
+    expect(inspection.status).toBe('drift');
+    expect(inspection.detail).toBe('checksum_mismatch');
   });
 
   it('exposes safe operational policy without database URLs', async () => {
