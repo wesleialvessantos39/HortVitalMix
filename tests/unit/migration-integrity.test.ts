@@ -8,6 +8,7 @@ import {
   inspectMigrationHistory,
 } from '../../server/db/migrationIntegrity';
 import { loadAndVerifyLocalMigrations } from '../../scripts/migrationRunner';
+import type { AppliedMigration } from '../../server/db/migrationIntegrity';
 
 describe('OE-001-004 migration integrity', () => {
   it('matches every local SQL file against the immutable manifest', async () => {
@@ -18,7 +19,7 @@ describe('OE-001-004 migration integrity', () => {
   });
 
   it('detects an edited applied file checksum', () => {
-    const remote = EXPECTED_MIGRATIONS.map((item) => ({ ...item }));
+    const remote: AppliedMigration[] = EXPECTED_MIGRATIONS.map((item) => ({ ...item }));
     remote[1] = { ...remote[1], checksum: '0'.repeat(64) };
     const result = inspectMigrationHistory(remote);
     expect(result.status).toBe('drift');
