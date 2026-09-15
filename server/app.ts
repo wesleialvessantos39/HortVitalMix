@@ -1,4 +1,4 @@
-import {timingSafeEqual} from 'node:crypto';
+import {randomUUID, timingSafeEqual} from 'node:crypto';
 import express, {type NextFunction, type Request, type Response} from 'express';
 import {z} from 'zod';
 import {getRuntimeConfig} from './config';
@@ -35,7 +35,7 @@ export function createApp() {
   app.disable('x-powered-by');
   app.use((req, res, next) => {
     const incoming = req.header('x-request-id');
-    const requestId = incoming && /^[a-zA-Z0-9._:-]{8,128}$/.test(incoming) ? incoming : crypto.randomUUID();
+    const requestId = incoming && /^[a-zA-Z0-9._:-]{8,128}$/.test(incoming) ? incoming : randomUUID();
     res.locals.requestId = requestId;
     res.setHeader('x-request-id', requestId);
     next();
