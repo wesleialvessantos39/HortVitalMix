@@ -9,7 +9,10 @@ export function createApp() {
   app.use((req, res, next) => {
     const incoming = req.header('x-request-id');
     const value =
-      incoming && /^[a-zA-Z0-9._:-]{8,128}$/.test(incoming) ? incoming : randomUUID();
+      incoming &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(incoming)
+        ? incoming
+        : randomUUID();
 
     res.locals.requestId = value;
     res.setHeader('x-request-id', value);
