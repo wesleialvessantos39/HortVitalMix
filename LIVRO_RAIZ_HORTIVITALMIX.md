@@ -81,3 +81,24 @@ No preview da Vercel da branch corretiva:
 
 O GitHub Actions registrou falha antes de iniciar qualquer step do job `validate` (sem checkout, npm, typecheck, teste ou build executados). Por isso o gate de build da Vercel foi reforçado para executar a mesma validação de código antes do deploy, sem mascarar a anomalia do runner do GitHub.
 
+## 2026-09-15 — Sincronização Neon da Trilha 01 v7
+
+A correção da Trilha 01 foi aplicada no PostgreSQL Neon na ordem obrigatória **development → homologation → production**, com verificação de cada ambiente antes do avanço.
+
+Estado consolidado nos três ambientes:
+- schema atual: versão `2`;
+- migrations registradas: `0001_trilha1_foundation_and_config.sql` e `0002_trilha01_manual_v7_alignment.sql`;
+- checksum 0001: `547fc051791a36aa39e6803681968dfe9e2282e581f580bf9693588c66c1bb19`;
+- checksum 0002: `fa68c46da79b680d90004e5f388a26848b9a17ab0532ab730aed89a9820b9a8a`;
+- hash do histórico: `b52ac08e9af87b72137ef69f5dd051a4ac4315358a700b5c5bc56b1188de4329`;
+- release corrente: `trilha01-v7-bb6a226`;
+- commit vinculado: `bb6a226f0bdc2af804d97e94f97e1c8965f44ef9`;
+- `app_schema_migrations.id` é a chave primária;
+- `app_schema_migrations.version` permanece única;
+- `app_releases.schema_version` referencia corretamente `app_schema_migrations(version)`;
+- configuração canônica: HortiVitalMix / Ariquemes-RO / BRL / America/Porto_Velho;
+- slogan canônico: `Tudo fresco. Tudo da sua região.`;
+- suporte canônico: `hortivitalmix@gmail.com`.
+
+Foi criado snapshot de segurança do branch root/development antes da alteração: `snap-floral-smoke-acxe9o4m`. O Neon recusou snapshots manuais diretos nas branches não-root de homologação e produção; nesses ambientes a promoção ocorreu somente após validação completa do ambiente anterior e cada aplicação foi executada de forma transacional.
+
