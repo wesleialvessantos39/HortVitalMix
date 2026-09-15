@@ -1,6 +1,6 @@
 -- Trilha 01 - alinhamento preservando o histórico já publicado da migration 0001.
--- Esta migration corretiva existe porque a primeira versão da Trilha 01 já foi aplicada
--- em development antes da auditoria contra o Manual Mestre Técnico v7.
+-- A primeira versão da Trilha 01 já foi aplicada em development antes da auditoria
+-- contra o Manual Mestre Técnico v7; por isso o arquivo 0001 permanece imutável.
 
 ALTER TABLE app_schema_migrations
   ADD COLUMN IF NOT EXISTS id uuid DEFAULT gen_random_uuid();
@@ -12,14 +12,30 @@ WHERE id IS NULL;
 ALTER TABLE app_schema_migrations
   ALTER COLUMN id SET NOT NULL;
 
+-- app_releases da 0001 referencia version, portanto a FK deve ser retirada antes
+-- da troca da PK e recriada depois que version voltar a ser uma chave candidata.
+ALTER TABLE app_releases
+  DROP CONSTRAINT IF EXISTS app_releases_schema_version_fkey;
+
 ALTER TABLE app_schema_migrations
   DROP CONSTRAINT IF EXISTS app_schema_migrations_pkey;
 
 ALTER TABLE app_schema_migrations
   ADD CONSTRAINT app_schema_migrations_pkey PRIMARY KEY (id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_app_schema_migrations_version
-  ON app_schema_migrations(version);
+ALTER TABLE app_schema_migrations
+  DROP CONSTRAINT IF EXISTS app_schema_migrations_version_key;
+
+ALTER TABLE app_schema_migrations
+  ADD CONSTRAINT app_schema_migrations_version_key UNIQUE (version);
+
+ALTER TABLE app_releases
+  ADD CONSTRAINT app_releases_schema_version_fkey
+  FOREIGN KEY (schema_version)
+  REFERENCES app_schema_migrations(version);
+
+CREATE INDEX IF NOT EXISTS idx_app_schema_migrations_applied_at
+  ON app_schema_migrations(applied_at DESC);
 
 ALTER TABLE app_releases
   ADD COLUMN IF NOT EXISTS release_tag varchar(64),
@@ -62,18 +78,21 @@ WITH ranked AS (
   SELECT id,
          row_number() OVER (
            PARTITION BY environment
-           ORDER BY COALESCE(deployed_at, released_at) DESC, id DESC
+           ORDER BY deployed_at DESC, id DESC
          ) AS position
   FROM app_releases
 )
-UPDATE app_releases r
+UPDATE app_releases AS release
 SET is_current = (ranked.position = 1)
 FROM ranked
-WHERE ranked.id = r.id;
+WHERE ranked.id = release.id;
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_app_releases_current_env
   ON app_releases(environment)
   WHERE is_current = true;
+
+CREATE INDEX IF NOT EXISTS idx_app_releases_environment_deployed
+  ON app_releases(environment, deployed_at DESC);
 
 ALTER TABLE app_global_config
   ADD COLUMN IF NOT EXISTS singleton_guard boolean NOT NULL DEFAULT true,
