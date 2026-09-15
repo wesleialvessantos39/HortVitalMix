@@ -5,3 +5,20 @@
 @media(min-width:768px) and (max-width:1024px){.desktop-header .brand-copy small,.header-actions .icon-button,.login-button{display:none}.home-page{padding:22px}.hero{grid-template-columns:1fr}.hero-copy{padding:48px}.hero-visual{min-height:330px}.empty-showcase{padding:24px}footer{padding:34px 24px}}
 @media(max-width:359px){.mobile-location{max-width:118px}.hero h1{font-size:24px}.brand-copy strong{font-size:16px}.benefits{grid-template-columns:1fr}.bottom-nav a{width:56px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+
+/* Trilha 01 - alinhamento do shell global com o Manual Mestre Técnico v7 */
+.signup-link{display:inline-flex;align-items:center;justify-content:center;color:#fff;background:var(--primary);font-size:13px;font-weight:800;border-radius:12px;padding:11px 14px;text-decoration:none;white-space:nowrap}
+.signup-link:hover{background:var(--dark)}
+.mobile-cart{margin-left:auto;text-decoration:none}
+.shell-main{flex:1;width:100%}
+.shell-alert{width:min(1440px,calc(100% - 32px));margin:14px auto 0;padding:12px 14px;border:1px solid #efc9ad;border-radius:12px;background:#fff6ef;color:#8e3500;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;font-weight:650}
+.shell-alert button{border:0;border-radius:9px;background:var(--accent);color:white;padding:8px 11px;font-weight:800}
+.site-footer{margin-top:auto;background:#fff;color:#647067;border-top:1px solid #e3e8e3;padding:22px max(20px,calc((100% - 1376px)/2));font-size:12px}
+.site-footer>div{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.site-footer .brand{color:var(--dark)}
+.site-footer .brand-icon{background:var(--light);color:var(--primary)}
+.site-footer .brand-copy small{color:#647067}
+@media(max-width:767px){.mobile-top{justify-content:space-between}.bottom-nav{max-width:430px;margin:0 auto}.shell-alert{width:calc(100% - 22px);margin-top:10px;align-items:flex-start}.site-footer{display:none}}
+
+.site-footer>div:last-child{flex-direction:row;align-items:center;justify-content:space-between}

@@ -1,4 +1,52 @@
 import request from 'supertest';
-import {describe,expect,it} from 'vitest';
+import {beforeEach, describe, expect, it} from 'vitest';
 import {createApp} from '../api/[...path].ts';
-describe('foundation API',()=>{it('returns liveness with a request id',async()=>{const response=await request(createApp()).get('/api/health');expect(response.status).toBe(200);expect(response.headers['x-request-id']).toBeTruthy();expect(response.body.status).toBe('ok')});it('returns a clean JSON 404',async()=>{const response=await request(createApp()).get('/api/unknown');expect(response.status).toBe(404);expect(response.body.error.code).toBe('NOT_FOUND')})});
+
+describe('Trilha 01 - foundation API', () => {
+  beforeEach(() => {
+    delete process.env.DATABASE_URL;
+    process.env.APP_ENV = 'development';
+  });
+
+  it('retorna liveness conforme o contrato v7', async () => {
+    const response = await request(createApp()).get('/api/health');
+
+    expect(response.status).toBe(200);
+    expect(response.headers['x-request-id']).toBeTruthy();
+    expect(response.body.status).toBe('ok');
+    expect(response.body.environment).toBe('development');
+    expect(Number.isNaN(Date.parse(response.body.time))).toBe(false);
+    expect(response.body.requestId).toBe(response.headers['x-request-id']);
+  });
+
+  it('normaliza request id inválido para UUID', async () => {
+    const response = await request(createApp())
+      .get('/api/health')
+      .set('x-request-id', 'identificador-nao-uuid');
+
+    expect(response.status).toBe(200);
+    expect(response.body.requestId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    );
+    expect(response.body.requestId).not.toBe('identificador-nao-uuid');
+  });
+
+  it('retorna 503 unavailable sem vazar DATABASE_URL quando o Neon está ausente', async () => {
+    const response = await request(createApp()).get('/api/ready');
+
+    expect(response.status).toBe(503);
+    expect(response.body.status).toBe('unavailable');
+    expect(response.body.databaseConnected).toBe(false);
+    expect(response.body.schemaVersion).toBe(0);
+    expect(response.body.releaseTag).toBe('');
+    expect(JSON.stringify(response.body)).not.toContain('postgresql://');
+  });
+
+  it('retorna JSON 404 limpo para rota inexistente', async () => {
+    const response = await request(createApp()).get('/api/unknown');
+
+    expect(response.status).toBe(404);
+    expect(response.body.error.code).toBe('NOT_FOUND');
+    expect(response.body.error.requestId).toBeTruthy();
+  });
+});

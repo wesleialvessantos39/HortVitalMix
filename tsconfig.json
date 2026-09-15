@@ -24,7 +24,19 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true,
-    "types": ["node", "vite/client", "vitest/globals"]
+    "types": [
+      "node",
+      "vite/client",
+      "vitest/globals"
+    ]
   },
-  "include": ["src", "server", "api", "scripts", "tests", "vite.config.ts"]
+  "include": [
+    "src",
+    "server",
+    "shared",
+    "api",
+    "scripts",
+    "tests",
+    "vite.config.ts"
+  ]
 }
