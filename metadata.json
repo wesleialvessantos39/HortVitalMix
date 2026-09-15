@@ -1,0 +1,6 @@
+{
+  "name": "Estrutura Base",
+  "description": "Estrutura base da aplicação pronta para desenvolvimento.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
