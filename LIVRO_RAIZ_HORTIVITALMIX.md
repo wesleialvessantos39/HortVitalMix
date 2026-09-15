@@ -18,7 +18,7 @@ Projeto Neon: `HortiVitalMix` (`flat-bonus-20719397`), PostgreSQL 17, região `a
 
 ## Volume 01 — Trilha 1
 
-Status: **implementada; publicação de preview pendente de disponibilidade/cota externa**.
+Status: **implementada e publicada; conexão segura do Neon no runtime da Vercel pendente de configuração externa**.
 
 Entregas incorporadas:
 
@@ -37,10 +37,13 @@ Entregas incorporadas:
 - [x] Testes automatizados sem falhas.
 - [x] Build de produção concluído.
 - [x] Inspeção visual em 360 px, 768 px e 1440 px, sem scroll horizontal ou ruptura estrutural.
-- [ ] Commit publicado no GitHub e deployment de preview inspecionado, quando houver cota.
+- [x] Commit publicado no GitHub e deployment de produção inspecionado.
 
 ### Evidência e limitações do ambiente de execução
 
-- O endpoint `/api/health` respondeu `200` com `x-request-id`.
-- O ambiente local desta execução bloqueou a resolução DNS externa do host Neon; `/api/ready` respondeu corretamente `503`, sem sucesso forçado. A estrutura e os dados foram conferidos pela conexão oficial do Neon.
-- A configuração de produção exige `DATABASE_URL`, `APP_ENV`, `APP_RELEASE` e `PLATFORM_CONFIG_ADMIN_TOKEN` definidos como variáveis protegidas na Vercel; nenhum valor real foi versionado.
+- Repositório: `wesleialvessantos39/HortVitalMix`; implementação consolidada no commit `793939a3efe1415e4ee24b1eb8b841532dc55c71`.
+- Produção: `https://hortivitalmix.vercel.app`; deployment `dpl_D1mvDsWKu61rCrKb8VMVbL9sJBXf` em estado `READY`.
+- O endpoint `/api/health` respondeu `200` com `x-request-id`; a rota administrativa respondeu `403` sem a permissão exigida, conforme contrato.
+- `/api/ready` e `/api/v1/config` respondem `503` enquanto a Vercel não receber a conexão Neon. O erro explícito preserva a regra de não simular sucesso.
+- A migration e os dados-base foram conferidos pela conexão oficial do Neon na branch `development`.
+- Para fechar o vínculo operacional em produção, definir na Vercel as variáveis protegidas `DATABASE_URL`, `APP_ENV=production`, `APP_RELEASE` e `PLATFORM_CONFIG_ADMIN_TOKEN`; nenhum segredo real foi versionado.
