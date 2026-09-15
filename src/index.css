@@ -20,3 +20,5 @@
 .site-footer .brand-icon{background:var(--light);color:var(--primary)}
 .site-footer .brand-copy small{color:#647067}
 @media(max-width:767px){.mobile-top{justify-content:space-between}.bottom-nav{max-width:430px;margin:0 auto}.shell-alert{width:calc(100% - 22px);margin-top:10px;align-items:flex-start}.site-footer{display:none}}
+
+.site-footer>div:last-child{flex-direction:row;align-items:center;justify-content:space-between}
