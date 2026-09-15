@@ -12,7 +12,8 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "npm run typecheck"
+    "lint": "npm run typecheck",
+    "release:register": "tsx scripts/register-release.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
