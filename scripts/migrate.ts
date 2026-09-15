@@ -3,12 +3,15 @@ import {readdir, readFile} from 'node:fs/promises';
 import {performance} from 'node:perf_hooks';
 import {resolve} from 'node:path';
 import 'dotenv/config';
-import {getPool} from '../api/lib/db.ts';
+import {Pool} from 'pg';
 
 const lockId = 74813001;
 const directory = resolve('migrations');
 const files = (await readdir(directory)).filter((file) => /^\d{4}_.+\.sql$/.test(file)).sort();
-const client = await getPool().connect();
+const databaseUrl=process.env.DATABASE_URL;
+if(!databaseUrl)throw new Error('DATABASE_URL não configurada.');
+const pool=new Pool({connectionString:databaseUrl,max:1,ssl:{rejectUnauthorized:false}});
+const client=await pool.connect();
 
 try {
   await client.query('SELECT pg_advisory_lock($1)', [lockId]);
@@ -35,5 +38,5 @@ try {
 } finally {
   await client.query('SELECT pg_advisory_unlock($1)', [lockId]);
   client.release();
-  await getPool().end();
+  await pool.end();
 }
