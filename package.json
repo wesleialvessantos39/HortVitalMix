@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
-    "build": "npm run typecheck && vite build",
+    "build": "npm run verify && vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:integration": "vitest run tests/integration",
@@ -13,7 +13,8 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "npm run typecheck",
-    "release:register": "tsx scripts/register-release.ts"
+    "release:register": "tsx scripts/register-release.ts",
+    "verify": "npm run typecheck && npm test"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
