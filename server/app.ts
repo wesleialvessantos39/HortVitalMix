@@ -1,8 +1,8 @@
 import {randomUUID, timingSafeEqual} from 'node:crypto';
 import express, {type NextFunction, type Request, type Response} from 'express';
 import {z} from 'zod';
-import {getRuntimeConfig} from './config';
-import {getPool, withTransaction} from './db';
+import {getRuntimeConfig} from './config.ts';
+import {getPool, withTransaction} from './db.ts';
 
 const updateConfigSchema = z.object({
   expectedRevision: z.number().int().positive(),

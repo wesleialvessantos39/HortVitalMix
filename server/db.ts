@@ -1,5 +1,5 @@
 import {Pool, type PoolClient} from 'pg';
-import {getRuntimeConfig} from './config';
+import {getRuntimeConfig} from './config.ts';
 
 let pool: Pool | undefined;
 

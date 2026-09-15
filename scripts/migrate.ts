@@ -3,7 +3,7 @@ import {readdir, readFile} from 'node:fs/promises';
 import {performance} from 'node:perf_hooks';
 import {resolve} from 'node:path';
 import 'dotenv/config';
-import {getPool} from '../server/db';
+import {getPool} from '../server/db.ts';
 
 const lockId = 74813001;
 const directory = resolve('migrations');
