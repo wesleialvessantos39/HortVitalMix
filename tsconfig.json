@@ -10,17 +10,21 @@
       "DOM.Iterable"
     ],
     "skipLibCheck": true,
+    "strict": true,
     "moduleResolution": "bundler",
     "isolatedModules": true,
     "moduleDetection": "force",
     "allowJs": true,
     "jsx": "react-jsx",
+    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./*"
       ]
     },
     "allowImportingTsExtensions": true,
-    "noEmit": true
-  }
+    "noEmit": true,
+    "types": ["node", "vite/client", "vitest/globals"]
+  },
+  "include": ["src", "server", "api", "scripts", "tests", "vite.config.ts"]
 }
