@@ -1,4 +1,4 @@
-import { runtime } from "../server/config/runtime.ts";
+import { runtime, logRuntimeBootSummary } from "../server/config/runtime.ts";
 import { dbPool } from "../server/db/pool.ts";
 import { supabaseAdmin, supabasePublic } from "../server/supabase/client.ts";
 
@@ -10,6 +10,8 @@ async function main() {
   const failures: string[] = [];
   const warnings: string[] = [];
 
+  logRuntimeBootSummary();
+
   failIf(!dbPool, runtime.dbRejection ?? "DATABASE_NOT_CONFIGURED", failures);
   failIf(!supabaseAdmin, "SUPABASE_ADMIN_NOT_CONFIGURED", failures);
   failIf(!supabasePublic, "SUPABASE_PUBLIC_NOT_CONFIGURED", failures);
@@ -18,25 +20,40 @@ async function main() {
   failIf(!process.env.VITE_SUPABASE_ANON_KEY, "VITE_SUPABASE_ANON_KEY", failures);
   failIf(!runtime.origins.length, "APP_ALLOWED_ORIGINS", failures);
 
-  const pepper = runtime.ipPepper;
   failIf(
-    !/^[0-9a-fA-F]{32,}$/.test(pepper),
+    !/^[0-9a-fA-F]{32,}$/.test(runtime.ipPepper),
     "APP_IP_PEPPER_MUST_BE_32_PLUS_HEX",
     failures,
   );
 
-  const outbox = process.env.OUTBOX_ENCRYPTION_KEY ?? "";
-  if (!outbox) warnings.push("OUTBOX_ENCRYPTION_KEY ausente; será obrigatória na Trilha 04");
-  else failIf(!/^[0-9a-fA-F]{64}$/.test(outbox), "OUTBOX_ENCRYPTION_KEY_INVALID", failures);
+  if (!runtime.outboxKey)
+    warnings.push(
+      "OUTBOX_ENCRYPTION_KEY ausente; será obrigatória na Trilha 04",
+    );
+  else
+    failIf(
+      !/^[0-9a-fA-F]{64}$/.test(runtime.outboxKey),
+      "OUTBOX_ENCRYPTION_KEY_INVALID",
+      failures,
+    );
 
-  if (!process.env.SUPABASE_JWT_SECRET) {
-    warnings.push("SUPABASE_JWT_SECRET ausente; aceitável enquanto a validação usar o SDK/JWKS");
-  }
+  if (!runtime.jwtSecret)
+    warnings.push(
+      "SUPABASE_JWT_SECRET ausente; aceitável enquanto a validação usar o SDK/JWKS",
+    );
 
   if (runtime.projectRef) {
     const expectedSupabaseUrl = `https://${runtime.projectRef}.supabase.co`;
-    failIf(runtime.supabaseUrl !== expectedSupabaseUrl, "SUPABASE_URL_PROJECT_REF_MISMATCH", failures);
-    failIf(process.env.VITE_SUPABASE_URL !== expectedSupabaseUrl, "VITE_SUPABASE_URL_PROJECT_REF_MISMATCH", failures);
+    failIf(
+      runtime.supabaseUrl !== expectedSupabaseUrl,
+      "SUPABASE_URL_PROJECT_REF_MISMATCH",
+      failures,
+    );
+    failIf(
+      process.env.VITE_SUPABASE_URL !== expectedSupabaseUrl,
+      "VITE_SUPABASE_URL_PROJECT_REF_MISMATCH",
+      failures,
+    );
   }
 
   failIf(
@@ -49,8 +66,11 @@ async function main() {
   if (runtime.dbUrl && runtime.projectRef) {
     try {
       const db = new URL(runtime.dbUrl);
-      const expectedUser = `postgres.${runtime.projectRef}`;
-      failIf(db.username !== expectedUser, "DB_PROJECT_REF_MISMATCH", failures);
+      failIf(
+        db.username !== `postgres.${runtime.projectRef}`,
+        "DB_PROJECT_REF_MISMATCH",
+        failures,
+      );
     } catch {
       failures.push("INVALID_TRANSACTION_POOLER_URL");
     }
@@ -64,6 +84,18 @@ async function main() {
   }
 
   await dbPool!.query("SELECT 1");
+
+  const rls = await dbPool!.query<{ table_name: string }>(
+    "SELECT table_name FROM public.v_rls_audit WHERE rls_enabled=false OR rls_forced=false ORDER BY table_name",
+  );
+  if (rls.rows.length)
+    throw new Error("RLS_GATE_FAILED");
+
+  const tables = await dbPool!.query<{ n: number }>(
+    "SELECT count(*)::int n FROM public.v_rls_audit",
+  );
+  if (tables.rows[0].n !== 8)
+    throw new Error("FOUNDATION_TABLE_COUNT_FAILED");
 
   const { error: adminError } = await supabaseAdmin!.auth.admin.listUsers({
     page: 1,
@@ -84,7 +116,7 @@ async function main() {
 main()
   .catch(() => {
     console.error(
-      "PREFLIGHT_FAILED: verificar variáveis e conectividade; nenhum valor de segredo será exibido.",
+      "PREFLIGHT_FAILED: verificar variáveis, RLS e conectividade; nenhum valor de segredo será exibido.",
     );
     process.exitCode = 1;
   })
