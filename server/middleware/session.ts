@@ -3,6 +3,36 @@ import { dbPool } from "../db/pool.ts";
 import { supabaseAdmin } from "../supabase/client.ts";
 import { reportFailure } from "../config/reportFailure.ts";
 
+function readCookie(req: Request, name: string) {
+  const part = req.headers.cookie
+    ?.split(";")
+    .map((value) => value.trim())
+    .find((value) => value.startsWith(name + "="));
+
+  if (!part) return null;
+
+  try {
+    return decodeURIComponent(part.slice(name.length + 1));
+  } catch {
+    return null;
+  }
+}
+
+function sessionIdFromAccessToken(token: string) {
+  try {
+    const payload = JSON.parse(
+      Buffer.from(token.split(".")[1], "base64url").toString(),
+    ) as { session_id?: unknown };
+
+    return typeof payload.session_id === "string" &&
+      /^[0-9a-f-]{36}$/i.test(payload.session_id)
+      ? payload.session_id
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function sessionMiddleware(
   req: Request,
   res: Response,
@@ -11,25 +41,33 @@ export async function sessionMiddleware(
   req.actor = null;
 
   const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer ")) {
-    next();
-    return;
-  }
+  const bearer =
+    authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+  const token = bearer || readCookie(req, "hvm_access");
 
-  if (!supabaseAdmin || !dbPool) {
+  if (!token || !supabaseAdmin || !dbPool) {
     next();
     return;
   }
 
   try {
-    const token = authHeader.slice(7).trim();
-    if (!token) {
+    const { data, error } = await supabaseAdmin.auth.getUser(token);
+    if (error || !data.user) {
       next();
       return;
     }
 
-    const { data, error } = await supabaseAdmin.auth.getUser(token);
-    if (error || !data.user) {
+    const sessionId = sessionIdFromAccessToken(token);
+    if (!sessionId) {
+      next();
+      return;
+    }
+
+    const liveSession = await dbPool.query(
+      "SELECT 1 FROM auth.sessions WHERE id=$1 AND user_id=$2",
+      [sessionId, data.user.id],
+    );
+    if (!liveSession.rowCount) {
       next();
       return;
     }
