@@ -1,5 +1,5 @@
 import { dbPool } from "../server/db/pool.ts";
-import { validateHistory } from "./migrations-manifest.ts";
+import { assertManifestHash, validateHistory } from "./migrations-manifest.ts";
 
 type Check = {
   id: string;
@@ -167,6 +167,70 @@ async function main() {
       pii.rows[0].n === 0,
       `matches=${pii.rows[0].n}`,
     );
+
+    const documentation = await client.query<{
+      tables_without_comment: number;
+      functions_without_comment: number;
+      sensitive_columns_without_comment: number;
+    }>(`
+      SELECT
+        (
+          SELECT count(*)::int
+          FROM pg_class c
+          WHERE c.relnamespace='public'::regnamespace
+            AND c.relkind='r'
+            AND c.relname LIKE 'app\\_%' ESCAPE '\\'
+            AND obj_description(c.oid,'pg_class') IS NULL
+        ) AS tables_without_comment,
+        (
+          SELECT count(*)::int
+          FROM pg_proc p
+          JOIN pg_namespace n ON n.oid=p.pronamespace
+          WHERE n.nspname='public'
+            AND (
+              p.proname LIKE 'trg_fn\\_%' ESCAPE '\\'
+              OR p.proname IN (
+                'has_role','is_platform_super_admin','is_any_platform_admin',
+                'current_person_id','hash_ip'
+              )
+            )
+            AND obj_description(p.oid,'pg_proc') IS NULL
+        ) AS functions_without_comment,
+        (
+          SELECT count(*)::int
+          FROM pg_class c
+          JOIN pg_attribute a ON a.attrelid=c.oid
+          WHERE c.relnamespace='public'::regnamespace
+            AND a.attnum>0
+            AND NOT a.attisdropped
+            AND (
+              (c.relname='app_people' AND a.attname IN ('cpf_normalized','email_normalized','phone_e164'))
+              OR
+              (c.relname='app_audit_events' AND a.attname IN ('payload_before','payload_after','client_ip_hash','user_agent_hash'))
+              OR
+              (c.relname='app_users' AND a.attname IN ('status','authorization_revision','blocked_by','block_reason'))
+              OR
+              (c.relname='app_user_role_assignments' AND a.attname IN ('granted_by','revoked_by','revoke_reason'))
+              OR
+              (c.relname='app_producer_profiles' AND a.attname IN ('verification_status','trust_level'))
+            )
+            AND col_description(c.oid,a.attnum) IS NULL
+        ) AS sensitive_columns_without_comment
+    `);
+
+    const docs = documentation.rows[0];
+    const documentationPassed =
+      docs.tables_without_comment === 0 &&
+      docs.functions_without_comment === 0 &&
+      docs.sensitive_columns_without_comment === 0;
+
+    console.log(
+      `${documentationPassed ? "PASS" : "FAIL"} DOC SQL comments — tables=${docs.tables_without_comment}, functions=${docs.functions_without_comment}, sensitive_columns=${docs.sensitive_columns_without_comment}`,
+    );
+    console.log(`PASS HASH migration_history_hash=${migrationHistoryHash}`);
+
+    if (!documentationPassed)
+      throw new Error("DOCUMENTATION_GATE_FAILED");
 
     for (const check of checks) {
       console.log(
