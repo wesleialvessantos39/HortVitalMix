@@ -1,6 +1,5 @@
 import { dbPool } from "../db/pool.ts";
-import { supabaseAdmin } from "../supabase/client.ts";
-import { runtime } from "../config/runtime.ts";
+import { supabaseAdmin, supabasePublic } from "../supabase/client.ts";
 import { reportFailure } from "../config/reportFailure.ts";
 import type { PoolClient } from "pg";
 import type { Registration } from "../../shared/contracts/auth.ts";
@@ -41,6 +40,7 @@ export async function register(
   data: Registration,
   role: "consumer" | "producer",
   requestId: string,
+  emailRedirectTo?: string,
 ) {
   if (!dbPool || !supabaseAdmin)
     throw Object.assign(new Error("DEPENDENCY_UNAVAILABLE"), { status: 503 });
@@ -54,10 +54,7 @@ export async function register(
     const created = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
       password: data.password,
-      email_confirm: runtime.appEnv === "development",
-      // Metadado informativo apenas. Autorização real nasce exclusivamente
-      // em app_user_role_assignments, nunca de user_metadata.
-      user_metadata: { intended_role: role },
+      email_confirm: false,
     });
 
     if (created.error || !created.data.user)
@@ -87,9 +84,23 @@ export async function register(
 
     await client.query("COMMIT");
 
+    let confirmationDispatchAccepted = false;
+    if (supabasePublic) {
+      const { error } = await supabasePublic.auth.resend({
+        type: "signup",
+        email: data.email,
+        options: emailRedirectTo ? { emailRedirectTo } : undefined,
+      });
+      confirmationDispatchAccepted = !error;
+      if (error) reportFailure("confirmation_dispatch_failed", requestId);
+    } else {
+      reportFailure("confirmation_dispatch_unavailable", requestId);
+    }
+
     return {
       userId,
-      confirmationRequired: runtime.appEnv !== "development",
+      confirmationRequired: true,
+      confirmationDispatchAccepted,
     };
   } catch (error) {
     await client.query("ROLLBACK").catch(() => undefined);
