@@ -24,6 +24,7 @@ async function main() {
     );
     const schemaVersion = validateHistory(history.rows);
     if (schemaVersion !== 8) throw new Error("MIGRATION_HISTORY_GATE_FAILED");
+    const migrationHistoryHash = assertManifestHash();
 
     const extensions = await client.query<{ extname: string }>(
       "SELECT extname FROM pg_extension WHERE extname IN ('pgcrypto','pg_trgm','btree_gin') ORDER BY extname",
