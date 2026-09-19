@@ -62,7 +62,7 @@ for (const width of [320, 360, 430, 768, 1024, 1440]) {
     await page.goto("/cadastro/produtor");
 
     await expect(
-      page.getByRole("heading", { name: "Cadastro de produtor ou produtora" }),
+      page.getByRole("heading", { name: "Cadastro de produtor" }),
     ).toBeVisible();
     await expect(page.getByLabel("Nome de seu imóvel")).toBeVisible();
 
@@ -71,6 +71,7 @@ for (const width of [320, 360, 430, 768, 1024, 1440]) {
     await expect(cpf).toHaveValue("529.982.247-25");
 
     const phone = page.getByLabel("Celular com DDD");
+    await expect(phone).toHaveAttribute("placeholder", "(00) 00000-0000");
     await phone.fill("69993810921");
     await expect(phone).toHaveValue("(69) 99381-0921");
 
@@ -213,14 +214,13 @@ test("login e cadastros usam telas separadas", async ({ page }) => {
 
   await page.goto("/cadastro/consumidor");
   await expect(
-    page.getByRole("heading", { name: "Cadastro de consumidor ou consumidora" }),
+    page.getByRole("heading", { name: "Cadastro de consumidor" }),
   ).toBeVisible();
-  await expect(page.getByLabel("Forma de tratamento no sistema")).toBeVisible();
   await expect(page.getByLabel("Nome de seu imóvel")).toHaveCount(0);
 
   await page.goto("/cadastro/produtor");
   await expect(
-    page.getByRole("heading", { name: "Cadastro de produtor ou produtora" }),
+    page.getByRole("heading", { name: "Cadastro de produtor" }),
   ).toBeVisible();
   await expect(page.getByLabel("Nome de seu imóvel")).toBeVisible();
 

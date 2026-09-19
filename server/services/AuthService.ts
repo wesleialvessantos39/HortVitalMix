@@ -67,15 +67,8 @@ export async function register(
     await client.query("BEGIN");
 
     const person = await client.query(
-      "INSERT INTO public.app_people(user_id,full_name,grammatical_treatment,cpf_normalized,email_normalized,phone_e164) VALUES($1,$2,$3,$4,$5,$6) RETURNING id",
-      [
-        userId,
-        data.fullName,
-        data.grammaticalTreatment,
-        data.cpf,
-        data.email,
-        data.phone,
-      ],
+      "INSERT INTO public.app_people(user_id,full_name,cpf_normalized,email_normalized,phone_e164) VALUES($1,$2,$3,$4,$5) RETURNING id",
+      [userId, data.fullName, data.cpf, data.email, data.phone],
     );
 
     await client.query(

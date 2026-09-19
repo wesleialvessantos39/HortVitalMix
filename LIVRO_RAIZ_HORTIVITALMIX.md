@@ -1,5 +1,21 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-19 — Ajuste de perfis e placeholder de celular
+
+Status: **implementação em promoção**.
+
+- decisão anterior de masculino/feminino revogada;
+- nomes de perfil passam a ser exclusivamente `Consumidor`, `Produtor`, `Administrador` e `Super administrador`;
+- frontend, contratos, sessão e backend deixam de receber/expor `grammaticalTreatment`;
+- placeholder do campo **Celular com DDD** passa a ser `(00) 00000-0000`;
+- máscara automática real continua produzindo `(DD) 9XXXX-XXXX` conforme os números digitados;
+- persistência continua em E.164 `+55...`;
+- migration `20260919231000_remove_grammatical_treatment.sql` remove a coluna e constraint antigas;
+- schema lógico passa de 9 para 10;
+- development já recebeu a migration 10 e confirmou ausência de `grammatical_treatment`, preservando `property_name`.
+
+---
+
 ## 2026-09-19 — Errata funcional: cadastro brasileiro e telas separadas
 
 Status: **implementação promovida para `main`, build Vercel aprovado e schema lógico 9 promovido e verificado em development, homologation e production**.
@@ -11,7 +27,7 @@ Status: **implementação promovida para `main`, build Vercel aprovado e schema 
 - cadastro público separado em `/cadastro/consumidor` e `/cadastro/produtor`; login em `/entrar`.
 - tela `/acesso/administracao` pré-preparada, sem cadastro administrativo público.
 - `Nome da sua produção` substituído por `Nome de seu imóvel`, inclusive no contrato e no banco (`property_name`).
-- preferência explícita de tratamento gramatical adicionada; não há inferência de sexo/gênero pelo nome.
+- registro histórico: a preferência de tratamento gramatical foi introduzida no schema 9 e posteriormente revogada pela migration do schema 10.
 - schema lógico promovido de 8 para 9 pela migration `20260919224500_registration_br_profile.sql`.
 - development: migration 9 aplicada, histórico canônico normalizado e teste transacional aprovado com zero resíduos.
 - homologation: migration 9 aplicada, RLS/FORCE verificados, `property_name` presente, `brand_name` ausente, bucket privado e zero resíduos.

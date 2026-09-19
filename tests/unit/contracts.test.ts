@@ -31,7 +31,6 @@ describe("contratos e limites de confiança", () => {
   it("valida DV e normaliza cadastro", () => {
     const data = RegisterProducerSchema.parse({
       fullName: "Pessoa de Teste",
-      grammaticalTreatment: "feminine",
       cpf: "529.982.247-25",
       email: " TEST@EXAMPLE.COM ",
       phone: "(69) 99999-9999",
@@ -43,7 +42,6 @@ describe("contratos e limites de confiança", () => {
     expect(data.cpf).toBe("52998224725");
     expect(data.email).toBe("test@example.com");
     expect(data.phone).toBe("+5569999999999");
-    expect(data.grammaticalTreatment).toBe("feminine");
     expect(data.propertyName).toBe("Sítio de Teste");
   });
 

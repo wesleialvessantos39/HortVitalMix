@@ -1,8 +1,5 @@
 import { z } from "zod";
 
-export type GrammaticalTreatment = "masculine" | "feminine";
-export const GrammaticalTreatmentSchema = z.enum(["masculine", "feminine"]);
-
 function onlyDigits(value: string) {
   return value.replace(/\D/g, "");
 }
@@ -78,12 +75,11 @@ const phone = z
   .transform(normalizeBrazilMobile)
   .refine(
     (value) => /^\+55[1-9]\d9\d{8}$/.test(value),
-    "Use o formato (69) 99381-0921",
+    "Use o formato (00) 00000-0000",
   );
 
 const base = {
   fullName: z.string().trim().min(3).max(255),
-  grammaticalTreatment: GrammaticalTreatmentSchema,
   cpf,
   email,
   password: z.string().min(12).max(128),
