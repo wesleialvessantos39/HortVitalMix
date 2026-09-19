@@ -52,6 +52,10 @@ const categories = [
 ];
 const accountPaths = new Set([
   "/conta",
+  "/entrar",
+  "/cadastro/consumidor",
+  "/cadastro/produtor",
+  "/acesso/administracao",
   "/recuperar-senha",
   "/redefinir-senha",
   "/confirmar-contato",
@@ -170,7 +174,7 @@ export default function App() {
             <button
               className="icon"
               aria-label="Minha conta"
-              onClick={() => go("/conta")}
+              onClick={() => go("/entrar")}
             >
               <UserRound />
             </button>
@@ -208,7 +212,7 @@ export default function App() {
       </header>
       <main id="conteudo" className="layout">
         {accountPaths.has(path) ? (
-          <Account path={path} />
+          <Account path={path} onNavigate={go} />
         ) : (
           <>
             <aside>
@@ -251,7 +255,10 @@ export default function App() {
                 <Sprout />
                 <h3>Você produz por aqui?</h3>
                 <p>Traga o frescor da sua produção para mais famílias.</p>
-                <button className="text-button" onClick={() => go("/conta")}>
+                <button
+                  className="text-button"
+                  onClick={() => go("/cadastro/produtor")}
+                >
                   Faça parte <ChevronRight size={15} />
                 </button>
               </section>
@@ -359,7 +366,7 @@ export default function App() {
                     </p>
                     <button
                       className="text-button"
-                      onClick={() => go("/conta")}
+                      onClick={() => go("/entrar")}
                     >
                       Conheça as opções de cadastro <ChevronRight size={15} />
                     </button>
@@ -378,7 +385,7 @@ export default function App() {
       <nav className="bottom-nav" aria-label="Navegação mobile">
         {[
           ...navigation.slice(0, 4),
-          ["/conta", "Conta", UserRound] as const,
+          ["/entrar", "Conta", UserRound] as const,
         ].map(([to, label, Icon]) => (
           <a
             href={to}

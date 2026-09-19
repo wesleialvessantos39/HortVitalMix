@@ -261,6 +261,7 @@ authRouter.get("/session", async (req, res, next) => {
         userId: req.actor.userId,
         email: req.actor.email,
         roles: req.actor.roles,
+        grammaticalTreatment: req.actor.grammaticalTreatment,
       });
       return;
     }
@@ -311,11 +312,18 @@ authRouter.get("/session", async (req, res, next) => {
       "SELECT role_code FROM public.app_user_role_assignments WHERE user_id=$1 AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at>now()) ORDER BY role_code",
       [id],
     );
+    const person = await dbPool.query<{
+      grammatical_treatment: "masculine" | "feminine" | null;
+    }>(
+      "SELECT grammatical_treatment FROM public.app_people WHERE user_id=$1 LIMIT 1",
+      [id],
+    );
 
     res.json({
       userId: id,
       email: result.data.user.email,
       roles: roles.rows.map((row) => row.role_code),
+      grammaticalTreatment: person.rows[0]?.grammatical_treatment ?? null,
     });
   } catch (error) {
     next(error);
@@ -352,7 +360,7 @@ authRouter.post("/resend-confirmation", async (req, res) => {
     return;
   }
 
-  const target = redirectUrl(req, "/conta");
+  const target = redirectUrl(req, "/entrar");
   if (supabasePublic && target) {
     const { error } = await supabasePublic.auth.resend({
       type: "signup",
@@ -391,7 +399,7 @@ authRouter.post("/magic-link", async (req, res) => {
     return;
   }
 
-  const target = redirectUrl(req, "/conta");
+  const target = redirectUrl(req, "/entrar");
   if (supabasePublic && target) {
     const { error } = await supabasePublic.auth.signInWithOtp({
       email: input.data.email,
@@ -563,7 +571,7 @@ for (const role of ["consumer", "producer"] as const)
         parsed.data,
         role,
         res.locals.requestId,
-        redirectUrl(req, "/conta") ?? undefined,
+        redirectUrl(req, "/entrar") ?? undefined,
       );
       res.status(201).json(result);
     } catch (error) {

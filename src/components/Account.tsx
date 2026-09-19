@@ -1,28 +1,66 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api } from "../lib/api";
 import {
+  formatBrazilMobile,
+  formatCpf,
   RegisterConsumerSchema,
   RegisterProducerSchema,
+  type GrammaticalTreatment,
 } from "../../shared/contracts/auth";
 
-type Session = { userId: string; email: string; roles: string[] };
+type Session = {
+  userId: string;
+  email: string;
+  roles: string[];
+  grammaticalTreatment: GrammaticalTreatment | null;
+};
+
 type Mode =
   | "login"
   | "consumer"
   | "producer"
+  | "admin"
   | "recovery"
   | "confirmation"
   | "magic"
   | "reset";
 
 function modeFromPath(path: string): Mode {
+  if (path === "/cadastro/consumidor") return "consumer";
+  if (path === "/cadastro/produtor") return "producer";
+  if (path === "/acesso/administracao") return "admin";
   if (path === "/recuperar-senha") return "recovery";
   if (path === "/redefinir-senha") return "reset";
   if (path === "/confirmar-contato") return "confirmation";
   return "login";
 }
 
-export function Account({ path = "/conta" }: { path?: string }) {
+function roleLabel(role: string, treatment: GrammaticalTreatment | null) {
+  const feminine = treatment === "feminine";
+  const labels: Record<string, string> = {
+    consumer: feminine ? "Consumidora" : treatment ? "Consumidor" : "Consumidor(a)",
+    producer: feminine ? "Produtora" : treatment ? "Produtor" : "Produtor(a)",
+    platform_admin: feminine
+      ? "Administradora"
+      : treatment
+        ? "Administrador"
+        : "Administrador(a)",
+    platform_super_admin: feminine
+      ? "Super administradora"
+      : treatment
+        ? "Super administrador"
+        : "Super administrador(a)",
+  };
+  return labels[role] ?? role;
+}
+
+export function Account({
+  path = "/entrar",
+  onNavigate,
+}: {
+  path?: string;
+  onNavigate?: (to: string) => void;
+}) {
   const [mode, setMode] = useState<Mode>(() => modeFromPath(path));
   const [session, setSession] = useState<Session | null>(null);
   const [busy, setBusy] = useState(false);
@@ -49,11 +87,7 @@ export function Account({ path = "/conta" }: { path?: string }) {
             body: JSON.stringify({ accessToken, refreshToken }),
           });
 
-          history.replaceState(
-            {},
-            "",
-            location.pathname + location.search,
-          );
+          history.replaceState({}, "", location.pathname + location.search);
 
           if (!cancelled && (type === "recovery" || path === "/redefinir-senha")) {
             setMode("reset");
@@ -73,7 +107,7 @@ export function Account({ path = "/conta" }: { path?: string }) {
         const current = await api<Session>("/v1/auth/session");
         if (!cancelled) setSession(current);
       } catch {
-        // Estado sem sessão é esperado na tela pública de acesso.
+        // Estado sem sessão é esperado nas telas públicas.
       }
     }
 
@@ -82,6 +116,11 @@ export function Account({ path = "/conta" }: { path?: string }) {
       cancelled = true;
     };
   }, [path]);
+
+  function navigate(to: string) {
+    if (onNavigate) onNavigate(to);
+    else location.assign(to);
+  }
 
   function changeMode(next: Mode) {
     setMode(next);
@@ -130,6 +169,7 @@ export function Account({ path = "/conta" }: { path?: string }) {
             : "Cadastro realizado, mas o e-mail não pôde ser enviado agora. Use “Reenviar confirmação”.",
         );
         setMode("login");
+        navigate("/entrar");
         return;
       }
 
@@ -174,6 +214,7 @@ export function Account({ path = "/conta" }: { path?: string }) {
         setSession(null);
         setMode("login");
         setNotice("Senha atualizada. Entre novamente com a nova senha.");
+        navigate("/entrar");
       }
     } catch (error) {
       const code = (error as Error).message;
@@ -227,6 +268,7 @@ export function Account({ path = "/conta" }: { path?: string }) {
       setSecurityFlow(false);
       setMode("login");
       setNotice("Senha alterada. Entre novamente para continuar.");
+      navigate("/entrar");
     } catch (error) {
       setNotice(
         (error as Error).message === "SECURITY_CODE_REJECTED"
@@ -247,15 +289,7 @@ export function Account({ path = "/conta" }: { path?: string }) {
         <p>
           Acesso:{" "}
           {session.roles
-            .map(
-              (role) =>
-                ({
-                  consumer: "Consumidor",
-                  producer: "Produtor",
-                  platform_admin: "Administrador",
-                  platform_super_admin: "Superadministrador",
-                })[role] ?? role,
-            )
+            .map((role) => roleLabel(role, session.grammaticalTreatment))
             .join(", ")}
         </p>
 
@@ -328,7 +362,51 @@ export function Account({ path = "/conta" }: { path?: string }) {
         >
           Sair da conta
         </button>
-        {notice && <p role="status" className="form-notice">{notice}</p>}
+        {notice && (
+          <p role="status" className="form-notice">
+            {notice}
+          </p>
+        )}
+      </section>
+    );
+
+  if (mode === "admin")
+    return (
+      <section className="account card admin-prepared">
+        <span className="eyebrow">Área administrativa</span>
+        <h1>Login administrativo</h1>
+        <p>
+          Tela reservada para Administrador, Administradora, Super administrador
+          e Super administradora. A autorização continuará sendo definida pelo
+          perfil real da conta, nunca por seleção manual na tela.
+        </p>
+
+        <div className="admin-role-preview" aria-label="Perfis administrativos previstos">
+          <span>Administrador / Administradora</span>
+          <span>Super administrador / Super administradora</span>
+        </div>
+
+        <form aria-label="Login administrativo em preparação">
+          <label>
+            E-mail
+            <input type="email" autoComplete="username" disabled />
+          </label>
+          <label>
+            Senha
+            <input type="password" autoComplete="current-password" disabled />
+          </label>
+          <button className="primary" type="button" disabled>
+            Acesso administrativo — disponível futuramente
+          </button>
+        </form>
+
+        <button
+          type="button"
+          className="text-button helper-action"
+          onClick={() => navigate("/entrar")}
+        >
+          Voltar para login
+        </button>
       </section>
     );
 
@@ -340,11 +418,11 @@ export function Account({ path = "/conta" }: { path?: string }) {
 
   const heading =
     mode === "login"
-      ? "Entre na sua conta"
+      ? "Entrar no HortiVitalMix"
       : mode === "producer"
-        ? "Cadastro do produtor"
+        ? "Cadastro de produtor ou produtora"
         : mode === "consumer"
-          ? "Crie sua conta"
+          ? "Cadastro de consumidor ou consumidora"
           : mode === "recovery"
             ? "Recupere sua senha"
             : mode === "confirmation"
@@ -361,36 +439,19 @@ export function Account({ path = "/conta" }: { path?: string }) {
       <h1>{heading}</h1>
       <p>
         {mode === "producer"
-          ? "Conecte sua produção a quem valoriza alimentos frescos."
-          : mode === "recovery"
-            ? "Informe seu e-mail para receber as instruções de redefinição."
-            : mode === "confirmation"
-              ? "Informe seu e-mail para reenviar a confirmação do cadastro."
-              : mode === "magic"
-                ? "Receba um link ou código de uso único para acessar sua conta."
-                : mode === "reset"
-                  ? "Use uma senha nova, diferente da anterior."
-                  : "Que bom ter você por aqui."}
+          ? "Cadastre seus dados e identifique o imóvel ligado à sua produção."
+          : mode === "consumer"
+            ? "Cadastre seus dados para utilizar o HortiVitalMix."
+            : mode === "recovery"
+              ? "Informe seu e-mail para receber as instruções de redefinição."
+              : mode === "confirmation"
+                ? "Informe seu e-mail para reenviar a confirmação do cadastro."
+                : mode === "magic"
+                  ? "Receba um link ou código de uso único para acessar sua conta."
+                  : mode === "reset"
+                    ? "Use uma senha nova, diferente da anterior."
+                    : "Informe suas credenciais para entrar."}
       </p>
-
-      {!auxiliary && (
-        <div className="account-tabs" aria-label="Tipo de acesso">
-          {(["login", "consumer", "producer"] as const).map((item) => (
-            <button
-              key={item}
-              type="button"
-              className={mode === item ? "selected" : ""}
-              onClick={() => changeMode(item)}
-            >
-              {item === "login"
-                ? "Entrar"
-                : item === "consumer"
-                  ? "Consumidor"
-                  : "Produtor"}
-            </button>
-          ))}
-        </div>
-      )}
 
       <form key={mode} onSubmit={submit}>
         {(mode === "consumer" || mode === "producer") && (
@@ -405,18 +466,51 @@ export function Account({ path = "/conta" }: { path?: string }) {
                 maxLength={255}
               />
             </label>
+
+            <label>
+              Forma de tratamento no sistema
+              <select name="grammaticalTreatment" defaultValue="" required>
+                <option value="" disabled>
+                  Selecione
+                </option>
+                <option value="masculine">Masculino</option>
+                <option value="feminine">Feminino</option>
+              </select>
+              <small>
+                Define somente a forma dos rótulos: Produtor/Produtora,
+                Consumidor/Consumidora e equivalentes administrativos.
+              </small>
+            </label>
+
             <div className="form-grid">
               <label>
                 CPF
-                <input name="cpf" inputMode="numeric" required maxLength={14} />
+                <input
+                  name="cpf"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  placeholder="000.000.000-00"
+                  maxLength={14}
+                  onInput={(event) => {
+                    event.currentTarget.value = formatCpf(event.currentTarget.value);
+                  }}
+                  required
+                />
               </label>
               <label>
-                Celular com DDI
+                Celular com DDD
                 <input
                   name="phone"
                   type="tel"
-                  autoComplete="tel"
-                  placeholder="+5569999999999"
+                  inputMode="numeric"
+                  autoComplete="tel-national"
+                  placeholder="(69) 99381-0921"
+                  maxLength={15}
+                  onInput={(event) => {
+                    event.currentTarget.value = formatBrazilMobile(
+                      event.currentTarget.value,
+                    );
+                  }}
                   required
                 />
               </label>
@@ -463,8 +557,8 @@ export function Account({ path = "/conta" }: { path?: string }) {
         {mode === "producer" && (
           <>
             <label>
-              Nome da sua produção
-              <input name="brandName" required minLength={2} maxLength={128} />
+              Nome de seu imóvel
+              <input name="propertyName" required minLength={2} maxLength={128} />
             </label>
             <label>
               Atividade principal
@@ -503,36 +597,78 @@ export function Account({ path = "/conta" }: { path?: string }) {
       </form>
 
       {mode === "login" && (
-        <div className="account-helpers" aria-label="Opções de segurança">
-          <button
-            type="button"
-            className="text-button"
-            onClick={() => changeMode("recovery")}
-          >
-            Esqueci minha senha
-          </button>
-          <button
-            type="button"
-            className="text-button"
-            onClick={() => changeMode("confirmation")}
-          >
-            Reenviar confirmação
-          </button>
-          <button
-            type="button"
-            className="text-button"
-            onClick={() => changeMode("magic")}
-          >
-            Entrar com link ou código
-          </button>
-        </div>
+        <>
+          <div className="account-helpers" aria-label="Opções de segurança">
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => changeMode("recovery")}
+            >
+              Esqueci minha senha
+            </button>
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => changeMode("confirmation")}
+            >
+              Reenviar confirmação
+            </button>
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => changeMode("magic")}
+            >
+              Entrar com link ou código
+            </button>
+          </div>
+
+          <div className="account-choice-grid" aria-label="Opções de cadastro">
+            <button
+              className="account-choice"
+              type="button"
+              onClick={() => navigate("/cadastro/consumidor")}
+            >
+              <strong>Cadastro de consumidor</strong>
+              <span>Abra uma conta para comprar no HortiVitalMix.</span>
+            </button>
+            <button
+              className="account-choice"
+              type="button"
+              onClick={() => navigate("/cadastro/produtor")}
+            >
+              <strong>Cadastro de produtor</strong>
+              <span>Cadastre seu perfil e o nome de seu imóvel.</span>
+            </button>
+            <button
+              className="account-choice account-choice-admin"
+              type="button"
+              onClick={() => navigate("/acesso/administracao")}
+            >
+              <strong>Acesso administrativo</strong>
+              <span>Tela preparada para ativação futura.</span>
+            </button>
+          </div>
+        </>
+      )}
+
+      {(mode === "consumer" || mode === "producer") && (
+        <button
+          type="button"
+          className="text-button helper-action"
+          onClick={() => navigate("/entrar")}
+        >
+          Já tenho cadastro — entrar
+        </button>
       )}
 
       {auxiliary && (
         <button
           type="button"
           className="text-button helper-action"
-          onClick={() => changeMode("login")}
+          onClick={() => {
+            changeMode("login");
+            navigate("/entrar");
+          }}
         >
           Voltar para entrar
         </button>

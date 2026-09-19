@@ -67,8 +67,15 @@ export async function register(
     await client.query("BEGIN");
 
     const person = await client.query(
-      "INSERT INTO public.app_people(user_id,full_name,cpf_normalized,email_normalized,phone_e164) VALUES($1,$2,$3,$4,$5) RETURNING id",
-      [userId, data.fullName, data.cpf, data.email, data.phone],
+      "INSERT INTO public.app_people(user_id,full_name,grammatical_treatment,cpf_normalized,email_normalized,phone_e164) VALUES($1,$2,$3,$4,$5,$6) RETURNING id",
+      [
+        userId,
+        data.fullName,
+        data.grammaticalTreatment,
+        data.cpf,
+        data.email,
+        data.phone,
+      ],
     );
 
     await client.query(
@@ -78,8 +85,8 @@ export async function register(
 
     if (role === "producer")
       await client.query(
-        "INSERT INTO public.app_producer_profiles(person_id,brand_name,rural_activity_type,verification_status,trust_level) VALUES($1,$2,$3,'declared',0)",
-        [person.rows[0].id, data.brandName, data.activityType],
+        "INSERT INTO public.app_producer_profiles(person_id,property_name,rural_activity_type,verification_status,trust_level) VALUES($1,$2,$3,'declared',0)",
+        [person.rows[0].id, data.propertyName, data.activityType],
       );
 
     await client.query("COMMIT");
