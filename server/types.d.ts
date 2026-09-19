@@ -8,7 +8,6 @@ declare global {
         email: string | null;
         roles: string[];
         personId: string | null;
-        grammaticalTreatment: "masculine" | "feminine" | null;
       } | null;
     }
   }
