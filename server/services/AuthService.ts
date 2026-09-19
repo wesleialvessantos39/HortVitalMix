@@ -2,12 +2,13 @@ import { dbPool } from "../db/pool.ts";
 import { supabaseAdmin } from "../supabase/client.ts";
 import { runtime } from "../config/runtime.ts";
 import { reportFailure } from "../config/reportFailure.ts";
+import type { PoolClient } from "pg";
 import type { Registration } from "../../shared/contracts/auth.ts";
 
 async function compensateIncompleteIdentity(
   userId: string,
   requestId: string,
-  client: NonNullable<typeof dbPool> extends never ? never : any,
+  client: PoolClient,
 ) {
   if (!supabaseAdmin) return;
 
