@@ -24,8 +24,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: package-lock.json
 
       - name: Generate deterministic lockfile when absent
         run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
