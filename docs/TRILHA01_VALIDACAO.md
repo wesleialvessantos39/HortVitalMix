@@ -1,39 +1,73 @@
-# Trilha 01 — resultados da execução
+# Trilha 01 — validação e auditoria de finalização
 
-Data: 2026-09-19. Estado: **homologação parcial de código e SQL; homologação final bloqueada por configuração externa**.
+Data: 2026-09-19. Estado: **correções de conformidade aplicadas em branch; homologação final ainda bloqueada pelos gates externos e pela reexecução completa**.
 
-| Verificação | Resultado observado |
+## Evidência já observada antes da auditoria final
+
+| Verificação | Evidência anterior |
 | --- | --- |
-| TypeScript | Aprovado |
-| Build Vite + varredura do bundle | Aprovado; sem padrões de segredos no bundle |
-| Testes unitários/HTTP | 23 aprovados |
-| Testes de integração GoTrue/credenciais completas | 3 pulados explicitamente; não homologados |
-| Playwright | 7 aprovados, Chromium real |
-| Viewports | 320, 360, 430, 768, 1024, 1440 px; home e cadastro sem overflow horizontal |
-| Migrations remotas | 8 aplicadas, histórico local sincronizado |
-| SQL real em Supabase | Assertions aprovadas com rollback |
-| Dados de teste após rollback | 0 pessoas, 0 usuários Auth, 0 eventos de auditoria |
-| RLS | 8 tabelas habilitadas e forçadas; 15 policies nas tabelas app_* |
-| Seeds | 4 papéis canônicos e singleton de configuração; sem usuários/produtos fictícios |
-| Storage | documents privado e policies de propriedade |
-| Preflight do runtime | Falhou por credenciais ausentes, corretamente |
-| Releases homologadas | 0; nenhuma release fictícia criada |
-| Vercel | Nenhum projeto retornado pela equipe conectada; deployment não realizado |
+| TypeScript/build | Aprovados na versão anterior à branch de finalização |
+| Testes unitários/HTTP | 23 aprovados na versão anterior |
+| Playwright | 7 aprovados anteriormente com Chromium |
+| Viewports | 320, 360, 430, 768, 1024 e 1440 sem overflow horizontal |
+| Migrations remotas | 8 aplicadas e histórico sincronizado |
+| SQL real | assertions com rollback aprovadas |
+| RLS | 8 tabelas com ENABLE/FORCE |
+| Seeds | 4 papéis + singleton; sem dados fictícios |
+| Storage | bucket `documents` privado |
 
-## Evidências visuais
+Esses resultados são históricos. A branch `trilha01-finalizacao-v10` alterou código crítico; portanto build/testes precisam ser executados novamente antes da promoção.
 
-- [Mobile 360 px](evidence/home-360.png)
-- [Tablet 768 px](evidence/home-768.png)
-- [Desktop 1440 px](evidence/home-1440.png)
+## Auditoria profunda contra Manual v10
 
-Inspeção visual efetuada nessas três capturas. Layout segue os HTMLs limpos: paleta verde/laranja, header desktop, categorias laterais, hero e shell mobile com navegação inferior. A comparação não afirma igualdade pixel a pixel com os PNGs de apresentação comercial.
+Correções aplicadas:
 
-## Escopo dos testes SQL
+- `verify:foundation` agora executa literalmente A1–A15 e exige 15/15.
+- gate adicional valida hash canônico das 8 migrations contra `supabase/manifest.json`.
+- gate documental verifica comentários em tabelas, funções e colunas sensíveis.
+- `preflight` valida project ref, URLs pública/servidor, pooler, RLS/FORCE, Auth Admin e Data API.
+- `logRuntimeBootSummary()` foi restaurado sem valores sensíveis.
+- `reportFailure/scrub` redige DB URL, JWT, bearer, secret key, e-mail, CPF e telefone E.164.
+- `vercel.json` permite auto-deploy somente de `main`.
+- `HVM_INTEGRATION_ENABLED` e `HVM_PROD_PROJECT_REF` substituem flags obsoletas.
+- `npm run homologate` recusa integração pulada e só aceita development.
+- middleware global resolve `req.actor` por JWT real + estado/papéis ao vivo; não usa `user_metadata` como autorização.
+- cadastro compensatório remove identidade GoTrue e tombstone transitório quando o domínio falha.
+- testes de integração agora cobrem cadeia completa do produtor, conflito, rollback GoTrue, JWT/RLS, config e readiness fail-closed.
+- SQL de fundação testa também `command_id` duplicado.
+- Playwright contém assertions explícitas C1–C7, incluindo fallback de config.
+- hardening documental `supabase/hardening/trilha01_sensitive_comments.sql` aplicado ao projeto existente.
 
-`supabase/tests/foundation.sql` verifica RLS/column grants, singleton, papéis, isolamento de duas identidades, bloqueio de autoatribuição administrativa, atualização permitida do nome próprio, bloqueio de confiança/status, imutabilidade de auditoria com linha existente, revisão com e sem mudança e suspensão do espelho após exclusão Auth. As claims são definidas na transação SQL para testar RLS; isso não substitui a suíte com JWTs reais emitidos pelo GoTrue.
+## Verificação real do Supabase em 2026-09-19
 
-## Limites
+Consulta administrativa atual confirmou:
 
-Não foram validados cadastro/login com credenciais completas, confirmação de e-mail, execução pela URL real do Studio, runtime Vercel, backups remotos e promoção em três ambientes. Catálogo e operações de compra não fazem parte da fundação e permanecem explicitamente indisponíveis.
+- A1: 3 extensões canônicas.
+- A2: 8 tabelas `app_*`.
+- A3/A4: zero tabela sem RLS/FORCE.
+- A5–A8: triggers exigidos presentes.
+- A9: exatamente 1 `app_global_config`.
+- A10: `consumer`, `producer`, `platform_admin`, `platform_super_admin`.
+- A11: zero ambiente com duas releases correntes.
+- A12: zero tabela local de credenciais.
+- A13: zero SECURITY DEFINER da aplicação sem `search_path`.
+- A14: zero policy da fundação sem role explícita.
+- A15: zero padrão de PII nos payloads de auditoria.
+- comentários sensíveis pendentes antes desta auditoria: corrigidos; nova consulta retornou zero pendências.
+- `app_releases`: **0 linhas**. Nenhuma release foi inventada.
 
-O ambiente de execução bloqueou o daemon agent-browser e o download padrão do navegador. A validação foi feita com Playwright e Chromium empacotado, sem desativar a segurança web do navegador. O build foi executado com Node 24. O erro de IPC do CLI tsx foi resolvido usando `node --import tsx`, sem elevação de permissões.
+O teste de `command_id` duplicado foi executado no banco real dentro de `BEGIN/ROLLBACK` e a restrição unique atuou sem resíduos.
+
+## Bloqueios que impedem declarar homologação
+
+1. A branch de finalização ainda precisa executar Node 24 + `npm ci` + typecheck + Vitest + build + Playwright.
+2. Cobertura mínima do Manual v10 ainda não foi medida. O projeto não possui `@vitest/coverage-v8` no lockfile; não alterar `package.json` isoladamente porque quebraria `npm ci`.
+3. Testes de integração precisam rodar com credenciais do **development isolado** e `HVM_INTEGRATION_ENABLED=true`.
+4. Só existe um projeto Supabase provisionado; development/homologation/production independentes ainda não estão comprovados.
+5. Não há releases registradas nem snapshots dos três ambientes.
+6. A equipe Vercel conectada continua retornando **0 projetos**; não há deployment READY nem URL para `verify:deploy`.
+7. A tag `trilha01-v1` não pode ser criada antes do deploy de production e `verify:deploy` aprovados.
+
+## Regra de transição
+
+Permanecer na Trilha 01. Não iniciar Trilha 02 enquanto os itens acima não estiverem comprovados.
