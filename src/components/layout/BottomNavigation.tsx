@@ -1,0 +1,2 @@
+import { Home, Search, ShoppingBasket, UserRound } from 'lucide-react';
+export function BottomNavigation(){return <nav className="bottom-nav" aria-label="Navegação inferior"><a className="active" href="#inicio"><Home/><span>Início</span></a><a href="#produtos"><Search/><span>Buscar</span></a><a href="#carrinho"><ShoppingBasket/><span>Carrinho</span></a><a href="#perfil"><UserRound/><span>Perfil</span></a></nav>}

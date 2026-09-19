@@ -1,0 +1,3 @@
+import { readdir, readFile } from 'fs/promises';import path from 'path';
+async function walk(dir:string):Promise<string[]>{const out:string[]=[];for(const e of await readdir(dir,{withFileTypes:true})){const p=path.join(dir,e.name);if(e.isDirectory())out.push(...await walk(p));else if(/\.(ts|tsx|js|jsx)$/.test(e.name))out.push(p)}return out}
+const files=await walk('src');const bad:string[]=[];for(const f of files){const s=await readFile(f,'utf8');if(/SUPABASE_SERVICE_ROLE_KEY|SUPABASE_DB_URL|SUPABASE_JWT_SECRET|APP_IP_PEPPER|OUTBOX_ENCRYPTION_KEY/.test(s))bad.push(f)}if(bad.length){console.error('Secrets server-side referenciados no bundle cliente:',bad);process.exit(1)}console.log('client-secret-boundary: ok');

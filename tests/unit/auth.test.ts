@@ -1,0 +1,3 @@
+import { describe,it,expect } from 'vitest';
+import { isValidCPF, normalizeCPF, RegisterProducerSchema } from '../../shared/contracts/auth';
+describe('contratos de identidade',()=>{it('normaliza CPF',()=>expect(normalizeCPF('529.982.247-25')).toBe('52998224725'));it('valida CPF matematicamente',()=>{expect(isValidCPF('52998224725')).toBe(true);expect(isValidCPF('11111111111')).toBe(false)});it('rejeita campo extra',()=>expect(RegisterProducerSchema.safeParse({fullName:'Maria Silva',cpf:'52998224725',email:'maria@example.com',phone:'+5569999999999',password:'SenhaSegura!123',brandName:'Sítio Maria',activityType:'misto',role:'admin'}).success).toBe(false));});

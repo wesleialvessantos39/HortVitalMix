@@ -1,0 +1,1 @@
+-- Intencionalmente vazio na Trilha 01. Nenhum dado fictício é criado.
