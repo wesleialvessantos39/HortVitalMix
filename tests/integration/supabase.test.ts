@@ -124,6 +124,7 @@ describe.skipIf(!enabled)("Supabase real e JWTs reais", () => {
       const login = await auth.auth.signInWithPassword({ email, password });
       expect(login.error).toBeNull();
       expect(login.data.session?.access_token).toBeTruthy();
+      const accessToken = login.data.session!.access_token;
 
       await dbPool!.query(
         "INSERT INTO public.app_user_role_assignments(user_id,role_code) VALUES($1,'consumer')",
@@ -132,7 +133,7 @@ describe.skipIf(!enabled)("Supabase real e JWTs reais", () => {
 
       const actor = await request(app)
         .get("/v1/auth/session")
-        .set("Authorization", `Bearer ${login.data.session!.access_token}`);
+        .set("Authorization", `Bearer ${accessToken}`);
       expect(actor.status).toBe(200);
       expect(actor.body.userId).toBe(id);
       expect(actor.body.roles).toEqual(["consumer"]);
@@ -152,7 +153,13 @@ describe.skipIf(!enabled)("Supabase real e JWTs reais", () => {
         .insert({ user_id: id, role_code: "platform_super_admin" });
       expect(roles.error).not.toBeNull();
 
-      await auth.auth.signOut();
+      const signedOut = await auth.auth.signOut();
+      expect(signedOut.error).toBeNull();
+
+      const revoked = await request(app)
+        .get("/v1/auth/session")
+        .set("Authorization", `Bearer ${accessToken}`);
+      expect(revoked.status).toBe(401);
     } finally {
       if (id) {
         const deleted = await supabaseAdmin!.auth.admin.deleteUser(id);
