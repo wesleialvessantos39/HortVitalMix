@@ -26,14 +26,25 @@ No projeto existente `xipbsazvymkqqfmfegwu`, consulta administrativa confirmou A
 
 Nenhuma release está registrada em `app_releases`; essa ausência é preservada para não fabricar homologação.
 
+### Estratégia Free autorizada e executada
+
+- Preview Branches pagas foram rejeitadas pelo proprietário.
+- A cota Free permite apenas 2 projetos ativos simultaneamente.
+- Production `xipbsazvymkqqfmfegwu` foi pausado temporariamente, sem exclusão.
+- Development `ldtcsrlxfpflzhnbjjnp` foi criado por US$ 0/mês e recebeu schema v8; A1–A15 e testes SQL transacionais passaram sem resíduos.
+- Homologation `vcbcbbnbboxoimqmuibm` foi criado por US$ 0/mês e recebeu schema v8; A1–A15, documentação sensível e testes SQL transacionais passaram sem resíduos.
+- A fase production usará rotação: após aprovação de dev/homolog, development será pausado e production restaurado.
+- Nenhuma release, snapshot fictício ou tag foi criada antecipadamente.
+- Detalhes: `docs/FREE_TIER_ENVIRONMENT_STRATEGY.md`.
+
 ### Pendências impeditivas
 
 - Gate de cobertura V8 versionado: `@vitest/coverage-v8@5.0.1`, `provider: "v8"` e `test:coverage` integrado ao `npm run homologate`; execução final ainda pendente em Node 24/development isolado.
 
 - reexecução integral da branch com Node 24 e dependências pelo lockfile;
 - cobertura mínima por módulo ainda sem evidência final;
-- testes reais em development isolado;
-- três ambientes Supabase isolados ainda não comprovados/provisionados;
+- suíte Node 24 completa com integração Auth/HTTP ainda pendente; testes SQL reais em development já passaram com rollback e zero resíduos;
+- development e homologation Free já estão isolados/provisionados; production está preservado e pausado temporariamente para respeitar a cota de 2 projetos ativos;
 - releases e snapshots por ambiente ausentes;
 - Vercel ainda sem projeto conectado na equipe consultada;
 - deployment production, `verify:deploy` e tag `trilha01-v1` ausentes.
