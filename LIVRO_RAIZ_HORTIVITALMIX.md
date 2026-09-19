@@ -28,6 +28,8 @@ Nenhuma release está registrada em `app_releases`; essa ausência é preservada
 
 ### Pendências impeditivas
 
+- Gate de cobertura V8 versionado: `@vitest/coverage-v8@5.0.1`, `provider: "v8"` e `test:coverage` integrado ao `npm run homologate`; execução final ainda pendente em Node 24/development isolado.
+
 - reexecução integral da branch com Node 24 e dependências pelo lockfile;
 - cobertura mínima por módulo ainda sem evidência final;
 - testes reais em development isolado;
