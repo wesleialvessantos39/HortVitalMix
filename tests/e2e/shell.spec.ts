@@ -59,13 +59,20 @@ for (const width of [320, 360, 430, 768, 1024, 1440]) {
       fullPage: true,
     });
 
-    await page.goto("/conta");
-    await page.getByRole("button", { name: "Produtor", exact: true }).click();
+    await page.goto("/cadastro/produtor");
 
     await expect(
-      page.getByRole("heading", { name: "Cadastro do produtor" }),
+      page.getByRole("heading", { name: "Cadastro de produtor ou produtora" }),
     ).toBeVisible();
-    await expect(page.getByLabel("Nome da sua produção")).toBeVisible();
+    await expect(page.getByLabel("Nome de seu imóvel")).toBeVisible();
+
+    const cpf = page.getByLabel("CPF");
+    await cpf.fill("52998224725");
+    await expect(cpf).toHaveValue("529.982.247-25");
+
+    const phone = page.getByLabel("Celular com DDD");
+    await phone.fill("69993810921");
+    await expect(phone).toHaveValue("(69) 99381-0921");
 
     expect(
       await page.evaluate(
@@ -154,7 +161,7 @@ test("config pública válida atualiza slogan da shell", async ({ page }) => {
 
 test("fluxos públicos de segurança estão acessíveis e responsivos", async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 800 });
-  await page.goto("/conta");
+  await page.goto("/entrar");
 
   await page.getByRole("button", { name: "Esqueci minha senha" }).click();
   await expect(
@@ -193,4 +200,37 @@ test("rotas diretas de recuperação preservam estado correto", async ({ page })
   await expect(
     page.getByRole("heading", { name: "Confirme seu cadastro" }),
   ).toBeVisible();
+});
+
+
+test("login e cadastros usam telas separadas", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  await page.goto("/entrar");
+  await expect(page.getByRole("heading", { name: "Entrar no HortiVitalMix" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Cadastro de consumidor/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Cadastro de produtor/ })).toBeVisible();
+
+  await page.goto("/cadastro/consumidor");
+  await expect(
+    page.getByRole("heading", { name: "Cadastro de consumidor ou consumidora" }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Forma de tratamento no sistema")).toBeVisible();
+  await expect(page.getByLabel("Nome de seu imóvel")).toHaveCount(0);
+
+  await page.goto("/cadastro/produtor");
+  await expect(
+    page.getByRole("heading", { name: "Cadastro de produtor ou produtora" }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Nome de seu imóvel")).toBeVisible();
+
+  await page.goto("/acesso/administracao");
+  await expect(page.getByRole("heading", { name: "Login administrativo" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Acesso administrativo — disponível futuramente" }),
+  ).toBeDisabled();
+
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+  ).toBe(true);
 });
