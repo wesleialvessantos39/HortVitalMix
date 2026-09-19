@@ -22,11 +22,10 @@ DO $$BEGIN
  UPDATE public.app_people SET full_name='Fixture editada' WHERE user_id=auth.uid();
 END;$$;
 RESET ROLE;
-DO $$DECLARE audit_test_id uuid:=gen_random_uuid();old_revision int;BEGIN
+DO $DECLARE audit_test_id uuid:=gen_random_uuid();old_revision int;duplicate_command uuid:=gen_random_uuid();BEGIN
  INSERT INTO public.app_audit_events(id,request_id,action,target_entity,client_ip_hash) VALUES(audit_test_id,gen_random_uuid(),'test.assertion','fixture',repeat('a',64));
  BEGIN UPDATE public.app_audit_events SET action='test.changed' WHERE app_audit_events.id=audit_test_id;RAISE EXCEPTION 'AUDIT_UPDATE_ALLOWED';EXCEPTION WHEN insufficient_privilege THEN NULL;END;
  BEGIN DELETE FROM public.app_audit_events WHERE app_audit_events.id=audit_test_id;RAISE EXCEPTION 'AUDIT_DELETE_ALLOWED';EXCEPTION WHEN insufficient_privilege THEN NULL;END;
- DECLARE duplicate_command uuid:=gen_random_uuid();
  BEGIN
    INSERT INTO public.app_audit_events(request_id,action,target_entity,client_ip_hash,command_id)
    VALUES(gen_random_uuid(),'test.command.first','fixture',repeat('b',64),duplicate_command);
