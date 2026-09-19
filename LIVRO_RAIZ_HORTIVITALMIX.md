@@ -2,7 +2,7 @@
 
 ## 2026-09-19 — Ajuste de perfis e placeholder de celular
 
-Status: **implementação em promoção**.
+Status: **implementação promovida para `main`; build Vercel aprovado; schema 10 aplicado em Development e Production; Homologation em restauração transitória do plano Free**.
 
 - decisão anterior de masculino/feminino revogada;
 - nomes de perfil passam a ser exclusivamente `Consumidor`, `Produtor`, `Administrador` e `Super administrador`;
@@ -12,7 +12,11 @@ Status: **implementação em promoção**.
 - persistência continua em E.164 `+55...`;
 - migration `20260919231000_remove_grammatical_treatment.sql` remove a coluna e constraint antigas;
 - schema lógico passa de 9 para 10;
-- development já recebeu a migration 10 e confirmou ausência de `grammatical_treatment`, preservando `property_name`.
+- development recebeu a migration 10 e confirmou ausência de `grammatical_treatment`, preservando `property_name`;
+- PR #4 mergeado na `main` no commit `3791e045802f53f8f6ec1a305d2b0e368e80915a`;
+- build Vercel do commit funcional retornou `success`;
+- production recebeu a migration 10, mantém 8 tabelas e `property_name`, e não possui mais `grammatical_treatment`;
+- Homologation foi restaurado para promoção do schema, mas voltou vazio durante `COMING_UP`; como o Storage interno ainda não havia inicializado, nenhuma estrutura interna foi criada manualmente e o ambiente permanece pendente de reconstrução antes de uma futura homologação formal.
 
 ---
 
