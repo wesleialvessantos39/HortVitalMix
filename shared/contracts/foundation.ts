@@ -12,7 +12,7 @@ export const GlobalConfigPublicSchema = z.object({
   timezone: z.string(),
   supportEmail: z.string().email(),
   supportPhone: z.string().nullable(),
-  revision: z.number().int().nonnegative(),
+  revision: z.number().int().positive(),
 });
 export type GlobalConfigPublic = z.infer<typeof GlobalConfigPublicSchema>;
 
@@ -23,6 +23,11 @@ export const ApiHealthResponseSchema = z.object({
   requestId: z.string().uuid(),
 });
 
+/**
+ * O manual mostra schemaVersion/releaseTag como obrigatórios no estado ready,
+ * enquanto os exemplos degraded/unavailable os omitem. O schema aceita ambas
+ * as formas sem inventar dados quando o banco não está pronto.
+ */
 export const ApiReadyResponseSchema = z.object({
   status: z.enum(['ready', 'degraded', 'unavailable']),
   databaseConnected: z.boolean(),
