@@ -15,7 +15,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,30 +25,74 @@ jobs:
         with:
           node-version: 22
 
-      - name: Generate deterministic lockfile when absent
-        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Run reproducible validation and capture evidence
+        id: validate
+        shell: bash
+        run: |
+          set +e
+          mkdir -p .ci-evidence
 
-      - name: Install from lockfile
-        run: npm ci --no-audit --no-fund
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund 2>&1 | tee .ci-evidence/01-lockfile.log
+          echo ${PIPESTATUS[0]} > .ci-evidence/01-lockfile.status
 
-      - name: Typecheck
-        run: npm run typecheck
+          if [ "$(cat .ci-evidence/01-lockfile.status)" = "0" ]; then
+            npm ci --no-audit --no-fund 2>&1 | tee .ci-evidence/02-install.log
+            echo ${PIPESTATUS[0]} > .ci-evidence/02-install.status
+          else
+            echo 99 > .ci-evidence/02-install.status
+            echo "SKIPPED: lockfile generation failed" | tee .ci-evidence/02-install.log
+          fi
 
-      - name: Unit and contract tests
-        run: npm run test
+          if [ "$(cat .ci-evidence/02-install.status)" = "0" ]; then
+            npm run typecheck 2>&1 | tee .ci-evidence/03-typecheck.log
+            echo ${PIPESTATUS[0]} > .ci-evidence/03-typecheck.status
 
-      - name: Client secret boundary
-        run: npm run lint
+            npm run test 2>&1 | tee .ci-evidence/04-tests.log
+            echo ${PIPESTATUS[0]} > .ci-evidence/04-tests.status
 
-      - name: Production build
-        run: npm run build
+            npm run lint 2>&1 | tee .ci-evidence/05-lint.log
+            echo ${PIPESTATUS[0]} > .ci-evidence/05-lint.status
 
-      - name: Upload lockfile and build evidence
+            npm run build 2>&1 | tee .ci-evidence/06-build.log
+            echo ${PIPESTATUS[0]} > .ci-evidence/06-build.status
+          else
+            for n in 03-typecheck 04-tests 05-lint 06-build; do
+              echo 99 > ".ci-evidence/${n}.status"
+              echo "SKIPPED: install failed" > ".ci-evidence/${n}.log"
+            done
+          fi
+
+          {
+            echo "lockfile=$(cat .ci-evidence/01-lockfile.status)"
+            echo "install=$(cat .ci-evidence/02-install.status)"
+            echo "typecheck=$(cat .ci-evidence/03-typecheck.status)"
+            echo "tests=$(cat .ci-evidence/04-tests.status)"
+            echo "lint=$(cat .ci-evidence/05-lint.status)"
+            echo "build=$(cat .ci-evidence/06-build.status)"
+          } | tee .ci-evidence/summary.txt
+
+      - name: Upload CI evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: trilha01-ci-evidence
           path: |
+            .ci-evidence/
             package-lock.json
             dist/
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 7
+
+      - name: Enforce green gate
+        if: always()
+        shell: bash
+        run: |
+          failures=0
+          for file in .ci-evidence/*.status; do
+            code="$(cat "$file")"
+            if [ "$code" != "0" ]; then
+              echo "::error::$(basename "$file") failed with status $code"
+              failures=$((failures + 1))
+            fi
+          done
+          test "$failures" -eq 0
