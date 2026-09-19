@@ -5,16 +5,41 @@ const patterns = [
   /sb_secret_[A-Za-z0-9_-]+/g,
   /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,
   /\b\d{3}\.\d{3}\.\d{3}-\d{2}\b/g,
+  /\+[1-9]\d{7,14}\b/g,
   /\b\d{11}\b/g,
 ];
+
 export function scrub(value: string) {
-  return patterns.reduce((s, p) => s.replace(p, "[REDACTED]"), value);
+  return patterns.reduce((text, pattern) => text.replace(pattern, "[REDACTED]"), value);
 }
-export function reportFailure(category: string, requestId?: string) {
+
+type FailureInput = {
+  category: string;
+  requestId?: string;
+  hostname?: string;
+  detail?: string;
+};
+
+export function reportFailure(
+  input: string | FailureInput,
+  legacyRequestId?: string,
+) {
+  const data: FailureInput =
+    typeof input === "string"
+      ? { category: input, requestId: legacyRequestId }
+      : input;
+
   console.error(
-    JSON.stringify({ severity: "error", category: scrub(category), requestId }),
+    JSON.stringify({
+      severity: "error",
+      category: scrub(data.category),
+      requestId: data.requestId,
+      ...(data.hostname ? { hostname: scrub(data.hostname) } : {}),
+      ...(data.detail ? { detail: scrub(data.detail) } : {}),
+    }),
   );
 }
+
 export function classifyDbError(err: unknown) {
   const code = (err as { code?: string })?.code;
   return code === "23505"
