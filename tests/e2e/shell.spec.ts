@@ -150,3 +150,47 @@ test("config pública válida atualiza slogan da shell", async ({ page }) => {
 
   await expect(page.getByText("Slogan canônico de validação").first()).toBeVisible();
 });
+
+
+test("fluxos públicos de segurança estão acessíveis e responsivos", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto("/conta");
+
+  await page.getByRole("button", { name: "Esqueci minha senha" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Recupere sua senha" }),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Voltar para entrar" }).click();
+  await page.getByRole("button", { name: "Reenviar confirmação" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Confirme seu cadastro" }),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Voltar para entrar" }).click();
+  await page.getByRole("button", { name: "Entrar com link ou código" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Acesso por link ou código" }),
+  ).toBeVisible();
+
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+  ).toBe(true);
+});
+
+test("rotas diretas de recuperação preservam estado correto", async ({ page }) => {
+  await page.goto("/recuperar-senha");
+  await expect(
+    page.getByRole("heading", { name: "Recupere sua senha" }),
+  ).toBeVisible();
+
+  await page.goto("/redefinir-senha");
+  await expect(
+    page.getByRole("heading", { name: "Defina sua nova senha" }),
+  ).toBeVisible();
+
+  await page.goto("/confirmar-contato");
+  await expect(
+    page.getByRole("heading", { name: "Confirme seu cadastro" }),
+  ).toBeVisible();
+});
