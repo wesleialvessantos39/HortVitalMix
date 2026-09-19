@@ -1,5 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
-import { validCpf, RegisterProducerSchema } from "../../shared/contracts/auth";
+import {
+  EmailRequestSchema,
+  NewPasswordSchema,
+  PasswordChangeSchema,
+  RegisterProducerSchema,
+  SessionImportSchema,
+  validCpf,
+} from "../../shared/contracts/auth";
 import {
   resolveDbUrl,
   buildRuntime,
@@ -38,6 +45,43 @@ describe("contratos e limites de confiança", () => {
     expect(
       RegisterProducerSchema.safeParse({ role: "platform_super_admin" })
         .success,
+    ).toBe(false);
+  });
+
+  it("normaliza e-mail nos fluxos de segurança", () => {
+    expect(EmailRequestSchema.parse({ email: " TEST@EXAMPLE.COM " }).email).toBe(
+      "test@example.com",
+    );
+  });
+
+  it("exige senha de 12 caracteres e nonce numérico", () => {
+    expect(NewPasswordSchema.safeParse({ password: "curta" }).success).toBe(false);
+    expect(
+      PasswordChangeSchema.safeParse({
+        password: "SenhaNovaMuitoForte!2026",
+        nonce: "123456",
+      }).success,
+    ).toBe(true);
+    expect(
+      PasswordChangeSchema.safeParse({
+        password: "SenhaNovaMuitoForte!2026",
+        nonce: "ABC123",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("limita tamanho dos tokens importados", () => {
+    expect(
+      SessionImportSchema.safeParse({
+        accessToken: "a".repeat(64),
+        refreshToken: "r".repeat(32),
+      }).success,
+    ).toBe(true);
+    expect(
+      SessionImportSchema.safeParse({
+        accessToken: "a".repeat(9000),
+        refreshToken: "r".repeat(32),
+      }).success,
     ).toBe(false);
   });
 
