@@ -2,7 +2,7 @@
 
 ## 2026-09-19 — Errata funcional: cadastro brasileiro e telas separadas
 
-Status: **código promovido para `main`, build Vercel aprovado; migration 9 aprovada em development e homologation; production em restauração para receber a mesma migration**.
+Status: **implementação promovida para `main`, build Vercel aprovado e schema lógico 9 promovido e verificado em development, homologation e production**.
 
 - PR #3 mergeado para `main` no commit `e6efccfe7b25b5b414103258b2d31a49b9af4344`.
 - contexto `Vercel` do commit: `success`.
@@ -15,7 +15,8 @@ Status: **código promovido para `main`, build Vercel aprovado; migration 9 apro
 - schema lógico promovido de 8 para 9 pela migration `20260919224500_registration_br_profile.sql`.
 - development: migration 9 aplicada, histórico canônico normalizado e teste transacional aprovado com zero resíduos.
 - homologation: migration 9 aplicada, RLS/FORCE verificados, `property_name` presente, `brand_name` ausente, bucket privado e zero resíduos.
-- production: projeto restaurando após rotação Free; migration 9 ainda não registrada enquanto a conexão PostgreSQL estiver indisponível.
+- production: projeto restaurado e `ACTIVE_HEALTHY`; migration 9 aplicada com histórico canônico; 8 tabelas, RLS/FORCE íntegros, `grammatical_treatment` e `property_name` presentes, `brand_name` ausente e bucket `documents` privado.
+- `app_releases` permanece sem release corrente nesta etapa; nenhuma homologação/tag foi fabricada.
 - documentação detalhada: `docs/ERRATA_CADASTRO_BR_2026-09-19.md`.
 
 
