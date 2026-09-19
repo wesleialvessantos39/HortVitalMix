@@ -61,7 +61,7 @@ O teste de `command_id` duplicado foi executado no banco real dentro de `BEGIN/R
 ## Bloqueios que impedem declarar homologação
 
 1. A branch de finalização ainda precisa executar Node 24 + `npm ci` + typecheck + Vitest + build + Playwright.
-2. Cobertura mínima do Manual v10 ainda não foi medida. O projeto não possui `@vitest/coverage-v8` no lockfile; não alterar `package.json` isoladamente porque quebraria `npm ci`.
+2. Cobertura mínima do Manual v10 ainda precisa ser medida em execução Node 24. O provider `@vitest/coverage-v8@5.0.1` já está versionado e sincronizado no lockfile; `npm run homologate` executa `test:coverage` e aplica os thresholds canônicos.
 3. Testes de integração precisam rodar com credenciais do **development isolado** e `HVM_INTEGRATION_ENABLED=true`.
 4. Só existe um projeto Supabase provisionado; development/homologation/production independentes ainda não estão comprovados.
 5. Não há releases registradas nem snapshots dos três ambientes.
@@ -71,3 +71,11 @@ O teste de `command_id` duplicado foi executado no banco real dentro de `BEGIN/R
 ## Regra de transição
 
 Permanecer na Trilha 01. Não iniciar Trilha 02 enquanto os itens acima não estiverem comprovados.
+
+
+## Atualização do gate de cobertura — 2026-09-19
+
+- `@vitest/coverage-v8@5.0.1` incluído em `package.json` e `package-lock.json` de forma sincronizada.
+- `vitest.config.ts` declara `provider: "v8"` e reporters `text/html/lcov`.
+- `npm run homologate` passou a executar `npm run test:coverage` antes do build/foundation/e2e.
+- A configuração não é tratada como evidência de aprovação: a medição final continua condicionada à execução reproduzível com Node 24 e integration habilitada em development isolado.
