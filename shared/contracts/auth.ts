@@ -1,4 +1,62 @@
 import { z } from "zod";
+
+export type GrammaticalTreatment = "masculine" | "feminine";
+export const GrammaticalTreatmentSchema = z.enum(["masculine", "feminine"]);
+
+function onlyDigits(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+export function formatCpf(value: string): string {
+  const digits = onlyDigits(value).slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return digits.slice(0, 3) + "." + digits.slice(3);
+  if (digits.length <= 9)
+    return (
+      digits.slice(0, 3) +
+      "." +
+      digits.slice(3, 6) +
+      "." +
+      digits.slice(6)
+    );
+  return (
+    digits.slice(0, 3) +
+    "." +
+    digits.slice(3, 6) +
+    "." +
+    digits.slice(6, 9) +
+    "-" +
+    digits.slice(9)
+  );
+}
+
+function localBrazilMobileDigits(value: string): string {
+  const digits = onlyDigits(value);
+  if (digits.length >= 12 && digits.startsWith("55")) return digits.slice(2, 13);
+  return digits.slice(0, 11);
+}
+
+export function formatBrazilMobile(value: string): string {
+  const digits = localBrazilMobileDigits(value);
+  if (!digits) return "";
+  if (digits.length <= 2) return "(" + digits;
+  if (digits.length <= 7)
+    return "(" + digits.slice(0, 2) + ") " + digits.slice(2);
+  return (
+    "(" +
+    digits.slice(0, 2) +
+    ") " +
+    digits.slice(2, 7) +
+    "-" +
+    digits.slice(7)
+  );
+}
+
+export function normalizeBrazilMobile(value: string): string {
+  const local = localBrazilMobileDigits(value);
+  return local.length === 11 ? "+55" + local : value.trim();
+}
+
 export function validCpf(value: string): boolean {
   if (!/^\d{11}$/.test(value) || /^(\d)\1{10}$/.test(value)) return false;
   for (let n = 9; n < 11; n++) {
@@ -9,22 +67,34 @@ export function validCpf(value: string): boolean {
   }
   return true;
 }
+
 const email = z.string().trim().toLowerCase().max(255).pipe(z.email());
+const cpf = z
+  .string()
+  .transform((value) => onlyDigits(value))
+  .refine(validCpf, "CPF inválido");
+const phone = z
+  .string()
+  .transform(normalizeBrazilMobile)
+  .refine(
+    (value) => /^\+55[1-9]\d9\d{8}$/.test(value),
+    "Use o formato (69) 99381-0921",
+  );
+
 const base = {
   fullName: z.string().trim().min(3).max(255),
-  cpf: z
-    .string()
-    .transform((v) => v.replace(/[.\-\s]/g, ""))
-    .refine(validCpf, "CPF inválido"),
+  grammaticalTreatment: GrammaticalTreatmentSchema,
+  cpf,
   email,
   password: z.string().min(12).max(128),
-  phone: z.string().regex(/^\+[1-9]\d{1,14}$/, "Use o formato +5569999999999"),
+  phone,
 };
+
 export const RegisterConsumerSchema = z.object(base).strict();
 export const RegisterProducerSchema = z
   .object({
     ...base,
-    brandName: z.string().trim().min(2).max(128),
+    propertyName: z.string().trim().min(2).max(128),
     activityType: z.enum([
       "hortalicas_folhosas",
       "legumes_picados",
@@ -34,6 +104,7 @@ export const RegisterProducerSchema = z
     ]),
   })
   .strict();
+
 export const LoginSchema = z
   .object({ email, password: z.string().min(1).max(128) })
   .strict();
@@ -53,7 +124,11 @@ export const PasswordChangeSchema = z
     nonce: z.string().regex(/^\d{6,8}$/, "Código de segurança inválido"),
   })
   .strict();
+
 export type Registration = z.infer<typeof RegisterConsumerSchema> &
   Partial<
-    Pick<z.infer<typeof RegisterProducerSchema>, "brandName" | "activityType">
+    Pick<
+      z.infer<typeof RegisterProducerSchema>,
+      "propertyName" | "activityType"
+    >
   >;
