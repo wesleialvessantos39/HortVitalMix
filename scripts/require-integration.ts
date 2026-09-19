@@ -17,7 +17,21 @@ if (runtime.appEnv !== "development") {
   process.exit(1);
 }
 
-if (productionRef && runtime.projectRef === productionRef) {
+if (!runtime.projectRef) {
+  console.error(
+    "INTEGRATION_GATE_FAILED: SUPABASE_PROJECT_REF é obrigatório.",
+  );
+  process.exit(1);
+}
+
+if (!productionRef) {
+  console.error(
+    "INTEGRATION_GATE_FAILED: HVM_PROD_PROJECT_REF é obrigatório para provar isolamento.",
+  );
+  process.exit(1);
+}
+
+if (runtime.projectRef === productionRef) {
   console.error(
     "INTEGRATION_GATE_FAILED: project ref de production recusado.",
   );
