@@ -13,14 +13,11 @@
   "outputDirectory": "dist",
   "regions": ["gru1"],
   "functions": {
-    "api/[...path].ts": {
+    "api/**/*.ts": {
       "maxDuration": 10,
       "memory": 512
     }
   },
-  "rewrites": [
-    {"source": "/api/(.*)", "destination": "/api/[...path]"}
-  ],
   "headers": [
     {
       "source": "/api/(.*)",
