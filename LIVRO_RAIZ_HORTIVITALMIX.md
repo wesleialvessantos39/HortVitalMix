@@ -1,5 +1,48 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-19 — Trilha 01: auditoria profunda de finalização v10
+
+Status: **correções de conformidade aplicadas; homologação final ainda não selada**.
+
+### Correções desta auditoria
+
+- Branch de finalização criada a partir da `main` atual: `trilha01-finalizacao-v10`.
+- `verify:foundation` elevado para A1–A15 literais, schema lógico 8, hash canônico e documentação SQL.
+- `preflight` endurecido para validar ambiente, project ref, Transaction Pooler, RLS/FORCE, Auth Admin e Data API.
+- Runtime alinhado ao Manual v10 com `logRuntimeBootSummary()`, diagnóstico de DB sem segredo e SHA automático da Vercel.
+- Scrub ampliado para telefone E.164 e reporte estruturado.
+- Sessão global com `req.actor` derivado de JWT válido e papéis vivos do banco.
+- Compensação de cadastro incompleto reforçada para não deixar identidade GoTrue/tombstone transitório.
+- Testes de integração ampliados: RLS/JWT, cadeia do produtor, duplicidade, rollback GoTrue, config e readiness.
+- SQL de fundação passou a provar unicidade de `command_id`.
+- Playwright transformado em gate explícito C1–C7.
+- `vercel.json` corrigido: auto-deploy apenas de `main`; demais branches desabilitadas por padrão.
+- Variáveis obsoletas removidas da documentação; testes reais usam `HVM_INTEGRATION_ENABLED` e `HVM_PROD_PROJECT_REF`.
+- Hardening documental aplicado ao Supabase e versionado em `supabase/hardening/trilha01_sensitive_comments.sql`.
+
+### Evidência atual do banco
+
+No projeto existente `xipbsazvymkqqfmfegwu`, consulta administrativa confirmou A1–A15 em estado compatível: 3 extensões, 8 tabelas, RLS/FORCE completo, triggers exigidos, singleton, quatro papéis, ausência de tabelas locais de credenciais, SECURITY DEFINER com search_path, policies com roles e zero PII detectada nos payloads de auditoria. O teste de `command_id` duplicado foi executado dentro de transação e revertido.
+
+Nenhuma release está registrada em `app_releases`; essa ausência é preservada para não fabricar homologação.
+
+### Pendências impeditivas
+
+- reexecução integral da branch com Node 24 e dependências pelo lockfile;
+- cobertura mínima por módulo ainda sem evidência final;
+- testes reais em development isolado;
+- três ambientes Supabase isolados ainda não comprovados/provisionados;
+- releases e snapshots por ambiente ausentes;
+- Vercel ainda sem projeto conectado na equipe consultada;
+- deployment production, `verify:deploy` e tag `trilha01-v1` ausentes.
+
+### Decisão de transição
+
+**NÃO iniciar Trilha 02.** Permanecer na Trilha 01 até fechar os gates externos e reproduzíveis.
+
+---
+
+
 ## 2026-09-19 — Trilha 01: implementação da fundação e verificação parcial
 
 Status: **implementada em código e banco existente; não homologada integralmente**.
