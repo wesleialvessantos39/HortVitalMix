@@ -5,6 +5,8 @@ import {
   PasswordChangeSchema,
   RegisterProducerSchema,
   SessionImportSchema,
+  formatBrazilMobile,
+  formatCpf,
   validCpf,
 } from "../../shared/contracts/auth";
 import {
@@ -28,17 +30,27 @@ describe("contratos e limites de confiança", () => {
 
   it("valida DV e normaliza cadastro", () => {
     const data = RegisterProducerSchema.parse({
-      fullName: "Produtor de Teste",
+      fullName: "Pessoa de Teste",
+      grammaticalTreatment: "feminine",
       cpf: "529.982.247-25",
       email: " TEST@EXAMPLE.COM ",
-      phone: "+5569999999999",
+      phone: "(69) 99999-9999",
       password: "a-secure-test-password",
-      brandName: "Produção de Teste",
+      propertyName: "Sítio de Teste",
       activityType: "misto",
     });
 
     expect(data.cpf).toBe("52998224725");
     expect(data.email).toBe("test@example.com");
+    expect(data.phone).toBe("+5569999999999");
+    expect(data.grammaticalTreatment).toBe("feminine");
+    expect(data.propertyName).toBe("Sítio de Teste");
+  });
+
+  it("aplica máscaras brasileiras de CPF e celular", () => {
+    expect(formatCpf("52998224725")).toBe("529.982.247-25");
+    expect(formatBrazilMobile("69993810921")).toBe("(69) 99381-0921");
+    expect(formatBrazilMobile("+5569993810921")).toBe("(69) 99381-0921");
   });
 
   it("rejeita injeção de papéis", () => {
