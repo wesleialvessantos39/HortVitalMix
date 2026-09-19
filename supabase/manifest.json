@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 9,
+  "schemaVersion": 10,
   "migrations": [
     {
       "version": "20260919030126",
@@ -45,7 +45,12 @@
       "version": "20260919224500",
       "name": "registration_br_profile",
       "file": "20260919224500_registration_br_profile.sql"
+    },
+    {
+      "version": "20260919231000",
+      "name": "remove_grammatical_treatment",
+      "file": "20260919231000_remove_grammatical_treatment.sql"
     }
   ],
-  "migrationHistoryHash": "0932343ae10c23f72e976ab60d35a347c5442d36d7bd2bd653596c343e5e3412"
+  "migrationHistoryHash": "896d4afdffae19fd9481816dfcead54ff75acca8852161a2fff23c10fffe3084"
 }
