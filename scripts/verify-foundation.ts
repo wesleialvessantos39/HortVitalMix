@@ -23,7 +23,7 @@ async function main() {
       "SELECT version,name FROM supabase_migrations.schema_migrations ORDER BY version",
     );
     const schemaVersion = validateHistory(history.rows);
-    if (schemaVersion !== 8) throw new Error("MIGRATION_HISTORY_GATE_FAILED");
+    if (schemaVersion !== 9) throw new Error("MIGRATION_HISTORY_GATE_FAILED");
     const migrationHistoryHash = assertManifestHash();
 
     const extensions = await client.query<{ extname: string }>(
@@ -205,7 +205,7 @@ async function main() {
             AND a.attnum>0
             AND NOT a.attisdropped
             AND (
-              (c.relname='app_people' AND a.attname IN ('cpf_normalized','email_normalized','phone_e164'))
+              (c.relname='app_people' AND a.attname IN ('cpf_normalized','email_normalized','phone_e164','grammatical_treatment'))
               OR
               (c.relname='app_audit_events' AND a.attname IN ('payload_before','payload_after','client_ip_hash','user_agent_hash'))
               OR
