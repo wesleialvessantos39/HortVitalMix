@@ -1,36 +1,46 @@
 {
-  "name": "react-example",
+  "name": "hortivitalmix",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --reporter=verbose",
+    "test:watch": "vitest",
+    "test:unit": "vitest run tests/unit tests/contract --reporter=verbose",
+    "test:integration": "HVM_INTEGRATION_ENABLED=true vitest run tests/integration --reporter=verbose",
     "build": "vite build",
-    "preview": "vite preview",
-    "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "preview": "vite preview --host=0.0.0.0",
+    "lint": "npm run typecheck && tsx scripts/check-client-secrets.ts",
+    "verify": "npm run typecheck && npm run test",
+    "preflight": "tsx scripts/preflight.ts",
+    "verify:foundation": "tsx scripts/verify-foundation.ts",
+    "release:current": "tsx scripts/release-current.ts",
+    "verify:deploy": "tsx scripts/verify-deploy.ts",
+    "homologate": "npm run preflight && npm run verify && npm run build && npm run verify:foundation"
   },
   "dependencies": {
-    "@google/genai": "^2.4.0",
+    "@supabase/supabase-js": "^2.57.4",
     "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-react": "^6.1.1",
+    "express": "^4.21.2",
     "lucide-react": "^0.546.0",
+    "pg": "^8.16.3",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "vite": "^8.3.0",
-    "express": "^4.21.2",
-    "dotenv": "^17.2.3",
-    "motion": "^12.23.24"
+    "zod": "^4.1.11"
   },
   "devDependencies": {
+    "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
+    "@types/pg": "^8.15.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "autoprefixer": "^10.4.21",
-    "esbuild": "^0.25.0",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
-    "typescript": "^7.0.2",
-    "@types/express": "^4.17.21"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   }
 }
