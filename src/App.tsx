@@ -50,6 +50,12 @@ const categories = [
   "Temperos e ervas",
   "Frutas",
 ];
+const accountPaths = new Set([
+  "/conta",
+  "/recuperar-senha",
+  "/redefinir-senha",
+  "/confirmar-contato",
+]);
 export default function App() {
   const [config, setConfig] = useState<GlobalConfigPublic | null>(null),
     [path, setPath] = useState(location.pathname),
@@ -201,8 +207,8 @@ export default function App() {
         {search}
       </header>
       <main id="conteudo" className="layout">
-        {path === "/conta" ? (
-          <Account />
+        {accountPaths.has(path) ? (
+          <Account path={path} />
         ) : (
           <>
             <aside>
