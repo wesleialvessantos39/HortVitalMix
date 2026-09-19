@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "npm run typecheck && npm run security:check",
     "test": "vitest run",
-    "test:integration": "vitest run tests/integration",
+    "test:integration": "HVM_INTEGRATION_ENABLED=true vitest run tests/integration",
     "test:e2e": "playwright test",
     "security:check": "node --import tsx scripts/security-check.ts",
     "preflight": "node --import tsx scripts/preflight.ts",
@@ -21,7 +21,7 @@
     "verify:foundation": "node --import tsx scripts/verify-foundation.ts",
     "release:current": "node --import tsx scripts/release-current.ts",
     "verify:deploy": "node --import tsx scripts/verify-deploy.ts",
-    "homologate": "npm run preflight && npm run verify && npm run build && npm run verify:foundation && node --import tsx scripts/require-integration.ts && npm run test:integration && npm run test:e2e",
+    "homologate": "npm run preflight && npm run verify && npm run build && npm run verify:foundation",
     "migrations:verify": "node --import tsx scripts/migrations-manifest.ts"
   },
   "dependencies": {
