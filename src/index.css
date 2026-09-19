@@ -615,6 +615,61 @@ dialog p {
   width: 100%;
   margin-top: 20px;
 }
+.account-choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 20px;
+}
+.account-choice {
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  background: #fbfcfb;
+}
+.account-choice:hover {
+  border-color: #b8cdbb;
+  background: var(--light);
+}
+.account-choice strong,
+.account-choice span {
+  display: block;
+}
+.account-choice strong {
+  color: var(--dark);
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+.account-choice span {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+.account-choice-admin {
+  grid-column: 1 / -1;
+}
+.admin-role-preview {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f7f9f7;
+  margin: 18px 0;
+}
+.admin-role-preview span {
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+.admin-prepared input:disabled {
+  background: #f4f6f4;
+  color: var(--muted);
+}
+.admin-prepared button:disabled {
+  cursor: not-allowed;
+}
 @media (min-width: 768px) and (max-width: 1199px) {
   .header-inner {
     gap: 16px;
@@ -894,6 +949,12 @@ dialog p {
   .form-grid {
     grid-template-columns: 1fr;
     gap: 0;
+  }
+  .account-choice-grid {
+    grid-template-columns: 1fr;
+  }
+  .account-choice-admin {
+    grid-column: auto;
   }
   .about {
     padding: 22px;
