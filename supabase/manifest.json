@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 8,
+  "schemaVersion": 9,
   "migrations": [
     {
       "version": "20260919030126",
@@ -40,7 +40,12 @@
       "version": "20260919030140",
       "name": "auth_delete_mirror",
       "file": "20260919030140_auth_delete_mirror.sql"
+    },
+    {
+      "version": "20260919224500",
+      "name": "registration_br_profile",
+      "file": "20260919224500_registration_br_profile.sql"
     }
   ],
-  "migrationHistoryHash": "59bf7dfa8bbfe0ae4bd9e58bf03bf9b243159fe78ac9f38175d3c848b55549d6"
+  "migrationHistoryHash": "0932343ae10c23f72e976ab60d35a347c5442d36d7bd2bd653596c343e5e3412"
 }
