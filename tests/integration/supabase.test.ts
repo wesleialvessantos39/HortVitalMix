@@ -54,7 +54,6 @@ function registration(overrides: Record<string, unknown> = {}) {
       return "(69) " + number.slice(0, 5) + "-" + number.slice(5);
     })(),
     password: `Hvm!${marker}Aa9#`,
-    grammaticalTreatment: "feminine",
     propertyName: `Sítio ${marker.slice(0, 8)}`,
     activityType: "misto",
     ...overrides,
@@ -143,7 +142,6 @@ describe.skipIf(!enabled)("Supabase real e JWTs reais", () => {
       expect(actor.status).toBe(200);
       expect(actor.body.userId).toBe(id);
       expect(actor.body.roles).toEqual(["consumer"]);
-      expect(actor.body.grammaticalTreatment).toBeNull();
 
       const own = await auth.from("app_users").select("id");
       expect(own.error).toBeNull();
@@ -199,7 +197,7 @@ describe.skipIf(!enabled)("Supabase real e JWTs reais", () => {
       expect(userId).toMatch(/^[0-9a-f-]{36}$/i);
 
       const chain = await dbPool!.query(
-        `SELECT u.status,p.full_name,p.grammatical_treatment,r.role_code,pp.property_name,pp.verification_status,pp.trust_level
+        `SELECT u.status,p.full_name,r.role_code,pp.property_name,pp.verification_status,pp.trust_level
            FROM public.app_users u
            JOIN public.app_people p ON p.user_id=u.id
            JOIN public.app_user_role_assignments r ON r.user_id=u.id AND r.revoked_at IS NULL
@@ -212,7 +210,6 @@ describe.skipIf(!enabled)("Supabase real e JWTs reais", () => {
       expect(chain.rows[0]).toMatchObject({
         status: "active",
         role_code: "producer",
-        grammatical_treatment: "feminine",
         property_name: payload.propertyName,
         verification_status: "declared",
         trust_level: 0,
@@ -324,7 +321,7 @@ describe.skipIf(!enabled)("Supabase real e JWTs reais", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.databaseConnected).toBe(true);
-    expect(response.body.schemaVersion).toBe(9);
+    expect(response.body.schemaVersion).toBe(10);
     expect(response.body.releaseTag).toBe(release.rows[0].release_tag);
   });
 
