@@ -43,9 +43,9 @@ Typecheck e build aprovados; 23 testes unitários/HTTP e 7 testes Playwright apr
 
 - Credenciais do pooler/Admin API não estão disponíveis no runtime Node. Preflight falha; três testes de integração estão pulados.
 - Ambientes dev/homolog/main separados ainda não provisionados. A aplicação no projeto existente não representa promoção homologada.
-- Conta Vercel conectada não retornou projetos; URL/variáveis/deployment ainda não configurados.
+- Conta Vercel conectada não retornou projetos; URL/variáveis/deployment ainda não configurados. A tentativa pelo conector retornou `Tool deploy_to_vercel not found` (`INVALID_ARGUMENT`); nenhum deployment foi criado. Não há evidência de esgotamento de cota.
 - Confirmação de e-mail, backups reais, release por ambiente e verificação pós-deploy pendentes.
-- Advisor da função preexistente `rls_auto_enable` requer revisão administrativa. Helpers de autorização autenticados possuem search_path e escopo da própria identidade.
+- Advisor da função preexistente `rls_auto_enable` requer revisão administrativa: inspeção identifica retorno `event_trigger` e `search_path=pg_catalog`; o aviso não demonstra uma RPC comum explorável. A função preexistente foi preservada. Helpers de autorização autenticados possuem search_path e escopo da própria identidade.
 
 ### Checklist da entrega
 
@@ -55,7 +55,7 @@ Typecheck e build aprovados; 23 testes unitários/HTTP e 7 testes Playwright apr
 - [x] Responsividade validada por navegador em seis viewports.
 - [x] Supabase atualizado no projeto existente; três ambientes pendentes.
 - [x] Livro Raiz atualizado.
-- [ ] GitHub: confirmar publicação do commit desta entrega.
+- [x] GitHub: implementação publicada na branch main, commit `980a70bd7e4035d6892a99d5527e75e5b5670cf6`, pelo conector autenticado após o Git local indicar ausência de credenciais.
 - [ ] Vercel integralmente pronta: build/configs preparados, projeto e segredos pendentes.
 - [ ] Conformidade/homologação integral: não aprovada enquanto os gates externos estiverem pendentes.
 
