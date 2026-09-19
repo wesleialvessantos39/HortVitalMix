@@ -19,6 +19,10 @@ export function assertNotProduction() {
     }
   }
 
+  if (process.env.HVM_INTEGRATION_ENABLED === "true" && !prodRef) {
+    throw new Error("[TEST] HVM_PROD_PROJECT_REF é obrigatório na integração.");
+  }
+
   if (prodRef && (url.includes(prodRef) || projectRef === prodRef)) {
     throw new Error("[TEST] Project ref de production recusado.");
   }
