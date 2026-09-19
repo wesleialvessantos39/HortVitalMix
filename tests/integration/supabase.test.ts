@@ -123,6 +123,19 @@ describe.skipIf(!enabled)("Supabase real e JWTs reais", () => {
       });
       const login = await auth.auth.signInWithPassword({ email, password });
       expect(login.error).toBeNull();
+      expect(login.data.session?.access_token).toBeTruthy();
+
+      await dbPool!.query(
+        "INSERT INTO public.app_user_role_assignments(user_id,role_code) VALUES($1,'consumer')",
+        [id],
+      );
+
+      const actor = await request(app)
+        .get("/v1/auth/session")
+        .set("Authorization", `Bearer ${login.data.session!.access_token}`);
+      expect(actor.status).toBe(200);
+      expect(actor.body.userId).toBe(id);
+      expect(actor.body.roles).toEqual(["consumer"]);
 
       const own = await auth.from("app_users").select("id");
       expect(own.error).toBeNull();
