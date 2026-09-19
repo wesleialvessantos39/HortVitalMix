@@ -360,7 +360,7 @@ authRouter.post("/resend-confirmation", async (req, res) => {
     return;
   }
 
-  const target = redirectUrl(req, "/conta");
+  const target = redirectUrl(req, "/entrar");
   if (supabasePublic && target) {
     const { error } = await supabasePublic.auth.resend({
       type: "signup",
@@ -399,7 +399,7 @@ authRouter.post("/magic-link", async (req, res) => {
     return;
   }
 
-  const target = redirectUrl(req, "/conta");
+  const target = redirectUrl(req, "/entrar");
   if (supabasePublic && target) {
     const { error } = await supabasePublic.auth.signInWithOtp({
       email: input.data.email,
@@ -571,7 +571,7 @@ for (const role of ["consumer", "producer"] as const)
         parsed.data,
         role,
         res.locals.requestId,
-        redirectUrl(req, "/conta") ?? undefined,
+        redirectUrl(req, "/entrar") ?? undefined,
       );
       res.status(201).json(result);
     } catch (error) {
