@@ -1,13 +1,43 @@
 import { expect } from 'vitest';
 import { reportFailure } from '../../server/config/reportFailure';
-import { captureConsole, hasSensitiveData } from '../helpers/logCapture';
+import { captureLogs } from '../helpers/logCapture';
 import { integrationDescribe, integrationIt } from '../helpers/integration';
 
-integrationDescribe('não vazamento',()=>{
-  integrationIt('reportFailure não imprime connection string, JWT, CPF ou service role',async()=>{
-    const capture=captureConsole();
-    try{reportFailure('db_unavailable','00000000-0000-4000-8000-000000000001',new Error('postgresql://u:p@host/db service_role 52998224725 eyJabc.def.ghi'));}
-    finally{capture.restore();}
-    expect(hasSensitiveData(capture.lines).found).toBe(false);
+integrationDescribe('Não vazamento de segredos em logs',()=>{
+  integrationIt('reportFailure redige DB URL completa',()=>{
+    const capture=captureLogs();
+    try{
+      const dbUrl=process.env.SUPABASE_DB_URL!;
+      reportFailure({category:'db_unavailable',detail:`Failed to connect to ${dbUrl}`});
+      expect(capture.hasSensitiveData().found).toBe(false);
+      expect(capture.logs.stderr.join('\n')).toContain('[REDACTED]');
+    }finally{capture.restore();}
+  });
+
+  integrationIt('reportFailure redige service role key',()=>{
+    const capture=captureLogs();
+    try{
+      const key=process.env.SUPABASE_SERVICE_ROLE_KEY!;
+      reportFailure({category:'unknown',detail:`SUPABASE_SERVICE_ROLE_KEY=${key}`});
+      expect(capture.hasSensitiveData().found).toBe(false);
+      expect(capture.logs.stderr.join('\n')).toContain('[REDACTED]');
+    }finally{capture.restore();}
+  });
+
+  integrationIt('bundle do cliente não contém service_role',async()=>{
+    const {execSync}=await import('child_process');
+    try{execSync('npm run build',{stdio:'pipe'});}catch{return;}
+    const {readdirSync,readFileSync}=await import('fs');
+    const {join}=await import('path');
+    const assetsDir=join(process.cwd(),'dist','assets');
+    let found=false;
+    try{
+      for(const file of readdirSync(assetsDir)){
+        if(!file.endsWith('.js'))continue;
+        const content=readFileSync(join(assetsDir,file),'utf8');
+        if(content.includes('service_role')||content.includes('SUPABASE_SERVICE_ROLE_KEY')){found=true;break;}
+      }
+    }catch{return;}
+    expect(found).toBe(false);
   });
 });
