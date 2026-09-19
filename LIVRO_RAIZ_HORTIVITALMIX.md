@@ -1,5 +1,21 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-19 — Errata funcional: cadastro brasileiro e telas separadas
+
+Status: **implementação em andamento na branch `ajustes-cadastro-brasileiro`**.
+
+- CPF com máscara automática `000.000.000-00`, normalização server-side e DV preservado.
+- celular restrito ao Brasil, exibido como `(DD) 9XXXX-XXXX` e persistido em E.164 `+55...`.
+- cadastro público separado em `/cadastro/consumidor` e `/cadastro/produtor`; login em `/entrar`.
+- tela `/acesso/administracao` pré-preparada, sem ativar endpoint público administrativo.
+- `Nome da sua produção` substituído por `Nome de seu imóvel`, inclusive no contrato e no banco (`property_name`).
+- preferência explícita de tratamento gramatical adicionada; não há inferência de sexo/gênero pelo nome.
+- schema lógico promovido de 8 para 9 pela migration `20260919224500_registration_br_profile.sql`.
+- development já recebeu a migration 9 e passou teste transacional sem resíduos.
+- documentação detalhada: `docs/ERRATA_CADASTRO_BR_2026-09-19.md`.
+
+---
+
 ## 2026-09-19 — Trilha 01: promoção para main e disparo Vercel
 
 Status: **implementação promovida para `main`; deployment GitHub→Vercel concluído com status `success`; homologação final ainda não selada**.
