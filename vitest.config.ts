@@ -13,6 +13,8 @@ export default defineConfig({
       shuffle: false,
     },
     coverage: {
+      provider: "v8",
+      reporter: ["text", "html", "lcov"],
       include: ["server/**/*.ts", "shared/**/*.ts", "tests/helpers/**/*.ts"],
       thresholds: {
         lines: 60,
