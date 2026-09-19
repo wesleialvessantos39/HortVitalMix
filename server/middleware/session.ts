@@ -52,7 +52,7 @@ export async function sessionMiddleware(
 
   try {
     const { data, error } = await supabaseAdmin.auth.getUser(token);
-    if (error || !data.user) {
+    if (error || !data.user || !data.user.email_confirmed_at) {
       next();
       return;
     }
