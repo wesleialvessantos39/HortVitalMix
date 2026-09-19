@@ -6,6 +6,7 @@ import {
   logRuntimeBootSummary,
 } from "../../server/config/runtime";
 import { parseArgs } from "../../scripts/args";
+import { hashMigrationContents } from "../../scripts/migrations-manifest";
 import {
   scrub,
   reportFailure,
@@ -82,6 +83,19 @@ describe("contratos e limites de confiança", () => {
       tag: "x",
       sha: "abc",
     }));
+
+  it("migration_history_hash muda quando qualquer migration muda", () => {
+    const original = hashMigrationContents([
+      ["0001.sql", "SELECT 1;"],
+      ["0002.sql", "SELECT 2;"],
+    ]);
+    const altered = hashMigrationContents([
+      ["0001.sql", "SELECT 1;"],
+      ["0002.sql", "SELECT 3;"],
+    ]);
+
+    expect(altered).not.toBe(original);
+  });
 
   it("remove PII e credenciais de mensagens", () => {
     const value = scrub(
