@@ -11,14 +11,14 @@
 
 Sincronizar GitHub no Studio, executar `npm ci`, configurar os segredos e iniciar `npm run dev`. API e interface compartilham a porta 3000.
 
-Aplicar migrations primeiro em development com Supabase CLI, depois conferir o manifesto. Antes de qualquer banco que já tenha dados, produzir backup privado com a ferramenta administrativa; não versionar dumps com PII. Nesta execução o schema de aplicação estava vazio antes das oito migrations; não se declarou snapshot remoto criado.
+Aplicar migrations primeiro em development com Supabase CLI, depois conferir o manifesto. Em cada ambiente, aplicar também os hardenings idempotentes de `supabase/hardening/` (ACL e comentários sensíveis). Antes de qualquer banco que já tenha dados, produzir backup privado com a ferramenta administrativa; não versionar dumps com PII. Nesta execução o schema de aplicação estava vazio antes das oito migrations; não se declarou snapshot remoto criado.
 
-Executar `npm run homologate` com integração habilitada no projeto development isolado. O gate falha quando credenciais estão ausentes ou testes reais não foram habilitados.
+Executar `HVM_INTEGRATION_ENABLED=true npm run homologate` no projeto development isolado. O gate falha quando credenciais estão ausentes, quando a integração real está desabilitada ou quando o project ref coincide com production.
 
 ## Promoção sequencial
 
 - Somente depois da validação em development, aplicar as migrations em homologation.
-- Conferir `npm run preflight`, `npm run verify:foundation`, build e smoke tests no preview.
+- Conferir `npm run preflight`, `npm run verify:foundation`, build, Playwright e smoke tests no preview criado deliberadamente. `vercel.json` não habilita deploy automático de branches diferentes de `main`.
 - Somente após a aprovação em homologation, promover para production.
 - Não modificar migrations já aplicadas. Qualquer correção subsequente precisa de migration aditiva e atualização do manifesto.
 
