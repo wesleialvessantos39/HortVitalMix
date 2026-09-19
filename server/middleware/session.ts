@@ -92,8 +92,11 @@ export async function sessionMiddleware(
       [data.user.id],
     );
 
-    const person = await dbPool.query<{ id: string }>(
-      "SELECT id FROM public.app_people WHERE user_id=$1 LIMIT 1",
+    const person = await dbPool.query<{
+      id: string;
+      grammatical_treatment: "masculine" | "feminine" | null;
+    }>(
+      "SELECT id,grammatical_treatment FROM public.app_people WHERE user_id=$1 LIMIT 1",
       [data.user.id],
     );
 
@@ -102,6 +105,7 @@ export async function sessionMiddleware(
       email: data.user.email ?? null,
       roles: roles.rows.map((row) => row.role_code),
       personId: person.rows[0]?.id ?? null,
+      grammaticalTreatment: person.rows[0]?.grammatical_treatment ?? null,
     };
 
     next();
