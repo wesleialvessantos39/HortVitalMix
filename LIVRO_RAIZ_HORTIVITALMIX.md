@@ -2,19 +2,22 @@
 
 ## 2026-09-19 — Errata funcional: cadastro brasileiro e telas separadas
 
-Status: **implementação em andamento na branch `ajustes-cadastro-brasileiro`**.
+Status: **código promovido para `main`, build Vercel aprovado; migration 9 aprovada em development e homologation; production em restauração para receber a mesma migration**.
 
+- PR #3 mergeado para `main` no commit `e6efccfe7b25b5b414103258b2d31a49b9af4344`.
+- contexto `Vercel` do commit: `success`.
 - CPF com máscara automática `000.000.000-00`, normalização server-side e DV preservado.
 - celular restrito ao Brasil, exibido como `(DD) 9XXXX-XXXX` e persistido em E.164 `+55...`.
 - cadastro público separado em `/cadastro/consumidor` e `/cadastro/produtor`; login em `/entrar`.
-- tela `/acesso/administracao` pré-preparada, sem ativar endpoint público administrativo.
+- tela `/acesso/administracao` pré-preparada, sem cadastro administrativo público.
 - `Nome da sua produção` substituído por `Nome de seu imóvel`, inclusive no contrato e no banco (`property_name`).
 - preferência explícita de tratamento gramatical adicionada; não há inferência de sexo/gênero pelo nome.
 - schema lógico promovido de 8 para 9 pela migration `20260919224500_registration_br_profile.sql`.
-- development já recebeu a migration 9 e passou teste transacional sem resíduos.
+- development: migration 9 aplicada, histórico canônico normalizado e teste transacional aprovado com zero resíduos.
+- homologation: migration 9 aplicada, RLS/FORCE verificados, `property_name` presente, `brand_name` ausente, bucket privado e zero resíduos.
+- production: projeto restaurando após rotação Free; migration 9 ainda não registrada enquanto a conexão PostgreSQL estiver indisponível.
 - documentação detalhada: `docs/ERRATA_CADASTRO_BR_2026-09-19.md`.
 
----
 
 ## 2026-09-19 — Trilha 01: promoção para main e disparo Vercel
 
