@@ -16,7 +16,9 @@ function assertIsolatedDevelopment() {
     throw new Error("ISOLATED_TEST_ENV_REQUIRED");
 
   const productionRef = process.env.HVM_PROD_PROJECT_REF;
-  if (productionRef && runtime.projectRef === productionRef)
+  if (!productionRef)
+    throw new Error("PRODUCTION_PROJECT_REF_REQUIRED");
+  if (runtime.projectRef === productionRef)
     throw new Error("PRODUCTION_PROJECT_REF_REJECTED");
 
   if (!dbPool || !supabaseAdmin)
