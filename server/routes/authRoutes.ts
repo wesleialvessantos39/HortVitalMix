@@ -133,9 +133,16 @@ authRouter.post("/refresh", async (req, res, next) => {
 });
 authRouter.get("/session", async (req, res, next) => {
   try {
-    const token =
-      cookie(req, "hvm_access") ??
-      req.headers.authorization?.replace(/^Bearer /, "");
+    if (req.actor) {
+      res.json({
+        userId: req.actor.userId,
+        email: req.actor.email,
+        roles: req.actor.roles,
+      });
+      return;
+    }
+
+    const token = cookie(req, "hvm_access");
     if (!token) {
       res.status(401).json({ error: "SESSION_REQUIRED" });
       return;
