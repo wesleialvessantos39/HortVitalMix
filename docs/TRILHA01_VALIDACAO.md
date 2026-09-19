@@ -62,8 +62,8 @@ O teste de `command_id` duplicado foi executado no banco real dentro de `BEGIN/R
 
 1. A branch de finalização ainda precisa executar Node 24 + `npm ci` + typecheck + Vitest + build + Playwright.
 2. Cobertura mínima do Manual v10 ainda precisa ser medida em execução Node 24. O provider `@vitest/coverage-v8@5.0.1` já está versionado e sincronizado no lockfile; `npm run homologate` executa `test:coverage` e aplica os thresholds canônicos.
-3. Testes de integração precisam rodar com credenciais do **development isolado** e `HVM_INTEGRATION_ENABLED=true`.
-4. Só existe um projeto Supabase provisionado; development/homologation/production independentes ainda não estão comprovados.
+3. Os testes SQL reais de isolamento/RLS/auditoria passaram no **development isolado** com rollback e zero resíduos; ainda falta executar a suíte Node 24 completa com `HVM_INTEGRATION_ENABLED=true` para validar também Auth/HTTP/runtime.
+4. A topologia paga por Preview Branches foi substituída, por autorização do proprietário, por projetos Free isolados com rotação de cota. Development e homologation estão provisionados e verificados; production está preservado e temporariamente pausado até a fase final.
 5. Não há releases registradas nem snapshots dos três ambientes.
 6. A equipe Vercel conectada continua retornando **0 projetos**; não há deployment READY nem URL para `verify:deploy`.
 7. A tag `trilha01-v1` não pode ser criada antes do deploy de production e `verify:deploy` aprovados.
@@ -79,3 +79,26 @@ Permanecer na Trilha 01. Não iniciar Trilha 02 enquanto os itens acima não est
 - `vitest.config.ts` declara `provider: "v8"` e reporters `text/html/lcov`.
 - `npm run homologate` passou a executar `npm run test:coverage` antes do build/foundation/e2e.
 - A configuração não é tratada como evidência de aprovação: a medição final continua condicionada à execução reproduzível com Node 24 e integration habilitada em development isolado.
+
+
+## Estratégia Free executada — 2026-09-19
+
+Por instrução do proprietário, nenhuma Preview Branch paga foi criada.
+
+- production original `xipbsazvymkqqfmfegwu`: pausado temporariamente para liberar a vaga Free;
+- development `ldtcsrlxfpflzhnbjjnp`: criado a US$ 0/mês, 8 migrations + hardening, A1–A15 aprovados, teste SQL transacional aprovado, zero resíduos;
+- homologation `vcbcbbnbboxoimqmuibm`: criado a US$ 0/mês, 8 migrations + hardening, A1–A15 aprovados, documentação sensível sem pendências, teste SQL transacional aprovado, zero resíduos;
+- a cota Free bloqueou um terceiro projeto ativo simultâneo; a fase production será executada após pausar development e restaurar o projeto production existente;
+- nenhum recurso pago foi contratado.
+
+Esta rotação preserva isolamento real de credenciais e a ordem de promoção, mas é uma errata operacional em relação à topologia literal de Preview Branches do Manual v10.
+
+### Pendências após o avanço
+
+1. executar `npm ci` e `npm run homologate` em Node 24 contra development, incluindo coverage V8 e integração Auth/HTTP;
+2. executar preflight/build/foundation/Playwright e smoke do preview de homologation;
+3. resolver o projeto Vercel correspondente à equipe conectada e obter deployment READY;
+4. registrar releases somente depois dos gates;
+5. produzir evidência real de snapshot/backup por ambiente conforme o que o plano Free disponibilizar;
+6. pausar development, restaurar production e repetir os gates de production;
+7. executar `verify:deploy` e somente então criar `trilha01-v1`.
