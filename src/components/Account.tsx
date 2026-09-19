@@ -4,15 +4,13 @@ import {
   formatBrazilMobile,
   formatCpf,
   RegisterConsumerSchema,
-  RegisterProducerSchema,
-  type GrammaticalTreatment,
+  RegisterProducerSchema
 } from "../../shared/contracts/auth";
 
 type Session = {
   userId: string;
   email: string;
   roles: string[];
-  grammaticalTreatment: GrammaticalTreatment | null;
 };
 
 type Mode =
@@ -35,21 +33,12 @@ function modeFromPath(path: string): Mode {
   return "login";
 }
 
-function roleLabel(role: string, treatment: GrammaticalTreatment | null) {
-  const feminine = treatment === "feminine";
+function roleLabel(role: string) {
   const labels: Record<string, string> = {
-    consumer: feminine ? "Consumidora" : treatment ? "Consumidor" : "Consumidor(a)",
-    producer: feminine ? "Produtora" : treatment ? "Produtor" : "Produtor(a)",
-    platform_admin: feminine
-      ? "Administradora"
-      : treatment
-        ? "Administrador"
-        : "Administrador(a)",
-    platform_super_admin: feminine
-      ? "Super administradora"
-      : treatment
-        ? "Super administrador"
-        : "Super administrador(a)",
+    consumer: "Consumidor",
+    producer: "Produtor",
+    platform_admin: "Administrador",
+    platform_super_admin: "Super administrador",
   };
   return labels[role] ?? role;
 }
@@ -289,7 +278,7 @@ export function Account({
         <p>
           Acesso:{" "}
           {session.roles
-            .map((role) => roleLabel(role, session.grammaticalTreatment))
+            .map((role) => roleLabel(role))
             .join(", ")}
         </p>
 
@@ -376,14 +365,14 @@ export function Account({
         <span className="eyebrow">Área administrativa</span>
         <h1>Login administrativo</h1>
         <p>
-          Tela reservada para Administrador, Administradora, Super administrador
-          e Super administradora. A autorização continuará sendo definida pelo
-          perfil real da conta, nunca por seleção manual na tela.
+          Tela reservada para Administrador e Super administrador. A autorização
+          continuará sendo definida pelo perfil real da conta, nunca por seleção
+          manual na tela.
         </p>
 
         <div className="admin-role-preview" aria-label="Perfis administrativos previstos">
-          <span>Administrador / Administradora</span>
-          <span>Super administrador / Super administradora</span>
+          <span>Administrador</span>
+          <span>Super administrador</span>
         </div>
 
         <form aria-label="Login administrativo em preparação">
@@ -420,9 +409,9 @@ export function Account({
     mode === "login"
       ? "Entrar no HortiVitalMix"
       : mode === "producer"
-        ? "Cadastro de produtor ou produtora"
+        ? "Cadastro de produtor"
         : mode === "consumer"
-          ? "Cadastro de consumidor ou consumidora"
+          ? "Cadastro de consumidor"
           : mode === "recovery"
             ? "Recupere sua senha"
             : mode === "confirmation"
@@ -466,22 +455,6 @@ export function Account({
                 maxLength={255}
               />
             </label>
-
-            <label>
-              Forma de tratamento no sistema
-              <select name="grammaticalTreatment" defaultValue="" required>
-                <option value="" disabled>
-                  Selecione
-                </option>
-                <option value="masculine">Masculino</option>
-                <option value="feminine">Feminino</option>
-              </select>
-              <small>
-                Define somente a forma dos rótulos: Produtor/Produtora,
-                Consumidor/Consumidora e equivalentes administrativos.
-              </small>
-            </label>
-
             <div className="form-grid">
               <label>
                 CPF
@@ -504,7 +477,7 @@ export function Account({
                   type="tel"
                   inputMode="numeric"
                   autoComplete="tel-national"
-                  placeholder="(69) 99381-0921"
+                  placeholder="(00) 00000-0000"
                   maxLength={15}
                   onInput={(event) => {
                     event.currentTarget.value = formatBrazilMobile(
