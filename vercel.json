@@ -1,0 +1,45 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "homologation": true,
+      "*": false
+    }
+  },
+  "buildCommand": "npm run build",
+  "installCommand": "npm ci --no-audit --no-fund",
+  "framework": "vite",
+  "outputDirectory": "dist",
+  "regions": ["gru1"],
+  "functions": {
+    "api/[...path].ts": {
+      "maxDuration": 10,
+      "memory": 512
+    }
+  },
+  "rewrites": [
+    {"source": "/api/(.*)", "destination": "/api/[...path]"}
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {"key": "Cache-Control", "value": "no-store, max-age=0"},
+        {"key": "X-Content-Type-Options", "value": "nosniff"}
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {"key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains"},
+        {"key": "X-Frame-Options", "value": "DENY"},
+        {"key": "Referrer-Policy", "value": "strict-origin-when-cross-origin"},
+        {"key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(self)"}
+      ]
+    }
+  ],
+  "redirects": [
+    {"source": "/confirmarcontato", "destination": "/confirmar-contato", "permanent": false}
+  ]
+}
