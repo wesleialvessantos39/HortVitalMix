@@ -58,6 +58,6 @@ Decisão necessária: manter a topologia literal e providenciar os ambientes cor
 - [ ] Responsividade validada — sem aplicação executável para testar.
 - [ ] Supabase atualizado — inspeção somente; nenhuma migration aplicada.
 - [x] Livro Raiz criado — registro inicial com estado real, sem homologação fictícia.
-- [ ] GitHub sincronizado — confirmar pelo commit remoto após publicação deste bloco.
+- [x] GitHub sincronizado — documentação publicada em main; commits iniciais `d00532511aabee9e57b3b41be71fda38a42254d6` e `6cc3d2e4bd606cbb64ec96d0c47488f3461054c7`. Não representa entrega de código funcional.
 - [ ] Pronto para Vercel — ainda sem build ou configuração de ambiente.
 - [ ] Conformidade integral — bloqueada pelas divergências documentadas; revisão inicial concluída.
