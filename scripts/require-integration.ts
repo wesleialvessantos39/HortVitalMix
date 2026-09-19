@@ -1,11 +1,41 @@
 import { runtime } from "../server/config/runtime.ts";
-if (
-  process.env.RUN_SUPABASE_INTEGRATION !== "1" ||
-  runtime.appEnv !== "development" ||
-  process.env.SUPABASE_TEST_PROJECT_REF !== runtime.projectRef
-) {
+
+const enabled = process.env.HVM_INTEGRATION_ENABLED === "true";
+const productionRef = process.env.HVM_PROD_PROJECT_REF ?? "";
+
+if (!enabled) {
   console.error(
-    "Homologação exige testes reais habilitados em ambiente development isolado.",
+    "INTEGRATION_GATE_FAILED: defina HVM_INTEGRATION_ENABLED=true para homologar development.",
   );
   process.exit(1);
 }
+
+if (runtime.appEnv !== "development") {
+  console.error(
+    "INTEGRATION_GATE_FAILED: homologate com integração real só pode rodar em development.",
+  );
+  process.exit(1);
+}
+
+if (!runtime.projectRef) {
+  console.error(
+    "INTEGRATION_GATE_FAILED: SUPABASE_PROJECT_REF é obrigatório.",
+  );
+  process.exit(1);
+}
+
+if (!productionRef) {
+  console.error(
+    "INTEGRATION_GATE_FAILED: HVM_PROD_PROJECT_REF é obrigatório para provar isolamento.",
+  );
+  process.exit(1);
+}
+
+if (runtime.projectRef === productionRef) {
+  console.error(
+    "INTEGRATION_GATE_FAILED: project ref de production recusado.",
+  );
+  process.exit(1);
+}
+
+console.log("Integração real habilitada em development isolado.");

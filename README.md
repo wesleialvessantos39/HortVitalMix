@@ -1,35 +1,65 @@
 # HortiVitalMix — Volume 01 / Trilha 01
 
-Fundação React + Vite + Express, Supabase PostgreSQL/Auth/Storage e contratos Zod. Fonte: Manual Mestre Técnico v10 e errata autorizada pelo proprietário.
+Fundação React + Vite + Express, Supabase PostgreSQL/Auth/Storage e contratos Zod. Fonte de autoridade: Manual Mestre Técnico v10 e erratas documentadas.
 
-**Estado: implementação da fundação, com validação local e SQL real; homologação final pendente.** Não existem releases homologadas registradas. Catálogo, pedidos, planos e endereços pertencem às trilhas seguintes e exibem indisponibilidade explícita.
+**Estado atual: implementação e auditoria de finalização em andamento; homologação final ainda não declarada.** Catálogo, pedidos, planos, endereços e administração pertencem às trilhas seguintes.
 
 ## Execução no Google AI Studio ou local
 
-Requer Node.js 24. Sincronize a branch `main` do GitHub para o Studio antes de executar.
+Requer Node.js 24. Sincronize a branch de trabalho do GitHub antes de executar.
 
 ```sh
 npm ci
-cp .env.example .env
+cp .env.example .env.local
 npm run dev
 ```
 
-Preencha `.env` pelo gerenciador de segredos da plataforma. O Vite serve a interface e monta a API na mesma origem, porta 3000. Não criar API em outra porta. No Studio, adicione a origem exata do preview a `APP_ALLOWED_ORIGINS`. Nenhum segredo deve usar prefixo `VITE_`.
+Preencha os valores pelo gerenciador de segredos da plataforma. O Vite serve interface e API na mesma origem, porta 3000. No Studio, adicione a origem exata do preview a `APP_ALLOWED_ORIGINS`. Credenciais privilegiadas nunca usam prefixo `VITE_`.
 
-Sem credenciais o shell visual continua utilizável e a API retorna 503 nas operações dependentes. Isso não significa que login/cadastro estejam homologados.
+Sem credenciais, o shell visual permanece navegável e endpoints dependentes do banco falham de forma fechada. Isso não equivale a homologação.
+
+## Variáveis de teste real
+
+A integração usa exclusivamente:
+
+```text
+HVM_INTEGRATION_ENABLED=true
+HVM_PROD_PROJECT_REF=<ref-de-production>
+```
+
+Não usar `RUN_SUPABASE_INTEGRATION` ou `SUPABASE_TEST_PROJECT_REF`; esses nomes são obsoletos.
 
 ## Validação
 
+Development isolado:
+
 ```sh
-npm run verify
-npm run build
-npm run preflight
-npm run verify:foundation
-npx playwright install chromium
+npm run migrations:verify
+HVM_INTEGRATION_ENABLED=true npm run homologate
 npm run test:e2e
 ```
 
-`npm test` pula integração real quando não habilitada; isso não vale como aprovação. Para o gate completo, configure ambiente development isolado, `RUN_SUPABASE_INTEGRATION=1`, `SUPABASE_TEST_PROJECT_REF` igual ao projeto de teste e execute `npm run homologate`. Nenhum mock substitui Supabase.
+`npm run homologate` recusa execução se a integração real não estiver explicitamente habilitada ou se o runtime não estiver em `development`.
+
+Gates adicionais:
+
+```sh
+npm run typecheck
+npm run security:check
+npm run build
+npm run preflight
+npm run verify:foundation
+```
+
+O `verify:foundation` executa A1–A15, valida schema lógico 8, hash canônico das migrations e documentação SQL de tabelas, funções e colunas sensíveis.
+
+### Cobertura
+
+A configuração contém os thresholds do Manual v10. A execução de cobertura exige o provedor compatível com Vitest 5.0.1 e o lockfile correspondente. Não considerar cobertura homologada enquanto esse gate não tiver sido executado com o lock regenerado.
+
+## Deploy
+
+`vercel.json` permite implantação automática somente de `main`; previews das demais branches são deliberados/manuais. A promoção de banco continua sequencial: development → homologation → production.
 
 ## Documentação
 

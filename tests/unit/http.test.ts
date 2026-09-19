@@ -54,4 +54,37 @@ describe("API same-origin sem mocks", () => {
   });
   it("sessão ausente não produz identidade inventada", async () =>
     expect((await request(app).get("/v1/auth/session")).status).toBe(401));
+  it.each([
+    "/v1/auth/resend-confirmation",
+    "/v1/auth/request-password-reset",
+    "/v1/auth/magic-link",
+  ])("não dispara e-mail com entrada inválida em %s", async (path) => {
+    const response = await request(app)
+      .post(path)
+      .set("Origin", "http://localhost:3000")
+      .send({ email: "invalido" });
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe("VALIDATION_ERROR");
+  });
+  it("importação de sessão rejeita tokens inválidos antes de dependências", async () => {
+    const response = await request(app)
+      .post("/v1/auth/import-session")
+      .set("Origin", "http://localhost:3000")
+      .send({ accessToken: "x", refreshToken: "y" });
+    expect(response.status).toBe(400);
+  });
+  it("reauth exige sessão real", async () => {
+    const response = await request(app)
+      .post("/v1/auth/reauthenticate")
+      .set("Origin", "http://localhost:3000")
+      .send({});
+    expect(response.status).toBe(401);
+  });
+  it("redefinição exige sessão real mesmo com senha válida", async () => {
+    const response = await request(app)
+      .post("/v1/auth/reset-password")
+      .set("Origin", "http://localhost:3000")
+      .send({ password: "SenhaNovaMuitoForte!2026" });
+    expect(response.status).toBe(401);
+  });
 });

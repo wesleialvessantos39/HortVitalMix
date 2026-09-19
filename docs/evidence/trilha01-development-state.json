@@ -1,0 +1,26 @@
+{
+  "captured_on": "2026-09-19",
+  "schema_version": 8,
+  "migration_history_hash": "59bf7dfa8bbfe0ae4bd9e58bf03bf9b243159fe78ac9f38175d3c848b55549d6",
+  "extensions": 3,
+  "app_tables": 8,
+  "roles": [
+    "consumer",
+    "platform_admin",
+    "platform_super_admin",
+    "producer"
+  ],
+  "global_config_rows": 1,
+  "app_users_rows": 0,
+  "app_people_rows": 0,
+  "producer_profiles_rows": 0,
+  "audit_rows": 0,
+  "current_release_rows": 0,
+  "documents_bucket_public": false,
+  "a1_a15": "passed",
+  "sql_transaction_gate": "passed",
+  "sql_transaction_residue": 0,
+  "note": "Manifesto de evidência; não substitui backup/dump do banco.",
+  "environment": "development",
+  "project_ref": "ldtcsrlxfpflzhnbjjnp"
+}

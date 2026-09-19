@@ -1,5 +1,8 @@
 import "dotenv/config";
 import type { AppEnvironment } from "../../shared/contracts/foundation.ts";
+
+type DbSource = "SUPABASE_DB_URL" | "DATABASE_URL" | "POSTGRES_URL" | null;
+
 export function resolveAppEnv(env: NodeJS.ProcessEnv): AppEnvironment {
   if (env.VERCEL_ENV === "production") return "production";
   if (env.VERCEL_ENV === "preview") return "homologation";
@@ -7,20 +10,36 @@ export function resolveAppEnv(env: NodeJS.ProcessEnv): AppEnvironment {
     return env.APP_ENV as AppEnvironment;
   return env.NODE_ENV === "production" ? "production" : "development";
 }
+
 export function resolveDbUrl(
   env: NodeJS.ProcessEnv,
   appEnv = resolveAppEnv(env),
-): { url: string | null; reason: string | null } {
+): { url: string | null; reason: string | null; source: DbSource } {
   if (appEnv !== "development" && (env.DATABASE_URL || env.POSTGRES_URL))
-    return { url: null, reason: "LEGACY_DB_ALIAS_REJECTED" };
-  const value =
-    env.SUPABASE_DB_URL ||
-    (appEnv === "development"
-      ? env.DATABASE_URL || env.POSTGRES_URL
-      : undefined);
-  if (!value) return { url: null, reason: "DATABASE_NOT_CONFIGURED" };
+    return {
+      url: null,
+      reason: "LEGACY_DB_ALIAS_REJECTED",
+      source: null,
+    };
+
+  const candidates: Array<[Exclude<DbSource, null>, string | undefined]> = [
+    ["SUPABASE_DB_URL", env.SUPABASE_DB_URL],
+    ["DATABASE_URL", appEnv === "development" ? env.DATABASE_URL : undefined],
+    ["POSTGRES_URL", appEnv === "development" ? env.POSTGRES_URL : undefined],
+  ];
+
+  const selected = candidates.find(([, value]) => Boolean(value));
+  if (!selected)
+    return {
+      url: null,
+      reason: "DATABASE_NOT_CONFIGURED",
+      source: null,
+    };
+
+  const [source, value] = selected;
+
   try {
-    const u = new URL(value);
+    const u = new URL(value!);
     if (
       !["postgres:", "postgresql:"].includes(u.protocol) ||
       !u.hostname.endsWith(".pooler.supabase.com") ||
@@ -28,17 +47,23 @@ export function resolveDbUrl(
       !u.username.startsWith("postgres.") ||
       !u.password ||
       u.pathname !== "/postgres" ||
-      /[<>\s]/.test(value)
+      /[<>\s]/.test(value!)
     )
       throw new Error();
-    return { url: value, reason: null };
+
+    return { url: value!, reason: null, source };
   } catch {
-    return { url: null, reason: "INVALID_TRANSACTION_POOLER_URL" };
+    return {
+      url: null,
+      reason: "INVALID_TRANSACTION_POOLER_URL",
+      source: null,
+    };
   }
 }
+
 export function buildRuntime(env: NodeJS.ProcessEnv) {
-  const appEnv = resolveAppEnv(env),
-    db = resolveDbUrl(env, appEnv);
+  const appEnv = resolveAppEnv(env);
+  const db = resolveDbUrl(env, appEnv);
   const origins = (
     env.APP_ALLOWED_ORIGINS ??
     (appEnv === "development"
@@ -46,20 +71,51 @@ export function buildRuntime(env: NodeJS.ProcessEnv) {
       : "")
   )
     .split(",")
+    .map((origin) => origin.trim())
     .filter(Boolean);
+
   return Object.freeze({
     appEnv,
     dbUrl: db.url,
+    dbUrlSource: db.source,
     dbRejection: db.reason,
+    dbUrlRejectionReason: db.reason,
     supabaseUrl: env.SUPABASE_URL ?? "",
     anonKey: env.SUPABASE_ANON_KEY ?? "",
     serviceKey: env.SUPABASE_SERVICE_ROLE_KEY ?? "",
+    jwtSecret: env.SUPABASE_JWT_SECRET ?? "",
     projectRef: env.SUPABASE_PROJECT_REF ?? "",
     ipPepper: env.APP_IP_PEPPER ?? "",
-    commitSha: env.VERCEL_GIT_COMMIT_SHA ?? env.APP_COMMIT_SHA ?? "",
+    outboxKey: env.OUTBOX_ENCRYPTION_KEY ?? "",
+    commitSha: env.VERCEL_GIT_COMMIT_SHA ?? "",
     origins: Object.freeze(origins),
     secureCookies: appEnv !== "development",
     port: Number(env.PORT ?? 3000),
   });
 }
+
 export const runtime = buildRuntime(process.env);
+
+export function logRuntimeBootSummary(
+  current: ReturnType<typeof buildRuntime> = runtime,
+) {
+  let supabaseHost = "(missing)";
+  try {
+    if (current.supabaseUrl)
+      supabaseHost = new URL(current.supabaseUrl).hostname;
+  } catch {
+    supabaseHost = "(invalid)";
+  }
+
+  console.log("[RUNTIME] Boot", {
+    appEnv: current.appEnv,
+    dbConfigured: Boolean(current.dbUrl),
+    dbUrlSource: current.dbUrlSource,
+    dbUrlRejectionReason: current.dbUrlRejectionReason,
+    supabaseHost,
+    hasServiceRole: Boolean(current.serviceKey),
+    hasJwtSecret: Boolean(current.jwtSecret),
+    hasIpPepper: Boolean(current.ipPepper),
+    hasOutboxKey: Boolean(current.outboxKey),
+  });
+}

@@ -4,6 +4,7 @@ import { foundationRouter } from "./routes/foundationRoutes.ts";
 import { authRouter } from "./routes/authRoutes.ts";
 import { runtime } from "./config/runtime.ts";
 import { reportFailure } from "./config/reportFailure.ts";
+import { sessionMiddleware } from "./middleware/session.ts";
 export const app = express();
 app.disable("x-powered-by");
 app.use((req, res, next) => {
@@ -26,6 +27,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.json({ limit: "32kb" }));
+app.use(sessionMiddleware);
 app.use(foundationRouter);
 app.use("/v1/auth", authRouter);
 app.use((_req, res) => {
