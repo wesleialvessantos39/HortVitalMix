@@ -1,19 +1,28 @@
 # CI e gates — Trilha 01
 
-A Trilha 01 não depende de GitHub Actions. O gate executa localmente ou em executor autorizado, conforme a Parte 3 do manual. Não adicionar workflows que solicitem chaves ou exponham variáveis em logs.
+A Trilha 01 **não depende de GitHub Actions**. O gate canônico executa localmente, no Google AI Studio ou em executor autorizado. Não manter workflows que solicitem chaves ou exponham variáveis em logs.
 
 | Comando | Finalidade |
 | --- | --- |
-| `npm ci` | Instalação pelo lockfile, versões fixadas |
+| `npm ci` | Instalação determinística pelo lockfile |
 | `npm run typecheck` | Contratos TypeScript de frontend e backend |
-| `npm test` | Unidade/HTTP reais; integração condicional e explicitamente identificada |
-| `npm run security:check` | Proíbe referências server-only sob src |
-| `npm run build` | Typecheck, fronteira de segredos, Vite, inspeção do bundle |
-| `npm run migrations:verify` | Manifesto e hash determinístico |
-| `npm run preflight` | Credenciais e conectividade reais, sem imprimir valores |
-| `npm run verify:foundation` | RLS, singleton, papéis, histórico e proteção de colunas |
-| `npm run homologate` | Gate completo; exige testes reais habilitados |
+| `npm run verify` | Typecheck + Vitest |
+| `HVM_INTEGRATION_ENABLED=true npm run homologate` | Gate de development com integração real obrigatória |
+| `npm run security:check` | Proíbe referências server-only sob `src/**` |
+| `npm run build` | Typecheck, fronteira de segredos, Vite e inspeção do bundle |
+| `npm run migrations:verify` | Manifesta schema 8 e valida hash determinístico |
+| `npm run preflight` | Variáveis, project ref, RLS, Auth/Data API e conectividade |
+| `npm run verify:foundation` | A1–A15 + hash + comentários SQL |
+| `npm run test:e2e` | Gates visuais/responsivos C1–C7 |
 
-Vercel: implantação Git habilitada somente em `main` e `homologation`, demais branches desabilitadas conforme o exemplo de configuração do manual. Não promover uma branch sem os gates e a sequência de ambientes. Cota esgotada não autoriza declarar deployment READY.
+## Integração real
 
-Os três ambientes precisam de credenciais próprias. Testes destrutivos de fixtures rodam apenas em development isolado e removem as identidades criadas. O teste SQL usa rollback e não deixa dados fictícios.
+Os testes de integração usam `HVM_INTEGRATION_ENABLED=true` e recusam production através de `HVM_PROD_PROJECT_REF`, `APP_ENV` e `VERCEL_ENV`. Teste pulado não vale como homologação.
+
+## Vercel
+
+O arquivo `vercel.json` habilita implantação Git apenas para `main` e usa `"*": false` para as demais branches. Preview de homologação é deliberado/manual. Não promover sem gates e sem a sequência development → homologation → production.
+
+## Cobertura
+
+Os thresholds por módulo estão em `vitest.config.ts`. O provedor de cobertura de Vitest 5.0.1 ainda precisa entrar no lockfile antes da medição final; a ausência desse resultado bloqueia a homologação, mas não autoriza alterar o lock manualmente sem instalação reproduzível.
