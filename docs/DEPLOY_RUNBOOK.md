@@ -1,44 +1,62 @@
 # Deploy e homologação — Trilha 01
 
-## Pré-requisitos
+## Topologia Free autorizada
 
-1. Configurar três ambientes Supabase reais e isolados conforme o manual. A conta atual só disponibilizou o projeto raiz. Provisionamento pago não foi autorizado.
-2. Vincular `wesleialvessantos39/HortVitalMix` à Vercel. A consulta da equipe conectada não retornou projetos nesta execução.
-3. Configurar os valores de `.env.example` no Google Studio e na Vercel, separados por ambiente. Manter Node 24 e instalação `npm ci`.
-4. A origem exata de cada preview deve constar em `APP_ALLOWED_ORIGINS`. Não usar wildcard de domínio para mutações autenticadas.
+Não usar Supabase Preview Branches pagas. A rotação documentada em [FREE_TIER_ENVIRONMENT_STRATEGY.md](FREE_TIER_ENVIRONMENT_STRATEGY.md) usa projetos Free independentes:
 
-## Desenvolvimento e validação
+1. development + homologation ativos;
+2. production pausado temporariamente;
+3. após aprovação de dev/homolog, pausar development;
+4. restaurar production;
+5. executar a fase production.
 
-Sincronizar GitHub no Studio, executar `npm ci`, configurar os segredos e iniciar `npm run dev`. API e interface compartilham a porta 3000.
+Nunca compartilhar credenciais entre ambientes.
 
-Aplicar migrations primeiro em development com Supabase CLI, depois conferir o manifesto. Em cada ambiente, aplicar também os hardenings idempotentes de `supabase/hardening/` (ACL e comentários sensíveis). Antes de qualquer banco que já tenha dados, produzir backup privado com a ferramenta administrativa; não versionar dumps com PII. Nesta execução o schema de aplicação estava vazio antes das oito migrations; não se declarou snapshot remoto criado.
+## Estado atual
 
-Executar `HVM_INTEGRATION_ENABLED=true npm run homologate` no projeto development isolado. O gate falha quando credenciais estão ausentes, quando a integração real está desabilitada ou quando o project ref coincide com production.
+- development `ldtcsrlxfpflzhnbjjnp`: schema v8 + A1–A15 + testes SQL transacionais aprovados.
+- homologation `vcbcbbnbboxoimqmuibm`: schema v8 + A1–A15 + testes SQL transacionais aprovados.
+- production `xipbsazvymkqqfmfegwu`: preservado e temporariamente pausado.
+- nenhuma release final ou tag criada.
+- Vercel conectado ao ChatGPT ainda retorna 0 projetos; o domínio público `hortvitalmix.vercel.app` responde, porém o deployment não é resolvido pela equipe conectada.
 
-## Promoção sequencial
+## Gate de development
 
-- Somente depois da validação em development, aplicar as migrations em homologation.
-- Conferir `npm run preflight`, `npm run verify:foundation`, build, Playwright e smoke tests no preview criado deliberadamente. `vercel.json` não habilita deploy automático de branches diferentes de `main`.
-- Somente após a aprovação em homologation, promover para production.
-- Não modificar migrations já aplicadas. Qualquer correção subsequente precisa de migration aditiva e atualização do manifesto.
-
-## Release verificável
-
-Após deployment correspondente pronto, registrar a release com SHA real e tag contendo o SHA curto. Exemplo de sintaxe (substituir valores):
+Com Node 24 e segredos do projeto development:
 
 ```sh
-npm run release:current -- --tag trilha01-v1-dev-SHA7 --environment development --sha SHA40 --by operador
-npm run verify:deploy -- --url https://URL-DA-IMPLANTACAO --sha SHA40 --schema 8
+npm ci --no-audit --no-fund
+HVM_INTEGRATION_ENABLED=true npm run homologate
 ```
 
-O script de release aceita `--flag valor` e `--flag=valor`. Valida histórico remoto, calcula hash, trava a atualização concorrente e troca a release corrente na mesma transação. O readiness verifica ambiente, versão, hash e SHA quando configurado; ausência de release retorna 503.
+Obrigatório configurar `HVM_PROD_PROJECT_REF=xipbsazvymkqqfmfegwu`. O gate deve executar cobertura V8, build, foundation e Playwright.
 
-O arquivo `vercel.json` encaminha SPA sem capturar `/api`; `api/[...path].ts` atende a API Express no mesmo domínio. Nenhuma segunda porta ou reescrita de cookies para domínio externo.
+Somente após aprovação completa registrar a release de development e produzir a evidência de snapshot/backup disponível no plano.
 
-## Se houver cota esgotada
+## Gate de homologation
 
-Manter o commit e build aprovados. O término da cota não agenda, por si só, um redeploy automático: após a liberação, disparar deployment do commit validado e executar os gates. Não cadastrar automação sem necessidade ou afirmar que a Vercel fará o redeploy automaticamente.
+Usar exclusivamente credenciais do projeto homologation. Executar preflight/foundation e smoke tests no preview Vercel deliberado. Não executar fixtures destrutivas em homologation.
+
+Somente após aprovação registrar a release `trilha01-v1-hml-<sha7>`.
+
+## Gate de production
+
+Após aprovação de development e homologation:
+
+1. pausar development;
+2. restaurar `xipbsazvymkqqfmfegwu`;
+3. conferir schema/foundation novamente;
+4. configurar variáveis production na Vercel;
+5. realizar deploy production deliberado;
+6. aguardar estado READY;
+7. registrar `trilha01-v1`;
+8. executar `verify:deploy --sha=<sha> --schema=8`;
+9. registrar snapshot/backup ou justificativa formal, conforme disponibilidade real do plano.
+
+## Vercel
+
+`vercel.json` mantém auto-deploy somente de `main`. Previews permanecem deliberados. Não promover branch de código nem criar tag somente porque o banco passou A1–A15.
 
 ## Selagem
 
-Registrar no Livro Raiz evidências de cada ambiente, deployment READY, SHA, migration hash, resultados dos testes e backups reais. Somente então criar a tag de homologação. **Nesta execução, a tag e as releases de homologação não foram criadas.**
+Atualizar Livro-Raiz com SHA, migration hash, resultados, releases, evidências de backup/snapshot e deployment READY. A tag `trilha01-v1` é o último passo.
