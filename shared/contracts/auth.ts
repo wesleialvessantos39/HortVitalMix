@@ -37,6 +37,22 @@ export const RegisterProducerSchema = z
 export const LoginSchema = z
   .object({ email, password: z.string().min(1).max(128) })
   .strict();
+export const EmailRequestSchema = z.object({ email }).strict();
+export const SessionImportSchema = z
+  .object({
+    accessToken: z.string().min(32).max(8192),
+    refreshToken: z.string().min(16).max(4096),
+  })
+  .strict();
+export const NewPasswordSchema = z
+  .object({ password: z.string().min(12).max(128) })
+  .strict();
+export const PasswordChangeSchema = z
+  .object({
+    password: z.string().min(12).max(128),
+    nonce: z.string().regex(/^\d{6,8}$/, "Código de segurança inválido"),
+  })
+  .strict();
 export type Registration = z.infer<typeof RegisterConsumerSchema> &
   Partial<
     Pick<z.infer<typeof RegisterProducerSchema>, "brandName" | "activityType">
