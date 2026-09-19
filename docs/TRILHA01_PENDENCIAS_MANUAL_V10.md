@@ -1,3 +1,20 @@
+# Atualização de execução — 2026-09-19
+
+O proprietário autorizou seguir com a implementação após a proposta E01–E06. As seis correções foram incorporadas. O registro original abaixo permanece como histórico, não como status atual. Resultados atuais: [TRILHA01_VALIDACAO.md](TRILHA01_VALIDACAO.md).
+
+Ajustes técnicos adicionais necessários para executar a intenção do manual:
+
+- O índice de auditoria com predicado `now()` foi substituído por índice composto de data/ação: PostgreSQL exige expressões imutáveis no predicado. Índices duplicados sobre chaves já indexadas foram evitados.
+- `SET LOCAL app.ip_pepper = $1` foi substituído por `set_config(..., true)` com parâmetro, forma aceita pelo PostgreSQL.
+- Helpers não aceitam identidade do cliente; execução anônima revogada, contas suspensas não resolvem papel ativo. Grants de coluna protegem governança.
+- Sessões verificam revogação, expiração de papéis e existência em auth.sessions, sem confiar em user_metadata.
+- Flags de integração passaram a ser requisito explícito do gate: testes pulados não homologam a trilha.
+- Identificadores de migrations foram gerados pelo CLI e sincronizados aos timestamps registrados pelo conector na aplicação, preservando o conteúdo aplicado.
+
+A ausência dos três ambientes e das credenciais de execução continua impeditiva para homologação final. Nenhuma contratação foi feita.
+
+---
+
 # Trilha 01 — verificação inicial e proposta de errata
 
 Data: 2026-09-19. Estado: proposta pendente de decisão; não é implementação nem homologação.

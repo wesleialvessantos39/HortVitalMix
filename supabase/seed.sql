@@ -1,0 +1,1 @@
+-- Sem dados fictícios. Seeds canônicos pertencem à migration 0007.

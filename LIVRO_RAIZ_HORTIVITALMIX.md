@@ -1,5 +1,70 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-19 — Trilha 01: implementação da fundação e verificação parcial
+
+Status: **implementada em código e banco existente; não homologada integralmente**.
+
+### Fonte de autoridade e autorização
+
+Manual Mestre Técnico v10, Trilha 01, referências HTML desktop/mobile e imagens anexadas. O proprietário autorizou seguir com as correções documentadas e solicitou continuar até homologação final. Não autorizou contratação de recursos pagos.
+
+### Escopo implementado
+
+- React/Vite com Express montado na mesma origem e porta; adaptador serverless Vercel.
+- Contratos Zod de saúde, readiness, configuração pública, cadastro PF e produtor; CPF com DV, email normalizado e telefone E.164.
+- Cadastro público limitado a consumer/producer, transação de domínio e compensação no GoTrue; login, refresh, sessão e logout com cookies HttpOnly, SameSite e Secure fora de development.
+- Sessão validada por Supabase getUser, estado da conta, sessão viva no Auth e papéis não revogados/expirados.
+- Shell responsiva, navegação, formulários ligados à API e fallback visual não bloqueante; catálogo/compras/endereços continuam fora desta trilha.
+- Oito migrations, oito tabelas com ENABLE/FORCE RLS, grants de coluna, helpers, auditoria append-only, singleton, índices, seeds canônicos e Storage privado.
+- Manifesto com versão lógica 8; hash determinístico; scripts de preflight, fundação, release e verificação de deploy.
+
+### Migrations aplicadas
+
+Projeto: `xipbsazvymkqqfmfegwu`. Timestamps remotos sincronizados ao repositório sem alteração do SQL aplicado.
+
+| Versão remota | Migration |
+| --- | --- |
+| 20260919030126 | foundation_releases |
+| 20260919030128 | identity_roles |
+| 20260919030130 | global_config_audit |
+| 20260919030132 | helper_functions |
+| 20260919030134 | rls_policies |
+| 20260919030136 | indexes_performance |
+| 20260919030138 | seeds_canonical |
+| 20260919030140 | auth_delete_mirror |
+
+Versão lógica: **8**. Hash: `59bf7dfa8bbfe0ae4bd9e58bf03bf9b243159fe78ac9f38175d3c848b55549d6`.
+
+### Evidências
+
+Typecheck e build aprovados; 23 testes unitários/HTTP e 7 testes Playwright aprovados. SQL real com rollback aprovado. Viewports 320/360/430/768/1024/1440 sem overflow horizontal. Nenhum usuário, pessoa ou evento de teste persistiu. Detalhes em [TRILHA01_VALIDACAO.md](docs/TRILHA01_VALIDACAO.md).
+
+### Pendências impeditivas de homologação final
+
+- Credenciais do pooler/Admin API não estão disponíveis no runtime Node. Preflight falha; três testes de integração estão pulados.
+- Ambientes dev/homolog/main separados ainda não provisionados. A aplicação no projeto existente não representa promoção homologada.
+- Conta Vercel conectada não retornou projetos; URL/variáveis/deployment ainda não configurados.
+- Confirmação de e-mail, backups reais, release por ambiente e verificação pós-deploy pendentes.
+- Advisor da função preexistente `rls_auto_enable` requer revisão administrativa. Helpers de autorização autenticados possuem search_path e escopo da própria identidade.
+
+### Checklist da entrega
+
+- [x] Backend escrito e endpoints locais testados; integração externa completa pendente.
+- [x] Frontend escrito e ligado aos contratos da API.
+- [x] Padrão visual dos HTMLs aplicado ao shell desktop/mobile.
+- [x] Responsividade validada por navegador em seis viewports.
+- [x] Supabase atualizado no projeto existente; três ambientes pendentes.
+- [x] Livro Raiz atualizado.
+- [ ] GitHub: confirmar publicação do commit desta entrega.
+- [ ] Vercel integralmente pronta: build/configs preparados, projeto e segredos pendentes.
+- [ ] Conformidade/homologação integral: não aprovada enquanto os gates externos estiverem pendentes.
+
+### Release e transição
+
+Nenhuma linha de release, tag de homologação ou snapshot fictício criada. Permanecer na Trilha 01. Não iniciar a Trilha 02.
+
+---
+
 ## 2026-09-19 — Volume 01 / Trilha 01: abertura e verificação inicial
 
 Status: **iniciada a análise; implementação e homologação pendentes**.

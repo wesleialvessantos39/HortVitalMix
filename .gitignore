@@ -1,8 +1,11 @@
 node_modules/
-build/
 dist/
-coverage/
-.DS_Store
-*.log
-.env*
+.env
+.env.*
 !.env.example
+.vercel/
+coverage/
+playwright-report/
+test-results/
+supabase/.temp/
+backups/

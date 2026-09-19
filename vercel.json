@@ -1,0 +1,73 @@
+{
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "installCommand": "npm ci --no-audit --no-fund",
+  "outputDirectory": "dist",
+  "regions": ["gru1"],
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "homologation": true,
+      "*": false
+    }
+  },
+  "functions": {
+    "api/[...path].ts": {
+      "maxDuration": 10,
+      "memory": 512
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/((?!api(?:/|$)|assets/|favicon.svg).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(self)"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/confirmarcontato",
+      "destination": "/confirmar-contato",
+      "permanent": false
+    }
+  ]
+}

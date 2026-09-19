@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 8,
+  "migrations": [
+    {
+      "version": "20260919030126",
+      "name": "foundation_releases",
+      "file": "20260919030126_foundation_releases.sql"
+    },
+    {
+      "version": "20260919030128",
+      "name": "identity_roles",
+      "file": "20260919030128_identity_roles.sql"
+    },
+    {
+      "version": "20260919030130",
+      "name": "global_config_audit",
+      "file": "20260919030130_global_config_audit.sql"
+    },
+    {
+      "version": "20260919030132",
+      "name": "helper_functions",
+      "file": "20260919030132_helper_functions.sql"
+    },
+    {
+      "version": "20260919030134",
+      "name": "rls_policies",
+      "file": "20260919030134_rls_policies.sql"
+    },
+    {
+      "version": "20260919030136",
+      "name": "indexes_performance",
+      "file": "20260919030136_indexes_performance.sql"
+    },
+    {
+      "version": "20260919030138",
+      "name": "seeds_canonical",
+      "file": "20260919030138_seeds_canonical.sql"
+    },
+    {
+      "version": "20260919030140",
+      "name": "auth_delete_mirror",
+      "file": "20260919030140_auth_delete_mirror.sql"
+    }
+  ],
+  "migrationHistoryHash": "59bf7dfa8bbfe0ae4bd9e58bf03bf9b243159fe78ac9f38175d3c848b55549d6"
+}
