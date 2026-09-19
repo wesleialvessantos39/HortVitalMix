@@ -1,5 +1,37 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-19 — Trilha 01: promoção para main e disparo Vercel
+
+Status: **implementação promovida para `main`; deployment GitHub→Vercel concluído com status `success`; homologação final ainda não selada**.
+
+### GitHub
+
+- PR #2 (`trilha01-finalizacao-v10` → `main`) mergeado com sucesso.
+- Commit de merge: `06662f8b204263ac88564949f1d66368b871e3f7`.
+- A `main` foi confirmada idêntica a esse commit no momento da promoção.
+- O contexto de status `Vercel` no GitHub saiu de `pending` para `success`, confirmando que a integração GitHub→Vercel recebeu e concluiu o deployment.
+
+### Supabase Free
+
+Para manter custo zero e permitir a fase production:
+
+- `HortVitalMix-Homologation` foi colocado em pausa após concluir schema v8, A1–A15 e testes SQL transacionais sem resíduos.
+- `HortVitalMix` production (`xipbsazvymkqqfmfegwu`) foi restaurado e entrou em processo de subida (`COMING_UP` na última verificação desta execução).
+- `HortVitalMix-Development` permaneceu ativo para os gates finais de integração.
+- Nenhuma branch paga foi criada.
+
+### Pendências de selagem
+
+- confirmar production `ACTIVE_HEALTHY` e repetir os gates SQL/foundation;
+- validar os endpoints públicos `/api/health`, `/api/ready` e `/api/config` do deployment final;
+- concluir execução Node 24/coverage/integration;
+- registrar releases somente após os gates reais;
+- produzir evidência de dump/backup compatível com o plano Free;
+- executar `verify:deploy`;
+- criar a tag `trilha01-v1` somente no último passo.
+
+---
+
 ## 2026-09-19 — Trilha 01: auditoria profunda de finalização v10
 
 Status: **correções de conformidade aplicadas; homologação final ainda não selada**.
