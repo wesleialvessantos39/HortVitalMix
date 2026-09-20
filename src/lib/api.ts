@@ -31,11 +31,17 @@ async function parseResponse(response: Response) {
   }
 }
 
-const PUBLIC_REGISTRATION_API_BASE =
-  "https://hortvitalmix.vercel.app/api";
+function apiBase() {
+  if (typeof location === "undefined") return "/api";
 
-function isPublicRegistrationPath(path: string) {
-  return /^\/v1\/auth\/register-(?:consumer|producer)$/.test(path);
+  // O preview do Google AI Studio é servido em localhost e pode reservar
+  // /api para o proxy da própria plataforma. A aplicação local usa um prefixo
+  // interno servido pelo mesmo Vite/Express, sem CORS e sem desviar para prod.
+  return location.hostname === "localhost" ||
+    location.hostname === "127.0.0.1" ||
+    location.hostname === "::1"
+    ? "/_hvm_api"
+    : "/api";
 }
 
 async function doFetch(
@@ -65,12 +71,14 @@ export async function api<T>(
   options: RequestInit = {},
   retried = false,
 ): Promise<T> {
-  let response = await doFetch("/api" + path, options, "same-origin");
+  const base = apiBase();
+  let response = await doFetch(base + path, options, "same-origin");
 
   if (response.status === 401 && !retried && path === "/v1/auth/session") {
-    refreshing ??= fetch("/api/v1/auth/refresh", {
+    refreshing ??= fetch(base + "/v1/auth/refresh", {
       method: "POST",
       credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
       signal: AbortSignal.timeout(10000),
     })
       .then((r) => r.ok)
@@ -83,31 +91,12 @@ export async function api<T>(
 
   if (response.status === 204) return undefined as T;
 
-  let parsed = await parseResponse(response);
-  let body = (parsed.json ?? {}) as {
+  const parsed = await parseResponse(response);
+  const body = (parsed.json ?? {}) as {
     error?: string;
     fields?: Array<{ field: string; message: string }>;
     requestId?: string;
   };
-
-  if (
-    response.status === 403 &&
-    !body.error &&
-    isPublicRegistrationPath(path)
-  ) {
-    response = await doFetch(
-      PUBLIC_REGISTRATION_API_BASE + path,
-      options,
-      "omit",
-    );
-    parsed = await parseResponse(response);
-    body = (parsed.json ?? {}) as {
-      error?: string;
-      fields?: Array<{ field: string; message: string }>;
-      requestId?: string;
-    };
-  }
-
   const { json, requestId } = parsed;
 
   if (!response.ok)
