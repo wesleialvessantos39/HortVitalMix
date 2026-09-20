@@ -3,7 +3,6 @@ import { api } from "../lib/api";
 import {
   formatBrazilMobile,
   formatCpf,
-  isStrongPassword,
   NewPasswordSchema,
   passwordChecks,
   PASSWORD_MAX_LENGTH,
