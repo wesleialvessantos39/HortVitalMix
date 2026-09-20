@@ -1,5 +1,32 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-19 — Correção de `config_unavailable` e alinhamento Google Studio
+
+Status: **Development e Production alinhados em schema 11; hotfix de runtime preparado para promoção à main**.
+
+Evidência fornecida pelo proprietário:
+- mensagem no cadastro: `A função de cadastro respondeu de forma inválida. O erro foi identificado para correção.`;
+- log no Google Studio com categoria `config_unavailable` e request id `51c989ab-b9bb-4671-8394-b9341a16643a`.
+
+Diagnóstico:
+- `config_unavailable` era emitido exclusivamente por `GET /api/v1/config`, que ainda acessava `app_global_config` via `pg.Pool`;
+- Development estava em schema 10 sem `complete_public_registration`, enquanto Production já estava em schema 11;
+- o Google Studio normalmente opera contra Development, portanto havia divergência real entre os ambientes;
+- o envio de confirmação de e-mail ainda estava dentro do bloco que compensava a identidade, podendo desfazer cadastro válido em caso de exceção externa.
+
+Correções:
+- migration 11 aplicada também em Development;
+- Development validado com 11 migrations, RPC presente e permissões `anon/authenticated=false`, `service_role=true`;
+- `/api/v1/config` deixa de usar Postgres Pooler e passa a usar Supabase Data API;
+- Production e Development confirmados com exatamente 1 linha canônica em `app_global_config`;
+- clientes Supabase server-side passam a usar timeout controlado de 8 segundos;
+- envio de e-mail de confirmação foi separado da transação/compensação do cadastro;
+- falha no envio da confirmação não apaga mais Consumer/Producer já criado corretamente;
+- função Vercel passa de 10 para 30 segundos de duração máxima;
+- schema permanece **11**.
+
+---
+
 ## 2026-09-19 — Hotfix definitivo do cadastro via Supabase RPC
 
 Status: **migration 11 aplicada e validada em Production; PR #7 promovido à `main`; deployment funcional Vercel aprovado com `success`**.
