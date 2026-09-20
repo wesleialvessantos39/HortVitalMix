@@ -143,8 +143,20 @@ export const RegisterProducerSchema = z
   })
   .strict();
 
+export const PortalRoleSchema = z.enum([
+  "consumer",
+  "producer",
+  "platform_admin",
+  "platform_super_admin",
+]);
+export type PortalRole = z.infer<typeof PortalRoleSchema>;
+
 export const LoginSchema = z
-  .object({ email, password: z.string().min(1).max(128) })
+  .object({
+    email,
+    password: z.string().min(1).max(128),
+    portalRole: PortalRoleSchema,
+  })
   .strict();
 export const EmailRequestSchema = z.object({ email }).strict();
 export const SessionImportSchema = z
