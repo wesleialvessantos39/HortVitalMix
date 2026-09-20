@@ -9,6 +9,7 @@ import {
   PASSWORD_MIN_LENGTH,
   RegisterConsumerSchema,
   RegisterProducerSchema,
+  type PortalRole,
 } from "../../shared/contracts/auth";
 
 type Session = {
@@ -20,36 +21,37 @@ type Session = {
 
 type Mode =
   | "login"
-  | "loginConsumer"
-  | "loginProducer"
   | "consumer"
   | "producer"
-  | "admin"
-  | "superAdmin"
   | "recovery"
   | "confirmation"
   | "magic"
   | "reset";
 
 function modeFromPath(path: string): Mode {
-  if (path === "/entrar/consumidor") return "loginConsumer";
-  if (path === "/entrar/produtor") return "loginProducer";
   if (path === "/cadastro/consumidor") return "consumer";
   if (path === "/cadastro/produtor") return "producer";
-  if (path === "/acesso/administracao") return "admin";
-  if (path === "/acesso/super-administracao") return "superAdmin";
   if (path === "/recuperar-senha") return "recovery";
   if (path === "/redefinir-senha") return "reset";
   if (path === "/confirmar-contato") return "confirmation";
   return "login";
 }
 
-function portalRoleForMode(mode: Mode) {
-  if (mode === "loginConsumer") return "consumer";
-  if (mode === "loginProducer") return "producer";
-  if (mode === "admin") return "platform_admin";
-  if (mode === "superAdmin") return "platform_super_admin";
+function loginRoleFromPath(path: string): PortalRole | null {
+  if (path === "/entrar/consumidor") return "consumer";
+  if (path === "/entrar/produtor") return "producer";
+  if (path === "/entrar/administrador" || path === "/acesso/administracao")
+    return "platform_admin";
+  if (
+    path === "/entrar/super-administrador" ||
+    path === "/acesso/super-administracao"
+  )
+    return "platform_super_admin";
   return null;
+}
+
+function loginPathForRole(role: "consumer" | "producer") {
+  return role === "consumer" ? "/entrar/consumidor" : "/entrar/produtor";
 }
 
 function roleLabel(role: string) {
@@ -296,7 +298,6 @@ export function Account({
     setFieldErrors({});
     setPasswordValue("");
     setConfirmPassword("");
-    setLoginPasswordVisible(false);
   }
 
   function clearFieldError(name: string) {
@@ -317,6 +318,8 @@ export function Account({
         document.querySelector<HTMLElement>(`[name="${first}"]`)?.focus();
       });
   }
+
+  const portalRole = loginRoleFromPath(path);
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -371,19 +374,16 @@ export function Account({
 
     setBusy(true);
     try {
-      const portalRole = portalRoleForMode(mode);
-      if (portalRole) {
+      if (mode === "login") {
+        if (!portalRole) {
+          navigate("/entrar");
+          return;
+        }
         await api("/v1/auth/login", {
           method: "POST",
-          body: JSON.stringify({
-            email: form.email,
-            password: form.password,
-            portalRole,
-          }),
+          body: JSON.stringify({ ...form, portalRole }),
         });
-        const currentSession = await api<Session>("/v1/auth/session");
-        setSession(currentSession);
-        navigate("/conta");
+        setSession(await api<Session>("/v1/auth/session"));
         return;
       }
 
@@ -393,22 +393,22 @@ export function Account({
           confirmationDispatchAccepted: boolean;
           existingIdentity?: boolean;
           roleAdded?: boolean;
-          role?: "consumer" | "producer";
         }>("/v1/auth/register-" + mode, {
           method: "POST",
           body: JSON.stringify(form),
         });
 
         setNotice(
-          result.existingIdentity
-            ? mode === "producer"
-              ? "Perfil de produtor adicionado à sua conta existente. Entre pelo Login do Produtor."
-              : "Perfil de consumidor adicionado à sua conta existente. Entre pelo Login do Consumidor."
+          result.existingIdentity && result.roleAdded
+            ? (mode === "producer"
+                ? "Perfil de Produtor adicionado à sua conta existente. Agora o mesmo CPF possui acesso separado como Consumidor e Produtor."
+                : "Perfil de Consumidor adicionado à sua conta existente.")
             : result.confirmationDispatchAccepted
               ? "Cadastro realizado. Enviamos a confirmação para o seu e-mail."
               : "Cadastro realizado, mas o e-mail não pôde ser enviado agora. Use “Reenviar confirmação”.",
         );
-        navigate(mode === "producer" ? "/entrar/produtor" : "/entrar/consumidor");
+        setMode("login");
+        navigate(loginPathForRole(mode));
         return;
       }
 
@@ -489,32 +489,32 @@ export function Account({
           ? "E-mail ou senha inválidos."
           : code === "EMAIL_CONFIRMATION_REQUIRED"
             ? "Confirme seu e-mail antes de entrar. Se necessário, reenvie a confirmação."
-            : code === "ROLE_NOT_ALLOWED_FOR_PORTAL"
-              ? "Esta conta existe, mas não possui acesso a este portal. Use o login correspondente ao seu perfil."
+            : code === "IDENTITY_CONFLICT"
+              ? "Os dados informados pertencem a identidades diferentes. Confira CPF e e-mail."
               : code === "ROLE_ALREADY_ASSIGNED"
-                ? "Este perfil já está habilitado nesta conta. Use o login correspondente."
+                ? "Este perfil já está ativo nessa conta. Use a tela de login correspondente."
                 : code === "CPF_LINKED_TO_EXISTING_ACCOUNT"
-                  ? "Este CPF já pertence a uma conta. Para adicionar outro perfil, use o mesmo e-mail e a mesma senha da conta existente."
+                  ? "Este CPF já pertence a uma conta existente. Use o mesmo e-mail e a mesma senha dessa conta para adicionar o novo perfil."
                   : code === "EXISTING_ACCOUNT_CREDENTIALS_INVALID"
-                    ? "O CPF já possui conta. Informe o mesmo e-mail e a senha dessa conta para habilitar o novo perfil."
+                    ? "O CPF já existe, mas a senha informada não confirma a conta atual. Use a senha da conta existente."
                     : code === "EXISTING_ACCOUNT_CONFIRM_REQUIRED"
-                      ? "Confirme primeiro o e-mail da conta existente e depois tente habilitar o novo perfil."
-                      : code === "IDENTITY_CONFLICT"
-                        ? "Já existe uma identidade com dados diferentes. Confira CPF e e-mail antes de continuar."
-                        : code === "REGISTRATION_RATE_LIMITED"
+                      ? "Confirme primeiro o e-mail da conta existente e depois adicione o novo perfil."
+                      : code === "ROLE_NOT_ALLOWED_FOR_PORTAL"
+                        ? `Esta conta não possui o perfil ${portalRole ? roleLabel(portalRole) : "selecionado"}. Escolha outro tipo de acesso.`
+              : code === "REGISTRATION_RATE_LIMITED"
                 ? "Foram feitas muitas tentativas de cadastro. Tente novamente em alguns minutos."
                 : code === "AUTH_UNAVAILABLE"
                   ? "O serviço de autenticação está temporariamente indisponível." + requestSuffix
                   : code === "DATABASE_UNAVAILABLE"
                     ? "O cadastro não conseguiu acessar o banco de dados." + requestSuffix
                     : code === "ORIGIN_NOT_ALLOWED"
-                      ? "A página de cadastro não foi reconhecida como origem segura. Atualize a página e tente novamente." + requestSuffix
+                      ? "A página não foi reconhecida como origem segura. Atualize o preview e tente novamente." + requestSuffix
                       : code === "ACCOUNT_UNAVAILABLE"
                         ? "Sua conta não está disponível para acesso."
                         : code === "PASSWORD_UPDATE_REJECTED"
                           ? "Não foi possível aceitar a nova senha. Solicite um novo link de recuperação."
                           : code === "DEPENDENCY_UNAVAILABLE"
-                            ? "O serviço de cadastro está temporariamente indisponível." + requestSuffix
+                            ? "O serviço está temporariamente indisponível." + requestSuffix
                             : code === "REGISTRATION_SCHEMA_OUTDATED"
                               ? "O banco de dados ainda não recebeu a atualização necessária para concluir o cadastro." + requestSuffix
                               : code === "REGISTRATION_DATA_REJECTED"
@@ -620,11 +620,12 @@ export function Account({
         <h1>Minha conta</h1>
         <p>{session.email}</p>
         <p>
-          Acesso:{" "}
-          {session.roles
-            .map((role) => roleLabel(role))
-            .join(", ")}
+          Acesso atual:{" "}
+          <strong>{session.activeRole ? roleLabel(session.activeRole) : "Conta"}</strong>
         </p>
+        {session.roles.length > 1 && (
+          <p>Perfis disponíveis: {session.roles.map((role) => roleLabel(role)).join(", ")}.</p>
+        )}
 
         {securityFlow ? (
           <form
@@ -718,74 +719,63 @@ export function Account({
       </section>
     );
 
-  if (mode === "login")
-    return (
-      <section className="account card">
-        <span className="eyebrow">Acesso seguro</span>
-        <h1>Escolha seu perfil de acesso</h1>
-        <p>
-          Cada portal valida o perfil real da conta. A mesma identidade pode ter
-          os perfis Consumidor e Produtor, mantendo as experiências separadas.
-        </p>
-
-        <div className="account-choice-grid" aria-label="Perfis de acesso">
-          <button className="account-choice" type="button" onClick={() => navigate("/entrar/consumidor")}>
-            <strong>Login do Consumidor</strong>
-            <span>Compras, conta e recursos do consumidor.</span>
-          </button>
-          <button className="account-choice" type="button" onClick={() => navigate("/entrar/produtor")}>
-            <strong>Login do Produtor</strong>
-            <span>Perfil de produção e recursos do produtor.</span>
-          </button>
-          <button className="account-choice account-choice-admin" type="button" onClick={() => navigate("/acesso/administracao")}>
-            <strong>Login do Administrador</strong>
-            <span>Acesso restrito ao perfil Administrador.</span>
-          </button>
-          <button className="account-choice account-choice-admin" type="button" onClick={() => navigate("/acesso/super-administracao")}>
-            <strong>Login do Super administrador</strong>
-            <span>Acesso restrito ao perfil Super administrador.</span>
-          </button>
-        </div>
-
-        <div className="account-helpers" aria-label="Opções de cadastro">
-          <button type="button" className="text-button" onClick={() => navigate("/cadastro/consumidor")}>
-            Criar cadastro de consumidor
-          </button>
-          <button type="button" className="text-button" onClick={() => navigate("/cadastro/produtor")}>
-            Criar cadastro de produtor
-          </button>
-        </div>
-      </section>
-    );
-
   const auxiliary =
     mode === "recovery" ||
     mode === "confirmation" ||
     mode === "magic" ||
     mode === "reset";
 
-  const loginMode = portalRoleForMode(mode) !== null;
+  if (mode === "login" && !portalRole)
+    return (
+      <section className="account card">
+        <span className="eyebrow">Acesso HortiVitalMix</span>
+        <h1>Escolha como deseja entrar</h1>
+        <p>O acesso é separado por perfil. Uma mesma pessoa pode ter os perfis Consumidor e Produtor no mesmo CPF.</p>
+        <div className="account-choice-grid" aria-label="Tipos de acesso">
+          <button className="account-choice" type="button" onClick={() => navigate("/entrar/consumidor")}>
+            <strong>Consumidor</strong>
+            <span>Comprar e acompanhar seus pedidos.</span>
+          </button>
+          <button className="account-choice" type="button" onClick={() => navigate("/entrar/produtor")}>
+            <strong>Produtor</strong>
+            <span>Acessar o ambiente de produção e comercialização.</span>
+          </button>
+          <button className="account-choice account-choice-admin" type="button" onClick={() => navigate("/entrar/administrador")}>
+            <strong>Administrador</strong>
+            <span>Acesso administrativo conforme permissão atribuída.</span>
+          </button>
+          <button className="account-choice account-choice-admin" type="button" onClick={() => navigate("/entrar/super-administrador")}>
+            <strong>Super administrador</strong>
+            <span>Acesso exclusivo ao perfil de super administração.</span>
+          </button>
+        </div>
+        <div className="account-choice-grid" aria-label="Opções de cadastro">
+          <button className="account-choice" type="button" onClick={() => navigate("/cadastro/consumidor")}>
+            <strong>Criar cadastro de consumidor</strong>
+            <span>Novo consumidor ou adicionar esse perfil a uma conta existente.</span>
+          </button>
+          <button className="account-choice" type="button" onClick={() => navigate("/cadastro/produtor")}>
+            <strong>Criar cadastro de produtor</strong>
+            <span>Novo produtor ou adicionar esse perfil ao mesmo CPF já cadastrado.</span>
+          </button>
+        </div>
+      </section>
+    );
 
   const heading =
-    mode === "loginConsumer"
-      ? "Login do Consumidor"
-      : mode === "loginProducer"
-        ? "Login do Produtor"
-        : mode === "admin"
-          ? "Login do Administrador"
-          : mode === "superAdmin"
-            ? "Login do Super administrador"
-            : mode === "producer"
-              ? "Cadastro de produtor"
-              : mode === "consumer"
-                ? "Cadastro de consumidor"
-                : mode === "recovery"
-                  ? "Recupere sua senha"
-                  : mode === "confirmation"
-                    ? "Confirme seu cadastro"
-                    : mode === "magic"
-                      ? "Acesso por link ou código"
-                      : "Defina sua nova senha";
+    mode === "login"
+      ? `Entrar como ${portalRole ? roleLabel(portalRole) : "usuário"}`
+      : mode === "producer"
+        ? "Cadastro de produtor"
+        : mode === "consumer"
+          ? "Cadastro de consumidor"
+          : mode === "recovery"
+            ? "Recupere sua senha"
+            : mode === "confirmation"
+              ? "Confirme seu cadastro"
+              : mode === "magic"
+                ? "Acesso por link ou código"
+                : "Defina sua nova senha";
 
   return (
     <section className="account card">
@@ -806,15 +796,9 @@ export function Account({
                   ? "Receba um link ou código de uso único para acessar sua conta."
                   : mode === "reset"
                     ? "Use uma senha nova, diferente da anterior."
-                    : mode === "loginConsumer"
-                      ? "Entre com uma conta que possua o perfil Consumidor."
-                      : mode === "loginProducer"
-                        ? "Entre com uma conta que possua o perfil Produtor."
-                        : mode === "admin"
-                          ? "Acesso exclusivo para contas com perfil Administrador."
-                          : mode === "superAdmin"
-                            ? "Acesso exclusivo para contas com perfil Super administrador."
-                            : "Informe suas credenciais para entrar."}
+                    : portalRole
+                      ? `Informe as credenciais da conta com perfil ${roleLabel(portalRole)}.`
+                      : "Escolha o perfil de acesso."}
       </p>
 
       <form
@@ -913,7 +897,7 @@ export function Account({
           </label>
         )}
 
-        {loginMode && (
+        {mode === "login" && (
           <label>
             Senha
             <div className="password-input">
@@ -1007,7 +991,7 @@ export function Account({
         >
           {busy
             ? "Aguarde…"
-            : loginMode
+            : mode === "login"
               ? "Entrar"
               : mode === "consumer" || mode === "producer"
                 ? "Criar cadastro"
@@ -1021,22 +1005,63 @@ export function Account({
         </button>
       </form>
 
-      {loginMode && (
+      {mode === "login" && (
         <>
           <div className="account-helpers" aria-label="Opções de segurança">
-            <button type="button" className="text-button" onClick={() => navigate("/recuperar-senha")}>
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => changeMode("recovery")}
+            >
               Esqueci minha senha
             </button>
-            <button type="button" className="text-button" onClick={() => navigate("/confirmar-contato")}>
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => changeMode("confirmation")}
+            >
               Reenviar confirmação
             </button>
-            <button type="button" className="text-button" onClick={() => changeMode("magic")}>
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => changeMode("magic")}
+            >
               Entrar com link ou código
             </button>
           </div>
 
-          <button type="button" className="text-button helper-action" onClick={() => navigate("/entrar")}>
-            Trocar perfil de acesso
+          {(portalRole === "consumer" || portalRole === "producer") && (
+            <div className="account-choice-grid" aria-label="Opções de cadastro">
+              <button
+                className="account-choice"
+                type="button"
+                onClick={() =>
+                  navigate(
+                    portalRole === "consumer"
+                      ? "/cadastro/consumidor"
+                      : "/cadastro/produtor",
+                  )
+                }
+              >
+                <strong>
+                  {portalRole === "consumer"
+                    ? "Criar cadastro de consumidor"
+                    : "Criar cadastro de produtor"}
+                </strong>
+                <span>
+                  Se o CPF já possuir o outro perfil, use o mesmo e-mail e senha
+                  para adicionar este novo acesso.
+                </span>
+              </button>
+            </div>
+          )}
+          <button
+            type="button"
+            className="text-button helper-action"
+            onClick={() => navigate("/entrar")}
+          >
+            Escolher outro tipo de acesso
           </button>
         </>
       )}
