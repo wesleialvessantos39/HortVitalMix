@@ -234,6 +234,12 @@ export function Account({
 
           history.replaceState({}, "", location.pathname + location.search);
 
+          if (!cancelled && type === "signup") {
+            setNotice(
+              "E-mail confirmado com sucesso. Sua conta já está pronta para uso.",
+            );
+          }
+
           if (!cancelled && (type === "recovery" || path === "/redefinir-senha")) {
             setMode("reset");
             setNotice("Acesso de recuperação validado. Defina sua nova senha.");

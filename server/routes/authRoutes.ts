@@ -40,7 +40,7 @@ function clear(res: Response) {
       path: "/",
       httpOnly: true,
       secure: runtime.secureCookies,
-      sameSite: "lax",
+      sameSite: runtime.secureCookies ? "none" : "lax",
     });
 }
 
@@ -51,7 +51,7 @@ function setSession(
   const opts = {
     httpOnly: true,
     secure: runtime.secureCookies,
-    sameSite: "lax" as const,
+    sameSite: runtime.secureCookies ? ("none" as const) : ("lax" as const),
     path: "/",
   };
 
@@ -582,7 +582,7 @@ for (const role of ["consumer", "producer"] as const)
         parsed.data,
         role,
         res.locals.requestId,
-        redirectUrl(req, "/entrar") ?? undefined,
+        redirectUrl(req, "/confirmar-contato") ?? undefined,
       );
       res.status(201).json(result);
     } catch (error) {
