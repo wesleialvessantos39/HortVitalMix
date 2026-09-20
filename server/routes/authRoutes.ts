@@ -1,11 +1,12 @@
 import { Router, type Request, type Response } from "express";
 import {
-  EmailRequestSchema,
   LoginSchema,
-  NewPasswordSchema,
-  PasswordChangeSchema,
   RegisterConsumerSchema,
   RegisterProducerSchema,
+  RoleScopedEmailRequestSchema,
+  RoleScopedPasswordChangeSchema,
+  RoleScopedResetPasswordSchema,
+  SecurityCodeRequestSchema,
   SessionImportSchema,
   type PortalRole,
 } from "../../shared/contracts/auth.ts";
@@ -19,6 +20,17 @@ import { register } from "../services/AuthService.ts";
 import { dbPool } from "../db/pool.ts";
 import { classifyDbError, reportFailure } from "../config/reportFailure.ts";
 import { safeRequestOrigin } from "../security/origin.ts";
+import {
+  consumeRecoveryChallenge,
+  consumeSecurityCodeChallenge,
+  findActiveIdentityForRole,
+  invalidateChallenge,
+  issueRecoveryChallenge,
+  issueSecurityCodeChallenge,
+  recordSecurityCodeFailure,
+  validateRecoveryChallenge,
+  validateSecurityCodeChallenge,
+} from "../services/RoleSecurityService.ts";
 
 export const authRouter = Router();
 
@@ -137,6 +149,13 @@ async function activeRoles(userId: string) {
 async function hasActiveRole(userId: string, role: PortalRole) {
   const roles = await activeRoles(userId);
   return roles.includes(role);
+}
+
+function loginPathForRole(role: PortalRole) {
+  if (role === "consumer") return "/entrar/consumidor";
+  if (role === "producer") return "/entrar/produtor";
+  if (role === "platform_admin") return "/entrar/administrador";
+  return "/entrar/super-administrador";
 }
 
 async function tokenGrant(body: unknown, grant: string) {
