@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { ChevronRight, Crown, Plus, ShieldCheck, ShoppingBag, Sprout } from "lucide-react";
 import { api } from "../lib/api";
 import {
   formatBrazilMobile,
@@ -725,38 +726,129 @@ export function Account({
     mode === "magic" ||
     mode === "reset";
 
-  if (mode === "login" && !portalRole)
+  if (mode === "login" && !portalRole && path !== "/administracao")
     return (
-      <section className="account card">
-        <span className="eyebrow">Acesso HortiVitalMix</span>
-        <h1>Escolha como deseja entrar</h1>
-        <p>O acesso é separado por perfil. Uma mesma pessoa pode ter os perfis Consumidor e Produtor no mesmo CPF.</p>
-        <div className="account-choice-grid" aria-label="Tipos de acesso">
-          <button className="account-choice" type="button" onClick={() => navigate("/entrar/consumidor")}>
-            <strong>Consumidor</strong>
-            <span>Comprar e acompanhar seus pedidos.</span>
+      <section className="access-selector" aria-labelledby="account-access-title">
+        <h1 id="account-access-title" className="visually-hidden">
+          Conta
+        </h1>
+        <div className="access-grid access-grid-public">
+          <button
+            className="access-card access-card-consumer"
+            type="button"
+            aria-label="Entrar como Consumidor"
+            onClick={() => navigate("/entrar/consumidor")}
+          >
+            <span className="access-card-top" aria-hidden="true">
+              <span className="access-card-icon">
+                <ShoppingBag />
+              </span>
+              <span className="access-card-badge">Para você</span>
+            </span>
+            <span className="access-card-copy" aria-hidden="true">
+              <strong className="access-card-title access-card-title-desktop">
+                Consumidor
+              </strong>
+              <strong className="access-card-title access-card-title-mobile">
+                Entrar como Consumidor
+              </strong>
+              <span className="access-card-description">
+                Compre produtos frescos e acompanhe seus pedidos.
+              </span>
+            </span>
+            <span className="access-card-action" aria-hidden="true">
+              Entrar como Consumidor <ChevronRight />
+            </span>
+            <ChevronRight className="access-card-mobile-chevron" aria-hidden="true" />
           </button>
-          <button className="account-choice" type="button" onClick={() => navigate("/entrar/produtor")}>
-            <strong>Produtor</strong>
-            <span>Acessar o ambiente de produção e comercialização.</span>
-          </button>
-          <button className="account-choice account-choice-admin" type="button" onClick={() => navigate("/entrar/administrador")}>
-            <strong>Administrador</strong>
-            <span>Acesso administrativo conforme permissão atribuída.</span>
-          </button>
-          <button className="account-choice account-choice-admin" type="button" onClick={() => navigate("/entrar/super-administrador")}>
-            <strong>Super administrador</strong>
-            <span>Acesso exclusivo ao perfil de super administração.</span>
+
+          <button
+            className="access-card access-card-producer"
+            type="button"
+            aria-label="Entrar como Produtor"
+            onClick={() => navigate("/entrar/produtor")}
+          >
+            <span className="access-card-top" aria-hidden="true">
+              <span className="access-card-icon">
+                <Sprout />
+              </span>
+              <span className="access-card-badge">Para produtores</span>
+            </span>
+            <span className="access-card-copy" aria-hidden="true">
+              <strong className="access-card-title access-card-title-desktop">
+                Produtor
+              </strong>
+              <strong className="access-card-title access-card-title-mobile">
+                Entrar como Produtor
+              </strong>
+              <span className="access-card-description">
+                Acesse seu ambiente de produção e comercialização.
+              </span>
+            </span>
+            <span className="access-card-action" aria-hidden="true">
+              Entrar como Produtor <ChevronRight />
+            </span>
+            <ChevronRight className="access-card-mobile-chevron" aria-hidden="true" />
           </button>
         </div>
-        <div className="account-choice-grid" aria-label="Opções de cadastro">
-          <button className="account-choice" type="button" onClick={() => navigate("/cadastro/consumidor")}>
-            <strong>Criar cadastro de consumidor</strong>
-            <span>Novo consumidor ou adicionar esse perfil a uma conta existente.</span>
+      </section>
+    );
+
+  if (mode === "login" && !portalRole && path === "/administracao")
+    return (
+      <section
+        className="access-selector administration-selector"
+        aria-labelledby="administration-access-title"
+      >
+        <span className="eyebrow">Acesso restrito</span>
+        <h1 id="administration-access-title">Administração</h1>
+        <div className="access-grid access-grid-admin">
+          <button
+            className="access-card access-card-admin"
+            type="button"
+            aria-label="Entrar como Administrador"
+            onClick={() => navigate("/entrar/administrador")}
+          >
+            <span className="access-card-top" aria-hidden="true">
+              <span className="access-card-icon">
+                <ShieldCheck />
+              </span>
+              <span className="access-card-badge">Gestão</span>
+            </span>
+            <span className="access-card-copy" aria-hidden="true">
+              <strong className="access-card-title">Administrador</strong>
+              <span className="access-card-description">
+                Gestão operacional conforme as permissões atribuídas à conta.
+              </span>
+            </span>
+            <span className="access-card-action" aria-hidden="true">
+              Entrar como Administrador <ChevronRight />
+            </span>
+            <ChevronRight className="access-card-mobile-chevron" aria-hidden="true" />
           </button>
-          <button className="account-choice" type="button" onClick={() => navigate("/cadastro/produtor")}>
-            <strong>Criar cadastro de produtor</strong>
-            <span>Novo produtor ou adicionar esse perfil ao mesmo CPF já cadastrado.</span>
+
+          <button
+            className="access-card access-card-super-admin"
+            type="button"
+            aria-label="Entrar como Super administrador"
+            onClick={() => navigate("/entrar/super-administrador")}
+          >
+            <span className="access-card-top" aria-hidden="true">
+              <span className="access-card-icon">
+                <Crown />
+              </span>
+              <span className="access-card-badge">Acesso superior</span>
+            </span>
+            <span className="access-card-copy" aria-hidden="true">
+              <strong className="access-card-title">Super administrador</strong>
+              <span className="access-card-description">
+                Administração superior, governança e configurações da plataforma.
+              </span>
+            </span>
+            <span className="access-card-action" aria-hidden="true">
+              Entrar como Super administrador <ChevronRight />
+            </span>
+            <ChevronRight className="access-card-mobile-chevron" aria-hidden="true" />
           </button>
         </div>
       </section>
@@ -1007,6 +1099,28 @@ export function Account({
 
       {mode === "login" && (
         <>
+          {(portalRole === "consumer" || portalRole === "producer") && (
+            <div className="login-registration">
+              <span>Ainda não tem esse cadastro?</span>
+              <button
+                type="button"
+                className="login-registration-action"
+                onClick={() =>
+                  navigate(
+                    portalRole === "consumer"
+                      ? "/cadastro/consumidor"
+                      : "/cadastro/produtor",
+                  )
+                }
+              >
+                <Plus aria-hidden="true" />
+                {portalRole === "consumer"
+                  ? "Criar cadastro de consumidor"
+                  : "Criar cadastro de produtor"}
+              </button>
+            </div>
+          )}
+
           <div className="account-helpers" aria-label="Opções de segurança">
             <button
               type="button"
@@ -1031,37 +1145,22 @@ export function Account({
             </button>
           </div>
 
-          {(portalRole === "consumer" || portalRole === "producer") && (
-            <div className="account-choice-grid" aria-label="Opções de cadastro">
-              <button
-                className="account-choice"
-                type="button"
-                onClick={() =>
-                  navigate(
-                    portalRole === "consumer"
-                      ? "/cadastro/consumidor"
-                      : "/cadastro/produtor",
-                  )
-                }
-              >
-                <strong>
-                  {portalRole === "consumer"
-                    ? "Criar cadastro de consumidor"
-                    : "Criar cadastro de produtor"}
-                </strong>
-                <span>
-                  Se o CPF já possuir o outro perfil, use o mesmo e-mail e senha
-                  para adicionar este novo acesso.
-                </span>
-              </button>
-            </div>
-          )}
           <button
             type="button"
             className="text-button helper-action"
-            onClick={() => navigate("/entrar")}
+            onClick={() =>
+              navigate(
+                portalRole === "platform_admin" ||
+                  portalRole === "platform_super_admin"
+                  ? "/administracao"
+                  : "/entrar",
+              )
+            }
           >
-            Escolher outro tipo de acesso
+            {portalRole === "platform_admin" ||
+            portalRole === "platform_super_admin"
+              ? "Voltar para Administração"
+              : "Escolher outro tipo de acesso"}
           </button>
         </>
       )}
