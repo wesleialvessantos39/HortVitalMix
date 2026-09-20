@@ -3,9 +3,145 @@ import { reportFailure } from "../config/reportFailure.ts";
 import type { Registration } from "../../shared/contracts/auth.ts";
 
 type RegistrationFailure = Error & { status?: number };
+type ChainState = "complete" | "incomplete" | "unknown";
 
 function registrationError(code: string, status: number): RegistrationFailure {
   return Object.assign(new Error(code), { status });
+}
+
+async function registrationChainState(
+  userId: string,
+  role: "consumer" | "producer",
+  requestId: string,
+): Promise<ChainState> {
+  if (!supabaseAdmin) return "unknown";
+
+  try {
+    const person = await supabaseAdmin
+      .from("app_people")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (person.error) {
+      reportFailure({
+        category: "registration_reconcile_people_failed",
+        requestId,
+        detail: person.error.code ?? "unknown",
+      });
+      return "unknown";
+    }
+
+    const assignment = await supabaseAdmin
+      .from("app_user_role_assignments")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("role_code", role)
+      .is("revoked_at", null)
+      .maybeSingle();
+
+    if (assignment.error) {
+      reportFailure({
+        category: "registration_reconcile_role_failed",
+        requestId,
+        detail: assignment.error.code ?? "unknown",
+      });
+      return "unknown";
+    }
+
+    if (!person.data || !assignment.data) return "incomplete";
+
+    if (role === "producer") {
+      const profile = await supabaseAdmin
+        .from("app_producer_profiles")
+        .select("id")
+        .eq("person_id", person.data.id)
+        .maybeSingle();
+
+      if (profile.error) {
+        reportFailure({
+          category: "registration_reconcile_producer_failed",
+          requestId,
+          detail: profile.error.code ?? "unknown",
+        });
+        return "unknown";
+      }
+
+      if (!profile.data) return "incomplete";
+    }
+
+    return "complete";
+  } catch (error) {
+    reportFailure({
+      category: "registration_reconcile_transport_failed",
+      requestId,
+      detail: (error as { name?: string })?.name ?? "unknown",
+    });
+    return "unknown";
+  }
+}
+
+async function cleanupIncompleteDomain(userId: string, requestId: string) {
+  if (!supabaseAdmin) return;
+
+  try {
+    const person = await supabaseAdmin
+      .from("app_people")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (person.error)
+      reportFailure({
+        category: "registration_cleanup_person_lookup_failed",
+        requestId,
+        detail: person.error.code ?? "unknown",
+      });
+
+    if (person.data?.id) {
+      const producer = await supabaseAdmin
+        .from("app_producer_profiles")
+        .delete()
+        .eq("person_id", person.data.id);
+
+      if (producer.error)
+        reportFailure({
+          category: "registration_cleanup_producer_failed",
+          requestId,
+          detail: producer.error.code ?? "unknown",
+        });
+    }
+
+    const roles = await supabaseAdmin
+      .from("app_user_role_assignments")
+      .delete()
+      .eq("user_id", userId);
+
+    if (roles.error)
+      reportFailure({
+        category: "registration_cleanup_roles_failed",
+        requestId,
+        detail: roles.error.code ?? "unknown",
+      });
+
+    const people = await supabaseAdmin
+      .from("app_people")
+      .delete()
+      .eq("user_id", userId);
+
+    if (people.error)
+      reportFailure({
+        category: "registration_cleanup_people_failed",
+        requestId,
+        detail: people.error.code ?? "unknown",
+      });
+  } catch (error) {
+    reportFailure({
+      category: "registration_cleanup_transport_failed",
+      requestId,
+      detail: (error as { name?: string })?.name ?? "unknown",
+    });
+  }
 }
 
 async function compensateIncompleteIdentity(
@@ -14,29 +150,17 @@ async function compensateIncompleteIdentity(
 ) {
   if (!supabaseAdmin) return;
 
+  await cleanupIncompleteDomain(userId, requestId);
+
   const deleted = await supabaseAdmin.auth.admin.deleteUser(userId);
-  if (deleted.error && deleted.error.status !== 404) {
+  if (deleted.error && deleted.error.status !== 404)
     reportFailure({
       category: "auth_compensation_failed",
       requestId,
       detail: deleted.error.code ?? String(deleted.error.status ?? "unknown"),
     });
-    return;
-  }
 
-  const cleanup = await supabaseAdmin
-    .from("app_users")
-    .delete()
-    .eq("id", userId)
-    .eq("status", "suspended")
-    .eq("block_reason", "auth_user_deleted");
-
-  if (cleanup.error)
-    reportFailure({
-      category: "auth_compensation_tombstone_cleanup_failed",
-      requestId,
-      detail: cleanup.error.code ?? "unknown",
-    });
+  // app_users é tombstone canônico e deve permanecer suspenso após exclusão do GoTrue.
 }
 
 function mapDomainRegistrationError(
@@ -107,30 +231,59 @@ export async function register(
 
     userId = created.data.user.id;
 
-    const completed = await supabaseAdmin.rpc("complete_public_registration", {
-      p_user_id: userId,
-      p_full_name: data.fullName,
-      p_cpf_normalized: data.cpf,
-      p_email_normalized: data.email,
-      p_phone_e164: data.phone,
-      p_role: role,
-      p_property_name: role === "producer" ? data.propertyName ?? null : null,
-      p_activity_type: role === "producer" ? data.activityType ?? null : null,
-    });
+    try {
+      const completed = await supabaseAdmin.rpc("complete_public_registration", {
+        p_user_id: userId,
+        p_full_name: data.fullName,
+        p_cpf_normalized: data.cpf,
+        p_email_normalized: data.email,
+        p_phone_e164: data.phone,
+        p_role: role,
+        p_property_name: role === "producer" ? data.propertyName ?? null : null,
+        p_activity_type: role === "producer" ? data.activityType ?? null : null,
+      });
 
-    if (completed.error)
-      throw mapDomainRegistrationError(completed.error, requestId);
+      if (completed.error)
+        throw mapDomainRegistrationError(completed.error, requestId);
+    } catch (error) {
+      const message = (error as Error)?.message;
+      const knownFailure =
+        message === "REGISTRATION_IDENTITY_CONFLICT" ||
+        message === "REGISTRATION_AUTH_UNAVAILABLE" ||
+        message === "REGISTRATION_DATABASE_UNAVAILABLE" ||
+        message === "REGISTRATION_SCHEMA_OUTDATED" ||
+        message === "REGISTRATION_DATA_REJECTED";
+
+      if (knownFailure) throw error;
+
+      const state = await registrationChainState(userId, role, requestId);
+
+      if (state === "complete") {
+        reportFailure({
+          category: "registration_rpc_response_lost_but_reconciled",
+          requestId,
+          detail: (error as { name?: string })?.name ?? "unknown",
+        });
+      } else if (state === "incomplete") {
+        throw registrationError("REGISTRATION_DATABASE_UNAVAILABLE", 503);
+      } else {
+        throw registrationError("REGISTRATION_STATUS_UNKNOWN", 503);
+      }
+    }
   } catch (error) {
-    if (userId) await compensateIncompleteIdentity(userId, requestId);
-
     const message = (error as Error)?.message;
+
+    if (userId && message !== "REGISTRATION_STATUS_UNKNOWN")
+      await compensateIncompleteIdentity(userId, requestId);
+
     if (
       message === "REGISTRATION_IDENTITY_CONFLICT" ||
       message === "REGISTRATION_RATE_LIMITED" ||
       message === "REGISTRATION_AUTH_UNAVAILABLE" ||
       message === "REGISTRATION_DATABASE_UNAVAILABLE" ||
       message === "REGISTRATION_SCHEMA_OUTDATED" ||
-      message === "REGISTRATION_DATA_REJECTED"
+      message === "REGISTRATION_DATA_REJECTED" ||
+      message === "REGISTRATION_STATUS_UNKNOWN"
     )
       throw error;
 
