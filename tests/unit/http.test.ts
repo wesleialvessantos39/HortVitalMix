@@ -47,6 +47,30 @@ describe("API same-origin sem mocks", () => {
     expect(r.body.error).toBe("VALIDATION_ERROR");
   });
 
+  it("aceita localhost do Google Studio mesmo com proxy HTTPS", async () => {
+    const response = await request(app)
+      .post("/v1/auth/login")
+      .set("Origin", "http://localhost:3000")
+      .set("Host", "localhost:3000")
+      .set("X-Forwarded-Host", "localhost:3000")
+      .set("X-Forwarded-Proto", "https")
+      .send({});
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe("VALIDATION_ERROR");
+  });
+
+  it("aceita same-origin quando o proxy remove Origin", async () => {
+    const response = await request(app)
+      .post("/v1/auth/login")
+      .set("Host", "localhost:3000")
+      .set("Sec-Fetch-Site", "same-origin")
+      .send({});
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe("VALIDATION_ERROR");
+  });
+
   it("não abre CORS público no cadastro", async () => {
     const registration = await request(app)
       .post("/v1/auth/register-consumer")
