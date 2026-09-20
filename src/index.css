@@ -731,6 +731,204 @@ dialog p {
 .account-choice-admin {
   grid-column: 1 / -1;
 }
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.admin-home-entry {
+  color: var(--primary);
+  background: #eef8f1;
+  border: 1px solid #d7eadc;
+}
+
+.admin-home-entry:hover {
+  background: #e2f3e7;
+}
+
+.access-selector {
+  width: 100%;
+  max-width: 980px;
+  margin: 4px auto 0;
+  align-self: flex-start;
+}
+
+.access-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.access-card {
+  position: relative;
+  min-width: 0;
+  min-height: 282px;
+  padding: 26px 24px 22px;
+  text-align: left;
+  background: #fff;
+  border: 1px solid #dfe7e0;
+  border-radius: 18px;
+  box-shadow: 0 2px 7px #143d2408;
+  display: flex;
+  flex-direction: column;
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.access-card:hover {
+  transform: translateY(-2px);
+  border-color: #bfd4c3;
+  box-shadow: 0 8px 24px #143d2412;
+}
+
+.access-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 17px;
+}
+
+.access-card-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #dcf7e7;
+  color: #17643c;
+  display: grid;
+  place-items: center;
+}
+
+.access-card-icon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.access-card-producer .access-card-icon {
+  background: #fff6e4;
+  color: #b65d12;
+}
+
+.access-card-admin .access-card-icon,
+.access-card-super-admin .access-card-icon {
+  background: #eef8f1;
+  color: var(--primary);
+}
+
+.access-card-badge {
+  background: #dff6e7;
+  color: #2b6d45;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.access-card-copy {
+  display: block;
+}
+
+.access-card-title {
+  display: block;
+  color: #203229;
+  font-size: 19px;
+  line-height: 1.2;
+  letter-spacing: -0.35px;
+  margin-bottom: 9px;
+}
+
+.access-card-title-mobile {
+  display: none;
+}
+
+.access-card-description {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  max-width: 330px;
+}
+
+.access-card-action {
+  width: 100%;
+  margin-top: auto;
+  padding: 13px 16px;
+  border-radius: 9px;
+  background: #0f5b39;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.access-card-action svg {
+  width: 15px;
+  height: 15px;
+}
+
+.access-card-mobile-chevron {
+  display: none;
+}
+
+.administration-selector {
+  max-width: 860px;
+}
+
+.administration-selector > .eyebrow {
+  margin-bottom: 8px;
+}
+
+.administration-selector > h1 {
+  color: var(--dark);
+  font-size: 27px;
+  letter-spacing: -0.6px;
+  margin-bottom: 20px;
+}
+
+.login-registration {
+  margin-top: 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.login-registration > span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.login-registration-action {
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 0;
+}
+
+.login-registration-action svg {
+  width: 14px;
+  height: 14px;
+}
 .admin-role-preview {
   display: grid;
   gap: 8px;
@@ -1037,6 +1235,108 @@ dialog p {
   }
   .account-choice-admin {
     grid-column: auto;
+  }
+
+  .access-selector {
+    max-width: none;
+    margin: 0;
+  }
+
+  .access-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .access-card {
+    min-height: 0;
+    padding: 16px;
+    border-radius: 15px;
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 18px;
+    grid-template-areas: "icon copy arrow";
+    align-items: center;
+    gap: 12px;
+  }
+
+  .access-card:hover {
+    transform: none;
+  }
+
+  .access-card-top {
+    grid-area: icon;
+    margin: 0;
+    display: block;
+  }
+
+  .access-card-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+  }
+
+  .access-card-badge {
+    display: none;
+  }
+
+  .access-card-copy {
+    grid-area: copy;
+    min-width: 0;
+  }
+
+  .access-card-title {
+    font-size: 14px;
+    margin-bottom: 3px;
+    letter-spacing: -0.2px;
+  }
+
+  .access-card-title-desktop {
+    display: none;
+  }
+
+  .access-card-title-mobile {
+    display: block;
+  }
+
+  .access-card-description {
+    font-size: 10px;
+    line-height: 1.45;
+  }
+
+  .access-card-action {
+    display: none;
+  }
+
+  .access-card-mobile-chevron {
+    display: block;
+    grid-area: arrow;
+    width: 18px;
+    height: 18px;
+    color: #b5c5b9;
+  }
+
+  .administration-selector > .eyebrow {
+    margin: 6px 4px 7px;
+  }
+
+  .administration-selector > h1 {
+    font-size: 23px;
+    margin: 0 4px 14px;
+  }
+
+  .login-registration {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 0;
+  }
+
+  .login-registration-action {
+    font-size: 11px;
+  }
+
+  .mobile-header .admin-home-entry {
+    background: #eef8f1;
+    border: 1px solid #d7eadc;
   }
   .about {
     padding: 22px;
