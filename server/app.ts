@@ -2,7 +2,6 @@ import express from "express";
 import { randomUUID } from "node:crypto";
 import { foundationRouter } from "./routes/foundationRoutes.ts";
 import { authRouter } from "./routes/authRoutes.ts";
-import { runtime } from "./config/runtime.ts";
 import { reportFailure } from "./config/reportFailure.ts";
 import { sessionMiddleware } from "./middleware/session.ts";
 import { isAllowedRequestOrigin } from "./security/origin.ts";
