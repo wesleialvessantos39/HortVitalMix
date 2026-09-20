@@ -957,12 +957,14 @@ export function Account({
         : mode === "consumer"
           ? "Cadastro de consumidor"
           : mode === "recovery"
-            ? "Recupere sua senha"
+            ? recoveryHeading(securityRole)
             : mode === "confirmation"
-              ? "Confirme seu cadastro"
+              ? securityRole
+                ? `Confirmação de cadastro — ${roleLabel(securityRole)}`
+                : "Confirme seu cadastro"
               : mode === "magic"
                 ? "Acesso por link ou código"
-                : "Defina sua nova senha";
+                : recoveryHeading(securityRole, true);
 
   return (
     <section className="account card">
@@ -976,13 +978,19 @@ export function Account({
           : mode === "consumer"
             ? "Cadastre seus dados para utilizar o HortiVitalMix."
             : mode === "recovery"
-              ? "Informe seu e-mail para receber as instruções de redefinição."
+              ? securityRole
+                ? `Informe o e-mail do perfil ${roleLabel(securityRole)}. O link será emitido somente se esse perfil existir na conta.`
+                : "Escolha o perfil de acesso antes de solicitar a recuperação."
               : mode === "confirmation"
-                ? "Informe seu e-mail para reenviar a confirmação do cadastro."
+                ? securityRole
+                  ? `Informe o e-mail do cadastro ${roleLabel(securityRole)} para reenviar a confirmação.`
+                  : "Escolha o perfil de acesso antes de reenviar a confirmação."
                 : mode === "magic"
                   ? "Receba um link ou código de uso único para acessar sua conta."
                   : mode === "reset"
-                    ? "Use uma senha nova, diferente da anterior."
+                    ? securityRole
+                      ? `Este link é válido exclusivamente para o perfil ${roleLabel(securityRole)} que solicitou a recuperação.`
+                      : "Este link de recuperação não possui perfil identificado."
                     : portalRole
                       ? `Informe as credenciais da conta com perfil ${roleLabel(portalRole)}.`
                       : "Escolha o perfil de acesso."}
@@ -1220,23 +1228,26 @@ export function Account({
             <button
               type="button"
               className="text-button"
-              onClick={() => changeMode("recovery")}
+              onClick={() =>
+                portalRole &&
+                navigate(
+                  `/recuperar-senha?portal=${encodeURIComponent(portalRole)}`,
+                )
+              }
             >
               Esqueci minha senha
             </button>
             <button
               type="button"
               className="text-button"
-              onClick={() => changeMode("confirmation")}
+              onClick={() =>
+                portalRole &&
+                navigate(
+                  `/confirmar-contato?portal=${encodeURIComponent(portalRole)}`,
+                )
+              }
             >
               Reenviar confirmação
-            </button>
-            <button
-              type="button"
-              className="text-button"
-              onClick={() => changeMode("magic")}
-            >
-              Entrar com link ou código
             </button>
           </div>
 
@@ -1282,7 +1293,9 @@ export function Account({
           className="text-button helper-action"
           onClick={() => {
             changeMode("login");
-            navigate("/entrar");
+            navigate(
+              securityRole ? loginPathForRole(securityRole) : "/entrar",
+            );
           }}
         >
           Voltar para entrar
