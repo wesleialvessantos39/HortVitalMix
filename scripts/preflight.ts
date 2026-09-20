@@ -18,7 +18,10 @@ async function main() {
   failIf(!runtime.projectRef, "SUPABASE_PROJECT_REF", failures);
   failIf(!process.env.VITE_SUPABASE_URL, "VITE_SUPABASE_URL", failures);
   failIf(!process.env.VITE_SUPABASE_ANON_KEY, "VITE_SUPABASE_ANON_KEY", failures);
-  failIf(!runtime.origins.length, "APP_ALLOWED_ORIGINS", failures);
+  if (!runtime.origins.length)
+    warnings.push(
+      "APP_ALLOWED_ORIGINS ausente; somente a própria origem HTTPS será aceita automaticamente",
+    );
 
   failIf(
     !/^[0-9a-fA-F]{32,}$/.test(runtime.ipPepper),
