@@ -539,3 +539,87 @@ Status: **implementado na `main`; frontend responsivo atualizado e integração 
 - Nenhuma regra de identidade, CPF, roles ou segurança foi relaxada.
 - Nenhuma migration foi criada e nenhum projeto Supabase adicional foi criado; o projeto canônico continua sendo **HortVitalMix**.
 - Testes E2E foram atualizados para impedir regressão: Conta não pode voltar a mostrar Administração, cadastro só aparece no login específico e o ícone Administração deve abrir o seletor administrativo.
+
+
+---
+
+## 2026-09-20 — Correção crítica: recuperação e códigos de segurança vinculados ao perfil
+
+Status: **corrigido full-stack na main, schema 13 aplicado no projeto Supabase canônico e deploy Vercel concluído**.
+
+### Causa raiz confirmada
+
+Os fluxos de recuperação e reautenticação anteriores validavam apenas a identidade Supabase pelo e-mail/sessão. Como uma mesma identidade pode possuir mais de um papel, o provedor de autenticação, isoladamente, não distinguia Consumidor, Produtor, Administrador e Super administrador antes de disparar o e-mail ou aceitar o nonce. Isso permitia iniciar um fluxo a partir de um portal incompatível com o papel solicitado.
+
+### Regra corrigida
+
+Todo fluxo sensível passou a carregar e validar explicitamente o papel de origem:
+
+- `consumer`;
+- `producer`;
+- `platform_admin`;
+- `platform_super_admin`.
+
+O backend consulta `app_user_role_assignments` antes de disparar recuperação, confirmação ou acesso por e-mail. Se o e-mail existir, mas não possuir o papel solicitado, a API mantém resposta pública genérica para impedir enumeração, porém **não dispara o e-mail**.
+
+### Recuperação de senha
+
+- `POST /v1/auth/request-password-reset` exige `email + portalRole`.
+- Antes do envio, o backend confirma que a identidade está ativa e possui o papel solicitado.
+- Cada recuperação recebe um token de contexto aleatório próprio; somente o SHA-256 é persistido.
+- O redirect carrega `portal` e um `flow` exclusivo.
+- A tela explicita o contexto: **Recuperação de senha — cadastro Consumidor**, **cadastro Produtor**, **Administrador** ou **Super administrador**.
+- Na redefinição, o backend exige simultaneamente usuário, papel e token de contexto correspondentes.
+- Link de Consumidor não é aceito como Produtor; Admin não é aceito como Super administrador; contextos administrativos não são aceitos nos portais públicos.
+- O token de contexto é de uso único e possui expiração.
+
+### Código de segurança / reautenticação
+
+- `POST /v1/auth/reauthenticate` exige o `portalRole` da sessão ativa.
+- O cookie de portal, o papel vivo no banco e o corpo da requisição precisam coincidir.
+- Cada solicitação cria `challengeId` vinculado a usuário + papel + finalidade.
+- Um novo pedido de código para a mesma identidade invalida o challenge anterior de código, inclusive quando solicitado em outro portal.
+- `POST /v1/auth/change-password` exige `challengeId + portalRole + nonce`.
+- Mesmo que um código numérico coincida por acaso, ele não é aceito fora do challenge e do papel que o originaram.
+- Tentativas inválidas são contadas no challenge da aplicação e o contexto é invalidado ao atingir o limite.
+
+### Área administrativa
+
+- Fluxos administrativos não utilizam mais a opção pública de “Entrar com link ou código”.
+- O endpoint de magic link rejeita `platform_admin` e `platform_super_admin`.
+- Recuperação administrativa só é disparada quando o e-mail realmente possui o papel administrativo solicitado.
+- Administrador e Super administrador permanecem contextos distintos em todos os checks de recuperação e código.
+
+### Banco
+
+Projeto único utilizado: **HortVitalMix** — `xipbsazvymkqqfmfegwu`.
+
+Nenhum projeto Supabase adicional foi criado.
+
+Migration aplicada: `20260920224820_role_scoped_security_flows`.
+
+Nova tabela: `app_role_security_challenges`.
+
+- RLS habilitado e forçado;
+- sem SELECT para `anon` e `authenticated`;
+- acesso operacional somente pelo backend;
+- token de recuperação persistido somente como digest SHA-256;
+- expiração, consumo, invalidação e limite de tentativas registrados.
+
+Schema lógico: **13**.
+
+Hash canônico das migrations: `c101268be41ba32f843356ccc6d0a01d4dcdd6f48081638167be058382591d62`.
+
+### Validação real
+
+Foi executada validação transacional no banco canônico:
+
+1. challenge de recuperação vinculado a `consumer` não encontrou correspondência como `producer`;
+2. challenge administrativo vinculado a `platform_admin` não encontrou correspondência como `platform_super_admin`;
+3. registros temporários foram removidos;
+4. verificação final retornou **0 resíduos**;
+5. `anon` e `authenticated` não possuem SELECT na tabela de challenges.
+
+### Observação de governança do Manual v10
+
+Esta correção fecha o vazamento de contexto entre portais nos fluxos existentes. A governança administrativa integral da Trilha 05 — incluindo cerimônia de bootstrap, convites administrativos completos e MFA obrigatório de login do Super Admin — permanece um subsistema próprio do Manual v10 e não deve ser falsamente considerado implementado apenas por esta correção de recuperação/reautenticação.
