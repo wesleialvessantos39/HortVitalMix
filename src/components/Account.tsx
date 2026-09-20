@@ -584,11 +584,7 @@ export function Account({
             />
             <button
               className="primary"
-              disabled={
-                busy ||
-                !isStrongPassword(passwordValue) ||
-                passwordValue !== confirmPassword
-              }
+              disabled={busy}
               type="submit"
             >
               {busy ? "Aguarde…" : "Confirmar nova senha"}
@@ -724,7 +720,9 @@ export function Account({
       <form
         key={mode}
         onSubmit={submit}
-        noValidate
+        noValidate={
+          mode === "consumer" || mode === "producer" || mode === "reset"
+        }
         onInputCapture={(event) => {
           const name = (event.target as HTMLInputElement).name;
           if (name) clearFieldError(name);
@@ -893,12 +891,7 @@ export function Account({
         )}
 
         <button
-          disabled={
-            busy ||
-            ((mode === "consumer" || mode === "producer" || mode === "reset") &&
-              (!isStrongPassword(passwordValue) ||
-                passwordValue !== confirmPassword))
-          }
+          disabled={busy}
           className="primary"
           type="submit"
         >
