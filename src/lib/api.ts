@@ -90,11 +90,17 @@ export async function api<T>(
   };
 
   if (!response.ok)
-    throw failure(body.error ?? "HTTP_ERROR", {
-      status: response.status,
-      fields: body.fields,
-      requestId: body.requestId ?? requestId,
-    });
+    throw failure(
+      body.error ??
+        (typeof (json as Record<string, unknown>)?.code === "string"
+          ? String((json as Record<string, unknown>).code)
+          : `HTTP_${response.status}`),
+      {
+        status: response.status,
+        fields: body.fields,
+        requestId: body.requestId ?? requestId,
+      },
+    );
 
   if (json === null)
     throw failure("INVALID_API_RESPONSE", {
