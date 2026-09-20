@@ -446,34 +446,55 @@ export function Account({
       }
 
       if (mode === "recovery") {
+        if (!securityRole) {
+          setNotice("Escolha primeiro o perfil de acesso para recuperar a senha.");
+          return;
+        }
         await api("/v1/auth/request-password-reset", {
           method: "POST",
-          body: JSON.stringify({ email: form.email }),
+          body: JSON.stringify({
+            email: form.email,
+            portalRole: securityRole,
+          }),
         });
         setNotice(
-          "Se o e-mail estiver cadastrado, enviaremos as instruções de recuperação.",
+          `Se o e-mail possuir o perfil ${roleLabel(securityRole)}, enviaremos as instruções de recuperação correspondentes.`,
         );
         return;
       }
 
       if (mode === "confirmation") {
+        if (!securityRole) {
+          setNotice("Escolha primeiro o perfil de acesso para reenviar a confirmação.");
+          return;
+        }
         await api("/v1/auth/resend-confirmation", {
           method: "POST",
-          body: JSON.stringify({ email: form.email }),
+          body: JSON.stringify({
+            email: form.email,
+            portalRole: securityRole,
+          }),
         });
         setNotice(
-          "Se houver um cadastro pendente, uma nova confirmação será enviada.",
+          `Se houver um cadastro ${roleLabel(securityRole)} pendente para este e-mail, uma nova confirmação será enviada.`,
         );
         return;
       }
 
       if (mode === "magic") {
+        if (!securityRole) {
+          setNotice("Escolha primeiro o perfil de acesso.");
+          return;
+        }
         await api("/v1/auth/magic-link", {
           method: "POST",
-          body: JSON.stringify({ email: form.email }),
+          body: JSON.stringify({
+            email: form.email,
+            portalRole: securityRole,
+          }),
         });
         setNotice(
-          "Se a conta estiver disponível, enviaremos um link ou código de acesso seguro.",
+          "Se a conta pública possuir esse perfil, enviaremos o acesso seguro.",
         );
         return;
       }
@@ -484,14 +505,22 @@ export function Account({
           setNotice(parsed.error.issues.map((issue) => issue.message).join(". "));
           return;
         }
+        if (!securityRole || !recoveryFlow) {
+          setNotice("Este link de recuperação não possui um contexto de perfil válido.");
+          return;
+        }
         await api("/v1/auth/reset-password", {
           method: "POST",
-          body: JSON.stringify({ password: form.password }),
+          body: JSON.stringify({
+            password: form.password,
+            portalRole: securityRole,
+            flowToken: recoveryFlow,
+          }),
         });
         setSession(null);
         setMode("login");
-        setNotice("Senha atualizada. Entre novamente com a nova senha.");
-        navigate("/entrar");
+        setNotice("Senha atualizada. Entre novamente pelo perfil correspondente.");
+        navigate(loginPathForRole(securityRole));
       }
     } catch (error) {
       const failure = error as Error & {
