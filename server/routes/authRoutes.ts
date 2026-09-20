@@ -445,61 +445,133 @@ authRouter.post("/logout", async (req, res, next) => {
 });
 
 authRouter.post("/resend-confirmation", async (req, res) => {
-  const input = EmailRequestSchema.safeParse(req.body);
+  const input = RoleScopedEmailRequestSchema.safeParse(req.body);
   if (!input.success) {
     res.status(400).json({ error: "VALIDATION_ERROR" });
     return;
   }
 
-  const target = redirectUrl(req, "/confirmar-contato");
-  if (supabasePublic && target) {
-    const { error } = await supabasePublic.auth.resend({
-      type: "signup",
-      email: input.data.email,
-      options: { emailRedirectTo: target },
-    });
-    if (error) reportFailure("confirmation_resend_not_dispatched", res.locals.requestId);
+  const identity = await findActiveIdentityForRole(
+    input.data.email,
+    input.data.portalRole,
+  );
+
+  if (identity && supabasePublic) {
+    const target = redirectUrl(
+      req,
+      `/confirmar-contato?portal=${encodeURIComponent(input.data.portalRole)}`,
+    );
+    if (target) {
+      const { error } = await supabasePublic.auth.resend({
+        type: "signup",
+        email: input.data.email,
+        options: { emailRedirectTo: target },
+      });
+      if (error)
+        reportFailure(
+          "confirmation_resend_not_dispatched",
+          res.locals.requestId,
+        );
+    }
   }
 
+  // Resposta invariável evita enumeração de identidade/papel.
   res.status(202).json({ status: "accepted" });
 });
 
 authRouter.post("/request-password-reset", async (req, res) => {
-  const input = EmailRequestSchema.safeParse(req.body);
+  const input = RoleScopedEmailRequestSchema.safeParse(req.body);
   if (!input.success) {
     res.status(400).json({ error: "VALIDATION_ERROR" });
     return;
   }
 
-  const target = redirectUrl(req, "/redefinir-senha");
-  if (supabasePublic && target) {
-    const { error } = await supabasePublic.auth.resetPasswordForEmail(
-      input.data.email,
-      { redirectTo: target },
-    );
-    if (error) reportFailure("password_recovery_not_dispatched", res.locals.requestId);
+  const identity = await findActiveIdentityForRole(
+    input.data.email,
+    input.data.portalRole,
+  );
+
+  if (!identity || !supabasePublic) {
+    res.status(202).json({ status: "accepted" });
+    return;
   }
 
+  const challenge = await issueRecoveryChallenge(
+    identity.user_id,
+    input.data.portalRole,
+    res.locals.requestId,
+  );
+
+  if (!challenge) {
+    res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
+    return;
+  }
+
+  const target = redirectUrl(
+    req,
+    `/redefinir-senha?portal=${encodeURIComponent(
+      input.data.portalRole,
+    )}&flow=${encodeURIComponent(challenge.rawToken)}`,
+  );
+
+  if (!target) {
+    await invalidateChallenge(challenge.id);
+    res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
+    return;
+  }
+
+  const { error } = await supabasePublic.auth.resetPasswordForEmail(
+    input.data.email,
+    { redirectTo: target },
+  );
+
+  if (error) {
+    await invalidateChallenge(challenge.id);
+    reportFailure("password_recovery_not_dispatched", res.locals.requestId);
+  }
+
+  // Resposta pública deliberadamente idêntica com ou sem papel correspondente.
   res.status(202).json({ status: "accepted" });
 });
 
 authRouter.post("/magic-link", async (req, res) => {
-  const input = EmailRequestSchema.safeParse(req.body);
+  const input = RoleScopedEmailRequestSchema.safeParse(req.body);
   if (!input.success) {
     res.status(400).json({ error: "VALIDATION_ERROR" });
     return;
   }
 
-  const target = redirectUrl(req, "/entrar");
-  if (supabasePublic && target) {
-    const { error } = await supabasePublic.auth.signInWithOtp({
-      email: input.data.email,
-      options: {
-        shouldCreateUser: false,
-        emailRedirectTo: target,
-      },
-    });
-    if (error) reportFailure("magic_link_not_dispatched", res.locals.requestId);
+  if (
+    input.data.portalRole === "platform_admin" ||
+    input.data.portalRole === "platform_super_admin"
+  ) {
+    res.status(403).json({ error: "ADMIN_MAGIC_LINK_NOT_ALLOWED" });
+    return;
+  }
+
+  const identity = await findActiveIdentityForRole(
+    input.data.email,
+    input.data.portalRole,
+  );
+
+  if (identity && supabasePublic) {
+    const target = redirectUrl(
+      req,
+      `${loginPathForRole(input.data.portalRole)}?portal=${encodeURIComponent(
+        input.data.portalRole,
+      )}`,
+    );
+    if (target) {
+      const { error } = await supabasePublic.auth.signInWithOtp({
+        email: input.data.email,
+        options: {
+          shouldCreateUser: false,
+          emailRedirectTo: target,
+        },
+      });
+      if (error)
+        reportFailure("magic_link_not_dispatched", res.locals.requestId);
+    }
   }
 
   res.status(202).json({ status: "accepted" });
