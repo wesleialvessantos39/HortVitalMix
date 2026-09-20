@@ -112,17 +112,47 @@ describe("contratos e limites de confiança", () => {
     ).toBe(false);
   });
 
-  it("não aceita alias em produção mesmo quando URL canônica existe", () => {
-    expect(
-      resolveDbUrl(
-        {
-          SUPABASE_DB_URL:
-            "postgresql://postgres.ref:pass@aws-0-test.pooler.supabase.com:6543/postgres",
-          DATABASE_URL: "legacy",
-        },
-        "production",
-      ).url,
-    ).toBeNull();
+  it("prefere SUPABASE_DB_URL mesmo quando a Vercel também injeta DATABASE_URL", () => {
+    const resolved = resolveDbUrl(
+      {
+        SUPABASE_PROJECT_REF: "ref",
+        SUPABASE_DB_URL:
+          "postgresql://postgres.ref:pass@aws-0-test.pooler.supabase.com:6543/postgres",
+        DATABASE_URL: "legacy",
+      },
+      "production",
+    );
+
+    expect(resolved.url).toContain("postgres.ref");
+    expect(resolved.source).toBe("SUPABASE_DB_URL");
+  });
+
+  it("aceita DATABASE_URL como fallback somente quando é Transaction Pooler válido", () => {
+    const resolved = resolveDbUrl(
+      {
+        SUPABASE_PROJECT_REF: "ref",
+        DATABASE_URL:
+          "postgresql://postgres.ref:pass@aws-0-test.pooler.supabase.com:6543/postgres",
+      },
+      "production",
+    );
+
+    expect(resolved.reason).toBeNull();
+    expect(resolved.source).toBe("DATABASE_URL");
+  });
+
+  it("rejeita pooler de outro projeto", () => {
+    const resolved = resolveDbUrl(
+      {
+        SUPABASE_PROJECT_REF: "ref-correta",
+        DATABASE_URL:
+          "postgresql://postgres.outra:pass@aws-0-test.pooler.supabase.com:6543/postgres",
+      },
+      "production",
+    );
+
+    expect(resolved.url).toBeNull();
+    expect(resolved.reason).toBe("DB_PROJECT_REF_MISMATCH");
   });
 
   it.each([
