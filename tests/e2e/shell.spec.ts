@@ -265,3 +265,35 @@ test("senha forte orienta e bloqueia cadastro fraco", async ({ page }) => {
   await expect(page.locator(".password-rules li.valid")).toHaveCount(5);
   await expect(submit).toBeEnabled();
 });
+
+
+test("cadastros mostram exatamente os campos obrigatórios ausentes", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  for (const path of ["/cadastro/consumidor", "/cadastro/produtor"]) {
+    await page.goto(path);
+
+    await page.getByLabel("Senha", { exact: true }).fill("SenhaForte!2026");
+    await page.getByLabel("Confirmar senha").fill("SenhaForte!2026");
+    await page.getByRole("button", { name: "Criar cadastro" }).click();
+
+    await expect(
+      page.getByText("Revise os campos destacados para continuar."),
+    ).toBeVisible();
+    await expect(page.getByText("Informe seu nome completo.")).toBeVisible();
+    await expect(page.getByText("Informe seu CPF.")).toBeVisible();
+    await expect(page.getByText("Informe seu celular com DDD.")).toBeVisible();
+    await expect(page.getByText("Informe seu e-mail.")).toBeVisible();
+
+    if (path.endsWith("produtor"))
+      await expect(
+        page.getByText("Informe o nome de seu imóvel."),
+      ).toBeVisible();
+    else
+      await expect(
+        page.getByText("Informe o nome de seu imóvel."),
+      ).toHaveCount(0);
+
+    await expect(page.getByLabel("Nome completo")).toBeFocused();
+  }
+});
