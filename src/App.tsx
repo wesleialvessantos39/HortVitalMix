@@ -194,14 +194,6 @@ export default function App() {
               <UserRound />
             </button>
             <button
-              className="icon admin-home-entry"
-              aria-label="Administração"
-              title="Administração"
-              onClick={() => go("/administracao")}
-            >
-              <ShieldCheck />
-            </button>
-            <button
               className="icon"
               aria-label="Carrinho"
               onClick={() => setModal("Carrinho")}
@@ -221,6 +213,14 @@ export default function App() {
               onClick={() => setModal("Notificações")}
             >
               <Bell />
+            </button>
+            <button
+              className="icon admin-home-entry"
+              aria-label="Administração"
+              title="Administração"
+              onClick={() => go("/administracao")}
+            >
+              <ShieldCheck />
             </button>
             <button
               className="icon"
