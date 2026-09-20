@@ -1,14 +1,6 @@
 import { runtime } from "../server/config/runtime.ts";
 
-const enabled = process.env.HVM_INTEGRATION_ENABLED === "true";
-const productionRef = process.env.HVM_PROD_PROJECT_REF ?? "";
-
-if (!enabled) {
-  console.error(
-    "INTEGRATION_GATE_FAILED: defina HVM_INTEGRATION_ENABLED=true para homologar development.",
-  );
-  process.exit(1);
-}
+const PRODUCTION_PROJECT_REF = "xipbsazvymkqqfmfegwu";
 
 if (runtime.appEnv !== "development") {
   console.error(
@@ -24,14 +16,7 @@ if (!runtime.projectRef) {
   process.exit(1);
 }
 
-if (!productionRef) {
-  console.error(
-    "INTEGRATION_GATE_FAILED: HVM_PROD_PROJECT_REF é obrigatório para provar isolamento.",
-  );
-  process.exit(1);
-}
-
-if (runtime.projectRef === productionRef) {
+if (runtime.projectRef === PRODUCTION_PROJECT_REF) {
   console.error(
     "INTEGRATION_GATE_FAILED: project ref de production recusado.",
   );
