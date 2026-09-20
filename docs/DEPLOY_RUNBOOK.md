@@ -26,10 +26,10 @@ Com Node 24 e segredos do projeto development:
 
 ```sh
 npm ci --no-audit --no-fund
-HVM_INTEGRATION_ENABLED=true npm run homologate
+flag exclusiva de integração=true npm run homologate
 ```
 
-Obrigatório configurar `HVM_PROD_PROJECT_REF=xipbsazvymkqqfmfegwu`. O gate deve executar cobertura V8, build, foundation e Playwright.
+Obrigatório configurar `referência protegida de production=xipbsazvymkqqfmfegwu`. O gate deve executar cobertura V8, build, foundation e Playwright.
 
 Somente após aprovação completa registrar a release de development e produzir a evidência de snapshot/backup disponível no plano.
 
