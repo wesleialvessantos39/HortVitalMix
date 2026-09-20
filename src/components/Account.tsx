@@ -487,7 +487,7 @@ export function Account({
                                             : code === "HTTP_401"
                                               ? "A plataforma recusou a solicitação por autenticação (HTTP 401)." + requestSuffix
                                               : code === "HTTP_403"
-                                                ? "A plataforma bloqueou a solicitação de cadastro (HTTP 403)." + requestSuffix
+                                                ? "A plataforma bloqueou esta solicitação (HTTP 403)." + requestSuffix
                                                 : code === "HTTP_404"
                                                   ? "A rota de cadastro não foi encontrada (HTTP 404)." + requestSuffix
                                                   : code === "HTTP_405"
