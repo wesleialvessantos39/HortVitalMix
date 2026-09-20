@@ -60,6 +60,7 @@ const accountPaths = new Set([
   "/cadastro/consumidor",
   "/cadastro/produtor",
   "/acesso/administracao",
+  "/acesso/super-administracao",
   "/recuperar-senha",
   "/redefinir-senha",
   "/confirmar-contato",
