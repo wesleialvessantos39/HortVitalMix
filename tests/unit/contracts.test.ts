@@ -179,6 +179,17 @@ describe("contratos e limites de confiança", () => {
       buildRuntime({ VERCEL_ENV: "production", APP_ENV: "development" }).appEnv,
     ).toBe("production"));
 
+  it("aceita chaves Supabase modernas como fallback seguro", () => {
+    const built = buildRuntime({
+      SUPABASE_PUBLISHABLE_KEY: "sb_publishable_example",
+      SUPABASE_SECRET_KEY: "sb_secret_example",
+    });
+
+    expect(built.anonKey).toBe("sb_publishable_example");
+    expect(built.serviceKey).toBe("sb_secret_example");
+  });
+
+
   it("aceita os dois estilos de argumentos do manual", () =>
     expect(parseArgs(["--tag=x", "--sha", "abc"])).toEqual({
       tag: "x",
