@@ -23,7 +23,7 @@ async function main() {
       "SELECT version,name FROM supabase_migrations.schema_migrations ORDER BY version",
     );
     const schemaVersion = validateHistory(history.rows);
-    if (schemaVersion !== 10) throw new Error("MIGRATION_HISTORY_GATE_FAILED");
+    if (schemaVersion !== 11) throw new Error("MIGRATION_HISTORY_GATE_FAILED");
     const migrationHistoryHash = assertManifestHash();
 
     const extensions = await client.query<{ extname: string }>(
@@ -192,7 +192,7 @@ async function main() {
               p.proname LIKE 'trg_fn\\_%' ESCAPE '\\'
               OR p.proname IN (
                 'has_role','is_platform_super_admin','is_any_platform_admin',
-                'current_person_id','hash_ip'
+                'current_person_id','hash_ip','complete_public_registration'
               )
             )
             AND obj_description(p.oid,'pg_proc') IS NULL
