@@ -37,7 +37,7 @@ export function cookie(req: Request, name: string) {
 function clear(res: Response) {
   for (const name of ["hvm_access", "hvm_refresh"])
     res.clearCookie(name, {
-      path: "/api",
+      path: "/",
       httpOnly: true,
       secure: runtime.secureCookies,
       sameSite: "lax",
@@ -52,7 +52,7 @@ function setSession(
     httpOnly: true,
     secure: runtime.secureCookies,
     sameSite: "lax" as const,
-    path: "/api",
+    path: "/",
   };
 
   res.cookie("hvm_access", data.access_token, {
@@ -65,9 +65,27 @@ function setSession(
   });
 }
 
-function redirectUrl(req: Request, path: string) {
-  const origin = safeRequestOrigin(req);
-  if (!origin) return null;
+const PUBLIC_APP_ORIGIN = "https://hortvitalmix.vercel.app";
+
+function isLoopbackOrigin(origin: string) {
+  try {
+    const hostname = new URL(origin).hostname;
+    return (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "::1"
+    );
+  } catch {
+    return false;
+  }
+}
+
+export function redirectUrl(req: Request, path: string) {
+  const requestOrigin = safeRequestOrigin(req);
+  const origin =
+    requestOrigin && !isLoopbackOrigin(requestOrigin)
+      ? requestOrigin
+      : PUBLIC_APP_ORIGIN;
 
   try {
     return new URL(path, origin).toString();

@@ -40,11 +40,6 @@ async function main() {
       failures,
     );
 
-  if (!runtime.jwtSecret)
-    warnings.push(
-      "SUPABASE_JWT_SECRET ausente; aceitável enquanto a validação usar o SDK/JWKS",
-    );
-
   if (runtime.projectRef) {
     const expectedSupabaseUrl = `https://${runtime.projectRef}.supabase.co`;
     failIf(

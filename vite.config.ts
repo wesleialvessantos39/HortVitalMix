@@ -11,6 +11,9 @@ export default defineConfig(({ mode }) => {
         name: "hortivitalmix-same-origin-api",
         async configureServer(server) {
           const { app } = await import("./server/app.ts");
+          // Google AI Studio usa /api como caminho especial no preview. O
+          // prefixo interno evita que o proxy do Studio intercepte a API local.
+          server.middlewares.use("/_hvm_api", app);
           server.middlewares.use("/api", app);
         },
       },
