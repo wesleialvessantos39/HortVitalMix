@@ -1,4 +1,8 @@
-import { supabaseAdmin, supabasePublic } from "../supabase/client.ts";
+import {
+  createSupabasePublicClient,
+  supabaseAdmin,
+  supabasePublic,
+} from "../supabase/client.ts";
 import { reportFailure } from "../config/reportFailure.ts";
 import type { Registration } from "../../shared/contracts/auth.ts";
 
@@ -192,6 +196,156 @@ function mapDomainRegistrationError(
   return registrationError("REGISTRATION_DATABASE_UNAVAILABLE", 503);
 }
 
+type ExistingPerson = {
+  id: string;
+  user_id: string;
+  cpf_normalized: string;
+  email_normalized: string;
+};
+
+async function findExistingPerson(
+  data: Registration,
+  requestId: string,
+): Promise<ExistingPerson | null> {
+  if (!supabaseAdmin) return null;
+  const admin = supabaseAdmin as any;
+
+  const byCpf = await admin
+    .from("app_people")
+    .select("id,user_id,cpf_normalized,email_normalized")
+    .eq("cpf_normalized", data.cpf)
+    .maybeSingle();
+
+  if (byCpf.error) {
+    reportFailure({
+      category: "registration_existing_cpf_lookup_failed",
+      requestId,
+      detail: byCpf.error.code ?? "unknown",
+    });
+    throw registrationError("REGISTRATION_DATABASE_UNAVAILABLE", 503);
+  }
+
+  const byEmail = await admin
+    .from("app_people")
+    .select("id,user_id,cpf_normalized,email_normalized")
+    .eq("email_normalized", data.email)
+    .maybeSingle();
+
+  if (byEmail.error) {
+    reportFailure({
+      category: "registration_existing_email_lookup_failed",
+      requestId,
+      detail: byEmail.error.code ?? "unknown",
+    });
+    throw registrationError("REGISTRATION_DATABASE_UNAVAILABLE", 503);
+  }
+
+  if (
+    byCpf.data &&
+    byEmail.data &&
+    byCpf.data.user_id !== byEmail.data.user_id
+  )
+    throw registrationError("REGISTRATION_IDENTITY_CONFLICT", 409);
+
+  return (byCpf.data ?? byEmail.data ?? null) as ExistingPerson | null;
+}
+
+async function addRoleToExistingIdentity(
+  data: Registration,
+  role: "consumer" | "producer",
+  requestId: string,
+) {
+  if (!supabaseAdmin) return null;
+
+  const person = await findExistingPerson(data, requestId);
+  if (!person) return null;
+
+  if (
+    person.cpf_normalized !== data.cpf ||
+    person.email_normalized !== data.email
+  )
+    throw registrationError(
+      "REGISTRATION_CPF_LINKED_TO_EXISTING_ACCOUNT",
+      409,
+    );
+
+  const client = createSupabasePublicClient();
+  if (!client)
+    throw registrationError("REGISTRATION_AUTH_UNAVAILABLE", 503);
+
+  const verified = await client.auth.signInWithPassword({
+    email: data.email,
+    password: data.password,
+  });
+
+  if (verified.error || !verified.data.user) {
+    const code = verified.error?.code ?? "";
+    const message = verified.error?.message?.toLowerCase() ?? "";
+    if (code === "email_not_confirmed" || message.includes("email not confirmed"))
+      throw registrationError(
+        "REGISTRATION_EXISTING_ACCOUNT_CONFIRM_REQUIRED",
+        409,
+      );
+
+    throw registrationError(
+      "REGISTRATION_EXISTING_ACCOUNT_CREDENTIALS_INVALID",
+      409,
+    );
+  }
+
+  try {
+    if (verified.data.user.id !== person.user_id)
+      throw registrationError("REGISTRATION_IDENTITY_CONFLICT", 409);
+
+    const added = await supabaseAdmin.rpc(
+      "add_public_role_to_existing_identity",
+      {
+        p_user_id: person.user_id,
+        p_cpf_normalized: data.cpf,
+        p_email_normalized: data.email,
+        p_role: role,
+        p_property_name:
+          role === "producer" ? data.propertyName ?? null : null,
+        p_activity_type:
+          role === "producer" ? data.activityType ?? null : null,
+      },
+    );
+
+    if (added.error) {
+      reportFailure({
+        category: "registration_existing_role_rpc_failed",
+        requestId,
+        detail: added.error.code ?? "unknown",
+      });
+
+      if (
+        added.error.code === "23505" ||
+        added.error.message?.includes("ROLE_ALREADY_ASSIGNED")
+      )
+        throw registrationError("REGISTRATION_ROLE_ALREADY_ASSIGNED", 409);
+
+      if (added.error.code === "22023")
+        throw registrationError("REGISTRATION_DATA_REJECTED", 400);
+
+      if (added.error.code === "PGRST202" || added.error.code === "42883")
+        throw registrationError("REGISTRATION_SCHEMA_OUTDATED", 503);
+
+      throw registrationError("REGISTRATION_DATABASE_UNAVAILABLE", 503);
+    }
+
+    return {
+      userId: person.user_id,
+      confirmationRequired: false,
+      confirmationDispatchAccepted: false,
+      existingIdentity: true,
+      roleAdded: true,
+      role,
+    };
+  } finally {
+    await client.auth.signOut({ scope: "local" }).catch(() => undefined);
+  }
+}
+
 export async function register(
   data: Registration,
   role: "consumer" | "producer",
@@ -200,6 +354,13 @@ export async function register(
 ) {
   if (!supabaseAdmin)
     throw registrationError("REGISTRATION_AUTH_UNAVAILABLE", 503);
+
+  const existing = await addRoleToExistingIdentity(
+    data,
+    role,
+    requestId,
+  );
+  if (existing) return existing;
 
   let userId: string | undefined;
 
@@ -212,6 +373,18 @@ export async function register(
 
     if (created.error || !created.data.user) {
       const status = created.error?.status;
+
+      // Corrida de duas requisições: se outra criou a identidade entre a busca
+      // e o createUser, tenta reconciliar como conta existente.
+      if (status === 422) {
+        const reconciled = await addRoleToExistingIdentity(
+          data,
+          role,
+          requestId,
+        );
+        if (reconciled) return reconciled;
+      }
+
       const code =
         status === 422
           ? "REGISTRATION_IDENTITY_CONFLICT"
@@ -280,6 +453,10 @@ export async function register(
 
     if (
       message === "REGISTRATION_IDENTITY_CONFLICT" ||
+      message === "REGISTRATION_ROLE_ALREADY_ASSIGNED" ||
+      message === "REGISTRATION_CPF_LINKED_TO_EXISTING_ACCOUNT" ||
+      message === "REGISTRATION_EXISTING_ACCOUNT_CREDENTIALS_INVALID" ||
+      message === "REGISTRATION_EXISTING_ACCOUNT_CONFIRM_REQUIRED" ||
       message === "REGISTRATION_RATE_LIMITED" ||
       message === "REGISTRATION_AUTH_UNAVAILABLE" ||
       message === "REGISTRATION_DATABASE_UNAVAILABLE" ||
@@ -328,5 +505,8 @@ export async function register(
     userId,
     confirmationRequired: true,
     confirmationDispatchAccepted,
+    existingIdentity: false,
+    roleAdded: true,
+    role,
   };
 }
