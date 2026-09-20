@@ -2,7 +2,7 @@
 
 ## 2026-09-20 — Reconciliação pós-RPC e diagnóstico HTTP real
 
-Status: **hotfix implementado em branch; promoção para main e validação Vercel pendentes nesta entrada**.
+Status: **hotfix promovido à `main`; deployment funcional Vercel aprovado com `success` no commit `80028edad2b6f9d1493255db4877dfde4659b538`**.
 
 Evidência da tentativa do proprietário:
 - mensagem exibida: `O servidor recusou a solicitação de cadastro.`;
@@ -21,6 +21,10 @@ Correções:
 - cliente deixa de transformar respostas 4xx/5xx vazias ou não-JSON em `HTTP_ERROR`;
 - frontend passa a exibir o status real: `HTTP_400`, `HTTP_401`, `HTTP_403`, `HTTP_404`, `HTTP_405`, `HTTP_413`, `HTTP_429`, `HTTP_500`, `HTTP_502`, `HTTP_503` ou `HTTP_504`;
 - schema permanece **11**.
+- o build falhava porque o commit `50408b31c6efdc4eb3e5b794e818552e4dca6ab5` havia removido o `package-lock.json` (4.299 linhas), enquanto a Vercel executa `npm ci`.
+- `package-lock.json` foi restaurado exatamente do último commit Vercel verde e o deployment seguinte concluiu com `success`.
+- Production verificada após a correção: 11 migrations, RPC presente, 0 usuários Auth, 0 pessoas e 0 papéis órfãos ativos.
+- Development verificado com 11 migrations, RPC presente e configuração canônica inicializada.
 
 ---
 
