@@ -438,3 +438,69 @@ Status: **causas reproduzidas no código e no estado real do Auth; correção fu
 ### Regra operacional resultante
 
 O Google Studio deve executar contra o projeto Development com a API same-origin local. Production só é acessada quando a aplicação publicada em production executa. Links enviados por e-mail precisam usar URL pública alcançável pelo dispositivo do usuário, nunca `localhost`.
+
+
+---
+
+## 2026-09-20 — Identidade multipefil, logins separados e saneamento definitivo do Google Studio
+
+Status: **implementação full-stack aplicada no repositório `main` e no único projeto Supabase vigente do HortiVitalMix; validação SQL real sem resíduos aprovada**.
+
+### Decisão de identidade
+
+- O CPF continua único e canônico em `app_people`; não são criadas duas pessoas para o mesmo CPF.
+- Uma mesma identidade pode possuir simultaneamente os papéis `consumer` e `producer` por `app_user_role_assignments`.
+- Ao cadastrar Produtor para um CPF que já é Consumidor, o backend reconhece a identidade existente e exige o mesmo e-mail e a senha atual antes de conceder o novo papel.
+- O fluxo inverso, Produtor adicionando Consumidor, segue a mesma regra.
+- Tentativa de usar o CPF existente com outro e-mail não cria uma identidade paralela e retorna conflito seguro.
+- O perfil de produtor é criado apenas quando o papel `producer` é efetivamente concedido.
+
+### Portais de login
+
+Foram separados os contextos de autenticação:
+
+- `/entrar/consumidor` — exige papel `consumer`;
+- `/entrar/produtor` — exige papel `producer`;
+- `/entrar/administrador` e alias `/acesso/administracao` — exigem `platform_admin`;
+- `/entrar/super-administrador` e alias `/acesso/super-administracao` — exigem `platform_super_admin`.
+
+O backend não confia somente na tela escolhida. Depois de validar e-mail/senha no Auth, consulta os papéis ativos no banco e recusa o portal quando o usuário não possui o papel solicitado. A sessão registra o `activeRole`, permitindo que Consumidor e Produtor com a mesma identidade recebam contexto distinto.
+
+### Senha na tela de entrada
+
+- Todas as telas de login possuem controle `Mostrar` / `Ocultar`.
+- O controle altera somente a visibilidade da senha e não muda política, valor ou validação da credencial.
+
+### Google Studio — HTTP 403
+
+A correção foi aprofundada para o comportamento real do preview:
+
+- em qualquer execução Vite de desenvolvimento, a UI usa `/_hvm_api`, evitando a rota `/api` reservada/interceptada pela plataforma;
+- o backend reconhece localhost/loopback atrás do proxy HTTPS do Studio sem confundir `Origin: http://localhost:3000` com o `x-forwarded-proto=https`;
+- quando o proxy remove `Origin`, somente requisições marcadas pelo navegador como `Sec-Fetch-Site: same-origin` são aceitas;
+- origens externas continuam bloqueadas.
+
+### Banco e migration
+
+- Projeto utilizado: **HortVitalMix** — ref `xipbsazvymkqqfmfegwu`.
+- Nenhum novo projeto Supabase foi criado nesta execução.
+- A listagem administrativa atual retorna somente esse projeto HortiVitalMix.
+- Migration remota: `20260920210710_multi_role_identity`.
+- Schema lógico: **12**.
+- Hash canônico das 12 migrations: `ae5a1c60c4642929587db1a0757ccfee394e6be07a61b3ec0bb704387c3c5600`.
+- A RPC `add_public_role_to_existing_identity` possui EXECUTE somente para `service_role`; `anon` e `authenticated` não podem executá-la diretamente.
+
+### Evidência SQL real
+
+Foi executado teste real e autocontido no banco production:
+
+1. identidade temporária criada;
+2. papel `consumer` atribuído;
+3. RPC de identidade existente adicionou `producer`;
+4. foram confirmados dois papéis ativos e um `app_producer_profiles`;
+5. todos os registros temporários foram apagados;
+6. verificação final retornou zero resíduos em `app_users`, `app_people` e `app_user_role_assignments`.
+
+### Regra operacional do projeto
+
+Não criar projetos Supabase adicionais para o HortiVitalMix. Evoluções de schema desta aplicação devem ser aplicadas no projeto canônico existente e versionadas no repositório, salvo decisão futura explícita do proprietário.
