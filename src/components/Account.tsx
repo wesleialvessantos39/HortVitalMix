@@ -322,7 +322,7 @@ export function Account({
       if (String(confirmation ?? "") === "")
         errors.confirmPassword = requiredMessages.confirmPassword;
       else if (form.password !== confirmation)
-        errors.confirmPassword = "As senhas não coincidem.";
+        errors.confirmPassword = "A confirmação deve ser igual à senha.";
 
       if (Object.keys(errors).length) {
         showFieldErrors(errors);
@@ -337,7 +337,7 @@ export function Account({
       if (String(confirmation ?? "") === "")
         errors.confirmPassword = requiredMessages.confirmPassword;
       else if (form.password !== confirmation)
-        errors.confirmPassword = "As senhas não coincidem.";
+        errors.confirmPassword = "A confirmação deve ser igual à senha.";
 
       if (Object.keys(errors).length) {
         showFieldErrors(errors);
