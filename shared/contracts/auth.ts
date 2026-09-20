@@ -194,6 +194,7 @@ export const SessionImportSchema = z
   .object({
     accessToken: z.string().min(32).max(8192),
     refreshToken: z.string().min(16).max(4096),
+    portalRole: PortalRoleSchema.optional(),
   })
   .strict();
 export const NewPasswordSchema = z
