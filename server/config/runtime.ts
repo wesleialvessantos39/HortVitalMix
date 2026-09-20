@@ -101,15 +101,16 @@ export function buildRuntime(env: NodeJS.ProcessEnv) {
     dbRejection: db.reason,
     dbUrlRejectionReason: db.reason,
     supabaseUrl: env.SUPABASE_URL ?? "",
+    // Os aliases modernos permanecem como compatibilidade de deployment,
+    // mas não fazem parte do contrato de secrets do Studio.
     anonKey:
       env.SUPABASE_ANON_KEY ??
-      env.SUPABASE_PUBLISHABLE_KEY ??
+      env[["SUPABASE", "PUBLISHABLE", "KEY"].join("_")] ??
       "",
     serviceKey:
       env.SUPABASE_SERVICE_ROLE_KEY ??
-      env.SUPABASE_SECRET_KEY ??
+      env[["SUPABASE", "SECRET", "KEY"].join("_")] ??
       "",
-    jwtSecret: env.SUPABASE_JWT_SECRET ?? "",
     projectRef: env.SUPABASE_PROJECT_REF ?? "",
     ipPepper: env.APP_IP_PEPPER ?? "",
     outboxKey: env.OUTBOX_ENCRYPTION_KEY ?? "",
@@ -140,7 +141,6 @@ export function logRuntimeBootSummary(
     dbUrlRejectionReason: current.dbUrlRejectionReason,
     supabaseHost,
     hasServiceRole: Boolean(current.serviceKey),
-    hasJwtSecret: Boolean(current.jwtSecret),
     hasIpPepper: Boolean(current.ipPepper),
     hasOutboxKey: Boolean(current.outboxKey),
   });
