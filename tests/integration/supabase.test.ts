@@ -321,7 +321,7 @@ describe.skipIf(!enabled)("Supabase real e JWTs reais", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.databaseConnected).toBe(true);
-    expect(response.body.schemaVersion).toBe(10);
+    expect(response.body.schemaVersion).toBe(11);
     expect(response.body.releaseTag).toBe(release.rows[0].release_tag);
   });
 
