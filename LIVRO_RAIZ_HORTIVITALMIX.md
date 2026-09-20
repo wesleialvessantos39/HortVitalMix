@@ -504,3 +504,38 @@ Foi executado teste real e autocontido no banco production:
 ### Regra operacional do projeto
 
 Não criar projetos Supabase adicionais para o HortiVitalMix. Evoluções de schema desta aplicação devem ser aplicadas no projeto canônico existente e versionadas no repositório, salvo decisão futura explícita do proprietário.
+
+
+---
+
+## 2026-09-20 — Ajuste visual dos acessos públicos e Administração independente
+
+Status: **implementado na `main`; frontend responsivo atualizado e integração GitHub→Vercel disparada automaticamente**.
+
+### Conta pública
+
+- O ícone **Conta** abre `/entrar`.
+- A tela pública contém somente **Consumidor** e **Produtor**.
+- Administrador e Super administrador foram removidos integralmente desse seletor.
+- A frase “O acesso é separado por perfil. Uma mesma pessoa pode ter os perfis Consumidor e Produtor no mesmo CPF.” foi removida da interface.
+- Desktop usa dois cartões lado a lado inspirados na referência visual fornecida; mobile usa cartões compactos empilhados com ícone, título, descrição e chevron.
+- O seletor público não exibe mais ação de cadastro.
+- **Criar cadastro de consumidor/produtor** aparece somente depois que o usuário escolhe o respectivo login, junto ao formulário de entrada.
+
+### Administração
+
+- Criada rota `/administracao`, com título **Administração**.
+- A tela oferece somente:
+  - **Administrador** → `/entrar/administrador`;
+  - **Super administrador** → `/entrar/super-administrador`.
+- Os dois acessos continuam sujeitos à validação de papel real no backend; a separação visual não concede permissão.
+- Foi adicionado ícone dedicado **Administração** no cabeçalho desktop e mobile, usando a identidade visual verde/branca do projeto.
+- Os aliases administrativos anteriores foram preservados por compatibilidade, mas o fluxo principal parte da nova tela Administração.
+
+### Responsividade e segurança
+
+- Layout novo possui estados específicos para desktop e mobile.
+- A função **Mostrar/Ocultar senha** permanece nos quatro logins.
+- Nenhuma regra de identidade, CPF, roles ou segurança foi relaxada.
+- Nenhuma migration foi criada e nenhum projeto Supabase adicional foi criado; o projeto canônico continua sendo **HortVitalMix**.
+- Testes E2E foram atualizados para impedir regressão: Conta não pode voltar a mostrar Administração, cadastro só aparece no login específico e o ícone Administração deve abrir o seletor administrativo.
