@@ -2,7 +2,7 @@
 
 ## 2026-09-19 — Hotfix definitivo do cadastro via Supabase RPC
 
-Status: **migration 11 aplicada e validada em Production; código preparado para promoção à main**.
+Status: **migration 11 aplicada e validada em Production; PR #7 promovido à `main`; deployment funcional Vercel aprovado com `success`**.
 
 Diagnóstico:
 - novas tentativas do proprietário continuavam retornando falha antes de qualquer identidade ser criada;
@@ -26,6 +26,8 @@ Validação executada:
 - histórico passa a 11 migrations e schema lógico **11**;
 - após validação: zero usuários/perfis fictícios ou resíduos;
 - Security Advisor não adicionou novo alerta relacionado à RPC.
+- PR #7 mergeado na `main` no commit `68ec68f613116955c8ecde291ca50a7c2363ab5a`.
+- contexto `Vercel` do commit funcional retornou `success`.
 
 Observação operacional:
 - Development restaurado no plano Free voltou sem histórico de migrations e com Storage ainda não inicializado; por isso o hotfix foi validado por dry-run transacional no schema 10 real de Production antes da aplicação definitiva da migration 11.
