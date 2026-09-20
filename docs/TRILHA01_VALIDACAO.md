@@ -29,7 +29,7 @@ Correções aplicadas:
 - `logRuntimeBootSummary()` foi restaurado sem valores sensíveis.
 - `reportFailure/scrub` redige DB URL, JWT, bearer, secret key, e-mail, CPF e telefone E.164.
 - `vercel.json` permite auto-deploy somente de `main`.
-- `HVM_INTEGRATION_ENABLED` e `HVM_PROD_PROJECT_REF` substituem flags obsoletas.
+- `flag exclusiva de integração` e `referência protegida de production` substituem flags obsoletas.
 - `npm run homologate` recusa integração pulada e só aceita development.
 - middleware global resolve `req.actor` por JWT real + estado/papéis ao vivo; não usa `user_metadata` como autorização.
 - cadastro compensatório remove identidade GoTrue e tombstone transitório quando o domínio falha.
@@ -62,7 +62,7 @@ O teste de `command_id` duplicado foi executado no banco real dentro de `BEGIN/R
 
 1. A branch de finalização ainda precisa executar Node 24 + `npm ci` + typecheck + Vitest + build + Playwright.
 2. Cobertura mínima do Manual v10 ainda precisa ser medida em execução Node 24. O provider `@vitest/coverage-v8@5.0.1` já está versionado e sincronizado no lockfile; `npm run homologate` executa `test:coverage` e aplica os thresholds canônicos.
-3. Os testes SQL reais de isolamento/RLS/auditoria passaram no **development isolado** com rollback e zero resíduos; ainda falta executar a suíte Node 24 completa com `HVM_INTEGRATION_ENABLED=true` para validar também Auth/HTTP/runtime.
+3. Os testes SQL reais de isolamento/RLS/auditoria passaram no **development isolado** com rollback e zero resíduos; ainda falta executar a suíte Node 24 completa com `flag exclusiva de integração=true` para validar também Auth/HTTP/runtime.
 4. A topologia paga por Preview Branches foi substituída, por autorização do proprietário, por projetos Free isolados com rotação de cota. Development e homologation estão provisionados e verificados; production está preservado e temporariamente pausado até a fase final.
 5. Não há releases registradas nem snapshots dos três ambientes.
 6. A equipe Vercel conectada continua retornando **0 projetos**; não há deployment READY nem URL para `verify:deploy`.
