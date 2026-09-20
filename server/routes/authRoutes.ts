@@ -7,6 +7,7 @@ import {
   RegisterConsumerSchema,
   RegisterProducerSchema,
   SessionImportSchema,
+  type PortalRole,
 } from "../../shared/contracts/auth.ts";
 import { runtime } from "../config/runtime.ts";
 import {
@@ -35,7 +36,7 @@ export function cookie(req: Request, name: string) {
 }
 
 function clear(res: Response) {
-  for (const name of ["hvm_access", "hvm_refresh"])
+  for (const name of ["hvm_access", "hvm_refresh", "hvm_portal_role"])
     res.clearCookie(name, {
       path: "/",
       httpOnly: true,
@@ -47,6 +48,7 @@ function clear(res: Response) {
 function setSession(
   res: Response,
   data: { access_token: string; refresh_token: string; expires_in: number },
+  portalRole?: PortalRole | null,
 ) {
   const opts = {
     httpOnly: true,
@@ -63,6 +65,11 @@ function setSession(
     ...opts,
     maxAge: 30 * 86400 * 1000,
   });
+  if (portalRole)
+    res.cookie("hvm_portal_role", portalRole, {
+      ...opts,
+      maxAge: 30 * 86400 * 1000,
+    });
 }
 
 const PUBLIC_APP_ORIGIN = "https://hortvitalmix.vercel.app";
@@ -118,6 +125,20 @@ async function accountIsActive(userId: string) {
   return row.rows[0]?.status === "active";
 }
 
+async function activeRoles(userId: string) {
+  if (!dbPool) return [] as PortalRole[];
+  const rows = await dbPool.query<{ role_code: PortalRole }>(
+    "SELECT role_code FROM public.app_user_role_assignments WHERE user_id=$1 AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at>now()) ORDER BY role_code",
+    [userId],
+  );
+  return rows.rows.map((row) => row.role_code);
+}
+
+async function hasActiveRole(userId: string, role: PortalRole) {
+  const roles = await activeRoles(userId);
+  return roles.includes(role);
+}
+
 async function tokenGrant(body: unknown, grant: string) {
   return fetch(runtime.supabaseUrl + "/auth/v1/token?grant_type=" + grant, {
     method: "POST",
@@ -140,7 +161,8 @@ authRouter.post("/login", async (req, res, next) => {
       return;
     }
 
-    const response = await tokenGrant(input.data, "password");
+    const { email, password, portalRole } = input.data;
+    const response = await tokenGrant({ email, password }, "password");
     if (!response.ok) {
       res.status(response.status === 400 ? 401 : 503).json({
         error:
@@ -155,7 +177,7 @@ authRouter.post("/login", async (req, res, next) => {
     if (!data.user?.email_confirmed_at) {
       if (supabaseAdmin && data.access_token)
         await supabaseAdmin.auth.admin
-          .signOut(data.access_token, "global")
+          .signOut(data.access_token, "local")
           .catch(() => undefined);
       res.status(403).json({ error: "EMAIL_CONFIRMATION_REQUIRED" });
       return;
@@ -166,8 +188,20 @@ authRouter.post("/login", async (req, res, next) => {
       return;
     }
 
-    setSession(res, data);
-    res.json({ status: "authenticated" });
+    if (!(await hasActiveRole(data.user.id, portalRole))) {
+      if (supabaseAdmin && data.access_token)
+        await supabaseAdmin.auth.admin
+          .signOut(data.access_token, "local")
+          .catch(() => undefined);
+      res.status(403).json({
+        error: "ROLE_NOT_ALLOWED_FOR_PORTAL",
+        portalRole,
+      });
+      return;
+    }
+
+    setSession(res, data, portalRole);
+    res.json({ status: "authenticated", activeRole: portalRole });
   } catch (error) {
     next(error);
   }
@@ -211,8 +245,15 @@ authRouter.post("/refresh", async (req, res, next) => {
       return;
     }
 
-    setSession(res, data);
-    res.json({ status: "authenticated" });
+    const requestedRole = cookie(req, "hvm_portal_role") as PortalRole | null;
+    if (requestedRole && !(await hasActiveRole(data.user.id, requestedRole))) {
+      clear(res);
+      res.status(403).json({ error: "ROLE_NOT_ALLOWED_FOR_PORTAL" });
+      return;
+    }
+
+    setSession(res, data, requestedRole);
+    res.json({ status: "authenticated", activeRole: requestedRole });
   } catch (error) {
     next(error);
   }
@@ -276,10 +317,16 @@ authRouter.post("/import-session", async (req, res, next) => {
 authRouter.get("/session", async (req, res, next) => {
   try {
     if (req.actor) {
+      const selected = cookie(req, "hvm_portal_role");
+      const activeRole =
+        selected && req.actor.roles.includes(selected)
+          ? selected
+          : req.actor.roles[0] ?? null;
       res.json({
         userId: req.actor.userId,
         email: req.actor.email,
         roles: req.actor.roles,
+        activeRole,
       });
       return;
     }
@@ -326,14 +373,17 @@ authRouter.get("/session", async (req, res, next) => {
       return;
     }
 
-    const roles = await dbPool.query<{ role_code: string }>(
-      "SELECT role_code FROM public.app_user_role_assignments WHERE user_id=$1 AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at>now()) ORDER BY role_code",
-      [id],
-    );
+    const roles = await activeRoles(id);
+    const selected = cookie(req, "hvm_portal_role");
+    const activeRole =
+      selected && roles.includes(selected as PortalRole)
+        ? (selected as PortalRole)
+        : roles[0] ?? null;
     res.json({
       userId: id,
       email: result.data.user.email,
-      roles: roles.rows.map((row) => row.role_code),
+      roles,
+      activeRole,
     });
   } catch (error) {
     next(error);
@@ -594,6 +644,14 @@ for (const role of ["consumer", "producer"] as const)
       const publicCode =
         message === "REGISTRATION_IDENTITY_CONFLICT"
           ? "IDENTITY_CONFLICT"
+          : message === "REGISTRATION_ROLE_ALREADY_ASSIGNED"
+            ? "ROLE_ALREADY_ASSIGNED"
+            : message === "REGISTRATION_CPF_LINKED_TO_EXISTING_ACCOUNT"
+              ? "CPF_LINKED_TO_EXISTING_ACCOUNT"
+              : message === "REGISTRATION_EXISTING_ACCOUNT_CREDENTIALS_INVALID"
+                ? "EXISTING_ACCOUNT_CREDENTIALS_INVALID"
+                : message === "REGISTRATION_EXISTING_ACCOUNT_CONFIRM_REQUIRED"
+                  ? "EXISTING_ACCOUNT_CONFIRM_REQUIRED"
           : message === "REGISTRATION_RATE_LIMITED"
             ? "REGISTRATION_RATE_LIMITED"
             : message === "REGISTRATION_AUTH_UNAVAILABLE"
