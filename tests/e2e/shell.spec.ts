@@ -253,12 +253,15 @@ test("senha forte orienta e bloqueia cadastro fraco", async ({ page }) => {
 
   await password.fill("senhafraca");
   await confirmation.fill("senhafraca");
-  await expect(submit).toBeDisabled();
+  await submit.click();
+  await expect(
+    page.getByText("A senha ainda não atende a todos os requisitos de segurança."),
+  ).toBeVisible();
 
   await password.fill("SenhaForte!2026");
   await confirmation.fill("SenhaDiferente!2026");
+  await submit.click();
   await expect(page.getByText("As senhas não coincidem.")).toBeVisible();
-  await expect(submit).toBeDisabled();
 
   await confirmation.fill("SenhaForte!2026");
   await expect(page.getByText("✓ As senhas coincidem.")).toBeVisible();
