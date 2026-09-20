@@ -159,6 +159,37 @@ export const LoginSchema = z
   })
   .strict();
 export const EmailRequestSchema = z.object({ email }).strict();
+
+export const RoleScopedEmailRequestSchema = z
+  .object({
+    email,
+    portalRole: PortalRoleSchema,
+  })
+  .strict();
+
+export const RoleScopedResetPasswordSchema = z
+  .object({
+    password: StrongPasswordSchema,
+    portalRole: PortalRoleSchema,
+    flowToken: z.string().min(32).max(256),
+  })
+  .strict();
+
+export const SecurityCodeRequestSchema = z
+  .object({
+    portalRole: PortalRoleSchema,
+  })
+  .strict();
+
+export const RoleScopedPasswordChangeSchema = z
+  .object({
+    password: StrongPasswordSchema,
+    nonce: z.string().regex(/^\d{6,8}$/, "Código de segurança inválido"),
+    challengeId: z.string().uuid(),
+    portalRole: PortalRoleSchema,
+  })
+  .strict();
+
 export const SessionImportSchema = z
   .object({
     accessToken: z.string().min(32).max(8192),
