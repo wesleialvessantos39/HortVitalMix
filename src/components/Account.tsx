@@ -468,7 +468,21 @@ export function Account({
                           ? "Não foi possível aceitar a nova senha. Solicite um novo link de recuperação."
                           : code === "DEPENDENCY_UNAVAILABLE"
                             ? "O serviço de cadastro está temporariamente indisponível." + requestSuffix
-                            : "Não foi possível concluir o cadastro." + requestSuffix,
+                            : code === "REGISTRATION_SCHEMA_OUTDATED"
+                              ? "O banco de dados ainda não recebeu a atualização necessária para concluir o cadastro." + requestSuffix
+                              : code === "REGISTRATION_DATA_REJECTED"
+                                ? "Os dados foram recusados pelo cadastro. Revise os campos e tente novamente." + requestSuffix
+                                : code === "REGISTRATION_INTERNAL_ERROR"
+                                  ? "Ocorreu uma falha interna durante o cadastro." + requestSuffix
+                                  : code === "REQUEST_TIMEOUT"
+                                    ? "O servidor demorou mais do que o esperado para responder. O cadastro não foi confirmado."
+                                    : code === "NETWORK_UNAVAILABLE"
+                                      ? "Não foi possível conectar ao servidor de cadastro. Verifique a conexão e tente novamente."
+                                      : code === "INVALID_API_RESPONSE"
+                                        ? "A função de cadastro respondeu de forma inválida. O erro foi identificado para correção."
+                                        : code === "HTTP_ERROR"
+                                          ? "O servidor recusou a solicitação de cadastro." + requestSuffix
+                                          : "Falha não identificada no cadastro: " + code + requestSuffix,
       );
     } finally {
       setBusy(false);
