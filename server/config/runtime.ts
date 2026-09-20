@@ -15,17 +15,10 @@ export function resolveDbUrl(
   env: NodeJS.ProcessEnv,
   appEnv = resolveAppEnv(env),
 ): { url: string | null; reason: string | null; source: DbSource } {
-  if (appEnv !== "development" && (env.DATABASE_URL || env.POSTGRES_URL))
-    return {
-      url: null,
-      reason: "LEGACY_DB_ALIAS_REJECTED",
-      source: null,
-    };
-
   const candidates: Array<[Exclude<DbSource, null>, string | undefined]> = [
     ["SUPABASE_DB_URL", env.SUPABASE_DB_URL],
-    ["DATABASE_URL", appEnv === "development" ? env.DATABASE_URL : undefined],
-    ["POSTGRES_URL", appEnv === "development" ? env.POSTGRES_URL : undefined],
+    ["DATABASE_URL", env.DATABASE_URL],
+    ["POSTGRES_URL", env.POSTGRES_URL],
   ];
 
   const selected = candidates.find(([, value]) => Boolean(value));
@@ -50,6 +43,16 @@ export function resolveDbUrl(
       /[<>\s]/.test(value!)
     )
       throw new Error();
+
+    if (
+      env.SUPABASE_PROJECT_REF &&
+      u.username !== `postgres.${env.SUPABASE_PROJECT_REF}`
+    )
+      return {
+        url: null,
+        reason: "DB_PROJECT_REF_MISMATCH",
+        source: null,
+      };
 
     return { url: value!, reason: null, source };
   } catch {
