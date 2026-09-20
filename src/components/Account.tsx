@@ -573,8 +573,14 @@ export function Account({
                       ? "A página não foi reconhecida como origem segura. Atualize o preview e tente novamente." + requestSuffix
                       : code === "ACCOUNT_UNAVAILABLE"
                         ? "Sua conta não está disponível para acesso."
-                        : code === "PASSWORD_UPDATE_REJECTED"
-                          ? "Não foi possível aceitar a nova senha. Solicite um novo link de recuperação."
+                        : code === "RECOVERY_CONTEXT_MISMATCH"
+                          ? "Este link de recuperação pertence a outro perfil."
+                          : code === "RECOVERY_CONTEXT_INVALID"
+                            ? "Este link de recuperação expirou, foi invalidado ou pertence a outro perfil."
+                            : code === "RECOVERY_CONTEXT_ALREADY_USED"
+                              ? "Este link de recuperação já foi utilizado."
+                              : code === "PASSWORD_UPDATE_REJECTED"
+                                ? "Não foi possível aceitar a nova senha. Solicite um novo link de recuperação."
                           : code === "DEPENDENCY_UNAVAILABLE"
                             ? "O serviço está temporariamente indisponível." + requestSuffix
                             : code === "REGISTRATION_SCHEMA_OUTDATED"
@@ -733,9 +739,13 @@ export function Account({
               if (name) clearFieldError(name);
             }}
           >
-            <h2>Alterar senha</h2>
+            <h2>
+              Alterar senha
+              {session.activeRole ? ` — ${roleLabel(session.activeRole)}` : ""}
+            </h2>
             <p>
-              Digite o código recebido e crie uma senha forte.
+              Digite o código enviado para este perfil. Códigos emitidos em
+              outro portal não são aceitos aqui.
             </p>
             <label>
               Código de segurança
