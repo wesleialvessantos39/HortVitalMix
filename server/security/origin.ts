@@ -14,9 +14,19 @@ export function isAllowedRequestOrigin(req: Request) {
 
   try {
     const parsed = new URL(origin);
+
+    if (runtime.appEnv === "development") {
+      if (
+        (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1") &&
+        (parsed.protocol === "http:" || parsed.protocol === "https:")
+      ) {
+        return true;
+      }
+    }
+
     const requestHost =
-      firstHeader(req.headers.host) ??
-      firstHeader(req.headers["x-forwarded-host"]);
+      firstHeader(req.headers["x-forwarded-host"]) ??
+      firstHeader(req.headers.host);
     if (!requestHost || parsed.host !== requestHost) return false;
 
     const forwardedProto = firstHeader(req.headers["x-forwarded-proto"]);

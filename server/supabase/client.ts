@@ -24,11 +24,12 @@ const options = {
   },
 };
 
-const valid = /^https:\/\/[a-z0-9]+\.supabase\.co$/.test(runtime.supabaseUrl);
+const cleanUrl = (runtime.supabaseUrl || "").trim().replace(/\/+$/, "");
+const valid = /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(cleanUrl);
 
 export function createSupabasePublicClient() {
   return valid && runtime.anonKey
-    ? createClient(runtime.supabaseUrl, runtime.anonKey, options)
+    ? createClient(cleanUrl, runtime.anonKey, options)
     : null;
 }
 
@@ -36,5 +37,5 @@ export const supabasePublic = createSupabasePublicClient();
 
 export const supabaseAdmin =
   valid && runtime.serviceKey
-    ? createClient(runtime.supabaseUrl, runtime.serviceKey, options)
+    ? createClient(cleanUrl, runtime.serviceKey, options)
     : null;

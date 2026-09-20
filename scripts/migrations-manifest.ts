@@ -54,7 +54,7 @@ export function validateHistory(rows: { version: string; name: string }[]) {
   return manifest.schemaVersion;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href)
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href)
   console.log(
     JSON.stringify({
       schemaVersion: manifest.schemaVersion,

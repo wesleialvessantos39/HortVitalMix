@@ -251,8 +251,8 @@ async function main() {
 }
 
 main()
-  .catch(() => {
-    console.error("FOUNDATION_GATE_FAILED");
+  .catch((err) => {
+    console.error("FOUNDATION_GATE_FAILED", err);
     process.exitCode = 1;
   })
   .finally(() => dbPool?.end());

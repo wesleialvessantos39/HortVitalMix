@@ -73,15 +73,26 @@ export function resolveDbUrl(
 export function buildRuntime(env: NodeJS.ProcessEnv) {
   const appEnv = resolveAppEnv(env);
   const db = resolveDbUrl(env, appEnv);
-  const origins = (
-    env.APP_ALLOWED_ORIGINS ??
-    (appEnv === "development"
-      ? "http://localhost:3000,http://127.0.0.1:3000"
-      : "")
-  )
+  const configuredOrigins = (env.APP_ALLOWED_ORIGINS ?? "")
     .split(",")
     .map((origin) => origin.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((origin) => {
+      try {
+        return new URL(origin).origin;
+      } catch {
+        return origin;
+      }
+    });
+
+  const defaultDevOrigins =
+    appEnv === "development"
+      ? ["http://localhost:3000", "http://127.0.0.1:3000"]
+      : [];
+
+  const origins = Array.from(
+    new Set([...configuredOrigins, ...defaultDevOrigins]),
+  );
 
   return Object.freeze({
     appEnv,
