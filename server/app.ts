@@ -17,8 +17,22 @@ app.use((req, res, next) => {
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "X-Frame-Options": "DENY",
   });
+  const origin = req.headers.origin;
+  if (typeof origin === "string" && isAllowedRequestOrigin(req)) {
+    res.set({
+      "Access-Control-Allow-Origin": origin,
+      "Access-Control-Allow-Credentials": "true",
+      "Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, X-Requested-With",
+      Vary: "Origin",
+    });
+    if (req.method === "OPTIONS") {
+      res.status(204).end();
+      return;
+    }
+  }
   if (
-    !["GET", "HEAD", "OPTIONS"].includes(req.method) &&
+    !["GET", "HEAD"].includes(req.method) &&
     !isAllowedRequestOrigin(req)
   ) {
     res

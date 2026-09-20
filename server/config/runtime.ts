@@ -73,7 +73,7 @@ export function resolveDbUrl(
 export function buildRuntime(env: NodeJS.ProcessEnv) {
   const appEnv = resolveAppEnv(env);
   const db = resolveDbUrl(env, appEnv);
-  const configuredOrigins = (env.APP_ALLOWED_ORIGINS ?? "")
+  const configuredOrigins = (env.APP_ALLOWED_ORIGINS ?? env.HVM_ALLOWED_ORIGINS ?? "")
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean)
