@@ -14,7 +14,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Preencha os valores pelo gerenciador de segredos da plataforma. O Vite serve interface e API na mesma origem, porta 3000. No Studio, adicione a origem exata do preview a `APP_ALLOWED_ORIGINS`. Credenciais privilegiadas nunca usam prefixo `VITE_`.
+Preencha os valores pelo gerenciador de segredos da plataforma. O Vite serve interface e API na mesma origem, porta 3000. O cadastro público possui fallback controlado para a API de Production quando o proxy do Google AI Studio devolve HTTP 403 sem JSON; login, sessão e rotas administrativas continuam same-origin e não recebem CORS público. Credenciais privilegiadas nunca usam prefixo `VITE_`.
 
 Sem credenciais, o shell visual permanece navegável e endpoints dependentes do banco falham de forma fechada. Isso não equivale a homologação.
 
