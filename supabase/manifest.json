@@ -57,10 +57,10 @@
       "file": "20260920023000_registration_rpc.sql"
     },
     {
-      "version": "20260920210000",
+      "version": "20260920210710",
       "name": "multi_role_identity",
-      "file": "20260920210000_multi_role_identity.sql"
+      "file": "20260920210710_multi_role_identity.sql"
     }
   ],
-  "migrationHistoryHash": "f138aca975d82981ad747fb31149ad24a97cb83dbe24de8ae4987fd323f82bb3"
+  "migrationHistoryHash": "ae5a1c60c4642929587db1a0757ccfee394e6be07a61b3ec0bb704387c3c5600"
 }
