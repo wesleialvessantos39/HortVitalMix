@@ -125,7 +125,7 @@ Diagnóstico confirmado:
 Correções:
 - mesma origem HTTPS do site aceita automaticamente; origens externas continuam bloqueadas.
 - `SUPABASE_DB_URL` continua prioritária, com fallback seguro para `DATABASE_URL` e `POSTGRES_URL` somente se forem poolers Supabase válidos na porta 6543 e do mesmo projeto.
-- suporte a `SUPABASE_PUBLISHABLE_KEY` e `SUPABASE_SECRET_KEY`.
+- suporte a `alias moderno de chave pública do Supabase` e `alias moderno de chave secreta do Supabase`.
 - cadastro agora diferencia `IDENTITY_CONFLICT`, `REGISTRATION_RATE_LIMITED`, `AUTH_UNAVAILABLE` e `DATABASE_UNAVAILABLE`, sempre com request id quando aplicável.
 - Produtor e Consumidor usam validação explícita por campo: mensagem abaixo do campo, `aria-invalid`, destaque visual e foco automático no primeiro erro.
 - formulários de cadastro usam validação Zod como fonte canônica e não dependem da mensagem nativa silenciosa do navegador.
@@ -243,7 +243,7 @@ Status: **correções de conformidade aplicadas; homologação final ainda não 
 - SQL de fundação passou a provar unicidade de `command_id`.
 - Playwright transformado em gate explícito C1–C7.
 - `vercel.json` corrigido: auto-deploy apenas de `main`; demais branches desabilitadas por padrão.
-- Variáveis obsoletas removidas da documentação; testes reais usam `HVM_INTEGRATION_ENABLED` e `HVM_PROD_PROJECT_REF`.
+- Variáveis obsoletas removidas da documentação; testes reais usam `flag exclusiva de integração` e `referência protegida de production`.
 - Hardening documental aplicado ao Supabase e versionado em `supabase/hardening/trilha01_sensitive_comments.sql`.
 
 ### Evidência atual do banco
