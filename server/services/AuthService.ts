@@ -1,42 +1,69 @@
-import { dbPool } from "../db/pool.ts";
 import { supabaseAdmin, supabasePublic } from "../supabase/client.ts";
-import {
-  classifyDbError,
-  reportFailure,
-} from "../config/reportFailure.ts";
-import type { PoolClient } from "pg";
+import { reportFailure } from "../config/reportFailure.ts";
 import type { Registration } from "../../shared/contracts/auth.ts";
+
+type RegistrationFailure = Error & { status?: number };
+
+function registrationError(code: string, status: number): RegistrationFailure {
+  return Object.assign(new Error(code), { status });
+}
 
 async function compensateIncompleteIdentity(
   userId: string,
   requestId: string,
-  client: PoolClient,
 ) {
   if (!supabaseAdmin) return;
 
   const deleted = await supabaseAdmin.auth.admin.deleteUser(userId);
-  if (deleted.error) {
-    reportFailure("auth_compensation_failed", requestId);
+  if (deleted.error && deleted.error.status !== 404) {
+    reportFailure({
+      category: "auth_compensation_failed",
+      requestId,
+      detail: deleted.error.code ?? String(deleted.error.status ?? "unknown"),
+    });
     return;
   }
 
-  try {
-    await client.query(
-      `DELETE FROM public.app_users u
-       WHERE u.id=$1
-         AND u.status='suspended'
-         AND u.block_reason='auth_user_deleted'
-         AND NOT EXISTS (
-           SELECT 1 FROM public.app_people p WHERE p.user_id=u.id
-         )
-         AND NOT EXISTS (
-           SELECT 1 FROM public.app_user_role_assignments r WHERE r.user_id=u.id
-         )`,
-      [userId],
-    );
-  } catch {
-    reportFailure("auth_compensation_tombstone_cleanup_failed", requestId);
-  }
+  const cleanup = await supabaseAdmin
+    .from("app_users")
+    .delete()
+    .eq("id", userId)
+    .eq("status", "suspended")
+    .eq("block_reason", "auth_user_deleted");
+
+  if (cleanup.error)
+    reportFailure({
+      category: "auth_compensation_tombstone_cleanup_failed",
+      requestId,
+      detail: cleanup.error.code ?? "unknown",
+    });
+}
+
+function mapDomainRegistrationError(
+  error: { code?: string | null; message?: string | null },
+  requestId: string,
+): RegistrationFailure {
+  const code = error.code ?? "unknown";
+
+  reportFailure({
+    category: "registration_domain_rpc_failed",
+    requestId,
+    detail: code,
+  });
+
+  if (code === "23505")
+    return registrationError("REGISTRATION_IDENTITY_CONFLICT", 409);
+
+  if (code === "22023")
+    return registrationError("REGISTRATION_DATA_REJECTED", 400);
+
+  if (code === "PGRST202" || code === "42883")
+    return registrationError("REGISTRATION_SCHEMA_OUTDATED", 503);
+
+  if (code === "42501")
+    return registrationError("REGISTRATION_AUTH_UNAVAILABLE", 503);
+
+  return registrationError("REGISTRATION_DATABASE_UNAVAILABLE", 503);
 }
 
 export async function register(
@@ -45,30 +72,8 @@ export async function register(
   requestId: string,
   emailRedirectTo?: string,
 ) {
-  if (!dbPool)
-    throw Object.assign(new Error("REGISTRATION_DATABASE_UNAVAILABLE"), {
-      status: 503,
-    });
   if (!supabaseAdmin)
-    throw Object.assign(new Error("REGISTRATION_AUTH_UNAVAILABLE"), {
-      status: 503,
-    });
-
-  // Adquire a conexão antes de criar a identidade para não deixar usuário órfão
-  // caso o Postgres esteja indisponível.
-  let client: PoolClient;
-  try {
-    client = await dbPool.connect();
-  } catch (error) {
-    reportFailure({
-      category: "registration_database_connect_failed",
-      requestId,
-      detail: (error as { code?: string })?.code ?? "unknown",
-    });
-    throw Object.assign(new Error("REGISTRATION_DATABASE_UNAVAILABLE"), {
-      status: 503,
-    });
-  }
+    throw registrationError("REGISTRATION_AUTH_UNAVAILABLE", 503);
 
   let userId: string | undefined;
 
@@ -94,32 +99,26 @@ export async function register(
         detail: created.error?.code ?? String(status ?? "unknown"),
       });
 
-      throw Object.assign(new Error(code), {
-        status: status === 422 ? 409 : status === 429 ? 429 : 503,
-      });
+      throw registrationError(
+        code,
+        status === 422 ? 409 : status === 429 ? 429 : 503,
+      );
     }
 
     userId = created.data.user.id;
 
-    await client.query("BEGIN");
+    const completed = await supabaseAdmin.rpc("complete_public_registration", {
+      p_user_id: userId,
+      p_full_name: data.fullName,
+      p_cpf_normalized: data.cpf,
+      p_email_normalized: data.email,
+      p_phone_e164: data.phone,
+      p_role: role,
+      p_property_name: role === "producer" ? data.propertyName ?? null : null,
+      p_activity_type: role === "producer" ? data.activityType ?? null : null,
+    });
 
-    const person = await client.query(
-      "INSERT INTO public.app_people(user_id,full_name,cpf_normalized,email_normalized,phone_e164) VALUES($1,$2,$3,$4,$5) RETURNING id",
-      [userId, data.fullName, data.cpf, data.email, data.phone],
-    );
-
-    await client.query(
-      "INSERT INTO public.app_user_role_assignments(user_id,role_code) VALUES($1,$2)",
-      [userId, role],
-    );
-
-    if (role === "producer")
-      await client.query(
-        "INSERT INTO public.app_producer_profiles(person_id,property_name,rural_activity_type,verification_status,trust_level) VALUES($1,$2,$3,'declared',0)",
-        [person.rows[0].id, data.propertyName, data.activityType],
-      );
-
-    await client.query("COMMIT");
+    if (completed.error) throw mapDomainRegistrationError(completed.error, requestId);
 
     let confirmationDispatchAccepted = false;
     if (supabasePublic) {
@@ -129,7 +128,12 @@ export async function register(
         options: emailRedirectTo ? { emailRedirectTo } : undefined,
       });
       confirmationDispatchAccepted = !error;
-      if (error) reportFailure("confirmation_dispatch_failed", requestId);
+      if (error)
+        reportFailure({
+          category: "confirmation_dispatch_failed",
+          requestId,
+          detail: error.code ?? String(error.status ?? "unknown"),
+        });
     } else {
       reportFailure("confirmation_dispatch_unavailable", requestId);
     }
@@ -140,36 +144,25 @@ export async function register(
       confirmationDispatchAccepted,
     };
   } catch (error) {
-    await client.query("ROLLBACK").catch(() => undefined);
-
-    if (userId) {
-      await compensateIncompleteIdentity(userId, requestId, client);
-    }
+    if (userId) await compensateIncompleteIdentity(userId, requestId);
 
     const message = (error as Error)?.message;
     if (
       message === "REGISTRATION_IDENTITY_CONFLICT" ||
       message === "REGISTRATION_RATE_LIMITED" ||
       message === "REGISTRATION_AUTH_UNAVAILABLE" ||
-      message === "REGISTRATION_DATABASE_UNAVAILABLE"
+      message === "REGISTRATION_DATABASE_UNAVAILABLE" ||
+      message === "REGISTRATION_SCHEMA_OUTDATED" ||
+      message === "REGISTRATION_DATA_REJECTED"
     )
       throw error;
 
-    const dbKind = classifyDbError(error);
-    if (dbKind === "conflict")
-      throw Object.assign(new Error("REGISTRATION_IDENTITY_CONFLICT"), {
-        status: 409,
-      });
-
     reportFailure({
-      category: "registration_database_write_failed",
+      category: "registration_unexpected_failure",
       requestId,
-      detail: (error as { code?: string })?.code ?? dbKind,
+      detail: (error as { name?: string })?.name ?? "unknown",
     });
-    throw Object.assign(new Error("REGISTRATION_DATABASE_UNAVAILABLE"), {
-      status: 503,
-    });
-  } finally {
-    client.release();
+
+    throw registrationError("REGISTRATION_UNEXPECTED_FAILURE", 503);
   }
 }
