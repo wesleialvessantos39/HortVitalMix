@@ -326,8 +326,20 @@ authRouter.post("/import-session", async (req, res, next) => {
       return;
     }
 
-    setSession(res, restored.data.session);
-    res.json({ status: "imported" });
+    if (
+      input.data.portalRole &&
+      !(await hasActiveRole(restored.data.user.id, input.data.portalRole))
+    ) {
+      await client.auth.signOut({ scope: "local" }).catch(() => undefined);
+      res.status(403).json({ error: "ROLE_NOT_ALLOWED_FOR_PORTAL" });
+      return;
+    }
+
+    setSession(res, restored.data.session, input.data.portalRole ?? null);
+    res.json({
+      status: "imported",
+      activeRole: input.data.portalRole ?? null,
+    });
   } catch (error) {
     next(error);
   }
