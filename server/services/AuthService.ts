@@ -1,6 +1,9 @@
 import { dbPool } from "../db/pool.ts";
 import { supabaseAdmin, supabasePublic } from "../supabase/client.ts";
-import { reportFailure } from "../config/reportFailure.ts";
+import {
+  classifyDbError,
+  reportFailure,
+} from "../config/reportFailure.ts";
 import type { PoolClient } from "pg";
 import type { Registration } from "../../shared/contracts/auth.ts";
 
@@ -42,12 +45,31 @@ export async function register(
   requestId: string,
   emailRedirectTo?: string,
 ) {
-  if (!dbPool || !supabaseAdmin)
-    throw Object.assign(new Error("DEPENDENCY_UNAVAILABLE"), { status: 503 });
+  if (!dbPool)
+    throw Object.assign(new Error("REGISTRATION_DATABASE_UNAVAILABLE"), {
+      status: 503,
+    });
+  if (!supabaseAdmin)
+    throw Object.assign(new Error("REGISTRATION_AUTH_UNAVAILABLE"), {
+      status: 503,
+    });
 
   // Adquire a conexão antes de criar a identidade para não deixar usuário órfão
   // caso o Postgres esteja indisponível.
-  const client = await dbPool.connect();
+  let client: PoolClient;
+  try {
+    client = await dbPool.connect();
+  } catch (error) {
+    reportFailure({
+      category: "registration_database_connect_failed",
+      requestId,
+      detail: (error as { code?: string })?.code ?? "unknown",
+    });
+    throw Object.assign(new Error("REGISTRATION_DATABASE_UNAVAILABLE"), {
+      status: 503,
+    });
+  }
+
   let userId: string | undefined;
 
   try {
@@ -57,10 +79,25 @@ export async function register(
       email_confirm: false,
     });
 
-    if (created.error || !created.data.user)
-      throw Object.assign(new Error("REGISTRATION_NOT_COMPLETED"), {
-        status: created.error?.status === 422 ? 409 : 503,
+    if (created.error || !created.data.user) {
+      const status = created.error?.status;
+      const code =
+        status === 422
+          ? "REGISTRATION_IDENTITY_CONFLICT"
+          : status === 429
+            ? "REGISTRATION_RATE_LIMITED"
+            : "REGISTRATION_AUTH_UNAVAILABLE";
+
+      reportFailure({
+        category: "registration_auth_failed",
+        requestId,
+        detail: created.error?.code ?? String(status ?? "unknown"),
       });
+
+      throw Object.assign(new Error(code), {
+        status: status === 422 ? 409 : status === 429 ? 429 : 503,
+      });
+    }
 
     userId = created.data.user.id;
 
@@ -109,7 +146,29 @@ export async function register(
       await compensateIncompleteIdentity(userId, requestId, client);
     }
 
-    throw error;
+    const message = (error as Error)?.message;
+    if (
+      message === "REGISTRATION_IDENTITY_CONFLICT" ||
+      message === "REGISTRATION_RATE_LIMITED" ||
+      message === "REGISTRATION_AUTH_UNAVAILABLE" ||
+      message === "REGISTRATION_DATABASE_UNAVAILABLE"
+    )
+      throw error;
+
+    const dbKind = classifyDbError(error);
+    if (dbKind === "conflict")
+      throw Object.assign(new Error("REGISTRATION_IDENTITY_CONFLICT"), {
+        status: 409,
+      });
+
+    reportFailure({
+      category: "registration_database_write_failed",
+      requestId,
+      detail: (error as { code?: string })?.code ?? dbKind,
+    });
+    throw Object.assign(new Error("REGISTRATION_DATABASE_UNAVAILABLE"), {
+      status: 503,
+    });
   } finally {
     client.release();
   }
