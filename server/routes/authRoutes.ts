@@ -814,7 +814,10 @@ for (const role of ["consumer", "producer"] as const)
         parsed.data,
         role,
         res.locals.requestId,
-        redirectUrl(req, "/confirmar-contato") ?? undefined,
+        redirectUrl(
+          req,
+          `/confirmar-contato?portal=${encodeURIComponent(role)}`,
+        ) ?? undefined,
       );
       res.status(201).json(result);
     } catch (error) {
