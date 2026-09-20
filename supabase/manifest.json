@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 12,
+  "schemaVersion": 13,
   "migrations": [
     {
       "version": "20260919030126",
@@ -60,7 +60,12 @@
       "version": "20260920210710",
       "name": "multi_role_identity",
       "file": "20260920210710_multi_role_identity.sql"
+    },
+    {
+      "version": "20260920224820",
+      "name": "role_scoped_security_flows",
+      "file": "20260920224820_role_scoped_security_flows.sql"
     }
   ],
-  "migrationHistoryHash": "ae5a1c60c4642929587db1a0757ccfee394e6be07a61b3ec0bb704387c3c5600"
+  "migrationHistoryHash": "c101268be41ba32f843356ccc6d0a01d4dcdd6f48081638167be058382591d62"
 }
