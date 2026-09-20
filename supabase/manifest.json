@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 10,
+  "schemaVersion": 11,
   "migrations": [
     {
       "version": "20260919030126",
@@ -50,7 +50,12 @@
       "version": "20260919231000",
       "name": "remove_grammatical_treatment",
       "file": "20260919231000_remove_grammatical_treatment.sql"
+    },
+    {
+      "version": "20260920023000",
+      "name": "registration_rpc",
+      "file": "20260920023000_registration_rpc.sql"
     }
   ],
-  "migrationHistoryHash": "896d4afdffae19fd9481816dfcead54ff75acca8852161a2fff23c10fffe3084"
+  "migrationHistoryHash": "8fa8747b04e007b4d95716846114a07ddcec76132add815f36244931323c5238"
 }
