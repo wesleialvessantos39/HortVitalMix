@@ -38,6 +38,7 @@ describe("API same-origin sem mocks", () => {
     const r = await request(app)
       .post("/v1/auth/login")
       .set("Origin", "https://hortivitalmix.vercel.app")
+      .set("Host", "hortivitalmix.vercel.app")
       .set("X-Forwarded-Host", "hortivitalmix.vercel.app")
       .set("X-Forwarded-Proto", "https")
       .send({});
