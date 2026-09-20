@@ -586,9 +586,11 @@ for (const role of ["consumer", "producer"] as const)
                   ? "REGISTRATION_SCHEMA_OUTDATED"
                   : message === "REGISTRATION_DATA_REJECTED"
                     ? "REGISTRATION_DATA_REJECTED"
-                    : message === "REGISTRATION_UNEXPECTED_FAILURE"
-                      ? "REGISTRATION_INTERNAL_ERROR"
-                      : status === 409
+                    : message === "REGISTRATION_STATUS_UNKNOWN"
+                      ? "REGISTRATION_STATUS_UNKNOWN"
+                      : message === "REGISTRATION_UNEXPECTED_FAILURE"
+                        ? "REGISTRATION_INTERNAL_ERROR"
+                        : status === 409
                         ? "IDENTITY_CONFLICT"
                         : "DEPENDENCY_UNAVAILABLE";
 
