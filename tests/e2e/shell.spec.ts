@@ -204,17 +204,40 @@ test("rotas diretas de recuperação preservam estado correto", async ({ page })
 });
 
 
-test("login e cadastros usam portais separados", async ({ page }) => {
+test("conta separa consumidor e produtor e administração fica independente", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
 
   await page.goto("/entrar");
+  await expect(page.getByRole("heading", { name: "Conta" })).toBeAttached();
+  await expect(page.getByRole("button", { name: "Entrar como Consumidor" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Entrar como Produtor" })).toBeVisible();
+  await expect(page.getByText("O acesso é separado por perfil")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Administrador/ })).toHaveCount(0);
+  await expect(page.getByText("Criar cadastro de consumidor")).toHaveCount(0);
+  await expect(page.getByText("Criar cadastro de produtor")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Entrar como Consumidor" }).click();
   await expect(
-    page.getByRole("heading", { name: "Escolha como deseja entrar" }),
+    page.getByRole("heading", { name: "Entrar como Consumidor" }),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: /Consumidor/ }).first()).toBeVisible();
-  await expect(page.getByRole("button", { name: /Produtor/ }).first()).toBeVisible();
-  await expect(page.getByRole("button", { name: /Administrador/ }).first()).toBeVisible();
-  await expect(page.getByRole("button", { name: /Super administrador/ }).first()).toBeVisible();
+  await expect(page.getByText("Criar cadastro de consumidor")).toBeVisible();
+
+  await page.goto("/entrar/produtor");
+  await expect(
+    page.getByRole("heading", { name: "Entrar como Produtor" }),
+  ).toBeVisible();
+  await expect(page.getByText("Criar cadastro de produtor")).toBeVisible();
+
+  await page.goto("/administracao");
+  await expect(
+    page.getByRole("heading", { name: "Administração" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Entrar como Administrador" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Entrar como Super administrador" }),
+  ).toBeVisible();
 
   for (const [path, heading] of [
     ["/entrar/consumidor", "Entrar como Consumidor"],
@@ -242,14 +265,23 @@ test("login e cadastros usam portais separados", async ({ page }) => {
   ).toBeVisible();
   await expect(page.getByLabel("Nome de seu imóvel")).toBeVisible();
 
-  await page.goto("/acesso/administracao");
-  await expect(
-    page.getByRole("heading", { name: "Entrar como Administrador" }),
-  ).toBeVisible();
-
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
   ).toBe(true);
+});
+
+test("ícone de administração da home abre o seletor administrativo", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+
+  const adminButton = page.getByRole("button", { name: "Administração" });
+  await expect(adminButton).toBeVisible();
+  await adminButton.click();
+
+  await expect(page).toHaveURL(/\/administracao$/);
+  await expect(
+    page.getByRole("heading", { name: "Administração" }),
+  ).toBeVisible();
 });
 
 
