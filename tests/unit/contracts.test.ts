@@ -141,6 +141,21 @@ describe("contratos e limites de confiança", () => {
     expect(resolved.source).toBe("DATABASE_URL");
   });
 
+  it("ignora alias inválido quando existe outro pooler válido", () => {
+    const resolved = resolveDbUrl(
+      {
+        SUPABASE_PROJECT_REF: "ref",
+        SUPABASE_DB_URL: "valor-invalido",
+        DATABASE_URL:
+          "postgresql://postgres.ref:pass@aws-0-test.pooler.supabase.com:6543/postgres",
+      },
+      "production",
+    );
+
+    expect(resolved.reason).toBeNull();
+    expect(resolved.source).toBe("DATABASE_URL");
+  });
+
   it("rejeita pooler de outro projeto", () => {
     const resolved = resolveDbUrl(
       {
