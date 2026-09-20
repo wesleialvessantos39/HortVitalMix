@@ -33,7 +33,7 @@ Fluxo sem custo:
 ## Regras de segurança
 
 - Credenciais nunca são compartilhadas entre ambientes.
-- `HVM_PROD_PROJECT_REF` continua apontando para `xipbsazvymkqqfmfegwu`, mesmo quando production estiver pausado.
+- `referência protegida de production` continua apontando para `xipbsazvymkqqfmfegwu`, mesmo quando production estiver pausado.
 - Testes destrutivos/fixtures só podem executar contra development.
 - Homologation não é tratado como production e não recebe testes destrutivos.
 - Nenhuma release é registrada até os gates correspondentes serem efetivamente aprovados.
