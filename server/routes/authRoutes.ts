@@ -17,6 +17,7 @@ import {
 import { register } from "../services/AuthService.ts";
 import { dbPool } from "../db/pool.ts";
 import { classifyDbError, reportFailure } from "../config/reportFailure.ts";
+import { safeRequestOrigin } from "../security/origin.ts";
 
 export const authRouter = Router();
 
@@ -65,8 +66,8 @@ function setSession(
 }
 
 function redirectUrl(req: Request, path: string) {
-  const origin = req.headers.origin;
-  if (!origin || !runtime.origins.includes(origin)) return null;
+  const origin = safeRequestOrigin(req);
+  if (!origin) return null;
 
   try {
     return new URL(path, origin).toString();
