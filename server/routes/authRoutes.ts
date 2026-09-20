@@ -370,7 +370,7 @@ authRouter.post("/resend-confirmation", async (req, res) => {
     return;
   }
 
-  const target = redirectUrl(req, "/entrar");
+  const target = redirectUrl(req, "/confirmar-contato");
   if (supabasePublic && target) {
     const { error } = await supabasePublic.auth.resend({
       type: "signup",
