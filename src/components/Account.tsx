@@ -10,6 +10,7 @@ import {
   PASSWORD_MIN_LENGTH,
   RegisterConsumerSchema,
   RegisterProducerSchema,
+  PortalRoleSchema,
   type PortalRole,
 } from "../../shared/contracts/auth";
 
@@ -51,8 +52,27 @@ function loginRoleFromPath(path: string): PortalRole | null {
   return null;
 }
 
-function loginPathForRole(role: "consumer" | "producer") {
-  return role === "consumer" ? "/entrar/consumidor" : "/entrar/produtor";
+function loginPathForRole(role: PortalRole) {
+  if (role === "consumer") return "/entrar/consumidor";
+  if (role === "producer") return "/entrar/produtor";
+  if (role === "platform_admin") return "/entrar/administrador";
+  return "/entrar/super-administrador";
+}
+
+function portalRoleFromSearch(): PortalRole | null {
+  if (typeof location === "undefined") return null;
+  const parsed = PortalRoleSchema.safeParse(
+    new URLSearchParams(location.search).get("portal"),
+  );
+  return parsed.success ? parsed.data : null;
+}
+
+function recoveryHeading(role: PortalRole | null, reset = false) {
+  if (!role) return reset ? "Defina sua nova senha" : "Recupere sua senha";
+  const prefix = reset ? "Redefinição de senha" : "Recuperação de senha";
+  if (role === "consumer") return `${prefix} — cadastro Consumidor`;
+  if (role === "producer") return `${prefix} — cadastro Produtor`;
+  return `${prefix} — ${roleLabel(role)}`;
 }
 
 function roleLabel(role: string) {
@@ -226,6 +246,7 @@ export function Account({
   const [passwordValue, setPasswordValue] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loginPasswordVisible, setLoginPasswordVisible] = useState(false);
+  const [securityChallengeId, setSecurityChallengeId] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   useEffect(() => {
@@ -233,6 +254,7 @@ export function Account({
     setPasswordValue("");
     setConfirmPassword("");
     setLoginPasswordVisible(false);
+    setSecurityChallengeId(null);
     setFieldErrors({});
   }, [path]);
 
@@ -244,12 +266,17 @@ export function Account({
       const accessToken = hash.get("access_token");
       const refreshToken = hash.get("refresh_token");
       const type = hash.get("type");
+      const emailPortalRole = portalRoleFromSearch();
 
       if (accessToken && refreshToken) {
         try {
           await api("/v1/auth/import-session", {
             method: "POST",
-            body: JSON.stringify({ accessToken, refreshToken }),
+            body: JSON.stringify({
+              accessToken,
+              refreshToken,
+              portalRole: emailPortalRole ?? undefined,
+            }),
           });
 
           history.replaceState({}, "", location.pathname + location.search);
@@ -321,6 +348,11 @@ export function Account({
   }
 
   const portalRole = loginRoleFromPath(path);
+  const securityRole = portalRole ?? portalRoleFromSearch();
+  const recoveryFlow =
+    typeof location === "undefined"
+      ? ""
+      : new URLSearchParams(location.search).get("flow") ?? "";
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
