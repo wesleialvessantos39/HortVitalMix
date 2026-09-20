@@ -9,16 +9,14 @@ import { supabaseAdmin } from "../../server/supabase/client";
 import { app } from "../../server/app";
 import { GlobalConfigPublicSchema } from "../../shared/contracts/foundation";
 
-const enabled = process.env.HVM_INTEGRATION_ENABLED === "true";
+const PRODUCTION_PROJECT_REF = "xipbsazvymkqqfmfegwu";
+const enabled = runtime.appEnv === "development" && runtime.projectRef !== PRODUCTION_PROJECT_REF;
 
 function assertIsolatedDevelopment() {
   if (runtime.appEnv !== "development")
     throw new Error("ISOLATED_TEST_ENV_REQUIRED");
 
-  const productionRef = process.env.HVM_PROD_PROJECT_REF;
-  if (!productionRef)
-    throw new Error("PRODUCTION_PROJECT_REF_REQUIRED");
-  if (runtime.projectRef === productionRef)
+  if (runtime.projectRef === PRODUCTION_PROJECT_REF)
     throw new Error("PRODUCTION_PROJECT_REF_REJECTED");
 
   if (!dbPool || !supabaseAdmin)
