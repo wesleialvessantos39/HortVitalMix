@@ -92,8 +92,9 @@ export default function App() {
     else dialog.current?.close();
   }, [modal]);
   function go(to: string) {
-    history.pushState({}, "", to);
-    setPath(to);
+    const next = new URL(to, location.origin);
+    history.pushState({}, "", next.pathname + next.search + next.hash);
+    setPath(next.pathname);
     window.scrollTo(0, 0);
   }
   const logo = (
