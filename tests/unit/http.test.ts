@@ -147,21 +147,29 @@ describe("API same-origin sem mocks", () => {
     const response = await request(app)
       .post("/v1/auth/reauthenticate")
       .set("Origin", "http://localhost:3000")
-      .send({});
+      .send({ portalRole: "consumer" });
     expect(response.status).toBe(401);
   });
   it("redefinição exige sessão real mesmo com senha válida", async () => {
     const response = await request(app)
       .post("/v1/auth/reset-password")
       .set("Origin", "http://localhost:3000")
-      .send({ password: "SenhaNovaMuitoForte!2026" });
+      .send({
+        password: "SenhaNovaMuitoForte!2026",
+        portalRole: "consumer",
+        flowToken: "f".repeat(48),
+      });
     expect(response.status).toBe(401);
   });
   it("backend rejeita senha fraca antes de consultar sessão", async () => {
     const response = await request(app)
       .post("/v1/auth/reset-password")
       .set("Origin", "http://localhost:3000")
-      .send({ password: "senhasemcriterios" });
+      .send({
+        password: "senhasemcriterios",
+        portalRole: "consumer",
+        flowToken: "f".repeat(48),
+      });
     expect(response.status).toBe(400);
     expect(response.body.error).toBe("VALIDATION_ERROR");
   });
