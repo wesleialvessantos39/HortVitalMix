@@ -550,6 +550,7 @@ for (const role of ["consumer", "producer"] as const)
     if (!parsed.success) {
       res.status(400).json({
         error: "VALIDATION_ERROR",
+        requestId: res.locals.requestId,
         fields: parsed.error.issues.map((issue) => ({
           field: issue.path.join("."),
           message: issue.message,
