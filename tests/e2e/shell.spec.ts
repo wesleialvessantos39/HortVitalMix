@@ -166,20 +166,25 @@ test("fluxos públicos de segurança estão acessíveis e responsivos", async ({
 
   await page.getByRole("button", { name: "Esqueci minha senha" }).click();
   await expect(
-    page.getByRole("heading", { name: "Recupere sua senha" }),
+    page.getByRole("heading", {
+      name: "Recuperação de senha — cadastro Consumidor",
+    }),
   ).toBeVisible();
+  await expect(page).toHaveURL(/portal=consumer/);
 
   await page.getByRole("button", { name: "Voltar para entrar" }).click();
   await page.getByRole("button", { name: "Reenviar confirmação" }).click();
   await expect(
-    page.getByRole("heading", { name: "Confirme seu cadastro" }),
+    page.getByRole("heading", {
+      name: "Confirmação de cadastro — Consumidor",
+    }),
   ).toBeVisible();
+  await expect(page).toHaveURL(/portal=consumer/);
 
   await page.getByRole("button", { name: "Voltar para entrar" }).click();
-  await page.getByRole("button", { name: "Entrar com link ou código" }).click();
   await expect(
-    page.getByRole("heading", { name: "Acesso por link ou código" }),
-  ).toBeVisible();
+    page.getByRole("button", { name: "Entrar com link ou código" }),
+  ).toHaveCount(0);
 
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
@@ -200,6 +205,33 @@ test("rotas diretas de recuperação preservam estado correto", async ({ page })
   await page.goto("/confirmar-contato");
   await expect(
     page.getByRole("heading", { name: "Confirme seu cadastro" }),
+  ).toBeVisible();
+});
+
+
+test("recuperação explicita o perfil e mantém administração isolada", async ({ page }) => {
+  await page.goto("/entrar/produtor");
+  await page.getByRole("button", { name: "Esqueci minha senha" }).click();
+  await expect(
+    page.getByRole("heading", {
+      name: "Recuperação de senha — cadastro Produtor",
+    }),
+  ).toBeVisible();
+
+  await page.goto("/entrar/administrador");
+  await page.getByRole("button", { name: "Esqueci minha senha" }).click();
+  await expect(
+    page.getByRole("heading", {
+      name: "Recuperação de senha — Administrador",
+    }),
+  ).toBeVisible();
+
+  await page.goto("/entrar/super-administrador");
+  await page.getByRole("button", { name: "Esqueci minha senha" }).click();
+  await expect(
+    page.getByRole("heading", {
+      name: "Recuperação de senha — Super administrador",
+    }),
   ).toBeVisible();
 });
 
