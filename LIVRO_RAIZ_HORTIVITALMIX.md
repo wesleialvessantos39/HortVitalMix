@@ -1,5 +1,26 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-19 — Correção definitiva do cadastro público e validação de campos
+
+Status: **correção implementada em branch de hotfix; promoção para main e validação Vercel pendentes nesta entrada**.
+
+Diagnóstico confirmado:
+- production possuía zero linhas em `auth.users`, `app_users`, `app_people`, papéis e perfis de produtor, sem órfãos; as tentativas estavam falhando antes da criação efetiva da identidade.
+- o middleware exigia `APP_ALLOWED_ORIGINS` estático para todo POST de produção.
+- o resolvedor de banco podia rejeitar o runtime quando `DATABASE_URL` ou `POSTGRES_URL` coexistiam com a configuração canônica.
+- o runtime aceitava apenas nomes legados de chaves Supabase.
+
+Correções:
+- mesma origem HTTPS do site aceita automaticamente; origens externas continuam bloqueadas.
+- `SUPABASE_DB_URL` continua prioritária, com fallback seguro para `DATABASE_URL` e `POSTGRES_URL` somente se forem poolers Supabase válidos na porta 6543 e do mesmo projeto.
+- suporte a `SUPABASE_PUBLISHABLE_KEY` e `SUPABASE_SECRET_KEY`.
+- cadastro agora diferencia `IDENTITY_CONFLICT`, `REGISTRATION_RATE_LIMITED`, `AUTH_UNAVAILABLE` e `DATABASE_UNAVAILABLE`, sempre com request id quando aplicável.
+- Produtor e Consumidor usam validação explícita por campo: mensagem abaixo do campo, `aria-invalid`, destaque visual e foco automático no primeiro erro.
+- formulários de cadastro usam validação Zod como fonte canônica e não dependem da mensagem nativa silenciosa do navegador.
+- schema do banco permanece **10**; nenhuma migration é necessária para esta correção.
+
+---
+
 ## 2026-09-19 — Senha forte inspirada no fluxo Gov.br
 
 Status: **implementação promovida para `main`; validação frontend/backend concluída em código; deployment Vercel do commit funcional em processamento na última verificação**.

@@ -3,7 +3,6 @@ import { api } from "../lib/api";
 import {
   formatBrazilMobile,
   formatCpf,
-  isStrongPassword,
   NewPasswordSchema,
   passwordChecks,
   PASSWORD_MAX_LENGTH,
@@ -48,18 +47,56 @@ function roleLabel(role: string) {
   return labels[role] ?? role;
 }
 
+type FieldErrors = Record<string, string>;
+
+const requiredMessages: Record<string, string> = {
+  fullName: "Informe seu nome completo.",
+  cpf: "Informe seu CPF.",
+  phone: "Informe seu celular com DDD.",
+  email: "Informe seu e-mail.",
+  password: "Crie uma senha.",
+  confirmPassword: "Confirme sua senha.",
+  propertyName: "Informe o nome de seu imóvel.",
+  activityType: "Selecione a atividade principal.",
+};
+
+function friendlyFieldMessage(
+  field: string,
+  message: string,
+  value?: unknown,
+) {
+  if (String(value ?? "").trim() === "") return requiredMessages[field] ?? message;
+
+  if (field === "fullName")
+    return "Informe seu nome completo com pelo menos 3 caracteres.";
+  if (field === "cpf") return "Informe um CPF válido no formato 000.000.000-00.";
+  if (field === "phone")
+    return "Informe um celular válido com DDD no formato (00) 00000-0000.";
+  if (field === "email") return "Informe um e-mail válido.";
+  if (field === "password")
+    return "A senha ainda não atende a todos os requisitos de segurança.";
+  if (field === "propertyName")
+    return "Informe o nome de seu imóvel com pelo menos 2 caracteres.";
+  if (field === "activityType") return "Selecione a atividade principal.";
+  return message;
+}
+
 function PasswordFields({
   password,
   confirmation,
   onPasswordChange,
   onConfirmationChange,
   label = "Senha",
+  passwordError,
+  confirmationError,
 }: {
   password: string;
   confirmation: string;
   onPasswordChange: (value: string) => void;
   onConfirmationChange: (value: string) => void;
   label?: string;
+  passwordError?: string;
+  confirmationError?: string;
 }) {
   const [visible, setVisible] = useState(false);
   const checks = passwordChecks(password);
@@ -85,6 +122,8 @@ function PasswordFields({
             minLength={PASSWORD_MIN_LENGTH}
             maxLength={PASSWORD_MAX_LENGTH}
             value={password}
+            aria-invalid={Boolean(passwordError)}
+            aria-describedby={passwordError ? "password-error" : undefined}
             onChange={(event) => onPasswordChange(event.currentTarget.value)}
             required
           />
@@ -97,6 +136,11 @@ function PasswordFields({
             {visible ? "Ocultar" : "Mostrar"}
           </button>
         </div>
+        {passwordError && (
+          <small id="password-error" className="field-error" role="alert">
+            {passwordError}
+          </small>
+        )}
       </label>
 
       <div className="password-rules" aria-live="polite">
@@ -120,9 +164,22 @@ function PasswordFields({
           minLength={PASSWORD_MIN_LENGTH}
           maxLength={PASSWORD_MAX_LENGTH}
           value={confirmation}
+          aria-invalid={Boolean(confirmationError)}
+          aria-describedby={
+            confirmationError ? "confirm-password-error" : undefined
+          }
           onChange={(event) => onConfirmationChange(event.currentTarget.value)}
           required
         />
+        {confirmationError && (
+          <small
+            id="confirm-password-error"
+            className="field-error"
+            role="alert"
+          >
+            {confirmationError}
+          </small>
+        )}
       </label>
       {confirmation.length > 0 && (
         <small
@@ -150,11 +207,13 @@ export function Account({
   const [securityFlow, setSecurityFlow] = useState(false);
   const [passwordValue, setPasswordValue] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   useEffect(() => {
     setMode(modeFromPath(path));
     setPasswordValue("");
     setConfirmPassword("");
+    setFieldErrors({});
   }, [path]);
 
   useEffect(() => {
@@ -211,29 +270,77 @@ export function Account({
   function changeMode(next: Mode) {
     setMode(next);
     setNotice("");
+    setFieldErrors({});
+    setPasswordValue("");
+    setConfirmPassword("");
+  }
+
+  function clearFieldError(name: string) {
+    setFieldErrors((current) => {
+      if (!current[name]) return current;
+      const next = { ...current };
+      delete next[name];
+      return next;
+    });
+  }
+
+  function showFieldErrors(errors: FieldErrors) {
+    setFieldErrors(errors);
+    setNotice("Revise os campos destacados para continuar.");
+    const first = Object.keys(errors)[0];
+    if (first)
+      requestAnimationFrame(() => {
+        document.querySelector<HTMLElement>(`[name="${first}"]`)?.focus();
+      });
   }
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setNotice("");
+    setFieldErrors({});
     const rawForm = Object.fromEntries(new FormData(e.currentTarget));
     const { confirmPassword: confirmation, ...form } = rawForm;
-
-    if (
-      (mode === "consumer" || mode === "producer" || mode === "reset") &&
-      form.password !== confirmation
-    ) {
-      setNotice("As senhas não coincidem.");
-      return;
-    }
 
     if (mode === "consumer" || mode === "producer") {
       const parsed = (
         mode === "producer" ? RegisterProducerSchema : RegisterConsumerSchema
       ).safeParse(form);
+      const errors: FieldErrors = {};
 
       if (!parsed.success) {
-        setNotice(parsed.error.issues.map((issue) => issue.message).join(". "));
+        for (const issue of parsed.error.issues) {
+          const field = String(issue.path[0] ?? "");
+          if (field && !errors[field])
+            errors[field] = friendlyFieldMessage(
+              field,
+              issue.message,
+              form[field],
+            );
+        }
+      }
+
+      if (String(confirmation ?? "") === "")
+        errors.confirmPassword = requiredMessages.confirmPassword;
+      else if (form.password !== confirmation)
+        errors.confirmPassword = "A confirmação deve ser igual à senha.";
+
+      if (Object.keys(errors).length) {
+        showFieldErrors(errors);
+        return;
+      }
+    }
+
+    if (mode === "reset") {
+      const errors: FieldErrors = {};
+      if (String(form.password ?? "") === "")
+        errors.password = requiredMessages.password;
+      if (String(confirmation ?? "") === "")
+        errors.confirmPassword = requiredMessages.confirmPassword;
+      else if (form.password !== confirmation)
+        errors.confirmPassword = "A confirmação deve ser igual à senha.";
+
+      if (Object.keys(errors).length) {
+        showFieldErrors(errors);
         return;
       }
     }
@@ -317,19 +424,51 @@ export function Account({
         navigate("/entrar");
       }
     } catch (error) {
-      const code = (error as Error).message;
+      const failure = error as Error & {
+        fields?: Array<{ field: string; message: string }>;
+        requestId?: string;
+      };
+      const code = failure.message;
+
+      if (code === "VALIDATION_ERROR" && failure.fields?.length) {
+        const errors: FieldErrors = {};
+        for (const item of failure.fields)
+          if (item.field && !errors[item.field])
+            errors[item.field] = friendlyFieldMessage(
+              item.field,
+              item.message,
+              rawForm[item.field],
+            );
+        showFieldErrors(errors);
+        return;
+      }
+
+      const requestSuffix = failure.requestId
+        ? ` Código de atendimento: ${failure.requestId}.`
+        : "";
+
       setNotice(
         code === "INVALID_CREDENTIALS"
           ? "E-mail ou senha inválidos."
           : code === "EMAIL_CONFIRMATION_REQUIRED"
             ? "Confirme seu e-mail antes de entrar. Se necessário, reenvie a confirmação."
             : code === "IDENTITY_CONFLICT"
-              ? "Os dados de identificação já estão em uso."
-              : code === "ACCOUNT_UNAVAILABLE"
-                ? "Sua conta não está disponível para acesso."
-                : code === "PASSWORD_UPDATE_REJECTED"
-                  ? "Não foi possível aceitar a nova senha. Solicite um novo link de recuperação."
-                  : "Não foi possível concluir agora. Tente novamente mais tarde.",
+              ? "Já existe um cadastro usando este CPF, e-mail ou celular. Confira os dados ou entre na conta existente."
+              : code === "REGISTRATION_RATE_LIMITED"
+                ? "Foram feitas muitas tentativas de cadastro. Tente novamente em alguns minutos."
+                : code === "AUTH_UNAVAILABLE"
+                  ? "O serviço de autenticação está temporariamente indisponível." + requestSuffix
+                  : code === "DATABASE_UNAVAILABLE"
+                    ? "O cadastro não conseguiu acessar o banco de dados." + requestSuffix
+                    : code === "ORIGIN_NOT_ALLOWED"
+                      ? "A página de cadastro não foi reconhecida como origem segura. Atualize a página e tente novamente." + requestSuffix
+                      : code === "ACCOUNT_UNAVAILABLE"
+                        ? "Sua conta não está disponível para acesso."
+                        : code === "PASSWORD_UPDATE_REJECTED"
+                          ? "Não foi possível aceitar a nova senha. Solicite um novo link de recuperação."
+                          : code === "DEPENDENCY_UNAVAILABLE"
+                            ? "O serviço de cadastro está temporariamente indisponível." + requestSuffix
+                            : "Não foi possível concluir o cadastro." + requestSuffix,
       );
     } finally {
       setBusy(false);
@@ -403,7 +542,15 @@ export function Account({
         </p>
 
         {securityFlow ? (
-          <form className="security-form" onSubmit={changePassword}>
+          <form
+            className="security-form"
+            onSubmit={changePassword}
+            noValidate
+            onInputCapture={(event) => {
+              const name = (event.target as HTMLInputElement).name;
+              if (name) clearFieldError(name);
+            }}
+          >
             <h2>Alterar senha</h2>
             <p>
               Digite o código recebido e crie uma senha forte.
@@ -423,16 +570,20 @@ export function Account({
               label="Nova senha"
               password={passwordValue}
               confirmation={confirmPassword}
-              onPasswordChange={setPasswordValue}
-              onConfirmationChange={setConfirmPassword}
+              onPasswordChange={(value) => {
+                setPasswordValue(value);
+                clearFieldError("password");
+              }}
+              onConfirmationChange={(value) => {
+                setConfirmPassword(value);
+                clearFieldError("confirmPassword");
+              }}
+              passwordError={fieldErrors.password}
+              confirmationError={fieldErrors.confirmPassword}
             />
             <button
               className="primary"
-              disabled={
-                busy ||
-                !isStrongPassword(passwordValue) ||
-                passwordValue !== confirmPassword
-              }
+              disabled={busy}
               type="submit"
             >
               {busy ? "Aguarde…" : "Confirmar nova senha"}
@@ -565,7 +716,17 @@ export function Account({
                     : "Informe suas credenciais para entrar."}
       </p>
 
-      <form key={mode} onSubmit={submit}>
+      <form
+        key={mode}
+        onSubmit={submit}
+        noValidate={
+          mode === "consumer" || mode === "producer" || mode === "reset"
+        }
+        onInputCapture={(event) => {
+          const name = (event.target as HTMLInputElement).name;
+          if (name) clearFieldError(name);
+        }}
+      >
         {(mode === "consumer" || mode === "producer") && (
           <>
             <label>
@@ -576,7 +737,13 @@ export function Account({
                 required
                 minLength={3}
                 maxLength={255}
+                aria-invalid={Boolean(fieldErrors.fullName)}
               />
+              {fieldErrors.fullName && (
+                <small className="field-error" role="alert">
+                  {fieldErrors.fullName}
+                </small>
+              )}
             </label>
             <div className="form-grid">
               <label>
@@ -590,8 +757,14 @@ export function Account({
                   onInput={(event) => {
                     event.currentTarget.value = formatCpf(event.currentTarget.value);
                   }}
+                  aria-invalid={Boolean(fieldErrors.cpf)}
                   required
                 />
+                {fieldErrors.cpf && (
+                  <small className="field-error" role="alert">
+                    {fieldErrors.cpf}
+                  </small>
+                )}
               </label>
               <label>
                 Celular com DDD
@@ -607,8 +780,14 @@ export function Account({
                       event.currentTarget.value,
                     );
                   }}
+                  aria-invalid={Boolean(fieldErrors.phone)}
                   required
                 />
+                {fieldErrors.phone && (
+                  <small className="field-error" role="alert">
+                    {fieldErrors.phone}
+                  </small>
+                )}
               </label>
             </div>
           </>
@@ -623,7 +802,13 @@ export function Account({
               autoComplete="email"
               required
               maxLength={255}
+              aria-invalid={Boolean(fieldErrors.email)}
             />
+            {fieldErrors.email && (
+              <small className="field-error" role="alert">
+                {fieldErrors.email}
+              </small>
+            )}
           </label>
         )}
 
@@ -646,8 +831,16 @@ export function Account({
             label={mode === "reset" ? "Nova senha" : "Senha"}
             password={passwordValue}
             confirmation={confirmPassword}
-            onPasswordChange={setPasswordValue}
-            onConfirmationChange={setConfirmPassword}
+            onPasswordChange={(value) => {
+              setPasswordValue(value);
+              clearFieldError("password");
+            }}
+            onConfirmationChange={(value) => {
+              setConfirmPassword(value);
+              clearFieldError("confirmPassword");
+            }}
+            passwordError={fieldErrors.password}
+            confirmationError={fieldErrors.confirmPassword}
           />
         )}
 
@@ -655,17 +848,37 @@ export function Account({
           <>
             <label>
               Nome de seu imóvel
-              <input name="propertyName" required minLength={2} maxLength={128} />
+              <input
+                name="propertyName"
+                required
+                minLength={2}
+                maxLength={128}
+                aria-invalid={Boolean(fieldErrors.propertyName)}
+              />
+              {fieldErrors.propertyName && (
+                <small className="field-error" role="alert">
+                  {fieldErrors.propertyName}
+                </small>
+              )}
             </label>
             <label>
               Atividade principal
-              <select name="activityType" defaultValue="misto">
+              <select
+                name="activityType"
+                defaultValue="misto"
+                aria-invalid={Boolean(fieldErrors.activityType)}
+              >
                 <option value="misto">Produção mista</option>
                 <option value="hortalicas_folhosas">Hortaliças folhosas</option>
                 <option value="legumes_picados">Legumes picados</option>
                 <option value="frutas">Frutas</option>
                 <option value="temperos">Temperos</option>
               </select>
+              {fieldErrors.activityType && (
+                <small className="field-error" role="alert">
+                  {fieldErrors.activityType}
+                </small>
+              )}
             </label>
           </>
         )}
@@ -677,12 +890,7 @@ export function Account({
         )}
 
         <button
-          disabled={
-            busy ||
-            ((mode === "consumer" || mode === "producer" || mode === "reset") &&
-              (!isStrongPassword(passwordValue) ||
-                passwordValue !== confirmPassword))
-          }
+          disabled={busy}
           className="primary"
           type="submit"
         >

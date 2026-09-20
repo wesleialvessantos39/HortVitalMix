@@ -29,6 +29,7 @@ export async function api<T>(
     throw Object.assign(new Error(json.error ?? "UNAVAILABLE"), {
       status: response.status,
       fields: json.fields,
+      requestId: json.requestId,
     });
   return json as T;
 }

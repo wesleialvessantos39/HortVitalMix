@@ -15,50 +15,59 @@ export function resolveDbUrl(
   env: NodeJS.ProcessEnv,
   appEnv = resolveAppEnv(env),
 ): { url: string | null; reason: string | null; source: DbSource } {
-  if (appEnv !== "development" && (env.DATABASE_URL || env.POSTGRES_URL))
-    return {
-      url: null,
-      reason: "LEGACY_DB_ALIAS_REJECTED",
-      source: null,
-    };
-
   const candidates: Array<[Exclude<DbSource, null>, string | undefined]> = [
     ["SUPABASE_DB_URL", env.SUPABASE_DB_URL],
-    ["DATABASE_URL", appEnv === "development" ? env.DATABASE_URL : undefined],
-    ["POSTGRES_URL", appEnv === "development" ? env.POSTGRES_URL : undefined],
+    ["DATABASE_URL", env.DATABASE_URL],
+    ["POSTGRES_URL", env.POSTGRES_URL],
   ];
 
-  const selected = candidates.find(([, value]) => Boolean(value));
-  if (!selected)
+  const configured = candidates.filter(
+    (candidate): candidate is [Exclude<DbSource, null>, string] =>
+      Boolean(candidate[1]),
+  );
+  if (!configured.length)
     return {
       url: null,
       reason: "DATABASE_NOT_CONFIGURED",
       source: null,
     };
 
-  const [source, value] = selected;
+  let mismatch = false;
+  for (const [source, value] of configured) {
+    try {
+      const u = new URL(value);
+      if (
+        !["postgres:", "postgresql:"].includes(u.protocol) ||
+        !u.hostname.endsWith(".pooler.supabase.com") ||
+        u.port !== "6543" ||
+        !u.username.startsWith("postgres.") ||
+        !u.password ||
+        u.pathname !== "/postgres" ||
+        /[<>\s]/.test(value)
+      )
+        continue;
 
-  try {
-    const u = new URL(value!);
-    if (
-      !["postgres:", "postgresql:"].includes(u.protocol) ||
-      !u.hostname.endsWith(".pooler.supabase.com") ||
-      u.port !== "6543" ||
-      !u.username.startsWith("postgres.") ||
-      !u.password ||
-      u.pathname !== "/postgres" ||
-      /[<>\s]/.test(value!)
-    )
-      throw new Error();
+      if (
+        env.SUPABASE_PROJECT_REF &&
+        u.username !== `postgres.${env.SUPABASE_PROJECT_REF}`
+      ) {
+        mismatch = true;
+        continue;
+      }
 
-    return { url: value!, reason: null, source };
-  } catch {
-    return {
-      url: null,
-      reason: "INVALID_TRANSACTION_POOLER_URL",
-      source: null,
-    };
+      return { url: value, reason: null, source };
+    } catch {
+      // Tenta o próximo alias configurado sem expor a URL inválida.
+    }
   }
+
+  return {
+    url: null,
+    reason: mismatch
+      ? "DB_PROJECT_REF_MISMATCH"
+      : "INVALID_TRANSACTION_POOLER_URL",
+    source: null,
+  };
 }
 
 export function buildRuntime(env: NodeJS.ProcessEnv) {
@@ -81,8 +90,14 @@ export function buildRuntime(env: NodeJS.ProcessEnv) {
     dbRejection: db.reason,
     dbUrlRejectionReason: db.reason,
     supabaseUrl: env.SUPABASE_URL ?? "",
-    anonKey: env.SUPABASE_ANON_KEY ?? "",
-    serviceKey: env.SUPABASE_SERVICE_ROLE_KEY ?? "",
+    anonKey:
+      env.SUPABASE_ANON_KEY ??
+      env.SUPABASE_PUBLISHABLE_KEY ??
+      "",
+    serviceKey:
+      env.SUPABASE_SERVICE_ROLE_KEY ??
+      env.SUPABASE_SECRET_KEY ??
+      "",
     jwtSecret: env.SUPABASE_JWT_SECRET ?? "",
     projectRef: env.SUPABASE_PROJECT_REF ?? "",
     ipPepper: env.APP_IP_PEPPER ?? "",

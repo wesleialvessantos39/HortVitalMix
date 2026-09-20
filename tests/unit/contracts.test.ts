@@ -112,17 +112,62 @@ describe("contratos e limites de confiança", () => {
     ).toBe(false);
   });
 
-  it("não aceita alias em produção mesmo quando URL canônica existe", () => {
-    expect(
-      resolveDbUrl(
-        {
-          SUPABASE_DB_URL:
-            "postgresql://postgres.ref:pass@aws-0-test.pooler.supabase.com:6543/postgres",
-          DATABASE_URL: "legacy",
-        },
-        "production",
-      ).url,
-    ).toBeNull();
+  it("prefere SUPABASE_DB_URL mesmo quando a Vercel também injeta DATABASE_URL", () => {
+    const resolved = resolveDbUrl(
+      {
+        SUPABASE_PROJECT_REF: "ref",
+        SUPABASE_DB_URL:
+          "postgresql://postgres.ref:pass@aws-0-test.pooler.supabase.com:6543/postgres",
+        DATABASE_URL: "legacy",
+      },
+      "production",
+    );
+
+    expect(resolved.url).toContain("postgres.ref");
+    expect(resolved.source).toBe("SUPABASE_DB_URL");
+  });
+
+  it("aceita DATABASE_URL como fallback somente quando é Transaction Pooler válido", () => {
+    const resolved = resolveDbUrl(
+      {
+        SUPABASE_PROJECT_REF: "ref",
+        DATABASE_URL:
+          "postgresql://postgres.ref:pass@aws-0-test.pooler.supabase.com:6543/postgres",
+      },
+      "production",
+    );
+
+    expect(resolved.reason).toBeNull();
+    expect(resolved.source).toBe("DATABASE_URL");
+  });
+
+  it("ignora alias inválido quando existe outro pooler válido", () => {
+    const resolved = resolveDbUrl(
+      {
+        SUPABASE_PROJECT_REF: "ref",
+        SUPABASE_DB_URL: "valor-invalido",
+        DATABASE_URL:
+          "postgresql://postgres.ref:pass@aws-0-test.pooler.supabase.com:6543/postgres",
+      },
+      "production",
+    );
+
+    expect(resolved.reason).toBeNull();
+    expect(resolved.source).toBe("DATABASE_URL");
+  });
+
+  it("rejeita pooler de outro projeto", () => {
+    const resolved = resolveDbUrl(
+      {
+        SUPABASE_PROJECT_REF: "ref-correta",
+        DATABASE_URL:
+          "postgresql://postgres.outra:pass@aws-0-test.pooler.supabase.com:6543/postgres",
+      },
+      "production",
+    );
+
+    expect(resolved.url).toBeNull();
+    expect(resolved.reason).toBe("DB_PROJECT_REF_MISMATCH");
   });
 
   it.each([
@@ -148,6 +193,17 @@ describe("contratos e limites de confiança", () => {
     expect(
       buildRuntime({ VERCEL_ENV: "production", APP_ENV: "development" }).appEnv,
     ).toBe("production"));
+
+  it("aceita chaves Supabase modernas como fallback seguro", () => {
+    const built = buildRuntime({
+      SUPABASE_PUBLISHABLE_KEY: "sb_publishable_example",
+      SUPABASE_SECRET_KEY: "sb_secret_example",
+    });
+
+    expect(built.anonKey).toBe("sb_publishable_example");
+    expect(built.serviceKey).toBe("sb_secret_example");
+  });
+
 
   it("aceita os dois estilos de argumentos do manual", () =>
     expect(parseArgs(["--tag=x", "--sha", "abc"])).toEqual({

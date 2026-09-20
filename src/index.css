@@ -576,6 +576,19 @@ dialog p {
   border-radius: 10px;
   margin-top: 15px;
 }
+.account input[aria-invalid="true"],
+.account select[aria-invalid="true"] {
+  border-color: #b42318;
+  box-shadow: 0 0 0 2px #b4231814;
+}
+.field-error {
+  display: block;
+  margin-top: 6px;
+  color: #b42318;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+}
 .account .eyebrow {
   margin-top: 5px;
 }

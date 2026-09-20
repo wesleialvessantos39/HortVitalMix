@@ -17,6 +17,7 @@ import {
 import { register } from "../services/AuthService.ts";
 import { dbPool } from "../db/pool.ts";
 import { classifyDbError, reportFailure } from "../config/reportFailure.ts";
+import { safeRequestOrigin } from "../security/origin.ts";
 
 export const authRouter = Router();
 
@@ -65,8 +66,8 @@ function setSession(
 }
 
 function redirectUrl(req: Request, path: string) {
-  const origin = req.headers.origin;
-  if (!origin || !runtime.origins.includes(origin)) return null;
+  const origin = safeRequestOrigin(req);
+  if (!origin) return null;
 
   try {
     return new URL(path, origin).toString();
@@ -549,6 +550,7 @@ for (const role of ["consumer", "producer"] as const)
     if (!parsed.success) {
       res.status(400).json({
         error: "VALIDATION_ERROR",
+        requestId: res.locals.requestId,
         fields: parsed.error.issues.map((issue) => ({
           field: issue.path.join("."),
           message: issue.message,
@@ -566,14 +568,32 @@ for (const role of ["consumer", "producer"] as const)
       );
       res.status(201).json(result);
     } catch (error) {
+      const message = (error as Error)?.message;
       const status =
         (error as { status?: number }).status ??
         (classifyDbError(error) === "conflict" ? 409 : 503);
 
-      reportFailure("registration_failed", res.locals.requestId);
+      const publicCode =
+        message === "REGISTRATION_IDENTITY_CONFLICT"
+          ? "IDENTITY_CONFLICT"
+          : message === "REGISTRATION_RATE_LIMITED"
+            ? "REGISTRATION_RATE_LIMITED"
+            : message === "REGISTRATION_AUTH_UNAVAILABLE"
+              ? "AUTH_UNAVAILABLE"
+              : message === "REGISTRATION_DATABASE_UNAVAILABLE"
+                ? "DATABASE_UNAVAILABLE"
+                : status === 409
+                  ? "IDENTITY_CONFLICT"
+                  : "DEPENDENCY_UNAVAILABLE";
+
+      reportFailure({
+        category: "registration_failed",
+        requestId: res.locals.requestId,
+        detail: publicCode,
+      });
       res.status(status).json({
-        error:
-          status === 409 ? "IDENTITY_CONFLICT" : "DEPENDENCY_UNAVAILABLE",
+        error: publicCode,
+        requestId: res.locals.requestId,
       });
     }
   });

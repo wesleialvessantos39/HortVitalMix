@@ -34,6 +34,31 @@ describe("API same-origin sem mocks", () => {
       .send({});
     expect(r.status).toBe(403);
   });
+  it("aceita automaticamente a própria origem HTTPS publicada", async () => {
+    const r = await request(app)
+      .post("/v1/auth/login")
+      .set("Origin", "https://hortivitalmix.vercel.app")
+      .set("Host", "hortivitalmix.vercel.app")
+      .set("X-Forwarded-Host", "hortivitalmix.vercel.app")
+      .set("X-Forwarded-Proto", "https")
+      .send({});
+
+    expect(r.status).toBe(400);
+    expect(r.body.error).toBe("VALIDATION_ERROR");
+  });
+
+  it("cadastro inválido retorna os campos que precisam de correção", async () => {
+    const r = await request(app)
+      .post("/v1/auth/register-consumer")
+      .set("Origin", "http://localhost:3000")
+      .send({});
+
+    expect(r.status).toBe(400);
+    expect(r.body.error).toBe("VALIDATION_ERROR");
+    expect(r.body.fields.map((item: { field: string }) => item.field)).toEqual(
+      expect.arrayContaining(["fullName", "cpf", "email", "password", "phone"]),
+    );
+  });
   it("bloqueia mutação sem Origin", async () =>
     expect((await request(app).post("/v1/auth/logout")).status).toBe(403));
   it("rejeita JSON inválido com resposta estruturada", async () => {
