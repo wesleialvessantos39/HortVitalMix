@@ -21,47 +21,53 @@ export function resolveDbUrl(
     ["POSTGRES_URL", env.POSTGRES_URL],
   ];
 
-  const selected = candidates.find(([, value]) => Boolean(value));
-  if (!selected)
+  const configured = candidates.filter(
+    (candidate): candidate is [Exclude<DbSource, null>, string] =>
+      Boolean(candidate[1]),
+  );
+  if (!configured.length)
     return {
       url: null,
       reason: "DATABASE_NOT_CONFIGURED",
       source: null,
     };
 
-  const [source, value] = selected;
+  let mismatch = false;
+  for (const [source, value] of configured) {
+    try {
+      const u = new URL(value);
+      if (
+        !["postgres:", "postgresql:"].includes(u.protocol) ||
+        !u.hostname.endsWith(".pooler.supabase.com") ||
+        u.port !== "6543" ||
+        !u.username.startsWith("postgres.") ||
+        !u.password ||
+        u.pathname !== "/postgres" ||
+        /[<>\s]/.test(value)
+      )
+        continue;
 
-  try {
-    const u = new URL(value!);
-    if (
-      !["postgres:", "postgresql:"].includes(u.protocol) ||
-      !u.hostname.endsWith(".pooler.supabase.com") ||
-      u.port !== "6543" ||
-      !u.username.startsWith("postgres.") ||
-      !u.password ||
-      u.pathname !== "/postgres" ||
-      /[<>\s]/.test(value!)
-    )
-      throw new Error();
+      if (
+        env.SUPABASE_PROJECT_REF &&
+        u.username !== `postgres.${env.SUPABASE_PROJECT_REF}`
+      ) {
+        mismatch = true;
+        continue;
+      }
 
-    if (
-      env.SUPABASE_PROJECT_REF &&
-      u.username !== `postgres.${env.SUPABASE_PROJECT_REF}`
-    )
-      return {
-        url: null,
-        reason: "DB_PROJECT_REF_MISMATCH",
-        source: null,
-      };
-
-    return { url: value!, reason: null, source };
-  } catch {
-    return {
-      url: null,
-      reason: "INVALID_TRANSACTION_POOLER_URL",
-      source: null,
-    };
+      return { url: value, reason: null, source };
+    } catch {
+      // Tenta o próximo alias configurado sem expor a URL inválida.
+    }
   }
+
+  return {
+    url: null,
+    reason: mismatch
+      ? "DB_PROJECT_REF_MISMATCH"
+      : "INVALID_TRANSACTION_POOLER_URL",
+    source: null,
+  };
 }
 
 export function buildRuntime(env: NodeJS.ProcessEnv) {
