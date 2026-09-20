@@ -16,6 +16,7 @@ import {
   Truck,
   Salad,
   Sprout,
+  ShieldCheck,
   X,
 } from "lucide-react";
 import {
@@ -57,6 +58,7 @@ const accountPaths = new Set([
   "/entrar/produtor",
   "/entrar/administrador",
   "/entrar/super-administrador",
+  "/administracao",
   "/cadastro/consumidor",
   "/cadastro/produtor",
   "/acesso/administracao",
@@ -177,11 +179,27 @@ export default function App() {
               <Bell />
             </button>
             <button
+              className="icon admin-home-entry"
+              aria-label="Administração"
+              title="Administração"
+              onClick={() => go("/administracao")}
+            >
+              <ShieldCheck />
+            </button>
+            <button
               className="icon"
               aria-label="Minha conta"
               onClick={() => go("/entrar")}
             >
               <UserRound />
+            </button>
+            <button
+              className="icon admin-home-entry"
+              aria-label="Administração"
+              title="Administração"
+              onClick={() => go("/administracao")}
+            >
+              <ShieldCheck />
             </button>
             <button
               className="icon"
