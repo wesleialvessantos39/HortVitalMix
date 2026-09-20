@@ -2,7 +2,7 @@
 
 ## 2026-09-19 — Correção definitiva do cadastro público e validação de campos
 
-Status: **correção implementada em branch de hotfix; promoção para main e validação Vercel pendentes nesta entrada**.
+Status: **correção promovida para `main` e deployment funcional Vercel aprovado com `success`; Supabase production `ACTIVE_HEALTHY` e schema 10 preservado**.
 
 Diagnóstico confirmado:
 - production possuía zero linhas em `auth.users`, `app_users`, `app_people`, papéis e perfis de produtor, sem órfãos; as tentativas estavam falhando antes da criação efetiva da identidade.
@@ -17,6 +17,9 @@ Correções:
 - cadastro agora diferencia `IDENTITY_CONFLICT`, `REGISTRATION_RATE_LIMITED`, `AUTH_UNAVAILABLE` e `DATABASE_UNAVAILABLE`, sempre com request id quando aplicável.
 - Produtor e Consumidor usam validação explícita por campo: mensagem abaixo do campo, `aria-invalid`, destaque visual e foco automático no primeiro erro.
 - formulários de cadastro usam validação Zod como fonte canônica e não dependem da mensagem nativa silenciosa do navegador.
+- PR #6 mergeado para `main` no commit `9b5c5e37d709d30297abf8a29d23b5295cfad17d`.
+- contexto `Vercel` do commit funcional retornou `success`.
+- production verificada após o deploy: 10 migrations canônicas, 8 tabelas `app_*`, zero tabela sem RLS/FORCE e zero usuários/pessoas residuais das tentativas anteriores.
 - schema do banco permanece **10**; nenhuma migration é necessária para esta correção.
 
 ---
