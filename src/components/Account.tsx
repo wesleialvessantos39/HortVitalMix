@@ -623,14 +623,34 @@ export function Account({
   }
 
   async function requestSecurityCode() {
+    const activeRole = session?.activeRole;
+    const parsedRole = PortalRoleSchema.safeParse(activeRole);
+    if (!parsedRole.success) {
+      setNotice("A sessão não possui um perfil de segurança válido.");
+      return;
+    }
+
     setBusy(true);
     setNotice("");
     try {
-      await api("/v1/auth/reauthenticate", { method: "POST" });
+      const result = await api<{ challengeId: string; portalRole: PortalRole }>(
+        "/v1/auth/reauthenticate",
+        {
+          method: "POST",
+          body: JSON.stringify({ portalRole: parsedRole.data }),
+        },
+      );
+      setSecurityChallengeId(result.challengeId);
       setSecurityFlow(true);
-      setNotice("Enviamos um código de segurança para confirmar sua identidade.");
-    } catch {
-      setNotice("Não foi possível enviar o código de segurança agora.");
+      setNotice(
+        `Enviamos um código de segurança exclusivo para o perfil ${roleLabel(parsedRole.data)}.`,
+      );
+    } catch (error) {
+      setNotice(
+        (error as Error).message === "SECURITY_CONTEXT_MISMATCH"
+          ? "O perfil desta sessão não corresponde ao portal atual."
+          : "Não foi possível enviar o código de segurança agora.",
+      );
     } finally {
       setBusy(false);
     }
@@ -650,25 +670,39 @@ export function Account({
       return;
     }
 
+    const parsedRole = PortalRoleSchema.safeParse(session?.activeRole);
+    if (!parsedRole.success || !securityChallengeId) {
+      setNotice("Solicite um novo código de segurança para este perfil.");
+      return;
+    }
+
     setBusy(true);
     try {
+      const targetRole = parsedRole.data;
       await api("/v1/auth/change-password", {
         method: "POST",
         body: JSON.stringify({
           password: form.password,
           nonce: form.nonce,
+          challengeId: securityChallengeId,
+          portalRole: targetRole,
         }),
       });
       setSession(null);
       setSecurityFlow(false);
+      setSecurityChallengeId(null);
       setMode("login");
       setNotice("Senha alterada. Entre novamente para continuar.");
-      navigate("/entrar");
+      navigate(loginPathForRole(targetRole));
     } catch (error) {
+      const code = (error as Error).message;
       setNotice(
-        (error as Error).message === "SECURITY_CODE_REJECTED"
-          ? "Código inválido ou expirado. Solicite um novo código."
-          : "Não foi possível alterar a senha agora.",
+        code === "SECURITY_CODE_REJECTED"
+          ? "Código inválido ou expirado. Solicite um novo código para este perfil."
+          : code === "SECURITY_CODE_CONTEXT_INVALID" ||
+              code === "SECURITY_CONTEXT_MISMATCH"
+            ? "Este código não pertence a este perfil. Solicite um código no portal correto."
+            : "Não foi possível alterar a senha agora.",
       );
     } finally {
       setBusy(false);
