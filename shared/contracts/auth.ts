@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+export const PASSWORD_MIN_LENGTH = 12;
+export const PASSWORD_MAX_LENGTH = 70;
+
 function onlyDigits(value: string) {
   return value.replace(/\D/g, "");
 }
@@ -65,6 +68,45 @@ export function validCpf(value: string): boolean {
   return true;
 }
 
+export type PasswordChecks = {
+  length: boolean;
+  lowercase: boolean;
+  uppercase: boolean;
+  number: boolean;
+  symbol: boolean;
+};
+
+export function passwordChecks(value: string): PasswordChecks {
+  return {
+    length:
+      value.length >= PASSWORD_MIN_LENGTH &&
+      value.length <= PASSWORD_MAX_LENGTH,
+    lowercase: /[a-z]/.test(value),
+    uppercase: /[A-Z]/.test(value),
+    number: /\d/.test(value),
+    symbol: /[^A-Za-z0-9\s]/.test(value),
+  };
+}
+
+export function isStrongPassword(value: string): boolean {
+  return Object.values(passwordChecks(value)).every(Boolean);
+}
+
+export const StrongPasswordSchema = z
+  .string()
+  .min(
+    PASSWORD_MIN_LENGTH,
+    `A senha deve ter pelo menos ${PASSWORD_MIN_LENGTH} caracteres`,
+  )
+  .max(
+    PASSWORD_MAX_LENGTH,
+    `A senha deve ter no máximo ${PASSWORD_MAX_LENGTH} caracteres`,
+  )
+  .regex(/[a-z]/, "A senha deve conter letra minúscula")
+  .regex(/[A-Z]/, "A senha deve conter letra maiúscula")
+  .regex(/\d/, "A senha deve conter número")
+  .regex(/[^A-Za-z0-9\s]/, "A senha deve conter símbolo");
+
 const email = z.string().trim().toLowerCase().max(255).pipe(z.email());
 const cpf = z
   .string()
@@ -82,7 +124,7 @@ const base = {
   fullName: z.string().trim().min(3).max(255),
   cpf,
   email,
-  password: z.string().min(12).max(128),
+  password: StrongPasswordSchema,
   phone,
 };
 
@@ -112,11 +154,11 @@ export const SessionImportSchema = z
   })
   .strict();
 export const NewPasswordSchema = z
-  .object({ password: z.string().min(12).max(128) })
+  .object({ password: StrongPasswordSchema })
   .strict();
 export const PasswordChangeSchema = z
   .object({
-    password: z.string().min(12).max(128),
+    password: StrongPasswordSchema,
     nonce: z.string().regex(/^\d{6,8}$/, "Código de segurança inválido"),
   })
   .strict();
