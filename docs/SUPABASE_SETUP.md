@@ -89,3 +89,30 @@ Após diagnóstico de falhas repetidas no cadastro público em 2026-09-19, o run
 - chaves modernas `SUPABASE_PUBLISHABLE_KEY` e `SUPABASE_SECRET_KEY` são aceitas como fallback às chaves legadas;
 - erros de cadastro diferenciam conflito de identidade, rate limit, Auth indisponível e banco indisponível;
 - nenhuma URL, senha ou chave é exposta nas respostas.
+
+
+## Cadastro público transacional via RPC
+
+Em 2026-09-19 o cadastro público foi removido da dependência direta do Postgres Pooler em runtime serverless.
+
+Fluxo atual:
+
+1. backend cria a identidade pelo Supabase Auth Admin;
+2. trigger canônico cria o espelho `app_users`;
+3. backend chama `public.complete_public_registration(...)`;
+4. a função grava `app_people`, papel e, quando aplicável, `app_producer_profiles` em uma única transação;
+5. em falha, a identidade incompleta é compensada;
+6. confirmação de e-mail é disparada depois da conclusão do domínio.
+
+Segurança da RPC:
+
+- `SECURITY DEFINER`;
+- `SET search_path=public`;
+- `EXECUTE` revogado de `PUBLIC`, `anon` e `authenticated`;
+- `EXECUTE` concedido somente a `service_role`;
+- papel público limitado a `consumer` ou `producer`;
+- nenhuma credencial, senha, papel administrativo ou dado fictício é persistido pela função.
+
+Migration: `20260920023000_registration_rpc.sql`.
+
+Schema lógico: **11**.
