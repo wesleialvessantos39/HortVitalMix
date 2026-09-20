@@ -73,7 +73,7 @@ export function resolveDbUrl(
 export function buildRuntime(env: NodeJS.ProcessEnv) {
   const appEnv = resolveAppEnv(env);
   const db = resolveDbUrl(env, appEnv);
-  const configuredOrigins = (env.APP_ALLOWED_ORIGINS ?? env.HVM_ALLOWED_ORIGINS ?? "")
+  const configuredOrigins = (env.APP_ALLOWED_ORIGINS ?? "")
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean)
@@ -101,16 +101,8 @@ export function buildRuntime(env: NodeJS.ProcessEnv) {
     dbRejection: db.reason,
     dbUrlRejectionReason: db.reason,
     supabaseUrl: env.SUPABASE_URL ?? "",
-    // Os aliases modernos permanecem como compatibilidade de deployment,
-    // mas não fazem parte do contrato de secrets do Studio.
-    anonKey:
-      env.SUPABASE_ANON_KEY ??
-      env[["SUPABASE", "PUBLISHABLE", "KEY"].join("_")] ??
-      "",
-    serviceKey:
-      env.SUPABASE_SERVICE_ROLE_KEY ??
-      env[["SUPABASE", "SECRET", "KEY"].join("_")] ??
-      "",
+    anonKey: env.SUPABASE_ANON_KEY ?? "",
+    serviceKey: env.SUPABASE_SERVICE_ROLE_KEY ?? "",
     projectRef: env.SUPABASE_PROJECT_REF ?? "",
     ipPepper: env.APP_IP_PEPPER ?? "",
     outboxKey: env.OUTBOX_ENCRYPTION_KEY ?? "",
