@@ -9,7 +9,6 @@ import {
   PASSWORD_MIN_LENGTH,
   RegisterConsumerSchema,
   RegisterProducerSchema,
-  type PortalRole,
 } from "../../shared/contracts/auth";
 
 type Session = {
@@ -21,8 +20,12 @@ type Session = {
 
 type Mode =
   | "login"
+  | "loginConsumer"
+  | "loginProducer"
   | "consumer"
   | "producer"
+  | "admin"
+  | "superAdmin"
   | "recovery"
   | "confirmation"
   | "magic"
@@ -53,6 +56,7 @@ function portalRoleForMode(mode: Mode) {
           Cada portal valida o perfil real da conta. A mesma identidade pode ter
           os perfis Consumidor e Produtor, mantendo as experiências separadas.
         </p>
+
         <div className="account-choice-grid" aria-label="Perfis de acesso">
           <button className="account-choice" type="button" onClick={() => navigate("/entrar/consumidor")}>
             <strong>Login do Consumidor</strong>
@@ -71,6 +75,7 @@ function portalRoleForMode(mode: Mode) {
             <span>Acesso restrito ao perfil Super administrador.</span>
           </button>
         </div>
+
         <div className="account-helpers" aria-label="Opções de cadastro">
           <button type="button" className="text-button" onClick={() => navigate("/cadastro/consumidor")}>
             Criar cadastro de consumidor
@@ -89,43 +94,6 @@ function portalRoleForMode(mode: Mode) {
     mode === "reset";
 
   const loginMode = portalRoleForMode(mode) !== null;
-
-  if (mode === "login" && !portalRole)
-    return (
-      <section className="account card">
-        <span className="eyebrow">Acesso HortiVitalMix</span>
-        <h1>Escolha como deseja entrar</h1>
-        <p>O acesso é separado por perfil. Uma mesma pessoa pode ter os perfis Consumidor e Produtor no mesmo CPF.</p>
-        <div className="account-choice-grid" aria-label="Tipos de acesso">
-          <button className="account-choice" type="button" onClick={() => navigate("/entrar/consumidor")}>
-            <strong>Consumidor</strong>
-            <span>Comprar e acompanhar seus pedidos.</span>
-          </button>
-          <button className="account-choice" type="button" onClick={() => navigate("/entrar/produtor")}>
-            <strong>Produtor</strong>
-            <span>Acessar o ambiente de produção e comercialização.</span>
-          </button>
-          <button className="account-choice account-choice-admin" type="button" onClick={() => navigate("/entrar/administrador")}>
-            <strong>Administrador</strong>
-            <span>Acesso administrativo conforme permissão atribuída.</span>
-          </button>
-          <button className="account-choice account-choice-admin" type="button" onClick={() => navigate("/entrar/super-administrador")}>
-            <strong>Super administrador</strong>
-            <span>Acesso exclusivo ao perfil de super administração.</span>
-          </button>
-        </div>
-        <div className="account-choice-grid" aria-label="Opções de cadastro">
-          <button className="account-choice" type="button" onClick={() => navigate("/cadastro/consumidor")}>
-            <strong>Criar cadastro de consumidor</strong>
-            <span>Novo consumidor ou adicionar esse perfil a uma conta existente.</span>
-          </button>
-          <button className="account-choice" type="button" onClick={() => navigate("/cadastro/produtor")}>
-            <strong>Criar cadastro de produtor</strong>
-            <span>Novo produtor ou adicionar esse perfil ao mesmo CPF já cadastrado.</span>
-          </button>
-        </div>
-      </section>
-    );
 
   const heading =
     mode === "loginConsumer"
@@ -167,9 +135,15 @@ function portalRoleForMode(mode: Mode) {
                   ? "Receba um link ou código de uso único para acessar sua conta."
                   : mode === "reset"
                     ? "Use uma senha nova, diferente da anterior."
-                    : portalRole
-                      ? `Informe as credenciais da conta com perfil ${roleLabel(portalRole)}.`
-                      : "Escolha o perfil de acesso."}
+                    : mode === "loginConsumer"
+                      ? "Entre com uma conta que possua o perfil Consumidor."
+                      : mode === "loginProducer"
+                        ? "Entre com uma conta que possua o perfil Produtor."
+                        : mode === "admin"
+                          ? "Acesso exclusivo para contas com perfil Administrador."
+                          : mode === "superAdmin"
+                            ? "Acesso exclusivo para contas com perfil Super administrador."
+                            : "Informe suas credenciais para entrar."}
       </p>
 
       <form
@@ -379,16 +353,17 @@ function portalRoleForMode(mode: Mode) {
       {loginMode && (
         <>
           <div className="account-helpers" aria-label="Opções de segurança">
-            <button type="button" className="text-button" onClick={() => changeMode("recovery")}>
+            <button type="button" className="text-button" onClick={() => navigate("/recuperar-senha")}>
               Esqueci minha senha
             </button>
-            <button type="button" className="text-button" onClick={() => changeMode("confirmation")}>
+            <button type="button" className="text-button" onClick={() => navigate("/confirmar-contato")}>
               Reenviar confirmação
             </button>
             <button type="button" className="text-button" onClick={() => changeMode("magic")}>
               Entrar com link ou código
             </button>
           </div>
+
           <button type="button" className="text-button helper-action" onClick={() => navigate("/entrar")}>
             Trocar perfil de acesso
           </button>
