@@ -53,6 +53,10 @@ const categories = [
 const accountPaths = new Set([
   "/conta",
   "/entrar",
+  "/entrar/consumidor",
+  "/entrar/produtor",
+  "/entrar/administrador",
+  "/entrar/super-administrador",
   "/cadastro/consumidor",
   "/cadastro/produtor",
   "/acesso/administracao",
