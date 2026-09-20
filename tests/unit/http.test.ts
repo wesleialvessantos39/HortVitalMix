@@ -87,4 +87,12 @@ describe("API same-origin sem mocks", () => {
       .send({ password: "SenhaNovaMuitoForte!2026" });
     expect(response.status).toBe(401);
   });
+  it("backend rejeita senha fraca antes de consultar sessão", async () => {
+    const response = await request(app)
+      .post("/v1/auth/reset-password")
+      .set("Origin", "http://localhost:3000")
+      .send({ password: "senhasemcriterios" });
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe("VALIDATION_ERROR");
+  });
 });
