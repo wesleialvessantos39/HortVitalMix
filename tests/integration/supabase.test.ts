@@ -10,7 +10,10 @@ import { app } from "../../server/app";
 import { GlobalConfigPublicSchema } from "../../shared/contracts/foundation";
 
 const PRODUCTION_PROJECT_REF = "xipbsazvymkqqfmfegwu";
-const enabled = runtime.appEnv === "development" && runtime.projectRef !== PRODUCTION_PROJECT_REF;
+const enabled =
+  runtime.appEnv === "development" &&
+  Boolean(runtime.projectRef) &&
+  runtime.projectRef !== PRODUCTION_PROJECT_REF;
 
 function assertIsolatedDevelopment() {
   if (runtime.appEnv !== "development")
