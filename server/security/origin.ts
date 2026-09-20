@@ -14,8 +14,9 @@ export function isAllowedRequestOrigin(req: Request) {
 
   try {
     const parsed = new URL(origin);
-    const forwardedHost = firstHeader(req.headers["x-forwarded-host"]);
-    const requestHost = forwardedHost ?? firstHeader(req.headers.host);
+    const requestHost =
+      firstHeader(req.headers.host) ??
+      firstHeader(req.headers["x-forwarded-host"]);
     if (!requestHost || parsed.host !== requestHost) return false;
 
     const forwardedProto = firstHeader(req.headers["x-forwarded-proto"]);
