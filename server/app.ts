@@ -5,6 +5,7 @@ import { authRouter } from "./routes/authRoutes.ts";
 import { runtime } from "./config/runtime.ts";
 import { reportFailure } from "./config/reportFailure.ts";
 import { sessionMiddleware } from "./middleware/session.ts";
+import { isAllowedRequestOrigin } from "./security/origin.ts";
 export const app = express();
 app.disable("x-powered-by");
 app.use((req, res, next) => {
@@ -16,13 +17,14 @@ app.use((req, res, next) => {
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "X-Frame-Options": "DENY",
   });
-  if (!["GET", "HEAD", "OPTIONS"].includes(req.method)) {
-    if (!req.headers.origin || !runtime.origins.includes(req.headers.origin)) {
-      res
-        .status(403)
-        .json({ error: "ORIGIN_NOT_ALLOWED", requestId: res.locals.requestId });
-      return;
-    }
+  if (
+    !["GET", "HEAD", "OPTIONS"].includes(req.method) &&
+    !isAllowedRequestOrigin(req)
+  ) {
+    res
+      .status(403)
+      .json({ error: "ORIGIN_NOT_ALLOWED", requestId: res.locals.requestId });
+    return;
   }
   next();
 });
