@@ -118,31 +118,8 @@ export async function register(
       p_activity_type: role === "producer" ? data.activityType ?? null : null,
     });
 
-    if (completed.error) throw mapDomainRegistrationError(completed.error, requestId);
-
-    let confirmationDispatchAccepted = false;
-    if (supabasePublic) {
-      const { error } = await supabasePublic.auth.resend({
-        type: "signup",
-        email: data.email,
-        options: emailRedirectTo ? { emailRedirectTo } : undefined,
-      });
-      confirmationDispatchAccepted = !error;
-      if (error)
-        reportFailure({
-          category: "confirmation_dispatch_failed",
-          requestId,
-          detail: error.code ?? String(error.status ?? "unknown"),
-        });
-    } else {
-      reportFailure("confirmation_dispatch_unavailable", requestId);
-    }
-
-    return {
-      userId,
-      confirmationRequired: true,
-      confirmationDispatchAccepted,
-    };
+    if (completed.error)
+      throw mapDomainRegistrationError(completed.error, requestId);
   } catch (error) {
     if (userId) await compensateIncompleteIdentity(userId, requestId);
 
@@ -165,4 +142,36 @@ export async function register(
 
     throw registrationError("REGISTRATION_UNEXPECTED_FAILURE", 503);
   }
+
+  let confirmationDispatchAccepted = false;
+  if (supabasePublic) {
+    try {
+      const { error } = await supabasePublic.auth.resend({
+        type: "signup",
+        email: data.email,
+        options: emailRedirectTo ? { emailRedirectTo } : undefined,
+      });
+      confirmationDispatchAccepted = !error;
+      if (error)
+        reportFailure({
+          category: "confirmation_dispatch_failed",
+          requestId,
+          detail: error.code ?? String(error.status ?? "unknown"),
+        });
+    } catch (error) {
+      reportFailure({
+        category: "confirmation_dispatch_failed",
+        requestId,
+        detail: (error as { name?: string })?.name ?? "unknown",
+      });
+    }
+  } else {
+    reportFailure("confirmation_dispatch_unavailable", requestId);
+  }
+
+  return {
+    userId,
+    confirmationRequired: true,
+    confirmationDispatchAccepted,
+  };
 }

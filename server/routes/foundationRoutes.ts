@@ -1,6 +1,7 @@
 import manifest from "../../supabase/manifest.json" with { type: "json" };
 import { Router } from "express";
 import { dbPool } from "../db/pool.ts";
+import { supabasePublic } from "../supabase/client.ts";
 import { runtime } from "../config/runtime.ts";
 import { reportFailure } from "../config/reportFailure.ts";
 import {
@@ -66,46 +67,66 @@ foundationRouter.get("/ready", async (_req, res) => {
   }
 });
 foundationRouter.get("/v1/config", async (_req, res) => {
-  if (!dbPool) {
-    res
-      .status(503)
-      .json({
-        error: "DATABASE_NOT_CONFIGURED",
-        requestId: res.locals.requestId,
-      });
+  if (!supabasePublic) {
+    res.status(503).json({
+      error: "SUPABASE_CONFIG_UNAVAILABLE",
+      requestId: res.locals.requestId,
+    });
     return;
   }
+
   try {
-    const { rows } = await dbPool.query(
-      "SELECT platform_name,slogan,default_municipality,default_state,currency,timezone,support_email,support_phone,revision FROM public.app_global_config WHERE singleton_guard=true",
-    );
-    if (rows.length !== 1) {
-      res
-        .status(503)
-        .json({
-          error: "CONFIG_NOT_INITIALIZED",
-          requestId: res.locals.requestId,
-        });
+    const { data, error } = await supabasePublic
+      .from("app_global_config")
+      .select(
+        "platform_name,slogan,default_municipality,default_state,currency,timezone,support_email,support_phone,revision",
+      )
+      .eq("singleton_guard", true)
+      .maybeSingle();
+
+    if (error) {
+      reportFailure({
+        category: "config_data_api_failed",
+        requestId: res.locals.requestId,
+        detail: error.code ?? "unknown",
+      });
+      res.status(503).json({
+        error: "CONFIG_DATA_API_UNAVAILABLE",
+        requestId: res.locals.requestId,
+      });
       return;
     }
-    const r = rows[0];
+
+    if (!data) {
+      res.status(503).json({
+        error: "CONFIG_NOT_INITIALIZED",
+        requestId: res.locals.requestId,
+      });
+      return;
+    }
+
     res.json(
       GlobalConfigPublicSchema.parse({
-        platformName: r.platform_name,
-        slogan: r.slogan,
-        defaultMunicipality: r.default_municipality,
-        defaultState: r.default_state,
-        currency: r.currency,
-        timezone: r.timezone,
-        supportEmail: r.support_email,
-        supportPhone: r.support_phone,
-        revision: r.revision,
+        platformName: data.platform_name,
+        slogan: data.slogan,
+        defaultMunicipality: data.default_municipality,
+        defaultState: data.default_state,
+        currency: data.currency,
+        timezone: data.timezone,
+        supportEmail: data.support_email,
+        supportPhone: data.support_phone,
+        revision: data.revision,
       }),
     );
-  } catch {
-    reportFailure("config_unavailable", res.locals.requestId);
-    res
-      .status(503)
-      .json({ error: "DB_UNAVAILABLE", requestId: res.locals.requestId });
+  } catch (error) {
+    reportFailure({
+      category: "config_unavailable",
+      requestId: res.locals.requestId,
+      detail: (error as { name?: string })?.name ?? "unknown",
+    });
+    res.status(503).json({
+      error: "CONFIG_UNAVAILABLE",
+      requestId: res.locals.requestId,
+    });
   }
 });
