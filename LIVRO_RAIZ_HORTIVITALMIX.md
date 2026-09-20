@@ -399,3 +399,42 @@ Não há aplicação executável, build aprovado, configuração Vercel validada
 ### Transição
 
 Permanecer na Trilha 01. Resolver as divergências literais e a infraestrutura antes da homologação. Não iniciar a Trilha 02 nem criar a tag `trilha01-v1`.
+
+
+---
+
+## 2026-09-20 — Correção de causa raiz: confirmação, HTTP 403 do Google Studio e secrets indevidos
+
+Status: **causas reproduzidas no código e no estado real do Auth; correção full-stack versionada em branch de saneamento para validação antes da promoção**.
+
+### Evidência real observada
+
+- O cadastro efetuado às 14:53 UTC chegou ao Supabase production e criou identidade e domínio.
+- A identidade foi confirmada às 14:54 UTC; portanto, o clique do e-mail **confirmou a conta antes** de o navegador falhar ao abrir `localhost:3000`.
+- A conta correspondente está ativa no domínio e possui papel `consumer` não revogado.
+- O projeto Development permanecia sem usuários no mesmo instante. Isso provou que o fallback criado para contornar o 403 do Studio estava desviando o cadastro local para a API de production.
+- O commit anterior tinha deployment Vercel com contexto `success`; a falha atual não era uma falha genérica de build.
+
+### Causas raiz confirmadas
+
+1. **Redirect de e-mail derivado do Origin local.** Cadastro, reenvio, recuperação e magic link montavam `emailRedirectTo` a partir do `Origin` da requisição. No preview do Google Studio esse Origin é `http://localhost:3000`; por isso o link de confirmação terminava no localhost do celular.
+2. **Contorno 403 incompleto e perigoso.** O frontend tratava somente cadastro: ao receber 403 sem JSON em `/api`, reenviava Consumer/Producer diretamente para a API Vercel. Login, reenvio de confirmação e recuperação continuavam presos ao `/api` interceptado pelo Studio.
+3. **Mistura de ambientes.** O fallback do item anterior fazia o preview local gravar no production, contrariando o isolamento Development/Homologation/Production.
+4. **Contrato de variáveis inflado.** `.env.example` declarava aliases opcionais e variáveis exclusivas de teste como se fossem secrets do runtime. O Google Studio passava a solicitá-las mesmo não sendo necessárias para o aplicativo em execução.
+5. **Mensagem enganosa.** A UI traduzia qualquer `HTTP_403`, inclusive login/reenvio, como “solicitação de cadastro”.
+
+### Correções aplicadas
+
+- O Vite agora disponibiliza a API local em `/_hvm_api` e mantém `/api` para compatibilidade.
+- Em localhost, o frontend usa exclusivamente `/_hvm_api`; em publicação usa `/api`. O fallback cross-origin para production foi removido.
+- O backend voltou a exigir política same-origin para **todas** as mutações, inclusive cadastro; o CORS público `*` foi removido.
+- Cookies de sessão passam a usar `Path=/`, permitindo o mesmo fluxo tanto em `/_hvm_api` quanto em `/api`.
+- Links de confirmação, recuperação e acesso seguro nunca mais usam origem loopback; em preview local apontam para a origem pública estável do HortiVitalMix.
+- `.env.example` passou a declarar somente o conjunto canônico de runtime. JWT secreto ocioso e variáveis de integração deixaram de ser requisitos do runtime.
+- Compatibilidade com chaves Supabase modernas foi preservada internamente sem expô-las como contrato obrigatório do Studio.
+- Mensagem genérica de 403 corrigida para não atribuir incorretamente a falha ao cadastro.
+- Testes HTTP foram atualizados para provar que cadastro e login obedecem à mesma política de origem.
+
+### Regra operacional resultante
+
+O Google Studio deve executar contra o projeto Development com a API same-origin local. Production só é acessada quando a aplicação publicada em production executa. Links enviados por e-mail precisam usar URL pública alcançável pelo dispositivo do usuário, nunca `localhost`.
