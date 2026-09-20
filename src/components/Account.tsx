@@ -3,8 +3,13 @@ import { api } from "../lib/api";
 import {
   formatBrazilMobile,
   formatCpf,
+  isStrongPassword,
+  NewPasswordSchema,
+  passwordChecks,
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
   RegisterConsumerSchema,
-  RegisterProducerSchema
+  RegisterProducerSchema,
 } from "../../shared/contracts/auth";
 
 type Session = {
@@ -43,6 +48,94 @@ function roleLabel(role: string) {
   return labels[role] ?? role;
 }
 
+function PasswordFields({
+  password,
+  confirmation,
+  onPasswordChange,
+  onConfirmationChange,
+  label = "Senha",
+}: {
+  password: string;
+  confirmation: string;
+  onPasswordChange: (value: string) => void;
+  onConfirmationChange: (value: string) => void;
+  label?: string;
+}) {
+  const [visible, setVisible] = useState(false);
+  const checks = passwordChecks(password);
+  const matches = confirmation.length > 0 && password === confirmation;
+
+  const rules = [
+    [checks.length, `Entre ${PASSWORD_MIN_LENGTH} e ${PASSWORD_MAX_LENGTH} caracteres`],
+    [checks.lowercase, "Letra minúscula"],
+    [checks.uppercase, "Letra maiúscula"],
+    [checks.number, "Número"],
+    [checks.symbol, "Símbolo, por exemplo: ! @ # $ %"],
+  ] as const;
+
+  return (
+    <div className="password-security">
+      <label>
+        {label}
+        <div className="password-input">
+          <input
+            name="password"
+            type={visible ? "text" : "password"}
+            autoComplete="new-password"
+            minLength={PASSWORD_MIN_LENGTH}
+            maxLength={PASSWORD_MAX_LENGTH}
+            value={password}
+            onChange={(event) => onPasswordChange(event.currentTarget.value)}
+            required
+          />
+          <button
+            type="button"
+            className="password-visibility"
+            aria-label={visible ? "Ocultar senha" : "Mostrar senha"}
+            onClick={() => setVisible((current) => !current)}
+          >
+            {visible ? "Ocultar" : "Mostrar"}
+          </button>
+        </div>
+      </label>
+
+      <div className="password-rules" aria-live="polite">
+        <strong>Sua senha deve conter:</strong>
+        <ul>
+          {rules.map(([valid, text]) => (
+            <li key={text} className={valid ? "valid" : undefined}>
+              <span aria-hidden="true">{valid ? "✓" : "○"}</span>
+              {text}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <label>
+        Confirmar senha
+        <input
+          name="confirmPassword"
+          type={visible ? "text" : "password"}
+          autoComplete="new-password"
+          minLength={PASSWORD_MIN_LENGTH}
+          maxLength={PASSWORD_MAX_LENGTH}
+          value={confirmation}
+          onChange={(event) => onConfirmationChange(event.currentTarget.value)}
+          required
+        />
+      </label>
+      {confirmation.length > 0 && (
+        <small
+          className={matches ? "password-match valid" : "password-match invalid"}
+          role="status"
+        >
+          {matches ? "✓ As senhas coincidem." : "As senhas não coincidem."}
+        </small>
+      )}
+    </div>
+  );
+}
+
 export function Account({
   path = "/entrar",
   onNavigate,
@@ -55,9 +148,13 @@ export function Account({
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const [securityFlow, setSecurityFlow] = useState(false);
+  const [passwordValue, setPasswordValue] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
     setMode(modeFromPath(path));
+    setPasswordValue("");
+    setConfirmPassword("");
   }, [path]);
 
   useEffect(() => {
@@ -119,7 +216,16 @@ export function Account({
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setNotice("");
-    const form = Object.fromEntries(new FormData(e.currentTarget));
+    const rawForm = Object.fromEntries(new FormData(e.currentTarget));
+    const { confirmPassword: confirmation, ...form } = rawForm;
+
+    if (
+      (mode === "consumer" || mode === "producer" || mode === "reset") &&
+      form.password !== confirmation
+    ) {
+      setNotice("As senhas não coincidem.");
+      return;
+    }
 
     if (mode === "consumer" || mode === "producer") {
       const parsed = (
@@ -196,6 +302,11 @@ export function Account({
       }
 
       if (mode === "reset") {
+        const parsed = NewPasswordSchema.safeParse({ password: form.password });
+        if (!parsed.success) {
+          setNotice(parsed.error.issues.map((issue) => issue.message).join(". "));
+          return;
+        }
         await api("/v1/auth/reset-password", {
           method: "POST",
           body: JSON.stringify({ password: form.password }),
@@ -241,10 +352,19 @@ export function Account({
 
   async function changePassword(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setBusy(true);
     setNotice("");
     const form = Object.fromEntries(new FormData(e.currentTarget));
+    if (form.password !== form.confirmPassword) {
+      setNotice("As senhas não coincidem.");
+      return;
+    }
+    const parsed = NewPasswordSchema.safeParse({ password: form.password });
+    if (!parsed.success) {
+      setNotice(parsed.error.issues.map((issue) => issue.message).join(". "));
+      return;
+    }
 
+    setBusy(true);
     try {
       await api("/v1/auth/change-password", {
         method: "POST",
@@ -286,8 +406,7 @@ export function Account({
           <form className="security-form" onSubmit={changePassword}>
             <h2>Alterar senha</h2>
             <p>
-              Digite o código recebido e escolha uma nova senha com pelo menos
-              12 caracteres.
+              Digite o código recebido e crie uma senha forte.
             </p>
             <label>
               Código de segurança
@@ -300,18 +419,22 @@ export function Account({
                 required
               />
             </label>
-            <label>
-              Nova senha
-              <input
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                minLength={12}
-                maxLength={128}
-                required
-              />
-            </label>
-            <button className="primary" disabled={busy} type="submit">
+            <PasswordFields
+              label="Nova senha"
+              password={passwordValue}
+              confirmation={confirmPassword}
+              onPasswordChange={setPasswordValue}
+              onConfirmationChange={setConfirmPassword}
+            />
+            <button
+              className="primary"
+              disabled={
+                busy ||
+                !isStrongPassword(passwordValue) ||
+                passwordValue !== confirmPassword
+              }
+              type="submit"
+            >
               {busy ? "Aguarde…" : "Confirmar nova senha"}
             </button>
             <button
@@ -504,19 +627,14 @@ export function Account({
           </label>
         )}
 
-        {(mode === "login" ||
-          mode === "consumer" ||
-          mode === "producer" ||
-          mode === "reset") && (
+        {mode === "login" && (
           <label>
-            {mode === "reset" ? "Nova senha" : "Senha"}
+            Senha
             <input
               name="password"
               type="password"
-              autoComplete={
-                mode === "login" ? "current-password" : "new-password"
-              }
-              minLength={mode === "login" ? 1 : 12}
+              autoComplete="current-password"
+              minLength={1}
               maxLength={128}
               required
             />
@@ -524,7 +642,13 @@ export function Account({
         )}
 
         {(mode === "consumer" || mode === "producer" || mode === "reset") && (
-          <small>Use uma senha com pelo menos 12 caracteres.</small>
+          <PasswordFields
+            label={mode === "reset" ? "Nova senha" : "Senha"}
+            password={passwordValue}
+            confirmation={confirmPassword}
+            onPasswordChange={setPasswordValue}
+            onConfirmationChange={setConfirmPassword}
+          />
         )}
 
         {mode === "producer" && (
@@ -552,7 +676,16 @@ export function Account({
           </p>
         )}
 
-        <button disabled={busy} className="primary" type="submit">
+        <button
+          disabled={
+            busy ||
+            ((mode === "consumer" || mode === "producer" || mode === "reset") &&
+              (!isStrongPassword(passwordValue) ||
+                passwordValue !== confirmPassword))
+          }
+          className="primary"
+          type="submit"
+        >
           {busy
             ? "Aguarde…"
             : mode === "login"
