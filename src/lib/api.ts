@@ -34,14 +34,10 @@ async function parseResponse(response: Response) {
 function apiBase() {
   if (typeof location === "undefined") return "/api";
 
-  // O preview do Google AI Studio é servido em localhost e pode reservar
-  // /api para o proxy da própria plataforma. A aplicação local usa um prefixo
-  // interno servido pelo mesmo Vite/Express, sem CORS e sem desviar para prod.
-  return location.hostname === "localhost" ||
-    location.hostname === "127.0.0.1" ||
-    location.hostname === "::1"
-    ? "/_hvm_api"
-    : "/api";
+  // Em qualquer execução Vite de desenvolvimento (incluindo Google AI Studio),
+  // /api pode pertencer ao proxy da plataforma. O prefixo interno é servido
+  // pelo mesmo processo Vite/Express e evita o HTTP 403 da camada do Studio.
+  return import.meta.env.DEV ? "/_hvm_api" : "/api";
 }
 
 async function doFetch(
