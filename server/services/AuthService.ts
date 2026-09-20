@@ -15,9 +15,10 @@ async function registrationChainState(
   requestId: string,
 ): Promise<ChainState> {
   if (!supabaseAdmin) return "unknown";
+  const admin = supabaseAdmin as any;
 
   try {
-    const person = await supabaseAdmin
+    const person = await admin
       .from("app_people")
       .select("id")
       .eq("user_id", userId)
@@ -32,7 +33,7 @@ async function registrationChainState(
       return "unknown";
     }
 
-    const assignment = await supabaseAdmin
+    const assignment = await admin
       .from("app_user_role_assignments")
       .select("id")
       .eq("user_id", userId)
@@ -52,7 +53,7 @@ async function registrationChainState(
     if (!person.data || !assignment.data) return "incomplete";
 
     if (role === "producer") {
-      const profile = await supabaseAdmin
+      const profile = await admin
         .from("app_producer_profiles")
         .select("id")
         .eq("person_id", person.data.id)
@@ -83,9 +84,10 @@ async function registrationChainState(
 
 async function cleanupIncompleteDomain(userId: string, requestId: string) {
   if (!supabaseAdmin) return;
+  const admin = supabaseAdmin as any;
 
   try {
-    const person = await supabaseAdmin
+    const person = await admin
       .from("app_people")
       .select("id")
       .eq("user_id", userId)
@@ -99,7 +101,7 @@ async function cleanupIncompleteDomain(userId: string, requestId: string) {
       });
 
     if (person.data?.id) {
-      const producer = await supabaseAdmin
+      const producer = await admin
         .from("app_producer_profiles")
         .delete()
         .eq("person_id", person.data.id);
@@ -112,7 +114,7 @@ async function cleanupIncompleteDomain(userId: string, requestId: string) {
         });
     }
 
-    const roles = await supabaseAdmin
+    const roles = await admin
       .from("app_user_role_assignments")
       .delete()
       .eq("user_id", userId);
@@ -124,7 +126,7 @@ async function cleanupIncompleteDomain(userId: string, requestId: string) {
         detail: roles.error.code ?? "unknown",
       });
 
-    const people = await supabaseAdmin
+    const people = await admin
       .from("app_people")
       .delete()
       .eq("user_id", userId);
