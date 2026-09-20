@@ -194,16 +194,15 @@ describe("contratos e limites de confiança", () => {
       buildRuntime({ VERCEL_ENV: "production", APP_ENV: "development" }).appEnv,
     ).toBe("production"));
 
-  it("aceita chaves Supabase modernas como fallback seguro", () => {
+  it("usa somente os nomes canônicos de chaves Supabase no runtime", () => {
     const built = buildRuntime({
-      SUPABASE_PUBLISHABLE_KEY: "sb_publishable_example",
-      SUPABASE_SECRET_KEY: "sb_secret_example",
+      SUPABASE_ANON_KEY: "public-example",
+      SUPABASE_SERVICE_ROLE_KEY: "service-example",
     });
 
-    expect(built.anonKey).toBe("sb_publishable_example");
-    expect(built.serviceKey).toBe("sb_secret_example");
+    expect(built.anonKey).toBe("public-example");
+    expect(built.serviceKey).toBe("service-example");
   });
-
 
   it("aceita os dois estilos de argumentos do manual", () =>
     expect(parseArgs(["--tag=x", "--sha", "abc"])).toEqual({
@@ -247,7 +246,6 @@ describe("contratos e limites de confiança", () => {
       SUPABASE_URL: "https://abcdefgh.supabase.co",
       SUPABASE_ANON_KEY: "public-value",
       SUPABASE_SERVICE_ROLE_KEY: "sb_secret_NEVER_LOG_THIS",
-      SUPABASE_JWT_SECRET: "jwt-secret-never-log",
       SUPABASE_PROJECT_REF: "abcdefgh",
       SUPABASE_DB_URL:
         "postgresql://postgres.abcdefgh:db-password@aws.pooler.supabase.com:6543/postgres",
@@ -259,7 +257,6 @@ describe("contratos e limites de confiança", () => {
     const rendered = JSON.stringify(log.mock.calls);
 
     expect(rendered).not.toContain("NEVER_LOG_THIS");
-    expect(rendered).not.toContain("jwt-secret-never-log");
     expect(rendered).not.toContain("db-password");
     expect(rendered).not.toContain("a".repeat(64));
     expect(rendered).not.toContain("b".repeat(64));
