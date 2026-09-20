@@ -615,6 +615,75 @@ dialog p {
   width: 100%;
   margin-top: 20px;
 }
+.password-security {
+  margin-top: 6px;
+}
+.password-input {
+  position: relative;
+}
+.password-input input {
+  padding-right: 78px;
+}
+.password-visibility {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-42%);
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+.password-rules {
+  margin: 10px 0 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f8faf8;
+}
+.password-rules strong {
+  display: block;
+  color: var(--dark);
+  font-size: 11px;
+  margin-bottom: 7px;
+}
+.password-rules ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 5px;
+}
+.password-rules li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.password-rules li.valid {
+  color: var(--primary);
+  font-weight: 700;
+}
+.password-rules li span {
+  width: 14px;
+  text-align: center;
+}
+.password-match {
+  display: block;
+  margin-top: 7px;
+  font-size: 11px;
+}
+.password-match.valid {
+  color: var(--primary);
+  font-weight: 700;
+}
+.password-match.invalid {
+  color: #8f2e2e;
+}
 .account-choice-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
