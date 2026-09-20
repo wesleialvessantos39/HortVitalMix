@@ -579,8 +579,23 @@ authRouter.post("/magic-link", async (req, res) => {
 
 authRouter.post("/reauthenticate", async (req, res, next) => {
   try {
+    const input = SecurityCodeRequestSchema.safeParse(req.body);
+    if (!input.success) {
+      res.status(400).json({ error: "VALIDATION_ERROR" });
+      return;
+    }
+
     if (!req.actor) {
       res.status(401).json({ error: "SESSION_REQUIRED" });
+      return;
+    }
+
+    const selectedRole = cookie(req, "hvm_portal_role") as PortalRole | null;
+    if (
+      selectedRole !== input.data.portalRole ||
+      !req.actor.roles.includes(input.data.portalRole)
+    ) {
+      res.status(403).json({ error: "SECURITY_CONTEXT_MISMATCH" });
       return;
     }
 
@@ -602,15 +617,31 @@ authRouter.post("/reauthenticate", async (req, res, next) => {
       return;
     }
 
-    setSession(res, restored.data.session);
+    const challenge = await issueSecurityCodeChallenge(
+      req.actor.userId,
+      input.data.portalRole,
+      res.locals.requestId,
+    );
+    if (!challenge) {
+      res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
+      return;
+    }
+
+    setSession(res, restored.data.session, input.data.portalRole);
     const { error } = await client.auth.reauthenticate();
     if (error) {
+      await invalidateChallenge(challenge.id);
       reportFailure("reauthentication_not_dispatched", res.locals.requestId);
       res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
       return;
     }
 
-    res.status(202).json({ status: "challenge_sent" });
+    res.status(202).json({
+      status: "challenge_sent",
+      challengeId: challenge.id,
+      portalRole: input.data.portalRole,
+      expiresAt: challenge.expiresAt.toISOString(),
+    });
   } catch (error) {
     next(error);
   }
@@ -618,7 +649,7 @@ authRouter.post("/reauthenticate", async (req, res, next) => {
 
 authRouter.post("/reset-password", async (req, res, next) => {
   try {
-    const input = NewPasswordSchema.safeParse(req.body);
+    const input = RoleScopedResetPasswordSchema.safeParse(req.body);
     if (!input.success) {
       res.status(400).json({ error: "VALIDATION_ERROR" });
       return;
@@ -626,6 +657,21 @@ authRouter.post("/reset-password", async (req, res, next) => {
 
     if (!req.actor) {
       res.status(401).json({ error: "SESSION_REQUIRED" });
+      return;
+    }
+
+    if (!req.actor.roles.includes(input.data.portalRole)) {
+      res.status(403).json({ error: "RECOVERY_CONTEXT_MISMATCH" });
+      return;
+    }
+
+    const validContext = await validateRecoveryChallenge(
+      req.actor.userId,
+      input.data.portalRole,
+      input.data.flowToken,
+    );
+    if (!validContext) {
+      res.status(410).json({ error: "RECOVERY_CONTEXT_INVALID" });
       return;
     }
 
@@ -655,6 +701,18 @@ authRouter.post("/reset-password", async (req, res, next) => {
       return;
     }
 
+    const consumed = await consumeRecoveryChallenge(
+      req.actor.userId,
+      input.data.portalRole,
+      input.data.flowToken,
+    );
+    if (!consumed) {
+      await client.auth.signOut({ scope: "global" }).catch(() => undefined);
+      clear(res);
+      res.status(409).json({ error: "RECOVERY_CONTEXT_ALREADY_USED" });
+      return;
+    }
+
     await client.auth.signOut({ scope: "global" }).catch(() => undefined);
     clear(res);
     res.status(204).end();
@@ -665,7 +723,7 @@ authRouter.post("/reset-password", async (req, res, next) => {
 
 authRouter.post("/change-password", async (req, res, next) => {
   try {
-    const input = PasswordChangeSchema.safeParse(req.body);
+    const input = RoleScopedPasswordChangeSchema.safeParse(req.body);
     if (!input.success) {
       res.status(400).json({ error: "VALIDATION_ERROR" });
       return;
@@ -673,6 +731,25 @@ authRouter.post("/change-password", async (req, res, next) => {
 
     if (!req.actor) {
       res.status(401).json({ error: "SESSION_REQUIRED" });
+      return;
+    }
+
+    const selectedRole = cookie(req, "hvm_portal_role") as PortalRole | null;
+    if (
+      selectedRole !== input.data.portalRole ||
+      !req.actor.roles.includes(input.data.portalRole)
+    ) {
+      res.status(403).json({ error: "SECURITY_CONTEXT_MISMATCH" });
+      return;
+    }
+
+    const validChallenge = await validateSecurityCodeChallenge(
+      input.data.challengeId,
+      req.actor.userId,
+      input.data.portalRole,
+    );
+    if (!validChallenge) {
+      res.status(410).json({ error: "SECURITY_CODE_CONTEXT_INVALID" });
       return;
     }
 
@@ -700,10 +777,12 @@ authRouter.post("/change-password", async (req, res, next) => {
     });
 
     if (updated.error) {
+      await recordSecurityCodeFailure(input.data.challengeId);
       res.status(400).json({ error: "SECURITY_CODE_REJECTED" });
       return;
     }
 
+    await consumeSecurityCodeChallenge(input.data.challengeId);
     await client.auth.signOut({ scope: "global" }).catch(() => undefined);
     clear(res);
     res.status(204).end();
