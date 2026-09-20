@@ -234,3 +234,34 @@ test("login e cadastros usam telas separadas", async ({ page }) => {
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
   ).toBe(true);
 });
+
+
+test("senha forte orienta e bloqueia cadastro fraco", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/cadastro/consumidor");
+
+  await expect(page.getByText("Sua senha deve conter:")).toBeVisible();
+  await expect(page.getByText("Entre 12 e 70 caracteres")).toBeVisible();
+  await expect(page.getByText("Letra minúscula")).toBeVisible();
+  await expect(page.getByText("Letra maiúscula")).toBeVisible();
+  await expect(page.getByText("Número")).toBeVisible();
+  await expect(page.getByText(/Símbolo, por exemplo/)).toBeVisible();
+
+  const password = page.getByLabel("Senha", { exact: true });
+  const confirmation = page.getByLabel("Confirmar senha");
+  const submit = page.getByRole("button", { name: "Criar cadastro" });
+
+  await password.fill("senhafraca");
+  await confirmation.fill("senhafraca");
+  await expect(submit).toBeDisabled();
+
+  await password.fill("SenhaForte!2026");
+  await confirmation.fill("SenhaDiferente!2026");
+  await expect(page.getByText("As senhas não coincidem.")).toBeVisible();
+  await expect(submit).toBeDisabled();
+
+  await confirmation.fill("SenhaForte!2026");
+  await expect(page.getByText("✓ As senhas coincidem.")).toBeVisible();
+  await expect(page.locator(".password-rules li.valid")).toHaveCount(5);
+  await expect(submit).toBeEnabled();
+});
