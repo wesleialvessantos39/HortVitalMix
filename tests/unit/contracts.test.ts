@@ -4,6 +4,8 @@ import {
   NewPasswordSchema,
   PasswordChangeSchema,
   RegisterProducerSchema,
+  StrongPasswordSchema,
+  passwordChecks,
   SessionImportSchema,
   formatBrazilMobile,
   formatCpf,
@@ -34,7 +36,7 @@ describe("contratos e limites de confiança", () => {
       cpf: "529.982.247-25",
       email: " TEST@EXAMPLE.COM ",
       phone: "(69) 99999-9999",
-      password: "a-secure-test-password",
+      password: "Senha-Segura-2026!",
       propertyName: "Sítio de Teste",
       activityType: "misto",
     });
@@ -64,7 +66,22 @@ describe("contratos e limites de confiança", () => {
     );
   });
 
-  it("exige senha de 12 caracteres e nonce numérico", () => {
+  it("exige senha forte com os cinco critérios", () => {
+    expect(StrongPasswordSchema.safeParse("SenhaForte!2026").success).toBe(true);
+    expect(StrongPasswordSchema.safeParse("senhaforte!2026").success).toBe(false);
+    expect(StrongPasswordSchema.safeParse("SENHAFORTE!2026").success).toBe(false);
+    expect(StrongPasswordSchema.safeParse("SenhaForteSemNumero!").success).toBe(false);
+    expect(StrongPasswordSchema.safeParse("SenhaForte2026").success).toBe(false);
+    expect(StrongPasswordSchema.safeParse("Curta!1Aa").success).toBe(false);
+
+    expect(passwordChecks("SenhaForte!2026")).toEqual({
+      length: true,
+      lowercase: true,
+      uppercase: true,
+      number: true,
+      symbol: true,
+    });
+
     expect(NewPasswordSchema.safeParse({ password: "curta" }).success).toBe(false);
     expect(
       PasswordChangeSchema.safeParse({
