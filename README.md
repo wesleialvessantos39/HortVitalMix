@@ -23,8 +23,8 @@ Sem credenciais, o shell visual permanece navegável e endpoints dependentes do 
 A integração usa exclusivamente:
 
 ```text
-HVM_INTEGRATION_ENABLED=true
-HVM_PROD_PROJECT_REF=<ref-de-production>
+flag exclusiva de integração=true
+referência protegida de production=<ref-de-production>
 ```
 
 Não usar `RUN_SUPABASE_INTEGRATION` ou `SUPABASE_TEST_PROJECT_REF`; esses nomes são obsoletos.
@@ -35,7 +35,7 @@ Development isolado:
 
 ```sh
 npm run migrations:verify
-HVM_INTEGRATION_ENABLED=true npm run homologate
+flag exclusiva de integração=true npm run homologate
 npm run test:e2e
 ```
 
