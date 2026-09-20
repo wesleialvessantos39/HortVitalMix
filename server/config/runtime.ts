@@ -90,8 +90,14 @@ export function buildRuntime(env: NodeJS.ProcessEnv) {
     dbRejection: db.reason,
     dbUrlRejectionReason: db.reason,
     supabaseUrl: env.SUPABASE_URL ?? "",
-    anonKey: env.SUPABASE_ANON_KEY ?? "",
-    serviceKey: env.SUPABASE_SERVICE_ROLE_KEY ?? "",
+    anonKey:
+      env.SUPABASE_ANON_KEY ??
+      env.SUPABASE_PUBLISHABLE_KEY ??
+      "",
+    serviceKey:
+      env.SUPABASE_SERVICE_ROLE_KEY ??
+      env.SUPABASE_SECRET_KEY ??
+      "",
     jwtSecret: env.SUPABASE_JWT_SECRET ?? "",
     projectRef: env.SUPABASE_PROJECT_REF ?? "",
     ipPepper: env.APP_IP_PEPPER ?? "",
