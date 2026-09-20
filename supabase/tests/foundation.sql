@@ -6,10 +6,57 @@ DO $$DECLARE n integer;BEGIN
  IF has_column_privilege('authenticated','public.app_users','status','UPDATE') OR has_column_privilege('authenticated','public.app_producer_profiles','trust_level','UPDATE') OR has_column_privilege('authenticated','public.app_producer_profiles','verification_status','UPDATE') THEN RAISE EXCEPTION 'SENSITIVE_COLUMN_WRITABLE';END IF;
  IF EXISTS(SELECT 1 FROM storage.buckets WHERE id='documents' AND public) THEN RAISE EXCEPTION 'PUBLIC_DOCUMENTS';END IF;
 END;$$;
+SELECT set_config('hvm.test_rpc_consumer',gen_random_uuid()::text,true),set_config('hvm.test_rpc_producer',gen_random_uuid()::text,true);
+INSERT INTO auth.users(id,email)
+VALUES
+  (current_setting('hvm.test_rpc_consumer')::uuid,'hvm-rpc-consumer-'||current_setting('hvm.test_rpc_consumer')||'@example.com'),
+  (current_setting('hvm.test_rpc_producer')::uuid,'hvm-rpc-producer-'||current_setting('hvm.test_rpc_producer')||'@example.com');
+SELECT public.complete_public_registration(
+  current_setting('hvm.test_rpc_consumer')::uuid,
+  'Consumidor RPC',
+  '12345678909',
+  'hvm-rpc-consumer-'||current_setting('hvm.test_rpc_consumer')||'@example.com',
+  '+5569999999901',
+  'consumer',
+  NULL,
+  NULL
+);
+SELECT public.complete_public_registration(
+  current_setting('hvm.test_rpc_producer')::uuid,
+  'Produtor RPC',
+  '98765432100',
+  'hvm-rpc-producer-'||current_setting('hvm.test_rpc_producer')||'@example.com',
+  '+5569999999902',
+  'producer',
+  'Sítio RPC',
+  'misto'
+);
+DO $BEGIN
+ IF has_function_privilege('anon','public.complete_public_registration(uuid,text,text,text,text,text,text,text)','EXECUTE') THEN RAISE EXCEPTION 'RPC_ANON_EXECUTE_ALLOWED';END IF;
+ IF has_function_privilege('authenticated','public.complete_public_registration(uuid,text,text,text,text,text,text,text)','EXECUTE') THEN RAISE EXCEPTION 'RPC_AUTHENTICATED_EXECUTE_ALLOWED';END IF;
+ IF NOT has_function_privilege('service_role','public.complete_public_registration(uuid,text,text,text,text,text,text,text)','EXECUTE') THEN RAISE EXCEPTION 'RPC_SERVICE_ROLE_EXECUTE_MISSING';END IF;
+ IF NOT EXISTS(
+   SELECT 1
+   FROM public.app_people p
+   JOIN public.app_user_role_assignments r ON r.user_id=p.user_id
+   WHERE p.user_id=current_setting('hvm.test_rpc_consumer')::uuid
+     AND r.role_code='consumer'
+ ) THEN RAISE EXCEPTION 'RPC_CONSUMER_CHAIN_FAILED';END IF;
+ IF NOT EXISTS(
+   SELECT 1
+   FROM public.app_people p
+   JOIN public.app_user_role_assignments r ON r.user_id=p.user_id
+   JOIN public.app_producer_profiles pp ON pp.person_id=p.id
+   WHERE p.user_id=current_setting('hvm.test_rpc_producer')::uuid
+     AND r.role_code='producer'
+     AND pp.property_name='Sítio RPC'
+     AND pp.rural_activity_type='misto'
+ ) THEN RAISE EXCEPTION 'RPC_PRODUCER_CHAIN_FAILED';END IF;
+END;$;
 SELECT set_config('hvm.test_a',gen_random_uuid()::text,true),set_config('hvm.test_b',gen_random_uuid()::text,true);
 INSERT INTO auth.users(id,email) VALUES(current_setting('hvm.test_a')::uuid,'hvm-a-'||current_setting('hvm.test_a')||'@example.com'),(current_setting('hvm.test_b')::uuid,'hvm-b-'||current_setting('hvm.test_b')||'@example.com');
 INSERT INTO public.app_people(user_id,full_name,cpf_normalized,email_normalized,phone_e164) VALUES(current_setting('hvm.test_a')::uuid,'Fixture A','52998224725','hvm-a-'||current_setting('hvm.test_a')||'@example.com','+5569999999999'),(current_setting('hvm.test_b')::uuid,'Fixture B','11144477735','hvm-b-'||current_setting('hvm.test_b')||'@example.com','+5569999999998');
-INSERT INTO public.app_producer_profiles(person_id,brand_name) SELECT id,'Fixture' FROM public.app_people WHERE user_id=current_setting('hvm.test_a')::uuid;
+INSERT INTO public.app_producer_profiles(person_id,property_name) SELECT id,'Fixture' FROM public.app_people WHERE user_id=current_setting('hvm.test_a')::uuid;
 INSERT INTO public.app_user_role_assignments(user_id,role_code) VALUES(current_setting('hvm.test_a')::uuid,'producer');
 SELECT set_config('request.jwt.claims',json_build_object('sub',current_setting('hvm.test_a'),'role','authenticated')::text,true);
 SET LOCAL ROLE authenticated;
