@@ -480,9 +480,33 @@ export function Account({
                                       ? "Não foi possível conectar ao servidor de cadastro. Verifique a conexão e tente novamente."
                                       : code === "INVALID_API_RESPONSE"
                                         ? "A função de cadastro respondeu de forma inválida. O erro foi identificado para correção."
-                                        : code === "HTTP_ERROR"
-                                          ? "O servidor recusou a solicitação de cadastro." + requestSuffix
-                                          : "Falha não identificada no cadastro: " + code + requestSuffix,
+                                        : code === "REGISTRATION_STATUS_UNKNOWN"
+                                          ? "O servidor perdeu a confirmação final do cadastro e não apagou a conta por segurança. Não repita o cadastro agora; tente entrar ou recuperar a senha." + requestSuffix
+                                          : code === "HTTP_400"
+                                            ? "A plataforma recusou a solicitação como inválida (HTTP 400)." + requestSuffix
+                                            : code === "HTTP_401"
+                                              ? "A plataforma recusou a solicitação por autenticação (HTTP 401)." + requestSuffix
+                                              : code === "HTTP_403"
+                                                ? "A plataforma bloqueou a solicitação de cadastro (HTTP 403)." + requestSuffix
+                                                : code === "HTTP_404"
+                                                  ? "A rota de cadastro não foi encontrada (HTTP 404)." + requestSuffix
+                                                  : code === "HTTP_405"
+                                                    ? "A rota existe, mas recusou o método POST (HTTP 405)." + requestSuffix
+                                                    : code === "HTTP_413"
+                                                      ? "A plataforma recusou o tamanho da solicitação (HTTP 413)." + requestSuffix
+                                                      : code === "HTTP_429"
+                                                        ? "A plataforma limitou temporariamente as tentativas de cadastro (HTTP 429)." + requestSuffix
+                                                        : code === "HTTP_500"
+                                                          ? "A função de cadastro falhou internamente (HTTP 500)." + requestSuffix
+                                                          : code === "HTTP_502"
+                                                            ? "O gateway não conseguiu concluir a chamada ao cadastro (HTTP 502)." + requestSuffix
+                                                            : code === "HTTP_503"
+                                                              ? "O serviço de cadastro está indisponível no momento (HTTP 503)." + requestSuffix
+                                                              : code === "HTTP_504"
+                                                                ? "A plataforma encerrou a solicitação por tempo excedido (HTTP 504)." + requestSuffix
+                                                                : code.startsWith("HTTP_")
+                                                                  ? "A plataforma recusou a solicitação com " + code.replace("_", " ") + "." + requestSuffix
+                                                                  : "Falha não identificada no cadastro: " + code + requestSuffix,
       );
     } finally {
       setBusy(false);

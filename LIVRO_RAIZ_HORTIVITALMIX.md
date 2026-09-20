@@ -1,5 +1,29 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-20 — Reconciliação pós-RPC e diagnóstico HTTP real
+
+Status: **hotfix implementado em branch; promoção para main e validação Vercel pendentes nesta entrada**.
+
+Evidência da tentativa do proprietário:
+- mensagem exibida: `O servidor recusou a solicitação de cadastro.`;
+- Production registrou criação de identidade por volta de 00:05 local, papel `consumer` e compensação poucos segundos depois;
+- após a compensação restou `app_user` suspenso e uma atribuição de papel ativa sem pessoa;
+- a mensagem `HTTP_ERROR` do frontend só era gerada para respostas 4xx vazias ou não-JSON, provando que a recusa atual vinha de uma camada externa à API JSON canônica.
+
+Correções:
+- backend passa a reconciliar o estado depois de falha de transporte da RPC;
+- se `app_people` + papel + perfil de produtor estiverem completos, o cadastro é considerado sucesso mesmo que a resposta da RPC tenha se perdido;
+- compensação destrutiva só ocorre quando a falha é confirmada;
+- se o estado não puder ser confirmado, retorna `REGISTRATION_STATUS_UNKNOWN` e não apaga a identidade;
+- compensação de domínio passa a limpar perfil/papel/pessoa antes da exclusão Auth, preservando apenas o tombstone canônico `app_users`;
+- o papel órfão da tentativa atual foi revogado com `revoke_reason=registration_compensated`;
+- Production validada com zero papéis órfãos ativos e um tombstone suspenso preservado;
+- cliente deixa de transformar respostas 4xx/5xx vazias ou não-JSON em `HTTP_ERROR`;
+- frontend passa a exibir o status real: `HTTP_400`, `HTTP_401`, `HTTP_403`, `HTTP_404`, `HTTP_405`, `HTTP_413`, `HTTP_429`, `HTTP_500`, `HTTP_502`, `HTTP_503` ou `HTTP_504`;
+- schema permanece **11**.
+
+---
+
 ## 2026-09-19 — Correção de `config_unavailable` e alinhamento Google Studio
 
 Status: **Development e Production alinhados em schema 11; PR #8 promovido à `main`; deployment funcional Vercel aprovado com `success`**.

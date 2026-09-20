@@ -17,25 +17,13 @@ async function parseResponse(response: Response) {
   const requestId = response.headers.get("x-request-id") ?? undefined;
   const raw = await response.text();
 
-  if (!raw) {
-    if (!response.ok) {
-      return {
-        json: { error: response.status >= 500 ? "DEPENDENCY_UNAVAILABLE" : "HTTP_ERROR" },
-        requestId,
-      };
-    }
-    return { json: null as unknown, requestId };
-  }
+  if (!raw) return { json: null as unknown, requestId };
 
   try {
     return { json: JSON.parse(raw) as Record<string, unknown>, requestId };
   } catch {
-    if (!response.ok) {
-      return {
-        json: { error: response.status >= 500 ? "DEPENDENCY_UNAVAILABLE" : "HTTP_ERROR" },
-        requestId,
-      };
-    }
+    if (!response.ok) return { json: {} as Record<string, unknown>, requestId };
+
     throw failure("INVALID_API_RESPONSE", {
       status: response.status,
       requestId,
@@ -90,11 +78,17 @@ export async function api<T>(
   };
 
   if (!response.ok)
-    throw failure(body.error ?? "HTTP_ERROR", {
-      status: response.status,
-      fields: body.fields,
-      requestId: body.requestId ?? requestId,
-    });
+    throw failure(
+      body.error ??
+        (typeof (json as Record<string, unknown>)?.code === "string"
+          ? String((json as Record<string, unknown>).code)
+          : `HTTP_${response.status}`),
+      {
+        status: response.status,
+        fields: body.fields,
+        requestId: body.requestId ?? requestId,
+      },
+    );
 
   if (json === null)
     throw failure("INVALID_API_RESPONSE", {
