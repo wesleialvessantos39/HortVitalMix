@@ -47,6 +47,35 @@ describe("API same-origin sem mocks", () => {
     expect(r.body.error).toBe("VALIDATION_ERROR");
   });
 
+  it("permite preflight CORS somente no cadastro público", async () => {
+    const response = await request(app)
+      .options("/v1/auth/register-consumer")
+      .set("Origin", "https://preview.ai.studio");
+
+    expect(response.status).toBe(204);
+    expect(response.headers["access-control-allow-origin"]).toBe("*");
+    expect(response.headers["access-control-allow-methods"]).toContain("POST");
+  });
+
+  it("cadastro público aceita origem externa sem liberar login", async () => {
+    const registration = await request(app)
+      .post("/v1/auth/register-consumer")
+      .set("Origin", "https://preview.ai.studio")
+      .send({});
+
+    expect(registration.status).toBe(400);
+    expect(registration.body.error).toBe("VALIDATION_ERROR");
+    expect(registration.headers["access-control-allow-origin"]).toBe("*");
+
+    const login = await request(app)
+      .post("/v1/auth/login")
+      .set("Origin", "https://preview.ai.studio")
+      .send({});
+
+    expect(login.status).toBe(403);
+    expect(login.body.error).toBe("ORIGIN_NOT_ALLOWED");
+  });
+
   it("cadastro inválido retorna os campos que precisam de correção", async () => {
     const r = await request(app)
       .post("/v1/auth/register-consumer")

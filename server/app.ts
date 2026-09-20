@@ -7,6 +7,30 @@ import { sessionMiddleware } from "./middleware/session.ts";
 import { isAllowedRequestOrigin } from "./security/origin.ts";
 export const app = express();
 app.disable("x-powered-by");
+
+function isPublicRegistrationPath(path: string) {
+  return /^\/(?:api\/)?v1\/auth\/register-(?:consumer|producer)$/.test(path);
+}
+
+app.use((req, res, next) => {
+  if (isPublicRegistrationPath(req.path)) {
+    res.set({
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Max-Age": "600",
+      Vary: "Origin",
+    });
+
+    if (req.method === "OPTIONS") {
+      res.status(204).end();
+      return;
+    }
+  }
+
+  next();
+});
+
 app.use((req, res, next) => {
   res.locals.requestId = randomUUID();
   res.set({
@@ -18,6 +42,7 @@ app.use((req, res, next) => {
   });
   if (
     !["GET", "HEAD", "OPTIONS"].includes(req.method) &&
+    !isPublicRegistrationPath(req.path) &&
     !isAllowedRequestOrigin(req)
   ) {
     res

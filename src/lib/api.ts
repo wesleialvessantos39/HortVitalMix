@@ -31,17 +31,22 @@ async function parseResponse(response: Response) {
   }
 }
 
-export async function api<T>(
-  path: string,
-  options: RequestInit = {},
-  retried = false,
-): Promise<T> {
-  let response: Response;
+const PUBLIC_REGISTRATION_API_BASE =
+  "https://hortvitalmix.vercel.app/api";
 
+function isPublicRegistrationPath(path: string) {
+  return /^\/v1\/auth\/register-(?:consumer|producer)$/.test(path);
+}
+
+async function doFetch(
+  url: string,
+  options: RequestInit,
+  credentials: RequestCredentials,
+) {
   try {
-    response = await fetch("/api" + path, {
+    return await fetch(url, {
       ...options,
-      credentials: "same-origin",
+      credentials,
       headers: { "Content-Type": "application/json", ...options.headers },
       signal: options.signal ?? AbortSignal.timeout(20000),
     });
@@ -53,6 +58,14 @@ export async function api<T>(
         : "NETWORK_UNAVAILABLE",
     );
   }
+}
+
+export async function api<T>(
+  path: string,
+  options: RequestInit = {},
+  retried = false,
+): Promise<T> {
+  let response = await doFetch("/api" + path, options, "same-origin");
 
   if (response.status === 401 && !retried && path === "/v1/auth/session") {
     refreshing ??= fetch("/api/v1/auth/refresh", {
@@ -70,12 +83,32 @@ export async function api<T>(
 
   if (response.status === 204) return undefined as T;
 
-  const { json, requestId } = await parseResponse(response);
-  const body = (json ?? {}) as {
+  let parsed = await parseResponse(response);
+  let body = (parsed.json ?? {}) as {
     error?: string;
     fields?: Array<{ field: string; message: string }>;
     requestId?: string;
   };
+
+  if (
+    response.status === 403 &&
+    !body.error &&
+    isPublicRegistrationPath(path)
+  ) {
+    response = await doFetch(
+      PUBLIC_REGISTRATION_API_BASE + path,
+      options,
+      "omit",
+    );
+    parsed = await parseResponse(response);
+    body = (parsed.json ?? {}) as {
+      error?: string;
+      fields?: Array<{ field: string; message: string }>;
+      requestId?: string;
+    };
+  }
+
+  const { json, requestId } = parsed;
 
   if (!response.ok)
     throw failure(

@@ -1,5 +1,26 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-20 — Contorno controlado do HTTP 403 do Google AI Studio
+
+Status: **hotfix implementado em branch; promoção e validação Vercel pendentes nesta entrada**.
+
+Evidência:
+- após a publicação do diagnóstico HTTP real, o cadastro no Google Studio passou a revelar `HTTP 403`;
+- a resposta 403 não continha o JSON canônico da API (`ORIGIN_NOT_ALLOWED`), indicando bloqueio anterior ao Express ou resposta do proxy/preview;
+- há relatos contemporâneos de HTTP 403 e problemas de autenticação/preview no Google AI Studio, portanto o cadastro não deve depender exclusivamente do POST same-origin do preview.
+
+Correção:
+- o frontend tenta primeiro `/api/v1/auth/register-consumer|producer` na própria origem;
+- somente se receber **HTTP 403 sem código JSON da API**, repete o mesmo cadastro contra `https://hortvitalmix.vercel.app/api`;
+- o fallback usa `credentials: omit`, sem cookies de sessão;
+- o backend libera CORS `POST/OPTIONS` somente para os dois endpoints públicos de cadastro;
+- login, sessão, recuperação, reautenticação e administração continuam protegidos pela política same-origin;
+- payload continua validado pelos contratos Zod, senha forte, normalização brasileira, restrição de papel a `consumer|producer` e RPC transacional;
+- preflight CORS recebe 204 apenas nas rotas de cadastro público;
+- schema permanece **11**.
+
+---
+
 ## 2026-09-20 — Reconciliação pós-RPC e diagnóstico HTTP real
 
 Status: **hotfix promovido à `main`; deployment funcional Vercel aprovado com `success` no commit `80028edad2b6f9d1493255db4877dfde4659b538`**.
