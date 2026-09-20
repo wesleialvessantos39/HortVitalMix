@@ -2,7 +2,7 @@
 
 ## 2026-09-19 — Correção de `config_unavailable` e alinhamento Google Studio
 
-Status: **Development e Production alinhados em schema 11; hotfix de runtime preparado para promoção à main**.
+Status: **Development e Production alinhados em schema 11; PR #8 promovido à `main`; deployment funcional Vercel aprovado com `success`**.
 
 Evidência fornecida pelo proprietário:
 - mensagem no cadastro: `A função de cadastro respondeu de forma inválida. O erro foi identificado para correção.`;
@@ -24,6 +24,8 @@ Correções:
 - falha no envio da confirmação não apaga mais Consumer/Producer já criado corretamente;
 - função Vercel passa de 10 para 30 segundos de duração máxima;
 - schema permanece **11**.
+- PR #8 mergeado na `main` no commit `1a51523da483ec6917da2baef59adb0c4ce6c737`.
+- contexto `Vercel` do commit funcional retornou `success`.
 
 ---
 
