@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 11,
+  "schemaVersion": 12,
   "migrations": [
     {
       "version": "20260919030126",
@@ -55,7 +55,12 @@
       "version": "20260920023000",
       "name": "registration_rpc",
       "file": "20260920023000_registration_rpc.sql"
+    },
+    {
+      "version": "20260920210000",
+      "name": "multi_role_identity",
+      "file": "20260920210000_multi_role_identity.sql"
     }
   ],
-  "migrationHistoryHash": "8fa8747b04e007b4d95716846114a07ddcec76132add815f36244931323c5238"
+  "migrationHistoryHash": "f138aca975d82981ad747fb31149ad24a97cb83dbe24de8ae4987fd323f82bb3"
 }
