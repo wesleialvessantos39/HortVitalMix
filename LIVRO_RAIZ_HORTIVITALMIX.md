@@ -1,5 +1,23 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-19 — Senha forte inspirada no fluxo Gov.br
+
+Status: **implementação promovida para `main`; validação frontend/backend concluída em código; deployment Vercel do commit funcional em processamento na última verificação**.
+
+- PR #5 mergeado para `main` no commit `467d61a3c0960328dc1f55371d8afed39edc6dbf`.
+- criação de senha passa a exigir, cumulativamente: 12 a 70 caracteres, letra minúscula, letra maiúscula, número e símbolo.
+- cadastro de Consumidor e Produtor passa a exibir checklist de critérios em tempo real.
+- redefinição e alteração autenticada de senha reutilizam o mesmo componente e a mesma regra.
+- confirmação de senha é obrigatória e deve coincidir exatamente.
+- botão de confirmação/cadastro permanece desabilitado até a senha cumprir todos os critérios e a confirmação coincidir.
+- backend usa a mesma validação canônica via Zod; senha fraca é rejeitada mesmo fora da interface.
+- login não é endurecido retroativamente, evitando bloquear senhas existentes durante autenticação.
+- limite mínimo de 12 caracteres foi preservado por ser mais rígido que a referência visual do Gov.br, mantendo a experiência semelhante sem reduzir a política vigente.
+- nenhuma migration de banco foi necessária; schema lógico permanece 10.
+- testes unitários, HTTP e Playwright foram atualizados para cobrir regras, rejeição de senha fraca e confirmação.
+
+---
+
 ## 2026-09-19 — Ajuste de perfis e placeholder de celular
 
 Status: **implementação promovida para `main`; build Vercel aprovado; schema 10 aplicado em Development e Production; Homologation em restauração transitória do plano Free**.
