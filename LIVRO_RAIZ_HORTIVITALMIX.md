@@ -1,5 +1,37 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-19 — Hotfix definitivo do cadastro via Supabase RPC
+
+Status: **migration 11 aplicada e validada em Production; código preparado para promoção à main**.
+
+Diagnóstico:
+- novas tentativas do proprietário continuavam retornando falha antes de qualquer identidade ser criada;
+- Production permaneceu com zero linhas em `auth.users`, `app_users`, `app_people`, papéis e perfis;
+- o caminho de cadastro ainda dependia de conexão PostgreSQL direta via Pooler dentro da função serverless.
+
+Correção estrutural:
+- cadastro deixa de usar `pg.Pool` no caminho crítico;
+- identidade é criada por Supabase Auth Admin;
+- domínio é concluído por `public.complete_public_registration(...)` via Data API/RPC;
+- Consumer e Producer são gravados atomicamente no próprio Postgres do Supabase;
+- falha da RPC aciona compensação da identidade incompleta;
+- cliente passa a distinguir timeout, falha de rede, resposta não-JSON, schema desatualizado, Auth indisponível, banco indisponível, conflito e rate limit;
+- mensagem genérica `Não foi possível concluir o cadastro.` deixa de ser o fallback silencioso.
+
+Validação executada:
+- dry-run transacional em Production para Consumer e Producer concluído e revertido com `ROLLBACK`;
+- RPC confirmada como `SECURITY DEFINER` com `search_path=public`;
+- `anon` e `authenticated` sem EXECUTE; `service_role` com EXECUTE;
+- migration canônica `20260920023000_registration_rpc.sql` aplicada;
+- histórico passa a 11 migrations e schema lógico **11**;
+- após validação: zero usuários/perfis fictícios ou resíduos;
+- Security Advisor não adicionou novo alerta relacionado à RPC.
+
+Observação operacional:
+- Development restaurado no plano Free voltou sem histórico de migrations e com Storage ainda não inicializado; por isso o hotfix foi validado por dry-run transacional no schema 10 real de Production antes da aplicação definitiva da migration 11.
+
+---
+
 ## 2026-09-19 — Correção definitiva do cadastro público e validação de campos
 
 Status: **correção promovida para `main` e deployment funcional Vercel aprovado com `success`; Supabase production `ACTIVE_HEALTHY` e schema 10 preservado**.

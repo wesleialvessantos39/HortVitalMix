@@ -582,9 +582,15 @@ for (const role of ["consumer", "producer"] as const)
               ? "AUTH_UNAVAILABLE"
               : message === "REGISTRATION_DATABASE_UNAVAILABLE"
                 ? "DATABASE_UNAVAILABLE"
-                : status === 409
-                  ? "IDENTITY_CONFLICT"
-                  : "DEPENDENCY_UNAVAILABLE";
+                : message === "REGISTRATION_SCHEMA_OUTDATED"
+                  ? "REGISTRATION_SCHEMA_OUTDATED"
+                  : message === "REGISTRATION_DATA_REJECTED"
+                    ? "REGISTRATION_DATA_REJECTED"
+                    : message === "REGISTRATION_UNEXPECTED_FAILURE"
+                      ? "REGISTRATION_INTERNAL_ERROR"
+                      : status === 409
+                        ? "IDENTITY_CONFLICT"
+                        : "DEPENDENCY_UNAVAILABLE";
 
       reportFailure({
         category: "registration_failed",
