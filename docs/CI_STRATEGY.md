@@ -7,7 +7,7 @@ A Trilha 01 **não depende de GitHub Actions**. O gate canônico executa localme
 | `npm ci` | Instalação determinística pelo lockfile |
 | `npm run typecheck` | Contratos TypeScript de frontend e backend |
 | `npm run verify` | Typecheck + Vitest |
-| `HVM_INTEGRATION_ENABLED=true npm run homologate` | Gate de development com integração real obrigatória |
+| `flag exclusiva de integração=true npm run homologate` | Gate de development com integração real obrigatória |
 | `npm run security:check` | Proíbe referências server-only sob `src/**` |
 | `npm run build` | Typecheck, fronteira de segredos, Vite e inspeção do bundle |
 | `npm run migrations:verify` | Manifesta schema 8 e valida hash determinístico |
@@ -17,7 +17,7 @@ A Trilha 01 **não depende de GitHub Actions**. O gate canônico executa localme
 
 ## Integração real
 
-Os testes de integração usam `HVM_INTEGRATION_ENABLED=true` e recusam production através de `HVM_PROD_PROJECT_REF`, `APP_ENV` e `VERCEL_ENV`. Teste pulado não vale como homologação.
+Os testes de integração usam `flag exclusiva de integração=true` e recusam production através de `referência protegida de production`, `APP_ENV` e `VERCEL_ENV`. Teste pulado não vale como homologação.
 
 ## Vercel
 
