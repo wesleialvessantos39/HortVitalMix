@@ -1,4 +1,4 @@
-name: Trilha 02 Free Seal Diagnostic
+name: Trilha 02 - Selagem gratuita
 
 on:
   push:
@@ -6,12 +6,165 @@ on:
       - main
     paths:
       - ".github/workflows/trilha02-free-seal.yml"
+      - "tests/setup/globalSetup.ts"
+      - "scripts/verify-trilha02-evidence.mjs"
+      - "server/config/runtime.ts"
+      - "server/db/pool.ts"
+      - "scripts/require-integration.ts"
+      - "package.json"
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
-  diagnostic:
+  homologacao-local:
+    name: Homologacao local - ${{ matrix.app_env }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        app_env:
+          - development
+          - homologation
+    env:
+      APP_ENV: ${{ matrix.app_env }}
+      HVM_PROD_PROJECT_REF: xipbsazvymkqqfmfegwu
+      HVM_INTEGRATION_ENABLED: "true"
+      APP_IP_PEPPER: 0123456789abcdef0123456789abcdef
+      OUTBOX_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      APP_ALLOWED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+      DATABASE_SSL_STRICT: "false"
+
     steps:
-      - name: Diagnostic
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Iniciar Supabase local
+        run: npx supabase start
+
+      - name: Snapshot logico pre-Trilha 02
+        shell: bash
         run: |
-          echo "TRILHA02_ACTIONS_OK"
-          node --version
+          set -euo pipefail
+          npx supabase db reset --local --version 20260920224820 --no-seed
+          SNAPSHOT="$RUNNER_TEMP/trilha02-${APP_ENV}-pre-20260921193244.sql"
+          npx supabase db dump --local --file "$SNAPSHOT" --keep-comments
+          SNAPSHOT_SHA="$(sha256sum "$SNAPSHOT" | awk '{print $1}')"
+          echo "T02_SNAPSHOT_ENV=${APP_ENV}"
+          echo "T02_SNAPSHOT_SHA256=${SNAPSHOT_SHA}"
+          {
+            echo "### Snapshot logico pre-T02 - ${APP_ENV}"
+            echo "`sha256:${SNAPSHOT_SHA}`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Aplicar migration da Trilha 02
+        run: npx supabase migration up --local
+
+      - name: Exportar runtime local isolado
+        shell: bash
+        run: |
+          set -euo pipefail
+          eval "$(npx supabase status -o env)"
+          {
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "VITE_SUPABASE_URL=$API_URL"
+            echo "VITE_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "SUPABASE_DB_URL=$DB_URL"
+            echo "SUPABASE_PROJECT_REF=local-${APP_ENV}"
+          } >> "$GITHUB_ENV"
+
+      - name: Manifesto e evidencia estatica
+        run: |
+          npm run migrations:verify
+          npm run verify:t02:evidence
+
+      - name: Gate A1-A18
+        run: npm run verify:foundation
+
+      - name: Trilha 02 - 31 casos
+        run: npm run test:t02
+
+      - name: Build
+        run: npm run build
+
+      - name: Release efemera
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          if [ "$APP_ENV" = "development" ]; then
+            SUFFIX="dev"
+          else
+            SUFFIX="hml"
+          fi
+          npm run release:current -- \
+            --tag="trilha02-v1-${SUFFIX}-${SHORT_SHA}" \
+            --environment="$APP_ENV" \
+            --sha="$GITHUB_SHA" \
+            --by="github-actions-free" \
+            --notes="Homologacao efemera gratuita da Trilha 02"
+
+      - name: Encerrar Supabase local
+        if: always()
+        run: npx supabase stop --no-backup
+
+  selagem:
+    name: Selar tag apos homologacao e Vercel
+    runs-on: ubuntu-latest
+    needs:
+      - homologacao-local
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Aguardar Vercel success do mesmo SHA
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 40); do
+            JSON="$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/status")"
+            STATE="$(printf '%s' "$JSON" | jq -r '[.statuses[] | select(.context=="Vercel")][0].state // empty')"
+            echo "Vercel attempt ${attempt}: ${STATE:-pending}"
+            if [ "$STATE" = "success" ]; then
+              exit 0
+            fi
+            if [ "$STATE" = "failure" ] || [ "$STATE" = "error" ]; then
+              exit 1
+            fi
+            sleep 15
+          done
+          exit 1
+
+      - name: Criar tag trilha02-v1
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "HortiVitalMix Release Bot"
+          git config user.email "actions@users.noreply.github.com"
+          if git ls-remote --exit-code --tags origin refs/tags/trilha02-v1 >/dev/null 2>&1; then
+            git fetch --tags origin
+            test "$(git rev-list -n 1 trilha02-v1)" = "$GITHUB_SHA"
+            exit 0
+          fi
+          git tag -a trilha02-v1 "$GITHUB_SHA" -m "Trilha 02 - Configuracao Global Revisionada e Auditoria Imutavel"
+          git push origin refs/tags/trilha02-v1
