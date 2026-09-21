@@ -1,5 +1,65 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-21 — Volume 01 / Trilha 02: auditoria de conformidade e correção
+
+Status: **núcleo funcional implementado e banco real validado; homologação final ainda bloqueada por gates operacionais externos**.
+
+### Fonte de autoridade
+
+Auditoria refeita contra o **MANUAL MESTRE TÉCNICO v10 — Volume 01 / Trilha 02**, preservando as implementações anteriores do projeto. Nenhuma migration aplicada foi reescrita ou removida.
+
+### Correção aplicada
+
+- `server/middleware/adminSession.ts` corrigido para usar `last_sign_in_at` como referência primária da janela de reautenticação de 15 minutos, conforme a Trilha 02.
+- O `iat` do JWT permanece apenas como fallback para identidade legada sem `last_sign_in_at`.
+- Commit da correção funcional: `62e03b53df210bd0cf49d8379167ef834c6d415e`.
+
+### Validação do banco real
+
+- migration `20260921011627_trilha02_config_hardening` aplicada;
+- `updated_by` presente;
+- índices `uq_app_audit_events_command_id` e `ix_app_audit_events_config_target` presentes;
+- zero policies de escrita em `app_global_config`;
+- singleton de configuração presente;
+- triggers de revisão e auditoria imutável presentes;
+- equivalente aos 18 gates atuais de fundação: **18/18 invariantes satisfeitas**;
+- zero correspondências de PII nos payloads de auditoria consultados;
+- manifesto atual: schema lógico **14**, hash `6c1e7cfee2f42109ed7523a44330dd84890e419b80f8a730c11fc351cb058747`.
+
+O schema não foi rebaixado para 9 porque o repositório já contém migrations canônicas posteriores de cadastro/autenticação. O hardening da Trilha 02 foi validado cumulativamente no schema 14, respeitando a regra de migrations aditivas e preservando o trabalho já implementado.
+
+### Backend e frontend
+
+- contratos Zod estritos, concorrência otimista, idempotência por `commandId`, auditoria transacional, `redactPII`, proteção de origem e reautenticação confirmados no código;
+- rota `/admin/configuracao` integrada à aplicação existente;
+- cinco estados obrigatórios de UI presentes, badge de revisão, conflito 409, sucesso temporário e responsividade mobile/desktop;
+- a integração existente de sessão (`req.actor`, cookies HttpOnly e papéis canônicos) foi preservada em vez de criar mecanismo paralelo.
+
+### Testes da Trilha 02
+
+Os 8 arquivos previstos estão presentes com **31 casos definidos** (9 + 4 + 2 + 3 + 3 + 3 + 3 + 4).
+
+O último GitHub Actions observado concluiu como failure **antes de executar qualquer step**, com `runner_id=0`. Portanto, não há evidência de falha de código nesse run, mas também não há evidência reproduzível de suíte verde para homologação.
+
+### Pendências impeditivas de homologação final
+
+- GitHub Actions precisa executar efetivamente typecheck, suíte e build;
+- suíte de integração precisa ser executada com integração real habilitada em ambiente não produtivo;
+- `app_releases` está sem releases registradas;
+- tag `trilha02-v1` ainda não existe;
+- equipe Vercel conectada retorna atualmente 0 projetos, sem deployment da Trilha 02 verificável;
+- snapshots e promoção development → homologation → production não possuem evidência verificável na conexão atual.
+
+### Documento de validação
+
+Detalhes completos: [TRILHA02_VALIDACAO.md](docs/TRILHA02_VALIDACAO.md).
+
+### Decisão de transição
+
+**Não declarar a Trilha 02 como homologada integralmente ainda.** O núcleo funcional está implementado e corrigido, porém os gates operacionais do manual precisam ser comprovados antes da selagem/tag/release final.
+
+---
+
 ## 2026-09-20 — Contorno controlado do HTTP 403 do Google AI Studio
 
 Status: **hotfix implementado em branch; promoção e validação Vercel pendentes nesta entrada**.
