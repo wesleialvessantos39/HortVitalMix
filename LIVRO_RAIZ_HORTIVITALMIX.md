@@ -679,3 +679,56 @@ O estado do repositório restaurado antes deste registro utiliza exatamente a me
 - histórico Supabase confirmado somente até schema 13, sem migrations posteriores da TRILHA 02.
 
 **Esta seção é uma trava de governança. Ao iniciar a TRILHA 02, considerar obrigatoriamente todo o estado acima como baseline já implementado e homologado.**
+
+
+---
+
+## 2026-09-21 — Correção definitiva da separação visual e dos pontos de entrada antes da TRILHA 02
+
+Status: **corrigido novamente na aplicação real após constatação de que uma sessão já existente podia ocultar os seletores de acesso**.
+
+### Causa raiz encontrada
+
+O código possuía os cartões de Consumidor/Produtor e Administração, porém `Account.tsx` retornava primeiro o bloco de sessão autenticada (`if (session)`). Com isso, um navegador que ainda possuísse cookies/sessão válida podia entrar em `/entrar`, `/conta`, `/administracao` ou em um login específico e visualizar a tela antiga de conta em vez dos novos seletores. Isso fazia a implementação existir no repositório sem aparecer de forma confiável no uso real.
+
+### Comportamento canônico corrigido
+
+- **Conta** possui ponto de entrada próprio: `/conta`.
+- O ícone Conta no cabeçalho desktop e o item Conta da navegação mobile apontam para `/conta`.
+- `/conta` e `/entrar` exibem somente:
+  - **Entrar como Consumidor** → `/entrar/consumidor`;
+  - **Entrar como Produtor** → `/entrar/produtor`.
+- Administrador e Super administrador não podem aparecer no seletor público.
+- O texto sobre “acesso separado por perfil” permanece removido.
+- As ações **Criar cadastro de consumidor** e **Criar cadastro de produtor** aparecem somente dentro do login do respectivo perfil.
+- As telas de login permanecem visíveis mesmo quando existe uma sessão anterior no navegador; uma sessão antiga não pode mais esconder o seletor ou substituir o formulário solicitado.
+- Após autenticação válida, a sessão é encaminhada para `/minha-conta`, mantendo a tela de conta autenticada separada das telas de escolha/login.
+
+### Administração independente
+
+- A Administração continua fora da Conta pública.
+- O ícone exclusivo **Administração** na tela inicial/cabeçalho aponta para `/administracao`.
+- `/administracao` exibe somente:
+  - **Administrador** → `/entrar/administrador`;
+  - **Super administrador** → `/entrar/super-administrador`.
+- O seletor administrativo não mostra Consumidor nem Produtor.
+- O backend continua validando o papel real antes de autenticar; a separação visual não substitui a autorização.
+
+### Vercel / atualização visual
+
+Foram adicionados headers `Cache-Control: no-store` e `Pragma: no-cache` nas rotas críticas de Conta, Administração, logins, cadastros e recuperação. O objetivo é impedir que navegador/CDN continue exibindo o shell antigo depois de uma restauração ou correção.
+
+### Regra para início da TRILHA 02
+
+A TRILHA 02 deve partir desta versão corrigida. É proibido:
+
+1. unir novamente Administração ao seletor público;
+2. alterar Conta para apontar diretamente a um login único;
+3. remover os logins específicos de Consumidor/Produtor;
+4. recolocar cadastro no seletor inicial;
+5. permitir que sessão antiga esconda os seletores;
+6. remover o ponto de entrada independente de Administração;
+7. contornar as validações de papel já existentes no Backend/Supabase;
+8. criar outro projeto Supabase.
+
+Esta seção substitui qualquer interpretação anterior ambígua sobre onde cada tela deve ser acessada.
