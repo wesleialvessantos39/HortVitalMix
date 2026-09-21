@@ -4,7 +4,7 @@ Fundação React + Vite + Express, Supabase PostgreSQL/Auth/Storage e contratos 
 
 ## Estado atual
 
-A Trilha 02 implementa **Configuração Global Revisionada e Auditoria Imutável** sobre o checkpoint canônico da Trilha 01, sem substituir os fluxos de Conta, Administração, autenticação por papel, recuperação, confirmação ou códigos de segurança já existentes.
+A Trilha 02 implementa **Configuração Global Revisionada e Auditoria Imutável** sobre o checkpoint canônico da Trilha 01, sem substituir os fluxos de Conta, Administração, autenticação por papel, recuperação, confirmação ou códigos de segurança já existentes. A implementação foi promovida à `main`, o schema canônico está em **14**, a release production é `trilha02-v1` e o deployment Vercel foi confirmado com status `success`.
 
 Principais entregas:
 
@@ -78,6 +78,8 @@ Não criar outro projeto Supabase para esta aplicação sem decisão explícita 
 `vercel.json` mantém implantação automática somente de `main`. O build de produção usa `tsconfig.build.json` para validar apenas código de runtime, enquanto `npm run typecheck` continua verificando também testes e scripts.
 
 A rota `/admin/configuracao` e as rotas de autenticação sensíveis usam `Cache-Control: no-store`.
+
+A release corrente em production deve apontar ao HEAD da `main`, com schema 14 e o hash canônico das migrations. Testes mutacionais que criam fixtures continuam proibidos no projeto production e exigem ambiente isolado.
 
 ## Documentação
 

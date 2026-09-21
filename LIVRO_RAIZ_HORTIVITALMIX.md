@@ -737,7 +737,7 @@ Esta seção substitui qualquer interpretação anterior ambígua sobre onde cad
 
 ## 2026-09-21 — VOLUME 01 / TRILHA 02 — CONFIGURAÇÃO GLOBAL REVISIONADA E AUDITORIA IMUTÁVEL
 
-Status técnico: **implementação full-stack concluída na branch `volume01-trilha02-v10`; schema 14 aplicado no Supabase canônico; promoção para `main` e status Vercel tratados pela etapa final desta execução**.
+Status técnico: **TRILHA 02 concluída e promovida à `main`; schema 14 aplicado; release de produção `trilha02-v1` registrada; deployment Vercel concluído com status `success`; auditoria final A1–A18 aprovada no Supabase canônico**.
 
 Fonte normativa: **MANUAL MESTRE TÉCNICO v10 — TRILHAS 01 A 06**.
 
@@ -897,7 +897,10 @@ O único Supabase disponível no projeto é o canônico. As suítes que criam id
 - `/admin/configuracao` usa `Cache-Control: no-store`;
 - nenhuma variável nova obrigatória foi introduzida;
 - `vercel.json` continua permitindo deploy automático somente de `main`;
-- o conector Vercel exposto nesta execução retornou zero projetos, portanto o status de deployment não deve ser inferido por esse conector. A integração GitHub → Vercel existente permanece preservada.
+- o commit de implementação integrado à `main` recebeu do contexto **Vercel** o estado `success` com a descrição **"Deployment has completed"**;
+- a release de produção `trilha02-v1` foi registrada em `app_releases` com schema 14 e o hash canônico das migrations;
+- o conector Vercel disponível ao ChatGPT continua sem listar o projeto, portanto a evidência de deployment usada é o status oficial publicado pela integração Vercel no commit GitHub;
+- os invariantes de readiness foram conferidos no código e no banco: release corrente única, schema 14, hash canônico e SHA sincronizado com o HEAD final após este registro.
 
 ### Checklist da implementação
 
@@ -911,6 +914,11 @@ O único Supabase disponível no projeto é o canônico. As suítes que criam id
 - [x] branch GitHub de implementação criada e atualizada;
 - [x] configuração de build/deploy Vercel preservada e atualizada;
 - [x] conformidade funcional da Trilha 02 reconciliada com o Manual v10 e com o checkpoint canônico;
-- [ ] testes mutacionais reais em Supabase isolado — aguardam ambiente não-production autorizado;
-- [ ] status do deployment Vercel pós-`main` — validar após promoção.
+- [x] auditoria final read-only A1–A18 aprovada no Supabase canônico;
+- [x] release de produção `trilha02-v1` registrada;
+- [x] deployment Vercel da `main` confirmado com status `success`;
+- [x] projeto mantido pronto para Vercel, sem novas variáveis obrigatórias;
+- [x] Livro Raiz fechado com rastreabilidade da Trilha 02.
+
+**Regra de segurança preservada:** os testes mutacionais que criam identidades/fixtures continuam bloqueados contra production e só podem ser executados em ambiente development isolado. Eles não foram executados no banco canônico para não violar a própria governança registrada do projeto.
 

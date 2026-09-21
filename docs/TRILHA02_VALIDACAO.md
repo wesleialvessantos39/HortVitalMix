@@ -122,7 +122,9 @@ A validação estrutural read-only foi executada no projeto canônico. Testes mu
 - `npm run build` usa `typecheck:app` + security check + Vite + bundle check;
 - `/admin/configuracao` usa `no-store`;
 - não há novas variáveis obrigatórias da Trilha 02;
-- o conector Vercel disponível ao ChatGPT não lista projetos, portanto o status real de deployment deve ser obtido pelo status de integração GitHub→Vercel após promoção para `main`.
+- o commit integrado à `main` recebeu status **Vercel = success** com a descrição **"Deployment has completed"**;
+- a release production `trilha02-v1` foi registrada em `app_releases` com schema 14 e hash canônico;
+- o conector Vercel disponível ao ChatGPT não lista diretamente o projeto, então a evidência de deployment é o status oficial da integração Vercel publicado no commit GitHub.
 
 ## Checklist técnico
 
@@ -135,5 +137,9 @@ A validação estrutural read-only foi executada no projeto canônico. Testes mu
 - [x] 31 testes canônicos versionados
 - [x] Build de produção protegido contra fontes de teste
 - [x] Sem alteração regressiva nos fluxos pré-Trilha 02
-- [ ] Homologação mutacional em Supabase isolado — bloqueada até existir ambiente não-production autorizado
-- [ ] Deployment Vercel da `main` — validar após merge/promoção
+- [x] Auditoria final A1–A18 aprovada no Supabase canônico
+- [x] Release production `trilha02-v1` registrada
+- [x] Deployment Vercel da `main` confirmado com status `success`
+- [x] Livro Raiz atualizado e fechado
+
+> Testes mutacionais que criam identidades/fixtures permanecem deliberadamente fail-closed contra production e só podem ser executados em ambiente development isolado. Não foram executados no projeto canônico para preservar a governança de segurança já registrada.
