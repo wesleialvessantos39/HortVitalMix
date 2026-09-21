@@ -1,9 +1,8 @@
-import { expect } from "vitest";
-import { integrationDescribe, integrationIt } from "../helpers/integration";
+import { describe, expect, it } from "vitest";
 import { UpdateGlobalConfigSchema } from "../../shared/contracts/adminConfig";
 
-integrationDescribe("Rejeição de payloads maliciosos", () => {
-  integrationIt('campo "role" é rejeitado', () => {
+describe("Rejeição de payloads maliciosos", () => {
+  it('campo "role" é rejeitado', () => {
     const parsed = UpdateGlobalConfigSchema.safeParse({
       expectedRevision: 1,
       commandId: "123e4567-e89b-42d3-a456-426614174000",
@@ -15,7 +14,7 @@ integrationDescribe("Rejeição de payloads maliciosos", () => {
     expect(parsed.success).toBe(false);
   });
 
-  integrationIt('campo "actor_id" no nível raiz é rejeitado', () => {
+  it('campo "actor_id" no nível raiz é rejeitado', () => {
     const parsed = UpdateGlobalConfigSchema.safeParse({
       expectedRevision: 1,
       commandId: "123e4567-e89b-42d3-a456-426614174000",
@@ -25,7 +24,7 @@ integrationDescribe("Rejeição de payloads maliciosos", () => {
     expect(parsed.success).toBe(false);
   });
 
-  integrationIt("expectedRevision negativo é rejeitado", () => {
+  it("expectedRevision negativo é rejeitado", () => {
     const parsed = UpdateGlobalConfigSchema.safeParse({
       expectedRevision: -1,
       commandId: "123e4567-e89b-42d3-a456-426614174000",
@@ -34,7 +33,7 @@ integrationDescribe("Rejeição de payloads maliciosos", () => {
     expect(parsed.success).toBe(false);
   });
 
-  integrationIt("slogan com espaços apenas é rejeitado", () => {
+  it("slogan com espaços apenas é rejeitado", () => {
     const parsed = UpdateGlobalConfigSchema.safeParse({
       expectedRevision: 1,
       commandId: "123e4567-e89b-42d3-a456-426614174000",
