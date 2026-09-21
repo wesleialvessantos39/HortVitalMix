@@ -92,7 +92,7 @@ async function main() {
   const tables = await dbPool!.query<{ n: number }>(
     "SELECT count(*)::int n FROM public.v_rls_audit",
   );
-  if (tables.rows[0].n !== 9)
+  if (tables.rows[0].n !== 8)
     throw new Error("FOUNDATION_TABLE_COUNT_FAILED");
 
   const { error: adminError } = await supabaseAdmin!.auth.admin.listUsers({

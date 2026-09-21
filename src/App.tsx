@@ -25,7 +25,6 @@ import {
 } from "../shared/contracts/foundation";
 import { api } from "./lib/api";
 import { Account } from "./components/Account";
-import { AdminConfiguracaoPage } from "./pages/admin/config/AdminConfiguracaoPage";
 const fallback = {
   platformName: "HortiVitalMix",
   slogan: "Tudo fresco. Tudo da sua região.",
@@ -236,9 +235,7 @@ export default function App() {
         {search}
       </header>
       <main id="conteudo" className="layout">
-        {path === "/admin/configuracao" ? (
-          <AdminConfiguracaoPage onNavigate={go} />
-        ) : accountPaths.has(path) ? (
+        {accountPaths.has(path) ? (
           <Account path={path} onNavigate={go} />
         ) : (
           <>

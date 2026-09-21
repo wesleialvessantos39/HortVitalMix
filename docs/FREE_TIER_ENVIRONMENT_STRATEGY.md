@@ -1,92 +1,74 @@
-# Estratégia Free de Ambientes — HortiVitalMix
+# Estratégia Free de Ambientes — Trilha 01
 
-Data de consolidação: 2026-09-21.
+Data: 2026-09-19.
 
-## Decisão operacional
+## Decisão autorizada
 
-O projeto utiliza, nesta fase:
+O proprietário determinou que **nenhuma Supabase Preview Branch paga** seja criada e que a homologação prossiga exclusivamente com recursos gratuitos.
 
-- Supabase Free;
-- GitHub como repositório/versionamento;
-- Vercel Free.
+O Manual Mestre Técnico v10 define a topologia oficial `dev | homolog | main` por branches Supabase. Nesta execução, essa topologia é substituída por **projetos Supabase isolados**, com credenciais próprias, mantendo a mesma separação lógica e a mesma ordem de promoção.
 
-Nenhum recurso pago é requisito para continuar a implementação.
+Esta é uma **errata operacional de custo**, não uma alegação de que projetos independentes sejam literalmente Preview Branches.
 
-O Manual Mestre Técnico v10 já prevê a estratégia Free-Tier: GitHub Actions não é dependência, deploys automáticos de branches são restritos, e snapshots manuais substituem PITR enquanto o projeto estiver no plano Free.
+## Rotação por cota Free
 
-## GitHub
+A organização Free limita a execução a dois projetos ativos simultaneamente. A promoção usa rotação:
 
-- Não usar GitHub Actions como gate canônico.
-- `.github/workflows/ci.yml` foi removido.
-- Não armazenar secrets de Supabase em workflows.
-- Gate diário: `npm run verify:free`.
-- Gate integral: `npm run homologate` em development isolado.
+| Ambiente | Projeto | Project ref | Estado operacional |
+| --- | --- | --- | --- |
+| development | HortVitalMix-Development | `ldtcsrlxfpflzhnbjjnp` | ativo durante dev/homolog |
+| homologation | HortVitalMix-Homologation | `vcbcbbnbboxoimqmuibm` | ativo durante dev/homolog |
+| production | HortVitalMix | `xipbsazvymkqqfmfegwu` | pausado temporariamente durante dev/homolog; deve ser restaurado para a fase production |
 
-## Supabase
+Fluxo sem custo:
 
-A topologia lógica continua:
+1. manter development + homologation ativos;
+2. validar development;
+3. validar homologation;
+4. pausar development após registrar evidências necessárias;
+5. restaurar production;
+6. executar a fase production;
+7. não criar nenhuma branch paga.
 
-```text
-development -> homologation -> production
-```
+## Regras de segurança
 
-No plano Free, essa topologia pode ser implementada com projetos independentes em vez de Preview Branches pagas.
+- Credenciais nunca são compartilhadas entre ambientes.
+- `referência protegida de production` continua apontando para `xipbsazvymkqqfmfegwu`, mesmo quando production estiver pausado.
+- Testes destrutivos/fixtures só podem executar contra development.
+- Homologation não é tratado como production e não recebe testes destrutivos.
+- Nenhuma release é registrada até os gates correspondentes serem efetivamente aprovados.
+- A pausa de production não muda sua identidade nem converte outro projeto em production.
 
-### Estado visível na conexão atual
+## Estado verificado
 
-Em 2026-09-21, apenas o projeto `HortVitalMix` (`xipbsazvymkqqfmfegwu`) aparece como `ACTIVE_HEALTHY`.
+### Development
 
-Os antigos projetos development/homologation registrados no Livro-Raiz não estão atualmente visíveis na conexão desta auditoria e, portanto, não devem ser tratados como ativos sem nova verificação.
+- 8 migrations aplicadas.
+- schema lógico v8.
+- hardening documental aplicado.
+- A1–A15 aprovados.
+- RLS transacional por identidade aprovado.
+- auditoria append-only aprovada.
+- unicidade de `command_id` aprovada.
+- teste transacional revertido com zero resíduos.
 
-### Regra de segurança
+### Homologation
 
-Se não houver um development isolado disponível:
+- 8 migrations aplicadas.
+- schema lógico v8.
+- hardening documental aplicado.
+- A1–A15 aprovados.
+- documentação de tabelas/colunas sensíveis: zero pendências.
+- teste transacional revertido com zero resíduos.
+- bucket `documents` privado.
 
-- não executar fixtures destrutivas em production;
-- não forçar “31/31” por skip;
-- continuar com `verify:free`;
-- aguardar capacidade Free para uma integração real antes da homologação final.
+### Production
 
-### Snapshots
+- projeto original preservado e temporariamente pausado para liberar uma vaga Free.
+- schema v8 já havia sido verificado antes da pausa.
+- nenhuma release `trilha01-v1` foi registrada.
+- deve ser restaurado somente após os gates de dev/homolog.
 
-No Free:
+## Limitações ainda abertas
 
-- snapshot manual antes de migration relevante;
-- migrations sempre aditivas;
-- nunca presumir PITR;
-- nunca rebaixar schema para corresponder ao número histórico de uma trilha.
-
-## Vercel
-
-O `vercel.json` mantém deployment Git somente da `main`, com todas as demais branches desabilitadas.
-
-Isso reduz consumo de cota e segue a prevenção do manual para `api-deployments-free-per-day`.
-
-A conexão Vercel atualmente acessível retorna zero projetos; por isso nenhum deployment novo é alegado como evidência até que um projeto seja novamente visível/conectado.
-
-## Validação sem custo
-
-```sh
-npm ci --no-audit --no-fund
-npm run verify:free
-```
-
-Esse fluxo não exige:
-
-- GitHub Actions;
-- banco de integration;
-- branch paga;
-- secrets em GitHub.
-
-## Homologação completa
-
-A homologação completa continua real, não simulada. Quando houver development isolado:
-
-```sh
-HVM_INTEGRATION_ENABLED=true \
-HVM_PROD_PROJECT_REF=<prod-ref> \
-SUPABASE_PROJECT_REF=<dev-ref> \
-npm run homologate
-```
-
-Depois seguem promotion, deployment Vercel, `verify:deploy`, release, snapshot e tag.
+A estratégia Free resolve o custo do isolamento, mas **não elimina** os demais gates do Manual: Node 24, cobertura medida, suíte completa, Vercel READY, `verify:deploy`, releases e evidência de snapshot/backup por ambiente.

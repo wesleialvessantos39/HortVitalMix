@@ -27,7 +27,7 @@ async function main() {
     if (path === "ready") {
       const ready = ApiReadyResponseSchema.parse(data);
       if (
-        ready.schemaVersion !== Number(args.schema ?? 14) ||
+        ready.schemaVersion !== Number(args.schema ?? 13) ||
         !ready.databaseConnected ||
         ready.status !== "ready" ||
         !ready.releaseTag.includes(args.sha.slice(0, 7))

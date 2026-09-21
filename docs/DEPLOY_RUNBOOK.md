@@ -1,151 +1,62 @@
-# Deploy e homologação — Free-Tier
+# Deploy e homologação — Trilha 01
 
-Data de consolidação: 2026-09-21.
+## Topologia Free autorizada
 
-## Princípio
+Não usar Supabase Preview Branches pagas. A rotação documentada em [FREE_TIER_ENVIRONMENT_STRATEGY.md](FREE_TIER_ENVIRONMENT_STRATEGY.md) usa projetos Free independentes:
 
-Enquanto o HortiVitalMix estiver em planos gratuitos, nenhuma etapa deve depender de GitHub Actions, Supabase Preview Branch paga ou deploy automático de branches.
-
-O fluxo segue o Manual Mestre Técnico v10:
-
-1. validar localmente;
-2. validar integração em development isolado quando esse ambiente estiver disponível;
-3. promover banco de forma sequencial;
-4. deploy Vercel deliberado;
-5. validar deployment;
-6. registrar release e evidências;
-7. atualizar Livro-Raiz.
-
-## Estado conectado verificado em 2026-09-21
-
-### Supabase
-
-A conexão atual expõe um único projeto ativo:
-
-- `HortVitalMix`
-- project ref `xipbsazvymkqqfmfegwu`
-- status `ACTIVE_HEALTHY`
-- schema lógico atual do repositório: **14**
-
-Nenhum projeto development/homologation está atualmente visível pela conexão usada nesta auditoria.
-
-**Consequência:** a suíte destrutiva de integração não deve ser executada contra esse projeto se ele for production.
-
-### Vercel
-
-A equipe conectada `wesleialvessantos' projects` retorna atualmente **0 projetos**.
-
-Portanto não há deployment da Trilha 02 verificável por essa conexão neste momento.
-
-### GitHub
-
-GitHub é usado como repositório/versionamento. O workflow automático de GitHub Actions foi removido conforme a estratégia Free-Tier do manual.
-
-## Gate diário gratuito
-
-Executar no Google AI Studio ou local:
-
-```sh
-npm ci --no-audit --no-fund
-npm run verify:free
-```
-
-O gate executa migrations manifest, typecheck, security check, testes unitários e build, sem exigir credenciais de banco.
-
-## Gate de development real
-
-Quando houver um projeto Supabase development isolado:
-
-```sh
-HVM_INTEGRATION_ENABLED=true \
-HVM_PROD_PROJECT_REF=<prod-ref> \
-SUPABASE_PROJECT_REF=<dev-ref> \
-npm run homologate
-```
-
-As demais credenciais do development devem estar no gerenciador seguro do ambiente.
-
-O script recusa:
-
-- integração não explicitamente habilitada;
-- ambiente diferente de development;
-- ausência do ref de production;
-- uso do mesmo project ref de production.
-
-## Trilha 02
-
-Para validar especificamente a Trilha 02:
-
-```sh
-npm run test:t02:unit
-```
-
-Sem banco real, esse comando valida os 13 casos unitários/contratuais.
-
-Para os 31 casos completos:
-
-```sh
-HVM_INTEGRATION_ENABLED=true \
-HVM_PROD_PROJECT_REF=<prod-ref> \
-SUPABASE_PROJECT_REF=<dev-ref> \
-npm run test:t02
-```
-
-A suíte completa não é considerada aprovada se a integração estiver skipped.
-
-## Promoção Supabase no Free
-
-O modelo lógico continua development → homologation → production.
-
-Durante o Free, a implementação física pode usar projetos Free independentes, respeitando a cota disponível. Se não houver vaga:
-
-1. preservar production;
-2. não testar destrutivamente nela;
-3. ativar/criar development apenas quando houver capacidade gratuita;
-4. registrar snapshot manual antes de migration relevante;
-5. promover somente após o gate anterior passar.
+1. development + homologation ativos;
+2. production pausado temporariamente;
+3. após aprovação de dev/homolog, pausar development;
+4. restaurar production;
+5. executar a fase production.
 
 Nunca compartilhar credenciais entre ambientes.
 
-## Vercel
+## Estado atual
 
-O `vercel.json` restringe deployments Git:
+- development `ldtcsrlxfpflzhnbjjnp`: schema v8 + A1–A15 + testes SQL transacionais aprovados.
+- homologation `vcbcbbnbboxoimqmuibm`: schema v8 + A1–A15 + testes SQL transacionais aprovados.
+- production `xipbsazvymkqqfmfegwu`: preservado e temporariamente pausado.
+- nenhuma release final ou tag criada.
+- Vercel conectado ao ChatGPT ainda retorna 0 projetos; o domínio público `hortvitalmix.vercel.app` responde, porém o deployment não é resolvido pela equipe conectada.
 
-- `main: true`;
-- `*: false`.
+## Gate de development
 
-Isso evita consumo de cota com previews de branches.
-
-Após um deployment real:
+Com Node 24 e segredos do projeto development:
 
 ```sh
-npm run verify:deploy -- --url=https://<deployment> --sha=<commit-sha> --schema=14
+npm ci --no-audit --no-fund
+flag exclusiva de integração=true npm run homologate
 ```
 
-Somente depois de `health`, `ready` e `config` válidos a release pode ser selada.
+Obrigatório configurar `referência protegida de production=xipbsazvymkqqfmfegwu`. O gate deve executar cobertura V8, build, foundation e Playwright.
 
-## Backup Free
+Somente após aprovação completa registrar a release de development e produzir a evidência de snapshot/backup disponível no plano.
 
-O Manual v10 registra que PITR é recurso de plano superior e que no Free o snapshot manual é obrigatório antes de migration em production.
+## Gate de homologation
 
-Por isso:
+Usar exclusivamente credenciais do projeto homologation. Executar preflight/foundation e smoke tests no preview Vercel deliberado. Não executar fixtures destrutivas em homologation.
 
-- migrations devem ser aditivas;
-- registrar snapshot/backup manual possível no plano;
-- não declarar rollback automático/PITR quando ele não existir.
+Somente após aprovação registrar a release `trilha01-v1-hml-<sha7>`.
+
+## Gate de production
+
+Após aprovação de development e homologation:
+
+1. pausar development;
+2. restaurar `xipbsazvymkqqfmfegwu`;
+3. conferir schema/foundation novamente;
+4. configurar variáveis production na Vercel;
+5. realizar deploy production deliberado;
+6. aguardar estado READY;
+7. registrar `trilha01-v1`;
+8. executar `verify:deploy --sha=<sha> --schema=8`;
+9. registrar snapshot/backup ou justificativa formal, conforme disponibilidade real do plano.
+
+## Vercel
+
+`vercel.json` mantém auto-deploy somente de `main`. Previews permanecem deliberados. Não promover branch de código nem criar tag somente porque o banco passou A1–A15.
 
 ## Selagem
 
-Atualizar o Livro-Raiz com:
-
-- commit SHA;
-- migration history hash;
-- resultado de `verify:free`;
-- resultado da integração real quando executada;
-- resultado de foundation;
-- snapshot/backup aplicável;
-- deployment READY;
-- release registrada;
-- tag final somente no último passo.
-
-Nenhuma evidência deve ser simulada.
+Atualizar Livro-Raiz com SHA, migration hash, resultados, releases, evidências de backup/snapshot e deployment READY. A tag `trilha01-v1` é o último passo.

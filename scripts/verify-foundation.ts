@@ -23,7 +23,7 @@ async function main() {
       "SELECT version,name FROM supabase_migrations.schema_migrations ORDER BY version",
     );
     const schemaVersion = validateHistory(history.rows);
-    if (schemaVersion !== 14) throw new Error("MIGRATION_HISTORY_GATE_FAILED");
+    if (schemaVersion !== 11) throw new Error("MIGRATION_HISTORY_GATE_FAILED");
     const migrationHistoryHash = assertManifestHash();
 
     const extensions = await client.query<{ extname: string }>(
@@ -39,7 +39,7 @@ async function main() {
     const tables = await client.query<{ n: number }>(
       "SELECT count(*)::int n FROM pg_class WHERE relnamespace='public'::regnamespace AND relname LIKE 'app\\_%' ESCAPE '\\' AND relkind='r'",
     );
-    add("A2", "Tabelas app_* presentes", tables.rows[0].n === 9, `count=${tables.rows[0].n}/9`);
+    add("A2", "Tabelas app_* presentes", tables.rows[0].n === 8, `count=${tables.rows[0].n}/8`);
 
     const rlsDisabled = await client.query<{ table_name: string }>(
       "SELECT table_name FROM public.v_rls_audit WHERE rls_enabled=false ORDER BY table_name",
@@ -106,31 +106,11 @@ async function main() {
       duplicateRelease.rows.length ? duplicateRelease.rows.map((r) => `${r.environment}=${r.n}`).join(",") : "0 duplicidades",
     );
 
-    const writePolicies = await client.query<{ polname: string }>(
-      "SELECT p.polname FROM pg_policy p JOIN pg_class c ON c.oid=p.polrelid WHERE c.relnamespace='public'::regnamespace AND c.relname='app_global_config' AND p.polcmd IN ('a','w','*')",
-    );
-    add(
-      "A12",
-      "Sem policy de escrita em app_global_config",
-      writePolicies.rows.length === 0,
-      writePolicies.rows.length ? writePolicies.rows.map((r) => r.polname).join(",") : "0 policies",
-    );
-
-    const updatedBy = await client.query<{ n: number }>(
-      "SELECT count(*)::int n FROM information_schema.columns WHERE table_schema='public' AND table_name='app_global_config' AND column_name='updated_by'",
-    );
-    add("A13", "Coluna updated_by presente", updatedBy.rows[0].n === 1, "count=" + updatedBy.rows[0].n);
-
-    const targetIndex = await client.query<{ n: number }>(
-      "SELECT count(*)::int n FROM pg_indexes WHERE schemaname='public' AND tablename='app_audit_events' AND indexname='ix_app_audit_events_config_target'",
-    );
-    add("A14", "Índice auditoria de configuração", targetIndex.rows[0].n === 1, "count=" + targetIndex.rows[0].n);
-
     const credentialTables = await client.query<{ n: number }>(
       "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('app_password_credentials','app_sessions')",
     );
     add(
-      "A15",
+      "A12",
       "Sem tabela local de credenciais",
       credentialTables.rows[0].n === 0,
       `count=${credentialTables.rows[0].n}`,
@@ -151,7 +131,7 @@ async function main() {
       ORDER BY p.proname
     `);
     add(
-      "A16",
+      "A13",
       "SECURITY DEFINER com search_path",
       badSecDef.rows.length === 0,
       badSecDef.rows.length ? badSecDef.rows.map((r) => r.proname).join(",") : "0 pendências",
@@ -169,7 +149,7 @@ async function main() {
       ORDER BY policyname
     `);
     add(
-      "A17",
+      "A14",
       "Policies com TO explícito",
       policiesWithoutRole.rows.length === 0,
       policiesWithoutRole.rows.length ? policiesWithoutRole.rows.map((r) => r.policyname).join(",") : "0 pendências",
@@ -183,7 +163,7 @@ async function main() {
       ) ~* $pii$([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})|([0-9]{3}\\.[0-9]{3}\\.[0-9]{3}-[0-9]{2})|(^|[^0-9])[0-9]{11}([^0-9]|$)$pii$
     `);
     add(
-      "A18",
+      "A15",
       "Sem PII em payloads de auditoria",
       pii.rows[0].n === 0,
       `matches=${pii.rows[0].n}`,
@@ -260,9 +240,9 @@ async function main() {
     }
 
     const passed = checks.filter((check) => check.passed).length;
-    console.log(`verify:foundation: ${passed}/18; schema_version=${schemaVersion}`);
+    console.log(`verify:foundation: ${passed}/15; schema_version=${schemaVersion}`);
 
-    if (checks.length !== 18 || passed !== 18) {
+    if (checks.length !== 15 || passed !== 15) {
       throw new Error("FOUNDATION_GATE_FAILED");
     }
   } finally {

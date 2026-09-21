@@ -1,91 +1,71 @@
-# HortiVitalMix — Volume 01
+# HortiVitalMix — Volume 01 / Trilha 01
 
-Aplicação React + Vite + Express com Supabase PostgreSQL/Auth/Storage, contratos Zod, auditoria imutável e configuração global revisionada.
+Fundação React + Vite + Express, Supabase PostgreSQL/Auth/Storage e contratos Zod. Fonte de autoridade: Manual Mestre Técnico v10 e erratas documentadas.
 
-Fonte de autoridade: **Manual Mestre Técnico v10 — Trilhas 01 a 06** e Livro-Raiz do projeto.
-
-## Estado atual
-
-- Trilha 01: base fundacional preservada.
-- Trilha 02: núcleo funcional implementado e auditado no schema lógico **14**.
-- Estratégia operacional atual: **Supabase Free + GitHub + Vercel Free**.
-- GitHub Actions não é dependência e o workflow automático foi removido conforme o Manual v10.
-
-A homologação final só é declarada quando houver evidências reais; skips, ausência de runner ou falta de deployment não são convertidos em “aprovado”.
+**Estado atual: implementação e auditoria de finalização em andamento; homologação final ainda não declarada.** Catálogo, pedidos, planos, endereços e administração pertencem às trilhas seguintes.
 
 ## Execução no Google AI Studio ou local
 
-Requer Node.js 24.
+Requer Node.js 24. Sincronize a branch de trabalho do GitHub antes de executar.
 
 ```sh
-npm ci --no-audit --no-fund
+npm ci
 cp .env.example .env.local
 npm run dev
 ```
 
-Preencha valores pelo gerenciador seguro do ambiente. Credenciais privilegiadas nunca usam prefixo `VITE_`.
+Preencha os valores pelo gerenciador de segredos da plataforma. O Vite serve interface e API na mesma origem, porta 3000. O cadastro público possui fallback controlado para a API de Production quando o proxy do Google AI Studio devolve HTTP 403 sem JSON; login, sessão e rotas administrativas continuam same-origin e não recebem CORS público. Credenciais privilegiadas nunca usam prefixo `VITE_`.
 
-## Validação gratuita diária
+Sem credenciais, o shell visual permanece navegável e endpoints dependentes do banco falham de forma fechada. Isso não equivale a homologação.
 
-```sh
-npm run verify:free
+## Variáveis de teste real
+
+A integração usa exclusivamente:
+
+```text
+flag exclusiva de integração=true
+referência protegida de production=<ref-de-production>
 ```
 
-Esse gate executa:
+Não usar `RUN_SUPABASE_INTEGRATION` ou `SUPABASE_TEST_PROJECT_REF`; esses nomes são obsoletos.
 
-- manifesto de migrations;
-- typecheck;
-- security check;
-- testes unitários;
-- build.
+## Validação
 
-Não exige GitHub Actions nem banco de integration.
-
-## Trilha 02
-
-Validação unitária/contratual:
+Development isolado:
 
 ```sh
-npm run test:t02:unit
+npm run migrations:verify
+flag exclusiva de integração=true npm run homologate
+npm run test:e2e
 ```
 
-Suíte completa de 31 casos:
+`npm run homologate` recusa execução se a integração real não estiver explicitamente habilitada ou se o runtime não estiver em `development`.
+
+Gates adicionais:
 
 ```sh
-HVM_INTEGRATION_ENABLED=true \
-HVM_PROD_PROJECT_REF=<prod-ref> \
-SUPABASE_PROJECT_REF=<dev-ref> \
-npm run test:t02
+npm run typecheck
+npm run security:check
+npm run build
+npm run preflight
+npm run verify:foundation
 ```
 
-A suíte completa exige um Supabase **development isolado**. Production é recusada pelo gate.
+O `verify:foundation` executa A1–A15, valida schema lógico 8, hash canônico das migrations e documentação SQL de tabelas, funções e colunas sensíveis.
 
-## Homologação integral
+### Cobertura
 
-```sh
-HVM_INTEGRATION_ENABLED=true \
-HVM_PROD_PROJECT_REF=<prod-ref> \
-SUPABASE_PROJECT_REF=<dev-ref> \
-npm run homologate
-```
+A configuração contém os thresholds do Manual v10. A execução de cobertura exige o provedor compatível com Vitest 5.0.1 e o lockfile correspondente. Não considerar cobertura homologada enquanto esse gate não tiver sido executado com o lock regenerado.
 
-As credenciais do development devem ser fornecidas apenas pelo gerenciador seguro do ambiente.
+## Deploy
 
-## Deploy Free
-
-O `vercel.json` habilita deployment Git apenas para `main` e desabilita as demais branches para economizar cota.
-
-Após deployment real:
-
-```sh
-npm run verify:deploy -- --url=https://<deployment> --sha=<commit-sha> --schema=14
-```
+`vercel.json` permite implantação automática somente de `main`; previews das demais branches são deliberados/manuais. A promoção de banco continua sequencial: development → homologation → production.
 
 ## Documentação
 
 - [Livro Raiz](LIVRO_RAIZ_HORTIVITALMIX.md)
-- [Estratégia de CI/CD Free-Tier](docs/CI_STRATEGY.md)
-- [Estratégia Free de ambientes](docs/FREE_TIER_ENVIRONMENT_STRATEGY.md)
-- [Deploy e homologação](docs/DEPLOY_RUNBOOK.md)
-- [Validação da Trilha 02](docs/TRILHA02_VALIDACAO.md)
 - [Configuração Supabase](docs/SUPABASE_SETUP.md)
+- [Deploy e promoção](docs/DEPLOY_RUNBOOK.md)
+- [Estratégia de CI](docs/CI_STRATEGY.md)
+- [Resultados de verificação](docs/TRILHA01_VALIDACAO.md)
+- [Errata e rastreabilidade](docs/TRILHA01_PENDENCIAS_MANUAL_V10.md)

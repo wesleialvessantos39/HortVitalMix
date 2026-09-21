@@ -416,11 +416,7 @@ export function Account({
           method: "POST",
           body: JSON.stringify({ ...form, portalRole }),
         });
-        const currentSession = await api<Session>("/v1/auth/session");
-        setSession(currentSession);
-        if (portalRole === "platform_super_admin") {
-          navigate("/admin/configuracao");
-        }
+        setSession(await api<Session>("/v1/auth/session"));
         return;
       }
 

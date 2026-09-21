@@ -1,6 +1,6 @@
 BEGIN;
 DO $$DECLARE n integer;BEGIN
- SELECT count(*) INTO n FROM public.v_rls_audit WHERE rls_enabled AND rls_forced;IF n<>9 THEN RAISE EXCEPTION 'RLS_TABLE_COUNT';END IF;
+ SELECT count(*) INTO n FROM public.v_rls_audit WHERE rls_enabled AND rls_forced;IF n<>8 THEN RAISE EXCEPTION 'RLS_TABLE_COUNT';END IF;
  IF (SELECT count(*) FROM public.app_global_config)<>1 THEN RAISE EXCEPTION 'CONFIG_SINGLETON';END IF;
  IF (SELECT count(*) FROM public.app_roles)<>4 THEN RAISE EXCEPTION 'CANONICAL_ROLES';END IF;
  IF has_column_privilege('authenticated','public.app_users','status','UPDATE') OR has_column_privilege('authenticated','public.app_producer_profiles','trust_level','UPDATE') OR has_column_privilege('authenticated','public.app_producer_profiles','verification_status','UPDATE') THEN RAISE EXCEPTION 'SENSITIVE_COLUMN_WRITABLE';END IF;
