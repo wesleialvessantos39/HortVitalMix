@@ -1,29 +1,45 @@
-import { describe, expect, it } from "vitest";
+import { expect } from "vitest";
+import { integrationDescribe, integrationIt } from "../helpers/integration";
 import { UpdateGlobalConfigSchema } from "../../shared/contracts/adminConfig";
 
-describe("Trilha 02 — payloads administrativos maliciosos", () => {
-  it.each(["actorId", "role", "token", "updatedBy"])(
-    "rejeita campo extra %s no envelope",
-    (field) => {
-      const result = UpdateGlobalConfigSchema.safeParse({
-        expectedRevision: 1,
-        commandId: "33333333-3333-4333-8333-333333333333",
-        payload: { slogan: "Configuração válida" },
-        [field]: "malicious",
-      });
-      expect(result.success).toBe(false);
-    },
-  );
-
-  it("rejeita campo extra dentro do payload", () => {
-    const result = UpdateGlobalConfigSchema.safeParse({
+integrationDescribe("Rejeição de payloads maliciosos", () => {
+  integrationIt('campo "role" é rejeitado', () => {
+    const parsed = UpdateGlobalConfigSchema.safeParse({
       expectedRevision: 1,
-      commandId: "33333333-3333-4333-8333-333333333333",
+      commandId: "123e4567-e89b-42d3-a456-426614174000",
       payload: {
-        slogan: "Configuração válida",
-        actorId: "00000000-0000-4000-8000-000000000001",
+        slogan: "Slogan válido com 5 caracteres",
+        role: "platform_super_admin",
       },
     });
-    expect(result.success).toBe(false);
+    expect(parsed.success).toBe(false);
+  });
+
+  integrationIt('campo "actor_id" no nível raiz é rejeitado', () => {
+    const parsed = UpdateGlobalConfigSchema.safeParse({
+      expectedRevision: 1,
+      commandId: "123e4567-e89b-42d3-a456-426614174000",
+      payload: { slogan: "Slogan válido com 5 caracteres" },
+      actor_id: "11111111-1111-4111-8111-111111111111",
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  integrationIt("expectedRevision negativo é rejeitado", () => {
+    const parsed = UpdateGlobalConfigSchema.safeParse({
+      expectedRevision: -1,
+      commandId: "123e4567-e89b-42d3-a456-426614174000",
+      payload: { slogan: "Slogan válido com 5 caracteres" },
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  integrationIt("slogan com espaços apenas é rejeitado", () => {
+    const parsed = UpdateGlobalConfigSchema.safeParse({
+      expectedRevision: 1,
+      commandId: "123e4567-e89b-42d3-a456-426614174000",
+      payload: { slogan: "     " },
+    });
+    expect(parsed.success).toBe(false);
   });
 });
