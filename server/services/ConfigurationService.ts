@@ -265,7 +265,10 @@ export class ConfigurationService {
   }
 
   static async getAdminConfig(): Promise<GlobalConfigAdminResponse | null> {
-    if (!dbPool) return null;
+    if (!dbPool)
+      throw Object.assign(new Error("db_not_configured"), {
+        code: "DB_NOT_CONFIGURED",
+      });
     const res = await dbPool.query<{
       platform_name: string;
       slogan: string;

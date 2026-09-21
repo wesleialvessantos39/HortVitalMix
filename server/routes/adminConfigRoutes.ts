@@ -18,14 +18,18 @@ adminConfigRouter.get(
     try {
       const config = await ConfigurationService.getAdminConfig();
       if (!config) {
+        res.status(204).end();
+        return;
+      }
+      res.status(200).json(config);
+    } catch (error) {
+      if ((error as { code?: string }).code === "DB_NOT_CONFIGURED") {
         res.status(503).json({
           error: ConfigErrorCode.DB_NOT_CONFIGURED,
           requestId: req.requestId,
         });
         return;
       }
-      res.status(200).json(config);
-    } catch (error) {
       reportFailure({
         category: classifyDbError(error),
         requestId: req.requestId,
