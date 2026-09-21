@@ -1,68 +1,93 @@
-import { expect } from "vitest";
+import { afterAll, beforeAll, expect } from "vitest";
 import { randomUUID } from "node:crypto";
-import { ConfigurationService } from "../../server/services/ConfigurationService";
+import { dbPool } from "../../server/db/pool";
+import { ConfigurationService, type ActorContext } from "../../server/services/ConfigurationService";
 import { ReauthRequiredError } from "../../server/services/reauthService";
-import {
-  freshActor,
-  integrationDescribe,
-  integrationIt,
-  requestContext,
-} from "./configTestSupport";
+import { createEphemeralIdentity } from "../helpers/identity";
+import { integrationDescribe, integrationIt } from "../helpers/integration";
 
 integrationDescribe("ConfigurationService — reautenticação", () => {
-  integrationIt("rejeita sessão mais antiga que 15 minutos", async () => {
+  let userId = "";
+  let cleanup: () => Promise<void>;
+  let originalSlogan = "";
+
+  beforeAll(async () => {
+    const identity = await createEphemeralIdentity();
+    userId = identity.userId;
+    cleanup = identity.cleanup;
+    originalSlogan = (await ConfigurationService.getAdminConfig())!.slogan;
+  });
+
+  afterAll(async () => {
+    if (dbPool && originalSlogan)
+      await dbPool.query(
+        "UPDATE public.app_global_config SET slogan=$1 WHERE singleton_guard=true",
+        [originalSlogan],
+      );
+    await cleanup?.();
+  });
+
+  integrationIt("sessão antiga (>15 min) exige reautenticação", async () => {
+    const actor: ActorContext = {
+      userId,
+      role: "platform_super_admin",
+      sessionIssuedAt: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
+    };
     const current = await ConfigurationService.getAdminConfig();
-    const actor = freshActor();
-    actor.sessionIssuedAt = new Date(Date.now() - 16 * 60_000).toISOString();
 
     await expect(
       ConfigurationService.updateConfig(
         {
           expectedRevision: current!.revision,
           commandId: randomUUID(),
-          payload: {},
+          payload: { slogan: "Tentativa com sessão antiga válida." },
         },
         actor,
-        requestContext().requestId,
-        requestContext().clientIpHash,
+        randomUUID(),
+        "a".repeat(64),
       ),
     ).rejects.toBeInstanceOf(ReauthRequiredError);
   });
 
-  integrationIt("rejeita sessão emitida no futuro", async () => {
-    const current = await ConfigurationService.getAdminConfig();
-    const actor = freshActor();
-    actor.sessionIssuedAt = new Date(Date.now() + 60_000).toISOString();
-
-    await expect(
-      ConfigurationService.updateConfig(
-        {
-          expectedRevision: current!.revision,
-          commandId: randomUUID(),
-          payload: {},
-        },
-        actor,
-        requestContext().requestId,
-        requestContext().clientIpHash,
-      ),
-    ).rejects.toBeInstanceOf(ReauthRequiredError);
-  });
-
-  integrationIt("aceita sessão recente sem criar UPDATE quando não há mudança", async () => {
+  integrationIt("sessão recente (<15 min) é aceita", async () => {
+    const actor: ActorContext = {
+      userId,
+      role: "platform_super_admin",
+      sessionIssuedAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+    };
     const current = await ConfigurationService.getAdminConfig();
     const result = await ConfigurationService.updateConfig(
       {
         expectedRevision: current!.revision,
         commandId: randomUUID(),
-        payload: {},
+        payload: { slogan: `Sessão recente ${Date.now()}` },
       },
-      freshActor(),
-      requestContext().requestId,
-      requestContext().clientIpHash,
+      actor,
+      randomUUID(),
+      "a".repeat(64),
     );
-    expect(result).toEqual({
-      status: "no_change",
-      revision: current!.revision,
-    });
+    expect(result.status).toBe("success");
+  });
+
+  integrationIt("timestamp futuro exige reautenticação", async () => {
+    const actor: ActorContext = {
+      userId,
+      role: "platform_super_admin",
+      sessionIssuedAt: new Date(Date.now() + 60_000).toISOString(),
+    };
+    const current = await ConfigurationService.getAdminConfig();
+
+    await expect(
+      ConfigurationService.updateConfig(
+        {
+          expectedRevision: current!.revision,
+          commandId: randomUUID(),
+          payload: {},
+        },
+        actor,
+        randomUUID(),
+        "a".repeat(64),
+      ),
+    ).rejects.toBeInstanceOf(ReauthRequiredError);
   });
 });
