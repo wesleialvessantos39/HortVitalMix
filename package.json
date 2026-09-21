@@ -23,7 +23,8 @@
     "verify:deploy": "node --import tsx scripts/verify-deploy.ts",
     "homologate": "node --import tsx scripts/require-integration.ts && npm run preflight && npm run migrations:verify && npm run verify && npm run test:coverage && npm run build && npm run verify:foundation && npm run test:e2e",
     "migrations:verify": "node --import tsx scripts/migrations-manifest.ts",
-    "test:coverage": "vitest run --coverage --reporter=verbose"
+    "test:coverage": "vitest run --coverage --reporter=verbose",
+    "test:t02": "vitest run tests/unit/configSchema.test.ts tests/unit/redactPII.test.ts tests/unit/adminOrigin.test.ts tests/integration/config*.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",

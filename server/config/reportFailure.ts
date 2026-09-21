@@ -18,6 +18,8 @@ type FailureInput = {
   requestId?: string;
   hostname?: string;
   detail?: string;
+  route?: string;
+  method?: string;
 };
 
 export function reportFailure(
@@ -36,6 +38,8 @@ export function reportFailure(
       requestId: data.requestId,
       ...(data.hostname ? { hostname: scrub(data.hostname) } : {}),
       ...(data.detail ? { detail: scrub(data.detail) } : {}),
+      ...(data.route ? { route: scrub(data.route) } : {}),
+      ...(data.method ? { method: scrub(data.method) } : {}),
     }),
   );
 }

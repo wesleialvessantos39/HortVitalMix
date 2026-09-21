@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 13,
+  "schemaVersion": 14,
   "migrations": [
     {
       "version": "20260919030126",
@@ -65,7 +65,12 @@
       "version": "20260920224820",
       "name": "role_scoped_security_flows",
       "file": "20260920224820_role_scoped_security_flows.sql"
+    },
+    {
+      "version": "20260921010100",
+      "name": "trilha02_config_hardening",
+      "file": "20260921010100_trilha02_config_hardening.sql"
     }
   ],
-  "migrationHistoryHash": "c101268be41ba32f843356ccc6d0a01d4dcdd6f48081638167be058382591d62"
+  "migrationHistoryHash": "780362a3fbee6475f5ec06b4a7ad01ecbf952be8269f695675e2c78147f7ef50"
 }
