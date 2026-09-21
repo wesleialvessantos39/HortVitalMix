@@ -53,6 +53,7 @@ const categories = [
 ];
 const accountPaths = new Set([
   "/conta",
+  "/minha-conta",
   "/entrar",
   "/entrar/consumidor",
   "/entrar/produtor",
@@ -189,8 +190,9 @@ export default function App() {
             </button>
             <button
               className="icon"
-              aria-label="Minha conta"
-              onClick={() => go("/entrar")}
+              aria-label="Conta"
+              title="Conta"
+              onClick={() => go("/conta")}
             >
               <UserRound />
             </button>
@@ -409,7 +411,7 @@ export default function App() {
       <nav className="bottom-nav" aria-label="Navegação mobile">
         {[
           ...navigation.slice(0, 4),
-          ["/entrar", "Conta", UserRound] as const,
+          ["/conta", "Conta", UserRound] as const,
         ].map(([to, label, Icon]) => (
           <a
             href={to}
