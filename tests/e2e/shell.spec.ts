@@ -439,3 +439,156 @@ test("cadastros mostram exatamente os campos obrigatórios ausentes", async ({ p
     await expect(page.getByLabel("Nome completo")).toBeFocused();
   }
 });
+
+const adminConfigResponse = (revision = 7) => ({
+  platformName: "HortiVitalMix",
+  slogan: "Tudo fresco. Tudo da sua região.",
+  defaultMunicipality: "Ariquemes",
+  defaultState: "RO",
+  currency: "BRL",
+  timezone: "America/Porto_Velho",
+  supportEmail: "hortivitalmix@gmail.com",
+  supportPhone: "+5569999999999",
+  revision,
+  updatedAt: new Date().toISOString(),
+  updatedBy: null,
+});
+
+for (const width of [320, 360, 768, 1440]) {
+  test(`Trilha 02 — configuração admin responsiva em ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.route("**/*admin/configuration", async (route) => {
+      if (route.request().method() === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(adminConfigResponse()),
+        });
+        return;
+      }
+      await route.continue();
+    });
+
+    await page.goto("/admin/configuracao");
+    await expect(page.getByRole("heading", { name: "Configuração Global" })).toBeVisible();
+    await expect(page.getByText("Revisão").first()).toBeVisible();
+
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+    ).toBe(true);
+
+    const pageWidth = await page.locator(".admin-config-page").evaluate(
+      (element) => element.getBoundingClientRect().width,
+    );
+    expect(pageWidth).toBeLessThanOrEqual(920);
+
+    const gridColumns = await page.locator(".admin-config-grid").first().evaluate(
+      (element) => getComputedStyle(element).gridTemplateColumns,
+    );
+
+    if (width < 768) {
+      expect(gridColumns.split(" ").filter(Boolean)).toHaveLength(1);
+      const footerDirection = await page.locator(".admin-config-footer").evaluate(
+        (element) => getComputedStyle(element).flexDirection,
+      );
+      expect(footerDirection).toBe("column");
+    } else {
+      expect(gridColumns.split(" ").filter(Boolean).length).toBeGreaterThanOrEqual(2);
+    }
+  });
+}
+
+test("Trilha 02 — loading permanece visível por pelo menos 100ms", async ({ page }) => {
+  await page.route("**/*admin/configuration", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(adminConfigResponse()),
+    });
+  });
+
+  await page.goto("/admin/configuracao");
+  await expect(page.getByLabel("Carregando configuração")).toBeVisible();
+  await page.waitForTimeout(90);
+  await expect(page.getByLabel("Carregando configuração")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Configuração Global" })).toBeVisible();
+});
+
+test("Trilha 02 — erro recuperável mostra card e retry", async ({ page }) => {
+  await page.route("**/*admin/configuration", async (route) => {
+    await route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "INTERNAL_ERROR" }),
+    });
+  });
+
+  await page.goto("/admin/configuracao");
+  await expect(
+    page.getByRole("heading", { name: "Não foi possível carregar a configuração" }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: /Tentar novamente/ })).toBeVisible();
+});
+
+test("Trilha 02 — conflito 409 preserva edição e oferece reload", async ({ page }) => {
+  await page.route("**/*admin/configuration", async (route) => {
+    if (route.request().method() === "GET") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(adminConfigResponse(7)),
+      });
+      return;
+    }
+
+    await route.fulfill({
+      status: 409,
+      contentType: "application/json",
+      body: JSON.stringify({
+        error: "CONFIG_REVISION_CONFLICT",
+        currentRevision: 8,
+      }),
+    });
+  });
+
+  await page.goto("/admin/configuracao");
+  const slogan = page.getByLabel("Slogan institucional");
+  await slogan.fill("Slogan local ainda não salvo.");
+  await page.getByRole("button", { name: "Salvar alterações" }).click();
+
+  await expect(page.getByText("Conflito de revisão.")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Recarregar revisão atual/ })).toBeVisible();
+  await expect(slogan).toHaveValue("Slogan local ainda não salvo.");
+});
+
+test("Trilha 02 — sucesso 200 exibe confirmação e nova revisão", async ({ page }) => {
+  let revision = 7;
+  await page.route("**/*admin/configuration", async (route) => {
+    if (route.request().method() === "PATCH") {
+      revision = 8;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          status: "success",
+          revision,
+          auditEventId: "123e4567-e89b-42d3-a456-426614174000",
+        }),
+      });
+      return;
+    }
+
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(adminConfigResponse(revision)),
+    });
+  });
+
+  await page.goto("/admin/configuracao");
+  await page.getByLabel("Slogan institucional").fill("Novo slogan auditável.");
+  await page.getByRole("button", { name: "Salvar alterações" }).click();
+
+  await expect(page.getByText("Configuração atualizada com sucesso.")).toBeVisible();
+  await expect(page.getByText("#8")).toBeVisible();
+});

@@ -730,6 +730,16 @@ export function Account({
           <p>Perfis disponíveis: {session.roles.map((role) => roleLabel(role)).join(", ")}.</p>
         )}
 
+        {session.activeRole === "platform_super_admin" && (
+          <button
+            className="secondary account-action"
+            type="button"
+            onClick={() => navigate("/admin/configuracao")}
+          >
+            Configuração global da plataforma
+          </button>
+        )}
+
         {securityFlow ? (
           <form
             className="security-form"

@@ -732,3 +732,185 @@ A TRILHA 02 deve partir desta versão corrigida. É proibido:
 8. criar outro projeto Supabase.
 
 Esta seção substitui qualquer interpretação anterior ambígua sobre onde cada tela deve ser acessada.
+
+---
+
+## 2026-09-21 — VOLUME 01 / TRILHA 02 — CONFIGURAÇÃO GLOBAL REVISIONADA E AUDITORIA IMUTÁVEL
+
+Status técnico: **implementação full-stack concluída na branch `volume01-trilha02-v10`; schema 14 aplicado no Supabase canônico; promoção para `main` e status Vercel tratados pela etapa final desta execução**.
+
+Fonte normativa: **MANUAL MESTRE TÉCNICO v10 — TRILHAS 01 A 06**.
+
+### Baseline preservado
+
+A execução partiu obrigatoriamente do **CHECKPOINT CANÔNICO PRÉ-TRILHA 02** deste Livro Raiz. Não foram recriados nem substituídos os fluxos já homologados de:
+
+- Conta pública separada de Administração;
+- Consumidor, Produtor, Administrador e Super administrador por papel real;
+- identidade única permitindo Consumidor + Produtor no mesmo CPF;
+- sessão com `activeRole`;
+- Mostrar/Ocultar senha;
+- Google AI Studio via `/_hvm_api`;
+- confirmação, recuperação e código de segurança vinculados ao papel;
+- migration `20260920224820_role_scoped_security_flows`;
+- projeto Supabase único `xipbsazvymkqqfmfegwu`;
+- integração GitHub → Vercel já existente.
+
+A equivalência histórica da migration 0009 da Trilha 02 foi aplicada **aditivamente sobre o schema 13**, sem reescrever o histórico anterior. Por isso, o estado lógico correto após esta implementação é **schema 14**.
+
+### Backend implementado
+
+Foram adicionados e integrados:
+
+- `server/services/ConfigurationService.ts`;
+- `server/services/reauthService.ts`;
+- `server/routes/adminConfigRoutes.ts`;
+- `server/middleware/adminSession.ts`;
+- `server/middleware/contextEnrichers.ts`;
+- `server/security/originProtection.ts`;
+- `server/security/redactPII.ts`;
+- `server/security/hash.ts`.
+
+Comportamentos canônicos:
+
+- `GET /api/v1/admin/configuration`;
+- `PATCH /api/v1/admin/configuration`;
+- autorização real somente para `platform_super_admin`;
+- sessão Supabase validada;
+- reautenticação recente vinculada a `last_sign_in_at`, janela máxima de 15 minutos;
+- `expectedRevision` obrigatório;
+- HTTP 409 em conflito de revisão;
+- `commandId` UUID para idempotência;
+- payload divergente com mesmo `commandId` rejeitado;
+- transação `SERIALIZABLE`;
+- advisory locks de comando e singleton;
+- UPDATE da configuração e INSERT da auditoria na mesma transação;
+- payload de auditoria submetido a redação de PII;
+- request ID e hash de IP;
+- proteção de origem para mutações administrativas;
+- logs estruturados sem expor segredo ou PII.
+
+### Frontend implementado
+
+Nova rota:
+
+- `/admin/configuracao`.
+
+A tela possui os estados exigidos pelo Manual v10:
+
+1. loading com skeleton;
+2. ready com formulário;
+3. empty;
+4. erro recuperável com retry;
+5. mutação com estados de salvamento, sucesso, conflito 409 e reautenticação 401.
+
+O formulário permite alterar somente:
+
+- slogan;
+- município padrão;
+- UF;
+- e-mail de suporte;
+- telefone de suporte em E.164 ou `null`.
+
+A revisão atual é visível. Em conflito, a edição local é preservada até o operador decidir recarregar a revisão atual.
+
+Para preservar a correção canônica de acesso, o login do Super Administrador **continua direcionando para `/minha-conta`**. A ação **Configuração global da plataforma** aparece nessa área somente quando `activeRole === platform_super_admin`. O backend continua sendo a autoridade final de autorização.
+
+### Design e responsividade
+
+A tela administrativa segue os tokens visuais das referências oficiais:
+
+- verde escuro `#143D24`;
+- verde principal `#1B4D2E`;
+- verde folha `#2E7D32`;
+- verde claro `#E8F5E9`;
+- branco, cinzas neutros, bordas suaves e cartões arredondados;
+- hierarquia visual consistente com desktop e aplicativo mobile.
+
+Responsividade coberta em E2E para:
+
+- 320 px;
+- 360 px;
+- 768 px;
+- 1440 px.
+
+Há ajuste adicional abaixo de 360 px e verificação de ausência de overflow horizontal.
+
+### Supabase — schema 14
+
+Projeto canônico utilizado:
+
+**HortVitalMix — `xipbsazvymkqqfmfegwu`**.
+
+Nenhum projeto adicional foi criado.
+
+Migration aplicada:
+
+`20260921193244_trilha02_config_hardening`.
+
+Efeitos reais verificados:
+
+- `app_global_config.updated_by`: presente;
+- `uq_app_audit_events_command_id`: presente;
+- `ix_app_audit_events_config_target`: presente;
+- policies de escrita para `authenticated` em `app_global_config`: **0**;
+- tabelas de aplicação com RLS habilitado e forçado: **9**;
+- singleton `app_global_config`: **1**.
+
+Schema lógico: **14**.
+
+Hash canônico das 14 migrations:
+
+`4df210ea6d4cdb05280f33889280edb1411532b0f24f5da8f7044110ef2617dc`.
+
+### Gates e testes
+
+O gate de fundação foi ampliado de A1–A15 para **A1–A18**, incorporando:
+
+- ausência de policy de escrita na configuração;
+- presença de `updated_by`;
+- presença do índice dedicado de auditoria da configuração.
+
+A suíte canônica da Trilha 02 contém **31 casos em oito arquivos**:
+
+- contrato: 9;
+- redação de PII: 4;
+- concorrência: 2;
+- idempotência: 3;
+- auditoria: 3;
+- reautenticação: 3;
+- RLS: 3;
+- payloads maliciosos: 4.
+
+Foram adicionados testes E2E próprios para layout responsivo, loading mínimo, erro recuperável, conflito 409 e sucesso.
+
+### Proteção do projeto production
+
+O único Supabase disponível no projeto é o canônico. As suítes que criam identidades e fixtures permanecem **fail-closed contra o project ref production**, conforme a governança existente. Nesta execução foram realizadas validações estruturais read-only no banco real; não foram fabricados resultados de testes mutacionais que exigem ambiente development isolado.
+
+### Build e Vercel
+
+- Node 24 preservado;
+- `tsconfig.build.json` restaura a separação entre typecheck de runtime e fontes de testes;
+- `npm run build` usa `typecheck:app`, `security:check`, Vite e bundle check;
+- `verify:free` e comandos específicos `test:t02:*` foram registrados;
+- `/admin/configuracao` usa `Cache-Control: no-store`;
+- nenhuma variável nova obrigatória foi introduzida;
+- `vercel.json` continua permitindo deploy automático somente de `main`;
+- o conector Vercel exposto nesta execução retornou zero projetos, portanto o status de deployment não deve ser inferido por esse conector. A integração GitHub → Vercel existente permanece preservada.
+
+### Checklist da implementação
+
+- [x] Backend da Trilha 02 implementado;
+- [x] Frontend da Trilha 02 implementado;
+- [x] design/layout desktop + mobile aplicado;
+- [x] responsividade coberta por E2E;
+- [x] Supabase canônico atualizado;
+- [x] migrations + manifesto sincronizados;
+- [x] Livro Raiz atualizado;
+- [x] branch GitHub de implementação criada e atualizada;
+- [x] configuração de build/deploy Vercel preservada e atualizada;
+- [x] conformidade funcional da Trilha 02 reconciliada com o Manual v10 e com o checkpoint canônico;
+- [ ] testes mutacionais reais em Supabase isolado — aguardam ambiente não-production autorizado;
+- [ ] status do deployment Vercel pós-`main` — validar após promoção.
+

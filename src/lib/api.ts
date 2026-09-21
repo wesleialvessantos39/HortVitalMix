@@ -1,9 +1,10 @@
 let refreshing: Promise<boolean> | null = null;
 
-type ApiFailure = Error & {
+export type ApiFailure = Error & {
   status?: number;
   fields?: Array<{ field: string; message: string }>;
   requestId?: string;
+  currentRevision?: number;
 };
 
 function failure(
@@ -92,6 +93,7 @@ export async function api<T>(
     error?: string;
     fields?: Array<{ field: string; message: string }>;
     requestId?: string;
+    currentRevision?: number;
   };
   const { json, requestId } = parsed;
 
@@ -105,6 +107,10 @@ export async function api<T>(
         status: response.status,
         fields: body.fields,
         requestId: body.requestId ?? requestId,
+        currentRevision:
+          typeof body.currentRevision === "number"
+            ? body.currentRevision
+            : undefined,
       },
     );
 

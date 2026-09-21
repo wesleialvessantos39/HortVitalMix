@@ -1,12 +1,28 @@
-# HortiVitalMix — Volume 01 / Trilha 01
+# HortiVitalMix — Volume 01 / Trilha 02
 
-Fundação React + Vite + Express, Supabase PostgreSQL/Auth/Storage e contratos Zod. Fonte de autoridade: Manual Mestre Técnico v10 e erratas documentadas.
+Fundação React + Vite + Express, Supabase PostgreSQL/Auth/Storage e contratos Zod. Fonte de autoridade: **Manual Mestre Técnico v10 — Trilhas 01 a 06** e o **Livro Raiz** do projeto.
 
-**Estado atual: implementação e auditoria de finalização em andamento; homologação final ainda não declarada.** Catálogo, pedidos, planos, endereços e administração pertencem às trilhas seguintes.
+## Estado atual
+
+A Trilha 02 implementa **Configuração Global Revisionada e Auditoria Imutável** sobre o checkpoint canônico da Trilha 01, sem substituir os fluxos de Conta, Administração, autenticação por papel, recuperação, confirmação ou códigos de segurança já existentes.
+
+Principais entregas:
+
+- API administrativa `GET/PATCH /api/v1/admin/configuration`;
+- acesso restrito a `platform_super_admin`, com sessão real e reautenticação recente;
+- concorrência otimista por `expectedRevision`;
+- idempotência por `commandId`;
+- auditoria imutável, com payload redigido e escrita na mesma transação;
+- proteção de origem/CSRF e hash de IP;
+- UI `/admin/configuracao` com loading, ready, empty, error, conflito, sucesso e reautenticação;
+- layout responsivo 320/360/768/1440, alinhado à identidade visual HortiVitalMix;
+- schema lógico **14** no Supabase canônico `xipbsazvymkqqfmfegwu`;
+- manifesto de migrations sincronizado;
+- suíte canônica da Trilha 02 com **31 casos**.
 
 ## Execução no Google AI Studio ou local
 
-Requer Node.js 24. Sincronize a branch de trabalho do GitHub antes de executar.
+Requer Node.js 24. Sincronize a branch do GitHub antes de executar.
 
 ```sh
 npm ci
@@ -14,58 +30,59 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Preencha os valores pelo gerenciador de segredos da plataforma. O Vite serve interface e API na mesma origem, porta 3000. O cadastro público possui fallback controlado para a API de Production quando o proxy do Google AI Studio devolve HTTP 403 sem JSON; login, sessão e rotas administrativas continuam same-origin e não recebem CORS público. Credenciais privilegiadas nunca usam prefixo `VITE_`.
-
-Sem credenciais, o shell visual permanece navegável e endpoints dependentes do banco falham de forma fechada. Isso não equivale a homologação.
-
-## Variáveis de teste real
-
-A integração usa exclusivamente:
-
-```text
-flag exclusiva de integração=true
-referência protegida de production=<ref-de-production>
-```
-
-Não usar `RUN_SUPABASE_INTEGRATION` ou `SUPABASE_TEST_PROJECT_REF`; esses nomes são obsoletos.
+O Vite serve interface e API na mesma origem, porta 3000. No Google AI Studio, a UI usa o prefixo interno `/_hvm_api` para evitar a interceptação de `/api` pelo preview. Credenciais privilegiadas nunca usam prefixo `VITE_`.
 
 ## Validação
 
-Development isolado:
+Validação compatível com planos gratuitos:
 
 ```sh
 npm run migrations:verify
-flag exclusiva de integração=true npm run homologate
-npm run test:e2e
-```
-
-`npm run homologate` recusa execução se a integração real não estiver explicitamente habilitada ou se o runtime não estiver em `development`.
-
-Gates adicionais:
-
-```sh
 npm run typecheck
 npm run security:check
+npm run test:unit
 npm run build
-npm run preflight
-npm run verify:foundation
 ```
 
-O `verify:foundation` executa A1–A15, valida schema lógico 8, hash canônico das migrations e documentação SQL de tabelas, funções e colunas sensíveis.
+Atalho:
 
-### Cobertura
+```sh
+npm run verify:free
+```
 
-A configuração contém os thresholds do Manual v10. A execução de cobertura exige o provedor compatível com Vitest 5.0.1 e o lockfile correspondente. Não considerar cobertura homologada enquanto esse gate não tiver sido executado com o lock regenerado.
+Suíte específica da Trilha 02:
+
+```sh
+npm run test:t02:unit
+npm run test:t02:integration
+npm run test:t02
+```
+
+Os testes de integração real exigem um ambiente **development isolado** e recusam o projeto Supabase canônico de production. Não execute fixtures destrutivas no projeto canônico.
+
+O `verify:foundation` executa **A1–A18**, valida schema 14, hash canônico das migrations, RLS, imutabilidade/auditoria e documentação SQL.
+
+## Banco de dados
+
+Projeto canônico único:
+
+- Supabase: **HortVitalMix**
+- Project ref: `xipbsazvymkqqfmfegwu`
+- Schema lógico: **14**
+- Migration da Trilha 02: `20260921193244_trilha02_config_hardening`
+
+Não criar outro projeto Supabase para esta aplicação sem decisão explícita futura do proprietário.
 
 ## Deploy
 
-`vercel.json` permite implantação automática somente de `main`; previews das demais branches são deliberados/manuais. A promoção de banco continua sequencial: development → homologation → production.
+`vercel.json` mantém implantação automática somente de `main`. O build de produção usa `tsconfig.build.json` para validar apenas código de runtime, enquanto `npm run typecheck` continua verificando também testes e scripts.
+
+A rota `/admin/configuracao` e as rotas de autenticação sensíveis usam `Cache-Control: no-store`.
 
 ## Documentação
 
 - [Livro Raiz](LIVRO_RAIZ_HORTIVITALMIX.md)
+- [Validação da Trilha 02](docs/TRILHA02_VALIDACAO.md)
 - [Configuração Supabase](docs/SUPABASE_SETUP.md)
 - [Deploy e promoção](docs/DEPLOY_RUNBOOK.md)
 - [Estratégia de CI](docs/CI_STRATEGY.md)
-- [Resultados de verificação](docs/TRILHA01_VALIDACAO.md)
-- [Errata e rastreabilidade](docs/TRILHA01_PENDENCIAS_MANUAL_V10.md)
