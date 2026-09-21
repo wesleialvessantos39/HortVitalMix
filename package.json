@@ -27,7 +27,7 @@
     "homologate": "node --import tsx scripts/require-integration.ts && npm run preflight && npm run migrations:verify && npm run verify && npm run test:coverage && npm run build && npm run verify:foundation && npm run test:e2e",
     "migrations:verify": "node --import tsx scripts/migrations-manifest.ts",
     "test:coverage": "vitest run --coverage --reporter=verbose",
-    "test:t02:unit": "vitest run tests/unit/redactPII.test.ts tests/unit/configSchema.test.ts",
+    "test:t02:unit": "vitest run tests/unit/redactPII.test.ts tests/unit/configSchema.test.ts tests/integration/configReauth.test.ts tests/integration/configMaliciousPayload.test.ts",
     "test:t02:integration": "node --import tsx scripts/require-integration.ts && vitest run tests/integration/config*.test.ts",
     "test:t02": "npm run test:t02:unit && npm run test:t02:integration",
     "typecheck:app": "tsc --noEmit -p tsconfig.build.json",
