@@ -13,6 +13,14 @@ type State = {
   errorMessage: string | null;
 };
 
+const MINIMUM_SKELETON_MS = 120;
+
+function minimumSkeletonDelay() {
+  return new Promise<void>((resolve) =>
+    window.setTimeout(resolve, MINIMUM_SKELETON_MS),
+  );
+}
+
 export function useConfigAdmin() {
   const [state, setState] = useState<State>({
     status: "loading",
@@ -29,19 +37,24 @@ export function useConfigAdmin() {
   }, []);
 
   const load = useCallback(async () => {
-    setState((current) => ({
-      ...current,
+    setState((currentState) => ({
+      ...currentState,
       status: "loading",
       errorMessage: null,
     }));
 
+    const minimumDelay = minimumSkeletonDelay();
+
     try {
       const data = await api<unknown>("/v1/admin/configuration");
+      await minimumDelay;
       if (!mounted.current) return;
+
       if (!data) {
         setState({ status: "empty", config: null, errorMessage: null });
         return;
       }
+
       const parsed = GlobalConfigAdminResponseSchema.safeParse(data);
       if (!parsed.success) {
         setState({
@@ -51,9 +64,12 @@ export function useConfigAdmin() {
         });
         return;
       }
+
       setState({ status: "ready", config: parsed.data, errorMessage: null });
     } catch (error) {
+      await minimumDelay;
       if (!mounted.current) return;
+
       const failure = error as ApiFailure;
       const message =
         failure.status === 401
@@ -65,6 +81,7 @@ export function useConfigAdmin() {
               : failure.message === "NETWORK_UNAVAILABLE"
                 ? "Falha de rede ao carregar configuração."
                 : "Falha ao carregar configuração.";
+
       setState({ status: "error", config: null, errorMessage: message });
     }
   }, []);
