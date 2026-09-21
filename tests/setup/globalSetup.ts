@@ -1,5 +1,8 @@
 import { beforeAll } from "vitest";
 
+export const HAS_INTEGRATION =
+  process.env.HVM_INTEGRATION_ENABLED === "true";
+
 export function assertNotProduction() {
   const url = process.env.SUPABASE_DB_URL ?? "";
   const appEnv = process.env.APP_ENV ?? "";
@@ -19,7 +22,7 @@ export function assertNotProduction() {
     }
   }
 
-  if (process.env.HVM_INTEGRATION_ENABLED === "true" && !prodRef) {
+  if (HAS_INTEGRATION && !prodRef) {
     throw new Error("[TEST] HVM_PROD_PROJECT_REF é obrigatório na integração.");
   }
 
@@ -29,8 +32,8 @@ export function assertNotProduction() {
 }
 
 beforeAll(() => {
-  assertNotProduction();
+  // Testes unitários/contratuais são seguros em build de production.
+  // A trava production aplica-se somente às suítes que realmente acessam
+  // Supabase/Auth/Postgres com HVM_INTEGRATION_ENABLED=true.
+  if (HAS_INTEGRATION) assertNotProduction();
 });
-
-export const HAS_INTEGRATION =
-  process.env.HVM_INTEGRATION_ENABLED === "true";
