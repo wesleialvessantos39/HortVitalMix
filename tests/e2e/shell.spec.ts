@@ -239,7 +239,7 @@ test("recuperação explicita o perfil e mantém administração isolada", async
 test("conta separa consumidor e produtor e administração fica independente", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
 
-  await page.goto("/entrar");
+  await page.goto("/conta");
   await expect(page.getByRole("heading", { name: "Conta" })).toBeAttached();
   await expect(page.getByRole("button", { name: "Entrar como Consumidor" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Entrar como Produtor" })).toBeVisible();
@@ -310,6 +310,64 @@ test("ícone de administração da home abre o seletor administrativo", async ({
   await expect(adminButton).toBeVisible();
   await adminButton.click();
 
+  await expect(page).toHaveURL(/\/administracao$/);
+  await expect(
+    page.getByRole("heading", { name: "Administração" }),
+  ).toBeVisible();
+});
+
+
+test("Conta e Administração possuem pontos de entrada diferentes na home", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+
+  const accountButton = page.getByRole("button", { name: "Conta" });
+  const adminButton = page.getByRole("button", { name: "Administração" });
+
+  await expect(accountButton).toBeVisible();
+  await expect(adminButton).toBeVisible();
+
+  await accountButton.click();
+  await expect(page).toHaveURL(/\/conta$/);
+  await expect(
+    page.getByRole("button", { name: "Entrar como Consumidor" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Entrar como Produtor" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Entrar como Administrador" }),
+  ).toHaveCount(0);
+
+  await page.goto("/");
+  await adminButton.click();
+  await expect(page).toHaveURL(/\/administracao$/);
+  await expect(
+    page.getByRole("button", { name: "Entrar como Administrador" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Entrar como Super administrador" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Entrar como Consumidor" }),
+  ).toHaveCount(0);
+});
+
+test("Conta mobile continua separada da Administração", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+
+  await page.getByRole("link", { name: "Conta" }).click();
+  await expect(page).toHaveURL(/\/conta$/);
+  await expect(
+    page.getByRole("button", { name: "Entrar como Consumidor" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Entrar como Produtor" }),
+  ).toBeVisible();
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Administração" }).click();
   await expect(page).toHaveURL(/\/administracao$/);
   await expect(
     page.getByRole("heading", { name: "Administração" }),
