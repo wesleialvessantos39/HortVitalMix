@@ -623,3 +623,59 @@ Foi executada validação transacional no banco canônico:
 ### Observação de governança do Manual v10
 
 Esta correção fecha o vazamento de contexto entre portais nos fluxos existentes. A governança administrativa integral da Trilha 05 — incluindo cerimônia de bootstrap, convites administrativos completos e MFA obrigatório de login do Super Admin — permanece um subsistema próprio do Manual v10 e não deve ser falsamente considerado implementado apenas por esta correção de recuperação/reautenticação.
+
+
+---
+
+## 2026-09-21 — CHECKPOINT CANÔNICO PRÉ-TRILHA 02 — NÃO SOBRESCREVER
+
+Status: **base oficial restaurada e congelada para reinício da TRILHA 02**.
+
+### Regra obrigatória para qualquer implementação futura da TRILHA 02
+
+A TRILHA 02 deve **partir desta base e preservar integralmente tudo o que já está funcionando**. Nenhuma implementação da TRILHA 02 pode recriar, substituir, simplificar, apagar, renomear ou contornar as implementações já consolidadas no Frontend, Backend, Supabase e Vercel.
+
+Antes de qualquer alteração da TRILHA 02, é obrigatório considerar como pré-existentes e intocáveis, salvo evolução compatível e expressamente necessária:
+
+- Frontend responsivo desktop/mobile já homologado até este checkpoint;
+- tela Conta com acessos separados de Consumidor e Produtor;
+- tela Administração separada, com Administrador e Super administrador;
+- login por papel com validação real no backend;
+- identidade canônica permitindo o mesmo CPF para Consumidor e Produtor sem duplicação de pessoa;
+- sessão com contexto de papel ativo;
+- função Mostrar/Ocultar senha;
+- correções do Google Studio para evitar o bloqueio HTTP 403 e o uso correto de `/_hvm_api`;
+- confirmação, recuperação de senha e código de segurança vinculados ao papel de origem;
+- isolamento entre Consumidor, Produtor, Administrador e Super administrador nos fluxos de segurança;
+- migration `20260920224820_role_scoped_security_flows`;
+- schema lógico **13**;
+- projeto Supabase canônico e único: **HortVitalMix — xipbsazvymkqqfmfegwu**;
+- integração GitHub → Vercel funcionando;
+- deployment Vercel da base restaurada validado com sucesso.
+
+### Regra de compatibilidade da TRILHA 02
+
+Toda implementação da TRILHA 02 deve ser **aditiva e compatível** com esta base. Se uma etapa do manual exigir evolução de uma estrutura existente, a alteração deve:
+
+1. preservar o comportamento já homologado;
+2. migrar dados e contratos sem regressão;
+3. manter Frontend e Backend sincronizados;
+4. aplicar a evolução no mesmo projeto Supabase canônico;
+5. atualizar migrations e manifesto sem reescrever o histórico anterior;
+6. manter build e deploy Vercel válidos;
+7. atualizar este Livro-Raiz com rastreabilidade da mudança;
+8. nunca criar outro projeto Supabase para o HortiVitalMix;
+9. nunca substituir esta base por uma implementação paralela ou simplificada;
+10. validar explicitamente que Consumidor, Produtor, Administrador e Super administrador continuam isolados conforme seus papéis e fluxos de segurança.
+
+### Checkpoint técnico verificado
+
+O estado do repositório restaurado antes deste registro utiliza exatamente a mesma árvore Git do checkpoint funcional do final da conversa anterior:
+
+- árvore Git canônica: `3190122278dbba171e2531c6baca5a566226444a`;
+- checkpoint funcional/documental de referência: `7cd73e898e633e798ad407f654b1c428c8d41b6f`;
+- commit de restauração integral da aplicação: `7ae86b5577a3a48add8cfc1ac617b1666ef93950`;
+- status Vercel do commit restaurado: **success**;
+- histórico Supabase confirmado somente até schema 13, sem migrations posteriores da TRILHA 02.
+
+**Esta seção é uma trava de governança. Ao iniciar a TRILHA 02, considerar obrigatoriamente todo o estado acima como baseline já implementado e homologado.**
