@@ -417,6 +417,7 @@ export function Account({
           body: JSON.stringify({ ...form, portalRole }),
         });
         setSession(await api<Session>("/v1/auth/session"));
+        navigate("/minha-conta");
         return;
       }
 
@@ -715,7 +716,7 @@ export function Account({
     }
   }
 
-  if (session)
+  if (session && path === "/minha-conta")
     return (
       <section className="account card">
         <span className="eyebrow">Acesso seguro</span>
@@ -830,6 +831,23 @@ export function Account({
     mode === "confirmation" ||
     mode === "magic" ||
     mode === "reset";
+
+  if (path === "/minha-conta" && !session)
+    return (
+      <section className="account card">
+        <span className="eyebrow">Conta</span>
+        <h1>Sessão necessária</h1>
+        <p>Escolha o tipo de acesso e entre novamente para abrir sua conta.</p>
+        <button
+          className="primary"
+          type="button"
+          onClick={() => navigate("/conta")}
+        >
+          Escolher acesso
+        </button>
+      </section>
+    );
+
 
   if (mode === "login" && !portalRole && path !== "/administracao")
     return (
