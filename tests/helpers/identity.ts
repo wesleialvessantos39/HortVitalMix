@@ -46,11 +46,17 @@ export async function createEphemeralIdentity(options?: {
   if (!supabaseAdmin || !dbPool)
     throw new Error("createEphemeralIdentity: runtime Supabase indisponível");
 
+  // Captura referências não nulas em constantes locais. O TypeScript não
+  // preserva o narrowing de imports anuláveis dentro de closures assíncronas
+  // como cleanup(), o que quebrava o typecheck/build da Vercel (TS18047).
+  const admin = supabaseAdmin;
+  const pool = dbPool;
+
   const suffix = randomSuffix();
   const email = `test-${suffix}@hvm-test.local`;
   const password = `TestP@ssw0rd-${suffix}!`;
 
-  const created = await supabaseAdmin.auth.admin.createUser({
+  const created = await admin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
@@ -60,16 +66,16 @@ export async function createEphemeralIdentity(options?: {
     throw new Error("Falha ao criar identidade efêmera.");
 
   const userId = created.data.user.id;
-  const signedIn = await supabaseAdmin.auth.signInWithPassword({ email, password });
+  const signedIn = await admin.auth.signInWithPassword({ email, password });
   if (signedIn.error || !signedIn.data.session) {
-    await supabaseAdmin.auth.admin.deleteUser(userId);
+    await admin.auth.admin.deleteUser(userId);
     throw new Error("Falha ao autenticar identidade efêmera.");
   }
 
   let personId: string | null = null;
   try {
     if (options?.withPerson !== false) {
-      const person = await dbPool.query<{ id: string }>(
+      const person = await pool.query<{ id: string }>(
         `INSERT INTO public.app_people
           (user_id,full_name,cpf_normalized,email_normalized,phone_e164)
          VALUES ($1,$2,$3,$4,$5)
@@ -79,15 +85,15 @@ export async function createEphemeralIdentity(options?: {
       personId = person.rows[0].id;
 
       if (options?.role) {
-        await dbPool.query(
+        await pool.query(
           "INSERT INTO public.app_user_role_assignments(user_id,role_code) VALUES($1,$2)",
           [userId, options.role],
         );
       }
     }
   } catch (error) {
-    await supabaseAdmin.auth.admin.deleteUser(userId).catch(() => undefined);
-    await dbPool.query("DELETE FROM public.app_users WHERE id=$1", [userId]).catch(() => undefined);
+    await admin.auth.admin.deleteUser(userId).catch(() => undefined);
+    await pool.query("DELETE FROM public.app_users WHERE id=$1", [userId]).catch(() => undefined);
     throw error;
   }
 
@@ -99,18 +105,18 @@ export async function createEphemeralIdentity(options?: {
     personId,
     cleanup: async () => {
       if (personId) {
-        await dbPool
+        await pool
           .query("DELETE FROM public.app_producer_profiles WHERE person_id=$1", [personId])
           .catch(() => undefined);
       }
-      await dbPool
+      await pool
         .query("DELETE FROM public.app_user_role_assignments WHERE user_id=$1", [userId])
         .catch(() => undefined);
-      await dbPool
+      await pool
         .query("DELETE FROM public.app_people WHERE user_id=$1", [userId])
         .catch(() => undefined);
-      await supabaseAdmin.auth.admin.deleteUser(userId).catch(() => undefined);
-      await dbPool
+      await admin.auth.admin.deleteUser(userId).catch(() => undefined);
+      await pool
         .query("DELETE FROM public.app_users WHERE id=$1", [userId])
         .catch(() => undefined);
     },
