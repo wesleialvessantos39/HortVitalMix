@@ -11,6 +11,10 @@ export function resolveAppEnv(env: NodeJS.ProcessEnv): AppEnvironment {
   return env.NODE_ENV === "production" ? "production" : "development";
 }
 
+function isLoopback(hostname: string) {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+}
+
 export function resolveDbUrl(
   env: NodeJS.ProcessEnv,
   appEnv = resolveAppEnv(env),
@@ -26,18 +30,28 @@ export function resolveDbUrl(
       Boolean(candidate[1]),
   );
   if (!configured.length)
-    return {
-      url: null,
-      reason: "DATABASE_NOT_CONFIGURED",
-      source: null,
-    };
+    return { url: null, reason: "DATABASE_NOT_CONFIGURED", source: null };
 
   let mismatch = false;
   for (const [source, value] of configured) {
     try {
       const u = new URL(value);
+      const postgresProtocol = ["postgres:", "postgresql:"].includes(u.protocol);
+
+      // Homologação gratuita/local: aceita somente loopback e nunca em production.
       if (
-        !["postgres:", "postgresql:"].includes(u.protocol) ||
+        appEnv !== "production" &&
+        postgresProtocol &&
+        isLoopback(u.hostname) &&
+        u.pathname === "/postgres" &&
+        Boolean(u.password)
+      ) {
+        return { url: value, reason: null, source };
+      }
+
+      // Runtime cloud: mantém o contrato canônico e estrito do Transaction Pooler.
+      if (
+        !postgresProtocol ||
         !u.hostname.endsWith(".pooler.supabase.com") ||
         u.port !== "6543" ||
         !u.username.startsWith("postgres.") ||
@@ -63,9 +77,7 @@ export function resolveDbUrl(
 
   return {
     url: null,
-    reason: mismatch
-      ? "DB_PROJECT_REF_MISMATCH"
-      : "INVALID_TRANSACTION_POOLER_URL",
+    reason: mismatch ? "DB_PROJECT_REF_MISMATCH" : "INVALID_TRANSACTION_POOLER_URL",
     source: null,
   };
 }
@@ -90,9 +102,7 @@ export function buildRuntime(env: NodeJS.ProcessEnv) {
       ? ["http://localhost:3000", "http://127.0.0.1:3000"]
       : [];
 
-  const origins = Array.from(
-    new Set([...configuredOrigins, ...defaultDevOrigins]),
-  );
+  const origins = Array.from(new Set([...configuredOrigins, ...defaultDevOrigins]));
 
   return Object.freeze({
     appEnv,
@@ -120,8 +130,7 @@ export function logRuntimeBootSummary(
 ) {
   let supabaseHost = "(missing)";
   try {
-    if (current.supabaseUrl)
-      supabaseHost = new URL(current.supabaseUrl).hostname;
+    if (current.supabaseUrl) supabaseHost = new URL(current.supabaseUrl).hostname;
   } catch {
     supabaseHost = "(invalid)";
   }

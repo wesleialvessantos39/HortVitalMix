@@ -88,3 +88,7 @@ A release corrente em production deve apontar ao HEAD da `main`, com schema 14 e
 - [Configuração Supabase](docs/SUPABASE_SETUP.md)
 - [Deploy e promoção](docs/DEPLOY_RUNBOOK.md)
 - [Estratégia de CI](docs/CI_STRATEGY.md)
+
+## Selagem gratuita da Trilha 02
+
+A homologacao final da Trilha 02 usa Supabase local efemero em GitHub Actions para `development` e `homologation`, sem criar branches Supabase cobrados. O workflow executa os 31 casos em cada ambiente local, gera snapshot logico pre-T02 com SHA-256 e somente cria a tag `trilha02-v1` depois de Vercel = success. Veja [Selagem gratuita da Trilha 02](docs/TRILHA02_FREE_TIER_SEAL.md).

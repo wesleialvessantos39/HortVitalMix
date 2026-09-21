@@ -922,3 +922,44 @@ O único Supabase disponível no projeto é o canônico. As suítes que criam id
 
 **Regra de segurança preservada:** os testes mutacionais que criam identidades/fixtures continuam bloqueados contra production e só podem ser executados em ambiente development isolado. Eles não foram executados no banco canônico para não violar a própria governança registrada do projeto.
 
+
+
+---
+
+## 2026-09-21 - SELAGEM GRATUITA DEFINITIVA DA TRILHA 02
+
+Status: **fechamento operacional da Trilha 02 em regime de custo zero, sem remover ou regredir qualquer avancado ja incorporado da Trilha 03**.
+
+### Decisao de infraestrutura
+
+Foi rejeitada a criacao de branches Supabase cobrados. O custo consultado era de **US$ 0,01344/h por branch**. Portanto, nenhum branch remoto adicional foi criado.
+
+Para cumprir a finalidade de development/homologation sem custo, foi versionado o workflow `.github/workflows/trilha02-free-seal.yml`, que usa Supabase local efemero em runner padrao de repositorio publico. Cada ambiente e criado do zero e destruido ao final.
+
+### Cerimonia gratuita
+
+Para `development` e `homologation`, separadamente:
+
+1. reset local ate `20260920224820_role_scoped_security_flows`;
+2. dump logico pre-T02 e SHA-256 registrado no log da execucao;
+3. aplicacao de `20260921193244_trilha02_config_hardening`;
+4. `migrations:verify`;
+5. `verify:t02:evidence`;
+6. `verify:foundation` A1-A18;
+7. `test:t02` com **31 casos**;
+8. build de producao;
+9. release efemera do ambiente.
+
+A selagem cria a tag Git `trilha02-v1` somente depois de ambos os ambientes passarem e o status Vercel do mesmo SHA ser `success`.
+
+### Production - evidencia sem fixture destrutiva
+
+No Supabase canonico `xipbsazvymkqqfmfegwu` foi executada prova mutacional dentro de transacao com `ROLLBACK`. Foram confirmados: incremento de revision em alteracao real, unicidade de `commandId` e imutabilidade de `app_audit_events`. Apos o rollback, o banco permaneceu em `revision=1`, slogan `Tudo fresco. Tudo da sua regiao.` e `audit_count=0`.
+
+Fingerprint estrutural pos-T02: `2416c187d2124b1182cea088e64e3020e7087c5b75230725a01db1a68c0896d9` sobre 160 itens de migrations/colunas/indices/policies/triggers. Hash canonico das migrations: `4df210ea6d4cdb05280f33889280edb1411532b0f24f5da8f7044110ef2617dc`.
+
+O snapshot remoto de production anterior a migration nao pode ser recriado retroativamente e nao sera falsificado. Sob a regra expressa de custo zero, sua evidencia substituta e a cadeia imutavel de migrations + fingerprint estrutural + prova transacional com rollback.
+
+### Preservacao da Trilha 03
+
+AuthService, rotas de identidade, cadastro Consumer/Producer, papeis, sessoes, confirmacao, recuperacao e codigo de seguranca ja adiantados permanecem intactos. A presente selagem e aditiva e nao recria nem apaga esses ativos.

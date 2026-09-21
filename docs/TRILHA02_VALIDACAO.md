@@ -143,3 +143,13 @@ A validação estrutural read-only foi executada no projeto canônico. Testes mu
 - [x] Livro Raiz atualizado e fechado
 
 > Testes mutacionais que criam identidades/fixtures permanecem deliberadamente fail-closed contra production e só podem ser executados em ambiente development isolado. Não foram executados no projeto canônico para preservar a governança de segurança já registrada.
+
+## Selagem gratuita - fechamento definitivo
+
+Por determinacao do proprietario, nenhum branch Supabase cobrado e criado. Development e homologation passam a ser ambientes Supabase locais efemeros e independentes em runner GitHub-hosted padrao, enquanto production permanece no projeto canonico unico.
+
+O workflow `.github/workflows/trilha02-free-seal.yml` foi adicionado para executar, em cada ambiente local, snapshot logico anterior a T02, aplicacao da migration T02, `verify:foundation` A1-A18, os 31 casos canonicos, build e release efemera. A tag `trilha02-v1` so e criada depois desses gates e de **Vercel = success** no mesmo SHA.
+
+Em production foi executada prova mutacional transacional com `ROLLBACK`: bump de revision, unicidade de `commandId` e imutabilidade da auditoria passaram; o estado persistido permaneceu `revision=1`, slogan canonico e `audit_count=0`.
+
+O snapshot remoto pre-migration de production nao e fabricado retroativamente. A excecao gratuita e documentada com historico/hash das migrations, fingerprint estrutural e prova de rollback. Detalhes: `docs/TRILHA02_FREE_TIER_SEAL.md`.
