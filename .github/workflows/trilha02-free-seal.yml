@@ -20,7 +20,7 @@ permissions:
 jobs:
   homologacao-local:
     name: Homologacao local - ${{ matrix.app_env }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     strategy:
       fail-fast: false
@@ -125,7 +125,7 @@ jobs:
 
   selagem:
     name: Selar tag apos homologacao e Vercel
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs:
       - homologacao-local
     timeout-minutes: 15
