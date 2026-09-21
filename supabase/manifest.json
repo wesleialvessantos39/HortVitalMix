@@ -67,10 +67,10 @@
       "file": "20260920224820_role_scoped_security_flows.sql"
     },
     {
-      "version": "20260921010100",
+      "version": "20260921011627",
       "name": "trilha02_config_hardening",
-      "file": "20260921010100_trilha02_config_hardening.sql"
+      "file": "20260921011627_trilha02_config_hardening.sql"
     }
   ],
-  "migrationHistoryHash": "780362a3fbee6475f5ec06b4a7ad01ecbf952be8269f695675e2c78147f7ef50"
+  "migrationHistoryHash": "6c1e7cfee2f42109ed7523a44330dd84890e419b80f8a730c11fc351cb058747"
 }
