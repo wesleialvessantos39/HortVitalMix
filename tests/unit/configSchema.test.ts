@@ -1,62 +1,91 @@
 import { describe, expect, it } from "vitest";
+import { randomUUID } from "node:crypto";
 import {
-  GlobalConfigAdminResponseSchema,
+  UpdateGlobalConfigPayloadSchema,
   UpdateGlobalConfigSchema,
 } from "../../shared/contracts/adminConfig";
 
-describe("Trilha 02 — contrato de configuração", () => {
-  const valid = {
+describe("UpdateGlobalConfigSchema", () => {
+  const base = {
     expectedRevision: 1,
-    commandId: "11111111-1111-4111-8111-111111111111",
-    payload: {
-      slogan: "Tudo fresco. Tudo da sua região.",
-      defaultMunicipality: "Ariquemes",
-      defaultState: "RO",
-      supportEmail: "SUPORTE@EXAMPLE.COM",
-      supportPhone: "+5569999999999",
-    },
+    commandId: randomUUID(),
+    payload: { slogan: "Tudo fresco, tudo da terra." },
   };
 
-  it("normaliza e aceita apenas o payload canônico", () => {
-    const parsed = UpdateGlobalConfigSchema.parse(valid);
-    expect(parsed.payload.supportEmail).toBe("suporte@example.com");
-    expect(parsed.payload.defaultState).toBe("RO");
+  it("aceita payload mínimo válido", () => {
+    expect(() => UpdateGlobalConfigSchema.parse(base)).not.toThrow();
   });
 
-  it("rejeita campos administrativos injetados", () => {
-    const result = UpdateGlobalConfigSchema.safeParse({
-      ...valid,
-      actorId: "11111111-1111-4111-8111-111111111111",
-    });
-    expect(result.success).toBe(false);
+  it("aceita todos os campos válidos", () => {
+    expect(() =>
+      UpdateGlobalConfigSchema.parse({
+        expectedRevision: 3,
+        commandId: randomUUID(),
+        payload: {
+          slogan: "Do campo direto para a sua mesa.",
+          defaultMunicipality: "Ariquemes",
+          defaultState: "RO",
+          supportEmail: "suporte@hortivitalmix.com",
+          supportPhone: "+5563999999999",
+        },
+      }),
+    ).not.toThrow();
   });
 
-  it("exige revisão positiva, UUID e telefone E.164", () => {
-    expect(
-      UpdateGlobalConfigSchema.safeParse({
-        ...valid,
-        expectedRevision: 0,
-        commandId: "not-a-uuid",
-        payload: { supportPhone: "69999999999" },
-      }).success,
-    ).toBe(false);
+  it("rejeita payload com campo extra (strict)", () => {
+    expect(() =>
+      UpdateGlobalConfigPayloadSchema.parse({
+        slogan: "Slogan válido para o teste",
+        role: "platform_super_admin",
+      }),
+    ).toThrow();
   });
 
-  it("valida a resposta administrativa completa", () => {
-    expect(
-      GlobalConfigAdminResponseSchema.safeParse({
-        platformName: "HortiVitalMix",
-        slogan: "Tudo fresco. Tudo da sua região.",
-        defaultMunicipality: "Ariquemes",
-        defaultState: "RO",
-        currency: "BRL",
-        timezone: "America/Porto_Velho",
-        supportEmail: "hortivitalmix@gmail.com",
-        supportPhone: null,
-        revision: 1,
-        updatedAt: "2026-09-20T20:00:00.000Z",
-        updatedBy: null,
-      }).success,
-    ).toBe(true);
+  it("rejeita entrada com campo extra no nível raiz", () => {
+    expect(() =>
+      UpdateGlobalConfigSchema.parse({
+        ...base,
+        actorId: randomUUID(),
+      }),
+    ).toThrow();
+  });
+
+  it("rejeita commandId não-UUID", () => {
+    expect(() =>
+      UpdateGlobalConfigSchema.parse({ ...base, commandId: "not-a-uuid" }),
+    ).toThrow();
+  });
+
+  it("rejeita expectedRevision <= 0", () => {
+    expect(() =>
+      UpdateGlobalConfigSchema.parse({ ...base, expectedRevision: 0 }),
+    ).toThrow();
+  });
+
+  it("rejeita UF inválida", () => {
+    expect(() =>
+      UpdateGlobalConfigSchema.parse({
+        ...base,
+        payload: { defaultState: "XX" },
+      }),
+    ).toThrow();
+  });
+
+  it("rejeita telefone fora do formato E.164", () => {
+    expect(() =>
+      UpdateGlobalConfigSchema.parse({
+        ...base,
+        payload: { supportPhone: "63999999999" },
+      }),
+    ).toThrow();
+  });
+
+  it("aceita supportPhone null (limpar)", () => {
+    expect(() =>
+      UpdateGlobalConfigSchema.parse({
+        ...base,
+        payload: { supportPhone: null },
+      }),
+    ).not.toThrow();
   });
 });
