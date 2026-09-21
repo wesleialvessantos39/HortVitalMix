@@ -15,18 +15,21 @@
     "test": "vitest run --reporter=verbose",
     "test:unit": "vitest run tests/unit",
     "test:contract": "vitest run tests/unit/configSchema.test.ts",
-    "test:integration": "vitest run tests/integration",
+    "test:integration": "node --import tsx scripts/require-integration.ts && vitest run tests/integration",
     "test:e2e": "playwright test",
     "security:check": "node --import tsx scripts/security-check.ts",
     "preflight": "node --import tsx scripts/preflight.ts",
     "verify": "npm run typecheck && npm test",
+    "verify:free": "npm run migrations:verify && npm run typecheck && npm run security:check && npm run test:unit && npm run build",
     "verify:foundation": "node --import tsx scripts/verify-foundation.ts",
     "release:current": "node --import tsx scripts/release-current.ts",
     "verify:deploy": "node --import tsx scripts/verify-deploy.ts",
     "homologate": "node --import tsx scripts/require-integration.ts && npm run preflight && npm run migrations:verify && npm run verify && npm run test:coverage && npm run build && npm run verify:foundation && npm run test:e2e",
     "migrations:verify": "node --import tsx scripts/migrations-manifest.ts",
     "test:coverage": "vitest run --coverage --reporter=verbose",
-    "test:t02": "vitest run tests/unit/redactPII.test.ts tests/unit/configSchema.test.ts tests/integration/config*.test.ts"
+    "test:t02:unit": "vitest run tests/unit/redactPII.test.ts tests/unit/configSchema.test.ts",
+    "test:t02:integration": "node --import tsx scripts/require-integration.ts && vitest run tests/integration/config*.test.ts",
+    "test:t02": "npm run test:t02:unit && npm run test:t02:integration"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",
