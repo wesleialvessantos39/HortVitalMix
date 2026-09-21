@@ -1,0 +1,101 @@
+name: Trilha 02 - Fallback gratuito de selagem
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/trilha02-free-seal-fallback.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fallback-seal:
+    name: Selagem T02 sem banco pago
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Executar 20 casos production-safe
+        run: npm run test:t02:unit
+
+      - name: Validar os 31 casos canonicos e invariantes
+        run: npm run verify:t02:evidence
+
+      - name: Aguardar Vercel success do mesmo SHA
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 40); do
+            JSON="$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/status")"
+            STATE="$(printf '%s' "$JSON" | jq -r '[.statuses[] | select(.context=="Vercel")][0].state // empty')"
+            echo "Vercel attempt ${attempt}: ${STATE:-pending}"
+            if [ "$STATE" = "success" ]; then
+              exit 0
+            fi
+            if [ "$STATE" = "failure" ] || [ "$STATE" = "error" ]; then
+              exit 1
+            fi
+            sleep 15
+          done
+          exit 1
+
+      - name: Confirmar readiness da release production
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          for attempt in $(seq 1 40); do
+            BODY="$(curl -fsS --max-time 10 https://hortvitalmix.vercel.app/api/ready || true)"
+            if BODY="$BODY" SHORT_SHA="$SHORT_SHA" node -e '
+              try {
+                const v=JSON.parse(process.env.BODY || "{}");
+                const ok=v.status==="ready" &&
+                  v.databaseConnected===true &&
+                  v.schemaVersion===14 &&
+                  typeof v.releaseTag==="string" &&
+                  v.releaseTag.includes(process.env.SHORT_SHA);
+                process.exit(ok ? 0 : 1);
+              } catch { process.exit(1); }
+            '; then
+              echo "Production readiness confirmado."
+              exit 0
+            fi
+            echo "Readiness attempt ${attempt}: aguardando release sincronizada."
+            sleep 15
+          done
+          exit 1
+
+      - name: Criar tag Git trilha02-v1
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "HortiVitalMix Release Bot"
+          git config user.email "actions@users.noreply.github.com"
+
+          if git ls-remote --exit-code --tags origin refs/tags/trilha02-v1 >/dev/null 2>&1; then
+            git fetch --tags origin
+            test "$(git rev-list -n 1 trilha02-v1)" = "$GITHUB_SHA"
+            echo "Tag existente aponta para o SHA correto."
+            exit 0
+          fi
+
+          git tag -a trilha02-v1 "$GITHUB_SHA" -m "Trilha 02 - Configuracao Global Revisionada e Auditoria Imutavel"
+          git push origin refs/tags/trilha02-v1

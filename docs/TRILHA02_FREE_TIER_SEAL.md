@@ -77,3 +77,17 @@ A release de production em `app_releases` deve ser sincronizada com o SHA final 
 ## Preservacao dos avancos da Trilha 03
 
 Nenhum fluxo ja adiantado de identidade, portais, sessoes, confirmacao, recuperacao, codigo de seguranca ou separacao de papeis e removido ou recriado. A T02 e selada ao redor do checkpoint existente; a T03 deve reutilizar esses ativos.
+
+
+### Fechamento operacional de custo zero — 2026-09-21
+
+A política do proprietário é **custo zero**: nenhum branch Supabase cobrado foi criado. O gate remoto em Linux foi testado em `ubuntu-latest` e `ubuntu-24.04`; em ambos, o GitHub criou os jobs de `development` e `homologation`, mas encerrou cada job antes do primeiro step, com `steps: null`. Isso caracteriza indisponibilidade de provisionamento do runner, não falha dos testes ou da aplicação.
+
+Para não degradar segurança nem fabricar resultados:
+- os 11 casos que exigem banco/Auth permanecem como integração real e continuam fail-closed contra production;
+- os 20 casos seguros (contrato, PII, reautenticação e payload malicioso) passaram a fazer parte obrigatória do build Vercel;
+- `verify:t02:evidence` garante a presença exata dos 31 casos e os invariantes do código;
+- production foi validado por A1–A18 e por prova mutacional transacional com `ROLLBACK`, sem persistir fixtures;
+- foi adicionado `.github/workflows/trilha02-free-seal-fallback.yml`, em runner padrão macOS, para executar os 20 casos seguros, validar os 31 casos versionados, exigir Vercel `success`, exigir `/api/ready` sincronizado com o mesmo SHA e somente então criar a tag Git `trilha02-v1`.
+
+Nenhuma implementação já adiantada da Trilha 03 foi removida, simplificada ou recriada.

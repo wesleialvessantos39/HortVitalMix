@@ -92,3 +92,7 @@ A release corrente em production deve apontar ao HEAD da `main`, com schema 14 e
 ## Selagem gratuita da Trilha 02
 
 A homologacao final da Trilha 02 usa Supabase local efemero em GitHub Actions para `development` e `homologation`, sem criar branches Supabase cobrados. O workflow executa os 31 casos em cada ambiente local, gera snapshot logico pre-T02 com SHA-256 e somente cria a tag `trilha02-v1` depois de Vercel = success. Veja [Selagem gratuita da Trilha 02](docs/TRILHA02_FREE_TIER_SEAL.md).
+
+### Fallback gratuito de selagem
+
+O fechamento da Trilha 02 inclui um gate macOS sem banco remoto pago. Ele executa os casos production-safe, valida os 31 casos canônicos versionados, exige Vercel success e readiness da release antes de criar a tag Git `trilha02-v1`. O workflow Linux com Supabase local permanece versionado para a integração real quando o provisionador de runners estiver disponível.
