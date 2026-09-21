@@ -1,5 +1,113 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-21 — Correção definitiva da estratégia Free-Tier e eliminação da dependência de GitHub Actions
+
+Status: **inconsistência de CI Free-Tier resolvida no repositório; projeto continua operando sem dependência de recurso pago**.
+
+### Regra operacional vigente
+
+Durante a fase atual, o HortiVitalMix utiliza:
+
+- **Supabase Free**;
+- **GitHub** para repositório e versionamento;
+- **Vercel Free** para deployment quando disponível.
+
+Nenhum gate de desenvolvimento pode exigir contratação paga para permitir a continuidade do projeto.
+
+O **Manual Mestre Técnico v10** registra expressamente o cenário de GitHub Actions encerrando antes do primeiro step (`steps: []`, `runner_id: 0`) e define como prevenção arquitetural:
+
+- workflow de CI removido do repositório;
+- validação local por `npm run homologate`;
+- GitHub Actions fora do caminho crítico;
+- Vercel como gate adicional de build/deployment;
+- restrição de deploy automático de branches para preservar a cota Free;
+- snapshot manual no Supabase Free quando PITR não estiver disponível.
+
+### Inconsistência encontrada
+
+Apesar dessa regra já constar do manual e da documentação do projeto, ainda existia `.github/workflows/ci.yml` disparando em `push` e `pull_request`.
+
+Esse workflow não executava os steps: os runs observados terminavam antes da alocação de runner. Além de não produzir evidência válida, isso fazia a auditoria da Trilha 02 tratar incorretamente “GitHub Actions verde” como pendência obrigatória.
+
+Também havia documentação antiga misturando schema 8/Trilha 01 com o estado atual schema 14, além de `npm run test:t02` poder executar com integração pulada e dar aparência enganosa de suíte completa.
+
+### Correções aplicadas no GitHub
+
+- workflow `.github/workflows/ci.yml` **removido**;
+- criado `npm run verify:free` para o gate diário gratuito: migrations manifest + typecheck + security check + testes unitários + build;
+- `npm run test:t02:unit` separado para os 13 casos sem banco;
+- `npm run test:t02:integration` passa a exigir integração real;
+- `npm run test:t02` encadeia unit + integration e não pode representar “31/31” quando a integração estiver desabilitada;
+- `scripts/require-integration.ts` deixa de usar referência de production hardcoded e exige `HVM_PROD_PROJECT_REF` como trava explícita;
+- integration continua restrita a `APP_ENV=development` e a um `SUPABASE_PROJECT_REF` diferente de production;
+- `docs/CI_STRATEGY.md` atualizado para a estratégia Free-Tier real;
+- `docs/DEPLOY_RUNBOOK.md` reconciliado;
+- `docs/FREE_TIER_ENVIRONMENT_STRATEGY.md` reconciliado;
+- `README.md` atualizado;
+- `docs/TRILHA02_VALIDACAO.md` atualizado;
+- `vercel.json` preservado porque já contém `deploymentEnabled.main=true` e `"*": false`.
+
+Commits principais desta correção:
+
+- `dad01e0415f01eef9387d4f01b7d821fd1e4bd65` — scripts Free-Tier no `package.json`;
+- `ee03243bf0c2267fefdaba3ddddfaf427e663361` — gate seguro de integration;
+- `8c95ad7e940650adf53201376ffb0c12fc78033a` — remoção do GitHub Actions;
+- `bbe70d3bdbfc5cabbcfc418e5407a2129c8e6c18` — estratégia de CI;
+- `bba521e709e816065314bf64b8e525ccba121472` — runbook;
+- `8d0fca851e16f2fe565ba89f341f3aed9536837d` — estratégia de ambientes Free;
+- `cffbefca127e1e6b4248a112f6ee29eee3f37ce9` — README;
+- `635fb834a69e2c61d22d53e96611a212f88d360d` — auditoria da Trilha 02 reconciliada.
+
+### Supabase — estado real observado
+
+Na conexão disponível em 2026-09-21, somente o projeto canônico **HortVitalMix** (`xipbsazvymkqqfmfegwu`) aparece como `ACTIVE_HEALTHY`.
+
+O banco já havia sido auditado nesta rodada com as invariantes da Trilha 02 satisfeitas no schema lógico **14**.
+
+Como nenhum development isolado está atualmente visível nessa conexão, a regra é:
+
+- **não executar testes destrutivos de integração contra production**;
+- usar `npm run verify:free` para o ciclo diário;
+- executar os 31 casos completos apenas quando houver development Free isolado;
+- nunca criar evidência fictícia por meio de skipped tests.
+
+### Vercel — estado real observado
+
+A equipe conectada ao ChatGPT retorna atualmente **0 projetos**.
+
+Por economia de cota Free:
+
+- não disparar deploys repetidos apenas para produzir evidência;
+- branches diferentes de `main` permanecem com deployment automático desabilitado;
+- quando o projeto Vercel estiver visível/conectado, o deployment deve ser deliberado e seguido por `verify:deploy`.
+
+### Backup e migrations no plano Free
+
+Enquanto não houver PITR:
+
+- snapshot/backup manual antes de migration relevante em production;
+- migrations sempre aditivas;
+- nenhuma migration aplicada é reescrita;
+- nenhum downgrade para schema histórico de trilha;
+- nenhuma alegação de backup automático que o plano atual não ofereça.
+
+### Status da Trilha 02 após esta correção
+
+A antiga pendência “GitHub Actions precisa ficar verde” está **encerrada e removida**, porque GitHub Actions não integra mais o gate canônico.
+
+Continuam como evidências reais necessárias para selagem final, quando operacionalmente disponíveis sem custo:
+
+- integração real em development isolado;
+- foundation no ambiente de promoção;
+- snapshot/backup manual aplicável;
+- deployment Vercel READY verificável;
+- release em `app_releases`;
+- tag `trilha02-v1` como último passo.
+
+**Nenhuma dessas evidências será simulada nem criada apenas para mascarar limitação do plano Free.**
+
+---
+
 ## 2026-09-21 — Volume 01 / Trilha 02: auditoria de conformidade e correção
 
 Status: **núcleo funcional implementado e banco real validado; homologação final ainda bloqueada por gates operacionais externos**.
