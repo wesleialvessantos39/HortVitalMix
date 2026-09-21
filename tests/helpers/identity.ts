@@ -98,8 +98,21 @@ export async function createEphemeralIdentity(options?: {
     accessToken: signedIn.data.session.access_token,
     personId,
     cleanup: async () => {
+      if (personId) {
+        await dbPool
+          .query("DELETE FROM public.app_producer_profiles WHERE person_id=$1", [personId])
+          .catch(() => undefined);
+      }
+      await dbPool
+        .query("DELETE FROM public.app_user_role_assignments WHERE user_id=$1", [userId])
+        .catch(() => undefined);
+      await dbPool
+        .query("DELETE FROM public.app_people WHERE user_id=$1", [userId])
+        .catch(() => undefined);
       await supabaseAdmin.auth.admin.deleteUser(userId).catch(() => undefined);
-      await dbPool.query("DELETE FROM public.app_users WHERE id=$1", [userId]).catch(() => undefined);
+      await dbPool
+        .query("DELETE FROM public.app_users WHERE id=$1", [userId])
+        .catch(() => undefined);
     },
   };
 }
