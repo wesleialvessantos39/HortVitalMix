@@ -151,9 +151,17 @@ Nenhum development isolado está atualmente visível nessa conexão. Por seguran
 
 ### Vercel
 
-A equipe conectada atualmente retorna **0 projetos**.
+A conexão Vercel disponível ao ChatGPT continua sem permissão suficiente para listar o projeto/deployments: a listagem da equipe retorna 0 projetos e a tentativa de listar deployments de `hortvitalmix` retorna `403 Forbidden`.
 
-Isso impede comprovar um deployment novo da Trilha 02 por essa conexão, mas não autoriza consumir cota com tentativas automáticas repetidas.
+Apesar dessa limitação do conector, a integração oficial **Vercel → GitHub** fornece evidência verificável do deployment:
+
+- `70bbf3566ffe39da2ea067bf85360148428665f0`: último deployment verde antes da regressão;
+- `61dffbaf9804ee8cf4900c126a834d83cb1055fd`: primeiro deployment `failure`, após inclusão do helper de identidade de testes;
+- `da5a0d58270d48bdf9b5c4a2288d6c4985e33cc0`: deployment **success**, descrição oficial `Deployment has completed`.
+
+A causa do build foi eliminada com duas correções: referências não anuláveis locais no helper de integração e separação do typecheck de produção em `tsconfig.build.json`.
+
+O build/deployment da `main` está novamente funcional. A verificação HTTP pós-deploy (`verify:deploy`) permanece separada porque o conector atual não consegue acessar o projeto/domínio com as permissões necessárias.
 
 ### GitHub Actions
 
@@ -164,7 +172,8 @@ Isso impede comprovar um deployment novo da Trilha 02 por essa conexão, mas nã
 - [ ] Executar os 31 casos com integration real em development isolado Free.
 - [ ] Executar `verify:foundation` no ambiente de promoção aplicável.
 - [ ] Registrar snapshot/backup manual compatível com o plano Free antes de migration/release relevante.
-- [ ] Tornar um projeto Vercel verificável e obter deployment READY.
+- [x] Build/deployment Vercel da `main` novamente aprovado no commit `da5a0d58270d48bdf9b5c4a2288d6c4985e33cc0`.
+- [ ] Executar a verificação HTTP pós-deploy (`verify:deploy`) quando a conexão Vercel permitir acesso ao projeto/domínio.
 - [ ] Registrar release em `app_releases` somente após os gates.
 - [ ] Criar `trilha02-v1` somente no último passo.
 - [ ] Atualizar o Livro-Raiz com as evidências reais.
@@ -175,4 +184,6 @@ As inconsistências de código, documentação e estratégia Free-Tier identific
 
 A Trilha 02 não depende mais de GitHub Actions e não usa recurso pago como requisito de continuidade.
 
-O que permanece aberto é **evidência operacional de homologação**, não uma inconsistência que deva ser falsamente preenchida.
+A falha de build Vercel observada em 2026-09-21 também foi corrigida e o deployment da `main` voltou a `success`.
+
+O que permanece aberto é **evidência operacional de homologação integral** (integração real em development isolado, verificação HTTP pós-deploy, release/snapshot/tag), não uma falha conhecida do build.

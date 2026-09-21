@@ -1,5 +1,74 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-21 — Correção da falha de build Vercel e restauração do deployment Production
+
+Status: **causa raiz do build identificada e corrigida; deployment Vercel da `main` voltou a concluir com `success`**.
+
+### Evidência cronológica
+
+- último commit anterior à regressão com Vercel verde: `70bbf3566ffe39da2ea067bf85360148428665f0` — descrição oficial `Deployment has completed`;
+- primeiro commit que passou a falhar: `61dffbaf9804ee8cf4900c126a834d83cb1055fd` — adicionou exclusivamente `tests/helpers/identity.ts`;
+- todos os commits seguintes herdaram a falha até a correção do pipeline de build;
+- correção final do build: `da5a0d58270d48bdf9b5c4a2288d6c4985e33cc0`;
+- status oficial Vercel desse commit no GitHub: **success — `Deployment has completed`**, atualizado em 2026-09-21T17:11:18Z.
+
+### Causa raiz técnica
+
+O `tsconfig.json` principal possui `strict: true` e inclui `tests/**`.
+
+O helper `tests/helpers/identity.ts` validava `supabaseAdmin` e `dbPool` contra `null` no início de `createEphemeralIdentity`, porém reutilizava diretamente esses **imports anuláveis dentro da closure assíncrona `cleanup()`**.
+
+O TypeScript não preserva esse narrowing do import dentro da closure, produzindo erro de compilação do tipo:
+
+`TS18047: '<referência>' is possibly 'null'.`
+
+Como o comando de produção era `npm run build -> npm run typecheck -> tsc --noEmit`, um erro de helper de teste bloqueava o deployment inteiro, mesmo não pertencendo ao bundle de produção.
+
+### Correções aplicadas
+
+1. `tests/helpers/identity.ts`
+   - captura `supabaseAdmin` e `dbPool` já validados em constantes locais não anuláveis `admin` e `pool`;
+   - `cleanup()` utiliza apenas essas referências locais;
+   - commit: `3c7d93021c2a58769bb44a8f38f38067ca7084dc`.
+
+2. Separação entre typecheck de homologação e typecheck de produção
+   - criado `tsconfig.build.json`;
+   - production inclui somente `src`, `server`, `shared`, `api` e arquivos TypeScript raiz;
+   - `tests` e `scripts` ficam fora do typecheck da Vercel;
+   - o `typecheck` completo continua existindo para validação/homologação;
+   - criado `typecheck:app = tsc --noEmit -p tsconfig.build.json`;
+   - `npm run build` passa a usar `typecheck:app`;
+   - commits: `5d4dd5139ea3dff7122275adc58bdabbf05565c9` e `da5a0d58270d48bdf9b5c4a2288d6c4985e33cc0`.
+
+### Resultado real
+
+O deployment do commit `da5a0d58270d48bdf9b5c4a2288d6c4985e33cc0` foi registrado pela integração oficial Vercel/GitHub como:
+
+- contexto: `Vercel`;
+- estado: `success`;
+- descrição: `Deployment has completed`.
+
+Portanto, a falha de build mostrada no e-mail do proprietário está **corrigida**.
+
+### Limitação da conexão Vercel usada pelo ChatGPT
+
+A conexão Vercel disponível ao ChatGPT consegue listar a equipe, mas atualmente:
+
+- retorna zero projetos em `list_projects`;
+- retorna `403 Forbidden` ao tentar listar deployments do projeto `hortvitalmix`;
+- por isso não foi possível ler os logs internos diretamente pelo conector nem executar a verificação HTTP pós-deploy por ele.
+
+Essa limitação de permissão do conector **não invalida o deployment**, pois o status oficial publicado pela própria Vercel no commit da `main` retornou `success`.
+
+### Regra preventiva
+
+- testes continuam sendo verificados no gate completo, mas não integram o typecheck do bundle de produção;
+- commits puramente documentais na `main` continuam podendo disparar Vercel enquanto `deploymentEnabled.main=true`; evitar commits fragmentados para preservar a cota Free;
+- GitHub Actions permanece fora do caminho crítico;
+- nenhuma evidência de homologação será inferida apenas pelo build: integração real, release e demais gates continuam separados.
+
+---
+
 ## 2026-09-21 — Correção definitiva da estratégia Free-Tier e eliminação da dependência de GitHub Actions
 
 Status: **inconsistência de CI Free-Tier resolvida no repositório; projeto continua operando sem dependência de recurso pago**.
@@ -247,7 +316,6 @@ Correções:
 ---
 
 ## 2026-09-19 — Hotfix definitivo do cadastro via Supabase RPC
-
 Status: **migration 11 aplicada e validada em Production; PR #7 promovido à `main`; deployment funcional Vercel aprovado com `success`**.
 
 Diagnóstico:
@@ -498,7 +566,6 @@ Typecheck e build aprovados; 23 testes unitários/HTTP e 7 testes Playwright apr
 - Advisor da função preexistente `rls_auto_enable` requer revisão administrativa: inspeção identifica retorno `event_trigger` e `search_path=pg_catalog`; o aviso não demonstra uma RPC comum explorável. A função preexistente foi preservada. Helpers de autorização autenticados possuem search_path e escopo da própria identidade.
 
 ### Checklist da entrega
-
 - [x] Backend escrito e endpoints locais testados; integração externa completa pendente.
 - [x] Frontend escrito e ligado aos contratos da API.
 - [x] Padrão visual dos HTMLs aplicado ao shell desktop/mobile.
