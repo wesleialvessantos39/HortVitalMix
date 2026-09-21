@@ -16,7 +16,17 @@ function readCookie(req: Request, name: string) {
   }
 }
 
-function issuedAtFromToken(token: string, fallback?: string | null) {
+function resolveSessionIssuedAt(token: string, lastSignInAt?: string | null) {
+  // O Manual Mestre Técnico v10 define last_sign_in_at como o proxy canônico
+  // da reautenticação recente na Trilha 02. Priorizá-lo evita que um refresh
+  // automático do access token "rejuvenesça" indevidamente a janela de 15 min.
+  if (lastSignInAt) {
+    const parsed = new Date(lastSignInAt).getTime();
+    if (Number.isFinite(parsed)) return lastSignInAt;
+  }
+
+  // Fallback fail-safe para identidades legadas sem last_sign_in_at.
+  // O token já foi validado por supabaseAdmin.auth.getUser acima.
   try {
     const payload = JSON.parse(
       Buffer.from(token.split(".")[1], "base64url").toString(),
@@ -24,9 +34,10 @@ function issuedAtFromToken(token: string, fallback?: string | null) {
     if (typeof payload.iat === "number" && Number.isFinite(payload.iat))
       return new Date(payload.iat * 1000).toISOString();
   } catch {
-    // Usa last_sign_in_at como proxy permitido pelo Manual v10.
+    // Timestamp inválido será recusado pelo serviço de reautenticação.
   }
-  return fallback ?? new Date(0).toISOString();
+
+  return new Date(0).toISOString();
 }
 
 export async function adminSessionMiddleware(
@@ -118,7 +129,10 @@ export async function adminSessionMiddleware(
   req.adminActor = {
     userId: userData.user.id,
     role: "platform_super_admin",
-    sessionIssuedAt: issuedAtFromToken(token, userData.user.last_sign_in_at),
+    sessionIssuedAt: resolveSessionIssuedAt(
+      token,
+      userData.user.last_sign_in_at,
+    ),
   };
   next();
 }
