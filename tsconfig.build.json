@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src",
+    "server",
+    "shared",
+    "api",
+    "*.ts"
+  ],
+  "exclude": [
+    "tests",
+    "scripts",
+    "dist",
+    "node_modules"
+  ]
+}
