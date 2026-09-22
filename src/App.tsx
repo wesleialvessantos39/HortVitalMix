@@ -64,6 +64,7 @@ const accountPaths = new Set([
   "/entrar/super-administrador",
   "/administracao",
   "/admin/entrar",
+  "/admin/painel",
   "/cadastro/consumidor",
   "/cadastro/produtor",
   "/acesso/administracao",
@@ -79,9 +80,19 @@ export default function App() {
     [query, setQuery] = useState(""),
     [category, setCategory] = useState(categories[0]);
   const dialog = useRef<HTMLDialogElement>(null);
-  const { session: shellSession } = useSession();
+  const {
+    session: shellSession,
+    adoptSession,
+    refresh: refreshSession,
+  } = useSession();
   const display = config ?? fallback;
   const accountTarget = shellSession ? "/minha-conta" : "/conta";
+  const adminTarget =
+    shellSession &&
+    (shellSession.activeRole === "platform_admin" ||
+      shellSession.activeRole === "platform_super_admin")
+      ? "/admin/painel"
+      : "/administracao";
   useEffect(() => {
     const abort = new AbortController();
     api<unknown>("/v1/config", { signal: abort.signal })
@@ -190,7 +201,7 @@ export default function App() {
               className="icon admin-home-entry"
               aria-label="Administração"
               title="Administração"
-              onClick={() => go("/administracao")}
+              onClick={() => go(adminTarget)
             >
               <ShieldCheck />
             </button>
@@ -227,7 +238,7 @@ export default function App() {
               className="icon admin-home-entry"
               aria-label="Administração"
               title="Administração"
-              onClick={() => go("/administracao")}
+              onClick={() => go(adminTarget)
             >
               <ShieldCheck />
             </button>
@@ -248,7 +259,13 @@ export default function App() {
         ) : path === "/cadastro" ? (
           <ChoosePortalPage onNavigate={go} />
         ) : accountPaths.has(path) ? (
-          <Account path={path} onNavigate={go} />
+          <Account
+            path={path}
+            onNavigate={go}
+            session={shellSession}
+            onSessionAdopt={adoptSession}
+            onSessionRefresh={refreshSession}
+          />
         ) : (
           <>
             <aside>
@@ -402,7 +419,7 @@ export default function App() {
                     </p>
                     <button
                       className="text-button"
-                      onClick={() => go("/entrar")}
+                      onClick={() => go("/cadastro")}
                     >
                       Conheça as opções de cadastro <ChevronRight size={15} />
                     </button>

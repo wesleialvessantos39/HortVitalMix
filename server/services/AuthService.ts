@@ -1,7 +1,6 @@
 import {
   createSupabasePublicClient,
   supabaseAdmin,
-  supabasePublic,
 } from "../supabase/client.ts";
 import { reportFailure } from "../config/reportFailure.ts";
 import type { Registration } from "../../shared/contracts/auth.ts";
@@ -210,11 +209,18 @@ async function findExistingPerson(
   if (!supabaseAdmin) return null;
   const admin = supabaseAdmin as any;
 
-  const byCpf = await admin
-    .from("app_people")
-    .select("id,user_id,cpf_normalized,email_normalized")
-    .eq("cpf_normalized", data.cpf)
-    .maybeSingle();
+  const [byCpf, byEmail] = await Promise.all([
+    admin
+      .from("app_people")
+      .select("id,user_id,cpf_normalized,email_normalized")
+      .eq("cpf_normalized", data.cpf)
+      .maybeSingle(),
+    admin
+      .from("app_people")
+      .select("id,user_id,cpf_normalized,email_normalized")
+      .eq("email_normalized", data.email)
+      .maybeSingle(),
+  ]);
 
   if (byCpf.error) {
     reportFailure({
@@ -224,12 +230,6 @@ async function findExistingPerson(
     });
     throw registrationError("REGISTRATION_DATABASE_UNAVAILABLE", 503);
   }
-
-  const byEmail = await admin
-    .from("app_people")
-    .select("id,user_id,cpf_normalized,email_normalized")
-    .eq("email_normalized", data.email)
-    .maybeSingle();
 
   if (byEmail.error) {
     reportFailure({
@@ -350,7 +350,6 @@ export async function register(
   data: Registration,
   role: "consumer" | "producer",
   requestId: string,
-  emailRedirectTo?: string,
 ) {
   if (!supabaseAdmin)
     throw registrationError("REGISTRATION_AUTH_UNAVAILABLE", 503);
@@ -475,36 +474,12 @@ export async function register(
     throw registrationError("REGISTRATION_UNEXPECTED_FAILURE", 503);
   }
 
-  let confirmationDispatchAccepted = false;
-  if (supabasePublic) {
-    try {
-      const { error } = await supabasePublic.auth.resend({
-        type: "signup",
-        email: data.email,
-        options: emailRedirectTo ? { emailRedirectTo } : undefined,
-      });
-      confirmationDispatchAccepted = !error;
-      if (error)
-        reportFailure({
-          category: "confirmation_dispatch_failed",
-          requestId,
-          detail: error.code ?? String(error.status ?? "unknown"),
-        });
-    } catch (error) {
-      reportFailure({
-        category: "confirmation_dispatch_failed",
-        requestId,
-        detail: (error as { name?: string })?.name ?? "unknown",
-      });
-    }
-  } else {
-    reportFailure("confirmation_dispatch_unavailable", requestId);
-  }
 
   return {
     userId,
     confirmationRequired: true,
-    confirmationDispatchAccepted,
+    confirmationDispatchAccepted: false,
+    confirmationDispatchDeferred: true,
     existingIdentity: false,
     roleAdded: true,
     role,

@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
-import { dbPool } from "../db/pool.ts";
 import { supabaseAdmin } from "../supabase/client.ts";
+import { resolveIdentityAccess } from "../services/IdentityAccessService.ts";
 import { reportFailure } from "../config/reportFailure.ts";
 
 function readCookie(req: Request, name: string) {
@@ -45,7 +45,7 @@ export async function sessionMiddleware(
     authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
   const token = bearer || readCookie(req, "hvm_access");
 
-  if (!token || !supabaseAdmin || !dbPool) {
+  if (!token || !supabaseAdmin) {
     next();
     return;
   }
@@ -63,45 +63,17 @@ export async function sessionMiddleware(
       return;
     }
 
-    const liveSession = await dbPool.query(
-      "SELECT 1 FROM auth.sessions WHERE id=$1 AND user_id=$2",
-      [sessionId, data.user.id],
-    );
-    if (!liveSession.rowCount) {
+    const access = await resolveIdentityAccess(data.user.id, sessionId);
+    if (!access?.liveSession || access.status !== "active") {
       next();
       return;
     }
-
-    const account = await dbPool.query<{ status: string }>(
-      "SELECT status FROM public.app_users WHERE id=$1",
-      [data.user.id],
-    );
-
-    if (account.rows[0]?.status !== "active") {
-      next();
-      return;
-    }
-
-    const roles = await dbPool.query<{ role_code: string }>(
-      `SELECT role_code
-         FROM public.app_user_role_assignments
-        WHERE user_id=$1
-          AND revoked_at IS NULL
-          AND (expires_at IS NULL OR expires_at > now())
-        ORDER BY role_code`,
-      [data.user.id],
-    );
-
-    const person = await dbPool.query<{ id: string }>(
-      "SELECT id FROM public.app_people WHERE user_id=$1 LIMIT 1",
-      [data.user.id],
-    );
 
     req.actor = {
       userId: data.user.id,
       email: data.user.email ?? null,
-      roles: roles.rows.map((row) => row.role_code),
-      personId: person.rows[0]?.id ?? null,
+      roles: access.roles,
+      personId: access.personId,
     };
 
     next();

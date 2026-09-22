@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { CPFInput } from "./forms/CPFInput";
 import { PhoneInput } from "./forms/PhoneInput";
 import { PasswordStrengthMeter } from "./forms/PasswordStrengthMeter";
+import type { ShellSession } from "../hooks/useSession";
 import {
   NewPasswordSchema,
   PASSWORD_MAX_LENGTH,
@@ -14,12 +15,6 @@ import {
   type PortalRole,
 } from "../../shared/contracts/auth";
 
-type Session = {
-  userId: string;
-  email: string;
-  roles: string[];
-  activeRole?: string | null;
-};
 
 type Mode =
   | "login"
@@ -215,12 +210,17 @@ function PasswordFields({
 export function Account({
   path = "/entrar",
   onNavigate,
+  session,
+  onSessionAdopt,
+  onSessionRefresh,
 }: {
   path?: string;
   onNavigate?: (to: string) => void;
+  session: ShellSession | null;
+  onSessionAdopt: (session: ShellSession | null) => void;
+  onSessionRefresh: () => Promise<void>;
 }) {
   const [mode, setMode] = useState<Mode>(() => modeFromPath(path));
-  const [session, setSession] = useState<Session | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const [securityFlow, setSecurityFlow] = useState(false);
@@ -237,64 +237,64 @@ export function Account({
     setLoginPasswordVisible(false);
     setSecurityChallengeId(null);
     setFieldErrors({});
+    const params = new URLSearchParams(location.search);
+    if (params.get("registered") === "1")
+      setNotice("Cadastro realizado. A confirmação de e-mail está sendo enviada.");
+    else if (params.get("roleAdded") === "1")
+      setNotice("Novo perfil adicionado à sua conta. Você já pode entrar.");
+    else
+      setNotice("");
   }, [path]);
 
   useEffect(() => {
     let cancelled = false;
 
-    async function bootstrap() {
+    async function bootstrapSecurityLink() {
       const hash = new URLSearchParams(location.hash.replace(/^#/, ""));
       const accessToken = hash.get("access_token");
       const refreshToken = hash.get("refresh_token");
       const type = hash.get("type");
       const emailPortalRole = portalRoleFromSearch();
 
-      if (accessToken && refreshToken) {
-        try {
-          await api("/v1/auth/import-session", {
-            method: "POST",
-            body: JSON.stringify({
-              accessToken,
-              refreshToken,
-              portalRole: emailPortalRole ?? undefined,
-            }),
-          });
-
-          history.replaceState({}, "", location.pathname + location.search);
-
-          if (!cancelled && type === "signup") {
-            setNotice(
-              "E-mail confirmado com sucesso. Sua conta já está pronta para uso.",
-            );
-          }
-
-          if (!cancelled && (type === "recovery" || path === "/redefinir-senha")) {
-            setMode("reset");
-            setNotice("Acesso de recuperação validado. Defina sua nova senha.");
-            return;
-          }
-        } catch {
-          if (!cancelled) {
-            setNotice(
-              "O link de segurança expirou ou já foi utilizado. Solicite um novo.",
-            );
-          }
-        }
-      }
+      if (!accessToken || !refreshToken) return;
 
       try {
-        const current = await api<Session>("/v1/auth/session");
-        if (!cancelled) setSession(current);
+        await api("/v1/auth/import-session", {
+          method: "POST",
+          body: JSON.stringify({
+            accessToken,
+            refreshToken,
+            portalRole: emailPortalRole ?? undefined,
+          }),
+        });
+
+        history.replaceState({}, "", location.pathname + location.search);
+        await onSessionRefresh();
+
+        if (!cancelled && type === "signup") {
+          setNotice(
+            "E-mail confirmado com sucesso. Sua conta já está pronta para uso.",
+          );
+        }
+
+        if (!cancelled && (type === "recovery" || path === "/redefinir-senha")) {
+          setMode("reset");
+          setNotice("Acesso de recuperação validado. Defina sua nova senha.");
+        }
       } catch {
-        // Estado sem sessão é esperado nas telas públicas.
+        if (!cancelled) {
+          setNotice(
+            "O link de segurança expirou ou já foi utilizado. Solicite um novo.",
+          );
+        }
       }
     }
 
-    void bootstrap();
+    void bootstrapSecurityLink();
     return () => {
       cancelled = true;
     };
-  }, [path]);
+  }, [path, onSessionRefresh]);
 
   function navigate(to: string) {
     if (onNavigate) onNavigate(to);
@@ -397,13 +397,19 @@ export function Account({
           portalRole === "platform_admin" || portalRole === "platform_super_admin"
             ? "/v1/auth/admin-login"
             : "/v1/auth/login";
-        await api(loginEndpoint, {
-          method: "POST",
-          body: JSON.stringify({ ...form, portalRole }),
-        });
-        setSession(await api<Session>("/v1/auth/session"));
-        window.dispatchEvent(new Event("hvm:session-changed"));
-        navigate("/minha-conta");
+        const authenticated = await api<ShellSession & { status: "authenticated" }>(
+          loginEndpoint,
+          {
+            method: "POST",
+            body: JSON.stringify({ ...form, portalRole }),
+          },
+        );
+        onSessionAdopt(authenticated);
+        navigate(
+          portalRole === "platform_admin" || portalRole === "platform_super_admin"
+            ? "/admin/painel"
+            : "/minha-conta",
+        );
         return;
       }
 
@@ -411,6 +417,7 @@ export function Account({
         const result = await api<{
           confirmationRequired: boolean;
           confirmationDispatchAccepted: boolean;
+          confirmationDispatchDeferred?: boolean;
           existingIdentity?: boolean;
           roleAdded?: boolean;
         }>("/v1/auth/register-" + mode, {
@@ -418,17 +425,25 @@ export function Account({
           body: JSON.stringify(form),
         });
 
-        setNotice(
-          result.existingIdentity && result.roleAdded
-            ? (mode === "producer"
-                ? "Perfil de Produtor adicionado à sua conta existente. Agora o mesmo CPF possui acesso separado como Consumidor e Produtor."
-                : "Perfil de Consumidor adicionado à sua conta existente.")
-            : result.confirmationDispatchAccepted
-              ? "Cadastro realizado. Enviamos a confirmação para o seu e-mail."
-              : "Cadastro realizado, mas o e-mail não pôde ser enviado agora. Use “Reenviar confirmação”.",
-        );
+        const targetRole = mode;
+        const targetEmail = String(form.email ?? "");
+        if (!result.existingIdentity && result.confirmationRequired) {
+          void api("/v1/auth/resend-confirmation", {
+            method: "POST",
+            body: JSON.stringify({
+              email: targetEmail,
+              portalRole: targetRole,
+            }),
+          }).catch(() => undefined);
+        }
+
         setMode("login");
-        navigate(loginPathForRole(mode));
+        navigate(
+          loginPathForRole(targetRole) +
+            (result.existingIdentity && result.roleAdded
+              ? "?roleAdded=1"
+              : "?registered=1"),
+        );
         return;
       }
 
@@ -504,7 +519,7 @@ export function Account({
             flowToken: recoveryFlow,
           }),
         });
-        setSession(null);
+        onSessionAdopt(null);
         setMode("login");
         setNotice("Senha atualizada. Entre novamente pelo perfil correspondente.");
         navigate(loginPathForRole(securityRole));
@@ -681,7 +696,7 @@ export function Account({
           portalRole: targetRole,
         }),
       });
-      setSession(null);
+      onSessionAdopt(null);
       setSecurityFlow(false);
       setSecurityChallengeId(null);
       setMode("login");
@@ -701,6 +716,73 @@ export function Account({
       setBusy(false);
     }
   }
+
+  if (session && path === "/admin/painel") {
+    const isAdmin =
+      session.activeRole === "platform_admin" ||
+      session.activeRole === "platform_super_admin";
+
+    if (!isAdmin)
+      return (
+        <section className="account card">
+          <span className="eyebrow">Administração</span>
+          <h1>Portal administrativo</h1>
+          <p>Esta sessão não possui um perfil administrativo ativo.</p>
+          <button
+            className="primary"
+            type="button"
+            onClick={() => navigate("/administracao")}
+          >
+            Escolher acesso administrativo
+          </button>
+        </section>
+      );
+
+    return (
+      <section className="account card admin-account-panel">
+        <span className="eyebrow">Administração</span>
+        <h1>Painel administrativo</h1>
+        <p>{session.email}</p>
+        <p>
+          Acesso atual: <strong>{roleLabel(session.activeRole ?? "")}</strong>
+        </p>
+
+        {session.activeRole === "platform_super_admin" && (
+          <button
+            className="primary account-action"
+            type="button"
+            onClick={() => navigate("/admin/configuracao")}
+          >
+            Abrir Configuração Global — Trilha 02
+          </button>
+        )}
+
+        <button
+          className="secondary account-action"
+          type="button"
+          onClick={() => navigate("/minha-conta")}
+        >
+          Minha conta e segurança
+        </button>
+      </section>
+    );
+  }
+
+  if (path === "/admin/painel" && !session)
+    return (
+      <section className="account card">
+        <span className="eyebrow">Administração</span>
+        <h1>Sessão administrativa necessária</h1>
+        <p>Entre como Administrador ou Super administrador para abrir o painel.</p>
+        <button
+          className="primary"
+          type="button"
+          onClick={() => navigate("/administracao")}
+        >
+          Entrar na Administração
+        </button>
+      </section>
+    );
 
   if (session && path === "/minha-conta")
     return (
@@ -804,9 +886,8 @@ export function Account({
             setBusy(true);
             try {
               await api("/v1/auth/logout", { method: "POST" });
-              setSession(null);
-              window.dispatchEvent(new Event("hvm:session-changed"));
-            } catch {
+              onSessionAdopt(null);
+                          } catch {
               setNotice("Não foi possível encerrar a sessão. Tente novamente.");
             } finally {
               setBusy(false);
@@ -846,7 +927,12 @@ export function Account({
     );
 
 
-  if (mode === "login" && !portalRole && path !== "/administracao")
+  if (
+    mode === "login" &&
+    !portalRole &&
+    path !== "/administracao" &&
+    path !== "/admin/entrar"
+  )
     return (
       <section className="access-selector" aria-labelledby="account-access-title">
         <h1 id="account-access-title" className="visually-hidden">

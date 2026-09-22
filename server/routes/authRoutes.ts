@@ -18,6 +18,7 @@ import {
 } from "../supabase/client.ts";
 import { register } from "../services/AuthService.ts";
 import { dbPool } from "../db/pool.ts";
+import { resolveIdentityAccess } from "../services/IdentityAccessService.ts";
 import { classifyDbError, reportFailure } from "../config/reportFailure.ts";
 import { safeRequestOrigin } from "../security/origin.ts";
 import {
@@ -129,29 +130,6 @@ function sessionIdFromToken(token: string) {
   }
 }
 
-async function accountIsActive(userId: string) {
-  if (!dbPool) return false;
-  const row = await dbPool.query<{ status: string }>(
-    "SELECT status FROM public.app_users WHERE id=$1",
-    [userId],
-  );
-  return row.rows[0]?.status === "active";
-}
-
-async function activeRoles(userId: string) {
-  if (!dbPool) return [] as PortalRole[];
-  const rows = await dbPool.query<{ role_code: PortalRole }>(
-    "SELECT role_code FROM public.app_user_role_assignments WHERE user_id=$1 AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at>now()) ORDER BY role_code",
-    [userId],
-  );
-  return rows.rows.map((row) => row.role_code);
-}
-
-async function hasActiveRole(userId: string, role: PortalRole) {
-  const roles = await activeRoles(userId);
-  return roles.includes(role);
-}
-
 function loginPathForRole(role: PortalRole) {
   if (role === "consumer") return "/entrar/consumidor";
   if (role === "producer") return "/entrar/produtor";
@@ -174,6 +152,7 @@ async function handleLoginRequest(
   next: NextFunction,
   portal: "public" | "admin",
 ) {
+  const startedAt = Date.now();
   try {
     const input = LoginSchema.safeParse(req.body);
     if (!input.success) {
@@ -213,13 +192,20 @@ async function handleLoginRequest(
       res.status(403).json({ error: "EMAIL_CONFIRMATION_REQUIRED" });
       return;
     }
-    if (!(await accountIsActive(data.user.id))) {
+    const access = await resolveIdentityAccess(data.user.id);
+    if (!access) {
+      if (supabaseAdmin && data.access_token)
+        await supabaseAdmin.auth.admin.signOut(data.access_token, "local").catch(() => undefined);
+      res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
+      return;
+    }
+    if (access.status !== "active") {
       if (supabaseAdmin && data.access_token)
         await supabaseAdmin.auth.admin.signOut(data.access_token, "local").catch(() => undefined);
       res.status(403).json({ error: "ACCOUNT_UNAVAILABLE" });
       return;
     }
-    if (!(await hasActiveRole(data.user.id, portalRole))) {
+    if (!access.roles.includes(portalRole)) {
       if (supabaseAdmin && data.access_token)
         await supabaseAdmin.auth.admin.signOut(data.access_token, "local").catch(() => undefined);
       res.status(403).json({ error: "ROLE_NOT_ALLOWED_FOR_PORTAL", portalRole });
@@ -228,7 +214,14 @@ async function handleLoginRequest(
 
     setSession(res, data, portalRole);
     resetLoginRateLimit(req.clientIpHash);
-    res.json({ status: "authenticated", activeRole: portalRole });
+    res.setHeader("Server-Timing", "auth-login;dur=" + Math.max(0, Date.now() - startedAt));
+    res.json({
+      status: "authenticated",
+      userId: data.user.id,
+      email: data.user.email ?? null,
+      roles: access.roles,
+      activeRole: portalRole,
+    });
   } catch (error) {
     next(error);
   }
@@ -266,28 +259,38 @@ authRouter.post("/refresh", async (req, res, next) => {
     }
 
     const data = await response.json();
-    if (
-      !data.user?.email_confirmed_at ||
-      !(await accountIsActive(data.user.id))
-    ) {
+    if (!data.user?.email_confirmed_at) {
       clear(res);
-      res.status(403).json({
-        error: data.user?.email_confirmed_at
-          ? "ACCOUNT_UNAVAILABLE"
-          : "EMAIL_CONFIRMATION_REQUIRED",
-      });
+      res.status(403).json({ error: "EMAIL_CONFIRMATION_REQUIRED" });
+      return;
+    }
+
+    const access = await resolveIdentityAccess(data.user.id);
+    if (!access) {
+      res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
+      return;
+    }
+    if (access.status !== "active") {
+      clear(res);
+      res.status(403).json({ error: "ACCOUNT_UNAVAILABLE" });
       return;
     }
 
     const requestedRole = cookie(req, "hvm_portal_role") as PortalRole | null;
-    if (requestedRole && !(await hasActiveRole(data.user.id, requestedRole))) {
+    if (requestedRole && !access.roles.includes(requestedRole)) {
       clear(res);
       res.status(403).json({ error: "ROLE_NOT_ALLOWED_FOR_PORTAL" });
       return;
     }
 
     setSession(res, data, requestedRole);
-    res.json({ status: "authenticated", activeRole: requestedRole });
+    res.json({
+      status: "authenticated",
+      userId: data.user.id,
+      email: data.user.email ?? null,
+      roles: access.roles,
+      activeRole: requestedRole,
+    });
   } catch (error) {
     next(error);
   }
@@ -328,22 +331,15 @@ authRouter.post("/import-session", async (req, res, next) => {
       return;
     }
 
-    const live = await dbPool.query(
-      "SELECT 1 FROM auth.sessions WHERE id=$1 AND user_id=$2",
-      [sessionId, restored.data.user.id],
-    );
-
-    if (
-      !live.rowCount ||
-      !(await accountIsActive(restored.data.user.id))
-    ) {
+    const access = await resolveIdentityAccess(restored.data.user.id, sessionId);
+    if (!access?.liveSession || access.status !== "active") {
       res.status(401).json({ error: "SESSION_IMPORT_FAILED" });
       return;
     }
 
     if (
       input.data.portalRole &&
-      !(await hasActiveRole(restored.data.user.id, input.data.portalRole))
+      !access.roles.includes(input.data.portalRole)
     ) {
       await client.auth.signOut({ scope: "local" }).catch(() => undefined);
       res.status(403).json({ error: "ROLE_NOT_ALLOWED_FOR_PORTAL" });
@@ -353,6 +349,9 @@ authRouter.post("/import-session", async (req, res, next) => {
     setSession(res, restored.data.session, input.data.portalRole ?? null);
     res.json({
       status: "imported",
+      userId: restored.data.user.id,
+      email: restored.data.user.email ?? null,
+      roles: access.roles,
       activeRole: input.data.portalRole ?? null,
     });
   } catch (error) {
@@ -405,30 +404,25 @@ authRouter.get("/session", async (req, res, next) => {
       return;
     }
 
-    const liveSession = await dbPool.query(
-      "SELECT 1 FROM auth.sessions WHERE id=$1 AND user_id=$2",
-      [sessionId, id],
-    );
-    if (!liveSession.rowCount) {
+    const access = await resolveIdentityAccess(id, sessionId);
+    if (!access?.liveSession) {
       res.status(401).json({ error: "SESSION_EXPIRED" });
       return;
     }
-
-    if (!(await accountIsActive(id))) {
+    if (access.status !== "active") {
       res.status(403).json({ error: "ACCOUNT_UNAVAILABLE" });
       return;
     }
 
-    const roles = await activeRoles(id);
     const selected = cookie(req, "hvm_portal_role");
     const activeRole =
-      selected && roles.includes(selected as PortalRole)
+      selected && access.roles.includes(selected as PortalRole)
         ? (selected as PortalRole)
-        : roles[0] ?? null;
+        : access.roles[0] ?? null;
     res.json({
       userId: id,
       email: result.data.user.email,
-      roles,
+      roles: access.roles,
       activeRole,
     });
   } catch (error) {
@@ -808,6 +802,7 @@ authRouter.post("/change-password", async (req, res, next) => {
 
 for (const role of ["consumer", "producer"] as const)
   authRouter.post("/register-" + role, async (req, res) => {
+    const startedAt = Date.now();
     const parsed = (
       role === "producer" ? RegisterProducerSchema : RegisterConsumerSchema
     ).safeParse(req.body);
@@ -829,11 +824,8 @@ for (const role of ["consumer", "producer"] as const)
         parsed.data,
         role,
         res.locals.requestId,
-        redirectUrl(
-          req,
-          `/confirmar-contato?portal=${encodeURIComponent(role)}`,
-        ) ?? undefined,
       );
+      res.setHeader("Server-Timing", "auth-register;dur=" + Math.max(0, Date.now() - startedAt));
       res.status(201).json(result);
     } catch (error) {
       const message = (error as Error)?.message;

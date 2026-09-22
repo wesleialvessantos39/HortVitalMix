@@ -18,6 +18,10 @@ const checks={
   adminFrontend:account.includes('"/v1/auth/admin-login"'),
   cadastroRoute:app.includes('path === "/cadastro"'),
   sessionHook:app.includes("useSession"),
+  directLoginSession:account.includes("onSessionAdopt(authenticated)"),
+  adminPanel:account.includes('path === "/admin/painel"'),
+  adminSelectorFixed:account.includes('path !== "/admin/entrar"'),
+  publicCadastroEntry:app.includes('go("/cadastro")'),
 };
 if(Object.values(checks).some(v=>!v)){console.error(JSON.stringify({status:"failed",checks},null,2));process.exit(1);}
 console.log(JSON.stringify({status:"ok",checks},null,2));

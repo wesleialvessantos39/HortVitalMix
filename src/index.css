@@ -1381,3 +1381,27 @@ dialog p {
     margin: 0 4px 14px;
   }
 }
+
+
+/* Revisão final Trilha 03 — painel administrativo e responsividade */
+.admin-account-panel {
+  max-width: 680px;
+}
+.admin-account-panel .primary,
+.admin-account-panel .secondary {
+  min-height: 46px;
+}
+@media (min-width: 768px) and (max-width: 1199px) {
+  .admin-account-panel {
+    max-width: 640px;
+  }
+}
+@media (max-width: 767px) {
+  .admin-account-panel {
+    max-width: none;
+    padding-bottom: 24px;
+  }
+  .admin-account-panel .account-action {
+    min-height: 48px;
+  }
+}

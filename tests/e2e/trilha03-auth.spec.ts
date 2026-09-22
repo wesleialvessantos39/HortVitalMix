@@ -70,3 +70,17 @@ test("Trilha 03 — seleção pública nunca oferece papel administrativo", asyn
   expect(text).not.toContain("Super administrador");
   expect(text).not.toContain("Entrar como Administrador");
 });
+
+
+test("Trilha 03 — home expõe cadastro e admin/entrar mostra somente Administração", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await page.getByRole("button", { name: /Conheça as opções de cadastro/ }).click();
+  await expect(page).toHaveURL(/\/cadastro$/);
+  await expect(page.getByRole("heading", { name: "Como você quer participar?" })).toBeVisible();
+
+  await page.goto("/admin/entrar");
+  await expect(page.getByRole("heading", { name: "Administração" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Entrar como Consumidor" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Entrar como Produtor" })).toHaveCount(0);
+});

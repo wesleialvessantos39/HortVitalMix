@@ -72,18 +72,25 @@ export async function api<T>(
   let response = await doFetch(base + path, options, "same-origin");
 
   if (response.status === 401 && !retried && path === "/v1/auth/session") {
-    refreshing ??= fetch(base + "/v1/auth/refresh", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      signal: AbortSignal.timeout(10000),
-    })
-      .then((r) => r.ok)
-      .catch(() => false)
-      .finally(() => {
-        refreshing = null;
-      });
-    if (await refreshing) return api<T>(path, options, true);
+    const sessionFailure = await response
+      .clone()
+      .json()
+      .catch(() => ({} as { error?: string }));
+
+    if (sessionFailure?.error === "SESSION_EXPIRED") {
+      refreshing ??= fetch(base + "/v1/auth/refresh", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(10000),
+      })
+        .then((r) => r.ok)
+        .catch(() => false)
+        .finally(() => {
+          refreshing = null;
+        });
+      if (await refreshing) return api<T>(path, options, true);
+    }
   }
 
   if (response.status === 204) return undefined as T;

@@ -32,7 +32,7 @@
     "test:t02": "npm run test:t02:unit && npm run test:t02:integration",
     "typecheck:app": "tsc --noEmit -p tsconfig.build.json",
     "verify:t02:evidence": "node scripts/verify-trilha02-evidence.mjs",
-    "test:t03:unit": "vitest run tests/unit/trilha03AuthContracts.test.ts tests/unit/trilha03Normalization.test.ts tests/unit/trilha03RateLimit.test.ts",
+    "test:t03:unit": "vitest run tests/unit/trilha03AuthContracts.test.ts tests/unit/trilha03Normalization.test.ts tests/unit/trilha03RateLimit.test.ts tests/unit/trilha03Performance.test.ts",
     "test:t03:integration": "node --import tsx scripts/require-integration.ts && vitest run tests/integration/trilha03Identity.test.ts tests/integration/supabase.test.ts",
     "test:t03": "npm run test:t03:unit && npm run test:t03:integration",
     "verify:t03:evidence": "node scripts/verify-trilha03-evidence.mjs",
