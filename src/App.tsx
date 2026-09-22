@@ -87,6 +87,10 @@ export default function App() {
   } = useSession();
   const display = config ?? fallback;
   const accountTarget = shellSession ? "/minha-conta" : "/conta";
+  const publicPortalSession =
+    shellSession?.activeRole === "consumer" ||
+    shellSession?.activeRole === "producer";
+  const showAdministrationEntry = !publicPortalSession;
   const adminTarget =
     shellSession &&
     (shellSession.activeRole === "platform_admin" ||
@@ -197,14 +201,16 @@ export default function App() {
             >
               <Bell />
             </button>
-            <button
-              className="icon admin-home-entry"
-              aria-label="Administração"
-              title="Administração"
-              onClick={() => go(adminTarget)}
-            >
-              <ShieldCheck />
-            </button>
+            {showAdministrationEntry && (
+              <button
+                className="icon admin-home-entry"
+                aria-label="Administração"
+                title="Administração"
+                onClick={() => go(adminTarget)}
+              >
+                <ShieldCheck />
+              </button>
+            )}
             <button
               className="icon"
               aria-label="Conta"
@@ -234,14 +240,16 @@ export default function App() {
             >
               <Bell />
             </button>
-            <button
-              className="icon admin-home-entry"
-              aria-label="Administração"
-              title="Administração"
-              onClick={() => go(adminTarget)}
-            >
-              <ShieldCheck />
-            </button>
+            {showAdministrationEntry && (
+              <button
+                className="icon admin-home-entry"
+                aria-label="Administração"
+                title="Administração"
+                onClick={() => go(adminTarget)}
+              >
+                <ShieldCheck />
+              </button>
+            )}
             <button
               className="icon"
               aria-label="Carrinho"
