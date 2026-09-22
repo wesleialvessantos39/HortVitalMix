@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 16,
+  "schemaVersion": 17,
   "migrations": [
     {
       "version": "20260919030126",
@@ -80,7 +80,12 @@
       "version": "20260922004505",
       "name": "trilha03_function_grants_hardening",
       "file": "20260922004505_trilha03_function_grants_hardening.sql"
+    },
+    {
+      "version": "20260922024933",
+      "name": "trilha04_contact_recovery",
+      "file": "20260922024933_trilha04_contact_recovery.sql"
     }
   ],
-  "migrationHistoryHash": "7642fea2913cbb56af6ea156dfbc9aaeabe1bb9548052f731ccee0469d4b3ac0"
+  "migrationHistoryHash": "493acbfc4f1a5ce4bfb74d0977f3a037c20c288956d47fb9f7415bbcad3d489c"
 }
