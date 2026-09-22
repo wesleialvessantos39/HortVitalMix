@@ -5,7 +5,7 @@ declare global {
     interface Request {
       requestId: string;
       clientIpHash: string;
-      adminActor?: import("./services/ConfigurationService.ts").ActorContext;
+      adminActor?: import("./middleware/adminSession.ts").AdminActorContext;
       actor: {
         userId: string;
         email: string | null;
