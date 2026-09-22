@@ -1,0 +1,54 @@
+name: Trilha 05 - Homologacao gratuita
+
+on:
+  push:
+    branches: [main, trilha05-v10]
+    paths:
+      - "server/middleware/adminSession.ts"
+      - "server/routes/adminConfigRoutes.ts"
+      - "server/routes/adminGovernanceRoutes.ts"
+      - "server/services/AdminGovernanceService.ts"
+      - "server/app.ts"
+      - "server/types.d.ts"
+      - "shared/contracts/adminGovernance.ts"
+      - "src/components/admin/**"
+      - "src/pages/admin/**"
+      - "src/App.tsx"
+      - "supabase/migrations/20260922200604_trilha05_admin_governance.sql"
+      - "supabase/manifest.json"
+      - "tests/unit/adminGovernanceContracts.test.ts"
+      - "tests/integration/admin*.test.ts"
+      - "tests/integration/lastSuperAdmin.test.ts"
+      - "tests/integration/e2eAdminFlow.test.ts"
+      - "tests/e2e/trilha05-admin.spec.ts"
+      - "scripts/verify-trilha05-evidence.mjs"
+      - "package.json"
+      - ".github/workflows/trilha05-free-homologation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-build-and-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      APP_ENV: development
+      APP_IP_PEPPER: 0123456789abcdef0123456789abcdef
+      APP_ALLOWED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run migrations:verify
+      - run: npm run test:t05:unit
+      - run: npm run verify:t05:evidence
+      - run: npm run typecheck:app
+      - run: npm run security:check
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:t05:e2e
