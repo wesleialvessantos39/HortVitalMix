@@ -25,7 +25,6 @@ import {
 } from "../shared/contracts/foundation";
 import { api } from "./lib/api";
 import { Account } from "./components/Account";
-import { AdminConfiguracaoPage } from "./pages/admin/config/AdminConfiguracaoPage";
 import { AdminRouter } from "./pages/admin/AdminRouter";
 import { ChoosePortalPage } from "./pages/auth/ChoosePortalPage";
 import { ContactConfirmationPage } from "./pages/auth/ContactConfirmationPage";
