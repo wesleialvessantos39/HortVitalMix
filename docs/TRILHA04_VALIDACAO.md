@@ -6,171 +6,155 @@ Fonte normativa: **MANUAL MESTRE TÉCNICO v10 — TRILHAS 01 A 06**.
 
 Trilha: **Confirmação Dupla de Contato e Recuperação de Senha**.
 
-Regra central implementada: **um único e-mail de confirmação contém OTP de 6 dígitos + link seguro por token**.
+A estrutura de banco criada na T04 permanece preservada integralmente. A política operacional atual de entrega, porém, foi simplificada para respeitar a infraestrutura gratuita já configurada pelo proprietário:
 
-A implementação preserva os avanços anteriores do projeto e não substitui fluxos reais por simulação.
+**todo e-mail de autenticação e segurança é enviado exclusivamente pelo Supabase Auth, utilizando o SMTP/Gmail configurado dentro do próprio projeto Supabase.**
+
+Não existe envio direto pela aplicação via Resend, Gmail API ou Twilio.
+
+## Política operacional atual
+
+Ativo agora:
+
+- Supabase Auth como único serviço de autenticação e entrega de e-mails de segurança;
+- SMTP/Gmail configurado no próprio painel do Supabase;
+- confirmação/reenvio de cadastro por `supabase.auth.resend(...)`;
+- recuperação de senha por `supabase.auth.resetPasswordForEmail(...)`;
+- reautenticação/código de segurança por `supabase.auth.reauthenticate()`;
+- isolamento por perfil Consumer, Producer, Administrador e Super administrador preservado.
+
+Desativado por enquanto:
+
+- Resend;
+- Gmail API direta pela aplicação;
+- Twilio;
+- SMS de segurança;
+- provider externo de e-mail;
+- outbox própria como mecanismo ativo de entrega.
+
+A estrutura de outbox permanece no banco apenas como fundação arquitetural prevista pela T04 e possível evolução futura. Ela não exige variável de runtime e não participa do fluxo ativo atual.
+
+## Variáveis removidas do runtime
+
+As seguintes variáveis **não pertencem mais ao contrato de ambiente da aplicação**:
+
+- `PUBLIC_ORIGIN`;
+- `EMAIL_PROVIDER`;
+- `RESEND_API_KEY`;
+- `MAIL_FROM`;
+- `GMAIL_ACCESS_TOKEN`;
+- `GMAIL_FROM_EMAIL`;
+- `SMS_PROVIDER`;
+- `TWILIO_ACCOUNT_SID`;
+- `TWILIO_AUTH_TOKEN`;
+- `TWILIO_FROM_NUMBER`;
+- `OUTBOX_ENCRYPTION_KEY`.
+
+O projeto não deve solicitá-las no Google Studio, Vercel ou outro runtime da aplicação.
 
 ## Banco
 
-Migrations:
+Migrations T04 preservadas:
 
-1. `20260922024933_trilha04_contact_recovery.sql` — implementação aditiva da migration 0011 do Manual;
-2. `20260922025820_trilha04_performance_hardening.sql` — hardening após advisor Supabase.
+1. `20260922024933_trilha04_contact_recovery.sql`;
+2. `20260922025820_trilha04_performance_hardening.sql`.
 
-O projeto partia do schema lógico 16; por isso a T04 fecha em schema lógico **18**, sem rebaixar ou reescrever histórico.
+Schema lógico permanece **18**.
 
 Hash do histórico:
 `2405a48927004cf8c60d700c6303c2997f0ce7708cde510b1d3dce70eda977e1`.
 
-Tabelas:
+Estruturas preservadas:
+
 - `app_contact_verification_challenges`;
 - `app_password_recovery_requests`;
 - `app_outbox_events`;
 - `app_delivery_attempts`.
 
-Todas possuem RLS habilitado/forçado conforme o escopo. Escrita permanece exclusivamente server-side.
+Nenhuma migration foi revertida ou removida.
 
-## Segurança
+## Backend ativo
 
-- OTP gerado por `randomBytes`, nunca `Math.random`;
-- OTP de seis dígitos e salt de 16 bytes;
-- verificação com `timingSafeEqual`;
-- token opaco de 32 bytes;
-- OTP e token persistidos somente como SHA-256;
-- fingerprint SHA-256 do contato;
-- TTL 30 min;
-- cooldown 60 s;
-- máximo de 5 erros OTP;
-- payload da outbox cifrado AES-256-GCM;
-- retry exponencial, limite de tentativas e estado `abandoned`;
-- recuperação com resposta pública genérica;
-- recuperação preserva vínculo explícito com o portal/papel;
-- reset consome token e challenge de papel;
-- sessões GoTrue são revogadas globalmente após reset.
+O fluxo utilizado pela aplicação está em `server/routes/authRoutes.ts`.
 
-## Backend
+Confirmação/reenvio:
 
-Serviços reais implementados para:
-- status e emissão de confirmação;
-- confirmação por OTP;
-- confirmação pública por token;
-- pedido de recuperação;
-- redefinição;
-- outbox cifrada;
-- dispatch de lote;
-- Resend;
-- Gmail API;
-- Twilio.
+- valida identidade e perfil;
+- usa `supabasePublic.auth.resend({ type: "signup", ... })`;
+- mantém resposta pública invariável para evitar enumeração.
 
-O dispatcher CLI está disponível por:
-`npm run outbox:dispatch`.
+Recuperação:
 
-## Frontend
+- valida identidade e perfil;
+- cria o contexto de recuperação por papel já homologado;
+- usa `supabasePublic.auth.resetPasswordForEmail(...)`;
+- o e-mail é entregue pelo Supabase Auth através do SMTP configurado no projeto.
 
-Telas próprias:
-- confirmação de contato;
-- recuperação;
-- redefinição.
+Reautenticação:
 
-A confirmação fica visível na área `/minha-conta`.
+- usa `client.auth.reauthenticate()`;
+- o código de segurança é enviado pelo Supabase Auth.
 
-OTP:
-- 6 inputs;
-- paste;
-- avanço automático;
-- backspace inteligente;
-- setas;
-- one-time-code;
-- cooldown.
+O router paralelo criado inicialmente para providers externos não é mais montado em `server/app.ts`.
+
+## Frontend ativo
+
+As rotas de segurança voltaram a utilizar o componente canônico `Account`, que já estava integrado ao Supabase:
+
+- `/confirmar-contato`;
+- `/confirmarcontato`;
+- `/recuperar-senha`;
+- `/redefinir-senha`;
+- `/redefinirsenha`.
+
+Isso evita duas implementações concorrentes para a mesma autenticação.
+
+## Supabase / Gmail
+
+A aplicação **não recebe credenciais do Gmail**.
+
+O Gmail é tratado como configuração interna do Supabase SMTP. A aplicação conhece apenas o Supabase e usa a API de Auth. Assim:
+
+- não existe `GMAIL_ACCESS_TOKEN` no projeto;
+- não existe `GMAIL_FROM_EMAIL` no projeto;
+- não existe senha SMTP do Gmail no GitHub, Google Studio ou frontend;
+- alterações futuras de SMTP devem ser feitas no Supabase, não no código da aplicação.
+
+## SMS
+
+SMS de segurança está **desativado por enquanto**.
+
+Nenhuma variável Twilio deve ser configurada. Quando o projeto decidir ativar SMS em etapa futura, a decisão deverá ser registrada no Livro Raiz antes de qualquer implementação.
 
 ## Responsividade
 
-CSS versionado para:
-- <=359 px;
-- <=767 px;
-- 768–1199 px;
-- >=1200 px.
-
-E2E versionado em:
-- 320 px;
-- 430 px;
-- 768 px;
-- 1024 px;
-- 1440 px.
-
-## Provas realizadas no Supabase canônico
-
-Foi executada prova transacional com `ROLLBACK`:
-- challenge inseriu corretamente;
-- recovery inseriu corretamente;
-- outbox inseriu corretamente;
-- delivery attempt inseriu corretamente;
-- OTP não estava em claro;
-- token não estava em claro;
-- payload de outbox foi aceito como binário;
-- consulta posterior confirmou zero resíduo.
-
-Foi executada prova RLS com dois usuários efêmeros dentro de transação:
-- usuário autenticado enxergou exatamente **1** challenge;
-- `only_self = true`;
-- nenhuma linha de outro usuário ficou visível;
-- transação revertida.
-
-## Advisors
-
-Após o hardening T04:
-- removido o alerta T04 de FK sem índice da outbox;
-- removidos os dois alertas T04 de `auth.uid()` por linha.
-
-Avisos restantes pertencem a estruturas anteriores ou são índices novos ainda sem tráfego; nenhum índice canônico T04 foi removido.
+As telas canônicas de conta/segurança continuam dentro do shell responsivo já homologado para mobile, tablet e desktop.
 
 ## Gates
 
-`npm run build` inclui:
-- migrations manifest/hash;
-- typecheck;
-- security check;
-- regressão T02;
-- regressão T03;
-- unitários T04;
-- evidência T04;
-- Vite build;
-- secret scan de bundle.
+O gate T04 agora verifica explicitamente:
 
-Integração real:
-`npm run test:t04:integration`.
+- uso de Supabase Auth para confirmação;
+- uso de Supabase Auth para recuperação;
+- uso de Supabase Auth para reautenticação;
+- ausência das variáveis de providers externos;
+- ausência do router paralelo T04 no runtime;
+- compatibilidade dos aliases de segurança;
+- preservação das quatro estruturas de banco T04.
 
-E2E:
-`npm run test:t04:e2e`.
+GitHub Actions continua fora do critério de execução.
 
-Nenhum GitHub Actions foi utilizado ou alterado.
+## Checklist corrigido
 
-## Checklist
-
-- [x] Feature Backend
-- [x] Feature Frontend
-- [x] Banco / migrations / RLS
-- [x] Outbox cifrada
-- [x] OTP + link na mesma confirmação
-- [x] Recuperação anti-enumeração
-- [x] Isolamento por papel preservado
-- [x] Design desktop/mobile
-- [x] Responsividade mobile/tablet/desktop
-- [x] Unit tests
-- [x] Integration tests versionados
-- [x] E2E versionado
-- [x] Livro Raiz
-- [x] GitHub
-- [x] Build Vercel
-- [x] Sem GitHub Actions
-
-
-## Fechamento de release
-
-Release canônica de produção: **`trilha04-v1`**.
-
-- schema: **18**;
-- migration hash: `2405a48927004cf8c60d700c6303c2997f0ce7708cde510b1d3dce70eda977e1`;
-- Vercel: **success**;
-- GitHub Actions: não utilizado;
-- tag física Git: pendente exclusivamente porque o conector disponível não expõe criação de `refs/tags`.
+- [x] Banco T04 preservado.
+- [x] Supabase Auth definido como único serviço de e-mail de segurança.
+- [x] Gmail mantido apenas dentro da configuração SMTP do Supabase.
+- [x] Resend removido do runtime.
+- [x] Gmail API direta removida do runtime.
+- [x] Twilio removido do runtime.
+- [x] SMS desativado.
+- [x] Variáveis extras removidas do `.env.example`.
+- [x] Preflight não exige chave de outbox.
+- [x] Frontend usa o fluxo canônico Supabase.
+- [x] Livro Raiz atualizado.
+- [x] GitHub Actions não utilizado.
