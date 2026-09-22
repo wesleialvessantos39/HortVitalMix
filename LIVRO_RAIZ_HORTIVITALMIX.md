@@ -1197,3 +1197,200 @@ Por determinação do proprietário:
 - o backend passou a declarar `portalKind: "public" | "administrative"` nas respostas de autenticação/sessão; o frontend usa esse contexto canônico para a visibilidade do atalho administrativo;
 - cobertura unitária adicionada à suíte da Trilha 03;
 - nenhuma alteração realizada em GitHub Actions.
+
+
+## 2026-09-21 — VOLUME 01 / TRILHA 04 — CONFIRMAÇÃO DUPLA DE CONTATO E RECUPERAÇÃO DE SENHA
+
+**Fonte única de verdade:** MANUAL MESTRE TÉCNICO v10 — TRILHAS 01 A 06.
+
+**Status:** implementada e em fechamento de homologação técnica.
+
+### Baseline e compatibilidade
+
+- a Trilha 04 foi iniciada sobre o estado real já homologado das Trilhas 01–03, sem remover os avanços existentes de identidade multi-papel, portais separados, recuperação vinculada ao perfil, códigos de segurança, configuração global e auditoria;
+- o Manual denomina a migration canônica desta trilha como **0011 / schema final 11**; o projeto real já estava no schema lógico **16** antes da T04 por migrations corretivas e hardenings anteriores. Não houve downgrade nem reescrita de histórico;
+- a migration canônica T04 foi aplicada de forma aditiva como `20260922024933_trilha04_contact_recovery.sql`;
+- após inspeção dos advisors do Supabase, foi aplicada a migration corretiva `20260922025820_trilha04_performance_hardening.sql`;
+- schema lógico do projeto após T04: **18**;
+- migration history hash: `2405a48927004cf8c60d700c6303c2997f0ce7708cde510b1d3dce70eda977e1`.
+
+### Banco / Supabase
+
+Criadas conforme o Manual v10:
+
+- `app_contact_verification_challenges`;
+- `app_password_recovery_requests`;
+- `app_outbox_events`;
+- `app_delivery_attempts`.
+
+Regras aplicadas:
+
+- OTP de 6 dígitos nunca persistido em claro;
+- `otp_hash = SHA-256(otp:salt)`, com salt aleatório de 16 bytes;
+- token/link armazenado apenas por digest SHA-256;
+- fingerprint SHA-256 do destino atual;
+- validade de 30 minutos;
+- cooldown server-side de 60 segundos por usuário+canal;
+- máximo de 5 tentativas OTP;
+- consumo único, expiração e invalidação;
+- outbox com payload AES-256-GCM, nonce de 12 bytes e auth tag de 16 bytes;
+- `OUTBOX_ENCRYPTION_KEY` permanece exclusivamente no backend/runtime;
+- retry com backoff exponencial e limite de tentativas;
+- RLS `ENABLE + FORCE` nas quatro tabelas;
+- authenticated possui somente SELECT governado por policies; escrita permanece service-role/backend;
+- índices canônicos e forenses da T04;
+- índice adicional `ix_app_outbox_recipient_user` após advisor de FK;
+- policies `challenges_self_read` e `recovery_self_read` otimizadas com `(SELECT auth.uid())`.
+
+Uma prova transacional real foi executada no banco e revertida por `ROLLBACK`, comprovando inserção das quatro estruturas, OTP/token não persistidos em claro e payload binário de outbox. A checagem posterior confirmou **zero resíduo**. Outra prova com `SET LOCAL ROLE authenticated` mostrou **1 linha própria visível e nenhuma linha de outro usuário**, confirmando o isolamento RLS.
+
+### Backend
+
+Implementados:
+
+- `shared/contracts/contactRecovery.ts`;
+- `server/security/otp.ts`;
+- `server/security/mask.ts`;
+- `server/communication/securePayload.ts`;
+- `server/communication/transports.ts`;
+- `server/communication/templates.ts`;
+- `server/config/publicOrigin.ts`;
+- `server/services/CommunicationOutboxService.ts`;
+- `server/services/ContactVerificationService.ts`;
+- `server/services/PasswordRecoveryService.ts`;
+- `server/routes/contactRecoveryRoutes.ts`;
+- `scripts/dispatch-outbox.ts`.
+
+Rotas reais:
+
+- `GET /v1/auth/contact/status`;
+- `POST /v1/auth/contact/challenge`;
+- `POST /v1/auth/contact/confirm-otp`;
+- `POST /v1/auth/contact/confirm-token`;
+- `POST /v1/auth/password/recovery`;
+- `POST /v1/auth/password/reset`;
+- aliases equivalentes sob `/api/v1/auth` mantidos.
+
+A mesma confirmação por e-mail entrega **OTP + link seguro** na mesma mensagem, conforme a regra canônica do Manual.
+
+Adapters reais disponibilizados:
+
+- Resend;
+- Gmail API;
+- Twilio SMS.
+
+Sem credencial de provedor, a arquitetura não simula sucesso: o evento permanece em retry/falha/abandono na outbox. Não há OTP/token em log nem fallback fictício.
+
+### Preservação do isolamento por perfil
+
+A T04 não regrediu o hardening já homologado anteriormente:
+
+- recuperação continua explicitamente vinculada a `consumer`, `producer`, `platform_admin` ou `platform_super_admin`;
+- o token T04 é combinado ao contexto `flowToken` já existente;
+- um fluxo emitido para um perfil não serve para redefinir senha em outro;
+- após redefinição bem-sucedida, o token T04 e o challenge de papel são consumidos;
+- todas as sessões GoTrue do usuário são revogadas.
+
+### Frontend
+
+Criados:
+
+- `src/components/forms/OtpInput.tsx`;
+- `src/pages/auth/ContactConfirmationPage.tsx`;
+- `src/pages/auth/RecoverPasswordPage.tsx`;
+- `src/pages/auth/ResetPasswordPage.tsx`;
+- `src/pages/auth/auth.css`.
+
+Rotas integradas:
+
+- `/confirmar-contato`;
+- `/confirmarcontato` (compatibilidade com o endereço previsto no Manual);
+- `/recuperar-senha`;
+- `/redefinir-senha`;
+- `/redefinirsenha` (compatibilidade).
+
+A área `/minha-conta` passou a expor a ação **Confirmar e-mail e telefone**, evitando tela escondida.
+
+OTP UX:
+
+- seis inputs;
+- zeros à esquerda preservados;
+- avanço automático;
+- backspace inteligente;
+- setas esquerda/direita;
+- colagem do código completo;
+- `autocomplete="one-time-code"`;
+- cooldown visível e decrescente.
+
+### Responsividade / design
+
+O padrão visual segue as referências oficiais do projeto: verde profundo, verde de ação, laranja de destaque, fundo claro, cards arredondados e hierarquia limpa.
+
+Faixas implementadas:
+
+- até 359 px: ajuste estreito específico;
+- mobile até 767 px: cards em coluna e OTP sem overflow;
+- tablet 768–1199 px: conteúdo limitado e grids adaptativos;
+- desktop >=1200 px: conteúdo centralizado e cartões paralelos.
+
+A suíte E2E T04 está versionada para **320, 430, 768, 1024 e 1440 px**, além de cenários de OTP e link inválido.
+
+### Testes e gates gratuitos
+
+Adicionados:
+
+- `tests/unit/trilha04Otp.test.ts`;
+- `tests/unit/trilha04SecurePayload.test.ts`;
+- `tests/unit/trilha04Contracts.test.ts`;
+- `tests/integration/trilha04Contact.test.ts`;
+- `tests/integration/trilha04Recovery.test.ts`;
+- `tests/integration/trilha04Rls.test.ts`;
+- `tests/e2e/trilha04-contact-recovery.spec.ts`;
+- `scripts/verify-trilha04-evidence.mjs`.
+
+O build gratuito do Vercel executa:
+
+- `migrations:verify`;
+- typecheck;
+- security check;
+- regressões T02/T03;
+- unitários T04;
+- evidência estrutural T04;
+- Vite build;
+- bundle secret scan.
+
+Os testes de integração que criam identidades efêmeras **não são executados automaticamente em cada deploy**, evitando operações desnecessárias no plano gratuito. Eles permanecem disponíveis por `npm run test:t04:integration`.
+
+**GitHub Actions não foi utilizado nem alterado.**
+
+### Configuração operacional da T04
+
+`.env.example` documenta:
+
+- `PUBLIC_ORIGIN`;
+- `OUTBOX_ENCRYPTION_KEY`;
+- `EMAIL_PROVIDER`;
+- `RESEND_API_KEY`;
+- `MAIL_FROM`;
+- `GMAIL_ACCESS_TOKEN`;
+- `GMAIL_FROM_EMAIL`;
+- `SMS_PROVIDER`;
+- `TWILIO_ACCOUNT_SID`;
+- `TWILIO_AUTH_TOKEN`;
+- `TWILIO_FROM_NUMBER`.
+
+O Manual permite adapters opcionais; ausência de Resend/Gmail/Twilio não é substituída por simulação.
+
+### Checklist técnico da implementação
+
+- [x] Backend T04 implementado.
+- [x] Frontend T04 implementado.
+- [x] Design/layout consistente com referências desktop/mobile.
+- [x] CSS responsivo mobile/tablet/desktop.
+- [x] Banco atualizado no Supabase.
+- [x] RLS/índices/policies validados e hardening do advisor aplicado.
+- [x] Livro Raiz atualizado.
+- [x] GitHub atualizado.
+- [x] Gates de build integrados ao Vercel.
+- [x] Conformidade estrutural com Manual Mestre Técnico v10 verificada.
+- [x] GitHub Actions não utilizado.
