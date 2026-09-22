@@ -26,6 +26,8 @@ import {
 import { api } from "./lib/api";
 import { Account } from "./components/Account";
 import { AdminConfiguracaoPage } from "./pages/admin/config/AdminConfiguracaoPage";
+import { ChoosePortalPage } from "./pages/auth/ChoosePortalPage";
+import { useSession } from "./hooks/useSession";
 const fallback = {
   platformName: "HortiVitalMix",
   slogan: "Tudo fresco. Tudo da sua região.",
@@ -61,6 +63,7 @@ const accountPaths = new Set([
   "/entrar/administrador",
   "/entrar/super-administrador",
   "/administracao",
+  "/admin/entrar",
   "/cadastro/consumidor",
   "/cadastro/produtor",
   "/acesso/administracao",
@@ -76,7 +79,9 @@ export default function App() {
     [query, setQuery] = useState(""),
     [category, setCategory] = useState(categories[0]);
   const dialog = useRef<HTMLDialogElement>(null);
+  const { session: shellSession } = useSession();
   const display = config ?? fallback;
+  const accountTarget = shellSession ? "/minha-conta" : "/conta";
   useEffect(() => {
     const abort = new AbortController();
     api<unknown>("/v1/config", { signal: abort.signal })
@@ -240,6 +245,8 @@ export default function App() {
       <main id="conteudo" className="layout">
         {path === "/admin/configuracao" ? (
           <AdminConfiguracaoPage onNavigate={go} />
+        ) : path === "/cadastro" ? (
+          <ChoosePortalPage onNavigate={go} />
         ) : accountPaths.has(path) ? (
           <Account path={path} onNavigate={go} />
         ) : (
@@ -414,7 +421,7 @@ export default function App() {
       <nav className="bottom-nav" aria-label="Navegação mobile">
         {[
           ...navigation.slice(0, 4),
-          ["/conta", "Conta", UserRound] as const,
+          [accountTarget, "Conta", UserRound] as const,
         ].map(([to, label, Icon]) => (
           <a
             href={to}

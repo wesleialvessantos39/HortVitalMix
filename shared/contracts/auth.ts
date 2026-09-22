@@ -1,61 +1,10 @@
 import { z } from "zod";
+import { formatBrazilMobile, formatCpf, normalizeBrazilMobile, onlyDigits } from "../utils/normalization.ts";
+
+export { formatBrazilMobile, formatCpf, normalizeBrazilMobile } from "../utils/normalization.ts";
 
 export const PASSWORD_MIN_LENGTH = 12;
 export const PASSWORD_MAX_LENGTH = 70;
-
-function onlyDigits(value: string) {
-  return value.replace(/\D/g, "");
-}
-
-export function formatCpf(value: string): string {
-  const digits = onlyDigits(value).slice(0, 11);
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 6) return digits.slice(0, 3) + "." + digits.slice(3);
-  if (digits.length <= 9)
-    return (
-      digits.slice(0, 3) +
-      "." +
-      digits.slice(3, 6) +
-      "." +
-      digits.slice(6)
-    );
-  return (
-    digits.slice(0, 3) +
-    "." +
-    digits.slice(3, 6) +
-    "." +
-    digits.slice(6, 9) +
-    "-" +
-    digits.slice(9)
-  );
-}
-
-function localBrazilMobileDigits(value: string): string {
-  const digits = onlyDigits(value);
-  if (digits.length >= 12 && digits.startsWith("55")) return digits.slice(2, 13);
-  return digits.slice(0, 11);
-}
-
-export function formatBrazilMobile(value: string): string {
-  const digits = localBrazilMobileDigits(value);
-  if (!digits) return "";
-  if (digits.length <= 2) return "(" + digits;
-  if (digits.length <= 7)
-    return "(" + digits.slice(0, 2) + ") " + digits.slice(2);
-  return (
-    "(" +
-    digits.slice(0, 2) +
-    ") " +
-    digits.slice(2, 7) +
-    "-" +
-    digits.slice(7)
-  );
-}
-
-export function normalizeBrazilMobile(value: string): string {
-  const local = localBrazilMobileDigits(value);
-  return local.length === 11 ? "+55" + local : value.trim();
-}
 
 export function validCpf(value: string): boolean {
   if (!/^\d{11}$/.test(value) || /^(\d)\1{10}$/.test(value)) return false;

@@ -1,0 +1,82 @@
+name: Trilha 03 - Homologacao gratuita
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "server/routes/authRoutes.ts"
+      - "server/security/loginRateLimit.ts"
+      - "shared/contracts/auth.ts"
+      - "shared/utils/normalization.ts"
+      - "src/components/Account.tsx"
+      - "src/components/forms/**"
+      - "src/hooks/useSession.ts"
+      - "src/pages/auth/**"
+      - "supabase/migrations/20260922002647_trilha03_identity_hardening.sql"
+      - "supabase/manifest.json"
+      - "tests/unit/trilha03*.test.ts"
+      - "tests/integration/trilha03*.test.ts"
+      - "scripts/verify-trilha03-evidence.mjs"
+      - "package.json"
+      - ".github/workflows/trilha03-free-homologation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run migrations:verify
+      - run: npm run test:t03:unit
+      - run: npm run verify:t03:evidence
+      - run: npm run typecheck:app
+      - run: npm run build
+
+  integration-local:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      APP_ENV: development
+      HVM_PROD_PROJECT_REF: xipbsazvymkqqfmfegwu
+      HVM_INTEGRATION_ENABLED: "true"
+      APP_IP_PEPPER: 0123456789abcdef0123456789abcdef
+      OUTBOX_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      APP_ALLOWED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+      DATABASE_SSL_STRICT: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx supabase start
+      - name: Exportar runtime local
+        shell: bash
+        run: |
+          set -euo pipefail
+          eval "$(npx supabase status -o env)"
+          {
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "VITE_SUPABASE_URL=$API_URL"
+            echo "VITE_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "SUPABASE_DB_URL=$DB_URL"
+            echo "SUPABASE_PROJECT_REF=local-trilha03"
+          } >> "$GITHUB_ENV"
+      - run: npm run migrations:verify
+      - run: npm run verify:foundation
+      - run: npm run test:t03
+      - run: npm run build
+      - if: always()
+        run: npx supabase stop --no-backup

@@ -1,11 +1,11 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { ChevronRight, Crown, Plus, ShieldCheck, ShoppingBag, Sprout } from "lucide-react";
 import { api } from "../lib/api";
+import { CPFInput } from "./forms/CPFInput";
+import { PhoneInput } from "./forms/PhoneInput";
+import { PasswordStrengthMeter } from "./forms/PasswordStrengthMeter";
 import {
-  formatBrazilMobile,
-  formatCpf,
   NewPasswordSchema,
-  passwordChecks,
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
   RegisterConsumerSchema,
@@ -137,16 +137,7 @@ function PasswordFields({
   confirmationError?: string;
 }) {
   const [visible, setVisible] = useState(false);
-  const checks = passwordChecks(password);
   const matches = confirmation.length > 0 && password === confirmation;
-
-  const rules = [
-    [checks.length, `Entre ${PASSWORD_MIN_LENGTH} e ${PASSWORD_MAX_LENGTH} caracteres`],
-    [checks.lowercase, "Letra minúscula"],
-    [checks.uppercase, "Letra maiúscula"],
-    [checks.number, "Número"],
-    [checks.symbol, "Símbolo, por exemplo: ! @ # $ %"],
-  ] as const;
 
   return (
     <div className="password-security">
@@ -181,17 +172,7 @@ function PasswordFields({
         )}
       </label>
 
-      <div className="password-rules" aria-live="polite">
-        <strong>Sua senha deve conter:</strong>
-        <ul>
-          {rules.map(([valid, text]) => (
-            <li key={text} className={valid ? "valid" : undefined}>
-              <span aria-hidden="true">{valid ? "✓" : "○"}</span>
-              {text}
-            </li>
-          ))}
-        </ul>
-      </div>
+      <PasswordStrengthMeter value={password} />
 
       <label>
         Confirmar senha
@@ -412,11 +393,16 @@ export function Account({
           navigate("/entrar");
           return;
         }
-        await api("/v1/auth/login", {
+        const loginEndpoint =
+          portalRole === "platform_admin" || portalRole === "platform_super_admin"
+            ? "/v1/auth/admin-login"
+            : "/v1/auth/login";
+        await api(loginEndpoint, {
           method: "POST",
           body: JSON.stringify({ ...form, portalRole }),
         });
         setSession(await api<Session>("/v1/auth/session"));
+        window.dispatchEvent(new Event("hvm:session-changed"));
         navigate("/minha-conta");
         return;
       }
@@ -819,6 +805,7 @@ export function Account({
             try {
               await api("/v1/auth/logout", { method: "POST" });
               setSession(null);
+              window.dispatchEvent(new Event("hvm:session-changed"));
             } catch {
               setNotice("Não foi possível encerrar a sessão. Tente novamente.");
             } finally {
@@ -927,7 +914,11 @@ export function Account({
       </section>
     );
 
-  if (mode === "login" && !portalRole && path === "/administracao")
+  if (
+    mode === "login" &&
+    !portalRole &&
+    (path === "/administracao" || path === "/admin/entrar")
+  )
     return (
       <section
         className="access-selector administration-selector"
@@ -1064,49 +1055,8 @@ export function Account({
               )}
             </label>
             <div className="form-grid">
-              <label>
-                CPF
-                <input
-                  name="cpf"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  placeholder="000.000.000-00"
-                  maxLength={14}
-                  onInput={(event) => {
-                    event.currentTarget.value = formatCpf(event.currentTarget.value);
-                  }}
-                  aria-invalid={Boolean(fieldErrors.cpf)}
-                  required
-                />
-                {fieldErrors.cpf && (
-                  <small className="field-error" role="alert">
-                    {fieldErrors.cpf}
-                  </small>
-                )}
-              </label>
-              <label>
-                Celular com DDD
-                <input
-                  name="phone"
-                  type="tel"
-                  inputMode="numeric"
-                  autoComplete="tel-national"
-                  placeholder="(00) 00000-0000"
-                  maxLength={15}
-                  onInput={(event) => {
-                    event.currentTarget.value = formatBrazilMobile(
-                      event.currentTarget.value,
-                    );
-                  }}
-                  aria-invalid={Boolean(fieldErrors.phone)}
-                  required
-                />
-                {fieldErrors.phone && (
-                  <small className="field-error" role="alert">
-                    {fieldErrors.phone}
-                  </small>
-                )}
-              </label>
+              <CPFInput error={fieldErrors.cpf} />
+              <PhoneInput error={fieldErrors.phone} />
             </div>
           </>
         )}

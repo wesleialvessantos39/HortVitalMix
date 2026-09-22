@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 14,
+  "schemaVersion": 15,
   "migrations": [
     {
       "version": "20260919030126",
@@ -70,7 +70,12 @@
       "version": "20260921193244",
       "name": "trilha02_config_hardening",
       "file": "20260921193244_trilha02_config_hardening.sql"
+    },
+    {
+      "version": "20260922002647",
+      "name": "trilha03_identity_hardening",
+      "file": "20260922002647_trilha03_identity_hardening.sql"
     }
   ],
-  "migrationHistoryHash": "4df210ea6d4cdb05280f33889280edb1411532b0f24f5da8f7044110ef2617dc"
+  "migrationHistoryHash": "6e68cfd6fac69c03cef0652fb87cc42ea26b4c33b5b44a9690791db1be24106b"
 }

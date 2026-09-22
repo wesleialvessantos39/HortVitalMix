@@ -1356,3 +1356,28 @@ dialog p {
       color 0.15s;
   }
 }
+
+
+/* Volume 01 / Trilha 03 */
+.portal-choice-heading {
+  color: var(--dark);
+  font-size: 27px;
+  letter-spacing: -0.6px;
+  margin: 0 0 8px;
+}
+.portal-choice-copy {
+  max-width: 690px;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+@media (max-width: 767px) {
+  .portal-choice-heading {
+    font-size: 22px;
+    margin-left: 4px;
+    margin-right: 4px;
+  }
+  .portal-choice-copy {
+    font-size: 11px;
+    margin: 0 4px 14px;
+  }
+}

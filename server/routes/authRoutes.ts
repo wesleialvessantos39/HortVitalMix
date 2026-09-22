@@ -1,4 +1,4 @@
-import { Router, type Request, type Response } from "express";
+import { Router, type NextFunction, type Request, type Response } from "express";
 import {
   LoginSchema,
   RegisterConsumerSchema,
@@ -31,6 +31,7 @@ import {
   validateRecoveryChallenge,
   validateSecurityCodeChallenge,
 } from "../services/RoleSecurityService.ts";
+import { loginRateLimit, resetLoginRateLimit } from "../security/loginRateLimit.ts";
 
 export const authRouter = Router();
 
@@ -53,7 +54,7 @@ function clear(res: Response) {
       path: "/",
       httpOnly: true,
       secure: runtime.secureCookies,
-      sameSite: runtime.secureCookies ? "none" : "lax",
+      sameSite: "lax",
     });
 }
 
@@ -65,7 +66,7 @@ function setSession(
   const opts = {
     httpOnly: true,
     secure: runtime.secureCookies,
-    sameSite: runtime.secureCookies ? ("none" as const) : ("lax" as const),
+    sameSite: "lax" as const,
     path: "/",
   };
 
@@ -167,7 +168,12 @@ async function tokenGrant(body: unknown, grant: string) {
   });
 }
 
-authRouter.post("/login", async (req, res, next) => {
+async function handleLoginRequest(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+  portal: "public" | "admin",
+) {
   try {
     const input = LoginSchema.safeParse(req.body);
     if (!input.success) {
@@ -175,19 +181,27 @@ authRouter.post("/login", async (req, res, next) => {
       return;
     }
 
+    const { email, password, portalRole } = input.data;
+    const administrativeRole =
+      portalRole === "platform_admin" || portalRole === "platform_super_admin";
+
+    if (portal === "public" && administrativeRole) {
+      res.status(403).json({ error: "ADMIN_PORTAL_REQUIRED", redirectTo: "/admin/entrar" });
+      return;
+    }
+    if (portal === "admin" && !administrativeRole) {
+      res.status(403).json({ error: "PUBLIC_PORTAL_REQUIRED", redirectTo: "/entrar" });
+      return;
+    }
     if (!supabasePublic || !dbPool) {
       res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
       return;
     }
 
-    const { email, password, portalRole } = input.data;
     const response = await tokenGrant({ email, password }, "password");
     if (!response.ok) {
       res.status(response.status === 400 ? 401 : 503).json({
-        error:
-          response.status === 400
-            ? "INVALID_CREDENTIALS"
-            : "DEPENDENCY_UNAVAILABLE",
+        error: response.status === 400 ? "INVALID_CREDENTIALS" : "DEPENDENCY_UNAVAILABLE",
       });
       return;
     }
@@ -195,35 +209,36 @@ authRouter.post("/login", async (req, res, next) => {
     const data = await response.json();
     if (!data.user?.email_confirmed_at) {
       if (supabaseAdmin && data.access_token)
-        await supabaseAdmin.auth.admin
-          .signOut(data.access_token, "local")
-          .catch(() => undefined);
+        await supabaseAdmin.auth.admin.signOut(data.access_token, "local").catch(() => undefined);
       res.status(403).json({ error: "EMAIL_CONFIRMATION_REQUIRED" });
       return;
     }
-
     if (!(await accountIsActive(data.user.id))) {
+      if (supabaseAdmin && data.access_token)
+        await supabaseAdmin.auth.admin.signOut(data.access_token, "local").catch(() => undefined);
       res.status(403).json({ error: "ACCOUNT_UNAVAILABLE" });
       return;
     }
-
     if (!(await hasActiveRole(data.user.id, portalRole))) {
       if (supabaseAdmin && data.access_token)
-        await supabaseAdmin.auth.admin
-          .signOut(data.access_token, "local")
-          .catch(() => undefined);
-      res.status(403).json({
-        error: "ROLE_NOT_ALLOWED_FOR_PORTAL",
-        portalRole,
-      });
+        await supabaseAdmin.auth.admin.signOut(data.access_token, "local").catch(() => undefined);
+      res.status(403).json({ error: "ROLE_NOT_ALLOWED_FOR_PORTAL", portalRole });
       return;
     }
 
     setSession(res, data, portalRole);
+    resetLoginRateLimit(req.clientIpHash);
     res.json({ status: "authenticated", activeRole: portalRole });
   } catch (error) {
     next(error);
   }
+}
+
+authRouter.post("/login", loginRateLimit, (req, res, next) => {
+  void handleLoginRequest(req, res, next, "public");
+});
+authRouter.post("/admin-login", loginRateLimit, (req, res, next) => {
+  void handleLoginRequest(req, res, next, "admin");
 });
 
 authRouter.post("/refresh", async (req, res, next) => {

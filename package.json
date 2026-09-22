@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 3000",
-    "build": "npm run typecheck:app && npm run security:check && npm run test:t02:unit && npm run verify:t02:evidence && vite build && node --import tsx scripts/check-bundle.ts",
+    "build": "npm run typecheck:app && npm run security:check && npm run test:t02:unit && npm run verify:t02:evidence && npm run test:t03:unit && npm run verify:t03:evidence && vite build && node --import tsx scripts/check-bundle.ts",
     "preview": "vite preview --host 0.0.0.0",
     "typecheck": "tsc --noEmit",
     "lint": "npm run typecheck && npm run security:check",
@@ -31,7 +31,12 @@
     "test:t02:integration": "node --import tsx scripts/require-integration.ts && vitest run tests/integration/config*.test.ts",
     "test:t02": "npm run test:t02:unit && npm run test:t02:integration",
     "typecheck:app": "tsc --noEmit -p tsconfig.build.json",
-    "verify:t02:evidence": "node scripts/verify-trilha02-evidence.mjs"
+    "verify:t02:evidence": "node scripts/verify-trilha02-evidence.mjs",
+    "test:t03:unit": "vitest run tests/unit/trilha03AuthContracts.test.ts tests/unit/trilha03Normalization.test.ts tests/unit/trilha03RateLimit.test.ts",
+    "test:t03:integration": "node --import tsx scripts/require-integration.ts && vitest run tests/integration/trilha03Identity.test.ts tests/integration/supabase.test.ts",
+    "test:t03": "npm run test:t03:unit && npm run test:t03:integration",
+    "verify:t03:evidence": "node scripts/verify-trilha03-evidence.mjs",
+    "verify:t03:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t03:unit && npm run verify:t03:evidence && npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",
