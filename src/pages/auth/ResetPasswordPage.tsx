@@ -1,13 +1,20 @@
-import { useMemo, useState } from "react";
-import { CheckCircle2, KeyRound, ShieldAlert } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { CheckCircle2, KeyRound, ShieldAlert, Sprout } from "lucide-react";
 import { api } from "../../lib/api";
-import { StrongPasswordSchema, type PortalRole } from "../../../shared/contracts/auth";
-import type { PasswordResetResult } from "../../../shared/contracts/contactRecovery";
+import type { ShellSession } from "../../hooks/useSession";
+import { NewPasswordSchema, PortalRoleSchema, type PortalRole } from "../../../shared/contracts/auth";
 import { PasswordInput } from "../../components/forms/PasswordInput";
 import { PasswordStrengthMeter } from "../../components/forms/PasswordStrengthMeter";
 import "./auth.css";
 
-const VALID_ROLES = new Set<string>(["consumer","producer","platform_admin","platform_super_admin"]);
+function queryContext() {
+  const params = new URLSearchParams(location.search);
+  const role = PortalRoleSchema.safeParse(params.get("portal"));
+  return {
+    role: role.success ? role.data : null,
+    flowToken: params.get("flow") ?? "",
+  };
+}
 
 function loginPath(role: PortalRole) {
   if (role === "consumer") return "/entrar/consumidor";
@@ -16,115 +23,162 @@ function loginPath(role: PortalRole) {
   return "/entrar/super-administrador";
 }
 
-export function ResetPasswordPage({ onNavigate }: { onNavigate: (path: string) => void }) {
-  const context = useMemo(() => {
-    const search = new URLSearchParams(location.search);
-    const role = search.get("portal");
-    return {
-      token: search.get("token") ?? "",
-      flowToken: search.get("flow") ?? "",
-      portalRole: VALID_ROLES.has(role ?? "") ? role as PortalRole : null,
-    };
-  }, []);
+export function ResetPasswordPage({
+  session,
+  onNavigate,
+  onSessionAdopt,
+  onSessionRefresh,
+}: {
+  session: ShellSession | null;
+  onNavigate: (path: string) => void;
+  onSessionAdopt: (session: ShellSession | null) => void;
+  onSessionRefresh: () => Promise<void>;
+}) {
+  const context = useMemo(queryContext, []);
+  const [ready, setReady] = useState(Boolean(session && context.role && context.flowToken));
+  const [checking, setChecking] = useState(!ready);
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [busy, setBusy] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [message, setMessage] = useState("");
+  const [done, setDone] = useState(false);
+  const [notice, setNotice] = useState("");
 
-  const contextValid =
-    context.token.length >= 32 &&
-    context.flowToken.length >= 32 &&
-    Boolean(context.portalRole);
+  useEffect(() => {
+    if (ready) return;
+    const hash = new URLSearchParams(location.hash.replace(/^#/, ""));
+    const accessToken = hash.get("access_token");
+    const refreshToken = hash.get("refresh_token");
+    const type = hash.get("type");
+
+    if (!context.role || context.flowToken.length < 32 || !accessToken || !refreshToken || type !== "recovery") {
+      setChecking(false);
+      return;
+    }
+
+    void api<ShellSession & { status?: string }>("/v1/auth/import-session", {
+      method: "POST",
+      body: JSON.stringify({
+        accessToken,
+        refreshToken,
+        portalRole: context.role,
+      }),
+    })
+      .then(async (imported) => {
+        onSessionAdopt(imported);
+        history.replaceState({}, "", location.pathname + location.search);
+        await onSessionRefresh();
+        setReady(true);
+        setNotice("Acesso de recuperação validado. Agora defina sua nova senha.");
+      })
+      .catch(() => setNotice("O link expirou ou já foi utilizado. Solicite um novo."))
+      .finally(() => setChecking(false));
+  }, [context.flowToken, context.role, onSessionAdopt, onSessionRefresh, ready]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!contextValid || !context.portalRole) return;
+    if (!ready || !context.role) return;
     if (password !== confirmation) {
-      setMessage("As senhas não coincidem.");
+      setNotice("As senhas não coincidem.");
       return;
     }
-    const validation = StrongPasswordSchema.safeParse(password);
-    if (!validation.success) {
-      setMessage(validation.error.issues[0]?.message ?? "Senha inválida.");
+    const parsed = NewPasswordSchema.safeParse({ password });
+    if (!parsed.success) {
+      setNotice(parsed.error.issues.map((item) => item.message).join(". "));
       return;
     }
+
     setBusy(true);
-    setMessage("");
+    setNotice("");
     try {
-      const result = await api<PasswordResetResult>("/v1/auth/password/reset", {
+      await api("/v1/auth/reset-password", {
         method: "POST",
         body: JSON.stringify({
-          token: context.token,
+          password,
+          portalRole: context.role,
           flowToken: context.flowToken,
-          portalRole: context.portalRole,
-          newPassword: password,
         }),
       });
-      if (result.status === "success") {
-        setSuccess(true);
-        setMessage("Senha redefinida. Todas as sessões anteriores foram encerradas.");
-      } else {
-        setMessage("O link expirou, já foi utilizado ou não corresponde a este perfil.");
-      }
+      onSessionAdopt(null);
+      setDone(true);
+      setNotice("Senha atualizada com sucesso. Todas as sessões anteriores foram encerradas.");
     } catch {
-      setMessage("Não foi possível redefinir a senha. Solicite um novo link.");
+      setNotice("Não foi possível redefinir a senha. Solicite um novo link.");
     } finally {
       setBusy(false);
     }
   }
 
-  if (!contextValid) {
-    return (
-      <section className="t04-page">
-        <div className="t04-card t04-center t04-auth-card">
-          <span className="t04-icon warning"><ShieldAlert /></span>
-          <h1>Link de recuperação inválido</h1>
-          <p>Este endereço não possui todos os dados de segurança necessários. Solicite um novo link pelo perfil correto.</p>
-          <button className="primary" onClick={() => onNavigate("/recuperar-senha")}>Solicitar novo link</button>
-        </div>
-      </section>
-    );
-  }
-
-  if (success && context.portalRole) {
-    return (
-      <section className="t04-page">
-        <div className="t04-card t04-center t04-auth-card">
-          <span className="t04-icon success"><CheckCircle2 /></span>
-          <h1>Senha atualizada</h1>
-          <p role="status">{message}</p>
-          <button className="primary" onClick={() => onNavigate(loginPath(context.portalRole!))}>Entrar novamente</button>
-        </div>
-      </section>
-    );
-  }
-
   return (
-    <section className="t04-page">
-      <div className="t04-card t04-auth-card">
-        <span className="t04-icon"><KeyRound /></span>
+    <section className="t04-security-layout" aria-labelledby="t04-reset-title">
+      <aside className="t04-security-aside">
+        <div className="t04-brand-mark"><Sprout /></div>
+        <span className="t04-kicker">Nova senha</span>
+        <h2>Uma nova chave para o seu acesso.</h2>
+        <p>Depois da troca, a sessão atual é encerrada e o próximo acesso usa somente a nova senha.</p>
+        <div className="t04-steps">
+          <span><b>1</b> Link de recuperação</span>
+          <span><b>2</b> Nova senha forte</span>
+          <span><b>3</b> Novo login seguro</span>
+        </div>
+      </aside>
+
+      <div className="t04-security-card">
+        <div className={done ? "t04-title-icon success" : "t04-title-icon"}>
+          {done ? <CheckCircle2 /> : <KeyRound />}
+        </div>
         <span className="eyebrow">Segurança da conta</span>
-        <h1>Crie uma nova senha</h1>
-        <p>Após a redefinição, todas as sessões ativas dessa identidade serão revogadas.</p>
-        <form className="t04-form" onSubmit={submit}>
-          <PasswordInput
-            label="Nova senha"
-            value={password}
-            onChange={setPassword}
-            autoComplete="new-password"
-          />
-          <PasswordStrengthMeter value={password} />
-          <PasswordInput
-            name="confirmPassword"
-            label="Confirmar nova senha"
-            value={confirmation}
-            onChange={setConfirmation}
-            autoComplete="new-password"
-          />
-          {message && <p className="t04-notice" role="status">{message}</p>}
-          <button className="primary" disabled={busy}>{busy ? "Salvando…" : "Salvar nova senha"}</button>
-        </form>
+        <h1 id="t04-reset-title">{done ? "Senha atualizada" : "Definir nova senha"}</h1>
+
+        {checking ? (
+          <div className="t04-loading"><span className="t04-spinner" /><p>Validando o link seguro…</p></div>
+        ) : done ? (
+          <>
+            <div className="t04-banner success" role="status">{notice}</div>
+            <button className="t04-primary" onClick={() => onNavigate(loginPath(context.role!))}>
+              Entrar novamente
+            </button>
+          </>
+        ) : !ready ? (
+          <>
+            <div className="t04-invalid">
+              <ShieldAlert />
+              <div>
+                <strong>Link inválido ou expirado</strong>
+                <p>{notice || "Solicite um novo e-mail de recuperação pelo perfil correto."}</p>
+              </div>
+            </div>
+            <button
+              className="t04-primary"
+              onClick={() => onNavigate(context.role ? `/recuperar-senha?portal=${context.role}` : "/recuperar-senha")}
+            >
+              Solicitar novo link
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="t04-lead">Escolha uma senha forte. O sistema manterá as mesmas regras de segurança já homologadas.</p>
+            {notice && <div className="t04-banner" role="status">{notice}</div>}
+            <form className="t04-form" onSubmit={submit}>
+              <PasswordInput
+                label="Nova senha"
+                value={password}
+                onChange={setPassword}
+                autoComplete="new-password"
+              />
+              <PasswordStrengthMeter value={password} />
+              <PasswordInput
+                name="confirmPassword"
+                label="Confirmar nova senha"
+                value={confirmation}
+                onChange={setConfirmation}
+                autoComplete="new-password"
+              />
+              <button className="t04-primary" disabled={busy}>
+                {busy ? "Salvando…" : "Salvar nova senha"}
+              </button>
+            </form>
+          </>
+        )}
       </div>
     </section>
   );
