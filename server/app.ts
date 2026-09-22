@@ -1,7 +1,6 @@
 import express from "express";
 import { foundationRouter } from "./routes/foundationRoutes.ts";
 import { authRouter } from "./routes/authRoutes.ts";
-import { contactRecoveryRouter } from "./routes/contactRecoveryRoutes.ts";
 import { reportFailure } from "./config/reportFailure.ts";
 import { sessionMiddleware } from "./middleware/session.ts";
 import { isAllowedRequestOrigin } from "./security/origin.ts";
@@ -60,8 +59,6 @@ app.use(foundationRouter);
 app.use("/api", foundationRouter);
 app.use("/v1/auth", authRouter);
 app.use("/api/v1/auth", authRouter);
-app.use("/v1/auth", contactRecoveryRouter);
-app.use("/api/v1/auth", contactRecoveryRouter);
 app.use("/v1/admin", adminConfigRouter);
 app.use("/api/v1/admin", adminConfigRouter);
 app.use((_req, res) => {
