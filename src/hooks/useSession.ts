@@ -6,6 +6,7 @@ export type ShellSession = {
   email: string | null;
   roles: string[];
   activeRole?: string | null;
+  portalKind?: "public" | "administrative";
 };
 
 export function useSession() {
