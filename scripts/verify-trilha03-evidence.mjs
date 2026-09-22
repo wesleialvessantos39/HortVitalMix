@@ -4,8 +4,9 @@ const auth=read("server/routes/authRoutes.ts"), account=read("src/components/Acc
 const migration=read("supabase/migrations/20260922002647_trilha03_identity_hardening.sql");
 const manifest=JSON.parse(read("supabase/manifest.json"));
 const checks={
-  schema15:manifest.schemaVersion===15,
-  migrationRegistered:manifest.migrations.at(-1)?.file==="20260922002647_trilha03_identity_hardening.sql",
+  schemaAtLeast15:manifest.schemaVersion>=15,
+  identityMigrationRegistered:manifest.migrations.some((m)=>m.file==="20260922002647_trilha03_identity_hardening.sql"),
+  grantsMigrationRegistered:manifest.migrations.some((m)=>m.file==="20260922004505_trilha03_function_grants_hardening.sql"),
   publicRoleGuard:migration.includes("fn_assert_public_role"),
   emailIndex:migration.includes("ix_app_people_email_login"),
   consistency:migration.includes("fn_check_auth_people_consistency"),

@@ -13,6 +13,7 @@ on:
       - "src/hooks/useSession.ts"
       - "src/pages/auth/**"
       - "supabase/migrations/20260922002647_trilha03_identity_hardening.sql"
+      - "supabase/migrations/20260922004505_trilha03_function_grants_hardening.sql"
       - "supabase/manifest.json"
       - "tests/unit/trilha03*.test.ts"
       - "tests/integration/trilha03*.test.ts"
