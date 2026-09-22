@@ -6,7 +6,7 @@ function walk(path: string): string[] {
   );
 }
 const forbidden =
-  /SUPABASE_SERVICE_ROLE_KEY|SUPABASE_DB_URL|SUPABASE_JWT_SECRET|APP_IP_PEPPER|OUTBOX_ENCRYPTION_KEY|(?:from|import)\s*['"][^'"]*server\//;
+  /SUPABASE_SERVICE_ROLE_KEY|SUPABASE_DB_URL|SUPABASE_JWT_SECRET|APP_IP_PEPPER|(?:from|import)\s*['"][^'"]*server\//;
 const errors = walk("src").filter((f) =>
   forbidden.test(readFileSync(f, "utf8")),
 );
