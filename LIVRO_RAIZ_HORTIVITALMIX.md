@@ -1194,5 +1194,6 @@ Por determinação do proprietário:
 - ao sair da sessão pública, a entrada administrativa volta a ficar disponível;
 - quando a sessão ativa é `platform_admin` ou `platform_super_admin`, o atalho administrativo permanece disponível e direciona ao painel administrativo;
 - a regra considera o **perfil ativo**, preservando a separação canônica entre portais;
+- o backend passou a declarar `portalKind: "public" | "administrative"` nas respostas de autenticação/sessão; o frontend usa esse contexto canônico para a visibilidade do atalho administrativo;
 - cobertura unitária adicionada à suíte da Trilha 03;
 - nenhuma alteração realizada em GitHub Actions.
