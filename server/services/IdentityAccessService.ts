@@ -44,7 +44,7 @@ export async function resolveIdentityAccess(
       AND r.revoked_at IS NULL
       AND (r.expires_at IS NULL OR r.expires_at > now())
     WHERE u.id = $1
-    GROUP BY u.status, p.id`,
+    GROUP BY u.id, u.status, p.id`,
     [userId, sessionId],
   );
 
