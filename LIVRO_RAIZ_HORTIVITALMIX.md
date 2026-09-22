@@ -1511,3 +1511,68 @@ Enquanto esta decisão estiver vigente:
 7. tratar Gmail/SMTP como configuração interna do Supabase.
 
 Esta seção **prevalece sobre referências anteriores da Trilha 04** que mencionavam Resend, Gmail API, Twilio, outbox ativa ou `OUTBOX_ENCRYPTION_KEY` como requisito de runtime.
+
+
+## 2026-09-22 — RECUPERAÇÃO DAS CAMADAS VISUAIS DA TRILHA 04 — SUPABASE INTACTO
+
+**Escopo desta correção:** exclusivamente frontend/UX. Nenhuma alteração foi realizada no Supabase, migrations, RLS, banco, SMTP/Gmail, endpoints de autenticação ou regras de sessão.
+
+### Diagnóstico corrigido
+
+Foi confirmado que as rotas `/confirmar-contato`, `/recuperar-senha` e `/redefinir-senha` haviam voltado a renderizar o componente genérico `Account`, herdado visualmente da Trilha 01. Isso fazia a T04 funcionar tecnicamente, porém sem apresentar as páginas visuais próprias definidas na Parte 3 do Manual v10.
+
+### Recuperação visual
+
+As páginas existentes foram reconectadas ao roteamento:
+
+- `ContactConfirmationPage`;
+- `RecoverPasswordPage`;
+- `ResetPasswordPage`;
+- aliases `/confirmarcontato` e `/redefinirsenha`.
+
+A camada visual recebeu identidade própria T04 em `src/pages/auth/auth.css`, preservando a identidade oficial HortiVitalMix:
+
+- verde profundo `#143D24`;
+- verde primário `#1B4D2E`;
+- verde folha `#2E7D32`;
+- laranja `#E65100`;
+- cards claros, hierarquia forte e responsividade mobile/tablet/desktop.
+
+### Supabase-only preservado
+
+As páginas visuais T04 usam exclusivamente os fluxos backend já existentes:
+
+- confirmação: `POST /v1/auth/resend-confirmation`;
+- recuperação: `POST /v1/auth/request-password-reset`;
+- consumo do link Supabase: `POST /v1/auth/import-session`;
+- redefinição: `POST /v1/auth/reset-password`.
+
+Não foram reativados:
+
+- Resend;
+- Gmail API direta;
+- Twilio;
+- SMS;
+- outbox própria como mecanismo ativo;
+- router paralelo `contactRecoveryRouter`.
+
+O Gmail continua exclusivamente como SMTP interno do Supabase Auth.
+
+### Código de segurança
+
+O componente `OtpInput` de seis campos foi reaproveitado na alteração de senha autenticada, sobre o fluxo já existente de `reauthenticate()`. A mudança é exclusivamente de apresentação/entrada do código; contrato, backend e Supabase foram preservados.
+
+### Responsividade
+
+A camada visual contempla:
+
+- <=359 px;
+- mobile <=767 px;
+- tablet 768–1199 px;
+- desktop >=1200 px.
+
+A suíte E2E T04 foi atualizada para validar 320, 430, 768, 1024 e 1440 px e confirmar que as rotas usam as páginas T04 próprias.
+
+### Regra de não regressão
+
+A partir deste fechamento, as páginas visuais T04 não podem ser substituídas novamente pelo formulário genérico da Trilha 01 sem decisão explícita registrada no Livro Raiz.
