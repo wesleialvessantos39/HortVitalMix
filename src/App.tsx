@@ -27,6 +27,9 @@ import { api } from "./lib/api";
 import { Account } from "./components/Account";
 import { AdminConfiguracaoPage } from "./pages/admin/config/AdminConfiguracaoPage";
 import { ChoosePortalPage } from "./pages/auth/ChoosePortalPage";
+import { ContactConfirmationPage } from "./pages/auth/ContactConfirmationPage";
+import { RecoverPasswordPage } from "./pages/auth/RecoverPasswordPage";
+import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 import { useSession } from "./hooks/useSession";
 const fallback = {
   platformName: "HortiVitalMix",
@@ -71,7 +74,9 @@ const accountPaths = new Set([
   "/acesso/super-administracao",
   "/recuperar-senha",
   "/redefinir-senha",
+  "/redefinirsenha",
   "/confirmar-contato",
+  "/confirmarcontato",
 ]);
 export default function App() {
   const [config, setConfig] = useState<GlobalConfigPublic | null>(null),
@@ -266,6 +271,12 @@ export default function App() {
       <main id="conteudo" className="layout">
         {path === "/admin/configuracao" ? (
           <AdminConfiguracaoPage onNavigate={go} />
+        ) : path === "/confirmar-contato" || path === "/confirmarcontato" ? (
+          <ContactConfirmationPage session={shellSession} onNavigate={go} />
+        ) : path === "/recuperar-senha" ? (
+          <RecoverPasswordPage onNavigate={go} />
+        ) : path === "/redefinir-senha" || path === "/redefinirsenha" ? (
+          <ResetPasswordPage onNavigate={go} />
         ) : path === "/cadastro" ? (
           <ChoosePortalPage onNavigate={go} />
         ) : accountPaths.has(path) ? (
