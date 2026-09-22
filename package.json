@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 3000",
-    "build": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t02:unit && npm run verify:t02:evidence && npm run test:t03:unit && npm run verify:t03:evidence && npm run test:t04:unit && npm run verify:t04:evidence && vite build && node --import tsx scripts/check-bundle.ts",
+    "build": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t02:unit && npm run verify:t02:evidence && npm run test:t03:unit && npm run verify:t03:evidence && npm run test:t04:unit && npm run verify:t04:evidence && npm run test:t05:unit && npm run verify:t05:evidence && vite build && node --import tsx scripts/check-bundle.ts",
     "preview": "vite preview --host 0.0.0.0",
     "typecheck": "tsc --noEmit",
     "lint": "npm run typecheck && npm run security:check",
@@ -43,7 +43,13 @@
     "test:t04:e2e": "playwright test tests/e2e/trilha04-contact-recovery.spec.ts",
     "verify:t04:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t04:unit && npm run verify:t04:evidence && npm run build",
     "test:t04:integration": "vitest run tests/integration/trilha04Rls.test.ts",
-    "test:t04": "npm run test:t04:unit && npm run test:t04:integration && npm run verify:t04:evidence"
+    "test:t04": "npm run test:t04:unit && npm run test:t04:integration && npm run verify:t04:evidence",
+    "test:t05:unit": "vitest run tests/unit/adminGovernanceContracts.test.ts tests/integration/adminBootstrap.test.ts tests/integration/adminInvites.test.ts tests/integration/adminMfa.test.ts tests/integration/lastSuperAdmin.test.ts tests/integration/e2eAdminFlow.test.ts",
+    "test:t05:integration": "vitest run tests/integration/adminBootstrap.test.ts tests/integration/adminInvites.test.ts tests/integration/adminMfa.test.ts tests/integration/lastSuperAdmin.test.ts tests/integration/e2eAdminFlow.test.ts",
+    "verify:t05:evidence": "node scripts/verify-trilha05-evidence.mjs",
+    "test:t05:e2e": "playwright test tests/e2e/trilha05-admin.spec.ts",
+    "test:t05": "npm run test:t05:unit && npm run verify:t05:evidence",
+    "verify:t05:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t05:unit && npm run verify:t05:evidence && vite build && node --import tsx scripts/check-bundle.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",
