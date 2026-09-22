@@ -40,6 +40,11 @@ describe("Trilha 03 — caminho crítico de autenticação", () => {
 
 it("oculta a entrada administrativa durante sessão pública ativa", () => {
   const app = read("src/App.tsx");
+  const routes = read("server/routes/authRoutes.ts");
+  expect(routes).toContain('portalKind: portalKindForRole(portalRole)');
+  expect(routes).toContain('"administrative"');
+  expect(routes).toContain('"public"');
+  expect(app).toContain('shellSession?.portalKind === "public"');
   expect(app).toContain('shellSession?.activeRole === "consumer"');
   expect(app).toContain('shellSession?.activeRole === "producer"');
   expect(app).toContain("const showAdministrationEntry = !publicPortalSession");
