@@ -1,16 +1,8 @@
 import { runtime } from "./runtime.ts";
 
-const CANONICAL_PRODUCTION_ORIGIN = "https://hortivitalmix.vercel.app";
-const BASE_ALLOWLIST = new Set([
-  CANONICAL_PRODUCTION_ORIGIN,
-  "http://localhost:3000",
-  "http://127.0.0.1:3000",
-  ...runtime.origins,
-]);
+const CANONICAL_PRODUCTION_ORIGIN = "https://hortvitalmix.vercel.app";
 
 export function resolvePublicOrigin(): string {
-  const explicit = process.env.PUBLIC_ORIGIN?.replace(/\/$/, "");
-  if (explicit && BASE_ALLOWLIST.has(explicit)) return explicit;
   return runtime.appEnv === "production"
     ? CANONICAL_PRODUCTION_ORIGIN
     : "http://localhost:3000";
