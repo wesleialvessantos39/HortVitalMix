@@ -9,6 +9,10 @@ const runtime = read("server/config/runtime.ts");
 const transports = read("server/communication/transports.ts");
 const app = read("src/App.tsx");
 const account = read("src/components/Account.tsx");
+const contactPage = read("src/pages/auth/ContactConfirmationPage.tsx");
+const recoveryPage = read("src/pages/auth/RecoverPasswordPage.tsx");
+const resetPage = read("src/pages/auth/ResetPasswordPage.tsx");
+const authCss = read("src/pages/auth/auth.css");
 
 const forbiddenRuntimeVars = [
   "EMAIL_PROVIDER",
@@ -48,16 +52,31 @@ const checks = {
     forbiddenRuntimeVars.every((name) => !combinedRuntime.includes(name)),
   noParallelT04Router:
     !appServer.includes("contactRecoveryRouter"),
-  frontendUsesCanonicalAccountFlow:
-    !app.includes("ContactConfirmationPage") &&
-    !app.includes("RecoverPasswordPage") &&
-    !app.includes("ResetPasswordPage") &&
-    account.includes('mode === "confirmation"') &&
-    account.includes('mode === "recovery"') &&
-    account.includes('mode === "reset"'),
+  dedicatedT04VisualLayers:
+    app.includes("ContactConfirmationPage") &&
+    app.includes("RecoverPasswordPage") &&
+    app.includes("ResetPasswordPage") &&
+    contactPage.includes('"/v1/auth/resend-confirmation"') &&
+    recoveryPage.includes('"/v1/auth/request-password-reset"') &&
+    resetPage.includes('"/v1/auth/import-session"') &&
+    resetPage.includes('"/v1/auth/reset-password"'),
+  noParallelContactBackend:
+    !contactPage.includes('"/v1/auth/contact/challenge"') &&
+    !contactPage.includes('"/v1/auth/contact/confirm-otp"') &&
+    !recoveryPage.includes('"/v1/auth/password/recovery"') &&
+    !resetPage.includes('"/v1/auth/password/reset"'),
+  visualIdentity:
+    authCss.includes(".t04-security-layout") &&
+    authCss.includes(".t04-security-aside") &&
+    authCss.includes("@media (max-width:767px)") &&
+    authCss.includes("@media (min-width:768px) and (max-width:1199px)"),
+  otpVisualReauth:
+    account.includes('import { OtpInput }') &&
+    account.includes('name="nonce"') &&
+    account.includes("securityNonce"),
   aliasCompatibility:
-    account.includes('path === "/confirmarcontato"') &&
-    account.includes('path === "/redefinirsenha"'),
+    app.includes('path === "/confirmar-contato" || path === "/confirmarcontato"') &&
+    app.includes('path === "/redefinir-senha" || path === "/redefinirsenha"'),
 };
 
 const failed = Object.entries(checks)
