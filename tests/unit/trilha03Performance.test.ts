@@ -36,3 +36,12 @@ describe("Trilha 03 — caminho crítico de autenticação", () => {
     expect(account).toContain("Abrir Configuração Global — Trilha 02");
   });
 });
+
+
+it("oculta a entrada administrativa durante sessão pública ativa", () => {
+  const app = read("src/App.tsx");
+  expect(app).toContain('shellSession?.activeRole === "consumer"');
+  expect(app).toContain('shellSession?.activeRole === "producer"');
+  expect(app).toContain("const showAdministrationEntry = !publicPortalSession");
+  expect(app).toContain("{showAdministrationEntry && (");
+});
