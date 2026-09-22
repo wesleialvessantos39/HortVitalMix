@@ -115,7 +115,6 @@ export function buildRuntime(env: NodeJS.ProcessEnv) {
     serviceKey: env.SUPABASE_SERVICE_ROLE_KEY ?? "",
     projectRef: env.SUPABASE_PROJECT_REF ?? "",
     ipPepper: env.APP_IP_PEPPER ?? "",
-    outboxKey: env.OUTBOX_ENCRYPTION_KEY ?? "",
     commitSha: env.VERCEL_GIT_COMMIT_SHA ?? "",
     origins: Object.freeze(origins),
     secureCookies: appEnv !== "development",
@@ -143,6 +142,5 @@ export function logRuntimeBootSummary(
     supabaseHost,
     hasServiceRole: Boolean(current.serviceKey),
     hasIpPepper: Boolean(current.ipPepper),
-    hasOutboxKey: Boolean(current.outboxKey),
   });
 }
