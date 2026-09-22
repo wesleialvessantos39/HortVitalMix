@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { CPFInput } from "./forms/CPFInput";
 import { PhoneInput } from "./forms/PhoneInput";
 import { PasswordStrengthMeter } from "./forms/PasswordStrengthMeter";
+import { OtpInput } from "./forms/OtpInput";
 import type { ShellSession } from "../hooks/useSession";
 import {
   NewPasswordSchema,
@@ -228,6 +229,7 @@ export function Account({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loginPasswordVisible, setLoginPasswordVisible] = useState(false);
   const [securityChallengeId, setSecurityChallengeId] = useState<string | null>(null);
+  const [securityNonce, setSecurityNonce] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   useEffect(() => {
@@ -236,6 +238,7 @@ export function Account({
     setConfirmPassword("");
     setLoginPasswordVisible(false);
     setSecurityChallengeId(null);
+    setSecurityNonce("");
     setFieldErrors({});
     const params = new URLSearchParams(location.search);
     if (params.get("registered") === "1")
@@ -834,16 +837,14 @@ export function Account({
               Digite o código enviado para este perfil. Códigos emitidos em
               outro portal não são aceitos aqui.
             </p>
-            <label>
+            <label className="t04-security-code-label">
               Código de segurança
-              <input
-                name="nonce"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                minLength={6}
-                maxLength={8}
-                required
+              <OtpInput
+                value={securityNonce}
+                onChange={setSecurityNonce}
+                disabled={busy}
               />
+              <input type="hidden" name="nonce" value={securityNonce} />
             </label>
             <PasswordFields
               label="Nova senha"
