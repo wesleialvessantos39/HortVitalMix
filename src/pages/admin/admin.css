@@ -1,3 +1,8 @@
+body:has(.admin-route-layout) .desktop-header,
+body:has(.admin-route-layout) .mobile-header,
+body:has(.admin-route-layout) > #root > footer,
+body:has(.admin-route-layout) > #root > .bottom-nav{display:none!important}
+body:has(.admin-route-layout) .admin-route-layout{min-height:100vh}
 /* Volume 01 / Trilha 05 — Portal Administrativo
    Linguagem visual canônica: verde profundo, branco quente e laranja HortiVitalMix. */
 .admin-route-layout{display:block!important;max-width:none!important;width:100%!important;padding:0!important;margin:0!important;background:#f6f7f3;min-height:calc(100vh - 80px)}
