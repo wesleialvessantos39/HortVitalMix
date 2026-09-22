@@ -201,7 +201,7 @@ export default function App() {
               className="icon admin-home-entry"
               aria-label="Administração"
               title="Administração"
-              onClick={() => go(adminTarget)
+              onClick={() => go(adminTarget)}
             >
               <ShieldCheck />
             </button>
@@ -238,7 +238,7 @@ export default function App() {
               className="icon admin-home-entry"
               aria-label="Administração"
               title="Administração"
-              onClick={() => go(adminTarget)
+              onClick={() => go(adminTarget)}
             >
               <ShieldCheck />
             </button>
