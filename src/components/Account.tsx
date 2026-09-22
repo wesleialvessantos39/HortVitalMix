@@ -808,6 +808,14 @@ export function Account({
           </button>
         )}
 
+        <button
+          className="secondary account-action"
+          type="button"
+          onClick={() => navigate("/confirmar-contato")}
+        >
+          Confirmar e-mail e telefone
+        </button>
+
         {securityFlow ? (
           <form
             className="security-form"
