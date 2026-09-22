@@ -48,3 +48,11 @@ body:has(.admin-route-layout) .admin-route-layout{min-height:100vh}
  .admin-bottom-nav{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;border-top:1px solid var(--admin-line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -5px 20px rgba(18,63,34,.07)}.admin-bottom-nav button{border:0;background:none;color:#728078;display:grid;place-items:center;gap:3px;font-size:8px;padding:5px 2px}.admin-bottom-nav button.is-active{color:var(--admin-green-2)}.admin-bottom-nav span{max-width:70px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  .admin-page-header{display:grid;gap:12px;margin-bottom:16px}.admin-page-header h1{font-size:24px}.admin-stat-grid,.admin-action-grid{grid-template-columns:1fr}.admin-stat-card{min-height:92px}.admin-card{border-radius:15px;padding:16px}.admin-governance-grid{display:grid;grid-template-columns:1fr}.admin-table-wrap{margin-inline:-4px;width:calc(100% + 8px)}.admin-table{min-width:610px}
 }
+
+@media (min-width:768px) and (max-width:1199px){
+ .admin-shell{grid-template-columns:220px minmax(0,1fr)}
+ .admin-main{padding:28px 24px 88px}
+ .admin-login-layout{grid-template-columns:minmax(0,1fr) minmax(330px,.8fr);gap:32px}
+ .admin-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .admin-governance-grid{grid-template-columns:1fr}
+}
