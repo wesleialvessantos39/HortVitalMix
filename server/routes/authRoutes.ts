@@ -137,7 +137,7 @@ function loginPathForRole(role: PortalRole) {
   return "/entrar/super-administrador";
 }
 
-function portalKindForRole(role: PortalRole | null | undefined) {
+function portalKindForRole(role: string | null | undefined) {
   return role === "platform_admin" || role === "platform_super_admin"
     ? "administrative"
     : "public";
@@ -381,6 +381,7 @@ authRouter.get("/session", async (req, res, next) => {
         email: req.actor.email,
         roles: req.actor.roles,
         activeRole,
+        portalKind: portalKindForRole(activeRole),
       });
       return;
     }
