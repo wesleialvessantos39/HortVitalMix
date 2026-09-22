@@ -1186,3 +1186,13 @@ Por determinação do proprietário:
 - hash canônico das migrations permanece `7642fea2913cbb56af6ea156dfbc9aaeabe1bb9548052f731ccee0469d4b3ac0`;
 - GitHub Actions permaneceu intocado nesta revisão, conforme determinação do proprietário;
 - a criação de uma **tag Git real** não é substituída por branch ou release de banco. O conector GitHub desta sessão não expõe operação de criação de ref/tag; portanto nenhuma tag fictícia foi criada. A release canônica Supabase `trilha03-v1` permanece separada desse conceito.
+
+
+### Ajuste pós-fechamento — visibilidade do acesso administrativo por sessão
+
+- quando a sessão ativa é `consumer` ou `producer`, o ícone/atalho de Administração fica oculto no header desktop e mobile;
+- ao sair da sessão pública, a entrada administrativa volta a ficar disponível;
+- quando a sessão ativa é `platform_admin` ou `platform_super_admin`, o atalho administrativo permanece disponível e direciona ao painel administrativo;
+- a regra considera o **perfil ativo**, preservando a separação canônica entre portais;
+- cobertura unitária adicionada à suíte da Trilha 03;
+- nenhuma alteração realizada em GitHub Actions.
