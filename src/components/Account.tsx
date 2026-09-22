@@ -29,8 +29,8 @@ function modeFromPath(path: string): Mode {
   if (path === "/cadastro/consumidor") return "consumer";
   if (path === "/cadastro/produtor") return "producer";
   if (path === "/recuperar-senha") return "recovery";
-  if (path === "/redefinir-senha") return "reset";
-  if (path === "/confirmar-contato") return "confirmation";
+  if (path === "/redefinir-senha" || path === "/redefinirsenha") return "reset";
+  if (path === "/confirmar-contato" || path === "/confirmarcontato") return "confirmation";
   return "login";
 }
 
