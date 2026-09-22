@@ -56,3 +56,81 @@ export function renderPasswordRecoveryEmail(params: {
 export function renderPhoneOtpSms(otp: string, expiresInMinutes: number): string {
   return `HortiVitalMix: seu codigo e ${otp}. Expira em ${expiresInMinutes} min. Nao compartilhe.`;
 }
+
+
+export function renderAdminMfaEmail(params: {
+  otp: string;
+  expiresInMinutes: number;
+}): RenderedTemplate {
+  const html = htmlShell(`
+<h1 style="font-size:20px;color:#143D24;margin:0 0 8px;">Confirmação de acesso administrativo</h1>
+<p style="font-size:14px;color:#4b5563;margin:0 0 20px;line-height:1.5;">
+Detectamos uma tentativa de login no portal administrativo. Digite o código abaixo para confirmar.
+Se não foi você, ignore este e-mail — sua senha continua válida e ninguém entra sem este código.
+</p>
+<div style="text-align:center;margin:24px 0;">
+  <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:#6b7280;margin-bottom:8px;">Código MFA</div>
+  <div style="display:inline-block;font-size:32px;font-weight:900;letter-spacing:8px;color:#1B4D2E;background:#E8F5E9;padding:14px 20px;border-radius:12px;font-family:monospace;">
+    ${params.otp}
+  </div>
+</div>
+<p style="font-size:12px;color:#6b7280;margin-top:20px;text-align:center;">
+Expira em ${params.expiresInMinutes} minutos.<br/>Nunca compartilhe este código com ninguém.
+</p>`);
+  const text = `HortiVitalMix — Código MFA
+
+Seu código: ${params.otp}
+Expira em ${params.expiresInMinutes} minutos.`;
+
+  return {
+    subject: "Código de acesso administrativo — HortiVitalMix",
+    html,
+    text,
+  };
+}
+
+export function renderAdminInviteEmail(params: {
+  inviteLink: string;
+  targetRole: "platform_admin" | "platform_super_admin";
+  sectors: string[];
+  expiresInHours: number;
+}): RenderedTemplate {
+  const roleLabel =
+    params.targetRole === "platform_super_admin"
+      ? "Super Administrador"
+      : "Administrador Setorial";
+
+  const sectorsBlock = params.sectors.length
+    ? `<div style="background:#F8F9FA;border-radius:10px;padding:14px 16px;margin:20px 0;">
+<div style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;margin-bottom:6px;">Setores atribuídos</div>
+<ul style="margin:0;padding-left:18px;font-size:13px;color:#1f2937;">
+${params.sectors.map((sector) => `<li><code>${sector}</code></li>`).join("")}
+</ul></div>`
+    : "";
+
+  const html = htmlShell(`
+<h1 style="font-size:20px;color:#143D24;margin:0 0 8px;">Convite administrativo</h1>
+<p style="font-size:14px;color:#4b5563;margin:0 0 12px;line-height:1.5;">
+Você foi convidado(a) para atuar como <strong>${roleLabel}</strong> no HortiVitalMix.
+</p>
+${sectorsBlock}
+<div style="text-align:center;margin:24px 0;">
+<a href="${params.inviteLink}" style="display:inline-block;background:#1B4D2E;color:#ffffff;font-size:14px;font-weight:700;padding:14px 24px;border-radius:10px;text-decoration:none;">Aceitar convite</a>
+</div>
+<p style="font-size:12px;color:#6b7280;margin-top:20px;text-align:center;">
+Este convite expira em ${params.expiresInHours} horas e só pode ser usado uma vez.
+</p>`);
+
+  const text = `HortiVitalMix — Convite administrativo
+
+Papel: ${roleLabel}
+${params.sectors.length ? `Setores: ${params.sectors.join(", ")}\n` : ""}Aceite: ${params.inviteLink}
+
+Expira em ${params.expiresInHours} horas.`;
+
+  return {
+    subject: `Convite ${roleLabel} — HortiVitalMix`,
+    html,
+    text,
+  };
+}
