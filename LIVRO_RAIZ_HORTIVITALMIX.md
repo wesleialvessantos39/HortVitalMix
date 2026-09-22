@@ -1108,7 +1108,7 @@ A tag `trilha03-v1` e a release corrente de production só podem ser criadas no 
 
 ## 2026-09-21 — REVISÃO FINAL DA TRILHA 03 — DESEMPENHO, TELAS E RESPONSIVIDADE
 
-Status: **correções de raiz implementadas sem uso de GitHub Actions; validação final condicionada exclusivamente ao build gratuito Vercel do SHA final**.
+Status: **correções de raiz implementadas sem uso de GitHub Actions; build gratuito Vercel aprovado no fechamento funcional e revisão final pronta para selagem**.
 
 ### Diagnóstico real encontrado
 
@@ -1175,3 +1175,14 @@ Por determinação do proprietário:
 - Supabase canônico permanece `xipbsazvymkqqfmfegwu`;
 - nenhuma migration foi necessária nesta revisão; schema lógico permanece 16.
 
+
+
+### Fechamento da revisão final T03
+
+- commit funcional com otimização completa e exclusão do middleware prévio em login/cadastro: `3311025aeef4fa5226eb2a085651f92dd68dcc1f`;
+- contexto Vercel desse commit: **success**;
+- fechamento documental subsequente também passou pelo build Vercel antes deste registro;
+- schema lógico permanece **16**, sem migration adicional;
+- hash canônico das migrations permanece `7642fea2913cbb56af6ea156dfbc9aaeabe1bb9548052f731ccee0469d4b3ac0`;
+- GitHub Actions permaneceu intocado nesta revisão, conforme determinação do proprietário;
+- a criação de uma **tag Git real** não é substituída por branch ou release de banco. O conector GitHub desta sessão não expõe operação de criação de ref/tag; portanto nenhuma tag fictícia foi criada. A release canônica Supabase `trilha03-v1` permanece separada desse conceito.
