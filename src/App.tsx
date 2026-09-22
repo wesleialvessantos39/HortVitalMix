@@ -88,8 +88,10 @@ export default function App() {
   const display = config ?? fallback;
   const accountTarget = shellSession ? "/minha-conta" : "/conta";
   const publicPortalSession =
-    shellSession?.activeRole === "consumer" ||
-    shellSession?.activeRole === "producer";
+    Boolean(shellSession) &&
+    (shellSession?.portalKind === "public" ||
+      shellSession?.activeRole === "consumer" ||
+      shellSession?.activeRole === "producer");
   const showAdministrationEntry = !publicPortalSession;
   const adminTarget =
     shellSession &&
