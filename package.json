@@ -36,7 +36,8 @@
     "test:t03:integration": "node --import tsx scripts/require-integration.ts && vitest run tests/integration/trilha03Identity.test.ts tests/integration/supabase.test.ts",
     "test:t03": "npm run test:t03:unit && npm run test:t03:integration",
     "verify:t03:evidence": "node scripts/verify-trilha03-evidence.mjs",
-    "verify:t03:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t03:unit && npm run verify:t03:evidence && npm run build"
+    "verify:t03:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t03:unit && npm run verify:t03:evidence && npm run build",
+    "test:t03:e2e": "playwright test tests/e2e/trilha03-auth.spec.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",

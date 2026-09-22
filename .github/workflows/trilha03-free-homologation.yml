@@ -17,6 +17,7 @@ on:
       - "supabase/manifest.json"
       - "tests/unit/trilha03*.test.ts"
       - "tests/integration/trilha03*.test.ts"
+      - "tests/e2e/trilha03-auth.spec.ts"
       - "scripts/verify-trilha03-evidence.mjs"
       - "package.json"
       - ".github/workflows/trilha03-free-homologation.yml"
@@ -78,6 +79,7 @@ jobs:
       - run: npm run migrations:verify
       - run: npm run verify:foundation
       - run: npm run test:t03
+      - run: npm run test:t03:e2e
       - run: npm run build
       - if: always()
         run: npx supabase stop --no-backup

@@ -977,3 +977,128 @@ Para não degradar segurança nem fabricar resultados:
 - foi adicionado `.github/workflows/trilha02-free-seal-fallback.yml`, em runner padrão macOS, para executar os 20 casos seguros, validar os 31 casos versionados, exigir Vercel `success`, exigir `/api/ready` sincronizado com o mesmo SHA e somente então criar a tag Git `trilha02-v1`.
 
 Nenhuma implementação já adiantada da Trilha 03 foi removida, simplificada ou recriada.
+
+
+---
+
+## 2026-09-21 — VOLUME 01 / TRILHA 03 — IDENTIDADE CANÔNICA, PORTAIS SEPARADOS E SESSÕES CRIPTOGRÁFICAS
+
+Status técnico: **implementação integral da Trilha 03 incorporada à main, preservando todos os avanços pré-existentes; Supabase canônico atualizado sem novas tabelas; build Vercel usado como gate executável; workflow gratuito de integração versionado e fail-closed contra production**.
+
+Fonte normativa: **MANUAL MESTRE TÉCNICO v10 — TRILHAS 01 A 06**.
+
+### Baseline obrigatório preservado
+
+A execução iniciou a partir da Trilha 02 homologada em schema lógico 14 e respeitou a trava deste Livro-Raiz. Permaneceram intactos:
+- identidade canônica com possibilidade de Consumer + Producer no mesmo CPF;
+- Conta pública separada da Administração;
+- Administrador e Super administrador sem cadastro público;
+- confirmação, recuperação de senha e código de segurança vinculados ao papel;
+- correções de Google Studio e roteamento `/_hvm_api`;
+- configuração global/auditoria da Trilha 02;
+- projeto Supabase único `xipbsazvymkqqfmfegwu`;
+- integração GitHub → Vercel.
+
+### Backend T03
+
+- endpoints separados `POST /api/v1/auth/login` e `POST /api/v1/auth/admin-login`;
+- login público rejeita `platform_admin` e `platform_super_admin` com HTTP 403 antes de autenticar e sem emitir cookie;
+- login administrativo rejeita Consumer/Producer;
+- rate limit de 10 tentativas/15 minutos por `clientIpHash`;
+- cookies de sessão `HttpOnly`, `Secure` em produção e `SameSite=Lax`;
+- sessão continua validada por JWT/Supabase Auth e papéis vivos do banco;
+- cadastro público permanece estritamente Consumer/Producer;
+- contratos Zod strict e mensagens sem enumeração de conta;
+- fluxos reais já adiantados de confirmação/recuperação/reautenticação foram preservados em vez de regredir para stubs.
+
+### Frontend T03
+
+- nova escolha explícita `/cadastro` com somente Consumidor e Produtor;
+- cadastros específicos permanecem em `/cadastro/consumidor` e `/cadastro/produtor`;
+- alias administrativo independente `/admin/entrar`;
+- normalização compartilhada de CPF/e-mail/celular;
+- CPF e celular extraídos para componentes reutilizáveis;
+- medidor de força de senha extraído para componente canônico;
+- hook `useSession` sincroniza a shell com a sessão real;
+- Conta autenticada aponta para `/minha-conta`;
+- design e tokens das referências oficiais preservados sem inserir dados fictícios.
+
+### Banco / Supabase
+
+Projeto: **HortVitalMix — `xipbsazvymkqqfmfegwu`**.
+
+Migrations aditivas:
+- `20260922002647_trilha03_identity_hardening`;
+- `20260922004505_trilha03_function_grants_hardening`.
+
+Schema lógico final da implementação: **16**.
+
+A T03 não criou tabelas. Foram adicionados/validados:
+- `fn_assert_public_role(text)`;
+- `ix_app_people_email_login`;
+- `fn_check_auth_people_consistency()`;
+- `trg_fn_auth_user_email_changed()`;
+- trigger `trg_hortivital_auth_user_email_changed`.
+
+A consulta canônica retornou **0 divergências** entre e-mails de `auth.users` e `app_people`.
+
+O Supabase Security Advisor detectou inicialmente que a nova função interna do trigger herdava EXECUTE público. A migration corretiva revogou execução de PUBLIC/anon/authenticated/service_role. Na rechecagem, esse alerta específico desapareceu.
+
+Advisories anteriores à T03 foram preservados sem alteração fora de escopo: helpers SECURITY DEFINER deliberadamente concedidos a authenticated para RLS, tabela de desafios com RLS sem policy pública (acesso direto negado) e proteção de senha vazada desativada na configuração Auth.
+
+### Testes e responsividade
+
+Testes unitários T03 versionados:
+- contratos de identidade;
+- normalização;
+- rate limit.
+
+Integração T03 versionada:
+- objetos da migration;
+- guard de papel público;
+- bloqueio de administrador no login público;
+- bloqueio de papel público no login administrativo.
+
+Responsividade:
+- suíte existente cobre 320, 360, 430, 768, 1024 e 1440 px;
+- suíte específica T03 cobre 320, 390, 768, 1024 e 1440 px;
+- valida seletor `/cadastro`, portal administrativo, ausência de mistura de papéis e ausência de overflow.
+
+### Build, CI e Vercel
+
+O build de produção executa typecheck, security-check, regressão segura da T02, validação histórica T02, testes unitários T03, evidência T03, Vite e inspeção do bundle.
+
+Foi encontrada e corrigida uma falha real de evolução do gate da T02: `verify:t02:evidence` exigia schema global exatamente 14 e, portanto, quebrava qualquer migration futura. O gate passou a validar o **hash histórico das 14 migrations da T02**, permitindo schema superior sem perder evidência.
+
+A integração GitHub → Vercel permanece o gate de build/deploy da main.
+
+O workflow `.github/workflows/trilha03-free-homologation.yml` usa Supabase local efêmero, sem custo e sem tocar em production. No GitHub Free atual, houve execução encerrada antes do primeiro step, com `steps: null`; isso é indisponibilidade de provisionamento do runner e não foi registrado como aprovação de teste.
+
+### Hash e manifesto
+
+Schema lógico: **16**.
+
+Hash canônico das 16 migrations:
+
+`7642fea2913cbb56af6ea156dfbc9aaeabe1bb9548052f731ccee0469d4b3ac0`.
+
+### Regra de selagem
+
+A tag `trilha03-v1` e a release corrente de production só podem ser criadas no mesmo SHA final deste fechamento após o contexto Vercel retornar `success`. Nenhum resultado de runner indisponível pode ser interpretado como teste aprovado.
+
+### Checklist T03
+
+- [x] Backend implementado;
+- [x] Frontend implementado;
+- [x] design/layout oficial preservado;
+- [x] responsividade coberta por testes E2E versionados;
+- [x] Supabase canônico atualizado;
+- [x] migrations e manifesto sincronizados;
+- [x] Livro Raiz atualizado;
+- [x] GitHub main atualizado;
+- [x] Vercel configurado e build obrigatório preservado;
+- [x] conformidade funcional reconciliada com o Manual v10 sem regredir avanços;
+- [x] hardening de privilégios do trigger concluído;
+- [x] zero divergências de e-mail na consistência canônica;
+- [ ] runner gratuito GitHub executou integração/E2E — **bloqueado externamente por indisponibilidade de provisionamento (`steps: null`)**;
+- [ ] release/tag T03 — **executar somente após Vercel success do SHA final deste fechamento**.
