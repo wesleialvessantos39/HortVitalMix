@@ -1405,3 +1405,109 @@ O Manual permite adapters opcionais; ausência de Resend/Gmail/Twilio não é su
 - Supabase: release de produção marcada como `is_current = true`;
 - GitHub Actions: não utilizado e não alterado;
 - tag física Git `trilha04-v1`: não criada pelo conector atual porque a operação `refs/tags` não é exposta; isso não foi substituído por branch falsa.
+
+
+## 2026-09-22 — CORREÇÃO OPERACIONAL DA TRILHA 04 — SUPABASE AUTH COMO ÚNICO SISTEMA DE E-MAIL DE SEGURANÇA
+
+**Status:** regra operacional vigente e substitutiva de qualquer referência anterior a providers externos na Trilha 04.
+
+### Decisão canônica
+
+A partir desta correção, o HortiVitalMix utiliza **somente o Supabase Auth** para envio de e-mails relacionados a autenticação e segurança.
+
+O Gmail permanece configurado exclusivamente como SMTP dentro do próprio Supabase. A aplicação não recebe, armazena nem solicita credenciais diretas do Gmail.
+
+Esta decisão vale, por enquanto, para:
+
+- confirmação e reenvio de cadastro;
+- recuperação de senha;
+- reautenticação e código de segurança;
+- fluxos de Consumidor;
+- fluxos de Produtor;
+- fluxos de Administrador;
+- fluxos de Super administrador.
+
+### Providers externos removidos do runtime
+
+Ficam **desativados e fora do contrato de ambiente atual**:
+
+- Resend;
+- Gmail API direta;
+- Twilio;
+- SMS de segurança;
+- qualquer provider externo de e-mail fora do Supabase Auth.
+
+As seguintes variáveis foram removidas do `.env.example` e não devem ser solicitadas pelo Google Studio, Vercel ou outro runtime:
+
+- `PUBLIC_ORIGIN`;
+- `EMAIL_PROVIDER`;
+- `RESEND_API_KEY`;
+- `MAIL_FROM`;
+- `GMAIL_ACCESS_TOKEN`;
+- `GMAIL_FROM_EMAIL`;
+- `SMS_PROVIDER`;
+- `TWILIO_ACCOUNT_SID`;
+- `TWILIO_AUTH_TOKEN`;
+- `TWILIO_FROM_NUMBER`;
+- `OUTBOX_ENCRYPTION_KEY`.
+
+### Fluxo ativo
+
+O fluxo ativo permanece centralizado em `server/routes/authRoutes.ts` e usa:
+
+- `supabase.auth.resend(...)` para confirmação/reenvio;
+- `supabase.auth.resetPasswordForEmail(...)` para recuperação;
+- `supabase.auth.reauthenticate()` para código de segurança.
+
+A entrega efetiva dos e-mails é responsabilidade do Supabase Auth através do SMTP/Gmail já configurado no painel do projeto.
+
+### Estrutura T04 preservada
+
+As migrations e tabelas da Trilha 04 **não foram removidas nem revertidas**.
+
+Continuam preservadas:
+
+- `app_contact_verification_challenges`;
+- `app_password_recovery_requests`;
+- `app_outbox_events`;
+- `app_delivery_attempts`.
+
+A outbox própria deixa de ser mecanismo ativo de entrega neste momento. Ela permanece somente como fundação arquitetural para uma eventual evolução futura, sem exigir secret próprio no runtime.
+
+Schema lógico permanece **18** e o histórico de migrations continua intacto.
+
+### Frontend
+
+As telas de:
+
+- `/confirmar-contato`;
+- `/confirmarcontato`;
+- `/recuperar-senha`;
+- `/redefinir-senha`;
+- `/redefinirsenha`;
+
+utilizam novamente o fluxo canônico do componente `Account`, já integrado ao Supabase Auth.
+
+Não existem dois fluxos concorrentes de autenticação.
+
+### SMS
+
+SMS de segurança fica **explicitamente desativado por enquanto**.
+
+Nenhuma credencial Twilio deve ser criada ou solicitada.
+
+Qualquer ativação futura de SMS deverá ser previamente registrada no Livro Raiz e implementada em etapa própria.
+
+### Regra para implementações futuras
+
+Enquanto esta decisão estiver vigente:
+
+1. não adicionar Resend;
+2. não adicionar Gmail API direta;
+3. não adicionar Twilio;
+4. não solicitar secrets de provider no Google Studio;
+5. não solicitar secrets de provider na Vercel;
+6. usar exclusivamente o Supabase Auth para e-mails de autenticação/segurança;
+7. tratar Gmail/SMTP como configuração interna do Supabase.
+
+Esta seção **prevalece sobre referências anteriores da Trilha 04** que mencionavam Resend, Gmail API, Twilio, outbox ativa ou `OUTBOX_ENCRYPTION_KEY` como requisito de runtime.
