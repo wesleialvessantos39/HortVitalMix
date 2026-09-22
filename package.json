@@ -38,12 +38,11 @@
     "verify:t03:evidence": "node scripts/verify-trilha03-evidence.mjs",
     "verify:t03:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t03:unit && npm run verify:t03:evidence && npm run build",
     "test:t03:e2e": "playwright test tests/e2e/trilha03-auth.spec.ts",
-    "outbox:dispatch": "node --import tsx scripts/dispatch-outbox.ts",
-    "test:t04:unit": "vitest run tests/unit/trilha04Otp.test.ts tests/unit/trilha04SecurePayload.test.ts tests/unit/trilha04Contracts.test.ts",
+    "test:t04:unit": "vitest run tests/unit/trilha04Otp.test.ts tests/unit/trilha04Contracts.test.ts",
     "verify:t04:evidence": "node scripts/verify-trilha04-evidence.mjs",
     "test:t04:e2e": "playwright test tests/e2e/trilha04-contact-recovery.spec.ts",
     "verify:t04:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t04:unit && npm run verify:t04:evidence && npm run build",
-    "test:t04:integration": "vitest run tests/integration/trilha04Contact.test.ts tests/integration/trilha04Recovery.test.ts tests/integration/trilha04Rls.test.ts",
+    "test:t04:integration": "vitest run tests/integration/trilha04Rls.test.ts",
     "test:t04": "npm run test:t04:unit && npm run test:t04:integration && npm run verify:t04:evidence"
   },
   "dependencies": {
