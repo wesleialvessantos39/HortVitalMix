@@ -84,3 +84,67 @@ O workflow gratuito da T03 provisiona Supabase local efêmero para integração 
 ## Não regressão
 
 Os fluxos reais de confirmação, recuperação de senha, código de segurança, identidade Consumer+Producer no mesmo CPF, Administração independente, configuração global e auditoria da T02 permanecem preservados.
+
+
+## Revisão final de desempenho, visibilidade e responsividade — 2026-09-21
+
+Esta revisão foi executada sem utilizar ou alterar GitHub Actions. O projeto permanece no fluxo gratuito GitHub + Supabase + Vercel.
+
+### Desempenho de autenticação
+
+Foi encontrada latência evitável no caminho crítico:
+
+- após o POST de login, o frontend fazia um GET adicional de sessão;
+- a sessão executava validação Auth e múltiplas consultas separadas ao PostgreSQL;
+- cookies de sessão antigos podiam fazer o middleware validar uma sessão anterior antes do próprio login/cadastro.
+
+Correções:
+
+- o POST de login agora devolve a sessão canônica completa (userId, email, roles e activeRole);
+- o frontend adota essa resposta imediatamente, sem GET de sessão após autenticar;
+- status da conta, papéis ativos, pessoa e validade opcional da sessão são resolvidos por `IdentityAccessService` em uma única consulta ao PostgreSQL;
+- endpoints públicos de login/cadastro/recuperação não executam resolução de sessão anterior;
+- visitante sem sessão não dispara tentativa inútil de refresh;
+- Consumer, Producer, Administrador e Super administrador usam o mesmo caminho rápido;
+- o backend publica `Server-Timing` para login e cadastro, permitindo observação futura sem logar credenciais.
+
+A consulta consolidada foi validada diretamente contra o Supabase canônico por `EXPLAIN`. O plano usa a chave primária de `app_users` e o índice `ix_app_user_role_active`.
+
+### Desempenho do cadastro
+
+- buscas por CPF e e-mail, antes sequenciais, passaram a ocorrer em paralelo;
+- persistência canônica continua transacional por RPC;
+- envio/reenvio da confirmação de e-mail deixou o caminho crítico da resposta do cadastro;
+- a tela navega assim que a identidade e o domínio foram persistidos;
+- o reenvio de confirmação ocorre em seguida sem bloquear a navegação;
+- caso o envio falhe, o fluxo existente de “Reenviar confirmação” permanece disponível.
+
+### Visibilidade das telas T02/T03
+
+Foram encontrados dois problemas reais de navegação:
+
+1. `/admin/entrar` era capturado antes pelo seletor público e podia exibir Consumer/Producer. A condição foi corrigida.
+2. `/cadastro` existia, mas a ação da home “Conheça as opções de cadastro” apontava para `/entrar`. Agora aponta para `/cadastro`.
+
+Foi criado também o ponto canônico `/admin/painel`:
+
+- Administrador entra no painel administrativo;
+- Super administrador entra no mesmo painel e recebe a ação explícita **Abrir Configuração Global — Trilha 02**;
+- `/admin/configuracao` continua restrito ao Super administrador pelo backend;
+- Conta/segurança permanece em `/minha-conta`.
+
+Assim, a tela da Trilha 02 não fica mais “escondida” dentro da conta genérica.
+
+### Responsividade
+
+Revisão mantida em três faixas:
+
+- mobile: até 767 px, cartões e formulários em coluna, botões de toque com altura adequada e navegação inferior;
+- tablet: 768–1199 px, largura limitada e grades de duas colunas quando há espaço;
+- desktop: 1200 px ou mais, cartões em duas colunas e conteúdo central com limites máximos.
+
+A Configuração Global T02 já possuía regras específicas para <=767 px e <=359 px. O novo painel administrativo recebeu limites próprios para tablet e mobile. A suíte Playwright versionada continua disponível para validação local/gratuita, sem depender de GitHub Actions.
+
+### Regra de infraestrutura
+
+Nenhum arquivo de `.github/workflows` foi alterado nesta revisão. GitHub Actions não participa do critério de conclusão solicitado pelo proprietário nesta etapa.
