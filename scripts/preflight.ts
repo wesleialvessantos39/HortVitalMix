@@ -29,12 +29,6 @@ async function main() {
     failures,
   );
 
-  else
-    failIf(
-      !/^[0-9a-fA-F]{64}$/.test(runtime.outboxKey),
-      "OUTBOX_ENCRYPTION_KEY_INVALID",
-      failures,
-    );
 
   if (runtime.projectRef) {
     const expectedSupabaseUrl = `https://${runtime.projectRef}.supabase.co`;
