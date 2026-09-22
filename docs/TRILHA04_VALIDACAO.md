@@ -158,3 +158,20 @@ GitHub Actions continua fora do critério de execução.
 - [x] Frontend usa o fluxo canônico Supabase.
 - [x] Livro Raiz atualizado.
 - [x] GitHub Actions não utilizado.
+
+
+## Recuperação visual pós-homologação
+
+A camada visual foi corrigida sem qualquer alteração no Supabase ou backend homologado.
+
+Validações:
+
+- `App.tsx` renderiza `ContactConfirmationPage`, `RecoverPasswordPage` e `ResetPasswordPage` diretamente;
+- confirmação usa somente `/v1/auth/resend-confirmation`;
+- recuperação usa somente `/v1/auth/request-password-reset`;
+- redefinição reutiliza `/v1/auth/import-session` + `/v1/auth/reset-password`;
+- nenhuma página T04 chama os endpoints antigos de outbox/OTP paralelo;
+- `OtpInput` de seis campos é usado no código de segurança de alteração de senha já existente;
+- aliases `/confirmarcontato` e `/redefinirsenha` continuam válidos;
+- CSS próprio da T04 contém breakpoints mobile/tablet/desktop;
+- Supabase, schema 18 e migrations permaneceram intocados.
