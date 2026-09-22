@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -77,21 +78,28 @@ assertIncludes("supabase/migrations/20260921193244_trilha02_config_hardening.sql
 ]);
 
 const manifest = JSON.parse(read("supabase/manifest.json"));
-if (manifest.schemaVersion !== 14) throw new Error("T02_SCHEMA_VERSION_MISMATCH");
+if (manifest.schemaVersion < 14) throw new Error("T02_SCHEMA_VERSION_REGRESSION");
+
+const t02Index = manifest.migrations.findIndex(
+  (m) =>
+    m.version === "20260921193244" &&
+    m.name === "trilha02_config_hardening" &&
+    m.file === "20260921193244_trilha02_config_hardening.sql",
+);
+if (t02Index !== 13) throw new Error("T02_MIGRATION_HISTORY_POSITION_MISMATCH");
+
+const t02HistoryHash = createHash("sha256");
+for (const migration of manifest.migrations.slice(0, t02Index + 1)) {
+  t02HistoryHash.update(migration.file + "\n");
+  t02HistoryHash.update(read("supabase/migrations/" + migration.file));
+  t02HistoryHash.update("\n");
+}
+const t02HistoricalHash = t02HistoryHash.digest("hex");
 if (
-  manifest.migrationHistoryHash !==
+  t02HistoricalHash !==
   "4df210ea6d4cdb05280f33889280edb1411532b0f24f5da8f7044110ef2617dc"
 ) {
-  throw new Error("T02_MIGRATION_HASH_MISMATCH");
-}
-if (
-  !manifest.migrations.some(
-    (m) =>
-      m.version === "20260921193244" &&
-      m.name === "trilha02_config_hardening",
-  )
-) {
-  throw new Error("T02_MIGRATION_NOT_IN_MANIFEST");
+  throw new Error("T02_HISTORICAL_MIGRATION_HASH_MISMATCH");
 }
 
 console.log(
@@ -100,6 +108,7 @@ console.log(
     trail: "02",
     cases: totalCases,
     schemaVersion: manifest.schemaVersion,
-    migrationHistoryHash: manifest.migrationHistoryHash,
+    t02HistoricalHash,
+    currentMigrationHistoryHash: manifest.migrationHistoryHash,
   }),
 );
