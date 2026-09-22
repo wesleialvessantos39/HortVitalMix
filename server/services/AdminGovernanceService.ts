@@ -383,25 +383,255 @@ export class AdminGovernanceService {
   }
 
   static async createInvite(
-    _input: CreateInviteInput,
-    _actorId: string,
-    _requestId: string,
-    _ipHash: string,
-    _origin: string,
+    input: CreateInviteInput,
+    actorId: string,
+    requestId: string,
+    ipHash: string,
+    origin: string,
   ): Promise<{ status: "created"; invite: InviteResponse } | { status: "conflict" } | { status: "unavailable" }> {
-    return { status: "unavailable" };
+    if (!dbPool || !supabaseAdmin) return { status: "unavailable" };
+
+    const duplicate = await dbPool.query(
+      `SELECT 1 FROM public.app_people WHERE email_normalized=$1
+       UNION ALL
+       SELECT 1 FROM public.app_admin_invites
+        WHERE lower(email)=$1 AND is_accepted=false AND invalidated_at IS NULL
+          AND expires_at>now() LIMIT 1`,
+      [input.email],
+    );
+    if (duplicate.rowCount) return { status: "conflict" };
+
+    if (input.targetRole === "platform_admin") {
+      const valid = await dbPool.query<{ code: string }>(
+        `SELECT code FROM public.app_admin_sectors
+          WHERE code=ANY($1::text[]) AND is_active=true`,
+        [input.sectors],
+      );
+      if (valid.rowCount !== input.sectors.length) return { status: "conflict" };
+    }
+
+    const token = randomBytes(32).toString("hex");
+    const digest = sha256(token);
+    const inviteId = randomUUID();
+    const expiresAt = new Date(Date.now() + INVITE_TTL_HOURS * 60 * 60_000);
+    const client = await dbPool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(
+        `INSERT INTO public.app_admin_invites
+          (id,email,target_role,token_digest,invited_by,expires_at)
+         VALUES ($1,$2,$3,$4,$5,$6)`,
+        [inviteId, input.email, input.targetRole, digest, actorId, expiresAt],
+      );
+      for (const sector of input.sectors) {
+        await client.query(
+          `INSERT INTO public.app_admin_invite_sectors(invite_id,sector_code)
+           VALUES ($1,$2)`,
+          [inviteId, sector],
+        );
+      }
+      await audit(client, {
+        requestId,
+        actorId,
+        actorRole: "platform_super_admin",
+        action: "admin.invite.created",
+        targetEntity: "app_admin_invites",
+        targetId: inviteId,
+        after: { emailHash: sha256(input.email), targetRole: input.targetRole, sectors: input.sectors },
+        commandId: input.commandId,
+        ipHash,
+      });
+      await client.query("COMMIT");
+    } catch {
+      try { await client.query("ROLLBACK"); } catch {}
+      return { status: "unavailable" };
+    } finally {
+      client.release();
+    }
+
+    let base = "https://hortvitalmix.vercel.app";
+    try { base = new URL(origin).origin; } catch {}
+    const redirectTo = `${base}/admin/convite?token=${encodeURIComponent(token)}`;
+    const sent = await supabaseAdmin.auth.admin.inviteUserByEmail(input.email, {
+      redirectTo,
+      data: { hvm_admin_invite_id: inviteId, hvm_admin_role: input.targetRole },
+    });
+    if (sent.error || !sent.data.user) {
+      await dbPool.query(
+        `UPDATE public.app_admin_invites SET invalidated_at=clock_timestamp() WHERE id=$1`,
+        [inviteId],
+      );
+      return { status: "unavailable" };
+    }
+    await dbPool.query(
+      `UPDATE public.app_admin_invites SET auth_user_id=$2 WHERE id=$1`,
+      [inviteId, sent.data.user.id],
+    );
+
+    return {
+      status: "created",
+      invite: {
+        id: inviteId,
+        email: input.email,
+        targetRole: input.targetRole,
+        sectors: input.sectors,
+        revision: 1,
+        isAccepted: false,
+        expiresAt: expiresAt.toISOString(),
+        createdAt: new Date().toISOString(),
+        invalidatedAt: null,
+      },
+    };
   }
 
-  static async listInvites(): Promise<InviteResponse[]> { return []; }
-  static async validateInviteToken(_token: string): Promise<ValidateInviteResponse> {
-    return { status: "invalid" };
+  static async listInvites(): Promise<InviteResponse[]> {
+    if (!dbPool) return [];
+    const result = await dbPool.query<{
+      id: string; email: string; target_role: AdminRole; revision: number;
+      is_accepted: boolean; expires_at: Date | string; created_at: Date | string;
+      invalidated_at: Date | string | null; sectors: AdminSectorCode[] | null;
+    }>(
+      `SELECT i.id,i.email,i.target_role,i.revision,i.is_accepted,i.expires_at,
+              i.created_at,i.invalidated_at,
+              COALESCE(array_agg(s.sector_code) FILTER (WHERE s.sector_code IS NOT NULL),'{}') AS sectors
+         FROM public.app_admin_invites i
+         LEFT JOIN public.app_admin_invite_sectors s ON s.invite_id=i.id
+        GROUP BY i.id ORDER BY i.created_at DESC LIMIT 100`,
+    );
+    return result.rows.map((row) => ({
+      id: row.id,
+      email: row.email,
+      targetRole: row.target_role,
+      sectors: row.sectors ?? [],
+      revision: row.revision,
+      isAccepted: row.is_accepted,
+      expiresAt: new Date(row.expires_at).toISOString(),
+      createdAt: new Date(row.created_at).toISOString(),
+      invalidatedAt: row.invalidated_at ? new Date(row.invalidated_at).toISOString() : null,
+    }));
   }
+
+  static async validateInviteToken(token: string): Promise<ValidateInviteResponse> {
+    if (!dbPool || !/^[0-9a-f]{64}$/i.test(token)) return { status: "invalid" };
+    const result = await dbPool.query<{
+      id: string; email: string; target_role: AdminRole; is_accepted: boolean;
+      expires_at: Date | string; invalidated_at: Date | string | null;
+      sectors: AdminSectorCode[] | null;
+    }>(
+      `SELECT i.id,i.email,i.target_role,i.is_accepted,i.expires_at,i.invalidated_at,
+              COALESCE(array_agg(s.sector_code) FILTER (WHERE s.sector_code IS NOT NULL),'{}') AS sectors
+         FROM public.app_admin_invites i
+         LEFT JOIN public.app_admin_invite_sectors s ON s.invite_id=i.id
+        WHERE i.token_digest=$1 GROUP BY i.id`,
+      [sha256(token)],
+    );
+    const row = result.rows[0];
+    if (!row) return { status: "invalid" };
+    if (row.is_accepted) return { status: "already_accepted" };
+    if (row.invalidated_at) return { status: "invalidated" };
+    if (new Date(row.expires_at).getTime() <= Date.now()) return { status: "expired" };
+    return {
+      status: "valid",
+      email: row.email,
+      targetRole: row.target_role,
+      sectors: row.sectors ?? [],
+      expiresAt: new Date(row.expires_at).toISOString(),
+    };
+  }
+
   static async acceptInvite(
-    _input: AcceptInviteInput,
-    _requestId: string,
-    _ipHash: string,
+    input: AcceptInviteInput,
+    requestId: string,
+    ipHash: string,
   ): Promise<AcceptInviteResult> {
-    return { status: "unavailable" };
+    if (!dbPool || !supabaseAdmin) return { status: "unavailable" };
+    const found = await dbPool.query<{
+      id: string; email: string; target_role: AdminRole; auth_user_id: string | null;
+      is_accepted: boolean; expires_at: Date | string; invalidated_at: Date | string | null;
+    }>(
+      `SELECT id,email,target_role,auth_user_id,is_accepted,expires_at,invalidated_at
+       FROM public.app_admin_invites WHERE token_digest=$1`,
+      [sha256(input.token)],
+    );
+    const invite = found.rows[0];
+    if (!invite) return { status: "invalid_token" };
+    if (invite.is_accepted) return { status: "already_accepted" };
+    if (invite.invalidated_at) return { status: "invalid_token" };
+    if (new Date(invite.expires_at).getTime() <= Date.now()) return { status: "expired" };
+    if (!invite.auth_user_id) return { status: "unavailable" };
+
+    const duplicate = await dbPool.query(
+      `SELECT 1 FROM public.app_people WHERE cpf_normalized=$1 OR email_normalized=$2 LIMIT 1`,
+      [input.cpf, invite.email],
+    );
+    if (duplicate.rowCount)
+      return { status: "identity_conflict", message: "CPF ou e-mail já vinculado." };
+
+    const updated = await supabaseAdmin.auth.admin.updateUserById(invite.auth_user_id, {
+      password: input.password,
+      email_confirm: true,
+      user_metadata: {
+        full_name: input.fullName,
+        hvm_portal: "administrative",
+        hvm_admin_role: invite.target_role,
+      },
+    });
+    if (updated.error) return { status: "unavailable" };
+
+    const client = await dbPool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(
+        `INSERT INTO public.app_users(id,status) VALUES ($1,'active')
+         ON CONFLICT (id) DO UPDATE SET status='active',updated_at=clock_timestamp()`,
+        [invite.auth_user_id],
+      );
+      await client.query(
+        `INSERT INTO public.app_people
+          (user_id,full_name,cpf_normalized,email_normalized,phone_e164,email_verified_at)
+         VALUES ($1,$2,$3,$4,$5,clock_timestamp())`,
+        [invite.auth_user_id, input.fullName, input.cpf, invite.email, input.phone],
+      );
+      await client.query(
+        `INSERT INTO public.app_user_role_assignments(user_id,role_code,granted_by)
+         VALUES ($1,$2,(SELECT invited_by FROM public.app_admin_invites WHERE id=$3))`,
+        [invite.auth_user_id, invite.target_role, invite.id],
+      );
+      if (invite.target_role === "platform_admin") {
+        await client.query(
+          `INSERT INTO public.app_admin_sector_members(user_id,sector_code,assigned_by)
+           SELECT $1,s.sector_code,i.invited_by
+             FROM public.app_admin_invite_sectors s
+             JOIN public.app_admin_invites i ON i.id=s.invite_id
+            WHERE s.invite_id=$2`,
+          [invite.auth_user_id, invite.id],
+        );
+      }
+      await client.query(
+        `UPDATE public.app_admin_invites
+         SET is_accepted=true,accepted_by=$2,accepted_at=clock_timestamp()
+         WHERE id=$1 AND is_accepted=false`,
+        [invite.id, invite.auth_user_id],
+      );
+      await audit(client, {
+        requestId,
+        actorId: invite.auth_user_id,
+        actorRole: invite.target_role,
+        action: "admin.invite.accepted",
+        targetEntity: "app_admin_invites",
+        targetId: invite.id,
+        after: { role: invite.target_role },
+        commandId: input.commandId,
+        ipHash,
+      });
+      await client.query("COMMIT");
+      return { status: "accepted", userId: invite.auth_user_id };
+    } catch {
+      try { await client.query("ROLLBACK"); } catch {}
+      return { status: "unavailable" };
+    } finally {
+      client.release();
+    }
   }
   static async verifyAdminSession(
     userId: string,
