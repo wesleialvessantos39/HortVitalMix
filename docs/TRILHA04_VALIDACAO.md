@@ -163,3 +163,14 @@ Nenhum GitHub Actions foi utilizado ou alterado.
 - [x] GitHub
 - [x] Build Vercel
 - [x] Sem GitHub Actions
+
+
+## Fechamento de release
+
+Release canônica de produção: **`trilha04-v1`**.
+
+- schema: **18**;
+- migration hash: `2405a48927004cf8c60d700c6303c2997f0ce7708cde510b1d3dce70eda977e1`;
+- Vercel: **success**;
+- GitHub Actions: não utilizado;
+- tag física Git: pendente exclusivamente porque o conector disponível não expõe criação de `refs/tags`.

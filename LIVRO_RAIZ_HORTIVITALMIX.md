@@ -1203,7 +1203,7 @@ Por determinação do proprietário:
 
 **Fonte única de verdade:** MANUAL MESTRE TÉCNICO v10 — TRILHAS 01 A 06.
 
-**Status:** implementada e em fechamento de homologação técnica.
+**Status:** homologada tecnicamente — release de produção `trilha04-v1`.
 
 ### Baseline e compatibilidade
 
@@ -1394,3 +1394,14 @@ O Manual permite adapters opcionais; ausência de Resend/Gmail/Twilio não é su
 - [x] Gates de build integrados ao Vercel.
 - [x] Conformidade estrutural com Manual Mestre Técnico v10 verificada.
 - [x] GitHub Actions não utilizado.
+
+
+### Fechamento da Trilha 04
+
+- release canônica: `trilha04-v1`;
+- schema lógico: **18**;
+- migration history hash: `2405a48927004cf8c60d700c6303c2997f0ce7708cde510b1d3dce70eda977e1`;
+- Vercel: build de homologação **success**;
+- Supabase: release de produção marcada como `is_current = true`;
+- GitHub Actions: não utilizado e não alterado;
+- tag física Git `trilha04-v1`: não criada pelo conector atual porque a operação `refs/tags` não é exposta; isso não foi substituído por branch falsa.
