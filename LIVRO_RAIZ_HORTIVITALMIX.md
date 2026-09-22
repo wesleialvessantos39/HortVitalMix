@@ -1102,3 +1102,76 @@ A tag `trilha03-v1` e a release corrente de production só podem ser criadas no 
 - [x] zero divergências de e-mail na consistência canônica;
 - [ ] runner gratuito GitHub executou integração/E2E — **bloqueado externamente por indisponibilidade de provisionamento (`steps: null`)**;
 - [ ] release/tag T03 — **executar somente após Vercel success do SHA final deste fechamento**.
+
+
+---
+
+## 2026-09-21 — REVISÃO FINAL DA TRILHA 03 — DESEMPENHO, TELAS E RESPONSIVIDADE
+
+Status: **correções de raiz implementadas sem uso de GitHub Actions; validação final condicionada exclusivamente ao build gratuito Vercel do SHA final**.
+
+### Diagnóstico real encontrado
+
+A lentidão de autenticação não era apenas percepção visual. O fluxo anterior fazia o POST de login e, após sucesso, executava um segundo GET de sessão. Essa resolução repetia autenticação e consultas de banco. Além disso, quando havia cookie anterior, o middleware global podia resolver a sessão antiga antes do próprio login/cadastro.
+
+No cadastro, CPF e e-mail eram consultados sequencialmente e o backend aguardava o reenvio da confirmação de e-mail antes de devolver sucesso.
+
+Também foram confirmadas falhas de visibilidade:
+
+- `/admin/entrar` podia cair no seletor público Consumer/Producer por ordem incorreta das condições;
+- `/cadastro` estava implementado, mas o CTA público da home levava a `/entrar`;
+- a Configuração Global da Trilha 02 existia em `/admin/configuracao`, porém permanecia pouco visível por depender do acesso genérico a `/minha-conta`.
+
+### Correções de desempenho
+
+- criado `server/services/IdentityAccessService.ts`;
+- status da conta, pessoa, papéis ativos e validade opcional de sessão são resolvidos em uma única consulta PostgreSQL;
+- `sessionMiddleware` caiu de múltiplas consultas para uma resolução consolidada após validar o JWT;
+- login retorna diretamente `userId`, `email`, `roles` e `activeRole`;
+- frontend adota a resposta do próprio POST e não faz GET de sessão logo após autenticar;
+- login/cadastro e demais endpoints públicos de Auth não processam cookie/sessão antiga antes da própria operação;
+- visitante sem sessão não aciona refresh inútil;
+- a mesma otimização atende Consumer, Producer, Administrador e Super administrador;
+- respostas de login/cadastro recebem `Server-Timing` sem exposição de credenciais.
+
+A consulta consolidada foi verificada diretamente no Supabase canônico com `EXPLAIN` e ficou executável após correção do `GROUP BY`. O plano confirmou uso da PK de `app_users` e do índice ativo de papéis.
+
+### Correções do cadastro
+
+- pesquisa por CPF e e-mail paralelizada com `Promise.all`;
+- criação de identidade + domínio continua real e transacional;
+- confirmação por e-mail deixou de bloquear a resposta principal do cadastro;
+- após persistência válida, a interface navega imediatamente para o login correspondente;
+- o reenvio de confirmação continua sendo disparado sem bloquear a navegação;
+- se o e-mail não sair, o usuário mantém a opção canônica de reenviar confirmação.
+
+### Correções de telas T02/T03
+
+- `/admin/entrar` corrigido para exibir exclusivamente Administrador e Super administrador;
+- `/cadastro` exposto pela ação pública “Conheça as opções de cadastro”;
+- criado `/admin/painel` como entrada pós-login administrativo;
+- Administrador recebe o painel administrativo;
+- Super administrador recebe no painel a ação explícita **Abrir Configuração Global — Trilha 02**;
+- `/admin/configuracao` continua autorizado somente para Super administrador no backend;
+- Conta/segurança continua separada em `/minha-conta`.
+
+Conclusão visual: as telas das Trilhas 02 e 03 **já existiam parcialmente**, porém havia problemas de entrada/roteamento que justificavam a percepção de que não apareciam. Esses pontos foram corrigidos.
+
+### Responsividade revisada
+
+- mobile <=767 px: formulários e cartões em coluna, navegação inferior e alvos de toque adequados;
+- tablet 768–1199 px: conteúdo limitado e grades adaptativas;
+- desktop >=1200 px: conteúdo central, cartões em duas colunas e limites máximos;
+- Configuração Global T02 já possuía tratamento <=767 px e <=359 px;
+- painel administrativo T03 ganhou regras próprias de tablet/mobile;
+- cobertura E2E continua versionada para execução local gratuita, sem depender de GitHub Actions.
+
+### Infraestrutura gratuita
+
+Por determinação do proprietário:
+- nenhum workflow GitHub Actions foi alterado nesta revisão;
+- GitHub Actions não será usado como critério de conclusão;
+- a validação executável da aplicação permanece no build/deploy Vercel gratuito;
+- Supabase canônico permanece `xipbsazvymkqqfmfegwu`;
+- nenhuma migration foi necessária nesta revisão; schema lógico permanece 16.
+
