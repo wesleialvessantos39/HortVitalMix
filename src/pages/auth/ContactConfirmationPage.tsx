@@ -1,278 +1,192 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Mail, Phone, RefreshCw, ShieldCheck } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { CheckCircle2, ChevronRight, Mail, ShieldCheck, Sprout } from "lucide-react";
 import { api } from "../../lib/api";
 import type { ShellSession } from "../../hooks/useSession";
-import type {
-  ContactChannel,
-  ContactStatusResponse,
-  ChallengeEmissionResult,
-  ConfirmationResult,
-} from "../../../shared/contracts/contactRecovery";
-import { OtpInput } from "../../components/forms/OtpInput";
+import { PortalRoleSchema, type PortalRole } from "../../../shared/contracts/auth";
 import "./auth.css";
 
-const EMPTY_STATUS: ContactStatusResponse = {
-  email: { verified: false, maskedDestination: null, hasActiveChallenge: false, cooldownRemainingSeconds: 0 },
-  phone: { verified: false, maskedDestination: null, hasActiveChallenge: false, cooldownRemainingSeconds: 0 },
-};
+const ROLES: Array<{ role: PortalRole; label: string; help: string }> = [
+  { role: "consumer", label: "Consumidor", help: "Conta de compras e assinaturas." },
+  { role: "producer", label: "Produtor", help: "Conta de produção e oferta." },
+  { role: "platform_admin", label: "Administrador", help: "Acesso administrativo." },
+  { role: "platform_super_admin", label: "Super administrador", help: "Governança da plataforma." },
+];
+
+function readPortal(): PortalRole | null {
+  const parsed = PortalRoleSchema.safeParse(new URLSearchParams(location.search).get("portal"));
+  return parsed.success ? parsed.data : null;
+}
+
+function loginPath(role: PortalRole) {
+  if (role === "consumer") return "/entrar/consumidor";
+  if (role === "producer") return "/entrar/produtor";
+  if (role === "platform_admin") return "/entrar/administrador";
+  return "/entrar/super-administrador";
+}
 
 export function ContactConfirmationPage({
   session,
   onNavigate,
+  onSessionAdopt,
+  onSessionRefresh,
 }: {
   session: ShellSession | null;
   onNavigate: (path: string) => void;
+  onSessionAdopt: (session: ShellSession | null) => void;
+  onSessionRefresh: () => Promise<void>;
 }) {
-  const token = useMemo(() => new URLSearchParams(location.search).get("token"), []);
-  const [status, setStatus] = useState<ContactStatusResponse>(EMPTY_STATUS);
-  const [loading, setLoading] = useState(Boolean(session));
-  const [busy, setBusy] = useState<ContactChannel | "token" | null>(token ? "token" : null);
-  const [activeChannel, setActiveChannel] = useState<ContactChannel | null>(null);
-  const [otp, setOtp] = useState("");
-  const [message, setMessage] = useState("");
-  const [tokenResult, setTokenResult] = useState<ConfirmationResult | null>(null);
-
-  const loadStatus = useCallback(async () => {
-    if (!session) return;
-    setLoading(true);
-    try {
-      setStatus(await api<ContactStatusResponse>("/v1/auth/contact/status"));
-    } catch {
-      setMessage("Não foi possível carregar o status dos contatos.");
-    } finally {
-      setLoading(false);
-    }
-  }, [session]);
+  const initialRole = useMemo(readPortal, []);
+  const [role, setRole] = useState<PortalRole | null>(initialRole);
+  const [email, setEmail] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [confirmed, setConfirmed] = useState(Boolean(session));
+  const [notice, setNotice] = useState("");
+  const [linkHandled, setLinkHandled] = useState(false);
 
   useEffect(() => {
-    void loadStatus();
-  }, [loadStatus]);
+    if (linkHandled) return;
+    const hash = new URLSearchParams(location.hash.replace(/^#/, ""));
+    const accessToken = hash.get("access_token");
+    const refreshToken = hash.get("refresh_token");
+    const type = hash.get("type");
+    if (!accessToken || !refreshToken) return;
 
-  useEffect(() => {
-    if (!token) return;
-    let active = true;
-    api<ConfirmationResult>("/v1/auth/contact/confirm-token", {
+    setLinkHandled(true);
+    setBusy(true);
+    void api<ShellSession & { status?: string }>("/v1/auth/import-session", {
       method: "POST",
-      body: JSON.stringify({ token }),
+      body: JSON.stringify({
+        accessToken,
+        refreshToken,
+        portalRole: initialRole ?? undefined,
+      }),
     })
-      .then((result) => {
-        if (!active) return;
-        setTokenResult(result);
-        setMessage(
-          result.status === "confirmed"
-            ? "Contato confirmado com segurança."
-            : "Este link não pode mais ser utilizado.",
-        );
-        void loadStatus();
+      .then(async (imported) => {
+        onSessionAdopt(imported);
+        history.replaceState({}, "", location.pathname + location.search);
+        await onSessionRefresh();
+        setConfirmed(type === "signup" || Boolean(imported.userId));
+        setNotice("E-mail confirmado com sucesso. Sua conta está pronta para uso.");
       })
-      .catch((error: Error) => {
-        if (!active) return;
-        setMessage(
-          error.message === "NETWORK_UNAVAILABLE"
-            ? "Sem conexão. Tente novamente."
-            : "Este link expirou, já foi usado ou não é mais válido.",
-        );
+      .catch(() => {
+        setNotice("Este link expirou ou já foi utilizado. Solicite uma nova confirmação.");
       })
-      .finally(() => active && setBusy(null));
-    return () => {
-      active = false;
-    };
-  }, [loadStatus, token]);
+      .finally(() => setBusy(false));
+  }, [initialRole, linkHandled, onSessionAdopt, onSessionRefresh]);
 
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setStatus((current) => ({
-        email: {
-          ...current.email,
-          cooldownRemainingSeconds: Math.max(0, current.email.cooldownRemainingSeconds - 1),
-        },
-        phone: {
-          ...current.phone,
-          cooldownRemainingSeconds: Math.max(0, current.phone.cooldownRemainingSeconds - 1),
-        },
-      }));
-    }, 1000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  async function issue(channel: ContactChannel) {
-    setBusy(channel);
-    setMessage("");
-    try {
-      const result = await api<ChallengeEmissionResult>("/v1/auth/contact/challenge", {
-        method: "POST",
-        body: JSON.stringify({ channel, commandId: crypto.randomUUID() }),
-      });
-      if (result.status === "issued") {
-        setActiveChannel(channel);
-        setOtp("");
-        setMessage(
-          channel === "email"
-            ? "Enviamos um único e-mail com o código de 6 dígitos e o link seguro."
-            : "Código enviado por SMS.",
-        );
-        setStatus((current) => ({
-          ...current,
-          [channel]: {
-            ...current[channel],
-            hasActiveChallenge: true,
-            cooldownRemainingSeconds: result.cooldownSeconds,
-            maskedDestination: result.maskedDestination,
-          },
-        }));
-      } else if (result.status === "already_verified") {
-        setMessage("Este contato já está confirmado.");
-        await loadStatus();
-      } else {
-        setMessage("Não foi possível emitir o código agora.");
-      }
-    } catch (error) {
-      const retry = Number((error as { status?: number }).status === 429);
-      setMessage(retry ? "Aguarde o tempo indicado antes de solicitar um novo código." : "Falha ao solicitar confirmação.");
-      await loadStatus();
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function confirmOtp(channel: ContactChannel) {
-    if (!/^\d{6}$/.test(otp)) {
-      setMessage("Digite os 6 dígitos do código.");
+  async function resend(event: React.FormEvent) {
+    event.preventDefault();
+    if (!role) {
+      setNotice("Escolha o perfil do cadastro.");
       return;
     }
-    setBusy(channel);
+    setBusy(true);
+    setNotice("");
     try {
-      const result = await api<ConfirmationResult>("/v1/auth/contact/confirm-otp", {
+      await api("/v1/auth/resend-confirmation", {
         method: "POST",
-        body: JSON.stringify({
-          channel,
-          otp,
-          commandId: crypto.randomUUID(),
-        }),
+        body: JSON.stringify({ email, portalRole: role }),
       });
-      if (result.status === "confirmed") {
-        setMessage("Contato confirmado com segurança.");
-        setActiveChannel(null);
-        setOtp("");
-        await loadStatus();
-      } else if (result.status === "invalid_code") {
-        setMessage(`Código incorreto. Restam ${result.attemptsRemaining} tentativa(s).`);
-      } else {
-        setMessage("O desafio expirou ou não pode mais ser usado.");
-      }
+      setNotice(
+        `Se houver um cadastro ${ROLES.find((item) => item.role === role)?.label} pendente para este e-mail, a confirmação será enviada pelo Supabase.`,
+      );
     } catch {
-      setMessage("Não foi possível validar o código.");
+      setNotice("Não foi possível solicitar o reenvio agora. Tente novamente.");
     } finally {
-      setBusy(null);
+      setBusy(false);
     }
-  }
-
-  if (token && busy === "token") {
-    return (
-      <section className="t04-page">
-        <div className="t04-card t04-center">
-          <span className="t04-icon"><ShieldCheck /></span>
-          <h1>Confirmando seu contato</h1>
-          <p>Validando o link seguro. Nenhum código é exposto no navegador ou no banco.</p>
-          <div className="t04-spinner" aria-label="Carregando" />
-        </div>
-      </section>
-    );
-  }
-
-  if (token && tokenResult?.status === "confirmed" && !session) {
-    return (
-      <section className="t04-page">
-        <div className="t04-card t04-center">
-          <span className="t04-icon success"><CheckCircle2 /></span>
-          <h1>Contato confirmado</h1>
-          <p>{message}</p>
-          <button className="primary" onClick={() => onNavigate("/entrar")}>Ir para entrar</button>
-        </div>
-      </section>
-    );
-  }
-
-  if (!session) {
-    return (
-      <section className="t04-page">
-        <div className="t04-card t04-center">
-          <span className="t04-icon"><ShieldCheck /></span>
-          <h1>Confirmação de contato</h1>
-          <p>Entre na sua conta para solicitar ou validar um código de contato.</p>
-          {message && <p className="t04-notice" role="status">{message}</p>}
-          <button className="primary" onClick={() => onNavigate("/entrar")}>Entrar na conta</button>
-        </div>
-      </section>
-    );
   }
 
   return (
-    <section className="t04-page" aria-labelledby="contact-confirm-title">
-      <header className="t04-heading">
-        <span className="eyebrow">Segurança da conta</span>
-        <h1 id="contact-confirm-title">Confirme seus contatos</h1>
-        <p>O e-mail recebe, na mesma mensagem, um código de 6 dígitos e um link seguro. Cada desafio vale 30 minutos e pode ser usado uma única vez.</p>
-      </header>
-
-      {message && <p className="t04-notice" role="status">{message}</p>}
-      {loading ? (
-        <div className="t04-card t04-center"><div className="t04-spinner" aria-label="Carregando" /></div>
-      ) : (
-        <div className="t04-contact-grid">
-          {(["email", "phone"] as const).map((channel) => {
-            const info = status[channel];
-            const Icon = channel === "email" ? Mail : Phone;
-            const label = channel === "email" ? "E-mail" : "Telefone";
-            return (
-              <article className="t04-card t04-contact-card" key={channel}>
-                <div className="t04-card-title">
-                  <span className="t04-icon"><Icon /></span>
-                  <div>
-                    <h2>{label}</h2>
-                    <p>{info.maskedDestination ?? "Destino não disponível"}</p>
-                  </div>
-                  <span className={info.verified ? "t04-status verified" : "t04-status"}>
-                    {info.verified ? "Confirmado" : "Pendente"}
-                  </span>
-                </div>
-
-                {info.verified ? (
-                  <div className="t04-verified"><CheckCircle2 /> Contato protegido e confirmado.</div>
-                ) : (
-                  <>
-                    <button
-                      className="primary"
-                      disabled={busy !== null || info.cooldownRemainingSeconds > 0}
-                      onClick={() => void issue(channel)}
-                    >
-                      <RefreshCw size={17} />
-                      {info.cooldownRemainingSeconds > 0
-                        ? `Reenviar em ${info.cooldownRemainingSeconds}s`
-                        : channel === "email" ? "Enviar código + link" : "Enviar código"}
-                    </button>
-
-                    {activeChannel === channel && (
-                      <div className="t04-otp-panel">
-                        <label>Código de 6 dígitos</label>
-                        <OtpInput value={otp} onChange={setOtp} disabled={busy !== null} />
-                        <button
-                          className="t04-secondary"
-                          disabled={busy !== null || otp.length !== 6}
-                          onClick={() => void confirmOtp(channel)}
-                        >
-                          Confirmar código
-                        </button>
-                      </div>
-                    )}
-                  </>
-                )}
-              </article>
-            );
-          })}
+    <section className="t04-security-layout" aria-labelledby="t04-confirm-title">
+      <aside className="t04-security-aside" aria-hidden="true">
+        <div className="t04-brand-mark"><Sprout /></div>
+        <span className="t04-kicker">HortiVitalMix • Segurança</span>
+        <h2>Seu acesso protegido, sem complicação.</h2>
+        <p>Os e-mails de confirmação são enviados pelo Supabase Auth através do Gmail/SMTP já configurado no projeto.</p>
+        <div className="t04-steps">
+          <span><b>1</b> Solicite a confirmação</span>
+          <span><b>2</b> Abra o e-mail recebido</span>
+          <span><b>3</b> Confirme pelo link seguro</span>
         </div>
-      )}
-      <button className="text-button t04-back" onClick={() => onNavigate("/minha-conta")}>Voltar para minha conta</button>
+      </aside>
+
+      <div className="t04-security-card">
+        <div className="t04-title-icon success"><Mail /></div>
+        <span className="eyebrow">Confirmação de cadastro</span>
+        <h1 id="t04-confirm-title">{confirmed ? "E-mail confirmado" : "Confirme seu e-mail"}</h1>
+        <p className="t04-lead">
+          {confirmed
+            ? "A confirmação foi reconhecida e sua sessão segura está disponível."
+            : "Escolha o perfil correto e solicite um novo e-mail somente se ainda não tiver confirmado o cadastro."}
+        </p>
+
+        {notice && <div className="t04-banner" role="status">{notice}</div>}
+
+        {confirmed ? (
+          <div className="t04-success-panel">
+            <CheckCircle2 />
+            <div>
+              <strong>Confirmação concluída</strong>
+              <span>{session?.email ?? "E-mail validado pelo Supabase Auth."}</span>
+            </div>
+          </div>
+        ) : (
+          <form className="t04-form" onSubmit={resend}>
+            {!role ? (
+              <div>
+                <span className="t04-field-label">Qual cadastro você quer confirmar?</span>
+                <div className="t04-role-grid">
+                  {ROLES.map((item) => (
+                    <button
+                      key={item.role}
+                      type="button"
+                      className="t04-role-option"
+                      onClick={() => setRole(item.role)}
+                    >
+                      <ShieldCheck />
+                      <span><strong>{item.label}</strong><small>{item.help}</small></span>
+                      <ChevronRight />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="t04-context">
+                  Perfil selecionado: <strong>{ROLES.find((item) => item.role === role)?.label}</strong>
+                  <button type="button" onClick={() => setRole(null)}>Trocar</button>
+                </div>
+                <label>
+                  E-mail do cadastro
+                  <input
+                    type="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.currentTarget.value)}
+                    required
+                    maxLength={255}
+                    placeholder="seuemail@exemplo.com"
+                  />
+                </label>
+                <button className="t04-primary" disabled={busy}>
+                  {busy ? "Enviando…" : "Reenviar confirmação"}
+                </button>
+              </>
+            )}
+          </form>
+        )}
+
+        <div className="t04-footer-actions">
+          <button
+            type="button"
+            className="t04-link-button"
+            onClick={() => onNavigate(session ? "/minha-conta" : role ? loginPath(role) : "/entrar")}
+          >
+            {session ? "Ir para minha conta" : "Voltar para entrar"}
+          </button>
+        </div>
+      </div>
     </section>
   );
 }
