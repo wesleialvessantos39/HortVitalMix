@@ -33,12 +33,25 @@ function sessionIdFromAccessToken(token: string) {
   }
 }
 
+function isPublicAuthFastPath(path: string): boolean {
+  return /^\/(?:api\/)?v1\/auth\/(?:login|admin-login|register-consumer|register-producer|refresh|import-session|resend-confirmation|request-password-reset|magic-link)$/.test(
+    path,
+  );
+}
+
 export async function sessionMiddleware(
   req: Request,
   res: Response,
   next: NextFunction,
 ) {
   req.actor = null;
+
+  // Login/cadastro não dependem de uma sessão anterior. Ignorar cookies antigos
+  // aqui evita uma validação Auth + banco antes do próprio request solicitado.
+  if (isPublicAuthFastPath(req.path)) {
+    next();
+    return;
+  }
 
   const authHeader = req.headers.authorization;
   const bearer =
