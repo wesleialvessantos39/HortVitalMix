@@ -137,6 +137,12 @@ function loginPathForRole(role: PortalRole) {
   return "/entrar/super-administrador";
 }
 
+function portalKindForRole(role: PortalRole | null | undefined) {
+  return role === "platform_admin" || role === "platform_super_admin"
+    ? "administrative"
+    : "public";
+}
+
 async function tokenGrant(body: unknown, grant: string) {
   return fetch(runtime.supabaseUrl + "/auth/v1/token?grant_type=" + grant, {
     method: "POST",
@@ -221,6 +227,7 @@ async function handleLoginRequest(
       email: data.user.email ?? null,
       roles: access.roles,
       activeRole: portalRole,
+      portalKind: portalKindForRole(portalRole),
     });
   } catch (error) {
     next(error);
@@ -290,6 +297,7 @@ authRouter.post("/refresh", async (req, res, next) => {
       email: data.user.email ?? null,
       roles: access.roles,
       activeRole: requestedRole,
+      portalKind: portalKindForRole(requestedRole),
     });
   } catch (error) {
     next(error);
@@ -353,6 +361,7 @@ authRouter.post("/import-session", async (req, res, next) => {
       email: restored.data.user.email ?? null,
       roles: access.roles,
       activeRole: input.data.portalRole ?? null,
+      portalKind: portalKindForRole(input.data.portalRole ?? null),
     });
   } catch (error) {
     next(error);
@@ -424,6 +433,7 @@ authRouter.get("/session", async (req, res, next) => {
       email: result.data.user.email,
       roles: access.roles,
       activeRole,
+      portalKind: portalKindForRole(activeRole),
     });
   } catch (error) {
     next(error);
