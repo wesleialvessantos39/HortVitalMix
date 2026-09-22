@@ -29,10 +29,6 @@ async function main() {
     failures,
   );
 
-  if (!runtime.outboxKey)
-    warnings.push(
-      "OUTBOX_ENCRYPTION_KEY ausente; será obrigatória na Trilha 04",
-    );
   else
     failIf(
       !/^[0-9a-fA-F]{64}$/.test(runtime.outboxKey),
