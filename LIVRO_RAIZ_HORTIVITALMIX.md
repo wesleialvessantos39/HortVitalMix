@@ -1917,3 +1917,101 @@ Permanece vigente a padronização anterior:
 - celular usa `PhoneInput` com máscara `(00) 00000-0000`;
 - o banner técnico de diagnóstico não é exibido no estado normal `open`;
 - validação do formulário continua usando `BootstrapRequestSchema`.
+
+
+---
+
+## 2026-09-23 — INVESTIGAÇÃO SUPABASE → BACKEND → FRONTEND DO BOOTSTRAP
+
+**Objetivo:** investigar de ponta a ponta por que o primeiro Super administrador continuava falhando no Google Studio e não ficava disponível de forma consistente na Vercel, validando especificamente a hipótese de ausência/desalinhamento do e-mail entre Supabase, backend e frontend.
+
+### 1. Supabase — evidência real
+
+Foi confirmado diretamente no projeto canônico `xipbsazvymkqqfmfegwu`:
+
+- `public.app_global_config.support_email = hortivitalmix@gmail.com`;
+- o SHA-256 normalizado desse valor é `e5529eeb9b99fcafc370d6fb5855ade0082855cbfee746a7a85aa9a09f29d699`;
+- esse digest coincide com a política canônica do backend;
+- não existe usuário permanente com esse e-mail em `auth.users`;
+- não existe pessoa permanente com esse e-mail em `app_people`;
+- existem **0** Super administradores ativos.
+
+Portanto, o endereço estava correto no Supabase como configuração global, mas ainda não como identidade Auth, porque a identidade deve nascer somente ao concluir o bootstrap.
+
+### 2. Logs Supabase — causa raiz comprovada de tentativas anteriores
+
+Os logs do Supabase mostraram tentativas reais de criação de `hortivitalmix@gmail.com` via Admin API do Auth, seguidas por exclusão compensatória.
+
+Isso prova que, nessas tentativas, o backend:
+
+1. recebeu o e-mail;
+2. aceitou o e-mail;
+3. chamou a criação real no Supabase Auth;
+4. falhou depois, na transação de domínio;
+5. removeu o usuário Auth criado para não deixar identidade parcial.
+
+O erro PostgreSQL confirmado foi:
+
+`duplicate key value violates unique constraint "app_users_pkey"`
+
+na instrução:
+
+`INSERT INTO public.app_users(id,status) VALUES ($1,'active')`
+
+A causa é o trigger canônico `trg_hortivital_auth_user_created`, que já cria `app_users` automaticamente após o INSERT em `auth.users`. O backend antigo tentava inserir o mesmo `id` novamente.
+
+A correção `ON CONFLICT (id) DO UPDATE` já permanece no serviço atual e não deve ser removida.
+
+### 3. Resíduos das falhas anteriores
+
+Foram encontrados registros `app_users` suspensos sem correspondente atual em `auth.users`, gerados pela exclusão compensatória das tentativas falhas. Eles não são Super administradores ativos e não bloqueiam o bootstrap. Nenhum deles possui pessoa administrativa persistida.
+
+Esses registros foram preservados; não houve limpeza destrutiva.
+
+### 4. Correção definitiva da fonte de autorização
+
+O backend passa a resolver o endereço autorizado **diretamente do Supabase**, por:
+
+`public.app_global_config.support_email`
+
+com as seguintes proteções:
+
+- normalização server-side;
+- o valor lido do banco precisa coincidir com o digest canônico esperado;
+- `BOOTSTRAP_ADMIN_EMAIL` continua suportada como verificação de consistência, mas divergência de runtime não substitui a política persistida no Supabase;
+- o e-mail digitado é comparado com o valor canônico resolvido no banco;
+- a criação no Supabase Auth usa o mesmo valor normalizado.
+
+Assim, Google Studio e Vercel passam a consultar a mesma fonte persistida no Supabase para a autorização do primeiro Super administrador.
+
+### 5. Frontend — integração corrigida
+
+O frontend **não recebe o e-mail autorizado em texto puro**, por segurança. O fluxo correto é:
+
+- GET `/v1/admin/bootstrap/status` para saber se o bootstrap está aberto;
+- formulário envia o e-mail digitado ao backend;
+- backend resolve a política no Supabase e valida;
+- somente o backend decide se o e-mail é autorizado.
+
+Também foi corrigida uma falha de mensagem: anteriormente qualquer HTTP 403 com bootstrap ainda aberto podia ser apresentado como **“e-mail incorreto”**. Agora essa mensagem aparece **somente** quando o backend retorna explicitamente `email_not_authorized`.
+
+### 6. Disponibilidade da tela na Vercel
+
+O status do bootstrap deixa de depender da presença do cliente Supabase Admin apenas para renderizar a tela. Para abrir o formulário, são exigidos:
+
+- banco canônico disponível;
+- política de bootstrap válida no `app_global_config`;
+- inexistência de Super administrador ativo.
+
+A chave privilegiada do Supabase continua obrigatória no momento do POST real de criação. Se ela estiver ausente, a operação retorna erro de dependência, e não “e-mail incorreto”.
+
+### Preservação
+
+- nenhuma migration nova;
+- schema continua 20;
+- nenhuma RLS alterada;
+- MFA preservado;
+- convites preservados;
+- trigger de Auth preservado;
+- nenhum usuário administrativo criado manualmente;
+- nenhum dado existente removido.
