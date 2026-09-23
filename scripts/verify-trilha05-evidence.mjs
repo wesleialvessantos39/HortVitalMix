@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const read = (path) => readFileSync(path, "utf8");
 const migration = read("supabase/migrations/20260922200604_trilha05_admin_governance.sql");
@@ -18,6 +18,7 @@ const apiClient = read("src/lib/api.ts");
 const originProtection = read("server/security/originProtection.ts");
 const bootstrapTransport = read("src/lib/adminBootstrapTransport.ts");
 const bootstrapEdge = read("supabase/functions/admin-bootstrap/index.ts");
+const vercelConfig = read("vercel.json");
 
 const requiredTables = [
   "app_admin_sectors",
@@ -151,7 +152,15 @@ const checks = {
       bootstrapTransport.includes("getBootstrapStatus") &&
       bootstrapTransport.includes("runBootstrap") &&
       bootstrapEdge.includes("fn_finalize_first_super_admin") &&
-      bootstrapEdge.includes("CANONICAL_EMAIL_SHA256")
+      bootstrapEdge.includes("CANONICAL_EMAIL_SHA256") &&
+      bootstrapEdge.includes("status === 204 ? null") &&
+      apiClient.includes('"X-HVM-Request": "1"') &&
+      originProtection.includes('req.headers["x-hvm-request"] === "1"') &&
+      !existsSync("api/v1/[...path].ts") &&
+      !existsSync("api/v1/admin/[...path].ts") &&
+      !existsSync("api/v1/admin/index.ts") &&
+      !vercelConfig.includes('"api/v1/[...path].ts"') &&
+      !vercelConfig.includes('"api/v1/admin/[...path].ts"')
     );
   })(),
 };

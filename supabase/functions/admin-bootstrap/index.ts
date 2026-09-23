@@ -5,18 +5,20 @@ const CANONICAL_EMAIL_SHA256 =
   "e5529eeb9b99fcafc370d6fb5855ade0082855cbfee746a7a85aa9a09f29d699";
 const ZERO_HASH = "0".repeat(64);
 
+const responseHeaders = (origin: string | null) => ({
+  "content-type": "application/json; charset=utf-8",
+  "cache-control": "no-store, max-age=0",
+  "access-control-allow-origin": origin ?? "*",
+  "access-control-allow-methods": "GET,POST,OPTIONS",
+  "access-control-allow-headers":
+    "content-type,authorization,apikey,x-client-info,x-hvm-request",
+  vary: "Origin",
+});
+
 const json = (status: number, body: unknown, origin: string | null) =>
-  new Response(JSON.stringify(body), {
+  new Response(status === 204 ? null : JSON.stringify(body), {
     status,
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store, max-age=0",
-      "access-control-allow-origin": origin ?? "*",
-      "access-control-allow-methods": "GET,POST,OPTIONS",
-      "access-control-allow-headers":
-        "content-type,authorization,apikey,x-client-info",
-      vary: "Origin",
-    },
+    headers: responseHeaders(origin),
   });
 
 const normalizeEmail = (value: unknown) =>
@@ -75,7 +77,7 @@ function normalizePhone(value: unknown) {
 
 Deno.serve(async (req) => {
   const origin = req.headers.get("origin");
-  if (req.method === "OPTIONS") return json(204, {}, origin);
+  if (req.method === "OPTIONS") return json(204, null, origin);
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";

@@ -2204,3 +2204,77 @@ A tela `/admin/bootstrap` e o seletor `/administracao` passaram a usar esse tran
 - nenhuma RLS foi relaxada;
 - nenhuma tabela existente foi removida;
 - o backend Express permanece como caminho primário.
+
+
+---
+
+## 2026-09-23 — CAUSA RAIZ FINAL DO TRANSPORTE DO BOOTSTRAP
+
+**Evidência visual:** na Vercel, a rota `/admin/bootstrap` abriu o frontend atual, porém exibiu **“Não foi possível consultar o bootstrap neste ambiente.”**. No Google Studio, o formulário abriu, mas o POST terminou em **“O servidor recusou a configuração inicial por uma condição de governança.”**.
+
+### Evidência de logs
+
+Na janela correspondente à captura da Vercel, os logs do Supabase não registraram chamada da aplicação, consulta de bootstrap nem criação Auth. Isso confirma que a falha ocorria **antes de alcançar o Supabase**.
+
+### Regressão de roteamento Vercel identificada
+
+O último estado conhecido com transporte API simples utilizava somente:
+
+- `api/index.ts`;
+- `api/[...path].ts`.
+
+O commit posterior de endurecimento adicionou simultaneamente:
+
+- `api/v1/[...path].ts`;
+- `api/v1/admin/[...path].ts`;
+- `api/v1/admin/index.ts`;
+
+e também registrou funções sobrepostas no `vercel.json`.
+
+Essa duplicação criou múltiplos candidatos de Function para a mesma árvore `/api/v1/admin/*`, exatamente na rota usada pelo bootstrap. O frontend continuava sendo publicado, mas a chamada serverless de status podia falhar antes do Express/Supabase.
+
+**Correção:** restaurado o modelo estável de Function única por catch-all, mantendo somente `api/index.ts` e `api/[...path].ts`. As rotas internas continuam sendo resolvidas pelo Express.
+
+### Falha adicional no fallback Supabase Edge
+
+O fallback `admin-bootstrap` já existia, porém o preflight CORS respondia:
+
+`new Response(JSON.stringify({}), { status: 204 })`
+
+Uma resposta HTTP 204 não pode carregar body. Em runtimes compatíveis com Fetch isso pode lançar erro antes de devolver os cabeçalhos CORS, impedindo o navegador de executar o GET/POST de fallback.
+
+**Correção:** respostas 204 agora usam body `null`. O header `x-hvm-request` foi incluído na lista CORS permitida.
+
+### Google Studio
+
+O Google Studio pode reescrever `Origin`, `Referer` e `Sec-Fetch-Site` ao encaminhar a chamada do preview para o processo Vite.
+
+Foi incluído o header interno:
+
+`X-HVM-Request: 1`
+
+em chamadas emitidas pelo cliente oficial. O backend aceita esse marcador **somente quando `APP_ENV` não é production**. Em produção, a validação de origem continua estrita.
+
+Assim:
+
+- Google Studio não depende de cabeçalhos reescritos pelo proxy para o POST interno;
+- Vercel production não recebe relaxamento de CSRF/origin;
+- chamadas cross-site de produção continuam protegidas.
+
+### Camadas de transporte após a correção
+
+1. **Vercel:** `/api/*` → catch-all único → Express;
+2. **Google Studio:** `/_hvm_api/*` → Express no processo Vite;
+3. **Fallback:** Supabase Edge `admin-bootstrap`, com CORS válido;
+4. **Finalização:** RPC `fn_finalize_first_super_admin` no Supabase.
+
+### Preservação
+
+- nenhum Super administrador foi criado manualmente;
+- nenhum usuário existente foi removido;
+- MFA permanece obrigatório;
+- advisory lock permanece;
+- RLS permanece;
+- migration de finalização RPC permanece;
+- CPF e celular continuam usando os componentes canônicos;
+- a identidade autorizada continua validada server-side.

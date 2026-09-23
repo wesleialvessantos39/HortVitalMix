@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { describe,expect,it } from "vitest";
 
 describe("Trilha 05 — bootstrap administrativo",()=>{
@@ -8,6 +8,9 @@ describe("Trilha 05 — bootstrap administrativo",()=>{
  const page=readFileSync("src/pages/admin/AdminBootstrapPage.tsx","utf8");
  const transport=readFileSync("src/lib/adminBootstrapTransport.ts","utf8");
  const edge=readFileSync("supabase/functions/admin-bootstrap/index.ts","utf8");
+ const apiClient=readFileSync("src/lib/api.ts","utf8");
+ const originProtection=readFileSync("server/security/originProtection.ts","utf8");
+ const vercel=readFileSync("vercel.json","utf8");
  it("fecha por existência de Super Admin e usa lock transacional no Supabase",()=>{
   expect(service).toContain('rpc(');
   expect(service).toContain('"fn_finalize_first_super_admin"');
@@ -27,6 +30,17 @@ describe("Trilha 05 — bootstrap administrativo",()=>{
   expect(bootstrapRpc).toContain("GRANT EXECUTE ON FUNCTION public.fn_finalize_first_super_admin");
   expect(bootstrapRpc).toContain("TO service_role");
   expect(migration).not.toContain("BOOTSTRAP_ADMIN_EMAIL");
+ });
+ it("corrige preflight CORS e evita rotas Vercel dinâmicas sobrepostas",()=>{
+  expect(edge).toContain("status === 204 ? null");
+  expect(edge).toContain("x-hvm-request");
+  expect(apiClient).toContain('"X-HVM-Request": "1"');
+  expect(originProtection).toContain('req.headers["x-hvm-request"] === "1"');
+  expect(existsSync("api/v1/[...path].ts")).toBe(false);
+  expect(existsSync("api/v1/admin/[...path].ts")).toBe(false);
+  expect(existsSync("api/v1/admin/index.ts")).toBe(false);
+  expect(vercel).not.toContain('"api/v1/[...path].ts"');
+  expect(vercel).not.toContain('"api/v1/admin/[...path].ts"');
  });
  it("usa Edge Function como fallback real de transporte",()=>{
   expect(transport).toContain("/functions/v1/admin-bootstrap");
