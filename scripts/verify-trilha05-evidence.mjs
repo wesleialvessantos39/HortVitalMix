@@ -35,6 +35,9 @@ const checks = {
   ].every((code) => migration.includes(code)),
   bootstrapGuard:
     service.includes("pg_advisory_xact_lock") &&
+    service.includes("CANONICAL_BOOTSTRAP_EMAIL_SHA256") &&
+    service.includes("isCanonicalBootstrapAdminEmail") &&
+    service.includes("timingSafeEqual") &&
     env.includes("BOOTSTRAP_ADMIN_EMAIL="),
   superAdminMfa:
     service.includes("signInWithOtp") &&
@@ -122,7 +125,8 @@ const checks = {
       bootstrapPage.includes("<PhoneInput") &&
       bootstrapPage.includes("BootstrapRequestSchema.safeParse") &&
       service.includes("normalizeBootstrapAdminEmail(input.email)") &&
-      service.includes("BOOTSTRAP_ADMIN_EMAIL\\s*=\\s*")
+      service.includes("bootstrapEnvironmentMatchesCanonicalPolicy") &&
+      service.includes("CANONICAL_BOOTSTRAP_EMAIL_SHA256")
     );
   })(),
 };
