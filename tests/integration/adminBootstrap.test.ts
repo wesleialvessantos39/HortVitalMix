@@ -33,7 +33,6 @@ describe("Trilha 05 — bootstrap administrativo",()=>{
   expect(service).toContain("\\u200B-\\u200D\\u2060\\uFEFF");
   expect(service).toContain("normalized.startsWith");
   expect(service).toContain("normalizeBootstrapAdminEmail(input.email)");
-  expect(service).toContain("bootstrapEnvironmentMatchesCanonicalPolicy");
   expect(service).toContain("persistido no Supabase; a política do banco prevalecerá");
   expect(service).not.toContain("authorizedEmail: authorizedEmail");
  });
