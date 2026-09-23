@@ -82,6 +82,7 @@ function roleLabel(role: string) {
 }
 
 type FieldErrors = Record<string, string>;
+type AdminBootstrapStatus = "idle" | "loading" | "open" | "closed" | "disabled";
 
 const requiredMessages: Record<string, string> = {
   fullName: "Informe seu nome completo.",
@@ -231,6 +232,8 @@ export function Account({
   const [securityChallengeId, setSecurityChallengeId] = useState<string | null>(null);
   const [securityNonce, setSecurityNonce] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [adminBootstrapStatus, setAdminBootstrapStatus] =
+    useState<AdminBootstrapStatus>("idle");
 
   useEffect(() => {
     setMode(modeFromPath(path));
@@ -247,6 +250,30 @@ export function Account({
       setNotice("Novo perfil adicionado à sua conta. Você já pode entrar.");
     else
       setNotice("");
+  }, [path]);
+
+  useEffect(() => {
+    if (path !== "/administracao") {
+      setAdminBootstrapStatus("idle");
+      return;
+    }
+
+    let cancelled = false;
+    setAdminBootstrapStatus("loading");
+
+    api<{ status: "open" | "closed" | "disabled"; reason: string | null }>(
+      "/v1/admin/bootstrap/status",
+    )
+      .then((result) => {
+        if (!cancelled) setAdminBootstrapStatus(result.status);
+      })
+      .catch(() => {
+        if (!cancelled) setAdminBootstrapStatus("disabled");
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [path]);
 
   useEffect(() => {
@@ -1005,6 +1032,20 @@ export function Account({
             <ChevronRight className="access-card-mobile-chevron" aria-hidden="true" />
           </button>
         </div>
+        <div className="access-discovery">
+          <div>
+            <strong>Primeiro acesso ao HortiVitalMix?</strong>
+            <span>Os cadastros de Consumidor e Produtor possuem formulários próprios.</span>
+          </div>
+          <button
+            type="button"
+            className="access-discovery-action"
+            onClick={() => navigate("/cadastro")}
+          >
+            <Plus aria-hidden="true" />
+            Criar cadastro
+          </button>
+        </div>
       </section>
     );
 
@@ -1068,6 +1109,51 @@ export function Account({
             </span>
             <ChevronRight className="access-card-mobile-chevron" aria-hidden="true" />
           </button>
+        </div>
+
+        <div
+          className={
+            "admin-bootstrap-discovery " +
+            (adminBootstrapStatus === "open"
+              ? "is-open"
+              : adminBootstrapStatus === "closed"
+                ? "is-closed"
+                : "")
+          }
+          aria-live="polite"
+        >
+          <span className="admin-bootstrap-discovery-icon" aria-hidden="true">
+            <ShieldCheck />
+          </span>
+          <div>
+            <strong>
+              {adminBootstrapStatus === "loading"
+                ? "Verificando a configuração administrativa…"
+                : adminBootstrapStatus === "open"
+                  ? "Primeiro Super administrador ainda não configurado"
+                  : adminBootstrapStatus === "closed"
+                    ? "Configuração inicial concluída"
+                    : "Configuração inicial protegida"}
+            </strong>
+            <span>
+              {adminBootstrapStatus === "open"
+                ? "Antes de usar o painel, conclua o bootstrap único com o e-mail autorizado no servidor."
+                : adminBootstrapStatus === "closed"
+                  ? "Use uma das opções acima. Novos administradores entram somente por convite."
+                  : adminBootstrapStatus === "loading"
+                    ? "Consultando o estado real da governança T05."
+                    : "O bootstrap não está disponível agora. Os acessos existentes continuam preservados."}
+            </span>
+          </div>
+          {adminBootstrapStatus === "open" && (
+            <button
+              type="button"
+              className="access-discovery-action"
+              onClick={() => navigate("/admin/bootstrap")}
+            >
+              Configurar primeiro Super administrador
+            </button>
+          )}
         </div>
       </section>
     );

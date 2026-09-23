@@ -101,6 +101,14 @@ const checks = {
     foundation.includes("FOUNDATION_SCHEMA_VERSION = 20"),
   remoteMigrationAlias:
     migrationManifest.includes('"20260923022554": "20260923022000"'),
+  adminScreenDiscovery:
+    account.includes("admin-bootstrap-discovery") &&
+    account.includes('navigate("/admin/bootstrap")') &&
+    router.includes("intendedRole={intendedRole}") &&
+    read("src/pages/admin/AdminLoginPage.tsx").includes("intendedRole"),
+  publicRegistrationDiscovery:
+    account.includes("access-discovery") &&
+    account.includes('navigate("/cadastro")'),
 };
 
 const failed = Object.entries(checks)

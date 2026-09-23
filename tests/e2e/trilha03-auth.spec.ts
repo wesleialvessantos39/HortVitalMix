@@ -85,3 +85,16 @@ test("Trilha 03 — home expõe cadastro e admin/entrar mostra somente Administr
   await expect(page.getByRole("button", { name: "Entrar como Consumidor" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Entrar como Produtor" })).toHaveCount(0);
 });
+
+
+test("Trilha 03 — seletor de conta também expõe o caminho para cadastro", async ({ page }) => {
+  await page.goto("/conta");
+  await expect(
+    page.getByRole("button", { name: "Criar cadastro" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Criar cadastro" }).click();
+  await expect(page).toHaveURL(/\/cadastro$/);
+  await expect(
+    page.getByRole("heading", { name: "Como você quer participar?" }),
+  ).toBeVisible();
+});

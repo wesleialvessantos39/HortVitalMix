@@ -16,8 +16,19 @@ type Props={
 };
 
 export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
- if(path==="/admin/entrar"||path==="/entrar/administrador"||path==="/entrar/super-administrador")
-  return <AdminLoginPage onNavigate={onNavigate} onSessionRefresh={onSessionRefresh}/>;
+ if(path==="/admin/entrar"||path==="/entrar/administrador"||path==="/entrar/super-administrador"){
+  const intendedRole =
+   path==="/entrar/administrador"
+    ? "platform_admin" as const
+    : path==="/entrar/super-administrador"
+      ? "platform_super_admin" as const
+      : null;
+  return <AdminLoginPage
+   onNavigate={onNavigate}
+   onSessionRefresh={onSessionRefresh}
+   intendedRole={intendedRole}
+  />;
+ }
  if(path==="/admin/bootstrap")
   return <AdminBootstrapPage onNavigate={onNavigate}/>;
  if(path==="/admin/aceitar-convite"||path==="/admin/convite")
