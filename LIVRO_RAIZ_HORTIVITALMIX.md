@@ -1806,3 +1806,29 @@ A correção não reduz a proteção do bootstrap:
 Google Studio e Vercel continuam sendo ambientes separados. Depois desta correção, o Google Studio precisa estar sincronizado com a `main` atual para exibir a dica mascarada e usar o normalizador novo. A Vercel recebe a correção por novo deployment da `main`.
 
 Nenhuma migration, RLS, MFA, papel administrativo ou schema foi alterado.
+
+
+---
+
+## 2026-09-23 — PADRONIZAÇÃO DO FORMULÁRIO DO PRIMEIRO SUPER ADMINISTRADOR
+
+**Motivo:** o formulário real de `/admin/bootstrap` ainda apresentava duas divergências de UX em relação aos cadastros canônicos de Consumidor/Produtor: CPF sem máscara/validação visual padronizada e celular sem a mesma máscara nacional. Também havia uma mensagem técnica de diagnóstico exibida mesmo quando o bootstrap estava liberado.
+
+### Correções aplicadas
+
+- removida da interface a mensagem técnica **“Bootstrap liberado neste ambiente. O servidor está esperando…”**;
+- o estado `open` passa a exibir diretamente o formulário, sem banner técnico;
+- CPF do primeiro Super administrador reutiliza o componente canônico `CPFInput`;
+- celular reutiliza o componente canônico `PhoneInput`;
+- máscara de CPF: `000.000.000-00`;
+- máscara de celular: `(00) 00000-0000`;
+- validação client-side do bootstrap usa o mesmo contrato canônico `BootstrapRequestSchema` antes de chamar a API;
+- erros de CPF, celular, e-mail, nome e senha ficam vinculados aos respectivos campos;
+- a comparação do e-mail autorizado passa a normalizar também o e-mail recebido do formulário, usando a mesma rotina aplicada ao `BOOTSTRAP_ADMIN_EMAIL`;
+- o e-mail canônico normalizado é usado na verificação de duplicidade, criação no Supabase Auth e persistência em `app_people`.
+
+### Preservação
+
+Os componentes `CPFInput` e `PhoneInput` foram apenas ampliados para aceitar uso controlado opcional. Os cadastros de Consumidor e Produtor continuam usando os mesmos componentes e comportamento anteriores.
+
+Nenhuma migration, RLS, MFA, papel administrativo ou schema foi alterado.
