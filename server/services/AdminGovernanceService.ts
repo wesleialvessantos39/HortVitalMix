@@ -21,7 +21,7 @@ import type {
 const MFA_TTL_MINUTES = 10;
 const INVITE_TTL_HOURS = 24;
 const RATE_WINDOW_MINUTES = 15;
-const RATE_MAX_FAILURES = 5;
+const RATE_MAX_FAILURES = 10;
 const ZERO_HASH = "0".repeat(64);
 const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
 const maskEmail = (email: string) => {
@@ -199,17 +199,28 @@ export class AdminGovernanceService {
 
   private static async rateLimit(email: string, ipHash: string) {
     if (!dbPool) return { limited: false, retryAfterSeconds: 0 };
-    const result = await dbPool.query<{ last_at: Date | string | null; failures: string }>(
-      `SELECT max(occurred_at) AS last_at,count(*)::text AS failures
+    const result = await dbPool.query<{
+      email_failures: string;
+      ip_failures: string;
+      last_at: Date | string | null;
+    }>(
+      `SELECT
+         count(*) FILTER (WHERE email_hash=$1)::text AS email_failures,
+         count(*) FILTER (WHERE ip_hash=$2)::text AS ip_failures,
+         max(occurred_at) FILTER (WHERE email_hash=$1 OR ip_hash=$2) AS last_at
        FROM public.app_admin_auth_attempts
        WHERE occurred_at > now() - interval '15 minutes'
          AND outcome IN ('failure','mfa_failure')
          AND (email_hash=$1 OR ip_hash=$2)`,
       [sha256(email), ipHash],
     );
-    const failures = Number(result.rows[0]?.failures ?? 0);
+    const emailFailures = Number(result.rows[0]?.email_failures ?? 0);
+    const ipFailures = Number(result.rows[0]?.ip_failures ?? 0);
     const lastAt = result.rows[0]?.last_at;
-    if (failures < RATE_MAX_FAILURES || !lastAt)
+    if (
+      (emailFailures < RATE_MAX_FAILURES && ipFailures < RATE_MAX_FAILURES) ||
+      !lastAt
+    )
       return { limited: false, retryAfterSeconds: 0 };
     const until = new Date(lastAt).getTime() + RATE_WINDOW_MINUTES * 60_000;
     return {
@@ -391,38 +402,64 @@ export class AdminGovernanceService {
   ): Promise<{ status: "created"; invite: InviteResponse } | { status: "conflict" } | { status: "unavailable" }> {
     if (!dbPool || !supabaseAdmin) return { status: "unavailable" };
 
-    const duplicate = await dbPool.query(
-      `SELECT 1 FROM public.app_people WHERE email_normalized=$1
-       UNION ALL
-       SELECT 1 FROM public.app_admin_invites
-        WHERE lower(email)=$1 AND is_accepted=false AND invalidated_at IS NULL
-          AND expires_at>now() LIMIT 1`,
-      [input.email],
-    );
-    if (duplicate.rowCount) return { status: "conflict" };
-
-    if (input.targetRole === "platform_admin") {
-      const valid = await dbPool.query<{ code: string }>(
-        `SELECT code FROM public.app_admin_sectors
-          WHERE code=ANY($1::text[]) AND is_active=true`,
-        [input.sectors],
-      );
-      if (valid.rowCount !== input.sectors.length) return { status: "conflict" };
-    }
-
-    const token = randomBytes(32).toString("hex");
-    const digest = sha256(token);
-    const inviteId = randomUUID();
-    const expiresAt = new Date(Date.now() + INVITE_TTL_HOURS * 60 * 60_000);
     const client = await dbPool.connect();
+    let inviteId = "";
+    let token = "";
+    let expiresAt = new Date(0);
+    let createdAt = new Date();
     try {
       await client.query("BEGIN");
       await client.query(
+        "SELECT pg_advisory_xact_lock(hashtext($1))",
+        [`invite:${input.email}`],
+      );
+
+      await client.query(
+        `UPDATE public.app_admin_invites
+            SET invalidated_at=clock_timestamp(),revision=revision+1
+          WHERE lower(email)=$1 AND is_accepted=false AND invalidated_at IS NULL
+            AND expires_at<=now()`,
+        [input.email],
+      );
+
+      const duplicate = await client.query(
+        `SELECT 1 FROM public.app_people WHERE email_normalized=$1
+         UNION ALL
+         SELECT 1 FROM public.app_admin_invites
+          WHERE lower(email)=$1 AND is_accepted=false AND invalidated_at IS NULL
+            AND expires_at>now() LIMIT 1`,
+        [input.email],
+      );
+      if (duplicate.rowCount) {
+        await client.query("ROLLBACK");
+        return { status: "conflict" };
+      }
+
+      if (input.targetRole === "platform_admin") {
+        const valid = await client.query<{ code: string }>(
+          `SELECT code FROM public.app_admin_sectors
+            WHERE code=ANY($1::text[]) AND is_active=true`,
+          [input.sectors],
+        );
+        if (valid.rowCount !== input.sectors.length) {
+          await client.query("ROLLBACK");
+          return { status: "conflict" };
+        }
+      }
+
+      token = randomBytes(32).toString("hex");
+      const digest = sha256(token);
+      inviteId = randomUUID();
+      expiresAt = new Date(Date.now() + INVITE_TTL_HOURS * 60 * 60_000);
+      const inserted = await client.query<{ created_at: Date | string }>(
         `INSERT INTO public.app_admin_invites
           (id,email,target_role,token_digest,invited_by,expires_at)
-         VALUES ($1,$2,$3,$4,$5,$6)`,
+         VALUES ($1,$2,$3,$4,$5,$6)
+         RETURNING created_at`,
         [inviteId, input.email, input.targetRole, digest, actorId, expiresAt],
       );
+      createdAt = new Date(inserted.rows[0]?.created_at ?? Date.now());
+
       for (const sector of input.sectors) {
         await client.query(
           `INSERT INTO public.app_admin_invite_sectors(invite_id,sector_code)
@@ -430,6 +467,7 @@ export class AdminGovernanceService {
           [inviteId, sector],
         );
       }
+
       await audit(client, {
         requestId,
         actorId,
@@ -437,7 +475,11 @@ export class AdminGovernanceService {
         action: "admin.invite.created",
         targetEntity: "app_admin_invites",
         targetId: inviteId,
-        after: { emailHash: sha256(input.email), targetRole: input.targetRole, sectors: input.sectors },
+        after: {
+          emailHash: sha256(input.email),
+          targetRole: input.targetRole,
+          sectors: input.sectors,
+        },
         commandId: input.commandId,
         ipHash,
       });
@@ -451,22 +493,39 @@ export class AdminGovernanceService {
 
     let base = "https://hortvitalmix.vercel.app";
     try { base = new URL(origin).origin; } catch {}
-    const redirectTo = `${base}/admin/convite?token=${encodeURIComponent(token)}`;
+    const redirectTo = `${base}/admin/aceitar-convite?token=${encodeURIComponent(token)}`;
     const sent = await supabaseAdmin.auth.admin.inviteUserByEmail(input.email, {
       redirectTo,
       data: { hvm_admin_invite_id: inviteId, hvm_admin_role: input.targetRole },
     });
     if (sent.error || !sent.data.user) {
+      if (sent.data.user?.id) {
+        await supabaseAdmin.auth.admin.deleteUser(sent.data.user.id).catch(() => undefined);
+      }
       await dbPool.query(
-        `UPDATE public.app_admin_invites SET invalidated_at=clock_timestamp() WHERE id=$1`,
+        `UPDATE public.app_admin_invites
+            SET invalidated_at=clock_timestamp(),revision=revision+1
+          WHERE id=$1 AND is_accepted=false`,
         [inviteId],
-      );
+      ).catch(() => undefined);
       return { status: "unavailable" };
     }
-    await dbPool.query(
-      `UPDATE public.app_admin_invites SET auth_user_id=$2 WHERE id=$1`,
-      [inviteId, sent.data.user.id],
-    );
+
+    try {
+      await dbPool.query(
+        `UPDATE public.app_admin_invites SET auth_user_id=$2 WHERE id=$1`,
+        [inviteId, sent.data.user.id],
+      );
+    } catch {
+      await supabaseAdmin.auth.admin.deleteUser(sent.data.user.id).catch(() => undefined);
+      await dbPool.query(
+        `UPDATE public.app_admin_invites
+            SET invalidated_at=clock_timestamp(),revision=revision+1
+          WHERE id=$1 AND is_accepted=false`,
+        [inviteId],
+      ).catch(() => undefined);
+      return { status: "unavailable" };
+    }
 
     return {
       status: "created",
@@ -478,8 +537,9 @@ export class AdminGovernanceService {
         revision: 1,
         isAccepted: false,
         expiresAt: expiresAt.toISOString(),
-        createdAt: new Date().toISOString(),
+        createdAt: createdAt.toISOString(),
         invalidatedAt: null,
+        invitedBy: actorId,
       },
     };
   }
@@ -545,45 +605,91 @@ export class AdminGovernanceService {
     ipHash: string,
   ): Promise<AcceptInviteResult> {
     if (!dbPool || !supabaseAdmin) return { status: "unavailable" };
-    const found = await dbPool.query<{
-      id: string; email: string; target_role: AdminRole; auth_user_id: string | null;
-      is_accepted: boolean; expires_at: Date | string; invalidated_at: Date | string | null;
-    }>(
-      `SELECT id,email,target_role,auth_user_id,is_accepted,expires_at,invalidated_at
-       FROM public.app_admin_invites WHERE token_digest=$1`,
-      [sha256(input.token)],
-    );
-    const invite = found.rows[0];
-    if (!invite) return { status: "invalid_token" };
-    if (invite.is_accepted) return { status: "already_accepted" };
-    if (invite.invalidated_at) return { status: "invalid_token" };
-    if (new Date(invite.expires_at).getTime() <= Date.now()) return { status: "expired" };
-    if (!invite.auth_user_id) return { status: "unavailable" };
-
-    const duplicate = await dbPool.query(
-      `SELECT 1 FROM public.app_people WHERE cpf_normalized=$1 OR email_normalized=$2 LIMIT 1`,
-      [input.cpf, invite.email],
-    );
-    if (duplicate.rowCount)
-      return { status: "identity_conflict", message: "CPF ou e-mail já vinculado." };
-
-    const updated = await supabaseAdmin.auth.admin.updateUserById(invite.auth_user_id, {
-      password: input.password,
-      email_confirm: true,
-      user_metadata: {
-        full_name: input.fullName,
-        hvm_portal: "administrative",
-        hvm_admin_role: invite.target_role,
-      },
-    });
-    if (updated.error) return { status: "unavailable" };
 
     const client = await dbPool.connect();
     try {
       await client.query("BEGIN");
+      const found = await client.query<{
+        id: string;
+        email: string;
+        target_role: AdminRole;
+        auth_user_id: string | null;
+        is_accepted: boolean;
+        expires_at: Date | string;
+        invalidated_at: Date | string | null;
+      }>(
+        `SELECT id,email,target_role,auth_user_id,is_accepted,expires_at,invalidated_at
+           FROM public.app_admin_invites
+          WHERE token_digest=$1
+          FOR UPDATE`,
+        [sha256(input.token)],
+      );
+      const invite = found.rows[0];
+      if (!invite) {
+        await client.query("ROLLBACK");
+        return { status: "invalid_token" };
+      }
+      if (invite.is_accepted) {
+        await client.query("ROLLBACK");
+        return { status: "already_accepted" };
+      }
+      if (invite.invalidated_at) {
+        await client.query("ROLLBACK");
+        return { status: "invalid_token" };
+      }
+      if (new Date(invite.expires_at).getTime() <= Date.now()) {
+        await client.query(
+          `UPDATE public.app_admin_invites
+              SET invalidated_at=clock_timestamp(),revision=revision+1
+            WHERE id=$1`,
+          [invite.id],
+        );
+        await client.query("COMMIT");
+        return { status: "expired" };
+      }
+      if (!invite.auth_user_id) {
+        await client.query("ROLLBACK");
+        return { status: "unavailable" };
+      }
+
+      const duplicate = await client.query(
+        `SELECT 1 FROM public.app_people
+          WHERE cpf_normalized=$1 OR email_normalized=$2
+          LIMIT 1`,
+        [input.cpf, invite.email],
+      );
+      if (duplicate.rowCount) {
+        await client.query("ROLLBACK");
+        return { status: "identity_conflict", message: "CPF ou e-mail já vinculado." };
+      }
+
+      const updated = await supabaseAdmin.auth.admin.updateUserById(
+        invite.auth_user_id,
+        {
+          password: input.password,
+          email_confirm: true,
+          user_metadata: {
+            full_name: input.fullName,
+            hvm_portal: "administrative",
+            hvm_admin_role: invite.target_role,
+          },
+        },
+      );
+      if (updated.error) {
+        await client.query("ROLLBACK");
+        return { status: "unavailable" };
+      }
+
       await client.query(
         `INSERT INTO public.app_users(id,status) VALUES ($1,'active')
-         ON CONFLICT (id) DO UPDATE SET status='active',updated_at=clock_timestamp()`,
+         ON CONFLICT (id) DO UPDATE
+           SET status='active',
+               blocked_at=NULL,
+               blocked_by=NULL,
+               block_reason=NULL,
+               authorization_revision=public.app_users.authorization_revision+1,
+               revision=public.app_users.revision+1,
+               updated_at=clock_timestamp()`,
         [invite.auth_user_id],
       );
       await client.query(
@@ -609,8 +715,11 @@ export class AdminGovernanceService {
       }
       await client.query(
         `UPDATE public.app_admin_invites
-         SET is_accepted=true,accepted_by=$2,accepted_at=clock_timestamp()
-         WHERE id=$1 AND is_accepted=false`,
+            SET is_accepted=true,
+                accepted_by=$2,
+                accepted_at=clock_timestamp(),
+                revision=revision+1
+          WHERE id=$1 AND is_accepted=false`,
         [invite.id, invite.auth_user_id],
       );
       await audit(client, {
@@ -633,6 +742,7 @@ export class AdminGovernanceService {
       client.release();
     }
   }
+
   static async verifyAdminSession(
     userId: string,
     role: AdminRole,
