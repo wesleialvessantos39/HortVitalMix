@@ -411,11 +411,7 @@ export function Account({
           },
         );
         onSessionAdopt(authenticated);
-        navigate(
-          portalRole === "platform_admin" || portalRole === "platform_super_admin"
-            ? "/admin/painel"
-            : "/minha-conta",
-        );
+        navigate("/minha-conta");
         return;
       }
 
