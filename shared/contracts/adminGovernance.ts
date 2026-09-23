@@ -34,6 +34,7 @@ export type AdminSectorCode = z.infer<typeof AdminSectorCodeSchema>;
 export const BootstrapStatusResponseSchema = z.object({
   status: z.enum(["open", "closed", "disabled"]),
   reason: z.string().nullable(),
+  authorizedEmailHint: z.string().nullable().optional(),
 });
 export type BootstrapStatusResponse = z.infer<typeof BootstrapStatusResponseSchema>;
 

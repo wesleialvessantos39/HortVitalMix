@@ -29,6 +29,18 @@ const maskEmail = (email: string) => {
   return `${name.slice(0, Math.min(2, name.length))}***@${domain}`;
 };
 
+const normalizeBootstrapAdminEmail = (value: string | undefined) => {
+  let normalized = value?.trim() ?? "";
+  if (
+    normalized.length >= 2 &&
+    ((normalized.startsWith('"') && normalized.endsWith('"')) ||
+      (normalized.startsWith("'") && normalized.endsWith("'")))
+  ) {
+    normalized = normalized.slice(1, -1).trim();
+  }
+  return normalized.toLowerCase();
+};
+
 async function audit(
   client: PoolClient,
   input: {
@@ -92,11 +104,21 @@ async function sectorsFor(userId: string): Promise<AdminSectorCode[]> {
 
 export class AdminGovernanceService {
   static async getBootstrapStatus(): Promise<BootstrapStatusResponse> {
-    const authorizedEmail = process.env.BOOTSTRAP_ADMIN_EMAIL?.trim().toLowerCase();
+    const authorizedEmail = normalizeBootstrapAdminEmail(
+      process.env.BOOTSTRAP_ADMIN_EMAIL,
+    );
     if (!authorizedEmail)
-      return { status: "disabled", reason: "BOOTSTRAP_ADMIN_EMAIL não configurado." };
+      return {
+        status: "disabled",
+        reason: "BOOTSTRAP_ADMIN_EMAIL não configurado.",
+        authorizedEmailHint: null,
+      };
     if (!dbPool)
-      return { status: "disabled", reason: "Banco de dados indisponível." };
+      return {
+        status: "disabled",
+        reason: "Banco de dados indisponível.",
+        authorizedEmailHint: maskEmail(authorizedEmail),
+      };
     const result = await dbPool.query(
       `SELECT 1 FROM public.app_user_role_assignments r
        JOIN public.app_users u ON u.id=r.user_id
@@ -104,8 +126,16 @@ export class AdminGovernanceService {
        AND (r.expires_at IS NULL OR r.expires_at>now()) AND u.status='active' LIMIT 1`,
     );
     return result.rowCount
-      ? { status: "closed", reason: "Já existe Super administrador ativo." }
-      : { status: "open", reason: null };
+      ? {
+          status: "closed",
+          reason: "Já existe Super administrador ativo.",
+          authorizedEmailHint: maskEmail(authorizedEmail),
+        }
+      : {
+          status: "open",
+          reason: null,
+          authorizedEmailHint: maskEmail(authorizedEmail),
+        };
   }
 
   static async executeBootstrap(
@@ -114,7 +144,9 @@ export class AdminGovernanceService {
     ipHash: string,
   ): Promise<BootstrapResult> {
     if (!dbPool || !supabaseAdmin) return { status: "unavailable" };
-    const authorizedEmail = process.env.BOOTSTRAP_ADMIN_EMAIL?.trim().toLowerCase();
+    const authorizedEmail = normalizeBootstrapAdminEmail(
+      process.env.BOOTSTRAP_ADMIN_EMAIL,
+    );
     if (!authorizedEmail) return { status: "disabled" };
     if (input.email !== authorizedEmail) return { status: "email_not_authorized" };
 

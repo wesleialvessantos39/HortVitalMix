@@ -1746,3 +1746,29 @@ Nenhuma regra foi relaxada:
 - o primeiro Super administrador continua sendo criado de forma transacional pelo bootstrap;
 - MFA do Super administrador continua obrigatório;
 - nenhuma migration, RLS ou schema foi alterado.
+
+
+---
+
+## 2026-09-23 — HARDENING DO E-MAIL AUTORIZADO NO BOOTSTRAP
+
+**Evidência operacional:** a tela real de `/admin/bootstrap` exibiu simultaneamente **“Bootstrap liberado neste ambiente”** e, após o envio, **“O e-mail informado não corresponde ao BOOTSTRAP_ADMIN_EMAIL”**. Isso prova que o secret estava presente no runtime, porém o valor efetivo carregado pelo backend não correspondia ao e-mail digitado.
+
+### Correção aplicada
+
+1. A leitura de `BOOTSTRAP_ADMIN_EMAIL` foi centralizada em normalização server-side.
+2. Espaços externos continuam removidos e o valor é comparado em minúsculas.
+3. Aspas simples ou duplas acidentalmente salvas ao redor do e-mail no secret são removidas antes da comparação.
+4. O endpoint de status retorna somente uma **dica mascarada** do e-mail autorizado, nunca o valor integral.
+5. A tela de bootstrap passa a mostrar a dica mascarada que o backend realmente está usando, permitindo distinguir valor incorreto, ambiente errado ou secret com formatação indevida sem expor o endereço completo.
+6. Em caso de incompatibilidade, a mensagem informa a mesma dica mascarada do valor efetivamente carregado no servidor.
+
+### Segurança
+
+A correção não reduz a proteção do bootstrap:
+
+- a comparação integral continua ocorrendo somente no servidor;
+- o frontend não recebe o e-mail completo configurado;
+- o secret não é gravado no banco nem no Livro-Raiz;
+- o bootstrap continua fechado automaticamente após existir um Super administrador ativo;
+- não houve alteração de schema, migration, RLS ou MFA.
