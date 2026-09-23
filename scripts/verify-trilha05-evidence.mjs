@@ -109,6 +109,14 @@ const checks = {
   publicRegistrationDiscovery:
     account.includes("access-discovery") &&
     account.includes('navigate("/cadastro")'),
+  bootstrapDiagnostics: (() => {
+    const bootstrapPage = read("src/pages/admin/AdminBootstrapPage.tsx");
+    return (
+      bootstrapPage.includes("BOOTSTRAP_ADMIN_EMAIL configurado neste ambiente") &&
+      bootstrapPage.includes("Já existe uma identidade usando este e-mail ou CPF") &&
+      bootstrapPage.includes("backend não conseguiu acessar uma dependência obrigatória")
+    );
+  })(),
 };
 
 const failed = Object.entries(checks)
