@@ -152,11 +152,10 @@ async function tokenGrant(body: unknown, grant: string) {
   });
 }
 
-async function handleLoginRequest(
+async function handlePublicLoginRequest(
   req: Request,
   res: Response,
   next: NextFunction,
-  portal: "public" | "admin",
 ) {
   const startedAt = Date.now();
   try {
@@ -170,12 +169,11 @@ async function handleLoginRequest(
     const administrativeRole =
       portalRole === "platform_admin" || portalRole === "platform_super_admin";
 
-    if (portal === "public" && administrativeRole) {
-      res.status(403).json({ error: "ADMIN_PORTAL_REQUIRED", redirectTo: "/admin/entrar" });
-      return;
-    }
-    if (portal === "admin" && !administrativeRole) {
-      res.status(403).json({ error: "PUBLIC_PORTAL_REQUIRED", redirectTo: "/entrar" });
+    if (administrativeRole) {
+      res.status(403).json({
+        error: "ADMIN_GOVERNANCE_LOGIN_REQUIRED",
+        redirectTo: "/admin/entrar",
+      });
       return;
     }
     if (!supabasePublic || !dbPool) {
@@ -235,10 +233,17 @@ async function handleLoginRequest(
 }
 
 authRouter.post("/login", loginRateLimit, (req, res, next) => {
-  void handleLoginRequest(req, res, next, "public");
+  void handlePublicLoginRequest(req, res, next);
 });
-authRouter.post("/admin-login", loginRateLimit, (req, res, next) => {
-  void handleLoginRequest(req, res, next, "admin");
+
+// Compatibilidade defensiva: o endpoint legado nunca autentica papéis administrativos.
+// Todo acesso administrativo passa pela governança T05 (/v1/admin/auth/login),
+// garantindo MFA obrigatório antes da sessão do Super administrador.
+authRouter.post("/admin-login", (_req, res) => {
+  res.status(409).json({
+    error: "ADMIN_GOVERNANCE_LOGIN_REQUIRED",
+    redirectTo: "/admin/entrar",
+  });
 });
 
 authRouter.post("/refresh", async (req, res, next) => {
