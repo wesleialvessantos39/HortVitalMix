@@ -6,6 +6,7 @@ import { OtpInput } from "../../components/forms/OtpInput";
 type Props = {
   onNavigate: (to: string) => void;
   onSessionRefresh: () => Promise<void>;
+  intendedRole?: "platform_admin" | "platform_super_admin" | null;
 };
 
 type LoginResponse =
@@ -13,7 +14,11 @@ type LoginResponse =
   | { status: "mfa_required"; mfaChallengeId: string; maskedDestination: string; expiresAt: string }
   | { status: string; retryAfterSeconds?: number };
 
-export function AdminLoginPage({ onNavigate, onSessionRefresh }: Props) {
+export function AdminLoginPage({
+  onNavigate,
+  onSessionRefresh,
+  intendedRole = null,
+}: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [challengeId, setChallengeId] = useState<string | null>(null);
@@ -22,6 +27,19 @@ export function AdminLoginPage({ onNavigate, onSessionRefresh }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [showHelp, setShowHelp] = useState(false);
+
+  const roleTitle =
+    intendedRole === "platform_admin"
+      ? "Administrador"
+      : intendedRole === "platform_super_admin"
+        ? "Super administrador"
+        : "administração";
+  const roleCopy =
+    intendedRole === "platform_admin"
+      ? "Acesso reservado a administradores setoriais convidados. O escopo liberado depende dos setores atribuídos à conta."
+      : intendedRole === "platform_super_admin"
+        ? "Acesso superior protegido. Após validar a senha, o segundo fator por e-mail é obrigatório antes da criação da sessão."
+        : "Acesso reservado a administradores autorizados. Super administradores confirmam o acesso com um código adicional enviado pelo Supabase Auth.";
 
   useEffect(() => {
     if (!showHelp) return;
@@ -89,7 +107,12 @@ export function AdminLoginPage({ onNavigate, onSessionRefresh }: Props) {
   return (
     <section className="admin-login-page">
       <header className="admin-login-header">
-        <button className="admin-back" onClick={() => onNavigate("/")}>← Voltar ao site</button>
+        <button
+          className="admin-back"
+          onClick={() => onNavigate(intendedRole ? "/administracao" : "/")}
+        >
+          {intendedRole ? "← Voltar para Administração" : "← Voltar ao site"}
+        </button>
         <div className="admin-login-brand">
           <span className="admin-brand-mark"><Leaf /></span>
           <strong>Horti<span>Vital</span>Mix</strong>
@@ -97,18 +120,30 @@ export function AdminLoginPage({ onNavigate, onSessionRefresh }: Props) {
       </header>
       <div className="admin-login-layout">
         <div className="admin-login-copy">
-          <span className="admin-kicker"><ShieldCheck size={15}/> Área Administrativa</span>
-          <h1>Gestão segura da plataforma.</h1>
-          <p>
-            Acesso reservado a administradores autorizados. Super administradores
-            confirmam o acesso com um código adicional enviado pelo Supabase Auth.
-          </p>
+          <span className="admin-kicker">
+            <ShieldCheck size={15}/>
+            {intendedRole === "platform_admin"
+              ? "Administração setorial"
+              : intendedRole === "platform_super_admin"
+                ? "Acesso superior"
+                : "Área Administrativa"}
+          </span>
+          <h1>
+            {intendedRole
+              ? `Entrar como ${roleTitle}.`
+              : "Gestão segura da plataforma."}
+          </h1>
+          <p>{roleCopy}</p>
         </div>
         <div className="admin-login-card">
           {!challengeId ? (
             <form onSubmit={submitLogin}>
               <div className="admin-login-icon"><KeyRound /></div>
-              <h2>Entrar na administração</h2>
+              <h2>
+                {intendedRole
+                  ? `Entrar como ${roleTitle}`
+                  : "Entrar na administração"}
+              </h2>
               <p className="admin-muted">
                 Use as credenciais do seu perfil administrativo.{" "}
                 <button type="button" className="admin-login-help-link" onClick={() => setShowHelp(true)}>
@@ -123,11 +158,21 @@ export function AdminLoginPage({ onNavigate, onSessionRefresh }: Props) {
                 <input type="password" autoComplete="current-password" value={password} onChange={(e)=>setPassword(e.target.value)} required />
               </label>
               <button className="admin-primary" disabled={busy}>
-                {busy ? "Validando…" : "Entrar"}
+                {busy
+                  ? "Validando…"
+                  : intendedRole
+                    ? `Entrar como ${roleTitle}`
+                    : "Entrar"}
               </button>
-              <button type="button" className="admin-link" onClick={() => onNavigate("/admin/bootstrap")}>
-                Primeiro acesso do Super administrador
-              </button>
+              {intendedRole !== "platform_admin" && (
+                <button
+                  type="button"
+                  className="admin-link"
+                  onClick={() => onNavigate("/admin/bootstrap")}
+                >
+                  Primeiro acesso do Super administrador
+                </button>
+              )}
             </form>
           ) : (
             <form onSubmit={submitMfa}>
