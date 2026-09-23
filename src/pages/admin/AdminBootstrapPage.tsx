@@ -9,19 +9,30 @@ type Props={onNavigate:(to:string)=>void};
 export function AdminBootstrapPage({onNavigate}:Props){
  const [status,setStatus]=useState<"loading"|"open"|"closed"|"disabled">("loading");
  const [reason,setReason]=useState<string|null>(null);
+ const [authorizedEmailHint,setAuthorizedEmailHint]=useState<string|null>(null);
  const [form,setForm]=useState({fullName:"",cpf:"",email:"",phone:"",password:""});
  const [busy,setBusy]=useState(false);
  const [message,setMessage]=useState("");
  async function refreshBootstrapStatus(){
   try{
-   const result=await api<{status:"open"|"closed"|"disabled";reason:string|null}>("/v1/admin/bootstrap/status");
+   const result=await api<{
+    status:"open"|"closed"|"disabled";
+    reason:string|null;
+    authorizedEmailHint?:string|null;
+   }>("/v1/admin/bootstrap/status");
    setStatus(result.status);
    setReason(result.reason);
+   setAuthorizedEmailHint(result.authorizedEmailHint??null);
    return result;
   }catch{
-   const result={status:"disabled" as const,reason:"Não foi possível consultar o bootstrap neste ambiente."};
+   const result={
+    status:"disabled" as const,
+    reason:"Não foi possível consultar o bootstrap neste ambiente.",
+    authorizedEmailHint:null as string|null,
+   };
    setStatus(result.status);
    setReason(result.reason);
+   setAuthorizedEmailHint(null);
    return result;
   }
  }
@@ -49,7 +60,13 @@ export function AdminBootstrapPage({onNavigate}:Props){
     }else if(current.status==="closed"){
      setMessage(current.reason??"O bootstrap já foi concluído.");
     }else{
-     setMessage("O e-mail informado não corresponde ao BOOTSTRAP_ADMIN_EMAIL configurado neste ambiente.");
+     setMessage(
+      `O e-mail informado não corresponde ao BOOTSTRAP_ADMIN_EMAIL deste ambiente.${
+       current.authorizedEmailHint
+        ? ` O servidor está esperando: ${current.authorizedEmailHint}.`
+        : ""
+      }`
+     );
     }
    }else if(failure.status===409){
     setMessage("Já existe uma identidade usando este e-mail ou CPF. Use dados ainda não vinculados.");
@@ -74,7 +91,12 @@ export function AdminBootstrapPage({onNavigate}:Props){
     <h1>Primeiro acesso administrativo</h1>
     <p className="admin-muted">Esta etapa abre somente enquanto ainda não existe um Super administrador ativo e aceita apenas o e-mail autorizado no servidor.</p>
     {status==="loading"&&<p className="admin-muted">Consultando disponibilidade…</p>}
-    {status==="open"&&<div className="admin-alert">Bootstrap liberado neste ambiente. Use exatamente o e-mail autorizado no servidor.</div>}
+    {status==="open"&&<div className="admin-alert">
+     Bootstrap liberado neste ambiente.
+     {authorizedEmailHint
+      ? <> O servidor está esperando: <strong>{authorizedEmailHint}</strong>.</>
+      : <> Use exatamente o e-mail autorizado no servidor.</>}
+    </div>}
     {status!=="loading"&&status!=="open"&&<div className="admin-alert">{reason??"Configuração inicial indisponível."}</div>}
     {message&&<div className="admin-alert">{message}</div>}
     {status==="open"&&<form onSubmit={submit} className="admin-form-grid">
