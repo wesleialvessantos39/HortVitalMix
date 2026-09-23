@@ -1,6 +1,6 @@
 {
   "framework": "vite",
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run verify:t05:evidence && vite build && node --import tsx scripts/check-bundle.ts",
   "installCommand": "npm ci --no-audit --no-fund",
   "outputDirectory": "dist",
   "regions": [
