@@ -1832,3 +1832,34 @@ Nenhuma migration, RLS, MFA, papel administrativo ou schema foi alterado.
 Os componentes `CPFInput` e `PhoneInput` foram apenas ampliados para aceitar uso controlado opcional. Os cadastros de Consumidor e Produtor continuam usando os mesmos componentes e comportamento anteriores.
 
 Nenhuma migration, RLS, MFA, papel administrativo ou schema foi alterado.
+
+
+---
+
+## 2026-09-23 — CAUSA RAIZ DO AMBIENTE NÃO ATUALIZAR
+
+**Sintoma:** mesmo após correções funcionais da T05, Google Studio e Vercel continuavam exibindo comportamento antigo, dando a impressão de que as mudanças não haviam sido aplicadas.
+
+### Causa raiz confirmada no GitHub/Vercel
+
+A branch `main` avançou para o commit `2afc00db05192e21b03b51012a821089adb1d55b`, porém esse commit removeu acidentalmente o arquivo `package-lock.json`.
+
+O `vercel.json` usa:
+
+`npm ci --no-audit --no-fund`
+
+O comando `npm ci` exige um lockfile válido. Como o `package-lock.json` não existia mais na `main`, o deployment Vercel do commit `2afc00d...` ficou em **failure** e o ambiente publicado permaneceu na versão anterior. Isso explica por que o usuário continuava vendo a interface antiga mesmo depois das correções terem sido integradas no código.
+
+### Correção aplicada
+
+- restaurado exatamente o `package-lock.json` do último commit funcional anterior, compatível com o mesmo `package.json`;
+- nenhum pacote, migration, schema, RLS, variável de ambiente ou regra de autenticação foi alterado;
+- novo commit de correção: `95bf591215149a7f972aa93ba1091c3bdac488ce`;
+- deployment Vercel desse commit confirmado com **success**.
+
+### Regra de não regressão
+
+- `package-lock.json` é obrigatório enquanto `vercel.json` usar `npm ci`;
+- nenhuma sincronização do Google Studio deve remover o lockfile;
+- antes de concluir que uma alteração “não apareceu”, verificar o status do commit mais recente na Vercel e confirmar que a `main` efetivamente publicou com sucesso;
+- o Livro-Raiz e a release de produção devem sempre apontar para o último commit efetivamente implantado.
