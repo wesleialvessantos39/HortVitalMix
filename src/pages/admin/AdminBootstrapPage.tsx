@@ -86,7 +86,7 @@ export function AdminBootstrapPage({onNavigate}:Props){
    }
   }catch(caught){
    const failure=caught as ApiFailure;
-   if(failure.status===403){
+   if(failure.status===403 && failure.message==="email_not_authorized"){
     const current=await refreshBootstrapStatus();
     if(current.status==="disabled"){
      setMessage(current.reason??"Bootstrap desabilitado neste ambiente.");
@@ -96,6 +96,10 @@ export function AdminBootstrapPage({onNavigate}:Props){
      setFieldErrors({email:"Use exatamente o e-mail autorizado para o primeiro Super administrador."});
      setMessage("O e-mail informado não foi reconhecido como o e-mail autorizado deste ambiente.");
     }
+   }else if(failure.message==="ORIGIN_REJECTED"){
+    setMessage("O servidor bloqueou a origem desta página. Abra o aplicativo pelo endereço configurado para este ambiente e tente novamente. Se persistir, confira APP_ALLOWED_ORIGINS no backend.");
+   }else if(failure.status===403){
+    setMessage("A requisição foi recusada pelo servidor. Atualize a página e verifique a configuração da origem deste ambiente.");
    }else if(failure.status===409){
     setMessage("Já existe uma identidade usando este e-mail ou CPF. Use dados ainda não vinculados.");
    }else if(failure.status===422){
