@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 const read=(p)=>readFileSync(p,"utf8");
-const auth=read("server/routes/authRoutes.ts"), account=read("src/components/Account.tsx"), app=read("src/App.tsx");
+const auth=read("server/routes/authRoutes.ts"), account=read("src/components/Account.tsx"), app=read("src/App.tsx"), adminRouter=read("src/pages/admin/AdminRouter.tsx");
 const migration=read("supabase/migrations/20260922002647_trilha03_identity_hardening.sql");
 const manifest=JSON.parse(read("supabase/manifest.json"));
 const checks={
@@ -12,10 +12,14 @@ const checks={
   consistency:migration.includes("fn_check_auth_people_consistency"),
   emailTrigger:migration.includes("trg_hortivital_auth_user_email_changed"),
   adminEndpoint:auth.includes('"/admin-login"'),
-  publicAdminBlocked:auth.includes("ADMIN_PORTAL_REQUIRED"),
+  publicAdminBlocked:
+    auth.includes("ADMIN_GOVERNANCE_LOGIN_REQUIRED") &&
+    auth.includes('redirectTo: "/admin/entrar"'),
   rateLimit:auth.includes("loginRateLimit"),
   sameSiteLax:auth.includes('sameSite: "lax"'),
-  adminFrontend:account.includes('"/v1/auth/admin-login"'),
+  adminFrontend:
+    !account.includes('"/v1/auth/admin-login"') &&
+    adminRouter.includes("AdminLoginPage"),
   cadastroRoute:app.includes('path === "/cadastro"'),
   sessionHook:app.includes("useSession"),
   directLoginSession:account.includes("onSessionAdopt(authenticated)"),
