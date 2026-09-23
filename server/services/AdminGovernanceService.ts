@@ -26,11 +26,19 @@ const ZERO_HASH = "0".repeat(64);
 const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
 const maskEmail = (email: string) => {
   const [name, domain = ""] = email.split("@");
-  return `${name.slice(0, Math.min(2, name.length))}***@${domain}`;
+  const start = name.slice(0, Math.min(2, name.length));
+  const end = name.length > 4 ? name.slice(-2) : "";
+  return `${start}***${end}@${domain}`;
 };
 
 const normalizeBootstrapAdminEmail = (value: string | undefined) => {
-  let normalized = value?.trim() ?? "";
+  let normalized = (value ?? "")
+    .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "")
+    .trim();
+
+  const assignment = /^BOOTSTRAP_ADMIN_EMAIL\s*=\s*(.+)$/i.exec(normalized);
+  if (assignment?.[1]) normalized = assignment[1].trim();
+
   if (
     normalized.length >= 2 &&
     ((normalized.startsWith('"') && normalized.endsWith('"')) ||
@@ -38,7 +46,11 @@ const normalizeBootstrapAdminEmail = (value: string | undefined) => {
   ) {
     normalized = normalized.slice(1, -1).trim();
   }
-  return normalized.toLowerCase();
+
+  return normalized
+    .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "")
+    .trim()
+    .toLowerCase();
 };
 
 async function audit(
