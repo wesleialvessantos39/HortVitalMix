@@ -43,11 +43,15 @@ const checks = {
     !service.includes("GMAIL_"),
   inviteDigest:
     service.includes('randomBytes(32).toString("hex")') &&
+    service.includes("pg_advisory_xact_lock") &&
+    service.includes("FOR UPDATE") &&
     service.includes("sha256(token)") &&
     migration.includes("token_digest char(64)"),
   persistentRateLimit:
     service.includes("app_admin_auth_attempts") &&
-    service.includes("RATE_MAX_FAILURES"),
+    service.includes("RATE_MAX_FAILURES = 10") &&
+    service.includes("email_failures") &&
+    service.includes("ip_failures"),
   sectorInvariant:
     middleware.includes("Administrador Setorial sem setor ativo") &&
     routes.includes('"/sectors"'),
@@ -65,6 +69,12 @@ const checks = {
     "/sectors",
     "/users",
   ].every((path) => routes.includes(path)),
+  canonicalInviteRoute:
+    service.includes("/admin/aceitar-convite?token=") &&
+    router.includes('path==="/admin/aceitar-convite"'),
+  helpDialog:
+    read("src/pages/admin/AdminLoginPage.tsx").includes("Como obter acesso administrativo") &&
+    css.includes("admin-help-backdrop"),
   frontendFiles: [
     "AdminLoginPage",
     "AdminBootstrapPage",
