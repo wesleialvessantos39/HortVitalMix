@@ -1772,3 +1772,37 @@ A correção não reduz a proteção do bootstrap:
 - o secret não é gravado no banco nem no Livro-Raiz;
 - o bootstrap continua fechado automaticamente após existir um Super administrador ativo;
 - não houve alteração de schema, migration, RLS ou MFA.
+
+
+---
+
+## 2026-09-23 — DIAGNÓSTICO FINAL GOOGLE STUDIO × VERCEL DO BOOTSTRAP
+
+**Evidência recebida:** no Google Studio, o formulário aceitou abrir o bootstrap, mas ao enviar o e-mail autorizado exibiu a mensagem `O e-mail informado não corresponde ao BOOTSTRAP_ADMIN_EMAIL deste ambiente.`. Na Vercel, o seletor de Administração não apresentava opção para iniciar o primeiro Super administrador.
+
+### Diagnóstico confirmado
+
+1. O banco canônico continua com **0 Super administradores ativos**.
+2. O e-mail usado no teste não existe em `auth.users` nem em `app_people`, portanto não há conflito de identidade prévio.
+3. Não houve chamada de criação administrativa chegando ao Supabase durante a tentativa, provando que a falha ocorre antes da criação da identidade.
+4. A mensagem observada no Google Studio não continha a dica mascarada introduzida na revisão anterior, sinal de preview/backend do Studio ainda desatualizado ou desalinhado com a `main`.
+5. A ausência do CTA na Vercel podia ocorrer quando o status do bootstrap era `disabled`; o seletor agora mantém uma rota segura de diagnóstico mesmo nesse estado.
+
+### Correções aplicadas
+
+- o normalizador server-side de `BOOTSTRAP_ADMIN_EMAIL` passa a tolerar:
+  - espaços externos;
+  - aspas simples ou duplas;
+  - prefixo acidental `BOOTSTRAP_ADMIN_EMAIL=`;
+  - caracteres invisíveis comuns (zero-width/BOM);
+  - diferenças de caixa;
+- a dica mascarada foi fortalecida para mostrar início e final do usuário do e-mail, sem revelar o endereço completo;
+- `/administracao` passa a exibir **Verificar configuração inicial** sempre que o bootstrap ainda não estiver fechado, mesmo quando o status estiver desabilitado;
+- `/admin/bootstrap` continua sendo a fonte de diagnóstico do ambiente atual;
+- nenhum bypass foi criado: a criação ainda depende do valor integral correto do secret no backend.
+
+### Regra operacional
+
+Google Studio e Vercel continuam sendo ambientes separados. Depois desta correção, o Google Studio precisa estar sincronizado com a `main` atual para exibir a dica mascarada e usar o normalizador novo. A Vercel recebe a correção por novo deployment da `main`.
+
+Nenhuma migration, RLS, MFA, papel administrativo ou schema foi alterado.
