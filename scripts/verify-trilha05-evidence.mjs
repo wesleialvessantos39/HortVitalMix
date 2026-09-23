@@ -113,13 +113,16 @@ const checks = {
   bootstrapDiagnostics: (() => {
     const bootstrapPage = read("src/pages/admin/AdminBootstrapPage.tsx");
     return (
-      bootstrapPage.includes("BOOTSTRAP_ADMIN_EMAIL deste ambiente") &&
-      bootstrapPage.includes("O servidor está esperando") &&
+      !bootstrapPage.includes("Bootstrap liberado neste ambiente") &&
+      !bootstrapPage.includes("O servidor está esperando") &&
+      bootstrapPage.includes("O e-mail informado não foi reconhecido") &&
       bootstrapPage.includes("Já existe uma identidade usando este e-mail ou CPF") &&
       bootstrapPage.includes("backend não conseguiu acessar uma dependência obrigatória") &&
-      service.includes("normalizeBootstrapAdminEmail") &&
-      service.includes("BOOTSTRAP_ADMIN_EMAIL\\s*=\\s*") &&
-      service.includes("authorizedEmailHint: maskEmail(authorizedEmail)")
+      bootstrapPage.includes("<CPFInput") &&
+      bootstrapPage.includes("<PhoneInput") &&
+      bootstrapPage.includes("BootstrapRequestSchema.safeParse") &&
+      service.includes("normalizeBootstrapAdminEmail(input.email)") &&
+      service.includes("BOOTSTRAP_ADMIN_EMAIL\\s*=\\s*")
     );
   })(),
 };
