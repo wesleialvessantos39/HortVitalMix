@@ -1,0 +1,33 @@
+name: Diagnostico build RPC bootstrap
+
+on:
+  push:
+    branches:
+      - diagnose-rpc-build
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-diagnosis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Migration manifest
+        run: npm run migrations:verify
+      - name: Typecheck
+        run: npm run typecheck:app
+      - name: T05 evidence
+        run: npm run verify:t05:evidence
+      - name: T05 tests
+        run: npm run test:t05:unit
+      - name: Full build
+        run: npm run build
