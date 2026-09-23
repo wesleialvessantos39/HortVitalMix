@@ -72,14 +72,6 @@ const isCanonicalBootstrapAdminEmail = (value: string | undefined) => {
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 };
 
-const bootstrapEnvironmentMatchesCanonicalPolicy = () => {
-  const configured = normalizeBootstrapAdminEmail(
-    process.env.BOOTSTRAP_ADMIN_EMAIL,
-  );
-  if (!configured) return null;
-  return isCanonicalBootstrapAdminEmail(configured);
-};
-
 async function resolveBootstrapAuthorizedEmailFromDatabase() {
   if (!dbPool) return null;
   const result = await dbPool.query<{ support_email: string | null }>(
