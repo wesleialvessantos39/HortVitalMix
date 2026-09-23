@@ -1631,3 +1631,74 @@ Após as correções, o commit funcional `bfd46289cf39a33b6a9406f1d1f7c37c46ea08
 A T05 passa a ser patrimônio consolidado junto com T01–T04. Implementações futuras não podem recriar login administrativo paralelo, emitir sessão de Super administrador antes do MFA, alterar o histórico aplicado ou remover o isolamento setorial.
 
 A próxima etapa funcional autorizada é a **Trilha 06 — Perfil Canônico, Endereços Residenciais e Privacidade LGPD**, utilizando o próximo schema lógico disponível sem downgrade.
+
+
+---
+
+## 2026-09-23 — REVISÃO DE VISIBILIDADE DAS TELAS T01–T05
+
+**Motivo da revisão:** após a homologação da Trilha 05, a validação visual em desktop e mobile mostrou apenas a Home, listagem vazia de produtores, seletor público de Conta e seletor de Administração. Foi confirmado que isso não representa o inventário completo de telas já implementadas até a T05.
+
+### Diagnóstico
+
+As telas adicionais já existiam no código, mas parte delas ficava pouco descobrível porque:
+
+- os formulários de cadastro público estavam acessíveis principalmente por CTAs secundários;
+- o bootstrap do primeiro Super administrador só aparecia dentro da tela genérica de login administrativo;
+- as rotas `/entrar/administrador` e `/entrar/super-administrador` usavam o mesmo conteúdo visual genérico;
+- painel, governança, usuários e configuração são corretamente protegidos por sessão administrativa e, portanto, não devem ser exibidos como páginas públicas.
+
+### Inventário canônico visível até a T05
+
+#### Público / navegação geral
+- `/` — Home;
+- `/produtores` — Produtores;
+- `/produtos` — Produtos;
+- `/planos` — Planos;
+- `/sobre` — Sobre;
+- `/conta` — escolha de acesso Consumidor/Produtor;
+- `/cadastro` — escolha de cadastro Consumidor/Produtor;
+- `/cadastro/consumidor` — cadastro de Consumidor;
+- `/cadastro/produtor` — cadastro de Produtor;
+- `/entrar/consumidor` — login Consumidor;
+- `/entrar/produtor` — login Produtor;
+- `/minha-conta` — conta e segurança quando autenticado.
+
+#### Segurança T04
+- `/confirmar-contato` e alias `/confirmarcontato`;
+- `/recuperar-senha`;
+- `/redefinir-senha` e alias `/redefinirsenha`.
+
+#### Administração T05
+- `/administracao` — seletor Administrador / Super administrador;
+- `/entrar/administrador` — entrada visual específica de Administrador;
+- `/entrar/super-administrador` — entrada visual específica de Super administrador;
+- `/admin/entrar` — entrada administrativa canônica genérica;
+- `/admin/bootstrap` — bootstrap único do primeiro Super administrador;
+- `/admin/aceitar-convite` e alias `/admin/convite` — aceite de convite;
+- `/admin/painel` — painel administrativo protegido;
+- `/admin/governanca` — convites e escopos, restrito ao Super administrador;
+- `/admin/usuarios` — gestão de usuários administrativos, restrita ao Super administrador;
+- `/admin/configuracao` — configuração global protegida.
+
+### Correções de UX aplicadas sem remover funcionalidade
+
+1. O seletor `/conta` agora mostra explicitamente o CTA **Criar cadastro**, levando para `/cadastro`.
+2. O seletor `/administracao` consulta `/v1/admin/bootstrap/status` e exibe o estado real da configuração inicial.
+3. Quando o bootstrap está aberto, a interface apresenta o CTA **Configurar primeiro Super administrador**, levando para `/admin/bootstrap`.
+4. As rotas de Administrador e Super administrador agora possuem título e texto próprios, mantendo o mesmo backend canônico e sem recriar um segundo motor de login.
+5. O link de bootstrap permanece oculto na tela específica de Administrador e visível na entrada de Super administrador/generic admin.
+6. As telas protegidas continuam protegidas por `AdminAccessGate`; nenhuma foi tornada pública apenas para facilitar visualização.
+7. A responsividade existente para desktop, tablet e mobile foi preservada e os novos elementos usam o mesmo sistema visual do projeto.
+
+### Estado operacional nesta revisão
+
+No momento desta revisão, o banco de produção ainda não possui Super administrador ativo. Portanto, é esperado que `/admin/painel`, `/admin/governanca`, `/admin/usuarios` e `/admin/configuracao` não sejam acessíveis antes da conclusão real do bootstrap.
+
+Isso não significa que essas telas estejam ausentes. Elas permanecem implementadas e deliberadamente protegidas. O caminho correto é:
+
+`/administracao` → `/admin/bootstrap` → criação do primeiro Super administrador autorizado → `/entrar/super-administrador` → credenciais → MFA → `/admin/painel`.
+
+### Regra de não regressão
+
+Não remover, simplificar ou tornar públicas as barreiras da T05 para “mostrar” telas protegidas. Descoberta visual e segurança devem coexistir: rotas públicas podem indicar o caminho, mas conteúdo administrativo continua condicionado a papel, sessão e MFA.
