@@ -24,8 +24,21 @@ test("Trilha 05 — bootstrap usa página dedicada", async ({ page }) => {
 });
 
 test("Trilha 05 — convite inválido não exibe ativação", async ({ page }) => {
-  await page.goto("/admin/convite");
+  await page.goto("/admin/aceitar-convite");
   await expect(
     page.getByRole("heading", { name: "Este convite não está disponível" }),
   ).toBeVisible();
+});
+
+
+test("Trilha 05 — ajuda de governança abre, fecha por backdrop e Escape", async ({ page }) => {
+  await page.goto("/admin/entrar");
+  await page.getByRole("button", { name: "Saiba mais" }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Saiba mais" }).click();
+  await page.locator(".admin-help-backdrop").click({ position: { x: 4, y: 4 } });
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 });
