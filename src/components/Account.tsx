@@ -1145,13 +1145,15 @@ export function Account({
                     : "O bootstrap não está disponível agora. Os acessos existentes continuam preservados."}
             </span>
           </div>
-          {adminBootstrapStatus === "open" && (
+          {adminBootstrapStatus !== "closed" && (
             <button
               type="button"
               className="access-discovery-action"
               onClick={() => navigate("/admin/bootstrap")}
             >
-              Configurar primeiro Super administrador
+              {adminBootstrapStatus === "open"
+                ? "Configurar primeiro Super administrador"
+                : "Verificar configuração inicial"}
             </button>
           )}
         </div>

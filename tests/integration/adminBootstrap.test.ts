@@ -14,8 +14,10 @@ describe("Trilha 05 — bootstrap administrativo",()=>{
   expect(service).toContain("email_not_authorized");
   expect(migration).not.toContain("BOOTSTRAP_ADMIN_EMAIL");
  });
- it("normaliza aspas acidentais e expõe somente dica mascarada",()=>{
+ it("normaliza formatação acidental e expõe somente dica mascarada",()=>{
   expect(service).toContain("normalizeBootstrapAdminEmail");
+  expect(service).toContain("BOOTSTRAP_ADMIN_EMAIL\\s*=\\s*");
+  expect(service).toContain("\\u200B-\\u200D\\u2060\\uFEFF");
   expect(service).toContain("normalized.startsWith");
   expect(service).toContain("authorizedEmailHint: maskEmail(authorizedEmail)");
   expect(service).not.toContain("authorizedEmail: authorizedEmail");
