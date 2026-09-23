@@ -99,7 +99,11 @@ async function doFetch(
     return await fetch(url, {
       ...options,
       credentials,
-      headers: { "Content-Type": "application/json", ...options.headers },
+      headers: {
+        "Content-Type": "application/json",
+        "X-HVM-Request": "1",
+        ...options.headers,
+      },
       signal: options.signal ?? AbortSignal.timeout(20000),
     });
   } catch (error) {
