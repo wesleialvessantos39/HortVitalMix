@@ -140,12 +140,16 @@ export const InviteResponseSchema = z.object({
   isAccepted: z.boolean(),
   expiresAt: z.string().datetime(),
   createdAt: z.string().datetime(),
+  invitedBy: z.string().uuid(),
   invalidatedAt: z.string().datetime().nullable(),
 });
 export type InviteResponse = z.infer<typeof InviteResponseSchema>;
 
 export const ResendInviteSchema = z
-  .object({ inviteId: z.string().uuid(), commandId: z.string().uuid() })
+  .object({
+    expectedRevision: z.number().int().positive(),
+    commandId: z.string().uuid(),
+  })
   .strict();
 
 export const ValidateInviteResponseSchema = z.discriminatedUnion("status", [
