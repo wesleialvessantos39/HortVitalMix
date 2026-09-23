@@ -118,7 +118,7 @@ const checks = {
       bootstrapPage.includes("Já existe uma identidade usando este e-mail ou CPF") &&
       bootstrapPage.includes("backend não conseguiu acessar uma dependência obrigatória") &&
       service.includes("normalizeBootstrapAdminEmail") &&
-      service.includes("BOOTSTRAP_ADMIN_EMAIL\\\\s*=\\\\s*") &&
+      service.includes("BOOTSTRAP_ADMIN_EMAIL\\s*=\\s*") &&
       service.includes("authorizedEmailHint: maskEmail(authorizedEmail)")
     );
   })(),
