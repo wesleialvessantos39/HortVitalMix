@@ -15,6 +15,17 @@ export function originProtection(
     return;
   }
 
+  // Google Studio roda o backend Vite atrás de um proxy que pode reescrever
+  // Origin/Referer/Sec-Fetch-Site. O frontend oficial marca chamadas internas
+  // com um header próprio. Esta exceção existe SOMENTE fora de production.
+  if (
+    runtime.appEnv !== "production" &&
+    req.headers["x-hvm-request"] === "1"
+  ) {
+    next();
+    return;
+  }
+
   const fetchSite = req.headers["sec-fetch-site"];
   if (fetchSite === "cross-site") {
     res.status(403).json({
