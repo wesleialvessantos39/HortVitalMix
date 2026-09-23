@@ -36,6 +36,9 @@ const checks = {
   bootstrapGuard:
     service.includes("pg_advisory_xact_lock") &&
     service.includes("CANONICAL_BOOTSTRAP_EMAIL_SHA256") &&
+    service.includes("resolveBootstrapAuthorizedEmailFromDatabase") &&
+    service.includes("FROM public.app_global_config") &&
+    service.includes("support_email") &&
     service.includes("isCanonicalBootstrapAdminEmail") &&
     service.includes("timingSafeEqual") &&
     env.includes("BOOTSTRAP_ADMIN_EMAIL="),
@@ -125,7 +128,8 @@ const checks = {
       bootstrapPage.includes("<PhoneInput") &&
       bootstrapPage.includes("BootstrapRequestSchema.safeParse") &&
       service.includes("normalizeBootstrapAdminEmail(input.email)") &&
-      service.includes("bootstrapEnvironmentMatchesCanonicalPolicy") &&
+      service.includes("resolveBootstrapAuthorizedEmailFromDatabase") &&
+      service.includes("persistido no Supabase; a política do banco prevalecerá") &&
       service.includes("CANONICAL_BOOTSTRAP_EMAIL_SHA256")
     );
   })(),
