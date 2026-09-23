@@ -16,6 +16,8 @@ const foundation = read("shared/contracts/foundation.ts");
 const migrationManifest = read("scripts/migrations-manifest.ts");
 const apiClient = read("src/lib/api.ts");
 const originProtection = read("server/security/originProtection.ts");
+const bootstrapTransport = read("src/lib/adminBootstrapTransport.ts");
+const bootstrapEdge = read("supabase/functions/admin-bootstrap/index.ts");
 
 const requiredTables = [
   "app_admin_sectors",
@@ -144,7 +146,12 @@ const checks = {
       routes.includes("BOOTSTRAP_EMAIL_NOT_AUTHORIZED") &&
       apiClient.includes('hostname.endsWith(".vercel.app")') &&
       apiClient.includes('["/_hvm_api", "/api"]') &&
-      originProtection.includes('fetchSite === "same-origin"')
+      originProtection.includes('fetchSite === "same-origin"') &&
+      bootstrapTransport.includes("/functions/v1/admin-bootstrap") &&
+      bootstrapTransport.includes("getBootstrapStatus") &&
+      bootstrapTransport.includes("runBootstrap") &&
+      bootstrapEdge.includes("fn_finalize_first_super_admin") &&
+      bootstrapEdge.includes("CANONICAL_EMAIL_SHA256")
     );
   })(),
 };
