@@ -1,6 +1,6 @@
 {
   "framework": "vite",
-  "buildCommand": "npm run migrations:verify && vite build",
+  "buildCommand": "npm run migrations:verify && (npm run typecheck:app > public/__hvm_typecheck.txt 2>&1 || true) && vite build",
   "installCommand": "npm ci --no-audit --no-fund",
   "outputDirectory": "dist",
   "regions": [
