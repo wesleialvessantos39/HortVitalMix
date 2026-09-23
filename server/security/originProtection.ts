@@ -25,6 +25,14 @@ export function originProtection(
     return;
   }
 
+  // Sec-Fetch-Site é controlado pelo navegador. Same-origin é suficiente para
+  // autorizar o POST mesmo quando proxies do Google Studio reescrevem
+  // Origin/Referer entre a URL pública e o processo Vite local.
+  if (fetchSite === "same-origin") {
+    next();
+    return;
+  }
+
   const origin = req.headers.origin;
   if (typeof origin === "string" && origin.length > 0) {
     if (!isAllowedRequestOrigin(req)) {
