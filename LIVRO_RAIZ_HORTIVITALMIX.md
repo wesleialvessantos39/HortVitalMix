@@ -1863,3 +1863,57 @@ O comando `npm ci` exige um lockfile válido. Como o `package-lock.json` não ex
 - nenhuma sincronização do Google Studio deve remover o lockfile;
 - antes de concluir que uma alteração “não apareceu”, verificar o status do commit mais recente na Vercel e confirmar que a `main` efetivamente publicou com sucesso;
 - o Livro-Raiz e a release de produção devem sempre apontar para o último commit efetivamente implantado.
+
+
+---
+
+## 2026-09-23 — POLÍTICA CANÔNICA DO PRIMEIRO SUPER ADMINISTRADOR
+
+**Motivo:** após múltiplas tentativas com Google Studio e Vercel usando o mesmo repositório, o bootstrap continuou sujeito a divergência do valor efetivo de `BOOTSTRAP_ADMIN_EMAIL` entre runtimes. O usuário confirmou como identidade correta do primeiro Super administrador o mesmo endereço administrativo utilizado no projeto.
+
+### Decisão operacional canônica
+
+A autorização do primeiro Super administrador deixa de depender do valor textual carregado por cada runtime como ponto único de falha.
+
+A identidade autorizada passa a ser representada no backend por **digest SHA-256 canônico, server-side e sem endereço em texto puro no repositório**.
+
+Regras:
+
+- o e-mail digitado no bootstrap é normalizado;
+- seu SHA-256 é comparado em tempo constante com o digest canônico;
+- somente a identidade administrativa previamente autorizada passa na comparação;
+- `BOOTSTRAP_ADMIN_EMAIL` permanece suportada como verificação de consistência/compatibilidade entre ambientes;
+- se a variável existir com valor divergente, o runtime registra apenas um aviso sem revelar o valor e **não substitui a política canônica**;
+- ausência ou divergência da variável não autoriza outro e-mail;
+- o bootstrap continua fechando automaticamente assim que existir um Super administrador ativo.
+
+### Efeito prático
+
+Google Studio e Vercel passam a aplicar a mesma política de identidade a partir do código da `main`, eliminando a divergência em que um ambiente aceitava abrir o bootstrap mas recusava o mesmo endereço no envio.
+
+O status do bootstrap passa a depender das dependências reais necessárias à operação:
+
+- banco PostgreSQL disponível;
+- Supabase Admin disponível;
+- inexistência de Super administrador ativo.
+
+A variável de e-mail deixa de ocultar o botão de bootstrap quando o restante da infraestrutura está correto.
+
+### Segurança preservada
+
+- nenhum e-mail alternativo é aceito;
+- o endereço autorizado não é armazenado em texto puro no código;
+- comparação usa `timingSafeEqual`;
+- não foi criado bypass de MFA;
+- não foi criada identidade manualmente no Supabase;
+- advisory lock e fechamento único permanecem;
+- nenhuma migration, RLS ou schema foi alterado.
+
+### Interface do bootstrap
+
+Permanece vigente a padronização anterior:
+
+- CPF usa `CPFInput` com máscara `000.000.000-00` e validação real;
+- celular usa `PhoneInput` com máscara `(00) 00000-0000`;
+- o banner técnico de diagnóstico não é exibido no estado normal `open`;
+- validação do formulário continua usando `BootstrapRequestSchema`.
