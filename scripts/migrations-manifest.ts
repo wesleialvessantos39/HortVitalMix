@@ -40,14 +40,20 @@ export function assertManifestHash() {
   return actual;
 }
 
+const remoteVersionAliases: Readonly<Record<string, string>> = {
+  // A migration de hardening T05 foi aplicada em produção com timestamp gerado
+  // pelo Supabase. O conteúdo/nome são canônicos; somente a versão física difere.
+  "20260923022554": "20260923022000",
+};
+
 export function validateHistory(rows: { version: string; name: string }[]) {
   if (
     rows.length !== manifest.migrations.length ||
-    rows.some(
-      (row, index) =>
-        row.version !== manifest.migrations[index].version ||
-        row.name !== manifest.migrations[index].name,
-    )
+    rows.some((row, index) => {
+      const expected = manifest.migrations[index];
+      const canonicalVersion = remoteVersionAliases[row.version] ?? row.version;
+      return canonicalVersion !== expected.version || row.name !== expected.name;
+    })
   )
     throw new Error("REMOTE_MIGRATION_HISTORY_MISMATCH");
 

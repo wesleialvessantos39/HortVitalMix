@@ -44,7 +44,7 @@
     "verify:t04:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t04:unit && npm run verify:t04:evidence && npm run build",
     "test:t04:integration": "vitest run tests/integration/trilha04Rls.test.ts",
     "test:t04": "npm run test:t04:unit && npm run test:t04:integration && npm run verify:t04:evidence",
-    "test:t05:unit": "vitest run tests/unit/adminGovernanceContracts.test.ts tests/integration/adminBootstrap.test.ts tests/integration/adminInvites.test.ts tests/integration/adminMfa.test.ts tests/integration/lastSuperAdmin.test.ts tests/integration/e2eAdminFlow.test.ts",
+    "test:t05:unit": "vitest run tests/unit/adminGovernanceContracts.test.ts tests/unit/trilha05SealRegression.test.ts tests/integration/adminBootstrap.test.ts tests/integration/adminInvites.test.ts tests/integration/adminMfa.test.ts tests/integration/lastSuperAdmin.test.ts tests/integration/e2eAdminFlow.test.ts",
     "test:t05:integration": "node --import tsx scripts/require-integration.ts && vitest run tests/integration/adminBootstrap.test.ts tests/integration/adminInvites.test.ts tests/integration/adminMfa.test.ts tests/integration/lastSuperAdmin.test.ts tests/integration/e2eAdminFlow.test.ts",
     "verify:t05:evidence": "node scripts/verify-trilha05-evidence.mjs",
     "test:t05:e2e": "playwright test tests/e2e/trilha05-admin.spec.ts",

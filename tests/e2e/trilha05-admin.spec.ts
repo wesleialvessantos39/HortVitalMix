@@ -42,3 +42,31 @@ test("Trilha 05 — ajuda de governança abre, fecha por backdrop e Escape", asy
   await page.locator(".admin-help-backdrop").click({ position: { x: 4, y: 4 } });
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
+
+
+test("Trilha 05 — endpoint administrativo legado não cria sessão", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const response = await fetch("/api/v1/auth/admin-login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "nao-existe@example.com",
+        password: "SenhaInvalida#2026",
+        portalRole: "platform_super_admin",
+      }),
+    });
+    return {
+      status: response.status,
+      body: await response.json(),
+      setCookieVisible: response.headers.has("set-cookie"),
+    };
+  });
+
+  expect(result.status).toBe(409);
+  expect(result.body).toEqual({
+    error: "ADMIN_GOVERNANCE_LOGIN_REQUIRED",
+    redirectTo: "/admin/entrar",
+  });
+  expect(result.setCookieVisible).toBe(false);
+});

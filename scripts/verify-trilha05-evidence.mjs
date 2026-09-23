@@ -9,6 +9,10 @@ const app = read("src/App.tsx");
 const router = read("src/pages/admin/AdminRouter.tsx");
 const css = read("src/pages/admin/admin.css");
 const env = read(".env.example");
+const legacyAuth = read("server/routes/authRoutes.ts");
+const account = read("src/components/Account.tsx");
+const foundation = read("shared/contracts/foundation.ts");
+const migrationManifest = read("scripts/migrations-manifest.ts");
 
 const requiredTables = [
   "app_admin_sectors",
@@ -89,6 +93,14 @@ const checks = {
     css.includes("@media (max-width:767px)") &&
     css.includes("@media (min-width:768px) and (max-width:1199px)"),
   brand: css.includes("#1b4d2e") && css.includes("#ef7d18"),
+  legacyAdminBypassClosed:
+    legacyAuth.includes('authRouter.post("/admin-login"') &&
+    legacyAuth.includes('"ADMIN_GOVERNANCE_LOGIN_REQUIRED"') &&
+    !account.includes('"/v1/auth/admin-login"'),
+  readinessSchema20:
+    foundation.includes("FOUNDATION_SCHEMA_VERSION = 20"),
+  remoteMigrationAlias:
+    migrationManifest.includes('"20260923022554": "20260923022000"'),
 };
 
 const failed = Object.entries(checks)
