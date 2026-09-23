@@ -20,10 +20,14 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
   return <AdminLoginPage onNavigate={onNavigate} onSessionRefresh={onSessionRefresh}/>;
  if(path==="/admin/bootstrap")
   return <AdminBootstrapPage onNavigate={onNavigate}/>;
- if(path==="/admin/convite")
+ if(path==="/admin/aceitar-convite"||path==="/admin/convite")
   return <AdminAcceptInvitePage onNavigate={onNavigate}/>;
 
- return <AdminAccessGate onNavigate={onNavigate}>
+ const superOnly = ["/admin/governanca","/admin/usuarios","/admin/configuracao"].includes(path);
+ return <AdminAccessGate
+  onNavigate={onNavigate}
+  requiredRole={superOnly ? "platform_super_admin" : undefined}
+ >
   {access=><AdminPortalShell
     access={access}
     currentPath={path}
