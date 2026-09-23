@@ -1,6 +1,6 @@
 import { useEffect,useState } from "react";
 import { Leaf,ShieldPlus } from "lucide-react";
-import { api } from "../../lib/api";
+import { api, type ApiFailure } from "../../lib/api";
 import { cryptoRandomUUID } from "../../lib/uuid";
 import { PasswordInput } from "../../components/forms/PasswordInput";
 import { PasswordStrengthMeter } from "../../components/forms/PasswordStrengthMeter";
@@ -12,10 +12,22 @@ export function AdminBootstrapPage({onNavigate}:Props){
  const [form,setForm]=useState({fullName:"",cpf:"",email:"",phone:"",password:""});
  const [busy,setBusy]=useState(false);
  const [message,setMessage]=useState("");
+ async function refreshBootstrapStatus(){
+  try{
+   const result=await api<{status:"open"|"closed"|"disabled";reason:string|null}>("/v1/admin/bootstrap/status");
+   setStatus(result.status);
+   setReason(result.reason);
+   return result;
+  }catch{
+   const result={status:"disabled" as const,reason:"Não foi possível consultar o bootstrap neste ambiente."};
+   setStatus(result.status);
+   setReason(result.reason);
+   return result;
+  }
+ }
+
  useEffect(()=>{
-  api<{status:"open"|"closed"|"disabled";reason:string|null}>("/v1/admin/bootstrap/status")
-   .then(r=>{setStatus(r.status);setReason(r.reason)})
-   .catch(()=>{setStatus("disabled");setReason("Não foi possível consultar o bootstrap.")});
+  void refreshBootstrapStatus();
  },[]);
  async function submit(e:React.FormEvent){
   e.preventDefault();setBusy(true);setMessage("");
@@ -28,8 +40,26 @@ export function AdminBootstrapPage({onNavigate}:Props){
     setMessage("Configuração inicial concluída.");
     setTimeout(()=>onNavigate("/admin/entrar"),800);
    }
-  }catch{
-   setMessage("Não foi possível concluir a configuração inicial. Verifique o e-mail autorizado e os dados informados.");
+  }catch(caught){
+   const failure=caught as ApiFailure;
+   if(failure.status===403){
+    const current=await refreshBootstrapStatus();
+    if(current.status==="disabled"){
+     setMessage(current.reason??"Bootstrap desabilitado neste ambiente.");
+    }else if(current.status==="closed"){
+     setMessage(current.reason??"O bootstrap já foi concluído.");
+    }else{
+     setMessage("O e-mail informado não corresponde ao BOOTSTRAP_ADMIN_EMAIL configurado neste ambiente.");
+    }
+   }else if(failure.status===409){
+    setMessage("Já existe uma identidade usando este e-mail ou CPF. Use dados ainda não vinculados.");
+   }else if(failure.status===422){
+    setMessage("Revise nome, CPF, celular, e-mail e os critérios da senha antes de continuar.");
+   }else if(failure.status===503){
+    setMessage("O backend não conseguiu acessar uma dependência obrigatória. Verifique Supabase, banco e secrets deste ambiente.");
+   }else{
+    setMessage("Não foi possível concluir a configuração inicial. Tente novamente após atualizar o ambiente.");
+   }
   }finally{setBusy(false)}
  }
  return <section className="admin-login-page">
@@ -44,6 +74,7 @@ export function AdminBootstrapPage({onNavigate}:Props){
     <h1>Primeiro acesso administrativo</h1>
     <p className="admin-muted">Esta etapa abre somente enquanto ainda não existe um Super administrador ativo e aceita apenas o e-mail autorizado no servidor.</p>
     {status==="loading"&&<p className="admin-muted">Consultando disponibilidade…</p>}
+    {status==="open"&&<div className="admin-alert">Bootstrap liberado neste ambiente. Use exatamente o e-mail autorizado no servidor.</div>}
     {status!=="loading"&&status!=="open"&&<div className="admin-alert">{reason??"Configuração inicial indisponível."}</div>}
     {message&&<div className="admin-alert">{message}</div>}
     {status==="open"&&<form onSubmit={submit} className="admin-form-grid">
