@@ -549,10 +549,10 @@ export class AdminGovernanceService {
     const result = await dbPool.query<{
       id: string; email: string; target_role: AdminRole; revision: number;
       is_accepted: boolean; expires_at: Date | string; created_at: Date | string;
-      invalidated_at: Date | string | null; sectors: AdminSectorCode[] | null;
+      invalidated_at: Date | string | null; invited_by: string; sectors: AdminSectorCode[] | null;
     }>(
       `SELECT i.id,i.email,i.target_role,i.revision,i.is_accepted,i.expires_at,
-              i.created_at,i.invalidated_at,
+              i.created_at,i.invalidated_at,i.invited_by,
               COALESCE(array_agg(s.sector_code) FILTER (WHERE s.sector_code IS NOT NULL),'{}') AS sectors
          FROM public.app_admin_invites i
          LEFT JOIN public.app_admin_invite_sectors s ON s.invite_id=i.id
@@ -567,6 +567,7 @@ export class AdminGovernanceService {
       isAccepted: row.is_accepted,
       expiresAt: new Date(row.expires_at).toISOString(),
       createdAt: new Date(row.created_at).toISOString(),
+      invitedBy: row.invited_by,
       invalidatedAt: row.invalidated_at ? new Date(row.invalidated_at).toISOString() : null,
     }));
   }
