@@ -13,6 +13,8 @@ const legacyAuth = read("server/routes/authRoutes.ts");
 const account = read("src/components/Account.tsx");
 const foundation = read("shared/contracts/foundation.ts");
 const migrationManifest = read("scripts/migrations-manifest.ts");
+const apiClient = read("src/lib/api.ts");
+const originProtection = read("server/security/originProtection.ts");
 
 const requiredTables = [
   "app_admin_sectors",
@@ -36,8 +38,9 @@ const checks = {
   bootstrapGuard:
     service.includes("pg_advisory_xact_lock") &&
     service.includes("CANONICAL_BOOTSTRAP_EMAIL_SHA256") &&
-    service.includes("resolveBootstrapAuthorizedEmailFromDatabase") &&
-    service.includes("FROM public.app_global_config") &&
+    service.includes("resolveBootstrapAuthorizedEmailFromSupabase") &&
+    service.includes('.from("app_global_config")') &&
+    service.includes("activeSuperAdminViaDataApi") &&
     service.includes("support_email") &&
     service.includes("isCanonicalBootstrapAdminEmail") &&
     service.includes("timingSafeEqual") &&
@@ -128,9 +131,14 @@ const checks = {
       bootstrapPage.includes("<PhoneInput") &&
       bootstrapPage.includes("BootstrapRequestSchema.safeParse") &&
       service.includes("normalizeBootstrapAdminEmail(input.email)") &&
-      service.includes("resolveBootstrapAuthorizedEmailFromDatabase") &&
+      service.includes("resolveBootstrapAuthorizedEmailFromSupabase") &&
       service.includes("persistido no Supabase; a política do banco prevalecerá") &&
-      service.includes("CANONICAL_BOOTSTRAP_EMAIL_SHA256")
+      service.includes("CANONICAL_BOOTSTRAP_EMAIL_SHA256") &&
+      bootstrapPage.includes('status:"open" as const') &&
+      routes.includes("BOOTSTRAP_EMAIL_NOT_AUTHORIZED") &&
+      apiClient.includes('hostname.endsWith(".vercel.app")') &&
+      apiClient.includes('["/_hvm_api", "/api"]') &&
+      originProtection.includes('fetchSite === "same-origin"')
     );
   })(),
 };
