@@ -70,3 +70,42 @@ test("Trilha 05 — endpoint administrativo legado não cria sessão", async ({ 
   });
   expect(result.setCookieVisible).toBe(false);
 });
+
+
+test("Trilha 05 — seletor administrativo conduz a telas de entrada distintas", async ({ page }) => {
+  await page.goto("/administracao");
+
+  await expect(
+    page.getByRole("button", { name: "Entrar como Administrador" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Entrar como Super administrador" }),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Entrar como Administrador" }).click();
+  await expect(page).toHaveURL(/\/entrar\/administrador$/);
+  await expect(
+    page.getByRole("heading", { name: "Entrar como Administrador." }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Entrar como Administrador", exact: true }),
+  ).toBeVisible();
+
+  await page.goto("/administracao");
+  await page.getByRole("button", { name: "Entrar como Super administrador" }).click();
+  await expect(page).toHaveURL(/\/entrar\/super-administrador$/);
+  await expect(
+    page.getByRole("heading", { name: "Entrar como Super administrador." }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Primeiro acesso do Super administrador" }),
+  ).toBeVisible();
+});
+
+test("Trilha 05 — seletor administrativo expõe o estado protegido do bootstrap", async ({ page }) => {
+  await page.goto("/administracao");
+  await expect(page.locator(".admin-bootstrap-discovery")).toBeVisible();
+  await expect(
+    page.getByText(/configuração administrativa|Super administrador|Configuração inicial/i).first(),
+  ).toBeVisible();
+});
