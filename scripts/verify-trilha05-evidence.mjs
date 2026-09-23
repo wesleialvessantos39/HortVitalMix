@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 const read = (path) => readFileSync(path, "utf8");
 const migration = read("supabase/migrations/20260922200604_trilha05_admin_governance.sql");
+const bootstrapRpc = read("supabase/migrations/20260923194253_trilha05_bootstrap_rpc_finalize.sql");
 const service = read("server/services/AdminGovernanceService.ts");
 const routes = read("server/routes/adminGovernanceRoutes.ts");
 const middleware = read("server/middleware/adminSession.ts");
@@ -36,7 +37,10 @@ const checks = {
     "finance_ops",
   ].every((code) => migration.includes(code)),
   bootstrapGuard:
-    service.includes("pg_advisory_xact_lock") &&
+    bootstrapRpc.includes("pg_advisory_xact_lock") &&
+    bootstrapRpc.includes("fn_finalize_first_super_admin") &&
+    bootstrapRpc.includes("TO service_role") &&
+    service.includes('"fn_finalize_first_super_admin"') &&
     service.includes("CANONICAL_BOOTSTRAP_EMAIL_SHA256") &&
     service.includes("resolveBootstrapAuthorizedEmailFromSupabase") &&
     service.includes('.from("app_global_config")') &&
@@ -106,8 +110,8 @@ const checks = {
     legacyAuth.includes('authRouter.post("/admin-login"') &&
     legacyAuth.includes('"ADMIN_GOVERNANCE_LOGIN_REQUIRED"') &&
     !account.includes('"/v1/auth/admin-login"'),
-  readinessSchema20:
-    foundation.includes("FOUNDATION_SCHEMA_VERSION = 20"),
+  readinessSchema21:
+    foundation.includes("FOUNDATION_SCHEMA_VERSION = 21"),
   remoteMigrationAlias:
     migrationManifest.includes('"20260923022554": "20260923022000"'),
   adminScreenDiscovery:
@@ -134,6 +138,8 @@ const checks = {
       service.includes("resolveBootstrapAuthorizedEmailFromSupabase") &&
       service.includes("persistido no Supabase; a política do banco prevalecerá") &&
       service.includes("CANONICAL_BOOTSTRAP_EMAIL_SHA256") &&
+      service.includes('"fn_finalize_first_super_admin"') &&
+      bootstrapRpc.includes("GRANT EXECUTE ON FUNCTION public.fn_finalize_first_super_admin") &&
       bootstrapPage.includes('status:"open" as const') &&
       routes.includes("BOOTSTRAP_EMAIL_NOT_AUTHORIZED") &&
       apiClient.includes('hostname.endsWith(".vercel.app")') &&
