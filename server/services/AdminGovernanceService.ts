@@ -160,7 +160,10 @@ export class AdminGovernanceService {
       process.env.BOOTSTRAP_ADMIN_EMAIL,
     );
     if (!authorizedEmail) return { status: "disabled" };
-    if (input.email !== authorizedEmail) return { status: "email_not_authorized" };
+
+    const bootstrapEmail = normalizeBootstrapAdminEmail(input.email);
+    if (bootstrapEmail !== authorizedEmail)
+      return { status: "email_not_authorized" };
 
     const client = await dbPool.connect();
     let authUserId: string | null = null;
@@ -180,7 +183,7 @@ export class AdminGovernanceService {
       const duplicate = await client.query(
         `SELECT 1 FROM public.app_people
          WHERE email_normalized=$1 OR cpf_normalized=$2 LIMIT 1`,
-        [input.email, input.cpf],
+        [bootstrapEmail, input.cpf],
       );
       if (duplicate.rowCount) {
         await client.query("ROLLBACK");
@@ -188,7 +191,7 @@ export class AdminGovernanceService {
       }
 
       const created = await supabaseAdmin.auth.admin.createUser({
-        email: input.email,
+        email: bootstrapEmail,
         password: input.password,
         email_confirm: true,
         user_metadata: { full_name: input.fullName, hvm_portal: "administrative" },
@@ -210,7 +213,7 @@ export class AdminGovernanceService {
         `INSERT INTO public.app_people
           (user_id,full_name,cpf_normalized,email_normalized,phone_e164,email_verified_at)
          VALUES ($1,$2,$3,$4,$5,clock_timestamp())`,
-        [authUserId, input.fullName, input.cpf, input.email, input.phone],
+        [authUserId, input.fullName, input.cpf, bootstrapEmail, input.phone],
       );
       await client.query(
         `INSERT INTO public.app_user_role_assignments(user_id,role_code,granted_by)
