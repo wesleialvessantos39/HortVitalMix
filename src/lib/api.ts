@@ -32,13 +32,62 @@ async function parseResponse(response: Response) {
   }
 }
 
-function apiBase() {
-  if (typeof location === "undefined") return "/api";
+function apiBases() {
+  if (typeof location === "undefined") return ["/api"];
 
-  // Em qualquer execução Vite de desenvolvimento (incluindo Google AI Studio),
-  // /api pode pertencer ao proxy da plataforma. O prefixo interno é servido
-  // pelo mesmo processo Vite/Express e evita o HTTP 403 da camada do Studio.
-  return import.meta.env.DEV ? "/_hvm_api" : "/api";
+  const hostname = location.hostname.toLowerCase();
+  const vercelOrCanonical =
+    hostname === "hortvitalmix.vercel.app" ||
+    hostname.endsWith(".vercel.app") ||
+    hostname === "hortivitalmix.com.br";
+
+  // Google AI Studio pode executar bundle de produção mesmo no preview.
+  // Por isso não usamos import.meta.env.DEV para decidir o transporte.
+  return vercelOrCanonical ? ["/api"] : ["/_hvm_api", "/api"];
+}
+
+async function shouldTryAlternateBase(response: Response) {
+  if (response.status === 404 || response.status === 405) return true;
+  if (response.status !== 403) return false;
+
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) return true;
+
+  const body = await response
+    .clone()
+    .json()
+    .catch(() => ({} as { error?: string; status?: string }));
+  const code = String(body.error ?? body.status ?? "");
+  return ![
+    "email_not_authorized",
+    "BOOTSTRAP_EMAIL_NOT_AUTHORIZED",
+    "ORIGIN_REJECTED",
+    "ORIGIN_NOT_ALLOWED",
+    "already_closed",
+    "disabled",
+  ].includes(code);
+}
+
+async function fetchApiPath(
+  path: string,
+  options: RequestInit,
+  credentials: RequestCredentials,
+) {
+  const bases = apiBases();
+  let lastResponse: Response | null = null;
+
+  for (let index = 0; index < bases.length; index++) {
+    const response = await doFetch(bases[index] + path, options, credentials);
+    lastResponse = response;
+    if (
+      index < bases.length - 1 &&
+      (await shouldTryAlternateBase(response))
+    )
+      continue;
+    return { response, base: bases[index] };
+  }
+
+  return { response: lastResponse!, base: bases[bases.length - 1] };
 }
 
 async function doFetch(
@@ -68,8 +117,9 @@ export async function api<T>(
   options: RequestInit = {},
   retried = false,
 ): Promise<T> {
-  const base = apiBase();
-  let response = await doFetch(base + path, options, "same-origin");
+  const first = await fetchApiPath(path, options, "same-origin");
+  let response = first.response;
+  const base = first.base;
 
   if (response.status === 401 && !retried && path === "/v1/auth/session") {
     const sessionFailure = await response
