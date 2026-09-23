@@ -5,6 +5,7 @@ import { reportFailure } from "./config/reportFailure.ts";
 import { sessionMiddleware } from "./middleware/session.ts";
 import { isAllowedRequestOrigin } from "./security/origin.ts";
 import { adminConfigRouter } from "./routes/adminConfigRoutes.ts";
+import { adminGovernanceRouter } from "./routes/adminGovernanceRoutes.ts";
 import { clientIpHashMiddleware, requestIdMiddleware } from "./middleware/contextEnrichers.ts";
 export const app = express();
 app.disable("x-powered-by");
@@ -25,7 +26,7 @@ app.use((req, res, next) => {
     res.set({
       "Access-Control-Allow-Origin": origin,
       "Access-Control-Allow-Credentials": "true",
-      "Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
+      "Access-Control-Allow-Methods": "GET,HEAD,POST,PATCH,OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, X-Requested-With",
       Vary: "Origin",
     });
@@ -59,6 +60,8 @@ app.use(foundationRouter);
 app.use("/api", foundationRouter);
 app.use("/v1/auth", authRouter);
 app.use("/api/v1/auth", authRouter);
+app.use("/v1/admin", adminGovernanceRouter);
+app.use("/api/v1/admin", adminGovernanceRouter);
 app.use("/v1/admin", adminConfigRouter);
 app.use("/api/v1/admin", adminConfigRouter);
 app.use((_req, res) => {

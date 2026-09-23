@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from "express";
-import { adminSessionMiddleware } from "../middleware/adminSession.ts";
+import { adminSessionMiddleware, requireSuperAdmin } from "../middleware/adminSession.ts";
 import { originProtection } from "../security/originProtection.ts";
 import { ConfigurationService } from "../services/ConfigurationService.ts";
 import {
@@ -14,6 +14,7 @@ export const adminConfigRouter = Router();
 adminConfigRouter.get(
   "/configuration",
   adminSessionMiddleware,
+  requireSuperAdmin,
   async (req: Request, res: Response) => {
     try {
       const config = await ConfigurationService.getAdminConfig();
@@ -48,6 +49,7 @@ adminConfigRouter.patch(
   "/configuration",
   originProtection,
   adminSessionMiddleware,
+  requireSuperAdmin,
   async (req: Request, res: Response) => {
     const parsed = UpdateGlobalConfigSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -74,7 +76,11 @@ adminConfigRouter.patch(
     try {
       const result = await ConfigurationService.updateConfig(
         parsed.data,
-        req.adminActor,
+        {
+          userId: req.adminActor.userId,
+          role: "platform_super_admin",
+          sessionIssuedAt: req.adminActor.sessionIssuedAt,
+        },
         req.requestId,
         req.clientIpHash,
       );

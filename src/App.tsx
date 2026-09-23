@@ -25,7 +25,7 @@ import {
 } from "../shared/contracts/foundation";
 import { api } from "./lib/api";
 import { Account } from "./components/Account";
-import { AdminConfiguracaoPage } from "./pages/admin/config/AdminConfiguracaoPage";
+import { AdminRouter } from "./pages/admin/AdminRouter";
 import { ChoosePortalPage } from "./pages/auth/ChoosePortalPage";
 import { ContactConfirmationPage } from "./pages/auth/ContactConfirmationPage";
 import { RecoverPasswordPage } from "./pages/auth/RecoverPasswordPage";
@@ -86,6 +86,7 @@ export default function App() {
     refresh: refreshSession,
   } = useSession();
   const display = config ?? fallback;
+  const isAdminRoute = path.startsWith("/admin/") || path === "/entrar/administrador" || path === "/entrar/super-administrador";
   const accountTarget = shellSession ? "/minha-conta" : "/conta";
   const publicPortalSession =
     Boolean(shellSession) &&
@@ -263,9 +264,9 @@ export default function App() {
         </div>
         {search}
       </header>
-      <main id="conteudo" className="layout">
-        {path === "/admin/configuracao" ? (
-          <AdminConfiguracaoPage onNavigate={go} />
+      <main id="conteudo" className={isAdminRoute ? "layout admin-route-layout" : "layout"}>
+        {isAdminRoute ? (
+          <AdminRouter path={path} onNavigate={go} onSessionRefresh={refreshSession} />
         ) : path === "/confirmar-contato" || path === "/confirmarcontato" ? (
           <ContactConfirmationPage
             session={shellSession}

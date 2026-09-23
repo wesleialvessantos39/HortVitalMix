@@ -113,6 +113,7 @@ export function buildRuntime(env: NodeJS.ProcessEnv) {
     supabaseUrl: env.SUPABASE_URL ?? "",
     anonKey: env.SUPABASE_ANON_KEY ?? "",
     serviceKey: env.SUPABASE_SERVICE_ROLE_KEY ?? "",
+    bootstrapAdminEmail: env.BOOTSTRAP_ADMIN_EMAIL?.trim().toLowerCase() ?? "",
     projectRef: env.SUPABASE_PROJECT_REF ?? "",
     ipPepper: env.APP_IP_PEPPER ?? "",
     commitSha: env.VERCEL_GIT_COMMIT_SHA ?? "",
