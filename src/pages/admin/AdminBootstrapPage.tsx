@@ -30,9 +30,12 @@ export function AdminBootstrapPage({onNavigate}:Props){
    setReason(result.reason);
    return result;
   }catch{
+   // A consulta de status é apenas descoberta de UI. A barreira real está no
+   // POST transacional do bootstrap; portanto uma falha de transporte não deve
+   // esconder o formulário do primeiro acesso.
    const result={
-    status:"disabled" as const,
-    reason:"Não foi possível consultar o bootstrap neste ambiente.",
+    status:"open" as const,
+    reason:null,
     authorizedEmailHint:null as string|null,
    };
    setStatus(result.status);
@@ -91,7 +94,7 @@ export function AdminBootstrapPage({onNavigate}:Props){
      setMessage("A origem da requisição não foi autorizada pelo servidor. Recarregue a página e tente novamente.");
      return;
     }
-    if(failure.message==="email_not_authorized"){
+    if(failure.message==="email_not_authorized"||failure.message==="BOOTSTRAP_EMAIL_NOT_AUTHORIZED"){
      setFieldErrors({email:"Use exatamente o e-mail autorizado para o primeiro Super administrador."});
      setMessage("O e-mail informado não foi reconhecido como o e-mail autorizado deste ambiente.");
      return;
@@ -105,11 +108,21 @@ export function AdminBootstrapPage({onNavigate}:Props){
      setMessage("O servidor recusou a configuração inicial por uma condição de governança. Atualize a página e tente novamente.");
     }
    }else if(failure.status===409){
-    setMessage("Já existe uma identidade usando este e-mail ou CPF. Use dados ainda não vinculados.");
+    if(failure.message==="BOOTSTRAP_ALREADY_CLOSED"){
+     setStatus("closed");
+     setReason("Já existe Super administrador ativo.");
+     setMessage("A configuração inicial já foi concluída.");
+    }else{
+     setMessage("Já existe uma identidade usando este e-mail ou CPF. Use dados ainda não vinculados.");
+    }
    }else if(failure.status===422){
     setMessage("Revise os campos destacados antes de continuar.");
    }else if(failure.status===503){
-    setMessage("O backend não conseguiu acessar uma dependência obrigatória. Verifique Supabase, banco e secrets deste ambiente.");
+    setMessage(
+     failure.message==="BOOTSTRAP_DISABLED"
+      ? "A política de bootstrap não está disponível no Supabase."
+      : "O backend não conseguiu acessar uma dependência obrigatória. Tente novamente em alguns segundos."
+    );
    }else{
     setMessage("Não foi possível concluir a configuração inicial. Tente novamente após atualizar o ambiente.");
    }
