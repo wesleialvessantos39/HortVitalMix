@@ -6,6 +6,8 @@ describe("Trilha 05 — bootstrap administrativo",()=>{
  const migration=readFileSync("supabase/migrations/20260922200604_trilha05_admin_governance.sql","utf8");
  const bootstrapRpc=readFileSync("supabase/migrations/20260923194253_trilha05_bootstrap_rpc_finalize.sql","utf8");
  const page=readFileSync("src/pages/admin/AdminBootstrapPage.tsx","utf8");
+ const transport=readFileSync("src/lib/adminBootstrapTransport.ts","utf8");
+ const edge=readFileSync("supabase/functions/admin-bootstrap/index.ts","utf8");
  it("fecha por existência de Super Admin e usa lock transacional no Supabase",()=>{
   expect(service).toContain('rpc(');
   expect(service).toContain('"fn_finalize_first_super_admin"');
@@ -25,6 +27,16 @@ describe("Trilha 05 — bootstrap administrativo",()=>{
   expect(bootstrapRpc).toContain("GRANT EXECUTE ON FUNCTION public.fn_finalize_first_super_admin");
   expect(bootstrapRpc).toContain("TO service_role");
   expect(migration).not.toContain("BOOTSTRAP_ADMIN_EMAIL");
+ });
+ it("usa Edge Function como fallback real de transporte",()=>{
+  expect(transport).toContain("/functions/v1/admin-bootstrap");
+  expect(transport).toContain("getBootstrapStatus");
+  expect(transport).toContain("runBootstrap");
+  expect(page).toContain("getBootstrapStatus");
+  expect(page).toContain("runBootstrap");
+  expect(edge).toContain("fn_finalize_first_super_admin");
+  expect(edge).toContain("BOOTSTRAP_EMAIL_NOT_AUTHORIZED");
+  expect(edge).toContain("CANONICAL_EMAIL_SHA256");
  });
  it("reutiliza os componentes canônicos de CPF e celular",()=>{
   expect(page).toContain("<CPFInput");

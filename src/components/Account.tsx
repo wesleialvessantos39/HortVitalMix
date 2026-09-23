@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { ChevronRight, Crown, Plus, ShieldCheck, ShoppingBag, Sprout } from "lucide-react";
 import { api } from "../lib/api";
+import { getBootstrapStatus } from "../lib/adminBootstrapTransport";
 import { CPFInput } from "./forms/CPFInput";
 import { PhoneInput } from "./forms/PhoneInput";
 import { PasswordStrengthMeter } from "./forms/PasswordStrengthMeter";
@@ -261,14 +262,14 @@ export function Account({
     let cancelled = false;
     setAdminBootstrapStatus("loading");
 
-    api<{ status: "open" | "closed" | "disabled"; reason: string | null }>(
-      "/v1/admin/bootstrap/status",
-    )
+    getBootstrapStatus()
       .then((result) => {
         if (!cancelled) setAdminBootstrapStatus(result.status);
       })
       .catch(() => {
-        if (!cancelled) setAdminBootstrapStatus("disabled");
+        // Se ambos os transportes falharem, mantemos a descoberta visível.
+        // A autorização real continua protegida no POST server-side/Edge.
+        if (!cancelled) setAdminBootstrapStatus("open");
       });
 
     return () => {

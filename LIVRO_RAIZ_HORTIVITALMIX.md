@@ -2136,3 +2136,71 @@ A correção mantém compatibilidade com `trg_hortivital_auth_user_created`. O b
 - convites administrativos permanecem inalterados;
 - nenhum Super administrador foi criado manualmente;
 - a identidade real continua sendo criada somente pelo fluxo autenticado de bootstrap.
+
+
+---
+
+## 2026-09-23 — FALLBACK CANÔNICO DO BOOTSTRAP VIA SUPABASE EDGE
+
+**Motivo:** a rota de bootstrap continuou apresentando dois sintomas diferentes conforme o ambiente: na Vercel, a consulta de status podia falhar antes de exibir o formulário; no Google Studio, o POST podia ser recusado por uma camada intermediária antes de chegar ao backend Express. Como ambos os ambientes consomem o mesmo repositório, foi criado um transporte de contingência canônico no próprio Supabase, sem remover o backend existente.
+
+### Diagnóstico técnico consolidado
+
+- o Supabase canônico mantém `app_global_config.support_email` com o endereço administrativo correto;
+- existem 0 Super administradores ativos;
+- a migration `20260923194253_trilha05_bootstrap_rpc_finalize.sql` está aplicada em produção;
+- a função `fn_finalize_first_super_admin` continua sendo a barreira transacional final, com advisory lock e execução exclusiva por `service_role`;
+- o frontend Vercel podia falhar na leitura de `/api/v1/admin/bootstrap/status`;
+- o Google Studio podia receber HTTP 403 de transporte/proxy que não representava `email_not_authorized`.
+
+### Correção implementada
+
+Foi criada e implantada no projeto Supabase canônico a Edge Function:
+
+`admin-bootstrap`
+
+A função está versionada também em:
+
+`supabase/functions/admin-bootstrap/index.ts`
+
+Ela:
+
+- lê a política real em `app_global_config`;
+- valida o digest canônico do e-mail;
+- verifica se já existe Super administrador ativo;
+- valida nome, CPF, celular, senha e commandId no servidor;
+- cria a identidade pelo Supabase Admin;
+- finaliza a operação exclusivamente via `fn_finalize_first_super_admin`;
+- executa limpeza compensatória se a finalização falhar;
+- nunca expõe `SUPABASE_SERVICE_ROLE_KEY` ao frontend.
+
+### Transporte do frontend
+
+Foi criado:
+
+`src/lib/adminBootstrapTransport.ts`
+
+Fluxo:
+
+1. tenta primeiro o backend same-origin existente;
+2. se houver falha de transporte, 404/405, 5xx ou 403 não pertencente à governança real, usa a Edge Function do Supabase;
+3. erros reais de negócio, como e-mail não autorizado ou bootstrap já fechado, continuam sendo respeitados e não sofrem bypass.
+
+A tela `/admin/bootstrap` e o seletor `/administracao` passaram a usar esse transporte resiliente.
+
+### Efeito esperado
+
+- a Vercel deixa de depender exclusivamente da função serverless local para descobrir se o bootstrap está aberto;
+- o Google Studio deixa de depender exclusivamente do proxy local `/_hvm_api` para concluir a criação;
+- ambos os ambientes convergem para o mesmo backend transacional no Supabase quando o transporte primário falhar.
+
+### Preservação de segurança
+
+- nenhum e-mail alternativo foi liberado;
+- nenhum Super administrador foi criado manualmente;
+- MFA continua obrigatório após o primeiro login;
+- advisory lock permanece;
+- bootstrap continua fechando quando surgir o primeiro Super administrador ativo;
+- nenhuma RLS foi relaxada;
+- nenhuma tabela existente foi removida;
+- o backend Express permanece como caminho primário.
