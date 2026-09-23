@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { KeyRound, Leaf, ShieldCheck } from "lucide-react";
 import { api, type ApiFailure } from "../../lib/api";
 import { OtpInput } from "../../components/forms/OtpInput";
@@ -21,6 +21,16 @@ export function AdminLoginPage({ onNavigate, onSessionRefresh }: Props) {
   const [otp, setOtp] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [showHelp, setShowHelp] = useState(false);
+
+  useEffect(() => {
+    if (!showHelp) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setShowHelp(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showHelp]);
 
   async function submitLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -99,7 +109,12 @@ export function AdminLoginPage({ onNavigate, onSessionRefresh }: Props) {
             <form onSubmit={submitLogin}>
               <div className="admin-login-icon"><KeyRound /></div>
               <h2>Entrar na administração</h2>
-              <p className="admin-muted">Use as credenciais do seu perfil administrativo.</p>
+              <p className="admin-muted">
+                Use as credenciais do seu perfil administrativo.{" "}
+                <button type="button" className="admin-login-help-link" onClick={() => setShowHelp(true)}>
+                  Saiba mais
+                </button>
+              </p>
               {error && <div className="admin-alert admin-alert--error">{error}</div>}
               <label>E-mail
                 <input type="email" autoComplete="username" value={email} onChange={(e)=>setEmail(e.target.value)} required />
@@ -131,6 +146,26 @@ export function AdminLoginPage({ onNavigate, onSessionRefresh }: Props) {
           )}
         </div>
       </div>
+      {showHelp && (
+        <div className="admin-help-backdrop" onClick={() => setShowHelp(false)}>
+          <div
+            className="admin-help-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-help-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="admin-help-title">Como obter acesso administrativo</h2>
+            <ol>
+              <li><strong>Primeiro Super administrador:</strong> nasce uma única vez pelo bootstrap protegido e por e-mail autorizado somente no servidor.</li>
+              <li><strong>Demais administradores:</strong> entram apenas por convite emitido por um Super administrador.</li>
+              <li><strong>Administrador setorial:</strong> opera somente nos setores atribuídos ao convite.</li>
+              <li><strong>Super administrador:</strong> confirma obrigatoriamente cada acesso com MFA por e-mail via Supabase Auth.</li>
+            </ol>
+            <button type="button" className="admin-primary" onClick={() => setShowHelp(false)}>Fechar</button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
