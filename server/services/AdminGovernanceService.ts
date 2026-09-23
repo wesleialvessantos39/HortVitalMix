@@ -1,4 +1,4 @@
-import { createHash, randomBytes, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
 import { createSupabasePublicClient, supabaseAdmin } from "../supabase/client.ts";
@@ -24,6 +24,12 @@ const RATE_WINDOW_MINUTES = 15;
 const RATE_MAX_FAILURES = 10;
 const ZERO_HASH = "0".repeat(64);
 const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
+
+// Política canônica do bootstrap: o e-mail autorizado é representado somente
+// por seu SHA-256 no código server-side. Isso elimina divergências entre
+// Google Studio e Vercel sem expor o endereço em texto puro no repositório.
+const CANONICAL_BOOTSTRAP_EMAIL_SHA256 =
+  "e5529eeb9b99fcafc370d6fb5855ade0082855cbfee746a7a85aa9a09f29d699";
 const maskEmail = (email: string) => {
   const [name, domain = ""] = email.split("@");
   const start = name.slice(0, Math.min(2, name.length));
@@ -56,6 +62,22 @@ const normalizeBootstrapAdminEmail = (value: string | undefined) => {
     .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "")
     .trim()
     .toLowerCase();
+};
+
+const isCanonicalBootstrapAdminEmail = (value: string | undefined) => {
+  const normalized = normalizeBootstrapAdminEmail(value);
+  if (!normalized) return false;
+  const actual = Buffer.from(sha256(normalized), "hex");
+  const expected = Buffer.from(CANONICAL_BOOTSTRAP_EMAIL_SHA256, "hex");
+  return actual.length === expected.length && timingSafeEqual(actual, expected);
+};
+
+const bootstrapEnvironmentMatchesCanonicalPolicy = () => {
+  const configured = normalizeBootstrapAdminEmail(
+    process.env.BOOTSTRAP_ADMIN_EMAIL,
+  );
+  if (!configured) return null;
+  return isCanonicalBootstrapAdminEmail(configured);
 };
 
 async function audit(
@@ -121,21 +143,27 @@ async function sectorsFor(userId: string): Promise<AdminSectorCode[]> {
 
 export class AdminGovernanceService {
   static async getBootstrapStatus(): Promise<BootstrapStatusResponse> {
-    const authorizedEmail = normalizeBootstrapAdminEmail(
-      process.env.BOOTSTRAP_ADMIN_EMAIL,
-    );
-    if (!authorizedEmail)
-      return {
-        status: "disabled",
-        reason: "BOOTSTRAP_ADMIN_EMAIL não configurado.",
-        authorizedEmailHint: null,
-      };
     if (!dbPool)
       return {
         status: "disabled",
         reason: "Banco de dados indisponível.",
-        authorizedEmailHint: maskEmail(authorizedEmail),
+        authorizedEmailHint: null,
       };
+    if (!supabaseAdmin)
+      return {
+        status: "disabled",
+        reason: "Supabase Admin indisponível.",
+        authorizedEmailHint: null,
+      };
+
+    const envMatches = bootstrapEnvironmentMatchesCanonicalPolicy();
+    if (envMatches === false) {
+      console.warn(
+        "[BOOTSTRAP] BOOTSTRAP_ADMIN_EMAIL diverge da política canônica; " +
+          "o valor do ambiente será ignorado para autorização.",
+      );
+    }
+
     const result = await dbPool.query(
       `SELECT 1 FROM public.app_user_role_assignments r
        JOIN public.app_users u ON u.id=r.user_id
@@ -146,12 +174,12 @@ export class AdminGovernanceService {
       ? {
           status: "closed",
           reason: "Já existe Super administrador ativo.",
-          authorizedEmailHint: maskEmail(authorizedEmail),
+          authorizedEmailHint: null,
         }
       : {
           status: "open",
           reason: null,
-          authorizedEmailHint: maskEmail(authorizedEmail),
+          authorizedEmailHint: null,
         };
   }
 
@@ -161,14 +189,18 @@ export class AdminGovernanceService {
     ipHash: string,
   ): Promise<BootstrapResult> {
     if (!dbPool || !supabaseAdmin) return { status: "unavailable" };
-    const authorizedEmail = normalizeBootstrapAdminEmail(
-      process.env.BOOTSTRAP_ADMIN_EMAIL,
-    );
-    if (!authorizedEmail) return { status: "disabled" };
 
     const bootstrapEmail = normalizeBootstrapAdminEmail(input.email);
-    if (bootstrapEmail !== authorizedEmail)
+    if (!isCanonicalBootstrapAdminEmail(bootstrapEmail))
       return { status: "email_not_authorized" };
+
+    const envMatches = bootstrapEnvironmentMatchesCanonicalPolicy();
+    if (envMatches === false) {
+      console.warn(
+        "[BOOTSTRAP] BOOTSTRAP_ADMIN_EMAIL diverge da política canônica; " +
+          "prosseguindo somente porque o e-mail informado corresponde ao digest canônico.",
+      );
+    }
 
     const client = await dbPool.connect();
     let authUserId: string | null = null;
