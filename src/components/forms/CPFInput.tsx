@@ -17,7 +17,7 @@ export function CPFInput({ error, value, onChange }: CPFInputProps) {
     {...(controlled ? { value } : {})}
     onInput={(event) => {
       const formatted = formatCpf(event.currentTarget.value);
-      if (controlled) onChange(formatted);
+      if (controlled) onChange?.(formatted);
       else event.currentTarget.value = formatted;
     }}
     aria-invalid={Boolean(error)}
