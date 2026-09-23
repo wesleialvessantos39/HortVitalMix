@@ -396,12 +396,15 @@ export function Account({
           navigate("/entrar");
           return;
         }
-        const loginEndpoint =
-          portalRole === "platform_admin" || portalRole === "platform_super_admin"
-            ? "/v1/auth/admin-login"
-            : "/v1/auth/login";
+        if (
+          portalRole === "platform_admin" ||
+          portalRole === "platform_super_admin"
+        ) {
+          navigate("/admin/entrar");
+          return;
+        }
         const authenticated = await api<ShellSession & { status: "authenticated" }>(
-          loginEndpoint,
+          "/v1/auth/login",
           {
             method: "POST",
             body: JSON.stringify({ ...form, portalRole }),
