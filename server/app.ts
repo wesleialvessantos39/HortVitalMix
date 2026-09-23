@@ -26,7 +26,7 @@ app.use((req, res, next) => {
     res.set({
       "Access-Control-Allow-Origin": origin,
       "Access-Control-Allow-Credentials": "true",
-      "Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
+      "Access-Control-Allow-Methods": "GET,HEAD,POST,PATCH,OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, X-Requested-With",
       Vary: "Origin",
     });
