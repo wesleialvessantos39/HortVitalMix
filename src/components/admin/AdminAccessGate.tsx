@@ -1,11 +1,11 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { api } from "../../lib/api";
-import type { AdminVerifySessionResponse } from "../../../shared/contracts/adminGovernance";
+import type { AdminSectorCode, AdminVerifySessionResponse } from "../../../shared/contracts/adminGovernance";
 
 type Props = {
   onNavigate: (to: string) => void;
   requiredRole?: "platform_admin" | "platform_super_admin";
-  requiredSector?: string;
+  requiredSector?: AdminSectorCode;
   children: (access: AdminVerifySessionResponse) => ReactNode;
 };
 
