@@ -71,17 +71,29 @@ adminGovernanceRouter.post(
       req.requestId,
       req.clientIpHash,
     );
-    const code =
-      result.status === "completed"
-        ? 201
-        : result.status === "identity_conflict"
-          ? 409
-          : result.status === "validation_failed"
-            ? 422
-            : result.status === "unavailable"
-              ? 503
-              : 403;
-    res.status(code).json(result);
+    if (result.status === "completed") {
+      res.status(201).json(result);
+      return;
+    }
+
+    const mapped =
+      result.status === "email_not_authorized"
+        ? { code: 403, error: "BOOTSTRAP_EMAIL_NOT_AUTHORIZED" }
+        : result.status === "already_closed"
+          ? { code: 409, error: "BOOTSTRAP_ALREADY_CLOSED" }
+          : result.status === "identity_conflict"
+            ? { code: 409, error: "BOOTSTRAP_IDENTITY_CONFLICT" }
+            : result.status === "validation_failed"
+              ? { code: 422, error: "BOOTSTRAP_VALIDATION_FAILED" }
+              : result.status === "disabled"
+                ? { code: 503, error: "BOOTSTRAP_DISABLED" }
+                : { code: 503, error: "BOOTSTRAP_UNAVAILABLE" };
+
+    res.status(mapped.code).json({
+      ...result,
+      error: mapped.error,
+      requestId: req.requestId,
+    });
   },
 );
 

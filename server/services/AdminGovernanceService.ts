@@ -1,7 +1,7 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
-import { createSupabasePublicClient, supabaseAdmin } from "../supabase/client.ts";
+import { createSupabasePublicClient, supabaseAdmin, supabasePublic } from "../supabase/client.ts";
 import type {
   AcceptInviteInput,
   AcceptInviteResult,
@@ -72,19 +72,28 @@ const isCanonicalBootstrapAdminEmail = (value: string | undefined) => {
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 };
 
-async function resolveBootstrapAuthorizedEmailFromDatabase() {
-  if (!dbPool) return null;
-  const result = await dbPool.query<{ support_email: string | null }>(
-    `SELECT support_email
-       FROM public.app_global_config
-      WHERE singleton_guard=true
-      LIMIT 1`,
-  );
+async function resolveBootstrapAuthorizedEmailFromSupabase() {
+  const client = supabaseAdmin ?? supabasePublic;
+  if (!client) return { email: null as string | null, unavailable: true };
+
+  const { data, error } = await client
+    .from("app_global_config")
+    .select("support_email")
+    .eq("singleton_guard", true)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[BOOTSTRAP] Falha ao ler app_global_config via Data API", {
+      code: error.code,
+    });
+    return { email: null as string | null, unavailable: true };
+  }
+
   const databaseEmail = normalizeBootstrapAdminEmail(
-    result.rows[0]?.support_email ?? undefined,
+    data?.support_email ?? undefined,
   );
   if (!databaseEmail || !isCanonicalBootstrapAdminEmail(databaseEmail))
-    return null;
+    return { email: null as string | null, unavailable: false };
 
   const configured = normalizeBootstrapAdminEmail(
     process.env.BOOTSTRAP_ADMIN_EMAIL,
@@ -96,7 +105,46 @@ async function resolveBootstrapAuthorizedEmailFromDatabase() {
     );
   }
 
-  return databaseEmail;
+  return { email: databaseEmail, unavailable: false };
+}
+
+async function activeSuperAdminViaDataApi() {
+  if (!supabaseAdmin)
+    return { active: false, unavailable: true };
+
+  const { data: roles, error: rolesError } = await supabaseAdmin
+    .from("app_user_role_assignments")
+    .select("user_id,expires_at")
+    .eq("role_code", "platform_super_admin")
+    .is("revoked_at", null)
+    .limit(50);
+
+  if (rolesError)
+    return { active: false, unavailable: true };
+
+  const now = Date.now();
+  const userIds = (roles ?? [])
+    .filter((row) => {
+      if (!row.expires_at) return true;
+      const expires = new Date(row.expires_at).getTime();
+      return Number.isFinite(expires) && expires > now;
+    })
+    .map((row) => row.user_id);
+
+  if (!userIds.length)
+    return { active: false, unavailable: false };
+
+  const { data: users, error: usersError } = await supabaseAdmin
+    .from("app_users")
+    .select("id")
+    .in("id", userIds)
+    .eq("status", "active")
+    .limit(1);
+
+  if (usersError)
+    return { active: false, unavailable: true };
+
+  return { active: Boolean(users?.length), unavailable: false };
 }
 
 async function audit(
@@ -162,38 +210,68 @@ async function sectorsFor(userId: string): Promise<AdminSectorCode[]> {
 
 export class AdminGovernanceService {
   static async getBootstrapStatus(): Promise<BootstrapStatusResponse> {
-    if (!dbPool)
+    const policy = await resolveBootstrapAuthorizedEmailFromSupabase();
+    if (policy.unavailable)
       return {
         status: "disabled",
-        reason: "Banco de dados indisponível.",
+        reason: "Não foi possível consultar a política de bootstrap no Supabase.",
         authorizedEmailHint: null,
       };
-
-    const authorizedEmail = await resolveBootstrapAuthorizedEmailFromDatabase();
-    if (!authorizedEmail)
+    if (!policy.email)
       return {
         status: "disabled",
         reason: "Política do primeiro Super administrador não encontrada no Supabase.",
         authorizedEmailHint: null,
       };
 
-    const result = await dbPool.query(
-      `SELECT 1 FROM public.app_user_role_assignments r
-       JOIN public.app_users u ON u.id=r.user_id
-       WHERE r.role_code='platform_super_admin' AND r.revoked_at IS NULL
-       AND (r.expires_at IS NULL OR r.expires_at>now()) AND u.status='active' LIMIT 1`,
-    );
-    return result.rowCount
-      ? {
-          status: "closed",
-          reason: "Já existe Super administrador ativo.",
-          authorizedEmailHint: null,
-        }
-      : {
-          status: "open",
-          reason: null,
-          authorizedEmailHint: null,
-        };
+    const dataApiStatus = await activeSuperAdminViaDataApi();
+    if (!dataApiStatus.unavailable)
+      return dataApiStatus.active
+        ? {
+            status: "closed",
+            reason: "Já existe Super administrador ativo.",
+            authorizedEmailHint: null,
+          }
+        : {
+            status: "open",
+            reason: null,
+            authorizedEmailHint: null,
+          };
+
+    if (!dbPool)
+      return {
+        status: "open",
+        reason: null,
+        authorizedEmailHint: null,
+      };
+
+    try {
+      const result = await dbPool.query(
+        `SELECT 1 FROM public.app_user_role_assignments r
+         JOIN public.app_users u ON u.id=r.user_id
+         WHERE r.role_code='platform_super_admin' AND r.revoked_at IS NULL
+         AND (r.expires_at IS NULL OR r.expires_at>now()) AND u.status='active' LIMIT 1`,
+      );
+      return result.rowCount
+        ? {
+            status: "closed",
+            reason: "Já existe Super administrador ativo.",
+            authorizedEmailHint: null,
+          }
+        : {
+            status: "open",
+            reason: null,
+            authorizedEmailHint: null,
+          };
+    } catch {
+      // A tela de bootstrap não é a barreira de segurança. Se a consulta de
+      // status falhar, o POST continuará validando lock, identidade e fechamento.
+      return {
+        status: "open",
+        reason: null,
+        authorizedEmailHint: null,
+      };
+    }
   }
 
   static async executeBootstrap(
@@ -203,11 +281,12 @@ export class AdminGovernanceService {
   ): Promise<BootstrapResult> {
     if (!dbPool || !supabaseAdmin) return { status: "unavailable" };
 
-    const authorizedEmail = await resolveBootstrapAuthorizedEmailFromDatabase();
-    if (!authorizedEmail) return { status: "disabled" };
+    const policy = await resolveBootstrapAuthorizedEmailFromSupabase();
+    if (policy.unavailable) return { status: "unavailable" };
+    if (!policy.email) return { status: "disabled" };
 
     const bootstrapEmail = normalizeBootstrapAdminEmail(input.email);
-    if (bootstrapEmail !== authorizedEmail)
+    if (bootstrapEmail !== policy.email)
       return { status: "email_not_authorized" };
 
     const client = await dbPool.connect();
