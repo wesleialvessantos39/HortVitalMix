@@ -1702,3 +1702,47 @@ Isso não significa que essas telas estejam ausentes. Elas permanecem implementa
 ### Regra de não regressão
 
 Não remover, simplificar ou tornar públicas as barreiras da T05 para “mostrar” telas protegidas. Descoberta visual e segurança devem coexistir: rotas públicas podem indicar o caminho, mas conteúdo administrativo continua condicionado a papel, sessão e MFA.
+
+
+---
+
+## 2026-09-23 — CORREÇÃO OPERACIONAL DO BOOTSTRAP DO PRIMEIRO SUPER ADMINISTRADOR
+
+**Motivo:** durante a criação real do primeiro Super administrador, foi identificado que a interface mascarava diferentes falhas do bootstrap com uma única mensagem genérica. Também foi reforçada a separação entre os ambientes Google Studio e Vercel: secrets configurados em um ambiente não são propagados automaticamente para o outro.
+
+### Regra operacional do secret
+
+`BOOTSTRAP_ADMIN_EMAIL` continua sendo server-side e obrigatório somente enquanto ainda não existe Super administrador ativo.
+
+- Google Studio/preview local: o secret precisa existir no ambiente do próprio Studio;
+- Vercel Preview: o secret precisa existir no escopo Preview;
+- Vercel Production: o secret precisa existir no escopo Production;
+- Supabase: não recebe esse secret, pois o bootstrap é executado pelo backend Express/Vercel e cria a identidade via Supabase Admin API;
+- após alterar/adicionar variável na Vercel, é necessário um novo deployment para que o runtime novo receba a configuração.
+
+### Correção aplicada
+
+A tela `/admin/bootstrap` agora diferencia explicitamente:
+
+- bootstrap desabilitado por secret ausente;
+- e-mail diferente do `BOOTSTRAP_ADMIN_EMAIL`;
+- conflito de CPF/e-mail já existente;
+- payload inválido;
+- dependência obrigatória indisponível;
+- bootstrap já fechado.
+
+Foi adicionada também indicação visual quando o bootstrap está realmente liberado no ambiente atual.
+
+### Observabilidade segura
+
+O resumo de boot do runtime passa a registrar somente o booleano `hasBootstrapAdminEmail`, nunca o valor do e-mail. Isso permite verificar presença/ausência da configuração sem expor o secret.
+
+### Segurança preservada
+
+Nenhuma regra foi relaxada:
+
+- o e-mail autorizado continua exclusivamente no servidor;
+- nenhum Super administrador é criado manualmente no banco;
+- o primeiro Super administrador continua sendo criado de forma transacional pelo bootstrap;
+- MFA do Super administrador continua obrigatório;
+- nenhuma migration, RLS ou schema foi alterado.

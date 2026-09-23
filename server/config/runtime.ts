@@ -143,5 +143,6 @@ export function logRuntimeBootSummary(
     supabaseHost,
     hasServiceRole: Boolean(current.serviceKey),
     hasIpPepper: Boolean(current.ipPepper),
+    hasBootstrapAdminEmail: Boolean(current.bootstrapAdminEmail),
   });
 }
