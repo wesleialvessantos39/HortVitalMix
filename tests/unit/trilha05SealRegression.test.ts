@@ -28,22 +28,25 @@ describe("Trilha 05 — regressões de selagem v11", () => {
       version: migration.version,
       name: migration.name,
     }));
-    productionRows[productionRows.length - 1] = {
-      ...productionRows[productionRows.length - 1],
+    const hardeningIndex = productionRows.findIndex(
+      (row) => row.name === "trilha05_performance_hardening",
+    );
+    productionRows[hardeningIndex] = {
+      ...productionRows[hardeningIndex],
       version: "20260923022554",
     };
 
-    expect(validateHistory(productionRows)).toBe(20);
+    expect(validateHistory(productionRows)).toBe(21);
 
     const unknownRows = productionRows.map((row) => ({ ...row }));
-    unknownRows[unknownRows.length - 1].version = "20260923999999";
+    unknownRows[hardeningIndex].version = "20260923999999";
     expect(() => validateHistory(unknownRows)).toThrow(
       "REMOTE_MIGRATION_HISTORY_MISMATCH",
     );
   });
 
   it("alinha readiness ao schema lógico efetivo da T05", () => {
-    expect(manifest.schemaVersion).toBe(20);
-    expect(FOUNDATION_SCHEMA_VERSION).toBe(20);
+    expect(manifest.schemaVersion).toBe(21);
+    expect(FOUNDATION_SCHEMA_VERSION).toBe(21);
   });
 });

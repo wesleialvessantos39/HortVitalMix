@@ -279,7 +279,7 @@ export class AdminGovernanceService {
     requestId: string,
     ipHash: string,
   ): Promise<BootstrapResult> {
-    if (!dbPool || !supabaseAdmin) return { status: "unavailable" };
+    if (!supabaseAdmin) return { status: "unavailable" };
 
     const policy = await resolveBootstrapAuthorizedEmailFromSupabase();
     if (policy.unavailable) return { status: "unavailable" };
@@ -289,92 +289,112 @@ export class AdminGovernanceService {
     if (bootstrapEmail !== policy.email)
       return { status: "email_not_authorized" };
 
-    const client = await dbPool.connect();
-    let authUserId: string | null = null;
-    try {
-      await client.query("BEGIN");
-      await client.query("SELECT pg_advisory_xact_lock(hashtext('hortivitalmix_admin_bootstrap'))");
-      const existing = await client.query(
-        `SELECT 1 FROM public.app_user_role_assignments r
-         JOIN public.app_users u ON u.id=r.user_id
-         WHERE r.role_code='platform_super_admin' AND r.revoked_at IS NULL
-           AND (r.expires_at IS NULL OR r.expires_at>now()) AND u.status='active' LIMIT 1`,
-      );
-      if (existing.rowCount) {
-        await client.query("ROLLBACK");
-        return { status: "already_closed" };
-      }
-      const duplicate = await client.query(
-        `SELECT 1 FROM public.app_people
-         WHERE email_normalized=$1 OR cpf_normalized=$2 LIMIT 1`,
-        [bootstrapEmail, input.cpf],
-      );
-      if (duplicate.rowCount) {
-        await client.query("ROLLBACK");
-        return { status: "identity_conflict", message: "E-mail ou CPF já vinculado." };
-      }
+    const status = await activeSuperAdminViaDataApi();
+    if (!status.unavailable && status.active)
+      return { status: "already_closed" };
 
-      const created = await supabaseAdmin.auth.admin.createUser({
-        email: bootstrapEmail,
-        password: input.password,
-        email_confirm: true,
-        user_metadata: { full_name: input.fullName, hvm_portal: "administrative" },
-      });
-      if (created.error || !created.data.user) {
-        await client.query("ROLLBACK");
-        return {
-          status: "identity_conflict",
-          message: created.error?.message ?? "Não foi possível criar a identidade.",
-        };
-      }
-      authUserId = created.data.user.id;
+    const [emailConflict, cpfConflict] = await Promise.all([
+      supabaseAdmin
+        .from("app_people")
+        .select("user_id")
+        .eq("email_normalized", bootstrapEmail)
+        .limit(1),
+      supabaseAdmin
+        .from("app_people")
+        .select("user_id")
+        .eq("cpf_normalized", input.cpf)
+        .limit(1),
+    ]);
 
-      await client.query(
-        `INSERT INTO public.app_users(id,status) VALUES ($1,'active')
-         ON CONFLICT (id) DO UPDATE SET status='active'`,
-        [authUserId],
-      );
-      await client.query(
-        `INSERT INTO public.app_people
-          (user_id,full_name,cpf_normalized,email_normalized,phone_e164,email_verified_at)
-         VALUES ($1,$2,$3,$4,$5,clock_timestamp())
-         ON CONFLICT (user_id) DO UPDATE SET
-           full_name=EXCLUDED.full_name,
-           cpf_normalized=EXCLUDED.cpf_normalized,
-           email_normalized=EXCLUDED.email_normalized,
-           phone_e164=EXCLUDED.phone_e164,
-           email_verified_at=clock_timestamp()`,
-        [authUserId, input.fullName, input.cpf, bootstrapEmail, input.phone],
-      );
-      await client.query(
-        `INSERT INTO public.app_user_role_assignments(user_id,role_code,granted_by)
-         VALUES ($1,'platform_super_admin',$1)
-         ON CONFLICT DO NOTHING`,
-        [authUserId],
-      );
-      await audit(client, {
-        requestId,
-        actorId: authUserId,
-        actorRole: "platform_super_admin",
-        action: "admin.bootstrap.completed",
-        targetEntity: "app_users",
-        targetId: authUserId,
-        after: { role: "platform_super_admin" },
-        commandId: input.commandId,
-        ipHash,
-      });
-      await client.query("COMMIT");
-      return { status: "completed", userId: authUserId };
-    } catch (error) {
-      console.error("[BOOTSTRAP] Execution error:", error);
-      try { await client.query("ROLLBACK"); } catch {}
-      if (authUserId) {
-        try { await supabaseAdmin.auth.admin.deleteUser(authUserId); } catch {}
-      }
+    if (emailConflict.error || cpfConflict.error)
       return { status: "unavailable" };
-    } finally {
-      client.release();
+    if (emailConflict.data?.length || cpfConflict.data?.length)
+      return {
+        status: "identity_conflict",
+        message: "E-mail ou CPF já vinculado.",
+      };
+
+    const created = await supabaseAdmin.auth.admin.createUser({
+      email: bootstrapEmail,
+      password: input.password,
+      email_confirm: true,
+      user_metadata: {
+        full_name: input.fullName,
+        hvm_portal: "administrative",
+      },
+    });
+
+    if (created.error || !created.data.user) {
+      return {
+        status: "identity_conflict",
+        message:
+          created.error?.message ?? "Não foi possível criar a identidade.",
+      };
     }
+
+    const authUserId = created.data.user.id;
+
+    const cleanup = async () => {
+      try {
+        await supabaseAdmin.auth.admin.deleteUser(authUserId);
+      } catch {
+        // Melhor esforço: a função RPC não confirmou o bootstrap.
+      }
+      try {
+        await supabaseAdmin.from("app_users").delete().eq("id", authUserId);
+      } catch {
+        // O trigger de auth pode deixar um espelho suspenso; não bloqueia nova tentativa.
+      }
+    };
+
+    const { data, error } = await supabaseAdmin.rpc(
+      "fn_finalize_first_super_admin",
+      {
+        p_user_id: authUserId,
+        p_full_name: input.fullName,
+        p_cpf_normalized: input.cpf,
+        p_email_normalized: bootstrapEmail,
+        p_phone_e164: input.phone,
+        p_request_id: requestId,
+        p_command_id: input.commandId,
+        p_client_ip_hash: ipHash || ZERO_HASH,
+      },
+    );
+
+    if (error) {
+      console.error("[BOOTSTRAP] RPC finalize failed", { code: error.code });
+      await cleanup();
+      return { status: "unavailable" };
+    }
+
+    const rpcStatus =
+      data && typeof data === "object" && "status" in data
+        ? String((data as { status?: unknown }).status ?? "")
+        : "";
+
+    if (rpcStatus === "completed")
+      return { status: "completed", userId: authUserId };
+
+    await cleanup();
+
+    if (rpcStatus === "already_closed")
+      return { status: "already_closed" };
+    if (rpcStatus === "email_not_authorized")
+      return { status: "email_not_authorized" };
+    if (rpcStatus === "identity_conflict")
+      return {
+        status: "identity_conflict",
+        message: "E-mail ou CPF já vinculado.",
+      };
+    if (rpcStatus === "validation_failed")
+      return {
+        status: "validation_failed",
+        message: "Dados inválidos para o primeiro Super administrador.",
+      };
+    if (rpcStatus === "disabled")
+      return { status: "disabled" };
+
+    return { status: "unavailable" };
   }
 
   private static async rateLimit(email: string, ipHash: string) {

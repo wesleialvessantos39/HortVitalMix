@@ -2077,3 +2077,62 @@ Assim, o frontend não converte falhas de transporte/governança em “e-mail in
 - o formulário poder ser exibido em fallback não autoriza criação;
 - advisory lock, verificação de Super administrador ativo, Supabase Admin, MFA e auditoria permanecem;
 - nenhuma migration, RLS ou schema foi alterado nesta correção.
+
+
+---
+
+## 2026-09-23 — FINALIZAÇÃO DO BOOTSTRAP VIA RPC SUPABASE
+
+**Motivo:** apesar da correção de transporte entre Google Studio e Vercel, o POST do primeiro Super administrador ainda dependia do Transaction Pooler PostgreSQL direto durante toda a finalização. Isso mantinha um ponto de falha diferente entre runtimes cloud, mesmo com a Supabase Data API e o Supabase Auth funcionando normalmente.
+
+### Correção arquitetural
+
+Foi criada e aplicada no Supabase canônico a migration:
+
+`20260923194253_trilha05_bootstrap_rpc_finalize.sql`
+
+Ela cria a função:
+
+`public.fn_finalize_first_super_admin(...)`
+
+A função é:
+
+- `SECURITY DEFINER`;
+- executável somente por `service_role`;
+- sem permissão de execução para `PUBLIC`, `anon` ou `authenticated`;
+- protegida por `pg_advisory_xact_lock(hashtext('hortivitalmix_admin_bootstrap'))`;
+- responsável por finalizar em uma única transação PostgreSQL:
+  - validação do e-mail contra `app_global_config.support_email`;
+  - verificação de ausência de Super administrador ativo;
+  - confirmação de que a identidade realmente existe em `auth.users`;
+  - prevenção de conflito por CPF/e-mail;
+  - ativação/espelho em `app_users`;
+  - criação/atualização de `app_people`;
+  - concessão de `platform_super_admin`;
+  - auditoria `admin.bootstrap.completed`.
+
+### Fluxo backend após a correção
+
+1. backend consulta a política pelo Supabase Data API;
+2. backend verifica conflitos conhecidos;
+3. backend cria a identidade com `supabaseAdmin.auth.admin.createUser`;
+4. o trigger canônico de Auth cria o espelho em `app_users`;
+5. backend chama `fn_finalize_first_super_admin` via `supabaseAdmin.rpc`;
+6. a função finaliza domínio, papel e auditoria dentro do PostgreSQL;
+7. se a RPC não confirmar `completed`, o backend executa limpeza compensatória da identidade Auth criada.
+
+Com isso, o bootstrap deixa de depender do pool PostgreSQL direto no runtime do Google Studio/Vercel para sua finalização crítica.
+
+### Causa histórica preservada
+
+A correção mantém compatibilidade com `trg_hortivital_auth_user_created`. O backend não tenta mais duplicar manualmente a sequência Auth → app_users fora da RPC.
+
+### Schema e governança
+
+- schema lógico avançado de **20 para 21**;
+- migration history atualizada;
+- RLS não foi afrouxada;
+- MFA permanece obrigatório depois do primeiro login;
+- convites administrativos permanecem inalterados;
+- nenhum Super administrador foi criado manualmente;
+- a identidade real continua sendo criada somente pelo fluxo autenticado de bootstrap.
