@@ -20,6 +20,14 @@
     "api/index.ts": {
       "maxDuration": 30,
       "memory": 512
+    },
+    "api/v1/[...path].ts": {
+      "maxDuration": 30,
+      "memory": 512
+    },
+    "api/v1/admin/[...path].ts": {
+      "maxDuration": 30,
+      "memory": 512
     }
   },
   "rewrites": [
@@ -29,6 +37,23 @@
     }
   ],
   "headers": [
+    {
+      "source": "/admin/bootstrap",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0, must-revalidate"
+        },
+        {
+          "key": "Pragma",
+          "value": "no-cache"
+        },
+        {
+          "key": "Expires",
+          "value": "0"
+        }
+      ]
+    },
     {
       "source": "/admin/entrar",
       "headers": [

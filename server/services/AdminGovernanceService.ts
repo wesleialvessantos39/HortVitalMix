@@ -36,16 +36,21 @@ const normalizeBootstrapAdminEmail = (value: string | undefined) => {
     .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "")
     .trim();
 
-  const assignment = /^BOOTSTRAP_ADMIN_EMAIL\s*=\s*(.+)$/i.exec(normalized);
+  const assignment =
+    /^BOOTSTRAP_ADMIN_EMAIL\s*=\s*(.+)$/i.exec(normalized) ||
+    /^BOOTSTRAP_ADMIN_EMAIL\s*:\s*(.+)$/i.exec(normalized);
   if (assignment?.[1]) normalized = assignment[1].trim();
 
   if (
     normalized.length >= 2 &&
     ((normalized.startsWith('"') && normalized.endsWith('"')) ||
-      (normalized.startsWith("'") && normalized.endsWith("'")))
+      (normalized.startsWith("'") && normalized.endsWith("'")) ||
+      (normalized.startsWith("<") && normalized.endsWith(">")))
   ) {
     normalized = normalized.slice(1, -1).trim();
   }
+
+  normalized = normalized.replace(/[;,]+$/, "").trim();
 
   return normalized
     .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "")
@@ -206,18 +211,26 @@ export class AdminGovernanceService {
       authUserId = created.data.user.id;
 
       await client.query(
-        `INSERT INTO public.app_users(id,status) VALUES ($1,'active')`,
+        `INSERT INTO public.app_users(id,status) VALUES ($1,'active')
+         ON CONFLICT (id) DO UPDATE SET status='active'`,
         [authUserId],
       );
       await client.query(
         `INSERT INTO public.app_people
           (user_id,full_name,cpf_normalized,email_normalized,phone_e164,email_verified_at)
-         VALUES ($1,$2,$3,$4,$5,clock_timestamp())`,
+         VALUES ($1,$2,$3,$4,$5,clock_timestamp())
+         ON CONFLICT (user_id) DO UPDATE SET
+           full_name=EXCLUDED.full_name,
+           cpf_normalized=EXCLUDED.cpf_normalized,
+           email_normalized=EXCLUDED.email_normalized,
+           phone_e164=EXCLUDED.phone_e164,
+           email_verified_at=clock_timestamp()`,
         [authUserId, input.fullName, input.cpf, bootstrapEmail, input.phone],
       );
       await client.query(
         `INSERT INTO public.app_user_role_assignments(user_id,role_code,granted_by)
-         VALUES ($1,'platform_super_admin',$1)`,
+         VALUES ($1,'platform_super_admin',$1)
+         ON CONFLICT DO NOTHING`,
         [authUserId],
       );
       await audit(client, {
@@ -233,7 +246,8 @@ export class AdminGovernanceService {
       });
       await client.query("COMMIT");
       return { status: "completed", userId: authUserId };
-    } catch {
+    } catch (error) {
+      console.error("[BOOTSTRAP] Execution error:", error);
       try { await client.query("ROLLBACK"); } catch {}
       if (authUserId) {
         try { await supabaseAdmin.auth.admin.deleteUser(authUserId); } catch {}

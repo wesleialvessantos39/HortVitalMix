@@ -87,6 +87,10 @@ export function AdminBootstrapPage({onNavigate}:Props){
   }catch(caught){
    const failure=caught as ApiFailure;
    if(failure.status===403){
+    if(failure.message==="ORIGIN_REJECTED"||failure.message==="ORIGIN_NOT_ALLOWED"){
+     setMessage("A origem da requisição não foi autorizada pelo servidor. Recarregue a página e tente novamente.");
+     return;
+    }
     const current=await refreshBootstrapStatus();
     if(current.status==="disabled"){
      setMessage(current.reason??"Bootstrap desabilitado neste ambiente.");

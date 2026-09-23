@@ -7,7 +7,8 @@ import { ContactVerificationService } from "../../server/services/ContactVerific
 import { createEphemeralIdentity } from "../helpers/identity";
 import { HAS_INTEGRATION } from "../setup/globalSetup";
 
-const enabled = HAS_INTEGRATION && /^[0-9a-fA-F]{64}$/.test(runtime.outboxKey);
+const outboxKey = process.env.OUTBOX_ENCRYPTION_KEY ?? "";
+const enabled = HAS_INTEGRATION && /^[0-9a-fA-F]{64}$/.test(outboxKey);
 const suite = enabled ? describe : describe.skip;
 
 suite("Trilha 04 — confirmação dupla de contato", () => {
@@ -46,7 +47,7 @@ suite("Trilha 04 — confirmação dupla de contato", () => {
         record.encrypted_payload,
         record.payload_nonce,
         record.payload_auth_tag,
-        runtime.outboxKey,
+        outboxKey,
       ) as { text: string };
       const otp = payload.text.match(/\b(\d{6})\b/)?.[1];
       expect(otp).toMatch(/^\d{6}$/);

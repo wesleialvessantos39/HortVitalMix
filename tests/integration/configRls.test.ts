@@ -4,7 +4,7 @@ import { runtime } from "../../server/config/runtime";
 import { asIdentity, createEphemeralIdentity } from "../helpers/identity";
 import { integrationDescribe, integrationIt } from "../helpers/integration";
 
-async function readConfig(client: ReturnType<typeof createClient>) {
+async function readConfig(client: any) {
   return client
     .from("app_global_config")
     .select("slogan,revision")

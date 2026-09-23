@@ -37,7 +37,7 @@ app.use((req, res, next) => {
   }
   if (
     !["GET", "HEAD"].includes(req.method) &&
-    !/^\/(?:api\/)?v1\/admin(?:\/|$)/.test(req.path) &&
+    !/^\/(?:api\/|_hvm_api\/)?v1\/admin(?:\/|$)/.test(req.path) &&
     !isAllowedRequestOrigin(req)
   ) {
     res
@@ -58,12 +58,16 @@ app.use(express.json({ limit: "32kb" }));
 app.use(sessionMiddleware);
 app.use(foundationRouter);
 app.use("/api", foundationRouter);
+app.use("/_hvm_api", foundationRouter);
 app.use("/v1/auth", authRouter);
 app.use("/api/v1/auth", authRouter);
+app.use("/_hvm_api/v1/auth", authRouter);
 app.use("/v1/admin", adminGovernanceRouter);
 app.use("/api/v1/admin", adminGovernanceRouter);
+app.use("/_hvm_api/v1/admin", adminGovernanceRouter);
 app.use("/v1/admin", adminConfigRouter);
 app.use("/api/v1/admin", adminConfigRouter);
+app.use("/_hvm_api/v1/admin", adminConfigRouter);
 app.use((_req, res) => {
   res.status(404).json({ error: "NOT_FOUND", requestId: res.locals.requestId });
 });

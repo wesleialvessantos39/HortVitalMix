@@ -8,9 +8,10 @@ import { PasswordRecoveryService } from "../../server/services/PasswordRecoveryS
 import { createEphemeralIdentity } from "../helpers/identity";
 import { HAS_INTEGRATION } from "../setup/globalSetup";
 
+const outboxKey = process.env.OUTBOX_ENCRYPTION_KEY ?? "";
 const enabled =
   HAS_INTEGRATION &&
-  /^[0-9a-fA-F]{64}$/.test(runtime.outboxKey) &&
+  /^[0-9a-fA-F]{64}$/.test(outboxKey) &&
   Boolean(supabaseAdmin);
 const suite = enabled ? describe : describe.skip;
 
@@ -57,7 +58,7 @@ suite("Trilha 04 — recuperação de senha", () => {
         outbox.rows[0].encrypted_payload,
         outbox.rows[0].payload_nonce,
         outbox.rows[0].payload_auth_tag,
-        runtime.outboxKey,
+        outboxKey,
       ) as { text: string };
       const urlText = payload.text.match(/https?:\/\/\S+/)?.[0];
       expect(urlText).toBeTruthy();

@@ -98,6 +98,7 @@ export async function api<T>(
   const parsed = await parseResponse(response);
   const body = (parsed.json ?? {}) as {
     error?: string;
+    status?: string;
     fields?: Array<{ field: string; message: string }>;
     requestId?: string;
     currentRevision?: number;
@@ -107,6 +108,7 @@ export async function api<T>(
   if (!response.ok)
     throw failure(
       body.error ??
+        (typeof body.status === "string" ? body.status : undefined) ??
         (typeof (json as Record<string, unknown>)?.code === "string"
           ? String((json as Record<string, unknown>).code)
           : `HTTP_${response.status}`),
