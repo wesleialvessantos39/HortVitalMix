@@ -1576,3 +1576,58 @@ A suíte E2E T04 foi atualizada para validar 320, 430, 768, 1024 e 1440 px e con
 ### Regra de não regressão
 
 A partir deste fechamento, as páginas visuais T04 não podem ser substituídas novamente pelo formulário genérico da Trilha 01 sem decisão explícita registrada no Livro Raiz.
+
+
+---
+
+## 2026-09-23 — SELAGEM DA TRILHA 05 CONFORME MANUAL MESTRE TÉCNICO v11
+
+**Status:** Trilha 05 homologada nesta execução após correção de segurança, reconciliação do histórico, build Vercel e registro da release corrente de produção.
+
+### Preservação obrigatória
+
+A selagem foi aditiva. T01–T04, seus fluxos, migrations, páginas, Supabase Auth e decisões canônicas anteriores foram preservados. Nenhuma migration aplicada foi removida, reescrita ou executada novamente.
+
+### Correções da selagem
+
+- fechado o bypass legado `POST /v1/auth/admin-login`: ele não autentica e retorna `ADMIN_GOVERNANCE_LOGIN_REQUIRED`;
+- login administrativo canônico permanece em `/v1/admin/auth/login`;
+- Super administrador só recebe sessão depois da conclusão do MFA;
+- `Account` não chama mais o endpoint administrativo legado;
+- `FOUNDATION_SCHEMA_VERSION` alinhado ao schema lógico real **20**;
+- histórico remoto reconciliado de forma explícita: a versão Supabase `20260923022554` é o alias físico conhecido da migration canônica `20260923022000_trilha05_performance_hardening.sql`;
+- qualquer outra divergência de versão/nome continua falhando fechada;
+- gate T03 atualizado para reconhecer o portal administrativo T05 sem reintroduzir o caminho antigo;
+- regressões T05 adicionadas para bypass, schema/readiness e alias de migration.
+
+### Banco de produção confirmado
+
+Projeto canônico único: **HortVitalMix — xipbsazvymkqqfmfegwu**.
+
+Confirmado:
+
+- 20 migrations no histórico real;
+- 6 tabelas administrativas T05;
+- 3 setores canônicos;
+- RLS + FORCE RLS nas estruturas T05;
+- helpers `has_role_for` e `fn_is_last_active_super_admin`;
+- trigger de atualização de convites;
+- configuração global singleton preservada;
+- nenhuma criação de identidade fictícia para homologar a T05.
+
+O bootstrap do primeiro Super administrador permanece um fluxo real e controlado: se ainda não houver Super administrador ativo, a plataforma fica apta a executá-lo somente com o e-mail autorizado no servidor.
+
+### Build e deploy
+
+Durante a selagem, duas falhas de build foram tratadas na raiz:
+
+1. evidência T03 ainda exigia o endpoint administrativo legado no frontend;
+2. TypeScript detectou ramo impossível após o redirecionamento dos papéis administrativos.
+
+Após as correções, o commit funcional `bfd46289cf39a33b6a9406f1d1f7c37c46ea08a9` concluiu deployment Vercel com **success**.
+
+### Regra canônica pós-selagem
+
+A T05 passa a ser patrimônio consolidado junto com T01–T04. Implementações futuras não podem recriar login administrativo paralelo, emitir sessão de Super administrador antes do MFA, alterar o histórico aplicado ou remover o isolamento setorial.
+
+A próxima etapa funcional autorizada é a **Trilha 06 — Perfil Canônico, Endereços Residenciais e Privacidade LGPD**, utilizando o próximo schema lógico disponível sem downgrade.
