@@ -91,14 +91,18 @@ export function AdminBootstrapPage({onNavigate}:Props){
      setMessage("A origem da requisição não foi autorizada pelo servidor. Recarregue a página e tente novamente.");
      return;
     }
-    const current=await refreshBootstrapStatus();
-    if(current.status==="disabled"){
-     setMessage(current.reason??"Bootstrap desabilitado neste ambiente.");
-    }else if(current.status==="closed"){
-     setMessage(current.reason??"O bootstrap já foi concluído.");
-    }else{
+    if(failure.message==="email_not_authorized"){
      setFieldErrors({email:"Use exatamente o e-mail autorizado para o primeiro Super administrador."});
      setMessage("O e-mail informado não foi reconhecido como o e-mail autorizado deste ambiente.");
+     return;
+    }
+    const current=await refreshBootstrapStatus();
+    if(failure.message==="disabled"||current.status==="disabled"){
+     setMessage(current.reason??"Bootstrap desabilitado neste ambiente.");
+    }else if(failure.message==="already_closed"||current.status==="closed"){
+     setMessage(current.reason??"O bootstrap já foi concluído.");
+    }else{
+     setMessage("O servidor recusou a configuração inicial por uma condição de governança. Atualize a página e tente novamente.");
     }
    }else if(failure.status===409){
     setMessage("Já existe uma identidade usando este e-mail ou CPF. Use dados ainda não vinculados.");

@@ -72,13 +72,32 @@ const isCanonicalBootstrapAdminEmail = (value: string | undefined) => {
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 };
 
-const bootstrapEnvironmentMatchesCanonicalPolicy = () => {
+async function resolveBootstrapAuthorizedEmailFromDatabase() {
+  if (!dbPool) return null;
+  const result = await dbPool.query<{ support_email: string | null }>(
+    `SELECT support_email
+       FROM public.app_global_config
+      WHERE singleton_guard=true
+      LIMIT 1`,
+  );
+  const databaseEmail = normalizeBootstrapAdminEmail(
+    result.rows[0]?.support_email ?? undefined,
+  );
+  if (!databaseEmail || !isCanonicalBootstrapAdminEmail(databaseEmail))
+    return null;
+
   const configured = normalizeBootstrapAdminEmail(
     process.env.BOOTSTRAP_ADMIN_EMAIL,
   );
-  if (!configured) return null;
-  return isCanonicalBootstrapAdminEmail(configured);
-};
+  if (configured && configured !== databaseEmail) {
+    console.warn(
+      "[BOOTSTRAP] BOOTSTRAP_ADMIN_EMAIL diverge do e-mail canônico " +
+        "persistido no Supabase; a política do banco prevalecerá.",
+    );
+  }
+
+  return databaseEmail;
+}
 
 async function audit(
   client: PoolClient,
@@ -149,20 +168,14 @@ export class AdminGovernanceService {
         reason: "Banco de dados indisponível.",
         authorizedEmailHint: null,
       };
-    if (!supabaseAdmin)
+
+    const authorizedEmail = await resolveBootstrapAuthorizedEmailFromDatabase();
+    if (!authorizedEmail)
       return {
         status: "disabled",
-        reason: "Supabase Admin indisponível.",
+        reason: "Política do primeiro Super administrador não encontrada no Supabase.",
         authorizedEmailHint: null,
       };
-
-    const envMatches = bootstrapEnvironmentMatchesCanonicalPolicy();
-    if (envMatches === false) {
-      console.warn(
-        "[BOOTSTRAP] BOOTSTRAP_ADMIN_EMAIL diverge da política canônica; " +
-          "o valor do ambiente será ignorado para autorização.",
-      );
-    }
 
     const result = await dbPool.query(
       `SELECT 1 FROM public.app_user_role_assignments r
@@ -190,17 +203,12 @@ export class AdminGovernanceService {
   ): Promise<BootstrapResult> {
     if (!dbPool || !supabaseAdmin) return { status: "unavailable" };
 
-    const bootstrapEmail = normalizeBootstrapAdminEmail(input.email);
-    if (!isCanonicalBootstrapAdminEmail(bootstrapEmail))
-      return { status: "email_not_authorized" };
+    const authorizedEmail = await resolveBootstrapAuthorizedEmailFromDatabase();
+    if (!authorizedEmail) return { status: "disabled" };
 
-    const envMatches = bootstrapEnvironmentMatchesCanonicalPolicy();
-    if (envMatches === false) {
-      console.warn(
-        "[BOOTSTRAP] BOOTSTRAP_ADMIN_EMAIL diverge da política canônica; " +
-          "prosseguindo somente porque o e-mail informado corresponde ao digest canônico.",
-      );
-    }
+    const bootstrapEmail = normalizeBootstrapAdminEmail(input.email);
+    if (bootstrapEmail !== authorizedEmail)
+      return { status: "email_not_authorized" };
 
     const client = await dbPool.connect();
     let authUserId: string | null = null;
