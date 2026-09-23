@@ -2015,3 +2015,65 @@ A chave privilegiada do Supabase continua obrigatória no momento do POST real d
 - trigger de Auth preservado;
 - nenhum usuário administrativo criado manualmente;
 - nenhum dado existente removido.
+
+
+---
+
+## 2026-09-23 — CORREÇÃO DE TRANSPORTE DO BOOTSTRAP NO GOOGLE STUDIO E VERCEL
+
+**Sintomas confirmados pelo usuário:**
+
+- Vercel em `/admin/bootstrap`: a tela abria, porém o formulário era ocultado pela mensagem **“Não foi possível consultar o bootstrap neste ambiente.”**;
+- Google Studio: o envio do formulário retornava **“O servidor recusou a configuração inicial por uma condição de governança.”**.
+
+### Evidência de produção no Supabase
+
+Na janela correspondente às tentativas, os logs do Supabase mostraram chamadas bem-sucedidas à Data API de `app_global_config` vindas de runtimes Node em Google Cloud e AWS Brasil. Isso confirmou que a conectividade HTTP com o projeto Supabase estava operacional, enquanto o status do bootstrap ainda dependia do pool PostgreSQL direto.
+
+Também não houve criação Auth nas tentativas mais recentes do Google Studio, demonstrando que o POST estava sendo interrompido antes de `supabaseAdmin.auth.admin.createUser`.
+
+### Causa Vercel
+
+`getBootstrapStatus()` dependia primeiro de `dbPool` e executava consultas PostgreSQL diretas. Uma falha de conexão/pooler fazia o endpoint responder erro e o frontend escondia integralmente o formulário, embora a Data API do Supabase estivesse acessível.
+
+**Correção:**
+
+- leitura de `app_global_config.support_email` movida para Supabase Data API;
+- consulta de Super administrador ativo prioriza Supabase Data API com service role;
+- PostgreSQL direto fica somente como fallback de status;
+- se apenas a consulta de status falhar, a UI não trata isso como barreira de segurança e mantém o formulário disponível;
+- o POST continua sendo a autoridade real para lock, identidade e fechamento do bootstrap.
+
+### Causa Google Studio
+
+O cliente de API usava `import.meta.env.DEV` para escolher entre `/_hvm_api` e `/api`. O Google Studio pode executar um bundle de produção no preview, fazendo `DEV=false` e enviando o POST para `/api`, caminho que a plataforma pode interceptar antes do Express.
+
+**Correção:**
+
+- a seleção do transporte passa a usar o hostname real;
+- domínios Vercel/canônico usam `/api`;
+- Google Studio/local usam `/_hvm_api` primeiro, com fallback seguro para `/api`;
+- respostas 403/404/405 de camada de plataforma podem acionar o caminho alternativo sem repetir operações que já tiveram sucesso;
+- `originProtection` aceita `Sec-Fetch-Site: same-origin`, cabeçalho controlado pelo navegador, evitando falso bloqueio quando o proxy do Studio reescreve Origin/Referer.
+
+### Diagnóstico HTTP corrigido
+
+O endpoint POST do bootstrap deixa de devolver 403 genérico para todos os estados. Agora diferencia:
+
+- `BOOTSTRAP_EMAIL_NOT_AUTHORIZED` → 403;
+- `BOOTSTRAP_ALREADY_CLOSED` → 409;
+- `BOOTSTRAP_IDENTITY_CONFLICT` → 409;
+- `BOOTSTRAP_VALIDATION_FAILED` → 422;
+- `BOOTSTRAP_DISABLED` → 503;
+- `BOOTSTRAP_UNAVAILABLE` → 503.
+
+Assim, o frontend não converte falhas de transporte/governança em “e-mail incorreto”.
+
+### Segurança preservada
+
+- cross-site continua bloqueado;
+- same-origin é aceito com base em `Sec-Fetch-Site`;
+- o e-mail autorizado continua validado server-side contra a política persistida no Supabase e digest canônico;
+- o formulário poder ser exibido em fallback não autoriza criação;
+- advisory lock, verificação de Super administrador ativo, Supabase Admin, MFA e auditoria permanecem;
+- nenhuma migration, RLS ou schema foi alterado nesta correção.
