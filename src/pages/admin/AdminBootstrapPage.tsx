@@ -1,6 +1,7 @@
 import { useEffect,useState } from "react";
 import { Leaf,ShieldPlus } from "lucide-react";
-import { api, type ApiFailure } from "../../lib/api";
+import type { ApiFailure } from "../../lib/api";
+import { getBootstrapStatus, runBootstrap } from "../../lib/adminBootstrapTransport";
 import { cryptoRandomUUID } from "../../lib/uuid";
 import { PasswordInput } from "../../components/forms/PasswordInput";
 import { PasswordStrengthMeter } from "../../components/forms/PasswordStrengthMeter";
@@ -21,11 +22,7 @@ export function AdminBootstrapPage({onNavigate}:Props){
 
  async function refreshBootstrapStatus(){
   try{
-   const result=await api<{
-    status:"open"|"closed"|"disabled";
-    reason:string|null;
-    authorizedEmailHint?:string|null;
-   }>("/v1/admin/bootstrap/status");
+   const result=await getBootstrapStatus();
    setStatus(result.status);
    setReason(result.reason);
    return result;
@@ -79,10 +76,7 @@ export function AdminBootstrapPage({onNavigate}:Props){
 
   setBusy(true);
   try{
-   const result=await api<{status:string}>("/v1/admin/bootstrap",{
-    method:"POST",
-    body:JSON.stringify(parsed.data),
-   });
+   const result=await runBootstrap(parsed.data);
    if(result.status==="completed"){
     setMessage("Configuração inicial concluída.");
     setTimeout(()=>onNavigate("/admin/entrar"),800);
