@@ -4,10 +4,17 @@ import type { AdminVerifySessionResponse } from "../../../shared/contracts/admin
 
 type Props = {
   onNavigate: (to: string) => void;
+  requiredRole?: "platform_admin" | "platform_super_admin";
+  requiredSector?: string;
   children: (access: AdminVerifySessionResponse) => ReactNode;
 };
 
-export function AdminAccessGate({ onNavigate, children }: Props) {
+export function AdminAccessGate({
+  onNavigate,
+  requiredRole,
+  requiredSector,
+  children,
+}: Props) {
   const [state, setState] = useState<
     | { kind: "loading" }
     | { kind: "ready"; access: AdminVerifySessionResponse }
@@ -20,7 +27,14 @@ export function AdminAccessGate({ onNavigate, children }: Props) {
       signal: abort.signal,
     })
       .then((access) => {
-        if (!access.authorized) {
+        const roleDenied =
+          requiredRole === "platform_super_admin" &&
+          access.role !== "platform_super_admin";
+        const sectorDenied =
+          Boolean(requiredSector) &&
+          access.role !== "platform_super_admin" &&
+          !access.sectors.includes(requiredSector!);
+        if (!access.authorized || !access.role || roleDenied || sectorDenied) {
           onNavigate("/admin/entrar");
           return;
         }
@@ -30,7 +44,7 @@ export function AdminAccessGate({ onNavigate, children }: Props) {
         if (!abort.signal.aborted) onNavigate("/admin/entrar");
       });
     return () => abort.abort();
-  }, [onNavigate]);
+  }, [onNavigate, requiredRole, requiredSector]);
 
   if (state.kind === "loading")
     return (
