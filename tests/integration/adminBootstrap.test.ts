@@ -12,8 +12,9 @@ describe("Trilha 05 — bootstrap administrativo",()=>{
  });
  it("resolve a identidade autorizada no Supabase e valida no servidor",()=>{
   expect(service).toContain("CANONICAL_BOOTSTRAP_EMAIL_SHA256");
-  expect(service).toContain("resolveBootstrapAuthorizedEmailFromDatabase");
-  expect(service).toContain("FROM public.app_global_config");
+  expect(service).toContain("resolveBootstrapAuthorizedEmailFromSupabase");
+  expect(service).toContain('.from("app_global_config")');
+  expect(service).toContain("activeSuperAdminViaDataApi");
   expect(service).toContain("support_email");
   expect(service).toContain("isCanonicalBootstrapAdminEmail");
   expect(service).toContain("timingSafeEqual");
