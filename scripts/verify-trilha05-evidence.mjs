@@ -104,6 +104,7 @@ const checks = {
   adminScreenDiscovery:
     account.includes("admin-bootstrap-discovery") &&
     account.includes('navigate("/admin/bootstrap")') &&
+    account.includes("Verificar configuração inicial") &&
     router.includes("intendedRole={intendedRole}") &&
     read("src/pages/admin/AdminLoginPage.tsx").includes("intendedRole"),
   publicRegistrationDiscovery:
@@ -117,6 +118,7 @@ const checks = {
       bootstrapPage.includes("Já existe uma identidade usando este e-mail ou CPF") &&
       bootstrapPage.includes("backend não conseguiu acessar uma dependência obrigatória") &&
       service.includes("normalizeBootstrapAdminEmail") &&
+      service.includes("BOOTSTRAP_ADMIN_EMAIL\\\\s*=\\\\s*") &&
       service.includes("authorizedEmailHint: maskEmail(authorizedEmail)")
     );
   })(),
