@@ -109,3 +109,21 @@ test("Trilha 05 — seletor administrativo expõe o estado protegido do bootstra
     page.getByText(/configuração administrativa|Super administrador|Configuração inicial/i).first(),
   ).toBeVisible();
 });
+
+
+test("Trilha 05 — seletor sempre oferece diagnóstico do bootstrap enquanto não estiver fechado", async ({ page }) => {
+  await page.goto("/administracao");
+  const bootstrapCard = page.locator(".admin-bootstrap-discovery");
+  await expect(bootstrapCard).toBeVisible();
+
+  const statusText = await bootstrapCard.textContent();
+  if (statusText?.includes("Configuração inicial concluída")) {
+    await expect(
+      page.getByRole("button", { name: /Configurar primeiro Super administrador|Verificar configuração inicial/ }),
+    ).toHaveCount(0);
+  } else {
+    await expect(
+      page.getByRole("button", { name: /Configurar primeiro Super administrador|Verificar configuração inicial/ }),
+    ).toBeVisible();
+  }
+});
