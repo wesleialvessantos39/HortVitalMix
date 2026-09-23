@@ -335,13 +335,16 @@ export class AdminGovernanceService {
     const authUserId = created.data.user.id;
 
     const cleanup = async () => {
-      await supabaseAdmin.auth.admin.deleteUser(authUserId).catch(() => undefined);
-      await supabaseAdmin
-        .from("app_users")
-        .delete()
-        .eq("id", authUserId)
-        .then(() => undefined)
-        .catch(() => undefined);
+      try {
+        await supabaseAdmin.auth.admin.deleteUser(authUserId);
+      } catch {
+        // Melhor esforço: a função RPC não confirmou o bootstrap.
+      }
+      try {
+        await supabaseAdmin.from("app_users").delete().eq("id", authUserId);
+      } catch {
+        // O trigger de auth pode deixar um espelho suspenso; não bloqueia nova tentativa.
+      }
     };
 
     const { data, error } = await supabaseAdmin.rpc(
