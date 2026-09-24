@@ -93,8 +93,11 @@ export function AdminLoginPage({
         result.status === "email_confirmation_required" &&
         "maskedDestination" in result
       ) {
-        const target = "/admin/confirmar-email?email=" +
-          encodeURIComponent(email.trim().toLowerCase());
+        const target =
+          "/admin/confirmar-email?email=" +
+          encodeURIComponent(email.trim().toLowerCase()) +
+          "&sent=1&dest=" +
+          encodeURIComponent(result.maskedDestination);
         onNavigate(target);
         return;
       }
