@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   AcceptInviteSchema,
+  AdminEmailConfirmationRequestSchema,
+  AdminEmailConfirmationVerifySchema,
   AdminLoginSchema,
   BootstrapRequestSchema,
   CreateInviteSchema,
@@ -10,6 +12,26 @@ import {
 const strong = "SenhaForte#123";
 
 describe("Trilha 05 — contratos de governança administrativa", () => {
+  it("valida confirmação administrativa com e-mail e OTP de seis dígitos", () => {
+    expect(
+      AdminEmailConfirmationRequestSchema.safeParse({
+        email: "admin@example.com",
+      }).success,
+    ).toBe(true);
+    expect(
+      AdminEmailConfirmationVerifySchema.safeParse({
+        email: "admin@example.com",
+        otp: "123456",
+      }).success,
+    ).toBe(true);
+    expect(
+      AdminEmailConfirmationVerifySchema.safeParse({
+        email: "admin@example.com",
+        otp: "12345",
+      }).success,
+    ).toBe(false);
+  });
+
   it("mantém login estrito e MFA com seis dígitos", () => {
     expect(
       AdminLoginSchema.safeParse({ email: "admin@example.com", password: strong }).success,
