@@ -77,7 +77,7 @@ export async function sessionMiddleware(
       return;
     }
 
-    const access = await resolveIdentityAccess(data.user.id, sessionId);
+    const access = await resolveIdentityAccess(data.user.id, sessionId, token);
     if (!access?.liveSession || access.status !== "active") {
       next();
       return;
