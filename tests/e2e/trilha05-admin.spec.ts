@@ -97,8 +97,17 @@ test("Trilha 05 — seletor administrativo conduz a telas de entrada distintas",
   await expect(
     page.getByRole("heading", { name: "Entrar como Super administrador." }),
   ).toBeVisible();
+  await expect(page.getByLabel("Senha")).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Primeiro acesso do Super administrador" }),
+    page.getByRole("button", { name: /Mostrar senha/i }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Esqueci minha senha" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", {
+      name: "Confirmar ou reenviar confirmação do e-mail",
+    }),
   ).toBeVisible();
 });
 
@@ -147,4 +156,28 @@ test("Trilha 05 — conflito do bootstrap não expõe detalhes técnicos", async
   await page.goto("/admin/bootstrap");
   const source = await page.locator("body").textContent();
   expect(source ?? "").not.toMatch(/ADMIN_GOVERNANCE_LOGIN_REQUIRED|HTTP_409|Código de atendimento/);
+});
+
+
+test("Trilha 05 — confirmação administrativa possui envio, OTP e reenvio", async ({ page }) => {
+  await page.goto("/admin/confirmar-email?email=admin%40example.com");
+  await expect(
+    page.getByRole("heading", { name: "Confirme seu e-mail" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Enviar código de confirmação" }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+  ).toBe(true);
+});
+
+test("Trilha 05 — recuperação administrativa abre no perfil correto", async ({ page }) => {
+  await page.goto("/entrar/super-administrador");
+  await page.getByRole("button", { name: "Esqueci minha senha" }).click();
+  await expect(page).toHaveURL(/\/recuperar-senha\?portal=platform_super_admin$/);
+  await expect(
+    page.getByRole("heading", { name: "Recuperar senha" }),
+  ).toBeVisible();
+  await expect(page.getByText(/Super administrador/).first()).toBeVisible();
 });
