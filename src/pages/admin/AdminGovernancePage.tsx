@@ -123,6 +123,7 @@ export function AdminGovernancePage({onNavigate,access}:Props){
     <form onSubmit={createInvite} className="admin-form">
      <CPFInput
       label="CPF já cadastrado (opcional)"
+      required={false}
       value={targetCpf}
       onChange={value=>{setTargetCpf(value);setIdentity(null)}}
      />
