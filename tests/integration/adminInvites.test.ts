@@ -15,9 +15,10 @@ describe("Trilha 05 — convites administrativos",()=>{
   expect(service).toContain("signInWithOtp");
   expect(service).toContain("INVITE_TTL_HOURS = 24");
  });
- it("reaproveita identidade pública sem duplicar CPF ou app_people",()=>{
-  expect(service).toContain('identityMode = "existing"');
-  expect(service).toContain("signInWithPassword");
+ it("vincula identidade pública a credencial administrativa separada sem duplicar CPF",()=>{
+  expect(service).toContain('identityMode: "new" | "existing"');
+  expect(service).toContain("target_person_id");
+  expect(service).toContain("app_admin_principals");
   expect(service).toContain("preservedPublicIdentity");
   expect(service).toContain("ON CONFLICT (user_id,role_code) DO UPDATE");
   expect(service).toContain("ON CONFLICT (user_id,sector_code) DO UPDATE");
