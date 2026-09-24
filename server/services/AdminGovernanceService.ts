@@ -607,11 +607,6 @@ export class AdminGovernanceService {
       .maybeSingle();
 
     if (principalError) return { status: "unavailable" };
-    if (principal && !principal.email_verified_at)
-      return {
-        status: "email_confirmation_required",
-        maskedDestination: maskEmail(normalized),
-      };
 
     const limited = await this.rateLimit(normalized, ipHash);
     if (limited.limited)
@@ -635,6 +630,18 @@ export class AdminGovernanceService {
       await client.auth.signOut({ scope: "local" }).catch(() => undefined);
       await this.recordAttempt(normalized, ipHash, "failure");
       return { status: "no_admin_role" };
+    }
+
+    if (principal && !principal.email_verified_at) {
+      const confirmation = await this.requestAdminEmailConfirmation(normalized);
+      await client.auth.signOut({ scope: "local" }).catch(() => undefined);
+      if (confirmation.status === "unavailable")
+        return { status: "unavailable" };
+      return {
+        status: "email_confirmation_required",
+        maskedDestination:
+          confirmation.maskedDestination ?? maskEmail(normalized),
+      };
     }
 
     const role = await activeAdminRole(signed.data.user.id);
@@ -1339,8 +1346,8 @@ export class AdminGovernanceService {
 
       await client.query(
         `INSERT INTO public.app_admin_principals
-          (admin_user_id,person_id,admin_email,created_by)
-         VALUES ($1,$2,$3,$4)`,
+          (admin_user_id,person_id,admin_email,created_by,email_verified_at)
+         VALUES ($1,$2,$3,$4,clock_timestamp())`,
         [targetUserId, personId, invite.email, invite.invited_by],
       );
 
