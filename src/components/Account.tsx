@@ -622,7 +622,7 @@ export function Account({
                                     : code === "NETWORK_UNAVAILABLE"
                                       ? "Não foi possível conectar ao servidor de cadastro. Verifique a conexão e tente novamente."
                                       : code === "INVALID_API_RESPONSE"
-                                        ? "A função de cadastro respondeu de forma inválida. O erro foi identificado para correção."
+                                        ? "Não foi possível concluir o cadastro agora. Tente novamente em alguns instantes."
                                         : code === "REGISTRATION_STATUS_UNKNOWN"
                                           ? "Não foi possível confirmar o cadastro. Tente entrar ou recuperar a senha antes de repetir o cadastro."
                                           : code === "HTTP_400"
