@@ -180,6 +180,25 @@ async function audit(
 }
 
 async function activeAdminRole(userId: string) {
+  if (supabaseAdmin) {
+    const [{ data: user, error: userError }, { data: roles, error: rolesError }] =
+      await Promise.all([
+        supabaseAdmin.from("app_users").select("status").eq("id", userId).maybeSingle(),
+        supabaseAdmin
+          .from("app_user_role_assignments")
+          .select("role_code,expires_at")
+          .eq("user_id", userId)
+          .in("role_code", ["platform_super_admin", "platform_admin"])
+          .is("revoked_at", null),
+      ]);
+    if (!userError && !rolesError && user) {
+      const active = (roles ?? [])
+        .filter((row) => !row.expires_at || new Date(row.expires_at).getTime() > Date.now())
+        .sort((a, b) => a.role_code === "platform_super_admin" ? -1 : b.role_code === "platform_super_admin" ? 1 : 0);
+      const role = active[0]?.role_code as AdminRole | undefined;
+      return role ? { status: user.status, role_code: role } : null;
+    }
+  }
   if (!dbPool) return null;
   const result = await dbPool.query<{ status: string; role_code: AdminRole }>(
     `SELECT u.status,r.role_code
@@ -197,6 +216,18 @@ async function activeAdminRole(userId: string) {
 }
 
 async function sectorsFor(userId: string): Promise<AdminSectorCode[]> {
+  if (supabaseAdmin) {
+    const { data, error } = await supabaseAdmin
+      .from("app_admin_sector_members")
+      .select("sector_code,expires_at")
+      .eq("user_id", userId)
+      .is("revoked_at", null);
+    if (!error)
+      return (data ?? [])
+        .filter((row) => !row.expires_at || new Date(row.expires_at).getTime() > Date.now())
+        .map((row) => row.sector_code as AdminSectorCode)
+        .sort();
+  }
   if (!dbPool) return [];
   const result = await dbPool.query<{ sector_code: AdminSectorCode }>(
     `SELECT sector_code FROM public.app_admin_sector_members
