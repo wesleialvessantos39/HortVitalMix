@@ -43,10 +43,11 @@ describe("Trilha 05 — bootstrap administrativo",()=>{
   expect(vercel).not.toContain('"api/v1/[...path].ts"');
   expect(vercel).not.toContain('"api/v1/admin/[...path].ts"');
  });
- it("usa Edge Function como fallback real de transporte",()=>{
+ it("usa Edge apenas como fallback de leitura e mantém a escrita no backend canônico",()=>{
   expect(transport).toContain("/functions/v1/admin-bootstrap");
   expect(transport).toContain("getBootstrapStatus");
   expect(transport).toContain("runBootstrap");
+  expect(transport).not.toContain('edgeRequest("POST"');
   expect(page).toContain("getBootstrapStatus");
   expect(page).toContain("runBootstrap");
   expect(edge).toContain("fn_finalize_first_super_admin");
