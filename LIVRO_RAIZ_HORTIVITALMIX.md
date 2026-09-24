@@ -2479,3 +2479,12 @@ Schema lógico passa de **21 para 22**.
 ### Fonte documental viva
 
 O arquivo **DOCUMENTO COM DIAGRAMA E ESPECIFICAÇÕES** passa a ser tratado, junto ao Manual Mestre e ao Livro-Raiz, como referência documental viva da arquitetura implementada. Alterações de engenharia devem preservar coerência entre código, banco, Livro-Raiz e a versão atualizada desse documento, sem substituir as regras normativas do Manual Mestre.
+
+
+---
+
+## 2026-09-23 — ESCRITA DO BOOTSTRAP FIXADA NO BACKEND CANÔNICO
+
+Após a introdução de `app_admin_principals` no schema 22, a mutação `POST` do bootstrap passa a utilizar exclusivamente o backend versionado junto à aplicação. O Supabase Edge permanece somente como fallback de leitura do status.
+
+Motivo: impedir que uma versão Edge eventualmente defasada aplique regras antigas de conflito de CPF durante a criação do primeiro Super administrador. Assim, Google Studio e Vercel executam a mesma regra de escrita publicada na `main`.
