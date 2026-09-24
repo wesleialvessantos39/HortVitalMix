@@ -79,15 +79,25 @@ export function AdminBootstrapPage({onNavigate}:Props){
    const result=await runBootstrap(parsed.data);
    if(result.status==="completed"){
     setMessage("Configuração inicial concluída. Agora confirme o e-mail administrativo.");
+    let target=
+     "/admin/confirmar-email?email="+encodeURIComponent(parsed.data.email);
     try{
-     await api("/v1/admin/auth/email-confirmation/request",{
+     const delivery=await api<{
+      status:string;
+      maskedDestination?:string;
+      retryAfterSeconds?:number;
+     }>("/v1/admin/auth/email-confirmation/request",{
       method:"POST",
       body:JSON.stringify({email:parsed.data.email}),
      });
+     if(delivery.status==="sent"||delivery.status==="cooldown"){
+      target+="&sent=1&dest="+encodeURIComponent(
+       delivery.maskedDestination??parsed.data.email
+      );
+      if(delivery.retryAfterSeconds)
+       target+="&retry="+encodeURIComponent(String(delivery.retryAfterSeconds));
+     }
     }catch{}
-    const target=
-     "/admin/confirmar-email?email="+encodeURIComponent(parsed.data.email)+
-     "&sent=1&dest="+encodeURIComponent(parsed.data.email);
     setTimeout(()=>onNavigate(target),500);
    }
   }catch(caught){
