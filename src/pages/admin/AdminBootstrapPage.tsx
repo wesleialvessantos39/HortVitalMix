@@ -85,7 +85,9 @@ export function AdminBootstrapPage({onNavigate}:Props){
       body:JSON.stringify({email:parsed.data.email}),
      });
     }catch{}
-    const target="/admin/confirmar-email?email="+encodeURIComponent(parsed.data.email);
+    const target=
+     "/admin/confirmar-email?email="+encodeURIComponent(parsed.data.email)+
+     "&sent=1&dest="+encodeURIComponent(parsed.data.email);
     setTimeout(()=>onNavigate(target),500);
    }
   }catch(caught){
