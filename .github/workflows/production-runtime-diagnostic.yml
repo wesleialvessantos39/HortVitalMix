@@ -1,0 +1,53 @@
+name: Production Runtime Diagnostic
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/production-runtime-diagnostic.yml"
+      - "server/**"
+      - "src/pages/admin/**"
+      - "src/components/admin/**"
+      - "src/lib/api.ts"
+      - "vercel.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe-production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Aguardar deploy Vercel do mesmo SHA
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 60); do
+            JSON="$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/status")"
+            STATE="$(printf '%s' "$JSON" | jq -r '[.statuses[] | select(.context=="Vercel")][0].state // empty')"
+            echo "Vercel: ${STATE:-pending}"
+            if [ "$STATE" = "success" ]; then exit 0; fi
+            if [ "$STATE" = "failure" ] || [ "$STATE" = "error" ]; then exit 1; fi
+            sleep 10
+          done
+          exit 1
+
+      - name: Diagnosticar endpoints públicos de runtime
+        shell: bash
+        run: |
+          set -u
+          probe() {
+            local path="$1"
+            echo "===== $path ====="
+            curl -sS --max-time 20 -D - "https://hortvitalmix.vercel.app$path" -o /tmp/body.txt || true
+            echo "--- body ---"
+            cat /tmp/body.txt 2>/dev/null || true
+            echo
+          }
+          probe "/api/health"
+          probe "/api/ready"
+          probe "/api/v1/admin/bootstrap/status"
