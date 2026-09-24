@@ -281,8 +281,18 @@ export function AdminLoginPage({
                 onClick={() =>
                   onNavigate(
                     "/admin/confirmar-email" +
-                      (email.trim()
-                        ? "?email=" + encodeURIComponent(email.trim().toLowerCase())
+                      (email.trim() || intendedRole
+                        ? "?" +
+                          [
+                            email.trim()
+                              ? "email=" + encodeURIComponent(email.trim().toLowerCase())
+                              : "",
+                            intendedRole
+                              ? "portal=" + encodeURIComponent(intendedRole)
+                              : "",
+                          ]
+                            .filter(Boolean)
+                            .join("&")
                         : ""),
                   )
                 }
