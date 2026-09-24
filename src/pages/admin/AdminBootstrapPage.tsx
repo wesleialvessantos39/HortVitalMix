@@ -115,10 +115,10 @@ export function AdminBootstrapPage({onNavigate}:Props){
     setMessage(
      failure.message==="BOOTSTRAP_DISABLED"
       ? "A política de bootstrap não está disponível no Supabase."
-      : "O backend não conseguiu acessar uma dependência obrigatória. Tente novamente em alguns segundos."
+      : "Não foi possível concluir a configuração inicial agora. Tente novamente em alguns instantes."
     );
    }else{
-    setMessage("Não foi possível concluir a configuração inicial. Tente novamente após atualizar o ambiente.");
+    setMessage("Não foi possível concluir a configuração inicial agora. Tente novamente em alguns instantes.");
    }
   }finally{setBusy(false)}
  }
