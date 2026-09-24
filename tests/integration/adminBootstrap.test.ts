@@ -6,6 +6,8 @@ describe("Trilha 05 — bootstrap administrativo",()=>{
  const migration=readFileSync("supabase/migrations/20260922200604_trilha05_admin_governance.sql","utf8");
  const bootstrapRpc=readFileSync("supabase/migrations/20260923194253_trilha05_bootstrap_rpc_finalize.sql","utf8");
  const principalMigration=readFileSync("supabase/migrations/20260924023000_trilha05_admin_principals.sql","utf8");
+ const emailVerificationMigration=readFileSync("supabase/migrations/20260924114500_trilha05_admin_email_verification.sql","utf8");
+ const confirmationPage=readFileSync("src/pages/admin/AdminEmailConfirmationPage.tsx","utf8");
  const page=readFileSync("src/pages/admin/AdminBootstrapPage.tsx","utf8");
  const transport=readFileSync("src/lib/adminBootstrapTransport.ts","utf8");
  const edge=readFileSync("supabase/functions/admin-bootstrap/index.ts","utf8");
@@ -74,6 +76,14 @@ describe("Trilha 05 — bootstrap administrativo",()=>{
   expect(principalMigration).toContain("app_admin_principals");
   expect(service).not.toContain('cpfConflict');
   expect(edge).not.toContain('cpfConflict');
+ });
+ it("exige confirmação explícita do e-mail após bootstrap e oferece campo OTP",()=>{
+  expect(emailVerificationMigration).toContain("email_verified_at");
+  expect(page).toContain("/auth/email-confirmation/request");
+  expect(page).toContain("/admin/confirmar-email");
+  expect(confirmationPage).toContain("<OtpInput");
+  expect(confirmationPage).toContain("Enviar código de confirmação");
+  expect(confirmationPage).toContain("Confirmar e-mail");
  });
  it("reutiliza os componentes canônicos de CPF e celular",()=>{
   expect(page).toContain("<CPFInput");
