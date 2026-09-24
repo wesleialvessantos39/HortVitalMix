@@ -698,8 +698,8 @@ export class AdminGovernanceService {
       expiresAt = new Date(Date.now() + INVITE_TTL_HOURS * 60 * 60_000);
       const inserted = await client.query<{ created_at: Date | string }>(
         `INSERT INTO public.app_admin_invites
-          (id,email,target_role,token_digest,invited_by,expires_at,identity_mode,auth_user_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+          (id,email,target_role,token_digest,invited_by,expires_at,auth_user_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7)
          RETURNING created_at`,
         [
           inviteId,
@@ -708,7 +708,6 @@ export class AdminGovernanceService {
           digest,
           actorId,
           expiresAt,
-          identityMode,
           existingUserId,
         ],
       );
@@ -841,7 +840,12 @@ export class AdminGovernanceService {
       created_at: Date | string; invalidated_at: Date | string | null;
       invited_by: string; sectors: AdminSectorCode[] | null;
     }>(
-      `SELECT i.id,i.email,i.target_role,i.identity_mode,i.revision,i.is_accepted,i.expires_at,
+      `SELECT i.id,i.email,i.target_role,
+              CASE WHEN EXISTS (
+                SELECT 1 FROM public.app_people p
+                 WHERE p.user_id=i.auth_user_id AND p.email_normalized=i.email
+              ) THEN 'existing' ELSE 'new' END AS identity_mode,
+              i.revision,i.is_accepted,i.expires_at,
               i.created_at,i.invalidated_at,i.invited_by,
               COALESCE(array_agg(s.sector_code) FILTER (WHERE s.sector_code IS NOT NULL),'{}') AS sectors
          FROM public.app_admin_invites i
@@ -872,8 +876,12 @@ export class AdminGovernanceService {
       auth_user_id: string | null; is_accepted: boolean; expires_at: Date | string;
       invalidated_at: Date | string | null; sectors: AdminSectorCode[] | null;
     }>(
-      `SELECT i.id,i.email,i.target_role,i.identity_mode,i.auth_user_id,
-              i.is_accepted,i.expires_at,i.invalidated_at,
+      `SELECT i.id,i.email,i.target_role,
+              CASE WHEN EXISTS (
+                SELECT 1 FROM public.app_people p
+                 WHERE p.user_id=i.auth_user_id AND p.email_normalized=i.email
+              ) THEN 'existing' ELSE 'new' END AS identity_mode,
+              i.auth_user_id,i.is_accepted,i.expires_at,i.invalidated_at,
               COALESCE(array_agg(s.sector_code) FILTER (WHERE s.sector_code IS NOT NULL),'{}') AS sectors
          FROM public.app_admin_invites i
          LEFT JOIN public.app_admin_invite_sectors s ON s.invite_id=i.id
@@ -933,10 +941,14 @@ export class AdminGovernanceService {
         expires_at: Date | string;
         invalidated_at: Date | string | null;
       }>(
-        `SELECT id,email,target_role,identity_mode,auth_user_id,invited_by,
-                is_accepted,expires_at,invalidated_at
-           FROM public.app_admin_invites
-          WHERE token_digest=$1
+        `SELECT i.id,i.email,i.target_role,
+                CASE WHEN EXISTS (
+                  SELECT 1 FROM public.app_people p
+                   WHERE p.user_id=i.auth_user_id AND p.email_normalized=i.email
+                ) THEN 'existing' ELSE 'new' END AS identity_mode,
+                i.auth_user_id,i.invited_by,i.is_accepted,i.expires_at,i.invalidated_at
+           FROM public.app_admin_invites i
+          WHERE i.token_digest=$1
           FOR UPDATE`,
         [sha256(input.token)],
       );
