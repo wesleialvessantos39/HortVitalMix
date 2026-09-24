@@ -8,6 +8,7 @@ import { AdminAcceptInvitePage } from "./AdminAcceptInvitePage";
 import { AdminGovernancePage } from "./AdminGovernancePage";
 import { AdminDashboardPage } from "./AdminDashboardPage";
 import { AdminUsersPage } from "./AdminUsersPage";
+import { AdminEmailConfirmationPage } from "./AdminEmailConfirmationPage";
 
 type Props={
  path:string;
@@ -37,6 +38,8 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
  }
  if(path==="/admin/bootstrap")
   return <AdminBootstrapPage onNavigate={onNavigate}/>;
+ if(path==="/admin/confirmar-email")
+  return <AdminEmailConfirmationPage onNavigate={onNavigate}/>;
  if(path==="/admin/aceitar-convite"||path==="/admin/convite")
   return <AdminAcceptInvitePage onNavigate={onNavigate}/>;
 
