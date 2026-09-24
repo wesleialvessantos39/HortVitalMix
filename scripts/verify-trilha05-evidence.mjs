@@ -5,6 +5,7 @@ const migration = read("supabase/migrations/20260922200604_trilha05_admin_govern
 const bootstrapRpc = read("supabase/migrations/20260923194253_trilha05_bootstrap_rpc_finalize.sql");
 const adminPrincipalMigration = read("supabase/migrations/20260924023000_trilha05_admin_principals.sql");
 const adminEmailVerificationMigration = read("supabase/migrations/20260924114500_trilha05_admin_email_verification.sql");
+const recoverySessionMigration = read("supabase/migrations/20260924125000_auth_recovery_session_revoke.sql");
 const service = read("server/services/AdminGovernanceService.ts");
 const routes = read("server/routes/adminGovernanceRoutes.ts");
 const middleware = read("server/middleware/adminSession.ts");
@@ -145,12 +146,13 @@ const checks = {
     legacyAuth.includes('authRouter.post("/admin-login"') &&
     legacyAuth.includes('"ADMIN_GOVERNANCE_LOGIN_REQUIRED"') &&
     !account.includes('"/v1/auth/admin-login"'),
-  readinessSchema23:
-    foundation.includes("FOUNDATION_SCHEMA_VERSION = 23"),
+  readinessSchema24:
+    foundation.includes("FOUNDATION_SCHEMA_VERSION = 24"),
   remoteMigrationAlias:
     migrationManifest.includes('"20260923022554": "20260923022000"') &&
     migrationManifest.includes('"20260924023250": "20260924023000"') &&
-    migrationManifest.includes('"20260924115207": "20260924114500"'),
+    migrationManifest.includes('"20260924115207": "20260924114500"') &&
+    migrationManifest.includes('"20260924124802": "20260924125000"'),
   adminScreenDiscovery:
     account.includes("admin-bootstrap-discovery") &&
     account.includes('navigate("/admin/bootstrap")') &&
@@ -175,7 +177,23 @@ const checks = {
     service.includes('.from("app_admin_mfa_challenges")') &&
     read("server/services/RoleSecurityService.ts").includes("app_admin_principals") &&
     read("server/services/IdentityAccessService.ts").includes("resolveViaDataApi") &&
-    read("server/routes/authRoutes.ts").includes('client.auth.signOut({ scope: "global" })'),
+    legacyAuth.includes('"fn_revoke_auth_sessions"') &&
+    recoverySessionMigration.includes("DELETE FROM auth.sessions") &&
+    recoverySessionMigration.includes("TO service_role"),
+  adminMailCooldown:
+    service.includes("authEmailRetryAfter") &&
+    service.includes('status: "email_rate_limited"') &&
+    service.includes('status: "cooldown"') &&
+    read("src/pages/admin/AdminLoginPage.tsx").includes("mailCooldown") &&
+    read("src/pages/admin/AdminEmailConfirmationPage.tsx").includes("retryAfter"),
+  recoveryRootCauseClosed:
+    legacyAuth.includes("recoveryRequestCooldown") &&
+    legacyAuth.includes("finalizeRecoveryChallenge") &&
+    legacyAuth.includes('"/password/recovery/validate"') &&
+    legacyAuth.includes("resolveRecoveryChallenge") &&
+    legacyAuth.includes('"fn_revoke_auth_sessions"') &&
+    read("src/pages/auth/ResetPasswordPage.tsx").includes('"/v1/auth/password/recovery/validate"') &&
+    !read("src/pages/auth/ResetPasswordPage.tsx").includes('"/v1/auth/import-session"'),
   adminEmailOwnership:
     adminEmailVerificationMigration.includes("email_verified_at") &&
     service.includes("requestAdminEmailConfirmation") &&
