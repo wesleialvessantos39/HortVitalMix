@@ -215,7 +215,11 @@ async function handlePublicLoginRequest(
       res.status(403).json({ error: "EMAIL_CONFIRMATION_REQUIRED" });
       return;
     }
-    const access = await resolveIdentityAccess(data.user.id);
+    const access = await resolveIdentityAccess(
+      data.user.id,
+      null,
+      data.access_token,
+    );
     if (!access) {
       if (supabaseAdmin && data.access_token)
         await supabaseAdmin.auth.admin.signOut(data.access_token, "local").catch(() => undefined);
@@ -297,7 +301,11 @@ authRouter.post("/refresh", async (req, res, next) => {
       return;
     }
 
-    const access = await resolveIdentityAccess(data.user.id);
+    const access = await resolveIdentityAccess(
+      data.user.id,
+      null,
+      data.access_token,
+    );
     if (!access) {
       res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
       return;
@@ -376,7 +384,11 @@ authRouter.post("/import-session", async (req, res, next) => {
       return;
     }
 
-    const access = await resolveIdentityAccess(restored.data.user.id, sessionId);
+    const access = await resolveIdentityAccess(
+      restored.data.user.id,
+      sessionId,
+      restored.data.session.access_token,
+    );
     if (access && !access.roles.some((role) => role === "consumer" || role === "producer")) {
       await client.auth.signOut({ scope: "local" }).catch(() => undefined);
       res.status(403).json({ error: "ADMIN_GOVERNANCE_LOGIN_REQUIRED" });
@@ -456,7 +468,7 @@ authRouter.get("/session", async (req, res, next) => {
       return;
     }
 
-    const access = await resolveIdentityAccess(id, sessionId);
+    const access = await resolveIdentityAccess(id, sessionId, token);
     if (!access?.liveSession) {
       res.status(401).json({ error: "SESSION_EXPIRED" });
       return;
