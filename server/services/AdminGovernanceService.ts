@@ -408,6 +408,50 @@ export class AdminGovernanceService {
   }
 
   private static async rateLimit(email: string, ipHash: string) {
+    const emailHash = sha256(email);
+    const since = new Date(
+      Date.now() - RATE_WINDOW_MINUTES * 60_000,
+    ).toISOString();
+
+    if (supabaseAdmin) {
+      const { data, error } = await supabaseAdmin
+        .from("app_admin_auth_attempts")
+        .select("email_hash,ip_hash,occurred_at,outcome")
+        .gte("occurred_at", since)
+        .in("outcome", ["failure", "mfa_failure"])
+        .or(`email_hash.eq.${emailHash},ip_hash.eq.${ipHash}`);
+
+      if (!error) {
+        const attempts = data ?? [];
+        const emailFailures = attempts.filter(
+          (row) => String(row.email_hash).trim() === emailHash,
+        ).length;
+        const ipFailures = attempts.filter(
+          (row) => String(row.ip_hash).trim() === ipHash,
+        ).length;
+        const lastAt = attempts
+          .map((row) => new Date(row.occurred_at).getTime())
+          .filter(Number.isFinite)
+          .sort((a, b) => b - a)[0];
+
+        if (
+          (emailFailures < RATE_MAX_FAILURES &&
+            ipFailures < RATE_MAX_FAILURES) ||
+          !lastAt
+        )
+          return { limited: false, retryAfterSeconds: 0 };
+
+        const until = lastAt + RATE_WINDOW_MINUTES * 60_000;
+        return {
+          limited: until > Date.now(),
+          retryAfterSeconds: Math.max(
+            1,
+            Math.ceil((until - Date.now()) / 1000),
+          ),
+        };
+      }
+    }
+
     if (!dbPool) return { limited: false, retryAfterSeconds: 0 };
     const result = await dbPool.query<{
       email_failures: string;
@@ -422,7 +466,7 @@ export class AdminGovernanceService {
        WHERE occurred_at > now() - interval '15 minutes'
          AND outcome IN ('failure','mfa_failure')
          AND (email_hash=$1 OR ip_hash=$2)`,
-      [sha256(email), ipHash],
+      [emailHash, ipHash],
     );
     const emailFailures = Number(result.rows[0]?.email_failures ?? 0);
     const ipFailures = Number(result.rows[0]?.ip_failures ?? 0);
@@ -444,12 +488,107 @@ export class AdminGovernanceService {
     ipHash: string,
     outcome: "success" | "failure" | "mfa_pending" | "mfa_failure",
   ) {
+    const payload = {
+      email_hash: sha256(email),
+      ip_hash: ipHash,
+      outcome,
+    };
+
+    if (supabaseAdmin) {
+      const { error } = await supabaseAdmin
+        .from("app_admin_auth_attempts")
+        .insert(payload);
+      if (!error) return;
+    }
+
     if (!dbPool) return;
     await dbPool.query(
       `INSERT INTO public.app_admin_auth_attempts(email_hash,ip_hash,outcome)
        VALUES ($1,$2,$3)`,
-      [sha256(email), ipHash, outcome],
+      [payload.email_hash, payload.ip_hash, payload.outcome],
     );
+  }
+
+  static async requestAdminEmailConfirmation(email: string): Promise<{
+    status: "sent" | "already_verified" | "accepted" | "unavailable";
+    maskedDestination?: string;
+  }> {
+    if (!supabaseAdmin) return { status: "unavailable" };
+
+    const normalized = email.trim().toLowerCase();
+    const { data: principal, error } = await supabaseAdmin
+      .from("app_admin_principals")
+      .select("admin_user_id,email_verified_at")
+      .eq("admin_email", normalized)
+      .maybeSingle();
+
+    if (error) return { status: "unavailable" };
+    if (!principal) return { status: "accepted" };
+    if (principal.email_verified_at)
+      return {
+        status: "already_verified",
+        maskedDestination: maskEmail(normalized),
+      };
+
+    const client = createSupabasePublicClient();
+    if (!client) return { status: "unavailable" };
+    const sent = await client.auth.signInWithOtp({
+      email: normalized,
+      options: { shouldCreateUser: false },
+    });
+    if (sent.error) return { status: "unavailable" };
+
+    return {
+      status: "sent",
+      maskedDestination: maskEmail(normalized),
+    };
+  }
+
+  static async verifyAdminEmailConfirmation(
+    email: string,
+    otp: string,
+  ): Promise<{
+    status: "verified" | "invalid_code" | "already_verified" | "unavailable";
+  }> {
+    if (!supabaseAdmin) return { status: "unavailable" };
+
+    const normalized = email.trim().toLowerCase();
+    const { data: principal, error } = await supabaseAdmin
+      .from("app_admin_principals")
+      .select("admin_user_id,email_verified_at")
+      .eq("admin_email", normalized)
+      .maybeSingle();
+
+    if (error || !principal) return { status: "unavailable" };
+    if (principal.email_verified_at) return { status: "already_verified" };
+
+    const client = createSupabasePublicClient();
+    if (!client) return { status: "unavailable" };
+    const verified = await client.auth.verifyOtp({
+      email: normalized,
+      token: otp,
+      type: "email",
+    });
+
+    if (
+      verified.error ||
+      !verified.data.user ||
+      verified.data.user.id !== principal.admin_user_id
+    ) {
+      await client.auth.signOut({ scope: "local" }).catch(() => undefined);
+      return { status: "invalid_code" };
+    }
+
+    await client.auth.signOut({ scope: "local" }).catch(() => undefined);
+    const { error: updateError } = await supabaseAdmin
+      .from("app_admin_principals")
+      .update({
+        email_verified_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("admin_user_id", principal.admin_user_id);
+
+    return updateError ? { status: "unavailable" } : { status: "verified" };
   }
 
   static async login(
@@ -458,27 +597,55 @@ export class AdminGovernanceService {
     ipHash: string,
     requestId: string,
   ): Promise<AdminLoginResult> {
-    if (!dbPool) return { status: "unavailable" };
-    const limited = await this.rateLimit(email, ipHash);
+    if (!supabaseAdmin) return { status: "unavailable" };
+
+    const normalized = email.trim().toLowerCase();
+    const { data: principal, error: principalError } = await supabaseAdmin
+      .from("app_admin_principals")
+      .select("admin_user_id,email_verified_at")
+      .eq("admin_email", normalized)
+      .maybeSingle();
+
+    if (principalError) return { status: "unavailable" };
+    if (principal && !principal.email_verified_at)
+      return {
+        status: "email_confirmation_required",
+        maskedDestination: maskEmail(normalized),
+      };
+
+    const limited = await this.rateLimit(normalized, ipHash);
     if (limited.limited)
-      return { status: "rate_limited", retryAfterSeconds: limited.retryAfterSeconds };
+      return {
+        status: "rate_limited",
+        retryAfterSeconds: limited.retryAfterSeconds,
+      };
 
     const client = createSupabasePublicClient();
     if (!client) return { status: "unavailable" };
-    const signed = await client.auth.signInWithPassword({ email, password });
+    const signed = await client.auth.signInWithPassword({
+      email: normalized,
+      password,
+    });
     if (signed.error || !signed.data.user || !signed.data.session) {
-      await this.recordAttempt(email, ipHash, "failure");
+      await this.recordAttempt(normalized, ipHash, "failure");
       return { status: "invalid_credentials" };
     }
+
+    if (principal && signed.data.user.id !== principal.admin_user_id) {
+      await client.auth.signOut({ scope: "local" }).catch(() => undefined);
+      await this.recordAttempt(normalized, ipHash, "failure");
+      return { status: "no_admin_role" };
+    }
+
     const role = await activeAdminRole(signed.data.user.id);
     if (!role) {
-      await client.auth.signOut().catch(() => {});
-      await this.recordAttempt(email, ipHash, "failure");
+      await client.auth.signOut({ scope: "local" }).catch(() => undefined);
+      await this.recordAttempt(normalized, ipHash, "failure");
       return { status: "no_admin_role" };
     }
     if (role.status !== "active") {
-      await client.auth.signOut().catch(() => {});
-      await this.recordAttempt(email, ipHash, "failure");
+      await client.auth.signOut({ scope: "local" }).catch(() => undefined);
+      await this.recordAttempt(normalized, ipHash, "failure");
       return { status: "account_blocked" };
     }
 
@@ -486,43 +653,55 @@ export class AdminGovernanceService {
       const otpClient = createSupabasePublicClient();
       if (!otpClient) return { status: "unavailable" };
       const sent = await otpClient.auth.signInWithOtp({
-        email,
+        email: normalized,
         options: { shouldCreateUser: false },
       });
-      await client.auth.signOut().catch(() => {});
+      await client.auth.signOut({ scope: "local" }).catch(() => undefined);
       if (sent.error) {
-        await this.recordAttempt(email, ipHash, "failure");
+        await this.recordAttempt(normalized, ipHash, "failure");
         return { status: "unavailable" };
       }
+
       const challengeId = randomUUID();
       const expiresAt = new Date(Date.now() + MFA_TTL_MINUTES * 60_000);
-      await dbPool.query(
-        `UPDATE public.app_admin_mfa_challenges SET invalidated_at=clock_timestamp()
-         WHERE user_id=$1 AND is_verified=false AND invalidated_at IS NULL`,
-        [signed.data.user.id],
-      );
-      await dbPool.query(
-        `INSERT INTO public.app_admin_mfa_challenges
-          (id,user_id,provider,expires_at,request_id,command_id)
-         VALUES ($1,$2,'supabase_auth_email_otp',$3,$4,$5)`,
-        [challengeId, signed.data.user.id, expiresAt, requestId, randomUUID()],
-      );
-      await this.recordAttempt(email, ipHash, "mfa_pending");
+
+      const invalidated = await supabaseAdmin
+        .from("app_admin_mfa_challenges")
+        .update({ invalidated_at: new Date().toISOString() })
+        .eq("user_id", signed.data.user.id)
+        .eq("is_verified", false)
+        .is("invalidated_at", null);
+      if (invalidated.error) return { status: "unavailable" };
+
+      const inserted = await supabaseAdmin
+        .from("app_admin_mfa_challenges")
+        .insert({
+          id: challengeId,
+          user_id: signed.data.user.id,
+          provider: "supabase_auth_email_otp",
+          expires_at: expiresAt.toISOString(),
+          request_id: requestId,
+          command_id: randomUUID(),
+        });
+      if (inserted.error) return { status: "unavailable" };
+
+      await this.recordAttempt(normalized, ipHash, "mfa_pending");
       return {
         status: "mfa_required",
         mfaChallengeId: challengeId,
-        maskedDestination: maskEmail(email),
+        maskedDestination: maskEmail(normalized),
         expiresAt: expiresAt.toISOString(),
       };
     }
 
     const sectors = await sectorsFor(signed.data.user.id);
     if (!sectors.length) {
-      await client.auth.signOut().catch(() => {});
-      await this.recordAttempt(email, ipHash, "failure");
+      await client.auth.signOut({ scope: "local" }).catch(() => undefined);
+      await this.recordAttempt(normalized, ipHash, "failure");
       return { status: "no_admin_role" };
     }
-    await this.recordAttempt(email, ipHash, "success");
+
+    await this.recordAttempt(normalized, ipHash, "success");
     return {
       status: "session_created",
       accessToken: signed.data.session.access_token,
@@ -538,60 +717,75 @@ export class AdminGovernanceService {
     otp: string,
     ipHash: string,
   ): Promise<MfaVerifyResult> {
-    if (!dbPool || !supabaseAdmin) return { status: "unavailable" };
-    const row = await dbPool.query<{
-      user_id: string;
-      attempts: number;
-      max_attempts: number;
-      expires_at: Date | string;
-      is_verified: boolean;
-      invalidated_at: Date | string | null;
-    }>(
-      `SELECT user_id,attempts,max_attempts,expires_at,is_verified,invalidated_at
-       FROM public.app_admin_mfa_challenges WHERE id=$1`,
-      [challengeId],
-    );
-    const challenge = row.rows[0];
+    if (!supabaseAdmin) return { status: "unavailable" };
+
+    const { data: challenge, error } = await supabaseAdmin
+      .from("app_admin_mfa_challenges")
+      .select(
+        "user_id,attempts,max_attempts,expires_at,is_verified,invalidated_at",
+      )
+      .eq("id", challengeId)
+      .maybeSingle();
+
+    if (error) return { status: "unavailable" };
     if (!challenge) return { status: "expired" };
-    if (challenge.is_verified || challenge.invalidated_at) return { status: "already_used" };
+    if (challenge.is_verified || challenge.invalidated_at)
+      return { status: "already_used" };
+
     if (new Date(challenge.expires_at).getTime() <= Date.now()) {
-      await dbPool.query(
-        `UPDATE public.app_admin_mfa_challenges SET invalidated_at=clock_timestamp() WHERE id=$1`,
-        [challengeId],
-      );
+      await supabaseAdmin
+        .from("app_admin_mfa_challenges")
+        .update({ invalidated_at: new Date().toISOString() })
+        .eq("id", challengeId);
       return { status: "expired" };
     }
+
     const user = await supabaseAdmin.auth.admin.getUserById(challenge.user_id);
     const email = user.data.user?.email?.toLowerCase();
     if (user.error || !email) return { status: "unavailable" };
 
     const verifyClient = createSupabasePublicClient();
     if (!verifyClient) return { status: "unavailable" };
-    const verified = await verifyClient.auth.verifyOtp({ email, token: otp, type: "email" });
+    const verified = await verifyClient.auth.verifyOtp({
+      email,
+      token: otp,
+      type: "email",
+    });
+
     if (
       verified.error ||
       !verified.data.session ||
       verified.data.user?.id !== challenge.user_id
     ) {
-      const attempts = challenge.attempts + 1;
-      const invalidate = attempts >= challenge.max_attempts;
-      await dbPool.query(
-        `UPDATE public.app_admin_mfa_challenges
-         SET attempts=$2,invalidated_at=CASE WHEN $3 THEN clock_timestamp() ELSE invalidated_at END
-         WHERE id=$1`,
-        [challengeId, attempts, invalidate],
-      );
+      const attempts = Number(challenge.attempts ?? 0) + 1;
+      const invalidate = attempts >= Number(challenge.max_attempts ?? 5);
+      await supabaseAdmin
+        .from("app_admin_mfa_challenges")
+        .update({
+          attempts,
+          ...(invalidate
+            ? { invalidated_at: new Date().toISOString() }
+            : {}),
+        })
+        .eq("id", challengeId);
       await this.recordAttempt(email, ipHash, "mfa_failure");
       return {
         status: "invalid_code",
-        attemptsRemaining: Math.max(0, challenge.max_attempts - attempts),
+        attemptsRemaining: Math.max(
+          0,
+          Number(challenge.max_attempts ?? 5) - attempts,
+        ),
       };
     }
-    await dbPool.query(
-      `UPDATE public.app_admin_mfa_challenges
-       SET is_verified=true,verified_at=clock_timestamp() WHERE id=$1`,
-      [challengeId],
-    );
+
+    await supabaseAdmin
+      .from("app_admin_mfa_challenges")
+      .update({
+        is_verified: true,
+        verified_at: new Date().toISOString(),
+      })
+      .eq("id", challengeId);
+
     await this.recordAttempt(email, ipHash, "success");
     return {
       status: "verified",
