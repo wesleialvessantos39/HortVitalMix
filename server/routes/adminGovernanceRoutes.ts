@@ -186,9 +186,14 @@ adminGovernanceRouter.get(
 adminGovernanceRouter.get(
   "/invites",
   adminSessionMiddleware,
-  requireSuperAdmin,
-  async (_req, res) => {
-    res.status(200).json({ invites: await AdminGovernanceService.listInvites() });
+  async (req: Request, res: Response) => {
+    if (!req.adminActor) return;
+    res.status(200).json({
+      invites: await AdminGovernanceService.listInvites(
+        req.adminActor.userId,
+        req.adminActor.role,
+      ),
+    });
   },
 );
 
@@ -196,7 +201,6 @@ adminGovernanceRouter.post(
   "/invites",
   originProtection,
   adminSessionMiddleware,
-  requireSuperAdmin,
   requireRecentAuth,
   async (req: Request, res: Response) => {
     const parsed = CreateInviteSchema.safeParse(req.body);
@@ -216,6 +220,8 @@ adminGovernanceRouter.post(
     const result = await AdminGovernanceService.createInvite(
       parsed.data,
       req.adminActor.userId,
+      req.adminActor.role,
+      req.adminActor.sectors,
       req.requestId,
       req.clientIpHash,
       origin,
@@ -224,9 +230,11 @@ adminGovernanceRouter.post(
       .status(
         result.status === "created"
           ? 201
-          : result.status === "conflict"
-            ? 409
-            : 503,
+          : result.status === "forbidden"
+            ? 403
+            : result.status === "conflict"
+              ? 409
+              : 503,
       )
       .json(result);
   },
@@ -306,29 +314,120 @@ adminGovernanceRouter.get(
 );
 
 adminGovernanceRouter.get(
-  "/users",
+  "/identities/lookup",
   adminSessionMiddleware,
-  requireSuperAdmin,
-  async (_req, res) => {
-    if (!dbPool) {
+  async (req: Request, res: Response) => {
+    if (!dbPool || !req.adminActor) {
       res.status(503).json({ error: "UNAVAILABLE" });
       return;
     }
+    const parsedEmail = z.string().trim().toLowerCase().email().safeParse(
+      String(req.query.email ?? ""),
+    );
+    if (!parsedEmail.success) {
+      res.status(422).json({ error: "VALIDATION_FAILED" });
+      return;
+    }
+    const result = await dbPool.query<{
+      user_id: string;
+      full_name: string;
+      email_normalized: string;
+      status: string;
+      public_roles: string[];
+      admin_roles: string[];
+    }>(
+      `SELECT p.user_id,p.full_name,p.email_normalized,u.status,
+              COALESCE(array_agg(DISTINCT r.role_code) FILTER (
+                WHERE r.role_code IN ('consumer','producer')
+                  AND r.revoked_at IS NULL
+                  AND (r.expires_at IS NULL OR r.expires_at>now())
+              ),'{}') AS public_roles,
+              COALESCE(array_agg(DISTINCT r.role_code) FILTER (
+                WHERE r.role_code IN ('platform_admin','platform_super_admin')
+                  AND r.revoked_at IS NULL
+                  AND (r.expires_at IS NULL OR r.expires_at>now())
+              ),'{}') AS admin_roles
+         FROM public.app_people p
+         JOIN public.app_users u ON u.id=p.user_id
+         LEFT JOIN public.app_user_role_assignments r ON r.user_id=p.user_id
+        WHERE p.email_normalized=$1
+        GROUP BY p.user_id,p.full_name,p.email_normalized,u.status
+        LIMIT 1`,
+      [parsedEmail.data],
+    );
+    const identity = result.rows[0];
+    if (!identity) {
+      res.status(200).json({ found: false });
+      return;
+    }
+    res.status(200).json({
+      found: true,
+      identity: {
+        fullName: identity.full_name,
+        email: identity.email_normalized,
+        status: identity.status,
+        publicRoles: identity.public_roles,
+        adminRoles: identity.admin_roles,
+      },
+    });
+  },
+);
+
+adminGovernanceRouter.get(
+  "/users",
+  adminSessionMiddleware,
+  async (req: Request, res: Response) => {
+    if (!dbPool || !req.adminActor) {
+      res.status(503).json({ error: "UNAVAILABLE" });
+      return;
+    }
+
+    const params: unknown[] = [];
+    let scope = "";
+    if (!req.adminActor.isSuperAdmin) {
+      params.push(req.adminActor.userId);
+      scope = `
+        AND ar.role_code='platform_admin'
+        AND EXISTS (
+          SELECT 1
+            FROM public.app_admin_sector_members target_sector
+            JOIN public.app_admin_sector_members actor_sector
+              ON actor_sector.sector_code=target_sector.sector_code
+             AND actor_sector.user_id=$1
+             AND actor_sector.revoked_at IS NULL
+             AND (actor_sector.expires_at IS NULL OR actor_sector.expires_at>now())
+           WHERE target_sector.user_id=u.id
+             AND target_sector.revoked_at IS NULL
+             AND (target_sector.expires_at IS NULL OR target_sector.expires_at>now())
+        )`;
+    }
+
     const result = await dbPool.query(
       `SELECT u.id,u.status,p.full_name,p.email_normalized,
-              r.role_code,
-              COALESCE(array_agg(m.sector_code) FILTER (WHERE m.sector_code IS NOT NULL),'{}') AS sectors
+              ar.role_code,
+              COALESCE(array_agg(DISTINCT m.sector_code) FILTER (
+                WHERE m.sector_code IS NOT NULL
+              ),'{}') AS sectors,
+              COALESCE(array_agg(DISTINCT pr.role_code) FILTER (
+                WHERE pr.role_code IN ('consumer','producer')
+                  AND pr.revoked_at IS NULL
+                  AND (pr.expires_at IS NULL OR pr.expires_at>now())
+              ),'{}') AS public_roles
          FROM public.app_users u
          JOIN public.app_people p ON p.user_id=u.id
-         JOIN public.app_user_role_assignments r ON r.user_id=u.id
-           AND r.revoked_at IS NULL
-           AND (r.expires_at IS NULL OR r.expires_at>now())
+         JOIN public.app_user_role_assignments ar ON ar.user_id=u.id
+           AND ar.revoked_at IS NULL
+           AND (ar.expires_at IS NULL OR ar.expires_at>now())
+           AND ar.role_code IN ('platform_admin','platform_super_admin')
+         LEFT JOIN public.app_user_role_assignments pr ON pr.user_id=u.id
+           AND pr.role_code IN ('consumer','producer')
          LEFT JOIN public.app_admin_sector_members m ON m.user_id=u.id
            AND m.revoked_at IS NULL
            AND (m.expires_at IS NULL OR m.expires_at>now())
-        WHERE r.role_code IN ('platform_admin','platform_super_admin')
-        GROUP BY u.id,p.full_name,p.email_normalized,r.role_code
+        WHERE 1=1 ${scope}
+        GROUP BY u.id,p.full_name,p.email_normalized,ar.role_code
         ORDER BY p.full_name`,
+      params,
     );
     res.status(200).json({ users: result.rows });
   },
