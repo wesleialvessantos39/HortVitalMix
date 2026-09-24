@@ -2,6 +2,7 @@ import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypt
 import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
 import { createSupabasePublicClient, supabaseAdmin, supabasePublic } from "../supabase/client.ts";
+import { authEmailRetryAfter } from "../security/authEmailRateLimit.ts";
 import type {
   AcceptInviteInput,
   AcceptInviteResult,
@@ -510,8 +511,14 @@ export class AdminGovernanceService {
   }
 
   static async requestAdminEmailConfirmation(email: string): Promise<{
-    status: "sent" | "already_verified" | "accepted" | "unavailable";
+    status:
+      | "sent"
+      | "already_verified"
+      | "accepted"
+      | "cooldown"
+      | "unavailable";
     maskedDestination?: string;
+    retryAfterSeconds?: number;
   }> {
     if (!supabaseAdmin) return { status: "unavailable" };
 
@@ -536,7 +543,16 @@ export class AdminGovernanceService {
       email: normalized,
       options: { shouldCreateUser: false },
     });
-    if (sent.error) return { status: "unavailable" };
+    if (sent.error) {
+      const retryAfterSeconds = authEmailRetryAfter(sent.error);
+      if (retryAfterSeconds)
+        return {
+          status: "cooldown",
+          maskedDestination: maskEmail(normalized),
+          retryAfterSeconds,
+        };
+      return { status: "unavailable" };
+    }
 
     return {
       status: "sent",
@@ -633,14 +649,13 @@ export class AdminGovernanceService {
     }
 
     if (principal && !principal.email_verified_at) {
-      const confirmation = await this.requestAdminEmailConfirmation(normalized);
+      // Credencial e entrega de e-mail são responsabilidades separadas. Uma
+      // senha válida nunca deve virar "serviço indisponível" só porque o
+      // provedor aplicou cooldown de envio.
       await client.auth.signOut({ scope: "local" }).catch(() => undefined);
-      if (confirmation.status === "unavailable")
-        return { status: "unavailable" };
       return {
         status: "email_confirmation_required",
-        maskedDestination:
-          confirmation.maskedDestination ?? maskEmail(normalized),
+        maskedDestination: maskEmail(normalized),
       };
     }
 
@@ -665,7 +680,13 @@ export class AdminGovernanceService {
       });
       await client.auth.signOut({ scope: "local" }).catch(() => undefined);
       if (sent.error) {
-        await this.recordAttempt(normalized, ipHash, "failure");
+        const retryAfterSeconds = authEmailRetryAfter(sent.error);
+        if (retryAfterSeconds)
+          return {
+            status: "email_rate_limited",
+            retryAfterSeconds,
+            phase: "mfa",
+          };
         return { status: "unavailable" };
       }
 
