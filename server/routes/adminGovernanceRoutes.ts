@@ -9,6 +9,8 @@ import {
 import { AdminGovernanceService } from "../services/AdminGovernanceService.ts";
 import {
   AcceptInviteSchema,
+  AdminEmailConfirmationRequestSchema,
+  AdminEmailConfirmationVerifySchema,
   AdminLoginSchema,
   BootstrapRequestSchema,
   CreateInviteSchema,
@@ -98,6 +100,55 @@ adminGovernanceRouter.post(
 );
 
 adminGovernanceRouter.post(
+  "/auth/email-confirmation/request",
+  originProtection,
+  async (req: Request, res: Response) => {
+    const parsed = AdminEmailConfirmationRequestSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(422).json({ status: "validation_failed" });
+      return;
+    }
+
+    const result = await AdminGovernanceService.requestAdminEmailConfirmation(
+      parsed.data.email,
+    );
+
+    if (result.status === "unavailable") {
+      res.status(503).json(result);
+      return;
+    }
+
+    // Resposta deliberadamente não enumera contas administrativas.
+    res.status(202).json(result);
+  },
+);
+
+adminGovernanceRouter.post(
+  "/auth/email-confirmation/verify",
+  originProtection,
+  async (req: Request, res: Response) => {
+    const parsed = AdminEmailConfirmationVerifySchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(422).json({ status: "validation_failed" });
+      return;
+    }
+
+    const result = await AdminGovernanceService.verifyAdminEmailConfirmation(
+      parsed.data.email,
+      parsed.data.otp,
+    );
+
+    const code =
+      result.status === "verified" || result.status === "already_verified"
+        ? 200
+        : result.status === "invalid_code"
+          ? 422
+          : 503;
+    res.status(code).json(result);
+  },
+);
+
+adminGovernanceRouter.post(
   "/auth/login",
   originProtection,
   async (req: Request, res: Response) => {
@@ -121,7 +172,10 @@ adminGovernanceRouter.post(
       });
       return;
     }
-    if (result.status === "mfa_required") {
+    if (
+      result.status === "mfa_required" ||
+      result.status === "email_confirmation_required"
+    ) {
       res.status(200).json(result);
       return;
     }
