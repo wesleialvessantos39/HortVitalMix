@@ -66,24 +66,6 @@ async function edgeRequest<T>(
   return payload as T;
 }
 
-function shouldUseEdgeFallback(error: unknown) {
-  const failure = error as ApiFailure;
-  if (!failure || typeof failure !== "object") return true;
-  if (!failure.status) return true;
-  if (failure.status >= 500) return true;
-  if (failure.status === 404 || failure.status === 405) return true;
-  if (
-    failure.status === 403 &&
-    ![
-      "BOOTSTRAP_EMAIL_NOT_AUTHORIZED",
-      "email_not_authorized",
-      "BOOTSTRAP_ALREADY_CLOSED",
-    ].includes(failure.message)
-  )
-    return true;
-  return false;
-}
-
 export async function getBootstrapStatus(): Promise<BootstrapStatus> {
   try {
     return await api<BootstrapStatus>("/v1/admin/bootstrap/status");
@@ -95,13 +77,11 @@ export async function getBootstrapStatus(): Promise<BootstrapStatus> {
 export async function runBootstrap(
   input: BootstrapCommand,
 ): Promise<{ status: string; userId?: string; requestId?: string }> {
-  try {
-    return await api("/v1/admin/bootstrap", {
-      method: "POST",
-      body: JSON.stringify(input),
-    });
-  } catch (error) {
-    if (!shouldUseEdgeFallback(error)) throw error;
-    return edgeRequest("POST", input);
-  }
+  // A mutação do primeiro Super administrador deve passar pelo backend
+  // versionado junto ao frontend. O Edge permanece apenas como fallback
+  // de leitura do status, evitando divergência entre versões de escrita.
+  return api("/v1/admin/bootstrap", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }
