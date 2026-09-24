@@ -8,20 +8,26 @@ export function AdminEmailConfirmationPage({
 }: {
   onNavigate: (to: string) => void;
 }) {
-  const initialEmail = useMemo(
-    () => new URLSearchParams(location.search).get("email") ?? "",
-    [],
-  );
-  const [email, setEmail] = useState(initialEmail);
+  const initial = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return {
+      email: params.get("email") ?? "",
+      sent: params.get("sent") === "1",
+      destination: params.get("dest") ?? "",
+    };
+  }, []);
+  const [email, setEmail] = useState(initial.email);
   const [otp, setOtp] = useState("");
-  const [destination, setDestination] = useState("");
-  const [sent, setSent] = useState(false);
+  const [destination, setDestination] = useState(initial.destination);
+  const [sent, setSent] = useState(initial.sent);
   const [verified, setVerified] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(
-    initialEmail
-      ? "Envie o código de confirmação para validar este e-mail administrativo."
-      : "",
+    initial.sent
+      ? "Código de confirmação enviado. Confira sua caixa de entrada e a pasta de spam."
+      : initial.email
+        ? "Envie o código de confirmação para validar este e-mail administrativo."
+        : "",
   );
 
   async function requestCode() {
