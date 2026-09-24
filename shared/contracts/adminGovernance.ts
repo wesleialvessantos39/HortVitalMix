@@ -180,7 +180,7 @@ export const AcceptInviteSchema = z
     fullName: z.string().trim().min(3).max(255).optional(),
     cpf,
     phone: phone.optional(),
-    password: StrongPasswordSchema,
+    password: z.string().min(1).max(128),
     commandId: z.string().uuid(),
   })
   .strict();
