@@ -2488,3 +2488,52 @@ O arquivo **DOCUMENTO COM DIAGRAMA E ESPECIFICAÇÕES** passa a ser tratado, jun
 Após a introdução de `app_admin_principals` no schema 22, a mutação `POST` do bootstrap passa a utilizar exclusivamente o backend versionado junto à aplicação. O Supabase Edge permanece somente como fallback de leitura do status.
 
 Motivo: impedir que uma versão Edge eventualmente defasada aplique regras antigas de conflito de CPF durante a criação do primeiro Super administrador. Assim, Google Studio e Vercel executam a mesma regra de escrita publicada na `main`.
+
+
+---
+
+## 2026-09-23 — CORREÇÃO DO TRANSPORTE DE ESCRITA DO PRIMEIRO SUPER ADMINISTRADOR
+
+### Evidência da tentativa após schema 22
+
+Após a implantação de `app_admin_principals`, nova tentativa real de criação do primeiro Super administrador ainda retornou mensagem genérica de indisponibilidade.
+
+A investigação dos logs do Supabase no horário da tentativa mostrou:
+
+- o navegador conseguiu executar o fallback de **leitura** da Edge Function `admin-bootstrap`;
+- `OPTIONS /functions/v1/admin-bootstrap` respondeu 204;
+- `GET /functions/v1/admin-bootstrap` respondeu 200;
+- não houve, no mesmo fluxo, criação Auth administrativa, chamada RPC `fn_finalize_first_super_admin` nem persistência em `app_admin_principals`;
+- o estado permaneceu com zero Super administradores e zero `app_admin_principals`.
+
+Conclusão: a falha ocorria **antes da mutação chegar ao Supabase**. Portanto, não era mais conflito de CPF, e-mail ou schema.
+
+### Lacunas de runtime encontradas
+
+Foram identificadas três lacunas de transporte/configuração:
+
+1. **Google Studio / Vite preview** — o plugin montava Express em `configureServer`, usado pelo desenvolvimento, mas não em `configurePreviewServer`. Em preview de build, o frontend podia abrir normalmente enquanto `/_hvm_api` e `/api` não possuíam backend Express.
+2. **Vercel** — o bootstrap dependia exclusivamente do catch-all `api/[...path].ts`. Foram adicionados entrypoints exatos para:
+   - `/api/v1/admin/bootstrap`;
+   - `/api/v1/admin/bootstrap/status`.
+   O catch-all continua preservado para as demais rotas.
+3. **Aliases modernos do Supabase** — a documentação do projeto afirmava compatibilidade com chaves modernas, mas `runtime.ts` ainda lia apenas os nomes legados. O runtime passa a reconhecer:
+   - `SUPABASE_PUBLISHABLE_KEY`;
+   - `SUPABASE_SECRET_KEY`;
+   - mapas `SUPABASE_PUBLISHABLE_KEYS` e `SUPABASE_SECRET_KEYS`;
+   - aliases públicos Vite/Next compatíveis;
+   mantendo precedência dos nomes canônicos já existentes.
+
+### Regra de escrita preservada
+
+A criação do primeiro Super administrador continua sendo executada pelo backend canônico versionado junto à aplicação. A Edge Function permanece fallback de leitura do status, impedindo divergência de versão na mutação administrativa.
+
+### Segurança
+
+- nenhum segredo é exposto no frontend ou em mensagens;
+- aliases de segredo são lidos somente no servidor;
+- CPF público existente continua vinculado por `app_admin_principals`, sem duplicação em `app_people`;
+- MFA de Super administrador permanece;
+- bootstrap continua fechando automaticamente após o primeiro Super administrador ativo;
+- nenhum usuário foi criado manualmente durante o diagnóstico;
+- schema lógico permanece 22.
