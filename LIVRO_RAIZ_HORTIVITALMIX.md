@@ -2789,3 +2789,55 @@ Status: backend, frontend e Supabase atualizados. A migration `20260924165427_ad
 - Supabase production: migration `admin_role_scoped_credentials` aplicada.
 - Release corrente: schema lógico **25**.
 - Hash canônico: `0fc58f8e0b0e4fd66f2f12a7b59e9de269339ab0fce014bb449abfd539cc8ea7`.
+
+
+## 2026-09-24 — RCA definitivo do loop pós-MFA e divergência Google Studio × Vercel
+
+### Evidência operacional observada
+
+A investigação deixou de tratar o sintoma como falha de código OTP. No Supabase production foram encontrados desafios de Super administrador marcados como `is_verified=true`, com `verified_at` preenchido e sessões `auth.sessions` criadas exatamente no mesmo instante. O histórico `app_admin_auth_attempts` também registrou a sequência `mfa_pending -> success`.
+
+Portanto, o código recebido estava correto, era aceito pelo Supabase e a sessão era emitida. O defeito ocorria **depois da verificação do MFA**, no handoff entre a autenticação administrativa e a shell da aplicação.
+
+### Causa-raiz 1 — sessão administrativa era reenviada ao fluxo público
+
+`AdminLoginPage` chamava `onSessionRefresh()` logo após `session_created` e logo após `mfa/verify`. Esse callback pertence ao hook público `useSession` e consulta `/v1/auth/session`.
+
+Isso era incorreto para a modelagem T05, pois a credencial administrativa possui `admin_user_id` próprio, enquanto a mesma pessoa/CPF pode possuir outro `user_id` público em `app_people`. Em production foi comprovado que esses IDs são diferentes. A sessão administrativa válida acabava sendo submetida imediatamente a uma resolução pública, podia ser descartada pela shell e o usuário retornava ao login; na tentativa seguinte o Super administrador recebia um novo MFA, gerando a impressão de “código infinito”.
+
+### Causa-raiz 2 — AdminAccessGate dependia indiretamente do actor público
+
+`adminSessionMiddleware` exigia que `req.actor`, construído pelo middleware público, coincidisse com o usuário Auth administrativo. Isso violava a segregação física de credenciais entre conta pública e credencial administrativa.
+
+A fronteira administrativa agora valida diretamente:
+
+- access token emitido pelo Supabase Auth;
+- `app_admin_principals.admin_user_id`;
+- `portal_role`;
+- papel ativo em `app_user_role_assignments`;
+- setores ativos quando o papel for `platform_admin`.
+
+Não existe mais dependência funcional de `req.actor` para autorizar uma sessão administrativa.
+
+### Causa-raiz 3 — runtime Vercel falhava fechado antes do login quando o client privilegiado não estava disponível
+
+O fluxo administrativo encerrava com `unavailable` em pontos que dependiam diretamente de `supabaseAdmin`. Isso explica a mensagem genérica da interface “Não foi possível entrar agora” e também por que algumas tentativas em Vercel não deixavam registro de falha de senha.
+
+Foram adicionados fallbacks server-side para o Postgres canônico em:
+
+- resolução de `app_admin_principals`;
+- confirmação administrativa de e-mail;
+- consulta/criação/invalidação do desafio MFA;
+- conclusão do desafio MFA;
+- validação da sessão administrativa;
+- leitura de papéis e setores administrativos.
+
+A validação do access token também pode usar o client público do Supabase quando o client privilegiado não estiver disponível, mantendo a autorização administrativa no banco e fail-closed.
+
+### Comportamento final esperado
+
+- **Administrador:** e-mail + senha -> sessão administrativa direta, limitada aos setores atribuídos.
+- **Super administrador:** e-mail + senha -> exatamente um MFA obrigatório -> código válido -> painel administrativo.
+- Depois de um MFA válido, a aplicação não consulta mais `/v1/auth/session` para decidir a sessão administrativa; o `AdminAccessGate` usa exclusivamente `/v1/admin/auth/verify-session`.
+- Um novo MFA somente deve ser exigido em um **novo login** de Super administrador, conforme o Manual Mestre v11, e não após a aceitação do código da tentativa corrente.
+- Google Studio e Vercel continuam consumindo a mesma implementação do repositório `main`; não existe caminho de autenticação alternativo por ambiente.
