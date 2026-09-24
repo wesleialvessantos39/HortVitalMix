@@ -1,5 +1,8 @@
 import { dbPool } from "../db/pool.ts";
-import { supabaseAdmin } from "../supabase/client.ts";
+import {
+  createSupabaseUserClient,
+  supabaseAdmin,
+} from "../supabase/client.ts";
 
 export type IdentityAccessSnapshot = {
   status: string;
@@ -10,17 +13,20 @@ export type IdentityAccessSnapshot = {
 
 async function resolveViaDataApi(
   userId: string,
+  accessToken?: string | null,
 ): Promise<IdentityAccessSnapshot | null> {
-  if (!supabaseAdmin) return null;
+  const dataClient =
+    supabaseAdmin ?? (accessToken ? createSupabaseUserClient(accessToken) : null);
+  if (!dataClient) return null;
 
   const [{ data: user, error: userError }, { data: roles, error: rolesError }] =
     await Promise.all([
-      supabaseAdmin
+      dataClient
         .from("app_users")
         .select("status")
         .eq("id", userId)
         .maybeSingle(),
-      supabaseAdmin
+      dataClient
         .from("app_user_role_assignments")
         .select("role_code,expires_at")
         .eq("user_id", userId)
@@ -36,7 +42,7 @@ async function resolveViaDataApi(
     )
     .map((row) => String(row.role_code));
 
-  const { data: principal } = await supabaseAdmin
+  const { data: principal } = await dataClient
     .from("app_admin_principals")
     .select("person_id")
     .eq("admin_user_id", userId)
@@ -44,7 +50,7 @@ async function resolveViaDataApi(
 
   let personId = principal?.person_id ?? null;
   if (!personId) {
-    const { data: person } = await supabaseAdmin
+    const { data: person } = await dataClient
       .from("app_people")
       .select("id")
       .eq("user_id", userId)
@@ -66,6 +72,7 @@ async function resolveViaDataApi(
 export async function resolveIdentityAccess(
   userId: string,
   sessionId: string | null = null,
+  accessToken: string | null = null,
 ): Promise<IdentityAccessSnapshot | null> {
   if (dbPool) {
     try {
@@ -127,5 +134,5 @@ export async function resolveIdentityAccess(
     }
   }
 
-  return resolveViaDataApi(userId);
+  return resolveViaDataApi(userId, accessToken);
 }
