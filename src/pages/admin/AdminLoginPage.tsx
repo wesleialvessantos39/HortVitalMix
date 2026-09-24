@@ -75,9 +75,11 @@ export function AdminLoginPage({
       setError(
         failure.status === 429
           ? "Muitas tentativas. Aguarde alguns minutos e tente novamente."
-          : failure.status === 401
-            ? "E-mail ou senha inválidos, ou acesso administrativo não autorizado."
-            : "Serviço administrativo indisponível no momento.",
+          : failure.status === 401 ||
+              failure.status === 403 ||
+              failure.status === 409
+            ? "Dados inválidos ou cadastro não autorizado."
+            : "Não foi possível entrar agora. Tente novamente em alguns instantes.",
       );
     } finally {
       setBusy(false);

@@ -23,6 +23,21 @@ describe("Trilha 05 — regressões de selagem v11", () => {
     expect(account).not.toContain('"/v1/auth/admin-login"');
   });
 
+  it("não expõe códigos internos nas mensagens administrativas", () => {
+    const account = readFileSync("src/components/Account.tsx", "utf8");
+    const bootstrap = readFileSync("src/pages/admin/AdminBootstrapPage.tsx", "utf8");
+    const adminLogin = readFileSync("src/pages/admin/AdminLoginPage.tsx", "utf8");
+    const app = readFileSync("src/App.tsx", "utf8");
+    const router = readFileSync("src/pages/admin/AdminRouter.tsx", "utf8");
+
+    expect(account).not.toContain("Falha não identificada no cadastro:");
+    expect(account).not.toContain("Código de atendimento:");
+    expect(bootstrap).toContain("Cadastro não autorizado.");
+    expect(adminLogin).toContain("Dados inválidos ou cadastro não autorizado.");
+    expect(app).toContain('path === "/acesso/administracao"');
+    expect(router).toContain('path==="/acesso/administracao"');
+  });
+
   it("reconcilia somente o alias físico conhecido da migration T05", () => {
     const productionRows = manifest.migrations.map((migration) => ({
       version: migration.version,

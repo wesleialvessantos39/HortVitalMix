@@ -574,10 +574,6 @@ export function Account({
         return;
       }
 
-      const requestSuffix = failure.requestId
-        ? ` Código de atendimento: ${failure.requestId}.`
-        : "";
-
       setNotice(
         code === "INVALID_CREDENTIALS"
           ? "E-mail ou senha inválidos."
@@ -598,11 +594,11 @@ export function Account({
               : code === "REGISTRATION_RATE_LIMITED"
                 ? "Foram feitas muitas tentativas de cadastro. Tente novamente em alguns minutos."
                 : code === "AUTH_UNAVAILABLE"
-                  ? "O serviço de autenticação está temporariamente indisponível." + requestSuffix
+                  ? "Não foi possível concluir a solicitação agora. Tente novamente em alguns instantes."
                   : code === "DATABASE_UNAVAILABLE"
-                    ? "O cadastro não conseguiu acessar o banco de dados." + requestSuffix
+                    ? "Não foi possível concluir a solicitação agora. Tente novamente em alguns instantes."
                     : code === "ORIGIN_NOT_ALLOWED"
-                      ? "A página não foi reconhecida como origem segura. Atualize o preview e tente novamente." + requestSuffix
+                      ? "Não foi possível concluir a solicitação agora. Tente novamente em alguns instantes."
                       : code === "ACCOUNT_UNAVAILABLE"
                         ? "Sua conta não está disponível para acesso."
                         : code === "RECOVERY_CONTEXT_MISMATCH"
@@ -614,46 +610,48 @@ export function Account({
                               : code === "PASSWORD_UPDATE_REJECTED"
                                 ? "Não foi possível aceitar a nova senha. Solicite um novo link de recuperação."
                           : code === "DEPENDENCY_UNAVAILABLE"
-                            ? "O serviço está temporariamente indisponível." + requestSuffix
+                            ? "Não foi possível concluir a solicitação agora. Tente novamente em alguns instantes."
                             : code === "REGISTRATION_SCHEMA_OUTDATED"
-                              ? "O banco de dados ainda não recebeu a atualização necessária para concluir o cadastro." + requestSuffix
+                              ? "Não foi possível concluir o cadastro agora. Tente novamente em alguns instantes."
                               : code === "REGISTRATION_DATA_REJECTED"
-                                ? "Os dados foram recusados pelo cadastro. Revise os campos e tente novamente." + requestSuffix
+                                ? "Dados inválidos ou cadastro não autorizado."
                                 : code === "REGISTRATION_INTERNAL_ERROR"
-                                  ? "Ocorreu uma falha interna durante o cadastro." + requestSuffix
+                                  ? "Não foi possível concluir o cadastro agora. Tente novamente em alguns instantes."
                                   : code === "REQUEST_TIMEOUT"
                                     ? "O servidor demorou mais do que o esperado para responder. O cadastro não foi confirmado."
                                     : code === "NETWORK_UNAVAILABLE"
                                       ? "Não foi possível conectar ao servidor de cadastro. Verifique a conexão e tente novamente."
                                       : code === "INVALID_API_RESPONSE"
-                                        ? "A função de cadastro respondeu de forma inválida. O erro foi identificado para correção."
+                                        ? "Não foi possível concluir o cadastro agora. Tente novamente em alguns instantes."
                                         : code === "REGISTRATION_STATUS_UNKNOWN"
-                                          ? "O servidor perdeu a confirmação final do cadastro e não apagou a conta por segurança. Não repita o cadastro agora; tente entrar ou recuperar a senha." + requestSuffix
+                                          ? "Não foi possível confirmar o cadastro. Tente entrar ou recuperar a senha antes de repetir o cadastro."
                                           : code === "HTTP_400"
-                                            ? "A plataforma recusou a solicitação como inválida (HTTP 400)." + requestSuffix
+                                            ? "Dados inválidos. Revise as informações e tente novamente."
                                             : code === "HTTP_401"
-                                              ? "A plataforma recusou a solicitação por autenticação (HTTP 401)." + requestSuffix
+                                              ? "Dados inválidos ou cadastro não autorizado."
                                               : code === "HTTP_403"
-                                                ? "A plataforma bloqueou esta solicitação (HTTP 403)." + requestSuffix
+                                                ? "Cadastro não autorizado."
                                                 : code === "HTTP_404"
-                                                  ? "A rota de cadastro não foi encontrada (HTTP 404)." + requestSuffix
+                                                  ? "Não foi possível concluir a solicitação agora. Tente novamente em alguns instantes."
                                                   : code === "HTTP_405"
-                                                    ? "A rota existe, mas recusou o método POST (HTTP 405)." + requestSuffix
+                                                    ? "Não foi possível concluir a solicitação agora. Tente novamente em alguns instantes."
                                                     : code === "HTTP_413"
-                                                      ? "A plataforma recusou o tamanho da solicitação (HTTP 413)." + requestSuffix
+                                                      ? "Não foi possível concluir a solicitação. Revise os dados informados."
                                                       : code === "HTTP_429"
-                                                        ? "A plataforma limitou temporariamente as tentativas de cadastro (HTTP 429)." + requestSuffix
+                                                        ? "Muitas tentativas. Aguarde alguns minutos e tente novamente."
                                                         : code === "HTTP_500"
-                                                          ? "A função de cadastro falhou internamente (HTTP 500)." + requestSuffix
+                                                          ? "Não foi possível concluir o cadastro agora. Tente novamente em alguns instantes."
                                                           : code === "HTTP_502"
-                                                            ? "O gateway não conseguiu concluir a chamada ao cadastro (HTTP 502)." + requestSuffix
+                                                            ? "Não foi possível concluir o cadastro agora. Tente novamente em alguns instantes."
                                                             : code === "HTTP_503"
-                                                              ? "O serviço de cadastro está indisponível no momento (HTTP 503)." + requestSuffix
+                                                              ? "Não foi possível concluir o cadastro agora. Tente novamente em alguns instantes."
                                                               : code === "HTTP_504"
-                                                                ? "A plataforma encerrou a solicitação por tempo excedido (HTTP 504)." + requestSuffix
+                                                                ? "A solicitação demorou mais do que o esperado. Tente novamente."
                                                                 : code.startsWith("HTTP_")
-                                                                  ? "A plataforma recusou a solicitação com " + code.replace("_", " ") + "." + requestSuffix
-                                                                  : "Falha não identificada no cadastro: " + code + requestSuffix,
+                                                                  ? "Não foi possível concluir a solicitação. Verifique os dados informados e tente novamente."
+                                                                  : code === "ADMIN_GOVERNANCE_LOGIN_REQUIRED"
+                                                                    ? "Dados inválidos ou cadastro não autorizado."
+                                                                    : "Não foi possível concluir a solicitação. Verifique os dados informados e tente novamente.",
       );
     } finally {
       setBusy(false);

@@ -20,6 +20,16 @@ const bootstrapTransport = read("src/lib/adminBootstrapTransport.ts");
 const bootstrapEdge = read("supabase/functions/admin-bootstrap/index.ts");
 const vercelConfig = read("vercel.json");
 
+function bootstrapPageDoesNotExposeTechnicalDetails() {
+  const bootstrapPage = read("src/pages/admin/AdminBootstrapPage.tsx");
+  const accountPage = read("src/components/Account.tsx");
+  return (
+    bootstrapPage.includes("Cadastro não autorizado.") &&
+    !accountPage.includes("Falha não identificada no cadastro:") &&
+    !accountPage.includes("Código de atendimento:")
+  );
+}
+
 const requiredTables = [
   "app_admin_sectors",
   "app_admin_sector_members",
@@ -122,7 +132,12 @@ const checks = {
     account.includes('navigate("/admin/bootstrap")') &&
     account.includes("Verificar configuração inicial") &&
     router.includes("intendedRole={intendedRole}") &&
+    router.includes('path==="/acesso/administracao"') &&
+    router.includes('path==="/acesso/super-administracao"') &&
     read("src/pages/admin/AdminLoginPage.tsx").includes("intendedRole"),
+  friendlyAdminErrors:
+    read("src/pages/admin/AdminLoginPage.tsx").includes("Dados inválidos ou cadastro não autorizado.") &&
+    bootstrapPageDoesNotExposeTechnicalDetails(),
   publicRegistrationDiscovery:
     account.includes("access-discovery") &&
     account.includes('navigate("/cadastro")'),
@@ -132,7 +147,7 @@ const checks = {
       !bootstrapPage.includes("Bootstrap liberado neste ambiente") &&
       !bootstrapPage.includes("O servidor está esperando") &&
       bootstrapPage.includes("O e-mail informado não foi reconhecido") &&
-      bootstrapPage.includes("Já existe uma identidade usando este e-mail ou CPF") &&
+      bootstrapPage.includes("Cadastro não autorizado. Os dados informados já estão vinculados a outra conta.") &&
       bootstrapPage.includes("backend não conseguiu acessar uma dependência obrigatória") &&
       bootstrapPage.includes("<CPFInput") &&
       bootstrapPage.includes("<PhoneInput") &&

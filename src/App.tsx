@@ -86,7 +86,12 @@ export default function App() {
     refresh: refreshSession,
   } = useSession();
   const display = config ?? fallback;
-  const isAdminRoute = path.startsWith("/admin/") || path === "/entrar/administrador" || path === "/entrar/super-administrador";
+  const isAdminRoute =
+    path.startsWith("/admin/") ||
+    path === "/entrar/administrador" ||
+    path === "/entrar/super-administrador" ||
+    path === "/acesso/administracao" ||
+    path === "/acesso/super-administracao";
   const accountTarget = shellSession ? "/minha-conta" : "/conta";
   const publicPortalSession =
     Boolean(shellSession) &&

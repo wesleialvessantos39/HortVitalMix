@@ -2278,3 +2278,54 @@ Assim:
 - migration de finalização RPC permanece;
 - CPF e celular continuam usando os componentes canônicos;
 - a identidade autorizada continua validada server-side.
+
+
+---
+
+## 2026-09-23 — MENSAGENS ADMINISTRATIVAS AMIGÁVEIS E CONFLITO DE IDENTIDADE
+
+### Diagnóstico real do conflito no primeiro Super administrador
+
+Foi confirmado no Supabase canônico que **não existe Super administrador ativo**. Entretanto, o CPF informado na tentativa de bootstrap já pertence a uma identidade pública ativa que possui os papéis `consumer` e `producer`.
+
+Isso não representa um cadastro administrativo existente. Trata-se da regra canônica de identidade já definida no projeto: **CPF é único em `app_people` e uma mesma pessoa acumula papéis na mesma identidade, em vez de criar uma segunda pessoa com o mesmo CPF**.
+
+Por isso, uma tentativa de criar uma nova identidade administrativa com outro e-mail e o mesmo CPF é rejeitada pela proteção de conflito. Nenhum Super administrador fantasma foi encontrado.
+
+### Correção de experiência do usuário
+
+As mensagens públicas da área administrativa foram simplificadas. A interface não deve mais exibir ao usuário final:
+
+- códigos internos como `ADMIN_GOVERNANCE_LOGIN_REQUIRED`;
+- textos como **“Falha não identificada no cadastro”**;
+- `HTTP_4xx` / `HTTP_5xx`;
+- identificadores internos apresentados como **“Código de atendimento”**.
+
+O backend continua podendo registrar os códigos internamente para auditoria e diagnóstico.
+
+Mensagens públicas passam a usar formulações simples, por exemplo:
+
+- **“Dados inválidos ou cadastro não autorizado.”**
+- **“Cadastro não autorizado. Os dados informados já estão vinculados a outra conta.”**
+- **“Não foi possível entrar agora. Tente novamente em alguns instantes.”**
+
+### Correção das rotas legadas administrativas
+
+Os aliases:
+
+- `/acesso/administracao`;
+- `/acesso/super-administracao`;
+
+deixam de cair no componente público `Account` e passam a utilizar diretamente o `AdminRouter` / `AdminLoginPage` canônico da Trilha 05.
+
+Com isso, nenhum acesso administrativo legítimo passa pelo endpoint legado `/v1/auth/admin-login`. O endpoint legado continua fechado no backend como proteção de compatibilidade, sem expor seu código interno na interface.
+
+### Preservação
+
+- nenhum usuário foi apagado;
+- nenhum papel existente foi alterado;
+- o CPF canônico continua único;
+- os papéis públicos existentes foram preservados;
+- MFA administrativo permanece obrigatório;
+- convites administrativos permanecem inalterados;
+- nenhuma RLS ou migration foi modificada nesta correção.

@@ -16,11 +16,17 @@ type Props={
 };
 
 export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
- if(path==="/admin/entrar"||path==="/entrar/administrador"||path==="/entrar/super-administrador"){
+ if(
+  path==="/admin/entrar" ||
+  path==="/entrar/administrador" ||
+  path==="/entrar/super-administrador" ||
+  path==="/acesso/administracao" ||
+  path==="/acesso/super-administracao"
+ ){
   const intendedRole =
-   path==="/entrar/administrador"
+   path==="/entrar/administrador" || path==="/acesso/administracao"
     ? "platform_admin" as const
-    : path==="/entrar/super-administrador"
+    : path==="/entrar/super-administrador" || path==="/acesso/super-administracao"
       ? "platform_super_admin" as const
       : null;
   return <AdminLoginPage

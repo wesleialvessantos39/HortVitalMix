@@ -107,7 +107,7 @@ export function AdminBootstrapPage({onNavigate}:Props){
      setReason("Já existe Super administrador ativo.");
      setMessage("A configuração inicial já foi concluída.");
     }else{
-     setMessage("Já existe uma identidade usando este e-mail ou CPF. Use dados ainda não vinculados.");
+     setMessage("Cadastro não autorizado. Os dados informados já estão vinculados a outra conta.");
     }
    }else if(failure.status===422){
     setMessage("Revise os campos destacados antes de continuar.");
