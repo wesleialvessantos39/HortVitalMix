@@ -126,3 +126,24 @@ Nenhuma das duas correções exigiu alteração de banco ou rollback.
 A partir desta selagem, nenhum fluxo pode criar sessão de `platform_super_admin` fora do motor `/v1/admin/auth/login` + MFA. O endpoint `/v1/auth/admin-login` existe apenas como compatibilidade defensiva e deve permanecer incapaz de autenticar.
 
 A próxima implementação funcional é a **Trilha 06**, usando o próximo número lógico disponível e sem downgrade da história já aplicada.
+
+
+---
+
+## Adendo — credencial administrativa separada / schema 22
+
+A revisão posterior da Trilha 05 identificou um conflito legítimo: o CPF do primeiro Super administrador já podia existir como Consumidor/Produtor. Para preservar a regra de CPF único sem misturar logins públicos e administrativos, foi criada a entidade `app_admin_principals`.
+
+Estado canônico desta revisão:
+
+- schema lógico **22**;
+- migration canônica `20260924023000_trilha05_admin_principals.sql`;
+- versão física aplicada pelo Supabase: `20260924023250`;
+- o primeiro Super administrador pode ser vinculado a `app_people` existente sem alterar a credencial pública;
+- e-mail e senha administrativos permanecem independentes;
+- o bootstrap fecha automaticamente após a criação do primeiro `platform_super_admin`;
+- novos acessos continuam sendo criados exclusivamente pelo Portal Administrativo;
+- Administrador setorial continua limitado à própria hierarquia de setores;
+- Super administrador mantém MFA obrigatório e proteção contra remoção do último acesso global.
+
+O manifesto e o readiness passam a **schema 22**. As seções anteriores deste documento permanecem como registro histórico da selagem anterior e não devem ser interpretadas como downgrade do estado atual.
