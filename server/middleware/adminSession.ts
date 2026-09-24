@@ -76,7 +76,21 @@ export async function adminSessionMiddleware(
     });
     return;
   }
-  if (!req.actor || req.actor.userId !== userData.user.id) {
+  // Não dependa de req.actor do middleware público. Uma credencial
+  // administrativa pode apontar para a mesma pessoa/CPF de uma conta pública,
+  // mas ter outro auth user_id e outra senha. A fronteira administrativa
+  // valida sua própria identidade pelo token + app_admin_principals.
+  const principal = await supabaseAdmin
+    .from("app_admin_principals")
+    .select("admin_user_id,portal_role")
+    .eq("admin_user_id", userData.user.id)
+    .maybeSingle();
+
+  if (
+    principal.error ||
+    !principal.data ||
+    principal.data.admin_user_id !== userData.user.id
+  ) {
     res.status(401).json({
       error: AdminErrorCode.UNAUTHORIZED,
       message: "Sessão administrativa não está ativa.",
@@ -105,20 +119,18 @@ export async function adminSessionMiddleware(
     (row) => !row.expires_at || new Date(row.expires_at).getTime() > Date.now(),
   );
   let role: AdminRole | null = null;
+  const principalRole = principal.data.portal_role as AdminRole;
   if (
-    portalRole === "platform_super_admin" &&
-    active.some((row) => row.role_code === "platform_super_admin")
-  )
-    role = "platform_super_admin";
-  else if (
-    portalRole === "platform_admin" &&
-    active.some((row) => row.role_code === "platform_admin")
-  )
-    role = "platform_admin";
-  else if (active.some((row) => row.role_code === "platform_super_admin"))
-    role = "platform_super_admin";
-  else if (active.some((row) => row.role_code === "platform_admin"))
-    role = "platform_admin";
+    portalRole === principalRole &&
+    active.some((row) => row.role_code === principalRole)
+  ) {
+    role = principalRole;
+  } else if (
+    !portalRole &&
+    active.some((row) => row.role_code === principalRole)
+  ) {
+    role = principalRole;
+  }
 
   if (!role) {
     res.status(403).json({
