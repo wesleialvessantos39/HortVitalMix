@@ -2,6 +2,7 @@ import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypt
 import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
 import { createSupabasePublicClient, supabaseAdmin, supabasePublic } from "../supabase/client.ts";
+import { StrongPasswordSchema } from "../../shared/contracts/auth.ts";
 import type {
   AcceptInviteInput,
   AcceptInviteResult,
@@ -1020,6 +1021,14 @@ export class AdminGovernanceService {
         }
         await authClient.auth.signOut().catch(() => undefined);
       } else {
+        const strongPassword = StrongPasswordSchema.safeParse(input.password);
+        if (!strongPassword.success) {
+          await client.query("ROLLBACK");
+          return {
+            status: "validation_failed",
+            message: "A senha não atende aos requisitos de segurança.",
+          };
+        }
         if (!input.fullName || !input.phone) {
           await client.query("ROLLBACK");
           return {
