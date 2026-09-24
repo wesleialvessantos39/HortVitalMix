@@ -400,7 +400,7 @@ adminGovernanceRouter.get(
       email_normalized: string;
       status: string;
       public_roles: string[];
-      has_admin_principal: boolean;
+      admin_roles: Array<"platform_admin" | "platform_super_admin">;
     }>(
       `SELECT p.id,p.user_id,p.full_name,p.cpf_normalized,p.email_normalized,u.status,
               COALESCE(array_agg(DISTINCT r.role_code) FILTER (
@@ -408,9 +408,12 @@ adminGovernanceRouter.get(
                   AND r.revoked_at IS NULL
                   AND (r.expires_at IS NULL OR r.expires_at>now())
               ),'{}') AS public_roles,
-              EXISTS(
-                SELECT 1 FROM public.app_admin_principals ap WHERE ap.person_id=p.id
-              ) AS has_admin_principal
+              ARRAY(
+                SELECT ap.portal_role
+                  FROM public.app_admin_principals ap
+                 WHERE ap.person_id=p.id
+                 ORDER BY ap.portal_role
+              ) AS admin_roles
          FROM public.app_people p
          JOIN public.app_users u ON u.id=p.user_id
          LEFT JOIN public.app_user_role_assignments r ON r.user_id=p.user_id
@@ -435,7 +438,7 @@ adminGovernanceRouter.get(
         publicEmail: identity.email_normalized,
         status: identity.status,
         publicRoles: identity.public_roles,
-        hasAdminAccess: identity.has_admin_principal,
+        adminRoles: identity.admin_roles,
       },
     });
   },
