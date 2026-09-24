@@ -111,6 +111,7 @@ adminGovernanceRouter.post(
 
     const result = await AdminGovernanceService.requestAdminEmailConfirmation(
       parsed.data.email,
+      parsed.data.portalRole,
     );
 
     if (result.status === "unavailable") {
@@ -139,6 +140,7 @@ adminGovernanceRouter.post(
     const result = await AdminGovernanceService.verifyAdminEmailConfirmation(
       parsed.data.email,
       parsed.data.otp,
+      parsed.data.portalRole,
     );
 
     const code =
@@ -165,6 +167,7 @@ adminGovernanceRouter.post(
       parsed.data.password,
       req.clientIpHash,
       req.requestId,
+      parsed.data.portalRole,
     );
     if (result.status === "session_created") {
       setAdminSession(res, result);
