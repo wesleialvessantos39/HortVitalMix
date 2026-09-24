@@ -147,3 +147,38 @@ Estado canônico desta revisão:
 - Super administrador mantém MFA obrigatório e proteção contra remoção do último acesso global.
 
 O manifesto e o readiness passam a **schema 22**. As seções anteriores deste documento permanecem como registro histórico da selagem anterior e não devem ser interpretadas como downgrade do estado atual.
+
+
+---
+
+## Adendo — login administrativo, recuperação e confirmação / schema 23
+
+A primeira tentativa de login do Super administrador já criado expôs uma falha de runtime distinta do bootstrap: o serviço de login retornava `unavailable` antes de consultar o Supabase Auth quando o Transaction Pooler não estava disponível no runtime serverless.
+
+A correção desta revisão torna os fluxos críticos de autenticação administrativa resilientes à ausência do Pooler:
+
+- papel administrativo e setores são resolvidos pela Supabase Data API, com Pooler apenas como fallback;
+- rate limit e desafios MFA usam a Data API;
+- a transição **senha → MFA por e-mail → sessão administrativa** permanece obrigatória para Super administrador;
+- nenhuma sessão administrativa é entregue antes do código MFA válido.
+
+Também foi concluída a ergonomia de segurança exigida pelas Trilhas 04 e 05:
+
+- o login administrativo reutiliza `PasswordInput` e oferece **Mostrar/Ocultar senha**;
+- **Esqueci minha senha** direciona para a recuperação com `portalRole` administrativo;
+- `RoleSecurityService` reconhece `app_admin_principals`, portanto a recuperação funciona para a credencial administrativa separada;
+- importação da sessão de recuperação e resolução de identidade possuem fallback via Data API;
+- redefinição revoga globalmente as sessões pela sessão Auth validada;
+- a tela `/admin/confirmar-email` oferece envio, entrada de OTP de 6 dígitos e reenvio;
+- o primeiro Super administrador exige confirmação explícita do e-mail administrativo;
+- novos administradores convidados têm o e-mail considerado confirmado no aceite do convite, pois a posse do endereço já foi comprovada pelo link de convite;
+- após confirmação do e-mail, cada acesso do Super administrador continua exigindo um novo código MFA.
+
+Migration desta revisão:
+
+- canônica: `20260924114500_trilha05_admin_email_verification.sql`;
+- versão física aplicada pelo Supabase: `20260924115207`;
+- schema lógico: **23**;
+- hash canônico: `80d77398387420550887ee34268decf583ab49a96cb78765aa41910f0577927f`.
+
+As seções históricas anteriores permanecem como registro das selagens precedentes e não representam downgrade do estado corrente.
