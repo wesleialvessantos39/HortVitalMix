@@ -8,7 +8,6 @@ import { PasswordInput } from "../../components/forms/PasswordInput";
 
 type Props = {
   onNavigate: (to: string) => void;
-  onSessionRefresh: () => Promise<void>;
   intendedRole?: "platform_admin" | "platform_super_admin" | null;
 };
 
@@ -20,7 +19,6 @@ type LoginResponse =
 
 export function AdminLoginPage({
   onNavigate,
-  onSessionRefresh,
   intendedRole = null,
 }: Props) {
   const [email, setEmail] = useState("");
