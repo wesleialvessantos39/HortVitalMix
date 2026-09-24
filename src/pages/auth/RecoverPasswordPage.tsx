@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronRight, KeyRound, Mail, ShieldCheck, Sprout } from "lucide-react";
 import { api } from "../../lib/api";
 import { PortalRoleSchema, type PortalRole } from "../../../shared/contracts/auth";
@@ -30,6 +30,16 @@ export function RecoverPasswordPage({ onNavigate }: { onNavigate: (path: string)
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [notice, setNotice] = useState("");
+  const [retryAfter, setRetryAfter] = useState(0);
+
+  useEffect(() => {
+    if (retryAfter <= 0) return;
+    const timer = window.setInterval(
+      () => setRetryAfter((value) => Math.max(0, value - 1)),
+      1000,
+    );
+    return () => window.clearInterval(timer);
+  }, [retryAfter]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -40,13 +50,17 @@ export function RecoverPasswordPage({ onNavigate }: { onNavigate: (path: string)
     setBusy(true);
     setNotice("");
     try {
-      await api("/v1/auth/request-password-reset", {
+      const result = await api<{
+        status: string;
+        retryAfterSeconds?: number;
+      }>("/v1/auth/request-password-reset", {
         method: "POST",
         body: JSON.stringify({ email, portalRole: role }),
       });
       setSent(true);
+      setRetryAfter(result.retryAfterSeconds ?? 60);
       setNotice(
-        `Se o e-mail possuir o perfil ${ROLES.find((item) => item.role === role)?.label}, o Supabase enviará as instruções de recuperação.`,
+        `Se o e-mail possuir o perfil ${ROLES.find((item) => item.role === role)?.label}, as instruções foram processadas. Um pedido repetido não invalida o link anterior enquanto um novo e-mail não for realmente enviado.`,
       );
     } catch {
       setNotice("Não foi possível processar a solicitação agora. Tente novamente.");
@@ -82,8 +96,15 @@ export function RecoverPasswordPage({ onNavigate }: { onNavigate: (path: string)
             <div className="t04-title-icon success"><Mail /></div>
             <h2>Confira seu e-mail</h2>
             <p>Abra o link enviado pelo Supabase para continuar a redefinição.</p>
-            <button type="button" className="t04-secondary" onClick={() => setSent(false)}>
-              Enviar novamente
+            <button
+              type="button"
+              className="t04-secondary"
+              disabled={retryAfter > 0}
+              onClick={() => setSent(false)}
+            >
+              {retryAfter > 0
+                ? `Novo envio disponível em ${retryAfter}s`
+                : "Enviar novamente"}
             </button>
           </div>
         ) : (
