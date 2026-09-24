@@ -132,10 +132,14 @@ export const CreateInviteSchema = z
   );
 export type CreateInviteInput = z.infer<typeof CreateInviteSchema>;
 
+export const InviteIdentityModeSchema = z.enum(["new", "existing"]);
+export type InviteIdentityMode = z.infer<typeof InviteIdentityModeSchema>;
+
 export const InviteResponseSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
   targetRole: AdminRoleSchema,
+  identityMode: InviteIdentityModeSchema,
   sectors: z.array(AdminSectorCodeSchema),
   revision: z.number().int().positive(),
   isAccepted: z.boolean(),
@@ -158,6 +162,8 @@ export const ValidateInviteResponseSchema = z.discriminatedUnion("status", [
     status: z.literal("valid"),
     email: z.string().email(),
     targetRole: AdminRoleSchema,
+    identityMode: InviteIdentityModeSchema,
+    existingRoles: z.array(z.enum(["consumer", "producer"])),
     sectors: z.array(AdminSectorCodeSchema),
     expiresAt: z.string().datetime(),
   }),
@@ -171,9 +177,9 @@ export type ValidateInviteResponse = z.infer<typeof ValidateInviteResponseSchema
 export const AcceptInviteSchema = z
   .object({
     token: z.string().min(32).max(128),
-    fullName: z.string().trim().min(3).max(255),
+    fullName: z.string().trim().min(3).max(255).optional(),
     cpf,
-    phone,
+    phone: phone.optional(),
     password: StrongPasswordSchema,
     commandId: z.string().uuid(),
   })
