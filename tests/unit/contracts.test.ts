@@ -194,14 +194,32 @@ describe("contratos e limites de confiança", () => {
       buildRuntime({ VERCEL_ENV: "production", APP_ENV: "development" }).appEnv,
     ).toBe("production"));
 
-  it("usa somente os nomes canônicos de chaves Supabase no runtime", () => {
-    const built = buildRuntime({
+  it("aceita chaves Supabase legadas e aliases modernos sem expor segredo", () => {
+    const legacy = buildRuntime({
+      SUPABASE_URL: "https://legacy.supabase.co",
       SUPABASE_ANON_KEY: "public-example",
       SUPABASE_SERVICE_ROLE_KEY: "service-example",
     });
+    expect(legacy.supabaseUrl).toBe("https://legacy.supabase.co");
+    expect(legacy.anonKey).toBe("public-example");
+    expect(legacy.serviceKey).toBe("service-example");
 
-    expect(built.anonKey).toBe("public-example");
-    expect(built.serviceKey).toBe("service-example");
+    const modern = buildRuntime({
+      VITE_SUPABASE_URL: "https://modern.supabase.co",
+      SUPABASE_PUBLISHABLE_KEY: "sb_publishable_example",
+      SUPABASE_SECRET_KEY: "sb_secret_example",
+    });
+    expect(modern.supabaseUrl).toBe("https://modern.supabase.co");
+    expect(modern.anonKey).toBe("sb_publishable_example");
+    expect(modern.serviceKey).toBe("sb_secret_example");
+
+    const edgeStyle = buildRuntime({
+      SUPABASE_URL: "https://edge.supabase.co",
+      SUPABASE_PUBLISHABLE_KEYS: JSON.stringify({ default: "pub-default" }),
+      SUPABASE_SECRET_KEYS: JSON.stringify({ default: "secret-default" }),
+    });
+    expect(edgeStyle.anonKey).toBe("pub-default");
+    expect(edgeStyle.serviceKey).toBe("secret-default");
   });
 
   it("aceita os dois estilos de argumentos do manual", () =>
