@@ -34,7 +34,7 @@ function sessionIdFromAccessToken(token: string) {
 }
 
 function isPublicAuthFastPath(path: string): boolean {
-  return /^\/(?:api\/)?v1\/auth\/(?:login|admin-login|register-consumer|register-producer|refresh|import-session|resend-confirmation|request-password-reset|magic-link|contact\/confirm-token|password\/recovery|password\/reset)$/.test(
+  return /^\/(?:api\/)?v1\/auth\/(?:login|admin-login|register-consumer|register-producer|refresh|import-session|resend-confirmation|request-password-reset|reset-password|magic-link|contact\/confirm-token|password\/recovery|password\/reset)$/.test(
     path,
   );
 }
