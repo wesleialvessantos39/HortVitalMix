@@ -1,0 +1,185 @@
+import { useMemo, useState } from "react";
+import { Leaf, MailCheck, RefreshCw } from "lucide-react";
+import { api } from "../../lib/api";
+import { OtpInput } from "../../components/forms/OtpInput";
+
+export function AdminEmailConfirmationPage({
+  onNavigate,
+}: {
+  onNavigate: (to: string) => void;
+}) {
+  const initialEmail = useMemo(
+    () => new URLSearchParams(location.search).get("email") ?? "",
+    [],
+  );
+  const [email, setEmail] = useState(initialEmail);
+  const [otp, setOtp] = useState("");
+  const [destination, setDestination] = useState("");
+  const [sent, setSent] = useState(false);
+  const [verified, setVerified] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState(
+    initialEmail
+      ? "Envie o código de confirmação para validar este e-mail administrativo."
+      : "",
+  );
+
+  async function requestCode() {
+    if (!email.trim()) {
+      setNotice("Informe o e-mail administrativo.");
+      return;
+    }
+    setBusy(true);
+    setNotice("");
+    try {
+      const result = await api<{
+        status: string;
+        maskedDestination?: string;
+      }>("/v1/admin/auth/email-confirmation/request", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+      if (result.status === "already_verified") {
+        setVerified(true);
+        setNotice("Este e-mail administrativo já está confirmado.");
+        return;
+      }
+      setDestination(result.maskedDestination ?? email);
+      setSent(true);
+      setNotice("Código de confirmação enviado. Confira também a pasta de spam.");
+    } catch {
+      setNotice("Não foi possível enviar o código agora. Tente novamente.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function verifyCode(event: React.FormEvent) {
+    event.preventDefault();
+    if (otp.length !== 6) return;
+    setBusy(true);
+    setNotice("");
+    try {
+      const result = await api<{ status: string }>(
+        "/v1/admin/auth/email-confirmation/verify",
+        {
+          method: "POST",
+          body: JSON.stringify({ email, otp }),
+        },
+      );
+      if (
+        result.status === "verified" ||
+        result.status === "already_verified"
+      ) {
+        setVerified(true);
+        setNotice("E-mail administrativo confirmado com sucesso.");
+        return;
+      }
+      setNotice("Código inválido ou expirado.");
+    } catch {
+      setNotice("Código inválido ou expirado. Solicite um novo código.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="admin-login-page">
+      <header className="admin-login-header">
+        <button
+          className="admin-back"
+          onClick={() => onNavigate("/entrar/super-administrador")}
+        >
+          ← Acesso administrativo
+        </button>
+        <div className="admin-login-brand">
+          <span className="admin-brand-mark"><Leaf /></span>
+          <strong>Horti<span>Vital</span>Mix</strong>
+        </div>
+      </header>
+
+      <div className="admin-bootstrap-wrap">
+        <div className="admin-login-card admin-login-card--wide">
+          <div className="admin-login-icon"><MailCheck /></div>
+          <span className="admin-kicker">Confirmação administrativa</span>
+          <h1>Confirme seu e-mail</h1>
+          <p className="admin-muted">
+            A confirmação do e-mail administrativo é separada do cadastro
+            público de Consumidor ou Produtor.
+          </p>
+
+          {notice && (
+            <div
+              className={
+                verified
+                  ? "admin-alert admin-alert--success"
+                  : "admin-alert"
+              }
+              role="status"
+            >
+              {notice}
+            </div>
+          )}
+
+          {verified ? (
+            <button
+              className="admin-primary"
+              onClick={() => onNavigate("/entrar/super-administrador")}
+            >
+              Ir para o acesso administrativo
+            </button>
+          ) : (
+            <>
+              <label>
+                E-mail administrativo
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(event) => {
+                    setEmail(event.currentTarget.value);
+                    setSent(false);
+                    setOtp("");
+                  }}
+                  autoComplete="email"
+                  required
+                />
+              </label>
+
+              {!sent ? (
+                <button
+                  className="admin-primary"
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void requestCode()}
+                >
+                  {busy ? "Enviando…" : "Enviar código de confirmação"}
+                </button>
+              ) : (
+                <form onSubmit={verifyCode}>
+                  <p className="admin-muted">
+                    Digite o código de 6 dígitos enviado para {destination}.
+                  </p>
+                  <OtpInput value={otp} onChange={setOtp} length={6} />
+                  <button
+                    className="admin-primary"
+                    disabled={busy || otp.length !== 6}
+                  >
+                    {busy ? "Confirmando…" : "Confirmar e-mail"}
+                  </button>
+                  <button
+                    className="admin-link"
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void requestCode()}
+                  >
+                    <RefreshCw size={14} /> Reenviar código
+                  </button>
+                </form>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
