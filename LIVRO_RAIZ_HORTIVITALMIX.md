@@ -2722,3 +2722,17 @@ Hash:
 `a23b076a67b259ce44f87501657be592d5d0eeca9b5d83cedba0397cb9250ca0`.
 
 Nenhuma estrutura, dado, RLS, papel ou implementação anterior foi removida.
+
+
+## 2026-09-24 — Correção complementar de acesso, reenvio e diagnóstico
+
+Status: implementação e testes locais concluídos; build completo, publicação e homologação real pendentes. Não declarar autenticação homologada com base nestes testes isolados.
+
+- Banco consultado em modo leitura: dois desafios de recuperação do Super administrador criados às 12:18:07 e 12:18:48 UTC estavam invalidados e não consumidos. A main já continha proteção de cooldown e invalidação após aceite do provedor; links antigos não foram reativados.
+- MFA: login repetido, após validar senha e papel ativo, reutiliza desafio pendente criado nos últimos 60 segundos, sem enviar outro e-mail ou invalidar o anterior. Falha da consulta interrompe o fluxo e encerra a sessão temporária. A interface distingue código reaproveitado de novo envio.
+- Transporte: normalização defensiva de JSON que o adaptador serverless já entregou como string ou Buffer; preservados o limite de 32 KiB e rejeição de JSON inválido. Não foi comprovado que esse era o motivo específico do atendimento e9ae3099-d447-4797-adae-9794aaf8062e.
+- Erros de validação passam a incluir campos e requestId, sem valores de credenciais. A tela genérica deixa de apresentar VALIDATION_ERROR como falha não identificada.
+- Recuperação: falha de rede/serviço não é mais apresentada como expiração; existe nova tentativa de validação do mesmo link. Erro de senha rejeitada não força novo e-mail.
+- Cadastro: removido reenvio automático redundante quando o backend já aceitou ou adiou o despacho.
+- Testes: seis cenários comportamentais aprovados com Node 24, usando mocks do provedor: JSON objeto/string/Buffer, JSON inválido/limite, retomada MFA, senha incorreta, indisponibilidade de consulta e emissão inicial. Comando: `node --experimental-test-module-mocks --test scripts/tests/auth-hotfix.node.mjs`.
+- Limitações: sem envio de e-mails reais, sem alteração de senha real e sem teste de navegador autenticado. A conexão Vercel retornou lista de projetos vazia. O código de atendimento informado não foi localizado em logs nesta execução. Nenhuma alteração de esquema ou privilégio foi necessária.

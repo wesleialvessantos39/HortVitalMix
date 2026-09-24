@@ -672,6 +672,32 @@ export class AdminGovernanceService {
     }
 
     if (role.role_code === "platform_super_admin") {
+      // A repeated password login during the mail cooldown resumes the same
+      // challenge. Password and current administrative role were checked above.
+      const { data: pending, error: pendingError } = await supabaseAdmin
+        .from("app_admin_mfa_challenges")
+        .select("id,expires_at,created_at,attempts,max_attempts")
+        .eq("user_id", signed.data.user.id)
+        .eq("is_verified", false)
+        .is("invalidated_at", null)
+        .gt("expires_at", new Date().toISOString())
+        .gt("created_at", new Date(Date.now() - 60_000).toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (pendingError) {
+        await client.auth.signOut({ scope: "local" }).catch(() => undefined);
+        return { status: "unavailable" };
+      }
+      if (pending && Number(pending.attempts) < Number(pending.max_attempts)) {
+        await client.auth.signOut({ scope: "local" }).catch(() => undefined);
+        return {
+          status: "mfa_required",
+          mfaChallengeId: pending.id,
+          maskedDestination: maskEmail(normalized),
+          expiresAt: pending.expires_at,
+        };
+      }
       const otpClient = createSupabasePublicClient();
       if (!otpClient) return { status: "unavailable" };
       const sent = await otpClient.auth.signInWithOtp({

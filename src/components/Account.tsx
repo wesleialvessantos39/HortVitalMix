@@ -457,7 +457,8 @@ export function Account({
 
         const targetRole = mode;
         const targetEmail = String(form.email ?? "");
-        if (!result.existingIdentity && result.confirmationRequired) {
+        if (!result.existingIdentity && result.confirmationRequired &&
+            !result.confirmationDispatchAccepted && !result.confirmationDispatchDeferred) {
           void api("/v1/auth/resend-confirmation", {
             method: "POST",
             body: JSON.stringify({
@@ -560,6 +561,12 @@ export function Account({
         requestId?: string;
       };
       const code = failure.message;
+
+      if (code === "VALIDATION_ERROR" && !failure.fields?.length) {
+        setNotice("Não foi possível validar os dados enviados. Revise o e-mail e o perfil selecionado." +
+          (failure.requestId ? ` Código de atendimento: ${failure.requestId}.` : ""));
+        return;
+      }
 
       if (code === "VALIDATION_ERROR" && failure.fields?.length) {
         const errors: FieldErrors = {};

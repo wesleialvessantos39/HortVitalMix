@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, KeyRound, ShieldAlert, Sprout } from "lucide-react";
-import { api } from "../../lib/api";
+import { api, type ApiFailure } from "../../lib/api";
 import type { ShellSession } from "../../hooks/useSession";
 import {
   NewPasswordSchema,
@@ -44,8 +44,13 @@ export function ResetPasswordPage({
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [notice, setNotice] = useState("");
+  const [retryable, setRetryable] = useState(false);
+  const [validationAttempt, setValidationAttempt] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
+    setChecking(true);
+    setRetryable(false);
     if (!context.role || context.flowToken.length < 32) {
       setChecking(false);
       return;
@@ -64,18 +69,24 @@ export function ResetPasswordPage({
       }),
     })
       .then((result) => {
+        if (cancelled) return;
         if (result.status === "valid") {
           setReady(true);
           setNotice("Link validado. Defina agora sua nova senha.");
         }
       })
-      .catch(() => {
-        setNotice(
-          "Este link já foi utilizado, foi substituído por um e-mail mais novo ou realmente expirou.",
-        );
+      .catch((error: ApiFailure) => {
+        if (cancelled) return;
+        const invalid = error.status === 410 || error.message === "RECOVERY_CONTEXT_INVALID";
+        setRetryable(!invalid);
+        setNotice(invalid
+          ? "Este link já foi utilizado, foi substituído por um e-mail mais novo ou expirou."
+          : "Não foi possível consultar o link agora. Tente validar novamente; não é necessário pedir outro e-mail." +
+            (error.requestId ? ` Código de atendimento: ${error.requestId}.` : ""));
       })
-      .finally(() => setChecking(false));
-  }, [context.flowToken, context.role]);
+      .finally(() => { if (!cancelled) setChecking(false); });
+    return () => { cancelled = true; };
+  }, [context.flowToken, context.role, validationAttempt]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -107,10 +118,14 @@ export function ResetPasswordPage({
       setNotice(
         "Senha atualizada com sucesso. As sessões anteriores foram revogadas.",
       );
-    } catch {
-      setNotice(
-        "Não foi possível concluir a troca com este link. Solicite um novo e-mail de recuperação.",
-      );
+    } catch (error) {
+      const failure = error as ApiFailure;
+      setNotice(failure.status === 410 || failure.message === "RECOVERY_CONTEXT_ALREADY_USED"
+        ? "Este link não está mais disponível. Solicite outro e-mail de recuperação."
+        : failure.message === "PASSWORD_UPDATE_REJECTED"
+          ? "A nova senha não foi aceita. Confira os requisitos e use uma senha diferente da atual."
+          : "Não foi possível concluir a troca agora. Tente novamente." +
+            (failure.requestId ? ` Código de atendimento: ${failure.requestId}.` : ""));
     } finally {
       setBusy(false);
     }
@@ -162,7 +177,7 @@ export function ResetPasswordPage({
             <div className="t04-invalid">
               <ShieldAlert />
               <div>
-                <strong>Link indisponível</strong>
+                <strong>{retryable ? "Validação temporariamente indisponível" : "Link indisponível"}</strong>
                 <p>
                   {notice ||
                     "Solicite um novo e-mail de recuperação pelo perfil correto."}
@@ -172,14 +187,14 @@ export function ResetPasswordPage({
             <button
               className="t04-primary"
               onClick={() =>
-                onNavigate(
+                retryable ? setValidationAttempt((value) => value + 1) : onNavigate(
                   context.role
                     ? `/recuperar-senha?portal=${context.role}`
                     : "/recuperar-senha",
                 )
               }
             >
-              Solicitar novo link
+              {retryable ? "Validar novamente" : "Solicitar novo link"}
             </button>
           </>
         ) : (

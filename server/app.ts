@@ -1,4 +1,5 @@
 import express from "express";
+import { decodedJsonBody } from "./middleware/decodedJsonBody.ts";
 import { foundationRouter } from "./routes/foundationRoutes.ts";
 import { authRouter } from "./routes/authRoutes.ts";
 import { reportFailure } from "./config/reportFailure.ts";
@@ -48,6 +49,12 @@ app.use((req, res, next) => {
   next();
 });
 app.use((req, _res, next) => {
+  try {
+    if (req.is("application/json")) req.body = decodedJsonBody(req.body);
+  } catch (error) {
+    next(error);
+    return;
+  }
   if (req.body && typeof req.body === "object") {
     // Prevent express.json from trying to re-read an already consumed stream in serverless environments (Vercel)
     (req as unknown as { _body?: boolean })._body = true;
@@ -80,14 +87,15 @@ app.use(
   ) => {
     const malformed =
       (error as { type?: string })?.type === "entity.parse.failed";
+    const tooLarge = (error as { type?: string })?.type === "entity.too.large";
     reportFailure(
       malformed ? "invalid_json" : "request_failed",
       res.locals.requestId,
     );
     res
-      .status(malformed ? 400 : 503)
+      .status(tooLarge ? 413 : malformed ? 400 : 503)
       .json({
-        error: malformed ? "INVALID_JSON" : "DEPENDENCY_UNAVAILABLE",
+        error: tooLarge ? "PAYLOAD_TOO_LARGE" : malformed ? "INVALID_JSON" : "DEPENDENCY_UNAVAILABLE",
         requestId: res.locals.requestId,
       });
   },

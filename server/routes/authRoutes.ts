@@ -165,7 +165,14 @@ async function handlePublicLoginRequest(
   try {
     const input = LoginSchema.safeParse(req.body);
     if (!input.success) {
-      res.status(400).json({ error: "VALIDATION_ERROR" });
+      res.status(400).json({
+        error: "VALIDATION_ERROR",
+        fields: input.error.issues.map((issue) => ({
+          field: String(issue.path[0] ?? "request"),
+          message: issue.message,
+        })),
+        requestId: res.locals.requestId,
+      });
       return;
     }
 
@@ -317,7 +324,14 @@ authRouter.post("/import-session", async (req, res, next) => {
   try {
     const input = SessionImportSchema.safeParse(req.body);
     if (!input.success) {
-      res.status(400).json({ error: "VALIDATION_ERROR" });
+      res.status(400).json({
+        error: "VALIDATION_ERROR",
+        fields: input.error.issues.map((issue) => ({
+          field: String(issue.path[0] ?? "request"),
+          message: issue.message,
+        })),
+        requestId: res.locals.requestId,
+      });
       return;
     }
 
@@ -476,7 +490,14 @@ authRouter.post("/logout", async (req, res, next) => {
 authRouter.post("/resend-confirmation", async (req, res) => {
   const input = RoleScopedEmailRequestSchema.safeParse(req.body);
   if (!input.success) {
-    res.status(400).json({ error: "VALIDATION_ERROR" });
+    res.status(400).json({
+        error: "VALIDATION_ERROR",
+        fields: input.error.issues.map((issue) => ({
+          field: String(issue.path[0] ?? "request"),
+          message: issue.message,
+        })),
+        requestId: res.locals.requestId,
+      });
     return;
   }
 
@@ -511,7 +532,14 @@ authRouter.post("/resend-confirmation", async (req, res) => {
 authRouter.post("/request-password-reset", async (req, res) => {
   const input = RoleScopedEmailRequestSchema.safeParse(req.body);
   if (!input.success) {
-    res.status(400).json({ error: "VALIDATION_ERROR" });
+    res.status(400).json({
+        error: "VALIDATION_ERROR",
+        fields: input.error.issues.map((issue) => ({
+          field: String(issue.path[0] ?? "request"),
+          message: issue.message,
+        })),
+        requestId: res.locals.requestId,
+      });
     return;
   }
 
@@ -598,7 +626,14 @@ authRouter.post("/request-password-reset", async (req, res) => {
 authRouter.post("/password/recovery/validate", async (req, res) => {
   const input = RoleScopedRecoveryFlowSchema.safeParse(req.body);
   if (!input.success) {
-    res.status(400).json({ error: "VALIDATION_ERROR" });
+    res.status(400).json({
+        error: "VALIDATION_ERROR",
+        fields: input.error.issues.map((issue) => ({
+          field: String(issue.path[0] ?? "request"),
+          message: issue.message,
+        })),
+        requestId: res.locals.requestId,
+      });
     return;
   }
 
@@ -617,7 +652,14 @@ authRouter.post("/password/recovery/validate", async (req, res) => {
 authRouter.post("/magic-link", async (req, res) => {
   const input = RoleScopedEmailRequestSchema.safeParse(req.body);
   if (!input.success) {
-    res.status(400).json({ error: "VALIDATION_ERROR" });
+    res.status(400).json({
+        error: "VALIDATION_ERROR",
+        fields: input.error.issues.map((issue) => ({
+          field: String(issue.path[0] ?? "request"),
+          message: issue.message,
+        })),
+        requestId: res.locals.requestId,
+      });
     return;
   }
 
@@ -661,7 +703,14 @@ authRouter.post("/reauthenticate", async (req, res, next) => {
   try {
     const input = SecurityCodeRequestSchema.safeParse(req.body);
     if (!input.success) {
-      res.status(400).json({ error: "VALIDATION_ERROR" });
+      res.status(400).json({
+        error: "VALIDATION_ERROR",
+        fields: input.error.issues.map((issue) => ({
+          field: String(issue.path[0] ?? "request"),
+          message: issue.message,
+        })),
+        requestId: res.locals.requestId,
+      });
       return;
     }
 
@@ -731,7 +780,14 @@ authRouter.post("/reset-password", async (req, res, next) => {
   try {
     const input = RoleScopedResetPasswordSchema.safeParse(req.body);
     if (!input.success) {
-      res.status(400).json({ error: "VALIDATION_ERROR" });
+      res.status(400).json({
+        error: "VALIDATION_ERROR",
+        fields: input.error.issues.map((issue) => ({
+          field: String(issue.path[0] ?? "request"),
+          message: issue.message,
+        })),
+        requestId: res.locals.requestId,
+      });
       return;
     }
     if (!supabaseAdmin) {
@@ -822,7 +878,14 @@ authRouter.post("/change-password", async (req, res, next) => {
   try {
     const input = RoleScopedPasswordChangeSchema.safeParse(req.body);
     if (!input.success) {
-      res.status(400).json({ error: "VALIDATION_ERROR" });
+      res.status(400).json({
+        error: "VALIDATION_ERROR",
+        fields: input.error.issues.map((issue) => ({
+          field: String(issue.path[0] ?? "request"),
+          message: issue.message,
+        })),
+        requestId: res.locals.requestId,
+      });
       return;
     }
 
@@ -961,3 +1024,4 @@ for (const role of ["consumer", "producer"] as const)
       });
     }
   });
+

@@ -145,7 +145,9 @@ export function AdminLoginPage({
         setDestination(result.maskedDestination);
         setOtp("");
         setMailCooldown(60);
-        setError("Novo código enviado para o e-mail administrativo.");
+        setError(result.mfaChallengeId === challengeId
+          ? "Já existe um código enviado. Use o código recebido no seu e-mail."
+          : "Novo código enviado para o e-mail administrativo.");
         return;
       }
       setError("Não foi possível reenviar o código de segurança.");
