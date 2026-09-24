@@ -687,15 +687,34 @@ export class AdminGovernanceService {
     }
 
     await client.auth.signOut({ scope: "local" }).catch(() => undefined);
-    const { error: updateError } = await supabaseAdmin!
-      .from("app_admin_principals")
-      .update({
-        email_verified_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("admin_user_id", principal.admin_user_id);
+    const verifiedAt = new Date().toISOString();
 
-    return updateError ? { status: "unavailable" } : { status: "verified" };
+    if (supabaseAdmin) {
+      const { error: updateError } = await supabaseAdmin
+        .from("app_admin_principals")
+        .update({
+          email_verified_at: verifiedAt,
+          updated_at: verifiedAt,
+        })
+        .eq("admin_user_id", principal.admin_user_id);
+      return updateError ? { status: "unavailable" } : { status: "verified" };
+    }
+
+    if (dbPool) {
+      try {
+        await dbPool.query(
+          `UPDATE public.app_admin_principals
+              SET email_verified_at=$2,updated_at=$2
+            WHERE admin_user_id=$1`,
+          [principal.admin_user_id, verifiedAt],
+        );
+        return { status: "verified" };
+      } catch {
+        return { status: "unavailable" };
+      }
+    }
+
+    return { status: "unavailable" };
   }
 
   static async login(
