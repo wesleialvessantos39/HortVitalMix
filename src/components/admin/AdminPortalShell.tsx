@@ -34,7 +34,7 @@ export function AdminPortalShell({
 }: Props) {
   const visible = items.filter(([to]) => {
     if (access.role === "platform_super_admin") return true;
-    return to === "/admin/painel";
+    return to !== "/admin/configuracao";
   });
 
   async function logout() {

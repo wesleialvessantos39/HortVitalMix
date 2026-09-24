@@ -40,7 +40,7 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
  if(path==="/admin/aceitar-convite"||path==="/admin/convite")
   return <AdminAcceptInvitePage onNavigate={onNavigate}/>;
 
- const superOnly = ["/admin/governanca","/admin/usuarios","/admin/configuracao"].includes(path);
+ const superOnly = path==="/admin/configuracao";
  return <AdminAccessGate
   onNavigate={onNavigate}
   requiredRole={superOnly ? "platform_super_admin" : undefined}
@@ -51,10 +51,10 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
     onNavigate={onNavigate}
     onSessionRefresh={onSessionRefresh}
    >
-    {path==="/admin/governanca" && access.role==="platform_super_admin"
-      ? <AdminGovernancePage onNavigate={onNavigate}/>
-      : path==="/admin/usuarios" && access.role==="platform_super_admin"
-        ? <AdminUsersPage/>
+    {path==="/admin/governanca"
+      ? <AdminGovernancePage onNavigate={onNavigate} access={access}/>
+      : path==="/admin/usuarios"
+        ? <AdminUsersPage access={access}/>
         : path==="/admin/configuracao" && access.role==="platform_super_admin"
           ? <AdminConfiguracaoPage onNavigate={onNavigate}/>
           : <AdminDashboardPage access={access} onNavigate={onNavigate}/>}

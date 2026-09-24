@@ -12,6 +12,19 @@ describe("Trilha 05 — convites administrativos",()=>{
  it("materializa setores e usa Supabase Auth para entrega",()=>{
   expect(service).toContain("app_admin_invite_sectors");
   expect(service).toContain("inviteUserByEmail");
+  expect(service).toContain("signInWithOtp");
   expect(service).toContain("INVITE_TTL_HOURS = 24");
+ });
+ it("reaproveita identidade pública sem duplicar CPF ou app_people",()=>{
+  expect(service).toContain('identityMode = "existing"');
+  expect(service).toContain("signInWithPassword");
+  expect(service).toContain("preservedPublicIdentity");
+  expect(service).toContain("ON CONFLICT (user_id,role_code) DO UPDATE");
+  expect(service).toContain("ON CONFLICT (user_id,sector_code) DO UPDATE");
+ });
+ it("impõe hierarquia ao administrador setorial",()=>{
+  expect(service).toContain('actorRole === "platform_admin"');
+  expect(service).toContain('input.targetRole !== "platform_admin"');
+  expect(service).toContain("!actorSectors.includes(sector)");
  });
 });

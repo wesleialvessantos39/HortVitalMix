@@ -2329,3 +2329,82 @@ Com isso, nenhum acesso administrativo legítimo passa pelo endpoint legado `/v1
 - MFA administrativo permanece obrigatório;
 - convites administrativos permanecem inalterados;
 - nenhuma RLS ou migration foi modificada nesta correção.
+
+
+---
+
+## 2026-09-23 — HIERARQUIA ADMINISTRATIVA E MIGRAÇÃO DE IDENTIDADE PÚBLICA
+
+### Regra de identidade
+
+O HortiVitalMix mantém **uma identidade canônica por pessoa/CPF** em `app_people`. Consumidor, Produtor e acesso administrativo são contextos de autorização diferentes vinculados à mesma identidade quando pertencem à mesma pessoa.
+
+Isso significa:
+
+- o CPF não é duplicado para criar um Administrador;
+- perfis `consumer` e `producer` permanecem ativos e preservados;
+- o acesso administrativo é concedido por `app_user_role_assignments`;
+- no portal administrativo, o sistema exibe separadamente **Acesso administrativo** e **Perfis vinculados**.
+
+### Primeiro Super administrador
+
+O bootstrap continua sendo excepcional e único:
+
+- somente funciona enquanto não existir Super administrador ativo;
+- continua rejeitando CPF/e-mail já vinculados, porque a migração de identidade pública só é permitida **depois** da constituição da primeira autoridade administrativa;
+- assim que o primeiro `platform_super_admin` é ativado, `/admin/bootstrap` passa automaticamente para estado `closed`;
+- o botão de primeiro acesso deixa de ser exibido nas telas administrativas;
+- qualquer POST posterior continua protegido por verificação server-side e advisory lock.
+
+### Migração posterior de Consumidor/Produtor para acesso administrativo
+
+Após existir o primeiro Super administrador, o fluxo oficial é **convite administrativo pelo portal**.
+
+Quando o e-mail convidado já pertence a um cadastro público:
+
+1. o backend localiza a identidade canônica existente;
+2. o convite é marcado logicamente como migração de identidade existente, sem criar outro `app_people`;
+3. Consumidor/Produtor confirma o mesmo CPF e a senha atual;
+4. o backend valida as credenciais contra Supabase Auth;
+5. o novo papel administrativo é adicionado à mesma identidade;
+6. os papéis públicos existentes permanecem intocados;
+7. setores são concedidos somente quando o papel alvo é `platform_admin`;
+8. auditoria registra `admin.identity.migrated`.
+
+Para identidade nova, o fluxo tradicional de convite continua criando a identidade administrativa e exigindo senha forte.
+
+### Hierarquia de criação administrativa
+
+A governança passa a obedecer explicitamente a seguinte hierarquia:
+
+- **Super administrador**: pode convidar Administrador setorial ou outro Super administrador;
+- **Administrador setorial**: pode convidar somente outro Administrador setorial e apenas para setores que o próprio administrador já possui;
+- Administrador setorial **não pode criar ou promover Super administrador**;
+- Super administrador não recebe setores departamentais;
+- promoção de Administrador setorial para Super administrador revoga o papel setorial ativo e suas associações de setor, evitando papéis administrativos concorrentes;
+- bloqueio/reativação de usuários continua reservado ao Super administrador.
+
+### Portal e visibilidade
+
+- `/admin/governanca` passa a ser acessível a Administrador e Super administrador;
+- `/admin/usuarios` passa a ser acessível aos dois níveis;
+- Administrador setorial visualiza somente Administradores que compartilham ao menos um setor ativo;
+- Super administrador visualiza a governança administrativa global;
+- a tabela de usuários separa **Acesso administrativo** de **Perfis vinculados** (Consumidor/Produtor);
+- `/admin/configuracao` permanece exclusivo do Super administrador.
+
+### Convites para identidade existente
+
+O backend não cria um segundo usuário para o mesmo CPF. Para identidade já existente, a entrega utiliza Supabase Auth com `shouldCreateUser:false` e a aceitação exige confirmação das credenciais atuais.
+
+A concessão de papel utiliza reativação idempotente por `ON CONFLICT (user_id, role_code)`, e os setores utilizam a mesma estratégia em `app_admin_sector_members`.
+
+### Preservação
+
+- nenhuma identidade pública foi removida;
+- nenhum CPF foi duplicado;
+- nenhum papel `consumer` ou `producer` foi revogado;
+- MFA de Super administrador permanece obrigatório;
+- proteção do último Super administrador permanece;
+- o fluxo público continua proibido para criação administrativa;
+- schema lógico permanece 21; nenhuma migration adicional foi necessária porque a modelagem multi-role existente já suporta a hierarquia.

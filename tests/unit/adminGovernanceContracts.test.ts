@@ -70,7 +70,7 @@ describe("Trilha 05 — contratos de governança administrativa", () => {
     ).toBe(false);
   });
 
-  it("preserva senha forte e token opaco de convite", () => {
+  it("preserva senha forte no bootstrap e aceita confirmação da conta existente", () => {
     const base = {
       fullName: "Administrador Teste",
       cpf: "52998224725",
@@ -90,6 +90,14 @@ describe("Trilha 05 — contratos de governança administrativa", () => {
     ).toBe(false);
     expect(
       AcceptInviteSchema.safeParse({ ...base, token: "a".repeat(64) }).success,
+    ).toBe(true);
+    expect(
+      AcceptInviteSchema.safeParse({
+        token: "a".repeat(64),
+        cpf: base.cpf,
+        password: strong,
+        commandId: base.commandId,
+      }).success,
     ).toBe(true);
     expect(
       AcceptInviteSchema.safeParse({ ...base, token: "curto" }).success,
