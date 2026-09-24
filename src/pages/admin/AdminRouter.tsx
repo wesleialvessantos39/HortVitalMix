@@ -32,7 +32,6 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
       : null;
   return <AdminLoginPage
    onNavigate={onNavigate}
-   onSessionRefresh={onSessionRefresh}
    intendedRole={intendedRole}
   />;
  }
