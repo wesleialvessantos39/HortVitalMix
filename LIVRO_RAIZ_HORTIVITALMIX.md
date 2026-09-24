@@ -2754,7 +2754,7 @@ Status: correções implementadas; quatro testes comportamentais locais aprovado
 
 ## 2026-09-24 — Hotfix de identidade administrativa por portal e correção da falsa repetição de confirmação
 
-Status: backend, frontend e Supabase atualizados. A migration `20260924165427_admin_role_scoped_credentials` foi aplicada no projeto canônico e registrada como schema lógico **25**. O deploy Vercel da revisão final ainda deve concluir o gate automático antes da homologação externa.
+Status: backend, frontend e Supabase atualizados. A migration `20260924165427_admin_role_scoped_credentials` foi aplicada no projeto canônico e registrada como schema lógico **25**. O gate automático da Vercel concluiu com **success** e a release corrente de produção foi reconciliada com schema 25 e o novo hash de migrations.
 
 ### Causa-raiz confirmada
 
@@ -2781,3 +2781,11 @@ Status: backend, frontend e Supabase atualizados. A migration `20260924165427_ad
 - Super administrador mantém escopo global e MFA obrigatório.
 - O último Super administrador ativo continua protegido contra remoção/bloqueio.
 - Nenhuma senha é compartilhada entre credenciais administrativas distintas.
+
+
+### Homologação desta correção
+
+- Build/deploy automático Vercel: **success**.
+- Supabase production: migration `admin_role_scoped_credentials` aplicada.
+- Release corrente: schema lógico **25**.
+- Hash canônico: `0fc58f8e0b0e4fd66f2f12a7b59e9de269339ab0fce014bb449abfd539cc8ea7`.
