@@ -2,7 +2,6 @@ import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypt
 import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
 import { createSupabasePublicClient, supabaseAdmin, supabasePublic } from "../supabase/client.ts";
-import { StrongPasswordSchema } from "../../shared/contracts/auth.ts";
 import type {
   AcceptInviteInput,
   AcceptInviteResult,
