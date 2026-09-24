@@ -941,6 +941,8 @@ export class AdminGovernanceService {
     let createdAt = new Date();
     let identityMode: "new" | "existing" = "new";
     let targetPersonId: string | null = null;
+    let authEmail = input.email;
+    let needsAuthAlias = false;
 
     try {
       await client.query("BEGIN");
@@ -963,6 +965,7 @@ export class AdminGovernanceService {
           WHERE is_accepted=false
             AND invalidated_at IS NULL
             AND expires_at>now()
+            AND target_role=$3
             AND (
               lower(email)=$1
               OR ($2::text IS NOT NULL AND target_person_id IN (
@@ -970,7 +973,7 @@ export class AdminGovernanceService {
               ))
             )
           LIMIT 1`,
-        [input.email, input.targetCpf ?? null],
+        [input.email, input.targetCpf ?? null, input.targetRole],
       );
       if (pending.rowCount) {
         await client.query("ROLLBACK");
@@ -980,14 +983,26 @@ export class AdminGovernanceService {
       const emailInUse = await client.query(
         `SELECT 1
            FROM public.app_admin_principals
-          WHERE admin_email=$1
+          WHERE admin_email=$1 AND portal_role=$2
           LIMIT 1`,
-        [input.email],
+        [input.email, input.targetRole],
       );
       if (emailInUse.rowCount) {
         await client.query("ROLLBACK");
-        return { status: "conflict", message: "Este e-mail administrativo já está em uso." };
+        return {
+          status: "conflict",
+          message: "Este e-mail já possui uma credencial para este mesmo portal.",
+        };
       }
+
+      const emailUsedByOtherPortal = await client.query(
+        `SELECT 1
+           FROM public.app_admin_principals
+          WHERE admin_email=$1 AND portal_role<>$2
+          LIMIT 1`,
+        [input.email, input.targetRole],
+      );
+      needsAuthAlias = Boolean(emailUsedByOtherPortal.rowCount);
 
       if (input.targetCpf) {
         const person = await client.query<{
@@ -1027,22 +1042,22 @@ export class AdminGovernanceService {
         const alreadyLinked = await client.query(
           `SELECT 1
              FROM public.app_admin_principals
-            WHERE person_id=$1
+            WHERE person_id=$1 AND portal_role=$2
             LIMIT 1`,
-          [existing.id],
+          [existing.id, input.targetRole],
         );
         if (alreadyLinked.rowCount) {
           await client.query("ROLLBACK");
-          return { status: "conflict", message: "Esta pessoa já possui credencial administrativa." };
-        }
-
-        if (existing.email_normalized === input.email) {
-          await client.query("ROLLBACK");
           return {
             status: "conflict",
-            message: "Use um e-mail administrativo diferente do e-mail do cadastro público.",
+            message: "Esta pessoa já possui credencial para este mesmo portal administrativo.",
           };
         }
+
+        // A mesma pessoa pode usar o mesmo Gmail no cadastro público e nos
+        // portais administrativos. A senha continua independente porque o Auth
+        // recebe um alias técnico por portal e o login resolve o alias no backend.
+        if (existing.email_normalized === input.email) needsAuthAlias = true;
 
         identityMode = "existing";
         targetPersonId = existing.id;
@@ -1075,15 +1090,27 @@ export class AdminGovernanceService {
       token = randomBytes(32).toString("hex");
       const digest = sha256(token);
       inviteId = randomUUID();
+      authEmail = needsAuthAlias
+        ? roleScopedInviteAuthEmail(input.email, input.targetRole, inviteId)
+        : input.email;
+      if (needsAuthAlias && authEmail === input.email) {
+        await client.query("ROLLBACK");
+        return {
+          status: "conflict",
+          message:
+            "Para manter duas senhas no mesmo endereço de e-mail, o provedor precisa aceitar alias. Use uma conta Gmail/Googlemail ou outro e-mail administrativo.",
+        };
+      }
       expiresAt = new Date(Date.now() + INVITE_TTL_HOURS * 60 * 60_000);
       const inserted = await client.query<{ created_at: Date | string }>(
         `INSERT INTO public.app_admin_invites
-          (id,email,target_role,token_digest,invited_by,expires_at,target_person_id,identity_mode)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+          (id,email,auth_email,target_role,token_digest,invited_by,expires_at,target_person_id,identity_mode)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
          RETURNING created_at`,
         [
           inviteId,
           input.email,
+          authEmail,
           input.targetRole,
           digest,
           actorId,
@@ -1133,7 +1160,7 @@ export class AdminGovernanceService {
     try { base = new URL(origin).origin; } catch {}
     const redirectTo = `${base}/admin/aceitar-convite?token=${encodeURIComponent(token)}`;
 
-    const sent = await supabaseAdmin.auth.admin.inviteUserByEmail(input.email, {
+    const sent = await supabaseAdmin.auth.admin.inviteUserByEmail(authEmail, {
       redirectTo,
       data: {
         hvm_admin_invite_id: inviteId,
@@ -1154,7 +1181,7 @@ export class AdminGovernanceService {
       return {
         status: sent.error?.status === 422 ? "conflict" : "unavailable",
         message: sent.error?.status === 422
-          ? "Este e-mail já possui uma credencial de acesso."
+          ? "Já existe uma identidade de autenticação para este endereço técnico."
           : undefined,
       };
     }
@@ -1300,12 +1327,13 @@ export class AdminGovernanceService {
         identity_mode: "new" | "existing";
         target_person_id: string | null;
         auth_user_id: string | null;
+        auth_email: string | null;
         invited_by: string;
         is_accepted: boolean;
         expires_at: Date | string;
         invalidated_at: Date | string | null;
       }>(
-        `SELECT id,email,target_role,identity_mode,target_person_id,auth_user_id,invited_by,
+        `SELECT id,email,target_role,identity_mode,target_person_id,auth_user_id,auth_email,invited_by,
                 is_accepted,expires_at,invalidated_at
            FROM public.app_admin_invites
           WHERE token_digest=$1
@@ -1406,15 +1434,16 @@ export class AdminGovernanceService {
 
         const alreadyLinked = await client.query(
           `SELECT 1 FROM public.app_admin_principals
-            WHERE person_id=$1 OR admin_email=$2
+            WHERE portal_role=$3
+              AND (person_id=$1 OR admin_email=$2)
             LIMIT 1`,
-          [personId, invite.email],
+          [personId, invite.email, invite.target_role],
         );
         if (alreadyLinked.rowCount) {
           await client.query("ROLLBACK");
           return {
             status: "identity_conflict",
-            message: "A pessoa já possui credencial administrativa.",
+            message: "A pessoa já possui credencial para este mesmo portal administrativo.",
           };
         }
       } else {
@@ -1454,9 +1483,16 @@ export class AdminGovernanceService {
 
       await client.query(
         `INSERT INTO public.app_admin_principals
-          (admin_user_id,person_id,admin_email,created_by,email_verified_at)
-         VALUES ($1,$2,$3,$4,clock_timestamp())`,
-        [targetUserId, personId, invite.email, invite.invited_by],
+          (admin_user_id,person_id,admin_email,portal_role,auth_email,created_by,email_verified_at)
+         VALUES ($1,$2,$3,$4,$5,$6,clock_timestamp())`,
+        [
+          targetUserId,
+          personId,
+          invite.email,
+          invite.target_role,
+          invite.auth_email ?? invite.email,
+          invite.invited_by,
+        ],
       );
 
       await client.query(
