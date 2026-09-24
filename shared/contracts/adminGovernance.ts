@@ -63,19 +63,24 @@ export const BootstrapResultSchema = z.discriminatedUnion("status", [
 export type BootstrapResult = z.infer<typeof BootstrapResultSchema>;
 
 export const AdminLoginSchema = z
-  .object({ email, password: z.string().min(1).max(128) })
+  .object({
+    email,
+    password: z.string().min(1).max(128),
+    portalRole: AdminRoleSchema.optional(),
+  })
   .strict();
 export type AdminLoginInput = z.infer<typeof AdminLoginSchema>;
 
 
 export const AdminEmailConfirmationRequestSchema = z
-  .object({ email })
+  .object({ email, portalRole: AdminRoleSchema.optional() })
   .strict();
 
 export const AdminEmailConfirmationVerifySchema = z
   .object({
     email,
     otp: z.string().regex(PROVIDER_OTP_PATTERN, "Código de 8 dígitos"),
+    portalRole: AdminRoleSchema.optional(),
   })
   .strict();
 
