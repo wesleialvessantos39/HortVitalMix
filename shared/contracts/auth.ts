@@ -116,6 +116,13 @@ export const RoleScopedEmailRequestSchema = z
   })
   .strict();
 
+export const RoleScopedRecoveryFlowSchema = z
+  .object({
+    portalRole: PortalRoleSchema,
+    flowToken: z.string().min(32).max(256),
+  })
+  .strict();
+
 export const RoleScopedResetPasswordSchema = z
   .object({
     password: StrongPasswordSchema,
