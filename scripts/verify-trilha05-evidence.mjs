@@ -142,7 +142,8 @@ const checks = {
   readinessSchema22:
     foundation.includes("FOUNDATION_SCHEMA_VERSION = 22"),
   remoteMigrationAlias:
-    migrationManifest.includes('"20260923022554": "20260923022000"'),
+    migrationManifest.includes('"20260923022554": "20260923022000"') &&
+    migrationManifest.includes('"20260924023250": "20260924023000"'),
   adminScreenDiscovery:
     account.includes("admin-bootstrap-discovery") &&
     account.includes('navigate("/admin/bootstrap")') &&
