@@ -38,6 +38,67 @@ const maskEmail = (email: string) => {
   return `${start}***${end}@${domain}`;
 };
 
+type AdminPrincipalRow = {
+  admin_user_id: string;
+  email_verified_at: string | null;
+  portal_role: AdminRole;
+  auth_email: string | null;
+};
+
+async function adminPrincipalFor(
+  email: string,
+  portalRole?: AdminRole,
+): Promise<{
+  principal: AdminPrincipalRow | null;
+  unavailable: boolean;
+  ambiguous: boolean;
+}> {
+  if (!supabaseAdmin)
+    return { principal: null, unavailable: true, ambiguous: false };
+
+  const normalized = email.trim().toLowerCase();
+  let query = supabaseAdmin
+    .from("app_admin_principals")
+    .select("admin_user_id,email_verified_at,portal_role,auth_email")
+    .eq("admin_email", normalized);
+  if (portalRole) query = query.eq("portal_role", portalRole);
+
+  const { data, error } = await query.limit(2);
+  if (error)
+    return { principal: null, unavailable: true, ambiguous: false };
+
+  const rows = (data ?? []) as AdminPrincipalRow[];
+  if (!portalRole && rows.length > 1)
+    return { principal: null, unavailable: false, ambiguous: true };
+
+  return {
+    principal: rows[0] ?? null,
+    unavailable: false,
+    ambiguous: false,
+  };
+}
+
+function roleScopedInviteAuthEmail(
+  displayEmail: string,
+  role: AdminRole,
+  inviteId: string,
+) {
+  const normalized = displayEmail.trim().toLowerCase();
+  const at = normalized.lastIndexOf("@");
+  if (at <= 0) return normalized;
+  const local = normalized.slice(0, at);
+  const domain = normalized.slice(at + 1);
+  // Gmail/Googlemail entregam aliases com "+tag" na mesma caixa. O e-mail
+  // digitado pelo operador continua sendo admin_email; auth_email existe apenas
+  // para permitir uma senha independente por portal no Supabase Auth, que exige
+  // e-mail único por identidade.
+  if (domain === "gmail.com" || domain === "googlemail.com") {
+    const tag = role === "platform_admin" ? "admin" : "super";
+    return `${local}+hvm-${tag}-${inviteId.slice(0, 8)}@${domain}`;
+  }
+  return normalized;
+}
+
 const normalizeBootstrapAdminEmail = (value: string | undefined) => {
   let normalized = (value ?? "")
     .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "")
@@ -510,7 +571,10 @@ export class AdminGovernanceService {
     );
   }
 
-  static async requestAdminEmailConfirmation(email: string): Promise<{
+  static async requestAdminEmailConfirmation(
+    email: string,
+    portalRole?: AdminRole,
+  ): Promise<{
     status:
       | "sent"
       | "already_verified"
@@ -520,17 +584,14 @@ export class AdminGovernanceService {
     maskedDestination?: string;
     retryAfterSeconds?: number;
   }> {
-    if (!supabaseAdmin) return { status: "unavailable" };
-
     const normalized = email.trim().toLowerCase();
-    const { data: principal, error } = await supabaseAdmin
-      .from("app_admin_principals")
-      .select("admin_user_id,email_verified_at")
-      .eq("admin_email", normalized)
-      .maybeSingle();
+    const resolved = await adminPrincipalFor(normalized, portalRole);
+    if (resolved.unavailable) return { status: "unavailable" };
+    // Sem papel explícito, duas credenciais com o mesmo e-mail são ambíguas.
+    // Mantemos resposta anti-enumeração; os portais dedicados sempre enviam o papel.
+    if (resolved.ambiguous || !resolved.principal) return { status: "accepted" };
 
-    if (error) return { status: "unavailable" };
-    if (!principal) return { status: "accepted" };
+    const principal = resolved.principal;
     if (principal.email_verified_at)
       return {
         status: "already_verified",
@@ -539,8 +600,9 @@ export class AdminGovernanceService {
 
     const client = createSupabasePublicClient();
     if (!client) return { status: "unavailable" };
+    const authEmail = principal.auth_email || normalized;
     const sent = await client.auth.signInWithOtp({
-      email: normalized,
+      email: authEmail,
       options: { shouldCreateUser: false },
     });
     if (sent.error) {
@@ -563,25 +625,23 @@ export class AdminGovernanceService {
   static async verifyAdminEmailConfirmation(
     email: string,
     otp: string,
+    portalRole?: AdminRole,
   ): Promise<{
     status: "verified" | "invalid_code" | "already_verified" | "unavailable";
   }> {
-    if (!supabaseAdmin) return { status: "unavailable" };
-
     const normalized = email.trim().toLowerCase();
-    const { data: principal, error } = await supabaseAdmin
-      .from("app_admin_principals")
-      .select("admin_user_id,email_verified_at")
-      .eq("admin_email", normalized)
-      .maybeSingle();
+    const resolved = await adminPrincipalFor(normalized, portalRole);
+    if (resolved.unavailable || resolved.ambiguous || !resolved.principal)
+      return { status: "unavailable" };
 
-    if (error || !principal) return { status: "unavailable" };
+    const principal = resolved.principal;
     if (principal.email_verified_at) return { status: "already_verified" };
 
     const client = createSupabasePublicClient();
     if (!client) return { status: "unavailable" };
+    const authEmail = principal.auth_email || normalized;
     const verified = await client.auth.verifyOtp({
-      email: normalized,
+      email: authEmail,
       token: otp,
       type: "email",
     });
@@ -596,7 +656,7 @@ export class AdminGovernanceService {
     }
 
     await client.auth.signOut({ scope: "local" }).catch(() => undefined);
-    const { error: updateError } = await supabaseAdmin
+    const { error: updateError } = await supabaseAdmin!
       .from("app_admin_principals")
       .update({
         email_verified_at: new Date().toISOString(),
@@ -612,17 +672,13 @@ export class AdminGovernanceService {
     password: string,
     ipHash: string,
     requestId: string,
+    portalRole?: AdminRole,
   ): Promise<AdminLoginResult> {
     if (!supabaseAdmin) return { status: "unavailable" };
 
     const normalized = email.trim().toLowerCase();
-    const { data: principal, error: principalError } = await supabaseAdmin
-      .from("app_admin_principals")
-      .select("admin_user_id,email_verified_at")
-      .eq("admin_email", normalized)
-      .maybeSingle();
-
-    if (principalError) return { status: "unavailable" };
+    const resolved = await adminPrincipalFor(normalized, portalRole);
+    if (resolved.unavailable) return { status: "unavailable" };
 
     const limited = await this.rateLimit(normalized, ipHash);
     if (limited.limited)
@@ -631,10 +687,17 @@ export class AdminGovernanceService {
         retryAfterSeconds: limited.retryAfterSeconds,
       };
 
+    if (resolved.ambiguous || !resolved.principal) {
+      await this.recordAttempt(normalized, ipHash, "failure");
+      return { status: "invalid_credentials" };
+    }
+
+    const principal = resolved.principal;
+    const authEmail = principal.auth_email || normalized;
     const client = createSupabasePublicClient();
     if (!client) return { status: "unavailable" };
     const signed = await client.auth.signInWithPassword({
-      email: normalized,
+      email: authEmail,
       password,
     });
     if (signed.error || !signed.data.user || !signed.data.session) {
@@ -642,16 +705,13 @@ export class AdminGovernanceService {
       return { status: "invalid_credentials" };
     }
 
-    if (principal && signed.data.user.id !== principal.admin_user_id) {
+    if (signed.data.user.id !== principal.admin_user_id) {
       await client.auth.signOut({ scope: "local" }).catch(() => undefined);
       await this.recordAttempt(normalized, ipHash, "failure");
       return { status: "no_admin_role" };
     }
 
-    if (principal && !principal.email_verified_at) {
-      // Credencial e entrega de e-mail são responsabilidades separadas. Uma
-      // senha válida nunca deve virar "serviço indisponível" só porque o
-      // provedor aplicou cooldown de envio.
+    if (!principal.email_verified_at) {
       await client.auth.signOut({ scope: "local" }).catch(() => undefined);
       return {
         status: "email_confirmation_required",
@@ -660,7 +720,7 @@ export class AdminGovernanceService {
     }
 
     const role = await activeAdminRole(signed.data.user.id);
-    if (!role) {
+    if (!role || role.role_code !== principal.portal_role || (portalRole && role.role_code !== portalRole)) {
       await client.auth.signOut({ scope: "local" }).catch(() => undefined);
       await this.recordAttempt(normalized, ipHash, "failure");
       return { status: "no_admin_role" };
@@ -672,8 +732,8 @@ export class AdminGovernanceService {
     }
 
     if (role.role_code === "platform_super_admin") {
-      // A repeated password login during the mail cooldown resumes the same
-      // challenge. Password and current administrative role were checked above.
+      // O e-mail já foi confirmado. Este segundo código é MFA obrigatório do
+      // Super administrador (Manual Mestre T05), nunca repetição da confirmação.
       const { data: pending, error: pendingError } = await supabaseAdmin
         .from("app_admin_mfa_challenges")
         .select("id,expires_at,created_at,attempts,max_attempts")
@@ -698,10 +758,11 @@ export class AdminGovernanceService {
           expiresAt: pending.expires_at,
         };
       }
+
       const otpClient = createSupabasePublicClient();
       if (!otpClient) return { status: "unavailable" };
       const sent = await otpClient.auth.signInWithOtp({
-        email: normalized,
+        email: authEmail,
         options: { shouldCreateUser: false },
       });
       await client.auth.signOut({ scope: "local" }).catch(() => undefined);
