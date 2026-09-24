@@ -294,27 +294,6 @@ export class AdminGovernanceService {
     if (!status.unavailable && status.active)
       return { status: "already_closed" };
 
-    const [emailConflict, cpfConflict] = await Promise.all([
-      supabaseAdmin
-        .from("app_people")
-        .select("user_id")
-        .eq("email_normalized", bootstrapEmail)
-        .limit(1),
-      supabaseAdmin
-        .from("app_people")
-        .select("user_id")
-        .eq("cpf_normalized", input.cpf)
-        .limit(1),
-    ]);
-
-    if (emailConflict.error || cpfConflict.error)
-      return { status: "unavailable" };
-    if (emailConflict.data?.length || cpfConflict.data?.length)
-      return {
-        status: "identity_conflict",
-        message: "E-mail ou CPF já vinculado.",
-      };
-
     const created = await supabaseAdmin.auth.admin.createUser({
       email: bootstrapEmail,
       password: input.password,
@@ -385,7 +364,7 @@ export class AdminGovernanceService {
     if (rpcStatus === "identity_conflict")
       return {
         status: "identity_conflict",
-        message: "E-mail ou CPF já vinculado.",
+        message: "Não foi possível vincular o acesso administrativo a esta pessoa.",
       };
     if (rpcStatus === "validation_failed")
       return {
