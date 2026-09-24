@@ -88,7 +88,11 @@ export function AdminLoginPage({
     try {
       const result = await api<LoginResponse>("/v1/admin/auth/login", {
         method: "POST",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email,
+          password,
+          ...(intendedRole ? { portalRole: intendedRole } : {}),
+        }),
       });
       if (result.status === "session_created") {
         await onSessionRefresh();
@@ -107,7 +111,8 @@ export function AdminLoginPage({
       ) {
         onNavigate(
           "/admin/confirmar-email?email=" +
-            encodeURIComponent(email.trim().toLowerCase()),
+            encodeURIComponent(email.trim().toLowerCase()) +
+            (intendedRole ? "&portal=" + encodeURIComponent(intendedRole) : ""),
         );
         return;
       }
@@ -139,7 +144,11 @@ export function AdminLoginPage({
     try {
       const result = await api<LoginResponse>("/v1/admin/auth/login", {
         method: "POST",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email,
+          password,
+          ...(intendedRole ? { portalRole: intendedRole } : {}),
+        }),
       });
       if (result.status === "mfa_required" && "mfaChallengeId" in result) {
         setChallengeId(result.mfaChallengeId);
@@ -293,8 +302,12 @@ export function AdminLoginPage({
           ) : (
             <form onSubmit={submitMfa}>
               <div className="admin-login-icon"><ShieldCheck /></div>
-              <h2>Confirme o código de segurança</h2>
-              <p className="admin-muted">Enviamos um código de 8 dígitos para {destination}.</p>
+              <h2>Segundo fator do Super administrador</h2>
+              <p className="admin-muted">
+                Seu e-mail já está confirmado. Este código de 8 dígitos é o MFA obrigatório
+                do acesso de Super administrador e não uma nova confirmação de cadastro.
+                Enviamos para {destination}.
+              </p>
               {error && <div className="admin-alert admin-alert--error">{error}</div>}
               {mailCooldown > 0 && (
                 <div className="admin-alert" role="status">
