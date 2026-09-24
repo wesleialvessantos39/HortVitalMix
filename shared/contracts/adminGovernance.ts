@@ -106,6 +106,11 @@ export const AdminLoginResultSchema = z.discriminatedUnion("status", [
     status: z.literal("rate_limited"),
     retryAfterSeconds: z.number().int().positive(),
   }),
+  z.object({
+    status: z.literal("email_rate_limited"),
+    retryAfterSeconds: z.number().int().positive(),
+    phase: z.literal("mfa"),
+  }),
   z.object({ status: z.literal("unavailable") }),
 ]);
 export type AdminLoginResult = z.infer<typeof AdminLoginResultSchema>;
