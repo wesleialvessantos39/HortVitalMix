@@ -23,7 +23,7 @@ async function main() {
       "SELECT version,name FROM supabase_migrations.schema_migrations ORDER BY version",
     );
     const schemaVersion = validateHistory(history.rows);
-    if (schemaVersion !== 24) throw new Error("MIGRATION_HISTORY_GATE_FAILED");
+    if (schemaVersion !== 25) throw new Error("MIGRATION_HISTORY_GATE_FAILED");
     const migrationHistoryHash = assertManifestHash();
 
     const extensions = await client.query<{ extname: string }>(
