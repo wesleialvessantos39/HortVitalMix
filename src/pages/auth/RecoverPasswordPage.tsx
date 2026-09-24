@@ -16,6 +16,14 @@ function queryRole(): PortalRole | null {
   return parsed.success ? parsed.data : null;
 }
 
+function loginPath(role: PortalRole | null) {
+  if (role === "consumer") return "/entrar/consumidor";
+  if (role === "producer") return "/entrar/produtor";
+  if (role === "platform_admin") return "/entrar/administrador";
+  if (role === "platform_super_admin") return "/entrar/super-administrador";
+  return "/entrar";
+}
+
 export function RecoverPasswordPage({ onNavigate }: { onNavigate: (path: string) => void }) {
   const [role, setRole] = useState<PortalRole | null>(useMemo(queryRole, []));
   const [email, setEmail] = useState("");
@@ -125,7 +133,7 @@ export function RecoverPasswordPage({ onNavigate }: { onNavigate: (path: string)
         )}
 
         <div className="t04-footer-actions">
-          <button type="button" className="t04-link-button" onClick={() => onNavigate("/entrar")}>
+          <button type="button" className="t04-link-button" onClick={() => onNavigate(loginPath(role))}>
             Voltar para entrar
           </button>
         </div>
