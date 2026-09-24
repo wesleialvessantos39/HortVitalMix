@@ -86,25 +86,28 @@ export async function adminSessionMiddleware(
   let active: Array<{ role_code: AdminRole; expires_at: string | null }> = [];
 
   if (supabaseAdmin) {
-    const principal = await supabaseAdmin
-      .from("app_admin_principals")
-      .select("admin_user_id,portal_role")
-      .eq("admin_user_id", userData.user.id)
-      .maybeSingle();
-
+    const [principal, roles, account] = await Promise.all([
+      supabaseAdmin.from("app_admin_principals")
+        .select("admin_user_id,portal_role").eq("admin_user_id", userData.user.id).maybeSingle(),
+      supabaseAdmin.from("app_user_role_assignments")
+        .select("role_code,expires_at,revoked_at").eq("user_id", userData.user.id)
+        .in("role_code", ["platform_admin", "platform_super_admin"]).is("revoked_at", null),
+      supabaseAdmin.from("app_users").select("status").eq("id", userData.user.id).maybeSingle(),
+    ]);
+    if (account.error) {
+      res.status(503).json({ error: AdminErrorCode.UNAVAILABLE, requestId: req.requestId });
+      return;
+    }
+    if (!account.data || account.data.status !== "active") {
+      res.status(403).json({ error: AdminErrorCode.FORBIDDEN, requestId: req.requestId });
+      return;
+    }
     if (!principal.error && principal.data) {
       principalData = {
         admin_user_id: principal.data.admin_user_id,
         portal_role: principal.data.portal_role as AdminRole,
       };
     }
-
-    const roles = await supabaseAdmin
-      .from("app_user_role_assignments")
-      .select("role_code,expires_at,revoked_at")
-      .eq("user_id", userData.user.id)
-      .in("role_code", ["platform_admin", "platform_super_admin"])
-      .is("revoked_at", null);
 
     if (!roles.error) {
       active = (roles.data ?? [])
@@ -126,7 +129,8 @@ export async function adminSessionMiddleware(
         portal_role: AdminRole;
       }>(
         `SELECT admin_user_id,portal_role
-           FROM public.app_admin_principals
+           FROM public.app_admin_principals ap
+           JOIN public.app_users u ON u.id=ap.admin_user_id AND u.status='active'
           WHERE admin_user_id=$1
           LIMIT 1`,
         [userData.user.id],

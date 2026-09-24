@@ -237,12 +237,13 @@ adminGovernanceRouter.get(
   adminSessionMiddleware,
   async (req: Request, res: Response) => {
     if (!req.adminActor) return;
-    const result = await AdminGovernanceService.verifyAdminSession(
-      req.adminActor.userId,
-      req.adminActor.role,
-      req.adminActor.sessionIssuedAt,
-    );
-    res.status(200).json(result);
+    // The middleware has just validated identity, active account, role and sectors.
+    const { role, sectors, sessionIssuedAt } = req.adminActor;
+    const issued = new Date(sessionIssuedAt).getTime();
+    res.status(200).json({
+      authorized: true, role, sectors,
+      requiresReauth: !Number.isFinite(issued) || Date.now() - issued > 15 * 60_000,
+    });
   },
 );
 

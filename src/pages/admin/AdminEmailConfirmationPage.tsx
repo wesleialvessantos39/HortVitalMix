@@ -127,7 +127,7 @@ export function AdminEmailConfirmationPage({
         setVerified(true);
         setNotice(
           initial.portalRole === "platform_super_admin"
-            ? "E-mail confirmado. No próximo acesso, o Super administrador ainda validará o MFA obrigatório."
+            ? "E-mail confirmado. Para entrar, use sua senha e o código de segurança enviado por e-mail."
             : "E-mail administrativo confirmado. Agora o Administrador entra diretamente com e-mail e senha.",
         );
         return;

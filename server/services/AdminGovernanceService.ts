@@ -1307,11 +1307,11 @@ export class AdminGovernanceService {
       );
       createdAt = new Date(inserted.rows[0]?.created_at ?? Date.now());
 
-      for (const sector of input.sectors) {
+      if (input.sectors.length) {
         await client.query(
           `INSERT INTO public.app_admin_invite_sectors(invite_id,sector_code)
-           VALUES ($1,$2)`,
-          [inviteId, sector],
+           SELECT $1, sector FROM unnest($2::text[]) AS sector`,
+          [inviteId, input.sectors],
         );
       }
 

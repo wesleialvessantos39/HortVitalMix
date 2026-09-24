@@ -2867,3 +2867,16 @@ O AdminAccessGate também redirecionava ao login em qualquer erro de transporte.
 Foram corrigidos tipos nulos já existentes no bootstrap e no desafio MFA para restabelecer `typecheck:app`. Validação local: typecheck passou, 15 testes de roteamento/MFA passaram e `vite build` passou. Os testes não usam contas reais nem enviam e-mails. Login completo com credenciais reais ainda depende de validação autenticada; não se declara homologação apenas por build.
 
 Validação ampliada T05: 28/29 testes passaram. Falha preexistente em `trilha05SealRegression.test.ts`: o teste proíbe o texto “Código de atendimento:” já presente em Account.tsx; esse arquivo não foi alterado nesta correção.
+
+
+### 2026-09-24 — desempenho dos acessos e acompanhamento de convites
+
+Removida a passagem redundante de rotas administrativas pelo resolvedor público; cada rota protegida continua validada no middleware administrativo. Sessão pública e logout também deixam de pré-validar a identidade antes dos próprios handlers. O middleware administrativo consulta principal, papéis e status da conta em paralelo; contas suspensas são recusadas. `/admin/auth/verify-session` reutiliza somente a autorização validada na mesma requisição, sem cache global de permissões nem consultas duplicadas.
+
+Navegação React estabilizada para não desmontar/revalidar o painel a cada clique. As restrições de tela são recalculadas no render e as APIs seguem autorizando cada operação. Saída administrativa espera o encerramento real, navega sem aguardar outra leitura de sessão e mostra falha quando a saída não foi concluída.
+
+Cadastro consumidor/produtor usa uma única busca indexável por CPF/e-mail; validações de identidade, RPC transacional, confirmação de e-mail e compensações permanecem. Resolução alternativa de identidade executa consultas independentes em paralelo. Tempo de cadastro reportado em Server-Timing inclui agora o envio inicial da confirmação.
+
+Convites inserem os setores em lote na mesma transação. A interface apresenta imediatamente o convite retornado pelo servidor, sem recarregar setores e histórico antes de liberar o botão. Enquanto houver convite pendente, consulta aceitação a cada 3 segundos, somente com a página visível, sem sobrepor consultas; cancela ao sair e informa falhas de sincronização. Isso acompanha aceitação, não comprova leitura ou entrega pelo Gmail.
+
+Removidos Volume/Trilha e referências ao provedor de autenticação nas telas públicas e administrativas. Nenhuma alteração de esquema necessária. Validação: typecheck e build aprovados, 30 testes específicos aprovados (incluindo cadastro confirmado obrigatório, conflito CPF/e-mail, bloqueio de administrador suspenso e acessos separados). Meta de 2–4 segundos não homologada sem medição com contas reais e entrega de e-mail.

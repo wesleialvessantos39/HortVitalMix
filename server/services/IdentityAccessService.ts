@@ -19,7 +19,7 @@ async function resolveViaDataApi(
     supabaseAdmin ?? (accessToken ? createSupabaseUserClient(accessToken) : null);
   if (!dataClient) return null;
 
-  const [{ data: user, error: userError }, { data: roles, error: rolesError }] =
+  const [{ data: user, error: userError }, { data: roles, error: rolesError }, principal, person] =
     await Promise.all([
       dataClient
         .from("app_users")
@@ -31,6 +31,8 @@ async function resolveViaDataApi(
         .select("role_code,expires_at")
         .eq("user_id", userId)
         .is("revoked_at", null),
+      dataClient.from("app_admin_principals").select("person_id").eq("admin_user_id", userId).maybeSingle(),
+      dataClient.from("app_people").select("id").eq("user_id", userId).maybeSingle(),
     ]);
 
   if (userError || rolesError || !user) return null;
@@ -42,21 +44,7 @@ async function resolveViaDataApi(
     )
     .map((row) => String(row.role_code));
 
-  const { data: principal } = await dataClient
-    .from("app_admin_principals")
-    .select("person_id")
-    .eq("admin_user_id", userId)
-    .maybeSingle();
-
-  let personId = principal?.person_id ?? null;
-  if (!personId) {
-    const { data: person } = await dataClient
-      .from("app_people")
-      .select("id")
-      .eq("user_id", userId)
-      .maybeSingle();
-    personId = person?.id ?? null;
-  }
+  const personId = principal.data?.person_id ?? person.data?.id ?? null;
 
   return {
     status: user.status,

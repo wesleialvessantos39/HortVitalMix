@@ -42,8 +42,8 @@ export function AdminLoginPage({
     intendedRole === "platform_admin"
       ? "Acesso reservado a administradores setoriais convidados. O escopo liberado depende dos setores atribuídos à conta."
       : intendedRole === "platform_super_admin"
-        ? "Acesso superior protegido. Após validar a senha, o segundo fator por e-mail é obrigatório antes da criação da sessão."
-        : "Acesso reservado a administradores autorizados. Super administradores confirmam o acesso com um código adicional enviado pelo Supabase Auth.";
+        ? "Entre com sua senha e confirme o código de segurança enviado por e-mail."
+        : "Acesso reservado a administradores autorizados. Super administradores confirmam o acesso com um código de segurança enviado por e-mail.";
 
   useEffect(() => {
     if (intendedRole === "platform_admin") {
@@ -315,8 +315,8 @@ export function AdminLoginPage({
               <div className="admin-login-icon"><ShieldCheck /></div>
               <h2>Segundo fator do Super administrador</h2>
               <p className="admin-muted">
-                Seu e-mail já está confirmado. Este código de 8 dígitos é o MFA obrigatório
-                do acesso de Super administrador e não uma nova confirmação de cadastro.
+                Seu e-mail já está confirmado. Este código de 8 dígitos confirma a entrada
+                do Super administrador e não uma nova confirmação de cadastro.
                 Enviamos para {destination}.
               </p>
               {error && <div className="admin-alert admin-alert--error">{error}</div>}
@@ -357,10 +357,10 @@ export function AdminLoginPage({
           >
             <h2 id="admin-help-title">Como obter acesso administrativo</h2>
             <ol>
-              <li><strong>Primeiro Super administrador:</strong> nasce uma única vez pelo bootstrap protegido e por e-mail autorizado somente no servidor.</li>
+              <li><strong>Primeiro Super administrador:</strong> é cadastrado uma única vez com o e-mail autorizado.</li>
               <li><strong>Demais administradores:</strong> entram apenas por convite emitido por um Super administrador.</li>
               <li><strong>Administrador setorial:</strong> opera somente nos setores atribuídos ao convite.</li>
-              <li><strong>Super administrador:</strong> confirma obrigatoriamente cada acesso com MFA por e-mail via Supabase Auth.</li>
+              <li><strong>Super administrador:</strong> confirma cada acesso com um código de segurança enviado por e-mail.</li>
             </ol>
             <button type="button" className="admin-primary" onClick={() => setShowHelp(false)}>Fechar</button>
           </div>

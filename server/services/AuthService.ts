@@ -209,45 +209,20 @@ async function findExistingPerson(
   if (!supabaseAdmin) return null;
   const admin = supabaseAdmin as any;
 
-  const [byCpf, byEmail] = await Promise.all([
-    admin
-      .from("app_people")
-      .select("id,user_id,cpf_normalized,email_normalized")
-      .eq("cpf_normalized", data.cpf)
-      .maybeSingle(),
-    admin
-      .from("app_people")
-      .select("id,user_id,cpf_normalized,email_normalized")
-      .eq("email_normalized", data.email)
-      .maybeSingle(),
-  ]);
-
-  if (byCpf.error) {
-    reportFailure({
-      category: "registration_existing_cpf_lookup_failed",
-      requestId,
-      detail: byCpf.error.code ?? "unknown",
-    });
+  // One indexed lookup; quote email as a PostgREST literal, never as filter syntax.
+  const result = await admin.from("app_people")
+    .select("id,user_id,cpf_normalized,email_normalized")
+    .or(`cpf_normalized.eq.${data.cpf},email_normalized.eq.${JSON.stringify(data.email)}`)
+    .limit(2);
+  if (result.error) {
+    reportFailure({ category: "registration_existing_lookup_failed", requestId,
+      detail: result.error.code ?? "unknown" });
     throw registrationError("REGISTRATION_DATABASE_UNAVAILABLE", 503);
   }
-
-  if (byEmail.error) {
-    reportFailure({
-      category: "registration_existing_email_lookup_failed",
-      requestId,
-      detail: byEmail.error.code ?? "unknown",
-    });
-    throw registrationError("REGISTRATION_DATABASE_UNAVAILABLE", 503);
-  }
-
-  if (
-    byCpf.data &&
-    byEmail.data &&
-    byCpf.data.user_id !== byEmail.data.user_id
-  )
+  const rows = (result.data ?? []) as ExistingPerson[];
+  if (rows.length > 1 && rows[0].user_id !== rows[1].user_id)
     throw registrationError("REGISTRATION_IDENTITY_CONFLICT", 409);
-
-  return (byCpf.data ?? byEmail.data ?? null) as ExistingPerson | null;
+  return rows[0] ?? null;
 }
 
 async function addRoleToExistingIdentity(

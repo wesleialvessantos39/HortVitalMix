@@ -75,7 +75,7 @@ export function RecoverPasswordPage({ onNavigate }: { onNavigate: (path: string)
         <div className="t04-brand-mark"><Sprout /></div>
         <span className="t04-kicker">Recuperação segura</span>
         <h2>Volte para sua conta com segurança.</h2>
-        <p>O link de recuperação é emitido pelo Supabase Auth e entregue pelo Gmail/SMTP configurado no próprio Supabase.</p>
+        <p>Enviaremos um link para você criar uma nova senha com segurança.</p>
         <div className="t04-steps">
           <span><b>1</b> Selecione seu perfil</span>
           <span><b>2</b> Informe o e-mail</span>
@@ -95,7 +95,7 @@ export function RecoverPasswordPage({ onNavigate }: { onNavigate: (path: string)
           <div className="t04-mail-result">
             <div className="t04-title-icon success"><Mail /></div>
             <h2>Confira seu e-mail</h2>
-            <p>Abra o link enviado pelo Supabase para continuar a redefinição.</p>
+            <p>Abra o link enviado por e-mail para criar sua nova senha.</p>
             <button
               type="button"
               className="t04-secondary"

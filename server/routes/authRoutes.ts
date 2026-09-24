@@ -1007,7 +1007,6 @@ for (const role of ["consumer", "producer"] as const)
         role,
         res.locals.requestId,
       );
-      res.setHeader("Server-Timing", "auth-register;dur=" + Math.max(0, Date.now() - startedAt));
       // A previous browser session is not proof that this new account was confirmed.
       clear(res);
       let confirmationDispatchAccepted = false;
@@ -1026,6 +1025,7 @@ for (const role of ["consumer", "producer"] as const)
           }
         }
       }
+      res.setHeader("Server-Timing", "auth-register;dur=" + Math.max(0, Date.now() - startedAt));
       res.status(201).json({
         ...result,
         confirmationDispatchAccepted,

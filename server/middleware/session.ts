@@ -52,7 +52,9 @@ export async function sessionMiddleware(
 
   // Login/cadastro não dependem de uma sessão anterior. Ignorar cookies antigos
   // aqui evita uma validação Auth + banco antes do próprio request solicitado.
-  if (isPublicAuthFastPath(req.path)) {
+  if (isPublicAuthFastPath(req.path) ||
+      /^\/(?:api\/|_hvm_api\/)?v1\/admin(?:\/|$)/.test(req.path) ||
+      /^\/(?:api\/|_hvm_api\/)?v1\/auth\/(?:logout|session)$/.test(req.path)) {
     next();
     return;
   }

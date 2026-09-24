@@ -31,19 +31,8 @@ export function AdminAccessGate({
     })
       .then((access) => {
         if (abort.signal.aborted) return;
-        const roleDenied =
-          requiredRole === "platform_super_admin" &&
-          access.role !== "platform_super_admin";
-        const sectorDenied =
-          Boolean(requiredSector) &&
-          access.role !== "platform_super_admin" &&
-          !access.sectors.includes(requiredSector!);
         if (!access.authorized || !access.role) {
           onNavigate("/admin/entrar");
-          return;
-        }
-        if (roleDenied || sectorDenied) {
-          setState({ kind: "denied" });
           return;
         }
         setState({ kind: "ready", access });
@@ -54,7 +43,7 @@ export function AdminAccessGate({
         else setState({ kind: error.status === 403 ? "denied" : "error" });
       });
     return () => abort.abort();
-  }, [onNavigate, requiredRole, requiredSector, attempt]);
+  }, [onNavigate, attempt]);
 
   if (state.kind === "loading")
     return (
@@ -75,7 +64,11 @@ export function AdminAccessGate({
       </section>
     );
 
-  if (state.kind === "denied")
+  const permissionDenied = state.kind === "ready" && (
+    (requiredRole === "platform_super_admin" && state.access.role !== "platform_super_admin") ||
+    (requiredSector && state.access.role !== "platform_super_admin" && !state.access.sectors.includes(requiredSector))
+  );
+  if (state.kind === "denied" || permissionDenied)
     return <section className="admin-loading"><strong>Seu perfil não tem permissão para acessar esta área.</strong></section>;
 
   return <>{children(state.access)}</>;

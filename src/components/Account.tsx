@@ -783,7 +783,7 @@ export function Account({
             type="button"
             onClick={() => navigate("/admin/configuracao")}
           >
-            Abrir Configuração Global — Trilha 02
+            Abrir configurações
           </button>
         )}
 
@@ -1143,7 +1143,7 @@ export function Account({
                 : adminBootstrapStatus === "closed"
                   ? "Use uma das opções acima. Novos administradores entram somente por convite."
                   : adminBootstrapStatus === "loading"
-                    ? "Consultando o estado real da governança T05."
+                    ? "Verificando disponibilidade do acesso."
                     : "O bootstrap não está disponível agora. Os acessos existentes continuam preservados."}
             </span>
           </div>

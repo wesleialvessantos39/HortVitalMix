@@ -6,7 +6,7 @@ import {
   LogOut,
   Leaf,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { AdminVerifySessionResponse } from "../../../shared/contracts/adminGovernance";
 import { api } from "../../lib/api";
 
@@ -37,12 +37,19 @@ export function AdminPortalShell({
     return to !== "/admin/configuracao";
   });
 
+  const [leaving, setLeaving] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
   async function logout() {
+    if (leaving) return;
+    setLeaving(true);
+    setLogoutError("");
     try {
       await api("/v1/auth/logout", { method: "POST", body: "{}" });
-    } catch {}
-    await onSessionRefresh();
-    onNavigate("/admin/entrar");
+      onNavigate("/admin/entrar");
+      void onSessionRefresh();
+    } catch {
+      setLogoutError("Não foi possível sair. Tente novamente.");
+    } finally { setLeaving(false); }
   }
 
   return (
@@ -76,7 +83,7 @@ export function AdminPortalShell({
           {access.sectors.length > 0 && (
             <small>{access.sectors.join(" • ")}</small>
           )}
-          <button className="admin-logout" onClick={logout}>
+          <button className="admin-logout" onClick={logout} disabled={leaving}>
             <LogOut size={17} /> Sair
           </button>
         </div>
@@ -87,10 +94,11 @@ export function AdminPortalShell({
             <span className="admin-brand-mark"><Leaf /></span>
             <strong>Horti<span>Vital</span>Mix</strong>
           </button>
-          <button className="admin-logout icon-only" onClick={logout} aria-label="Sair">
+          <button className="admin-logout icon-only" onClick={logout} disabled={leaving} aria-label="Sair">
             <LogOut size={18} />
           </button>
         </div>
+        {logoutError && <p role="alert" className="admin-alert admin-alert--error">{logoutError}</p>}
         {children}
         <nav className="admin-bottom-nav" aria-label="Administração mobile">
           {visible.map(([to, label, Icon]) => (

@@ -133,7 +133,7 @@ export function AdminBootstrapPage({onNavigate}:Props){
    }else if(failure.status===503){
     setMessage(
      failure.message==="BOOTSTRAP_DISABLED"
-      ? "A política de bootstrap não está disponível no Supabase."
+      ? "Não foi possível verificar a disponibilidade do cadastro."
       : "Não foi possível concluir a configuração inicial agora. Tente novamente em alguns instantes."
     );
    }else{

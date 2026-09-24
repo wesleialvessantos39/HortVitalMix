@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Leaf,
   MapPin,
@@ -121,12 +121,12 @@ export default function App() {
     if (modal) dialog.current?.showModal();
     else dialog.current?.close();
   }, [modal]);
-  function go(to: string) {
+  const go = useCallback((to: string) => {
     const next = new URL(to, location.origin);
     history.pushState({}, "", next.pathname + next.search + next.hash);
     setPath(next.pathname);
     window.scrollTo(0, 0);
-  }
+  }, []);
   const logo = (
     <a
       className="brand"

@@ -1,4 +1,4 @@
-import { useEffect,useState } from "react";
+import { useEffect,useRef,useState } from "react";
 import { MailPlus,RefreshCw,ShieldCheck,UsersRound } from "lucide-react";
 import { api } from "../../lib/api";
 import { CPFInput } from "../../components/forms/CPFInput";
@@ -39,6 +39,8 @@ export function AdminGovernancePage({onNavigate,access}:Props){
  const [identity,setIdentity]=useState<IdentityLookup|null>(null);
  const [busy,setBusy]=useState(false),[error,setError]=useState(""),[success,setSuccess]=useState("");
 
+ const refreshInFlight = useRef(false);
+ const [syncError,setSyncError]=useState("");
  async function load(){
   setError("");
   try{
@@ -50,6 +52,24 @@ export function AdminGovernancePage({onNavigate,access}:Props){
   }catch{setError("Não foi possível carregar a governança administrativa.")}
  }
  useEffect(()=>{void load()},[]);
+ const hasPending = invites.some(i=>!i.isAccepted&&!i.invalidatedAt&&new Date(i.expiresAt).getTime()>Date.now());
+ useEffect(()=>{
+  if(!hasPending) return;
+  const abort = new AbortController();
+  async function sync(){
+   if(document.visibilityState!=="visible"||refreshInFlight.current) return;
+   refreshInFlight.current=true;
+   try {
+    const result=await api<{invites:InviteResponse[]}>("/v1/admin/invites",{signal:abort.signal});
+    if(!abort.signal.aborted){setInvites(result.invites);setSyncError("");}
+   } catch {
+    if(!abort.signal.aborted)setSyncError("A atualização automática está indisponível. Tente atualizar novamente.");
+   } finally {refreshInFlight.current=false;}
+  }
+  const timer=window.setInterval(()=>void sync(),3000);
+  document.addEventListener("visibilitychange",sync);
+  return ()=>{abort.abort();clearInterval(timer);document.removeEventListener("visibilitychange",sync);};
+ },[hasPending]);
 
  async function lookupIdentity(){
   const cpf=targetCpf.replace(/\D/g,"");
@@ -83,7 +103,9 @@ export function AdminGovernancePage({onNavigate,access}:Props){
       ? "Convite enviado. O cadastro existente será preservado e receberá apenas o novo acesso administrativo."
       : "Convite enviado. O novo acesso administrativo poderá ser ativado pelo link recebido."
     );
-    setEmail("");setTargetCpf("");setSelected([]);setIdentity(null);setTargetRole("platform_admin");await load();
+    setEmail("");setTargetCpf("");setSelected([]);setIdentity(null);setTargetRole("platform_admin");
+    const created=result.invite;
+    setInvites(current=>[created,...current.filter(i=>i.id!==created.id)]);
    }
   }catch(err){
    const status=(err as {status?:number}).status;
@@ -183,6 +205,8 @@ export function AdminGovernancePage({onNavigate,access}:Props){
 
    <section className="admin-card admin-card--table">
     <div className="admin-card-heading"><div><h2>Histórico de convites</h2><p className="admin-muted">{isSuper?"Todos os convites administrativos.":"Somente convites emitidos por você."}</p></div></div>
+    {hasPending&&<p className="admin-muted" role="status">Acompanhando a aceitação dos convites automaticamente.</p>}
+    {syncError&&<p role="status" className="admin-muted">{syncError}</p>}
     {invites.length===0?<p className="admin-empty">Nenhum convite emitido.</p>:<div className="admin-table-wrap"><table className="admin-table">
      <thead><tr><th>E-mail</th><th>Papel</th><th>Origem</th><th>Setores</th><th>Status</th><th>Expira</th></tr></thead>
      <tbody>{invites.map(i=>{

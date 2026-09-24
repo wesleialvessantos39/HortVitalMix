@@ -95,7 +95,7 @@ export function ContactConfirmationPage({
         body: JSON.stringify({ email, portalRole: role }),
       });
       setNotice(
-        `Se houver um cadastro ${ROLES.find((item) => item.role === role)?.label} pendente para este e-mail, a confirmação será enviada pelo Supabase.`,
+        `Se houver um cadastro ${ROLES.find((item) => item.role === role)?.label} pendente para este e-mail, a confirmação será enviada por e-mail.`,
       );
     } catch {
       setNotice("Não foi possível solicitar o reenvio agora. Tente novamente.");
@@ -110,7 +110,7 @@ export function ContactConfirmationPage({
         <div className="t04-brand-mark"><Sprout /></div>
         <span className="t04-kicker">HortiVitalMix • Segurança</span>
         <h2>Seu acesso protegido, sem complicação.</h2>
-        <p>Os e-mails de confirmação são enviados pelo Supabase Auth através do Gmail/SMTP já configurado no projeto.</p>
+        <p>Confirme seu e-mail para ativar o acesso à sua conta.</p>
         <div className="t04-steps">
           <span><b>1</b> Solicite a confirmação</span>
           <span><b>2</b> Abra o e-mail recebido</span>
@@ -135,7 +135,7 @@ export function ContactConfirmationPage({
             <CheckCircle2 />
             <div>
               <strong>Confirmação concluída</strong>
-              <span>{session?.email ?? "E-mail validado pelo Supabase Auth."}</span>
+              <span>{session?.email ?? "E-mail confirmado."}</span>
             </div>
           </div>
         ) : (
