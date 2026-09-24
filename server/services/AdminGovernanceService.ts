@@ -1024,19 +1024,26 @@ export class AdminGovernanceService {
           return { status: "conflict", message: "CPF não localizado em cadastro ativo." };
         }
 
-        const publicRoles = await client.query(
+        const eligibleIdentity = await client.query(
           `SELECT 1
              FROM public.app_user_role_assignments
             WHERE user_id=$1
               AND role_code IN ('consumer','producer')
               AND revoked_at IS NULL
               AND (expires_at IS NULL OR expires_at>now())
+            UNION ALL
+           SELECT 1
+             FROM public.app_admin_principals
+            WHERE person_id=$2
             LIMIT 1`,
-          [existing.user_id],
+          [existing.user_id, existing.id],
         );
-        if (!publicRoles.rowCount) {
+        if (!eligibleIdentity.rowCount) {
           await client.query("ROLLBACK");
-          return { status: "conflict", message: "CPF não pertence a Consumidor ou Produtor ativo." };
+          return {
+            status: "conflict",
+            message: "CPF não pertence a uma identidade ativa elegível para acesso administrativo.",
+          };
         }
 
         const alreadyLinked = await client.query(
