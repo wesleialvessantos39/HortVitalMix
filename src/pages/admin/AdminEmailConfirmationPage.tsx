@@ -64,11 +64,17 @@ export function AdminEmailConfirmationPage({
       }
       if (result.status === "cooldown") {
         setDestination(result.maskedDestination ?? email);
-        setSent(true);
         setRetryAfter(result.retryAfterSeconds ?? 60);
-        setNotice(
-          "Um código foi solicitado recentemente. Use o código mais recente recebido; o reenvio ficará disponível após o contador.",
-        );
+        if (sent) {
+          setNotice(
+            "Use o código de confirmação mais recente recebido. O reenvio ficará disponível após o contador.",
+          );
+        } else {
+          setSent(false);
+          setNotice(
+            "O provedor de e-mail está em intervalo de segurança. Aguarde o contador e então solicite o código de confirmação.",
+          );
+        }
         return;
       }
       setDestination(result.maskedDestination ?? email);
