@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 21,
+  "schemaVersion": 22,
   "migrations": [
     {
       "version": "20260919030126",
@@ -105,7 +105,12 @@
       "version": "20260923194253",
       "name": "trilha05_bootstrap_rpc_finalize",
       "file": "20260923194253_trilha05_bootstrap_rpc_finalize.sql"
+    },
+    {
+      "version": "20260924023000",
+      "name": "trilha05_admin_principals",
+      "file": "20260924023000_trilha05_admin_principals.sql"
     }
   ],
-  "migrationHistoryHash": "4c2033793929e6f2926897eaa45aff3c06993f1699f27eb9d6baee1391e5374c"
+  "migrationHistoryHash": "ffdbac1590584284def97afa26d9e9ccb58d3753d9c985fa80f198a523854f5b"
 }
