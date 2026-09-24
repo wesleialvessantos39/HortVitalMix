@@ -16,6 +16,11 @@ export function AdminEmailConfirmationPage({
       sent: params.get("sent") === "1",
       destination: params.get("dest") ?? "",
       retryAfter: Number(params.get("retry") ?? 0) || 0,
+      portalRole:
+        params.get("portal") === "platform_admin" ||
+        params.get("portal") === "platform_super_admin"
+          ? (params.get("portal") as "platform_admin" | "platform_super_admin")
+          : null,
     };
   }, []);
   const [email, setEmail] = useState(initial.email);
@@ -25,6 +30,12 @@ export function AdminEmailConfirmationPage({
   const [verified, setVerified] = useState(false);
   const [busy, setBusy] = useState(false);
   const [retryAfter, setRetryAfter] = useState(initial.retryAfter);
+  const loginPath =
+    initial.portalRole === "platform_admin"
+      ? "/entrar/administrador"
+      : initial.portalRole === "platform_super_admin"
+        ? "/entrar/super-administrador"
+        : "/admin/entrar";
   const [notice, setNotice] = useState(
     initial.sent
       ? "Código de confirmação enviado. Confira sua caixa de entrada e a pasta de spam."
@@ -56,7 +67,10 @@ export function AdminEmailConfirmationPage({
         retryAfterSeconds?: number;
       }>("/v1/admin/auth/email-confirmation/request", {
         method: "POST",
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+          email,
+          ...(initial.portalRole ? { portalRole: initial.portalRole } : {}),
+        }),
       });
       if (result.status === "already_verified") {
         setVerified(true);
@@ -99,7 +113,11 @@ export function AdminEmailConfirmationPage({
         "/v1/admin/auth/email-confirmation/verify",
         {
           method: "POST",
-          body: JSON.stringify({ email, otp }),
+          body: JSON.stringify({
+            email,
+            otp,
+            ...(initial.portalRole ? { portalRole: initial.portalRole } : {}),
+          }),
         },
       );
       if (
@@ -107,7 +125,11 @@ export function AdminEmailConfirmationPage({
         result.status === "already_verified"
       ) {
         setVerified(true);
-        setNotice("E-mail administrativo confirmado com sucesso.");
+        setNotice(
+          initial.portalRole === "platform_super_admin"
+            ? "E-mail confirmado. No próximo acesso, o Super administrador ainda validará o MFA obrigatório."
+            : "E-mail administrativo confirmado. Agora o Administrador entra diretamente com e-mail e senha.",
+        );
         return;
       }
       setNotice("Código inválido ou expirado.");
@@ -123,7 +145,7 @@ export function AdminEmailConfirmationPage({
       <header className="admin-login-header">
         <button
           className="admin-back"
-          onClick={() => onNavigate("/entrar/super-administrador")}
+          onClick={() => onNavigate(loginPath)}
         >
           ← Acesso administrativo
         </button>
@@ -159,7 +181,7 @@ export function AdminEmailConfirmationPage({
           {verified ? (
             <button
               className="admin-primary"
-              onClick={() => onNavigate("/entrar/super-administrador")}
+              onClick={() => onNavigate(loginPath)}
             >
               Ir para o acesso administrativo
             </button>
