@@ -127,3 +127,24 @@ test("Trilha 05 — seletor sempre oferece diagnóstico do bootstrap enquanto n�
     ).toBeVisible();
   }
 });
+
+
+test("Trilha 05 — aliases administrativos usam o portal canônico", async ({ page }) => {
+  await page.goto("/acesso/administracao");
+  await expect(
+    page.getByRole("heading", { name: "Entrar como Administrador." }),
+  ).toBeVisible();
+
+  await page.goto("/acesso/super-administracao");
+  await expect(
+    page.getByRole("heading", { name: "Entrar como Super administrador." }),
+  ).toBeVisible();
+
+  await expect(page.getByText(/ADMIN_GOVERNANCE_LOGIN_REQUIRED|Código de atendimento|Falha não identificada/i)).toHaveCount(0);
+});
+
+test("Trilha 05 — conflito do bootstrap não expõe detalhes técnicos", async ({ page }) => {
+  await page.goto("/admin/bootstrap");
+  const source = await page.locator("body").textContent();
+  expect(source ?? "").not.toMatch(/ADMIN_GOVERNANCE_LOGIN_REQUIRED|HTTP_409|Código de atendimento/);
+});
