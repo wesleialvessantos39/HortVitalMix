@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 24,
+  "schemaVersion": 25,
   "migrations": [
     {
       "version": "20260919030126",
@@ -120,7 +120,12 @@
       "version": "20260924125000",
       "name": "auth_recovery_session_revoke",
       "file": "20260924125000_auth_recovery_session_revoke.sql"
+    },
+    {
+      "version": "20260924165427",
+      "name": "admin_role_scoped_credentials",
+      "file": "20260924165427_admin_role_scoped_credentials.sql"
     }
   ],
-  "migrationHistoryHash": "a23b076a67b259ce44f87501657be592d5d0eeca9b5d83cedba0397cb9250ca0"
+  "migrationHistoryHash": "0fc58f8e0b0e4fd66f2f12a7b59e9de269339ab0fce014bb449abfd539cc8ea7"
 }
