@@ -67,7 +67,15 @@ describe("Trilha 05 — regressões de selagem v11", () => {
       version: "20260924115207",
     };
 
-    expect(validateHistory(productionRows)).toBe(23);
+    const recoveryRevokeIndex = productionRows.findIndex(
+      (row) => row.name === "auth_recovery_session_revoke",
+    );
+    productionRows[recoveryRevokeIndex] = {
+      ...productionRows[recoveryRevokeIndex],
+      version: "20260924124802",
+    };
+
+    expect(validateHistory(productionRows)).toBe(24);
 
     const unknownRows = productionRows.map((row) => ({ ...row }));
     unknownRows[hardeningIndex].version = "20260923999999";
@@ -77,7 +85,7 @@ describe("Trilha 05 — regressões de selagem v11", () => {
   });
 
   it("alinha readiness ao schema lógico efetivo da T05", () => {
-    expect(manifest.schemaVersion).toBe(23);
-    expect(FOUNDATION_SCHEMA_VERSION).toBe(23);
+    expect(manifest.schemaVersion).toBe(24);
+    expect(FOUNDATION_SCHEMA_VERSION).toBe(24);
   });
 });
