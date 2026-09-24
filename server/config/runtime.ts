@@ -82,6 +82,21 @@ export function resolveDbUrl(
   };
 }
 
+function firstConfigured(...values: Array<string | undefined>) {
+  return values.map((value) => value?.trim()).find(Boolean) ?? "";
+}
+
+function readNamedSecretMap(value: string | undefined, name = "default") {
+  if (!value?.trim()) return "";
+  try {
+    const parsed = JSON.parse(value) as Record<string, unknown>;
+    const candidate = parsed[name];
+    return typeof candidate === "string" ? candidate.trim() : "";
+  } catch {
+    return "";
+  }
+}
+
 export function buildRuntime(env: NodeJS.ProcessEnv) {
   const appEnv = resolveAppEnv(env);
   const db = resolveDbUrl(env, appEnv);
@@ -110,9 +125,26 @@ export function buildRuntime(env: NodeJS.ProcessEnv) {
     dbUrlSource: db.source,
     dbRejection: db.reason,
     dbUrlRejectionReason: db.reason,
-    supabaseUrl: env.SUPABASE_URL ?? "",
-    anonKey: env.SUPABASE_ANON_KEY ?? "",
-    serviceKey: env.SUPABASE_SERVICE_ROLE_KEY ?? "",
+    supabaseUrl: firstConfigured(
+      env.SUPABASE_URL,
+      env.VITE_SUPABASE_URL,
+      env.NEXT_PUBLIC_SUPABASE_URL,
+    ),
+    anonKey: firstConfigured(
+      env.SUPABASE_ANON_KEY,
+      env.SUPABASE_PUBLISHABLE_KEY,
+      env.VITE_SUPABASE_ANON_KEY,
+      env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+      readNamedSecretMap(env.SUPABASE_PUBLISHABLE_KEYS),
+    ),
+    serviceKey: firstConfigured(
+      env.SUPABASE_SERVICE_ROLE_KEY,
+      env.SUPABASE_SECRET_KEY,
+      env.SUPABASE_SERVICE_KEY,
+      readNamedSecretMap(env.SUPABASE_SECRET_KEYS),
+    ),
     bootstrapAdminEmail: env.BOOTSTRAP_ADMIN_EMAIL?.trim().toLowerCase() ?? "",
     projectRef: env.SUPABASE_PROJECT_REF ?? "",
     ipPepper: env.APP_IP_PEPPER ?? "",

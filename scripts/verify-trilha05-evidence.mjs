@@ -20,6 +20,8 @@ const originProtection = read("server/security/originProtection.ts");
 const bootstrapTransport = read("src/lib/adminBootstrapTransport.ts");
 const bootstrapEdge = read("supabase/functions/admin-bootstrap/index.ts");
 const vercelConfig = read("vercel.json");
+const viteConfig = read("vite.config.ts");
+const runtimeConfig = read("server/config/runtime.ts");
 
 function bootstrapPageDoesNotExposeTechnicalDetails() {
   const bootstrapPage = read("src/pages/admin/AdminBootstrapPage.tsx");
@@ -165,7 +167,7 @@ const checks = {
       !bootstrapPage.includes("O servidor está esperando") &&
       bootstrapPage.includes("O e-mail informado não foi reconhecido") &&
       bootstrapPage.includes("Cadastro não autorizado. Os dados informados já estão vinculados a outra conta.") &&
-      bootstrapPage.includes("backend não conseguiu acessar uma dependência obrigatória") &&
+      bootstrapPage.includes("Não foi possível concluir a configuração inicial agora") &&
       bootstrapPage.includes("<CPFInput") &&
       bootstrapPage.includes("<PhoneInput") &&
       bootstrapPage.includes("BootstrapRequestSchema.safeParse") &&
@@ -192,8 +194,16 @@ const checks = {
       !existsSync("api/v1/[...path].ts") &&
       !existsSync("api/v1/admin/[...path].ts") &&
       !existsSync("api/v1/admin/index.ts") &&
+      existsSync("api/v1/admin/bootstrap/index.ts") &&
+      existsSync("api/v1/admin/bootstrap/status.ts") &&
       !vercelConfig.includes('"api/v1/[...path].ts"') &&
-      !vercelConfig.includes('"api/v1/admin/[...path].ts"')
+      !vercelConfig.includes('"api/v1/admin/[...path].ts"') &&
+      vercelConfig.includes('"api/v1/admin/bootstrap/index.ts"') &&
+      vercelConfig.includes('"api/v1/admin/bootstrap/status.ts"') &&
+      viteConfig.includes("configurePreviewServer") &&
+      runtimeConfig.includes("SUPABASE_SECRET_KEY") &&
+      runtimeConfig.includes("SUPABASE_SECRET_KEYS") &&
+      runtimeConfig.includes("SUPABASE_PUBLISHABLE_KEY")
     );
   })(),
 };

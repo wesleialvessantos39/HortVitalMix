@@ -30,6 +30,17 @@ const normalizeEmail = (value: unknown) =>
 const onlyDigits = (value: unknown) =>
   String(value ?? "").replace(/\D/g, "");
 
+function readNamedKeyMap(value: string | undefined, name = "default") {
+  if (!value?.trim()) return "";
+  try {
+    const parsed = JSON.parse(value) as Record<string, unknown>;
+    const candidate = parsed[name];
+    return typeof candidate === "string" ? candidate.trim() : "";
+  } catch {
+    return "";
+  }
+}
+
 async function sha256(value: string) {
   const bytes = new TextEncoder().encode(value);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
@@ -80,7 +91,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return json(204, null, origin);
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-  const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const serviceRole =
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim() ||
+    readNamedKeyMap(Deno.env.get("SUPABASE_SECRET_KEYS"));
 
   if (!supabaseUrl || !serviceRole)
     return json(
