@@ -6,6 +6,7 @@ const bootstrapRpc = read("supabase/migrations/20260923194253_trilha05_bootstrap
 const adminPrincipalMigration = read("supabase/migrations/20260924023000_trilha05_admin_principals.sql");
 const adminEmailVerificationMigration = read("supabase/migrations/20260924114500_trilha05_admin_email_verification.sql");
 const recoverySessionMigration = read("supabase/migrations/20260924125000_auth_recovery_session_revoke.sql");
+const roleScopedCredentialsMigration = read("supabase/migrations/20260924165427_admin_role_scoped_credentials.sql");
 const service = read("server/services/AdminGovernanceService.ts");
 const routes = read("server/routes/adminGovernanceRoutes.ts");
 const middleware = read("server/middleware/adminSession.ts");
@@ -146,8 +147,8 @@ const checks = {
     legacyAuth.includes('authRouter.post("/admin-login"') &&
     legacyAuth.includes('"ADMIN_GOVERNANCE_LOGIN_REQUIRED"') &&
     !account.includes('"/v1/auth/admin-login"'),
-  readinessSchema24:
-    foundation.includes("FOUNDATION_SCHEMA_VERSION = 24"),
+  readinessSchema25:
+    foundation.includes("FOUNDATION_SCHEMA_VERSION = 25"),
   remoteMigrationAlias:
     migrationManifest.includes('"20260923022554": "20260923022000"') &&
     migrationManifest.includes('"20260924023250": "20260924023000"') &&
@@ -199,7 +200,10 @@ const checks = {
     service.includes("requestAdminEmailConfirmation") &&
     service.includes("verifyAdminEmailConfirmation") &&
     service.includes('status: "email_confirmation_required"') &&
-    service.includes("(admin_user_id,person_id,admin_email,created_by,email_verified_at)"),
+    service.includes("(admin_user_id,person_id,admin_email,portal_role,auth_email,created_by,email_verified_at)") &&
+    roleScopedCredentialsMigration.includes("uq_app_admin_principals_person_role") &&
+    roleScopedCredentialsMigration.includes("uq_app_admin_principals_email_role") &&
+    roleScopedCredentialsMigration.includes("auth_email"),
   publicRegistrationDiscovery:
     account.includes("access-discovery") &&
     account.includes('navigate("/cadastro")'),
