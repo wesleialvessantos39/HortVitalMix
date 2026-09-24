@@ -75,7 +75,7 @@ describe("Trilha 05 — regressões de selagem v11", () => {
       version: "20260924124802",
     };
 
-    expect(validateHistory(productionRows)).toBe(24);
+    expect(validateHistory(productionRows)).toBe(25);
 
     const unknownRows = productionRows.map((row) => ({ ...row }));
     unknownRows[hardeningIndex].version = "20260923999999";
@@ -85,7 +85,7 @@ describe("Trilha 05 — regressões de selagem v11", () => {
   });
 
   it("alinha readiness ao schema lógico efetivo da T05", () => {
-    expect(manifest.schemaVersion).toBe(24);
-    expect(FOUNDATION_SCHEMA_VERSION).toBe(24);
+    expect(manifest.schemaVersion).toBe(25);
+    expect(FOUNDATION_SCHEMA_VERSION).toBe(25);
   });
 });
