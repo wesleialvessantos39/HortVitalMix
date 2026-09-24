@@ -5,6 +5,7 @@ import {
   RegisterProducerSchema,
   RoleScopedEmailRequestSchema,
   RoleScopedPasswordChangeSchema,
+  RoleScopedRecoveryFlowSchema,
   RoleScopedResetPasswordSchema,
   SecurityCodeRequestSchema,
   SessionImportSchema,
@@ -24,15 +25,18 @@ import { safeRequestOrigin } from "../security/origin.ts";
 import {
   consumeRecoveryChallenge,
   consumeSecurityCodeChallenge,
+  finalizeRecoveryChallenge,
   findActiveIdentityForRole,
   invalidateChallenge,
   issueRecoveryChallenge,
   issueSecurityCodeChallenge,
   recordSecurityCodeFailure,
-  validateRecoveryChallenge,
+  recoveryRequestCooldown,
+  resolveRecoveryChallenge,
   validateSecurityCodeChallenge,
 } from "../services/RoleSecurityService.ts";
 import { loginRateLimit, resetLoginRateLimit } from "../security/loginRateLimit.ts";
+import { authEmailRetryAfter } from "../security/authEmailRateLimit.ts";
 
 export const authRouter = Router();
 
@@ -517,7 +521,22 @@ authRouter.post("/request-password-reset", async (req, res) => {
   );
 
   if (!identity || !supabasePublic) {
-    res.status(202).json({ status: "accepted" });
+    res.status(202).json({ status: "accepted", retryAfterSeconds: 60 });
+    return;
+  }
+
+  // Não invalida um link entregue antes de sabermos que um novo e-mail foi
+  // realmente aceito pelo provedor. Isso evita deixar o usuário sem nenhum
+  // caminho válido quando o Supabase aplica cooldown de envio.
+  const cooldown = await recoveryRequestCooldown(
+    identity.user_id,
+    input.data.portalRole,
+  );
+  if (cooldown > 0) {
+    res.status(202).json({
+      status: "accepted",
+      retryAfterSeconds: cooldown,
+    });
     return;
   }
 
@@ -552,11 +571,47 @@ authRouter.post("/request-password-reset", async (req, res) => {
 
   if (error) {
     await invalidateChallenge(challenge.id);
-    reportFailure("password_recovery_not_dispatched", res.locals.requestId);
+    const retryAfterSeconds = authEmailRetryAfter(error);
+    reportFailure(
+      retryAfterSeconds
+        ? "password_recovery_email_rate_limited"
+        : "password_recovery_not_dispatched",
+      res.locals.requestId,
+    );
+    // Resposta anti-enumeração: não revela se a identidade existe.
+    res.status(202).json({
+      status: "accepted",
+      retryAfterSeconds: retryAfterSeconds ?? 60,
+    });
+    return;
   }
 
-  // Resposta pública deliberadamente idêntica com ou sem papel correspondente.
-  res.status(202).json({ status: "accepted" });
+  await finalizeRecoveryChallenge(
+    identity.user_id,
+    input.data.portalRole,
+    challenge.id,
+  );
+
+  res.status(202).json({ status: "accepted", retryAfterSeconds: 60 });
+});
+
+authRouter.post("/password/recovery/validate", async (req, res) => {
+  const input = RoleScopedRecoveryFlowSchema.safeParse(req.body);
+  if (!input.success) {
+    res.status(400).json({ error: "VALIDATION_ERROR" });
+    return;
+  }
+
+  const challenge = await resolveRecoveryChallenge(
+    input.data.portalRole,
+    input.data.flowToken,
+  );
+  if (!challenge) {
+    res.status(410).json({ status: "invalid" });
+    return;
+  }
+
+  res.status(200).json({ status: "valid" });
 });
 
 authRouter.post("/magic-link", async (req, res) => {
@@ -679,66 +734,83 @@ authRouter.post("/reset-password", async (req, res, next) => {
       res.status(400).json({ error: "VALIDATION_ERROR" });
       return;
     }
-
-    if (!req.actor) {
-      res.status(401).json({ error: "SESSION_REQUIRED" });
+    if (!supabaseAdmin) {
+      res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
       return;
     }
 
-    if (!req.actor.roles.includes(input.data.portalRole)) {
-      res.status(403).json({ error: "RECOVERY_CONTEXT_MISMATCH" });
-      return;
-    }
-
-    const validContext = await validateRecoveryChallenge(
-      req.actor.userId,
+    // O token HortiVitalMix é a autorização canônica da recuperação: 32 bytes
+    // aleatórios, digest-only no banco, curto, single-use e entregue somente no
+    // e-mail de recovery. Não depende de uma sessão já importada do fragmento URL.
+    const challenge = await resolveRecoveryChallenge(
       input.data.portalRole,
       input.data.flowToken,
     );
-    if (!validContext) {
+    if (!challenge) {
       res.status(410).json({ error: "RECOVERY_CONTEXT_INVALID" });
       return;
     }
 
-    const access = cookie(req, "hvm_access");
-    const refresh = cookie(req, "hvm_refresh");
-    const client = createSupabasePublicClient();
-    if (!access || !refresh || !client) {
-      res.status(401).json({ error: "SESSION_REQUIRED" });
-      return;
-    }
-
-    const restored = await client.auth.setSession({
-      access_token: access,
-      refresh_token: refresh,
-    });
-    if (restored.error) {
-      clear(res);
-      res.status(401).json({ error: "SESSION_EXPIRED" });
-      return;
-    }
-
-    const updated = await client.auth.updateUser({
-      password: input.data.password,
-    });
+    const updated = await supabaseAdmin.auth.admin.updateUserById(
+      challenge.userId,
+      { password: input.data.password },
+    );
     if (updated.error) {
+      reportFailure("password_update_rejected", res.locals.requestId);
       res.status(400).json({ error: "PASSWORD_UPDATE_REJECTED" });
       return;
     }
 
+    let sessionsRevoked = false;
+    const revoked = await supabaseAdmin.rpc("fn_revoke_auth_sessions", {
+      p_user_id: challenge.userId,
+    });
+    sessionsRevoked = !revoked.error;
+
+    if (!sessionsRevoked && dbPool) {
+      try {
+        await dbPool.query("DELETE FROM auth.sessions WHERE user_id=$1", [
+          challenge.userId,
+        ]);
+        sessionsRevoked = true;
+      } catch {
+        sessionsRevoked = false;
+      }
+    }
+
+    if (!sessionsRevoked) {
+      reportFailure("password_sessions_revoke_failed", res.locals.requestId);
+      res.status(503).json({ error: "SESSION_REVOCATION_FAILED" });
+      return;
+    }
+
     const consumed = await consumeRecoveryChallenge(
-      req.actor.userId,
+      challenge.userId,
       input.data.portalRole,
       input.data.flowToken,
     );
     if (!consumed) {
-      await client.auth.signOut({ scope: "global" }).catch(() => undefined);
       clear(res);
       res.status(409).json({ error: "RECOVERY_CONTEXT_ALREADY_USED" });
       return;
     }
 
-    await client.auth.signOut({ scope: "global" }).catch(() => undefined);
+    await supabaseAdmin
+      .from("app_audit_events")
+      .insert({
+        request_id: res.locals.requestId,
+        actor_id: challenge.userId,
+        actor_role: "anonymous",
+        action: "password.reset.completed",
+        target_entity: "app_role_security_challenges",
+        target_id: challenge.id,
+        client_ip_hash: req.clientIpHash,
+      })
+      .then(({ error }) => {
+        if (error)
+          reportFailure("password_reset_audit_failed", res.locals.requestId);
+      });
+
     clear(res);
     res.status(204).end();
   } catch (error) {

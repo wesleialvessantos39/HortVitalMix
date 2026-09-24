@@ -58,8 +58,18 @@ const checks = {
     app.includes("ResetPasswordPage") &&
     contactPage.includes('"/v1/auth/resend-confirmation"') &&
     recoveryPage.includes('"/v1/auth/request-password-reset"') &&
-    resetPage.includes('"/v1/auth/import-session"') &&
-    resetPage.includes('"/v1/auth/reset-password"'),
+    resetPage.includes('"/v1/auth/password/recovery/validate"') &&
+    resetPage.includes('"/v1/auth/reset-password"') &&
+    !resetPage.includes('"/v1/auth/import-session"'),
+  recoveryFlowHardening:
+    authRoutes.includes('"/password/recovery/validate"') &&
+    authRoutes.includes("resolveRecoveryChallenge") &&
+    authRoutes.includes("finalizeRecoveryChallenge") &&
+    authRoutes.includes('"fn_revoke_auth_sessions"') &&
+    read("server/services/RoleSecurityService.ts").includes("recoveryRequestCooldown") &&
+    read("server/services/RoleSecurityService.ts").includes("resolveRecoveryChallenge") &&
+    recoveryPage.includes("retryAfterSeconds") &&
+    recoveryPage.includes("Novo envio disponível em"),
   noParallelContactBackend:
     !contactPage.includes('"/v1/auth/contact/challenge"') &&
     !contactPage.includes('"/v1/auth/contact/confirm-otp"') &&

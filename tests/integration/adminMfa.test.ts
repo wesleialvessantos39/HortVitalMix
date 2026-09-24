@@ -39,6 +39,14 @@ describe("Trilha 05 — MFA administrativo",()=>{
   expect(loginPage).toContain("<OtpInput");
  });
 
+ it("trata cooldown do e-mail de MFA sem registrar falha de credencial",()=>{
+  expect(service).toContain("authEmailRetryAfter");
+  expect(service).toContain('status: "email_rate_limited"');
+  expect(service).toContain('phase: "mfa"');
+  expect(loginPage).toContain("mailCooldown");
+  expect(loginPage).toContain("O provedor protege o envio de e-mails de segurança");
+ });
+
  it("recuperação reconhece principal administrativo separado",()=>{
   expect(roleSecurity).toContain("app_admin_principals");
   expect(roleSecurity).toContain("admin_user_id");

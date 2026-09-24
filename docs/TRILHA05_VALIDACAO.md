@@ -182,3 +182,59 @@ Migration desta revisão:
 - hash canônico: `80d77398387420550887ee34268decf583ab49a96cb78765aa41910f0577927f`.
 
 As seções históricas anteriores permanecem como registro das selagens precedentes e não representam downgrade do estado corrente.
+
+
+---
+
+## Adendo — RCA definitivo de Recovery + Login + MFA / schema 24
+
+Em 24/09/2026 foi executada análise de causa raiz com evidência direta do Supabase Auth e das tabelas de desafios. Não se tratava de um único defeito de interface.
+
+### Evidência temporal confirmada
+
+- 12:18:07 UTC — `POST /auth/v1/recover` retornou **200** e o primeiro e-mail de recuperação foi aceito pelo Supabase.
+- 12:18:25 UTC — o link de recovery foi validado pelo Supabase (`type=recovery`) e houve login implícito bem-sucedido.
+- 12:18:48 UTC — um segundo pedido de recuperação invalidou o challenge anterior antes de comprovar a entrega de um novo e-mail.
+- 12:18:49 UTC — o Supabase recusou o novo envio com **429 / over_email_send_rate_limit**, informando espera restante.
+- consequência: o challenge antigo já estava invalidado e o novo foi invalidado porque o e-mail não saiu; o usuário ficou sem qualquer link HortiVitalMix válido.
+- ao reutilizar o link Auth one-time, o Supabase registrou `One-time token not found`, comportamento esperado de um token já consumido.
+
+### Correção do recovery
+
+O `flowToken` HortiVitalMix passa a ser a autorização canônica da redefinição:
+
+- 32 bytes aleatórios;
+- persistência somente do SHA-256;
+- escopo por `userId + portalRole`;
+- validade curta;
+- consumo único;
+- validação pública sem sessão prévia;
+- redefinição de senha via Supabase Admin API somente depois da validação do flow.
+
+A tela de redefinição deixa de exigir `access_token` e `refresh_token` no fragmento do navegador. Isso também torna o fluxo resiliente a scanners de e-mail que consomem links one-time do provedor antes do usuário.
+
+No reenvio, o challenge anterior só é invalidado **depois** que o Supabase aceita o novo e-mail. Se houver cooldown ou falha de entrega, o link anterior permanece válido.
+
+### Revogação de sessões
+
+Foi criada `public.fn_revoke_auth_sessions(uuid)`, SECURITY DEFINER, com EXECUTE exclusivo para `service_role`. A função remove as sessões GoTrue do usuário após a troca de senha; refresh tokens associados são eliminados pelo relacionamento de banco já existente.
+
+Migration canônica: `20260924125000_auth_recovery_session_revoke.sql`.
+Versão física no Supabase: `20260924124802`.
+
+### Correção do login e dos códigos de segurança
+
+O login não tenta mais enviar confirmação de e-mail dentro da validação de senha. Uma senha válida com e-mail administrativo ainda pendente retorna o estado explícito `email_confirmation_required`.
+
+Os envios de confirmação e MFA passam a reconhecer `over_email_send_rate_limit` e o tempo restante informado pelo Supabase. A UI apresenta contador e bloqueia reenvio prematuro em vez de converter o cooldown em “serviço indisponível”.
+
+O desafio MFA continua sendo criado somente depois de o e-mail ser aceito pelo Supabase. Nenhuma sessão de Super administrador é entregue antes do OTP válido.
+
+### Estado lógico
+
+Schema lógico: **24**.
+
+Hash canônico do histórico:
+`a23b076a67b259ce44f87501657be592d5d0eeca9b5d83cedba0397cb9250ca0`.
+
+Esta revisão é aditiva e preserva integralmente as Trilhas 01–05, o Super administrador existente, papéis, RLS, convites e dados já persistidos.

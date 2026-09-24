@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 23,
+  "schemaVersion": 24,
   "migrations": [
     {
       "version": "20260919030126",
@@ -115,7 +115,12 @@
       "version": "20260924114500",
       "name": "trilha05_admin_email_verification",
       "file": "20260924114500_trilha05_admin_email_verification.sql"
+    },
+    {
+      "version": "20260924125000",
+      "name": "auth_recovery_session_revoke",
+      "file": "20260924125000_auth_recovery_session_revoke.sql"
     }
   ],
-  "migrationHistoryHash": "80d77398387420550887ee34268decf583ab49a96cb78765aa41910f0577927f"
+  "migrationHistoryHash": "a23b076a67b259ce44f87501657be592d5d0eeca9b5d83cedba0397cb9250ca0"
 }

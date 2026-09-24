@@ -150,7 +150,6 @@ export async function issueRecoveryChallenge(
   role: PortalRole,
   requestId: string,
 ) {
-  await invalidateActive(userId, "password_recovery", role);
   const rawToken = generateFlowToken();
   const expiresAt = new Date(Date.now() + RECOVERY_TTL_MINUTES * 60_000);
 
@@ -180,6 +179,170 @@ export async function issueRecoveryChallenge(
     [userId, role, digest(rawToken), expiresAt, requestId],
   );
   return { id: result.rows[0].id, rawToken, expiresAt };
+}
+
+export async function recoveryRequestCooldown(
+  userId: string,
+  role: PortalRole,
+  minimumSeconds = 60,
+) {
+  const cutoff = Date.now() - minimumSeconds * 1000;
+
+  if (supabaseAdmin) {
+    const { data, error } = await supabaseAdmin
+      .from("app_role_security_challenges")
+      .select("created_at")
+      .eq("user_id", userId)
+      .eq("role_code", role)
+      .eq("purpose", "password_recovery")
+      .is("consumed_at", null)
+      .is("invalidated_at", null)
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (!error) {
+      const createdAt = data?.[0]?.created_at
+        ? new Date(data[0].created_at).getTime()
+        : 0;
+      if (createdAt > cutoff)
+        return Math.max(
+          1,
+          Math.ceil((createdAt + minimumSeconds * 1000 - Date.now()) / 1000),
+        );
+      return 0;
+    }
+  }
+
+  if (!dbPool) return 0;
+  const result = await dbPool.query<{ created_at: Date | string }>(
+    `SELECT created_at
+       FROM public.app_role_security_challenges
+      WHERE user_id=$1
+        AND role_code=$2
+        AND purpose='password_recovery'
+        AND consumed_at IS NULL
+        AND invalidated_at IS NULL
+        AND expires_at>now()
+      ORDER BY created_at DESC
+      LIMIT 1`,
+    [userId, role],
+  );
+  const createdAt = result.rows[0]?.created_at
+    ? new Date(result.rows[0].created_at).getTime()
+    : 0;
+  return createdAt > cutoff
+    ? Math.max(
+        1,
+        Math.ceil((createdAt + minimumSeconds * 1000 - Date.now()) / 1000),
+      )
+    : 0;
+}
+
+export async function finalizeRecoveryChallenge(
+  userId: string,
+  role: PortalRole,
+  keepChallengeId: string,
+) {
+  const now = new Date().toISOString();
+
+  if (supabaseAdmin) {
+    const { error } = await supabaseAdmin
+      .from("app_role_security_challenges")
+      .update({ invalidated_at: now })
+      .eq("user_id", userId)
+      .eq("role_code", role)
+      .eq("purpose", "password_recovery")
+      .is("consumed_at", null)
+      .is("invalidated_at", null)
+      .neq("id", keepChallengeId);
+    if (!error) return;
+  }
+
+  if (!dbPool) return;
+  await dbPool.query(
+    `UPDATE public.app_role_security_challenges
+        SET invalidated_at=clock_timestamp()
+      WHERE user_id=$1
+        AND role_code=$2
+        AND purpose='password_recovery'
+        AND consumed_at IS NULL
+        AND invalidated_at IS NULL
+        AND id<>$3`,
+    [userId, role, keepChallengeId],
+  );
+}
+
+export async function resolveRecoveryChallenge(
+  role: PortalRole,
+  rawToken: string,
+): Promise<{ id: string; userId: string } | null> {
+  const tokenDigest = digest(rawToken);
+  const now = new Date().toISOString();
+
+  if (supabaseAdmin) {
+    const { data: challenges, error } = await supabaseAdmin
+      .from("app_role_security_challenges")
+      .select("id,user_id,expires_at")
+      .eq("role_code", role)
+      .eq("purpose", "password_recovery")
+      .eq("token_digest", tokenDigest)
+      .is("consumed_at", null)
+      .is("invalidated_at", null)
+      .gt("expires_at", now)
+      .limit(1);
+
+    const challenge = challenges?.[0];
+    if (!error && challenge) {
+      const [{ data: user, error: userError }, { data: assignments, error: roleError }] =
+        await Promise.all([
+          supabaseAdmin
+            .from("app_users")
+            .select("status")
+            .eq("id", challenge.user_id)
+            .maybeSingle(),
+          supabaseAdmin
+            .from("app_user_role_assignments")
+            .select("role_code,expires_at")
+            .eq("user_id", challenge.user_id)
+            .eq("role_code", role)
+            .is("revoked_at", null),
+        ]);
+
+      if (!userError && !roleError && user?.status === "active") {
+        const activeRole = (assignments ?? []).some(
+          (row) =>
+            !row.expires_at ||
+            new Date(row.expires_at).getTime() > Date.now(),
+        );
+        if (activeRole)
+          return { id: challenge.id as string, userId: challenge.user_id as string };
+      }
+      return null;
+    }
+  }
+
+  if (!dbPool) return null;
+  const result = await dbPool.query<{ id: string; user_id: string }>(
+    `SELECT c.id,c.user_id
+       FROM public.app_role_security_challenges c
+       JOIN public.app_users u ON u.id=c.user_id
+       JOIN public.app_user_role_assignments r
+         ON r.user_id=c.user_id
+        AND r.role_code=c.role_code
+        AND r.revoked_at IS NULL
+        AND (r.expires_at IS NULL OR r.expires_at>now())
+      WHERE c.role_code=$1
+        AND c.purpose='password_recovery'
+        AND c.token_digest=$2
+        AND c.consumed_at IS NULL
+        AND c.invalidated_at IS NULL
+        AND c.expires_at>now()
+        AND u.status='active'
+      LIMIT 1`,
+    [role, tokenDigest],
+  );
+  const row = result.rows[0];
+  return row ? { id: row.id, userId: row.user_id } : null;
 }
 
 export async function invalidateChallenge(id: string) {
