@@ -672,7 +672,11 @@ export class AdminGovernanceService {
 
       const identity = existing.rows[0];
       if (identity) {
-        if (identity.status !== "active" || identity.roles.includes(input.targetRole)) {
+        if (
+          identity.status !== "active" ||
+          identity.roles.includes(input.targetRole) ||
+          identity.roles.includes("platform_super_admin")
+        ) {
           await client.query("ROLLBACK");
           return { status: "conflict" };
         }
@@ -1110,6 +1114,28 @@ export class AdminGovernanceService {
                revoke_reason=NULL`,
         [targetUserId, invite.target_role, invite.invited_by],
       );
+
+      if (invite.target_role === "platform_super_admin") {
+        await client.query(
+          `UPDATE public.app_user_role_assignments
+              SET revoked_at=clock_timestamp(),
+                  revoked_by=$2,
+                  revoke_reason='promoted_to_super_admin'
+            WHERE user_id=$1
+              AND role_code='platform_admin'
+              AND revoked_at IS NULL`,
+          [targetUserId, invite.invited_by],
+        );
+        await client.query(
+          `UPDATE public.app_admin_sector_members
+              SET revoked_at=clock_timestamp(),
+                  revoked_by=$2,
+                  revoke_reason='promoted_to_super_admin',
+                  authorization_version=authorization_version+1
+            WHERE user_id=$1 AND revoked_at IS NULL`,
+          [targetUserId, invite.invited_by],
+        );
+      }
 
       if (invite.target_role === "platform_admin") {
         await client.query(
