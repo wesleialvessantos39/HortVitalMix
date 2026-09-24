@@ -188,7 +188,7 @@ async function handlePublicLoginRequest(
       });
       return;
     }
-    if (!supabasePublic || !dbPool) {
+    if (!supabasePublic) {
       res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
       return;
     }
@@ -273,7 +273,7 @@ authRouter.post("/refresh", async (req, res, next) => {
       return;
     }
 
-    if (!supabasePublic || !dbPool) {
+    if (!supabasePublic) {
       res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
       return;
     }
@@ -434,7 +434,7 @@ authRouter.get("/session", async (req, res, next) => {
       return;
     }
 
-    if (!supabasePublic || !dbPool) {
+    if (!supabasePublic) {
       res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
       return;
     }
