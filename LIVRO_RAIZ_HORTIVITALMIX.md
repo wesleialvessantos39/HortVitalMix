@@ -2841,3 +2841,18 @@ A validação do access token também pode usar o client público do Supabase qu
 - Depois de um MFA válido, a aplicação não consulta mais `/v1/auth/session` para decidir a sessão administrativa; o `AdminAccessGate` usa exclusivamente `/v1/admin/auth/verify-session`.
 - Um novo MFA somente deve ser exigido em um **novo login** de Super administrador, conforme o Manual Mestre v11, e não após a aceitação do código da tentativa corrente.
 - Google Studio e Vercel continuam consumindo a mesma implementação do repositório `main`; não existe caminho de autenticação alternativo por ambiente.
+
+
+### Complemento — Vercel sem dependência obrigatória do Transaction Pooler
+
+Durante a mesma RCA foi localizado outro desvio específico do runtime serverless: as rotas públicas de login, refresh e leitura de sessão devolviam `503 DEPENDENCY_UNAVAILABLE` sempre que `dbPool` estivesse indisponível, embora `IdentityAccessService` já possuísse fallback pela Supabase Data API.
+
+A correção removeu essa dependência artificial. Agora:
+
+- login público exige Supabase Auth, mas não exige conexão direta ao Transaction Pooler;
+- refresh e restauração de sessão também funcionam sem `dbPool`;
+- `IdentityAccessService` pode resolver `app_users`, papéis e pessoa via RLS usando o próprio access token autenticado;
+- o middleware público valida o token com client Supabase público quando a chave server-side não estiver disponível;
+- o banco direto continua preferencial quando disponível, mas deixou de ser ponto único de falha em Vercel.
+
+Isso alinha o comportamento de Google Studio e Vercel sem criar implementações diferentes por ambiente.
