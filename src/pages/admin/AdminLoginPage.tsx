@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { KeyRound, Leaf, ShieldCheck } from "lucide-react";
 import { api, type ApiFailure } from "../../lib/api";
+import { getBootstrapStatus } from "../../lib/adminBootstrapTransport";
 import { OtpInput } from "../../components/forms/OtpInput";
 
 type Props = {
@@ -27,6 +28,7 @@ export function AdminLoginPage({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [showHelp, setShowHelp] = useState(false);
+  const [bootstrapOpen, setBootstrapOpen] = useState(false);
 
   const roleTitle =
     intendedRole === "platform_admin"
@@ -40,6 +42,22 @@ export function AdminLoginPage({
       : intendedRole === "platform_super_admin"
         ? "Acesso superior protegido. Após validar a senha, o segundo fator por e-mail é obrigatório antes da criação da sessão."
         : "Acesso reservado a administradores autorizados. Super administradores confirmam o acesso com um código adicional enviado pelo Supabase Auth.";
+
+  useEffect(() => {
+    if (intendedRole === "platform_admin") {
+      setBootstrapOpen(false);
+      return;
+    }
+    let cancelled = false;
+    getBootstrapStatus()
+      .then((result) => {
+        if (!cancelled) setBootstrapOpen(result.status === "open");
+      })
+      .catch(() => {
+        if (!cancelled) setBootstrapOpen(false);
+      });
+    return () => { cancelled = true; };
+  }, [intendedRole]);
 
   useEffect(() => {
     if (!showHelp) return;
@@ -166,7 +184,7 @@ export function AdminLoginPage({
                     ? `Entrar como ${roleTitle}`
                     : "Entrar"}
               </button>
-              {intendedRole !== "platform_admin" && (
+              {intendedRole !== "platform_admin" && bootstrapOpen && (
                 <button
                   type="button"
                   className="admin-link"
