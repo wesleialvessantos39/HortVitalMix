@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
-import { supabaseAdmin } from "../supabase/client.ts";
+import { createSupabasePublicClient, supabaseAdmin } from "../supabase/client.ts";
+import { dbPool } from "../db/pool.ts";
 import type {
   AdminRole,
   AdminSectorCode,
@@ -62,12 +63,13 @@ export async function adminSessionMiddleware(
     });
     return;
   }
-  if (!supabaseAdmin) {
+  const authClient = supabaseAdmin ?? createSupabasePublicClient();
+  if (!authClient) {
     res.status(503).json({ error: AdminErrorCode.UNAVAILABLE, requestId: req.requestId });
     return;
   }
 
-  const { data: userData, error } = await supabaseAdmin.auth.getUser(token);
+  const { data: userData, error } = await authClient.auth.getUser(token);
   if (error || !userData.user || !userData.user.email_confirmed_at) {
     res.status(401).json({
       error: AdminErrorCode.UNAUTHORIZED,
@@ -80,17 +82,79 @@ export async function adminSessionMiddleware(
   // administrativa pode apontar para a mesma pessoa/CPF de uma conta pública,
   // mas ter outro auth user_id e outra senha. A fronteira administrativa
   // valida sua própria identidade pelo token + app_admin_principals.
-  const principal = await supabaseAdmin
-    .from("app_admin_principals")
-    .select("admin_user_id,portal_role")
-    .eq("admin_user_id", userData.user.id)
-    .maybeSingle();
+  let principalData: { admin_user_id: string; portal_role: AdminRole } | null = null;
+  let active: Array<{ role_code: AdminRole; expires_at: string | null }> = [];
 
-  if (
-    principal.error ||
-    !principal.data ||
-    principal.data.admin_user_id !== userData.user.id
-  ) {
+  if (supabaseAdmin) {
+    const principal = await supabaseAdmin
+      .from("app_admin_principals")
+      .select("admin_user_id,portal_role")
+      .eq("admin_user_id", userData.user.id)
+      .maybeSingle();
+
+    if (!principal.error && principal.data) {
+      principalData = {
+        admin_user_id: principal.data.admin_user_id,
+        portal_role: principal.data.portal_role as AdminRole,
+      };
+    }
+
+    const roles = await supabaseAdmin
+      .from("app_user_role_assignments")
+      .select("role_code,expires_at,revoked_at")
+      .eq("user_id", userData.user.id)
+      .in("role_code", ["platform_admin", "platform_super_admin"])
+      .is("revoked_at", null);
+
+    if (!roles.error) {
+      active = (roles.data ?? [])
+        .filter(
+          (row) =>
+            !row.expires_at || new Date(row.expires_at).getTime() > Date.now(),
+        )
+        .map((row) => ({
+          role_code: row.role_code as AdminRole,
+          expires_at: row.expires_at,
+        }));
+    }
+  }
+
+  if ((!principalData || !active.length) && dbPool) {
+    try {
+      const principal = await dbPool.query<{
+        admin_user_id: string;
+        portal_role: AdminRole;
+      }>(
+        `SELECT admin_user_id,portal_role
+           FROM public.app_admin_principals
+          WHERE admin_user_id=$1
+          LIMIT 1`,
+        [userData.user.id],
+      );
+      principalData = principal.rows[0] ?? principalData;
+
+      const roles = await dbPool.query<{
+        role_code: AdminRole;
+        expires_at: Date | string | null;
+      }>(
+        `SELECT role_code,expires_at
+           FROM public.app_user_role_assignments
+          WHERE user_id=$1
+            AND role_code IN ('platform_admin','platform_super_admin')
+            AND revoked_at IS NULL
+            AND (expires_at IS NULL OR expires_at>now())`,
+        [userData.user.id],
+      );
+      active = roles.rows.map((row) => ({
+        role_code: row.role_code,
+        expires_at: row.expires_at ? new Date(row.expires_at).toISOString() : null,
+      }));
+    } catch {
+      // A decisão final abaixo permanece fail-closed.
+    }
+  }
+
+  if (!principalData || principalData.admin_user_id !== userData.user.id) {
     res.status(401).json({
       error: AdminErrorCode.UNAUTHORIZED,
       message: "Sessão administrativa não está ativa.",
@@ -99,14 +163,7 @@ export async function adminSessionMiddleware(
     return;
   }
 
-  const roles = await supabaseAdmin
-    .from("app_user_role_assignments")
-    .select("role_code,expires_at,revoked_at")
-    .eq("user_id", userData.user.id)
-    .in("role_code", ["platform_admin", "platform_super_admin"])
-    .is("revoked_at", null);
-
-  if (roles.error || !roles.data?.length) {
+  if (!active.length) {
     res.status(403).json({
       error: AdminErrorCode.FORBIDDEN,
       message: "Papel administrativo ativo não encontrado.",
@@ -114,12 +171,8 @@ export async function adminSessionMiddleware(
     });
     return;
   }
-
-  const active = roles.data.filter(
-    (row) => !row.expires_at || new Date(row.expires_at).getTime() > Date.now(),
-  );
   let role: AdminRole | null = null;
-  const principalRole = principal.data.portal_role as AdminRole;
+  const principalRole = principalData.portal_role;
   if (
     portalRole === principalRole &&
     active.some((row) => row.role_code === principalRole)
@@ -143,18 +196,37 @@ export async function adminSessionMiddleware(
 
   let sectors: AdminSectorCode[] = [];
   if (role === "platform_admin") {
-    const members = await supabaseAdmin
-      .from("app_admin_sector_members")
-      .select("sector_code,expires_at,revoked_at")
-      .eq("user_id", userData.user.id)
-      .is("revoked_at", null);
-    if (members.error) {
-      res.status(503).json({ error: AdminErrorCode.UNAVAILABLE, requestId: req.requestId });
-      return;
+    if (supabaseAdmin) {
+      const members = await supabaseAdmin
+        .from("app_admin_sector_members")
+        .select("sector_code,expires_at,revoked_at")
+        .eq("user_id", userData.user.id)
+        .is("revoked_at", null);
+      if (!members.error) {
+        sectors = (members.data ?? [])
+          .filter(
+            (row) =>
+              !row.expires_at || new Date(row.expires_at).getTime() > Date.now(),
+          )
+          .map((row) => row.sector_code as AdminSectorCode);
+      }
     }
-    sectors = (members.data ?? [])
-      .filter((row) => !row.expires_at || new Date(row.expires_at).getTime() > Date.now())
-      .map((row) => row.sector_code as AdminSectorCode);
+    if (!sectors.length && dbPool) {
+      try {
+        const members = await dbPool.query<{ sector_code: AdminSectorCode }>(
+          `SELECT sector_code
+             FROM public.app_admin_sector_members
+            WHERE user_id=$1
+              AND revoked_at IS NULL
+              AND (expires_at IS NULL OR expires_at>now())
+            ORDER BY sector_code`,
+          [userData.user.id],
+        );
+        sectors = members.rows.map((row) => row.sector_code);
+      } catch {
+        sectors = [];
+      }
+    }
     if (!sectors.length) {
       res.status(403).json({
         error: AdminErrorCode.FORBIDDEN,
