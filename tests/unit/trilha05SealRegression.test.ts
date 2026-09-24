@@ -38,7 +38,7 @@ describe("Trilha 05 — regressões de selagem v11", () => {
     expect(router).toContain('path==="/acesso/administracao"');
   });
 
-  it("reconcilia somente o alias físico conhecido da migration T05", () => {
+  it("reconcilia somente os aliases físicos conhecidos das migrations T05", () => {
     const productionRows = manifest.migrations.map((migration) => ({
       version: migration.version,
       name: migration.name,
@@ -51,7 +51,15 @@ describe("Trilha 05 — regressões de selagem v11", () => {
       version: "20260923022554",
     };
 
-    expect(validateHistory(productionRows)).toBe(21);
+    const principalsIndex = productionRows.findIndex(
+      (row) => row.name === "trilha05_admin_principals",
+    );
+    productionRows[principalsIndex] = {
+      ...productionRows[principalsIndex],
+      version: "20260924023250",
+    };
+
+    expect(validateHistory(productionRows)).toBe(22);
 
     const unknownRows = productionRows.map((row) => ({ ...row }));
     unknownRows[hardeningIndex].version = "20260923999999";
@@ -61,7 +69,7 @@ describe("Trilha 05 — regressões de selagem v11", () => {
   });
 
   it("alinha readiness ao schema lógico efetivo da T05", () => {
-    expect(manifest.schemaVersion).toBe(21);
-    expect(FOUNDATION_SCHEMA_VERSION).toBe(21);
+    expect(manifest.schemaVersion).toBe(22);
+    expect(FOUNDATION_SCHEMA_VERSION).toBe(22);
   });
 });
