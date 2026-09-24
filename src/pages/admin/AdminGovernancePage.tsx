@@ -21,11 +21,12 @@ type IdentityLookup={
   publicEmail:string;
   status:string;
   publicRoles:string[];
-  hasAdminAccess:boolean;
+  adminRoles:Array<"platform_admin"|"platform_super_admin">;
  };
 };
 const roleLabels={platform_admin:"Administrador setorial",platform_super_admin:"Super administrador"} as const;
 const publicRoleLabel=(role:string)=>role==="producer"?"Produtor":role==="consumer"?"Consumidor":role;
+const adminRoleLabel=(role:string)=>role==="platform_super_admin"?"Super administrador":"Administrador setorial";
 
 export function AdminGovernancePage({onNavigate,access}:Props){
  const isSuper=access.role==="platform_super_admin";
@@ -92,7 +93,7 @@ export function AdminGovernancePage({onNavigate,access}:Props){
      : status===403
        ? "Seu nível de acesso não permite criar esse tipo de administrador."
        : status===409
-         ? "Já existe acesso administrativo ou convite pendente para este e-mail."
+         ? "Já existe acesso ou convite pendente para este mesmo papel administrativo."
          : "Não foi possível emitir o convite."
    );
   }finally{setBusy(false)}
@@ -117,7 +118,7 @@ export function AdminGovernancePage({onNavigate,access}:Props){
   <div className="admin-governance-grid">
    <section className="admin-card">
     <h2><MailPlus size={19}/> Novo acesso administrativo</h2>
-    <p className="admin-muted">Para vincular um Consumidor ou Produtor existente, informe o CPF dele e um e-mail administrativo próprio. O cadastro público será preservado.</p>
+    <p className="admin-muted">Informe o CPF para reaproveitar a mesma pessoa. Administrador e Super administrador podem usar o mesmo Gmail visível, mas cada portal mantém sua própria senha e seu próprio nível de acesso.</p>
     {error&&<div className="admin-alert admin-alert--error">{error}</div>}
     {success&&<div className="admin-alert admin-alert--success">{success}</div>}
     <form onSubmit={createInvite} className="admin-form">
@@ -137,7 +138,9 @@ export function AdminGovernancePage({onNavigate,access}:Props){
         ? identity.identity.publicRoles.map(publicRoleLabel).join(" • ")
         : "nenhum"}.
        {" "}Esses perfis serão preservados.
-       {identity.identity.hasAdminAccess?" Esta pessoa já possui acesso administrativo.":""}
+       {identity.identity.adminRoles.length
+        ? " Acessos administrativos existentes: " + identity.identity.adminRoles.map(adminRoleLabel).join(" • ") + "."
+        : ""}
       </small>
      </div>}
 
