@@ -12,6 +12,8 @@ describe("Trilha 05 — bootstrap administrativo",()=>{
  const apiClient=readFileSync("src/lib/api.ts","utf8");
  const originProtection=readFileSync("server/security/originProtection.ts","utf8");
  const vercel=readFileSync("vercel.json","utf8");
+ const vite=readFileSync("vite.config.ts","utf8");
+ const runtime=readFileSync("server/config/runtime.ts","utf8");
  it("fecha por existência de Super Admin e usa lock transacional no Supabase",()=>{
   expect(service).toContain('rpc(');
   expect(service).toContain('"fn_finalize_first_super_admin"');
@@ -42,6 +44,17 @@ describe("Trilha 05 — bootstrap administrativo",()=>{
   expect(existsSync("api/v1/admin/index.ts")).toBe(false);
   expect(vercel).not.toContain('"api/v1/[...path].ts"');
   expect(vercel).not.toContain('"api/v1/admin/[...path].ts"');
+ });
+ it("possui entrypoints exatos na Vercel e monta API também no preview do Studio",()=>{
+  expect(existsSync("api/v1/admin/bootstrap/index.ts")).toBe(true);
+  expect(existsSync("api/v1/admin/bootstrap/status.ts")).toBe(true);
+  expect(vercel).toContain('"api/v1/admin/bootstrap/index.ts"');
+  expect(vercel).toContain('"api/v1/admin/bootstrap/status.ts"');
+  expect(vite).toContain("configurePreviewServer");
+  expect(vite).toContain('server.middlewares.use("/_hvm_api", app)');
+  expect(runtime).toContain("SUPABASE_SECRET_KEY");
+  expect(runtime).toContain("SUPABASE_SECRET_KEYS");
+  expect(runtime).toContain("SUPABASE_PUBLISHABLE_KEY");
  });
  it("usa Edge apenas como fallback de leitura e mantém a escrita no backend canônico",()=>{
   expect(transport).toContain("/functions/v1/admin-bootstrap");
