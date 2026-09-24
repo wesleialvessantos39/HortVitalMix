@@ -2408,3 +2408,74 @@ A concessão de papel utiliza reativação idempotente por `ON CONFLICT (user_id
 - proteção do último Super administrador permanece;
 - o fluxo público continua proibido para criação administrativa;
 - schema lógico permanece 21; nenhuma migration adicional foi necessária porque a modelagem multi-role existente já suporta a hierarquia.
+
+
+---
+
+## 2026-09-23 — CREDENCIAL ADMINISTRATIVA SEPARADA DA IDENTIDADE PÚBLICA
+
+### Causa do conflito confirmado
+
+A tentativa do primeiro Super administrador utilizou um CPF já existente em `app_people` como identidade pública ativa com os papéis `consumer` e `producer`, enquanto o e-mail administrativo autorizado ainda não possuía identidade Auth própria.
+
+A regra antiga tratava qualquer CPF já existente como conflito absoluto no bootstrap, mesmo quando a intenção legítima era criar **uma credencial administrativa separada para a mesma pessoa**.
+
+### Decisão arquitetural
+
+A partir desta revisão, HortiVitalMix separa explicitamente:
+
+- **Pessoa canônica**: `app_people`, única por CPF;
+- **Cadastro público**: credencial Auth pública ligada por `app_people.user_id`, com papéis `consumer` e/ou `producer`;
+- **Credencial administrativa**: Auth independente, e-mail e senha próprios, ligada à mesma pessoa por `app_admin_principals`;
+- **Autorização administrativa**: papéis `platform_admin` ou `platform_super_admin` atribuídos ao `admin_user_id`.
+
+Assim, Consumidor/Produtor e Administrador continuam sendo **cadastros e portais diferentes**, mas podem representar a mesma pessoa física sem duplicar CPF.
+
+### Primeiro Super administrador
+
+O bootstrap permanece excepcional, protegido e único.
+
+Se o CPF informado já existir em `app_people`:
+
+1. o sistema preserva integralmente o cadastro público existente;
+2. cria uma nova identidade Supabase Auth usando o e-mail administrativo autorizado;
+3. vincula essa nova credencial à pessoa existente por `app_admin_principals`;
+4. concede `platform_super_admin` somente à credencial administrativa;
+5. não altera e-mail, senha, papéis ou login de Consumidor/Produtor;
+6. ao concluir, o bootstrap fecha automaticamente porque passa a existir Super administrador ativo.
+
+Se o CPF ainda não existir, o bootstrap cria a pessoa canônica e a credencial administrativa normalmente.
+
+### Próximos Administradores e Super administradores
+
+Após o primeiro Super administrador:
+
+- novos acessos continuam exclusivos do Portal Administrativo;
+- formulário público continua proibido para criação administrativa;
+- Super administrador pode convidar Administrador setorial ou outro Super administrador;
+- Administrador setorial pode convidar apenas Administrador setorial e somente dentro dos próprios setores;
+- para vincular Consumidor/Produtor existente, o Administrador informa o CPF existente e um **e-mail administrativo próprio**;
+- o convite cria uma identidade Auth administrativa separada e mantém o login público original intacto;
+- a aceitação exige CPF correspondente e uma nova senha forte para a credencial administrativa.
+
+### Persistência e segurança
+
+Nova entidade: `app_admin_principals`.
+
+Garantias:
+
+- `admin_user_id` é único;
+- `person_id` é único;
+- `admin_email` é único;
+- um CPF continua existindo apenas uma vez em `app_people`;
+- uma pessoa possui no máximo uma credencial administrativa ativa no modelo canônico;
+- RLS e FORCE RLS permanecem habilitados;
+- MFA de Super administrador permanece obrigatório;
+- proteção do último Super administrador permanece;
+- auditoria registra o vínculo administrativo sem alterar perfis públicos.
+
+Schema lógico passa de **21 para 22**.
+
+### Fonte documental viva
+
+O arquivo **DOCUMENTO COM DIAGRAMA E ESPECIFICAÇÕES** passa a ser tratado, junto ao Manual Mestre e ao Livro-Raiz, como referência documental viva da arquitetura implementada. Alterações de engenharia devem preservar coerência entre código, banco, Livro-Raiz e a versão atualizada desse documento, sem substituir as regras normativas do Manual Mestre.
