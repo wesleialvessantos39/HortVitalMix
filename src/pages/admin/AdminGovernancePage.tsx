@@ -1,6 +1,7 @@
 import { useEffect,useState } from "react";
 import { MailPlus,RefreshCw,ShieldCheck,UsersRound } from "lucide-react";
 import { api } from "../../lib/api";
+import { CPFInput } from "../../components/forms/CPFInput";
 import { cryptoRandomUUID } from "../../lib/uuid";
 import type {
   AdminVerifySessionResponse,
@@ -16,10 +17,11 @@ type IdentityLookup={
  found:boolean;
  identity?:{
   fullName:string;
-  email:string;
+  cpf:string;
+  publicEmail:string;
   status:string;
   publicRoles:string[];
-  adminRoles:string[];
+  hasAdminAccess:boolean;
  };
 };
 const roleLabels={platform_admin:"Administrador setorial",platform_super_admin:"Super administrador"} as const;
@@ -30,6 +32,7 @@ export function AdminGovernancePage({onNavigate,access}:Props){
  const [sectors,setSectors]=useState<Sector[]>([]);
  const [invites,setInvites]=useState<InviteResponse[]>([]);
  const [email,setEmail]=useState("");
+ const [targetCpf,setTargetCpf]=useState("");
  const [targetRole,setTargetRole]=useState<"platform_admin"|"platform_super_admin">("platform_admin");
  const [selected,setSelected]=useState<string[]>([]);
  const [identity,setIdentity]=useState<IdentityLookup|null>(null);
@@ -48,11 +51,11 @@ export function AdminGovernancePage({onNavigate,access}:Props){
  useEffect(()=>{void load()},[]);
 
  async function lookupIdentity(){
-  const normalized=email.trim().toLowerCase();
+  const cpf=targetCpf.replace(/\D/g,"");
   setIdentity(null);
-  if(!normalized||!normalized.includes("@")) return;
+  if(cpf.length!==11) return;
   try{
-   const result=await api<IdentityLookup>("/v1/admin/identities/lookup?email="+encodeURIComponent(normalized));
+   const result=await api<IdentityLookup>("/v1/admin/identities/lookup?cpf="+encodeURIComponent(cpf));
    setIdentity(result);
   }catch{
    setIdentity(null);
@@ -65,7 +68,13 @@ export function AdminGovernancePage({onNavigate,access}:Props){
   try{
    const result=await api<{status:string;invite?:InviteResponse}>("/v1/admin/invites",{
     method:"POST",
-    body:JSON.stringify({email,targetRole,sectors:targetRole==="platform_admin"?selected:[],commandId:cryptoRandomUUID()}),
+    body:JSON.stringify({
+     email,
+     targetCpf:targetCpf.replace(/\D/g,"")||undefined,
+     targetRole,
+     sectors:targetRole==="platform_admin"?selected:[],
+     commandId:cryptoRandomUUID(),
+    }),
    });
    if(result.status==="created"&&result.invite){
     setSuccess(
@@ -73,7 +82,7 @@ export function AdminGovernancePage({onNavigate,access}:Props){
       ? "Convite enviado. O cadastro existente será preservado e receberá apenas o novo acesso administrativo."
       : "Convite enviado. O novo acesso administrativo poderá ser ativado pelo link recebido."
     );
-    setEmail("");setSelected([]);setIdentity(null);setTargetRole("platform_admin");await load();
+    setEmail("");setTargetCpf("");setSelected([]);setIdentity(null);setTargetRole("platform_admin");await load();
    }
   }catch(err){
    const status=(err as {status?:number}).status;
@@ -108,19 +117,17 @@ export function AdminGovernancePage({onNavigate,access}:Props){
   <div className="admin-governance-grid">
    <section className="admin-card">
     <h2><MailPlus size={19}/> Novo acesso administrativo</h2>
-    <p className="admin-muted">Se o e-mail já pertencer a Consumidor ou Produtor, o sistema reutiliza a identidade e preserva esses perfis.</p>
+    <p className="admin-muted">Para vincular um Consumidor ou Produtor existente, informe o CPF dele e um e-mail administrativo próprio. O cadastro público será preservado.</p>
     {error&&<div className="admin-alert admin-alert--error">{error}</div>}
     {success&&<div className="admin-alert admin-alert--success">{success}</div>}
     <form onSubmit={createInvite} className="admin-form">
-     <label>E-mail
-      <input
-       type="email"
-       value={email}
-       onChange={e=>{setEmail(e.target.value);setIdentity(null)}}
-       onBlur={()=>void lookupIdentity()}
-       required
-      />
-     </label>
+     <CPFInput
+      label="CPF já cadastrado (opcional)"
+      required={false}
+      value={targetCpf}
+      onChange={value=>{setTargetCpf(value);setIdentity(null)}}
+     />
+     {targetCpf.replace(/\D/g,"").length===11&&<button type="button" className="admin-secondary compact" onClick={()=>void lookupIdentity()}>Localizar cadastro</button>}
 
      {identity?.found&&identity.identity&&<div className="admin-alert admin-alert--success">
       <strong><UsersRound size={15}/> Cadastro existente localizado.</strong>
@@ -130,8 +137,18 @@ export function AdminGovernancePage({onNavigate,access}:Props){
         ? identity.identity.publicRoles.map(publicRoleLabel).join(" • ")
         : "nenhum"}.
        {" "}Esses perfis serão preservados.
+       {identity.identity.hasAdminAccess?" Esta pessoa já possui acesso administrativo.":""}
       </small>
      </div>}
+
+     <label>E-mail administrativo
+      <input
+       type="email"
+       value={email}
+       onChange={e=>setEmail(e.target.value)}
+       required
+      />
+     </label>
 
      <label>Papel
       <select

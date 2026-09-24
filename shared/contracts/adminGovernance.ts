@@ -117,6 +117,7 @@ export type MfaVerifyResult = z.infer<typeof MfaVerifyResultSchema>;
 export const CreateInviteSchema = z
   .object({
     email,
+    targetCpf: cpf.optional(),
     targetRole: AdminRoleSchema,
     sectors: z.array(AdminSectorCodeSchema).max(10).default([]),
     commandId: z.string().uuid(),
@@ -180,7 +181,7 @@ export const AcceptInviteSchema = z
     fullName: z.string().trim().min(3).max(255).optional(),
     cpf,
     phone: phone.optional(),
-    password: z.string().min(1).max(128),
+    password: StrongPasswordSchema,
     commandId: z.string().uuid(),
   })
   .strict();

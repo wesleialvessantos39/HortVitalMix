@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 const read = (path) => readFileSync(path, "utf8");
 const migration = read("supabase/migrations/20260922200604_trilha05_admin_governance.sql");
 const bootstrapRpc = read("supabase/migrations/20260923194253_trilha05_bootstrap_rpc_finalize.sql");
+const adminPrincipalMigration = read("supabase/migrations/20260924023000_trilha05_admin_principals.sql");
 const service = read("server/services/AdminGovernanceService.ts");
 const routes = read("server/routes/adminGovernanceRoutes.ts");
 const middleware = read("server/middleware/adminSession.ts");
@@ -78,17 +79,20 @@ const checks = {
     service.includes("sha256(token)") &&
     migration.includes("token_digest char(64)"),
   identityMigrationHierarchy:
-    service.includes('identityMode = "existing"') &&
-    service.includes("signInWithPassword") &&
-    service.includes("preservedPublicIdentity") &&
+    service.includes('identityMode: "new" | "existing"') &&
+    service.includes("target_person_id") &&
+    service.includes("app_admin_principals") &&
     service.includes('actorRole === "platform_admin"') &&
     service.includes('input.targetRole !== "platform_admin"') &&
     routes.includes('"/identities/lookup"') &&
-    read("src/pages/admin/AdminAcceptInvitePage.tsx").includes("Perfis preservados") &&
-    read("src/pages/admin/AdminGovernancePage.tsx").includes("Cadastro existente localizado") &&
+    routes.includes("app_admin_principals") &&
+    read("src/pages/admin/AdminAcceptInvitePage.tsx").includes("credencial administrativa separada") &&
+    read("src/pages/admin/AdminGovernancePage.tsx").includes("CPF já cadastrado (opcional)") &&
     read("src/pages/admin/AdminUsersPage.tsx").includes("Perfis vinculados") &&
     router.includes('const superOnly = path==="/admin/configuracao"') &&
-    read("src/components/admin/AdminPortalShell.tsx").includes('return to !== "/admin/configuracao"'),
+    read("src/components/admin/AdminPortalShell.tsx").includes('return to !== "/admin/configuracao"') &&
+    adminPrincipalMigration.includes("CREATE TABLE public.app_admin_principals") &&
+    adminPrincipalMigration.includes("linkedExistingPerson"),
   persistentRateLimit:
     service.includes("app_admin_auth_attempts") &&
     service.includes("RATE_MAX_FAILURES = 10") &&
@@ -135,10 +139,11 @@ const checks = {
     legacyAuth.includes('authRouter.post("/admin-login"') &&
     legacyAuth.includes('"ADMIN_GOVERNANCE_LOGIN_REQUIRED"') &&
     !account.includes('"/v1/auth/admin-login"'),
-  readinessSchema21:
-    foundation.includes("FOUNDATION_SCHEMA_VERSION = 21"),
+  readinessSchema22:
+    foundation.includes("FOUNDATION_SCHEMA_VERSION = 22"),
   remoteMigrationAlias:
-    migrationManifest.includes('"20260923022554": "20260923022000"'),
+    migrationManifest.includes('"20260923022554": "20260923022000"') &&
+    migrationManifest.includes('"20260924023250": "20260924023000"'),
   adminScreenDiscovery:
     account.includes("admin-bootstrap-discovery") &&
     account.includes('navigate("/admin/bootstrap")') &&

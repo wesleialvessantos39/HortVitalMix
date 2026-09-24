@@ -4,11 +4,13 @@ type CPFInputProps = {
   error?: string;
   value?: string;
   onChange?: (value: string) => void;
+  label?: string;
+  required?: boolean;
 };
 
-export function CPFInput({ error, value, onChange }: CPFInputProps) {
+export function CPFInput({ error, value, onChange, label="CPF", required=true }: CPFInputProps) {
   const controlled = value !== undefined && onChange;
-  return <label>CPF<input
+  return <label>{label}<input
     name="cpf"
     inputMode="numeric"
     autoComplete="off"
@@ -22,7 +24,7 @@ export function CPFInput({ error, value, onChange }: CPFInputProps) {
     }}
     aria-invalid={Boolean(error)}
     aria-describedby={error ? "cpf-error" : undefined}
-    required
+    required={required}
   />
     {error && <small id="cpf-error" className="field-error" role="alert">{error}</small>}
   </label>;

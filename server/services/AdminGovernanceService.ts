@@ -2,7 +2,6 @@ import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypt
 import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
 import { createSupabasePublicClient, supabaseAdmin, supabasePublic } from "../supabase/client.ts";
-import { StrongPasswordSchema } from "../../shared/contracts/auth.ts";
 import type {
   AcceptInviteInput,
   AcceptInviteResult,
@@ -294,27 +293,6 @@ export class AdminGovernanceService {
     if (!status.unavailable && status.active)
       return { status: "already_closed" };
 
-    const [emailConflict, cpfConflict] = await Promise.all([
-      supabaseAdmin
-        .from("app_people")
-        .select("user_id")
-        .eq("email_normalized", bootstrapEmail)
-        .limit(1),
-      supabaseAdmin
-        .from("app_people")
-        .select("user_id")
-        .eq("cpf_normalized", input.cpf)
-        .limit(1),
-    ]);
-
-    if (emailConflict.error || cpfConflict.error)
-      return { status: "unavailable" };
-    if (emailConflict.data?.length || cpfConflict.data?.length)
-      return {
-        status: "identity_conflict",
-        message: "E-mail ou CPF já vinculado.",
-      };
-
     const created = await supabaseAdmin.auth.admin.createUser({
       email: bootstrapEmail,
       password: input.password,
@@ -385,7 +363,7 @@ export class AdminGovernanceService {
     if (rpcStatus === "identity_conflict")
       return {
         status: "identity_conflict",
-        message: "E-mail ou CPF já vinculado.",
+        message: "Não foi possível vincular o acesso administrativo a esta pessoa.",
       };
     if (rpcStatus === "validation_failed")
       return {
@@ -604,7 +582,7 @@ export class AdminGovernanceService {
     origin: string,
   ): Promise<
     | { status: "created"; invite: InviteResponse }
-    | { status: "conflict" }
+    | { status: "conflict"; message?: string }
     | { status: "forbidden" }
     | { status: "unavailable" }
   > {
@@ -622,7 +600,7 @@ export class AdminGovernanceService {
     let expiresAt = new Date(0);
     let createdAt = new Date();
     let identityMode: "new" | "existing" = "new";
-    let existingUserId: string | null = null;
+    let targetPersonId: string | null = null;
 
     try {
       await client.query("BEGIN");
@@ -640,48 +618,106 @@ export class AdminGovernanceService {
       );
 
       const pending = await client.query(
-        `SELECT 1 FROM public.app_admin_invites
-          WHERE lower(email)=$1 AND is_accepted=false AND invalidated_at IS NULL
-            AND expires_at>now() LIMIT 1`,
-        [input.email],
+        `SELECT 1
+           FROM public.app_admin_invites
+          WHERE is_accepted=false
+            AND invalidated_at IS NULL
+            AND expires_at>now()
+            AND (
+              lower(email)=$1
+              OR ($2::text IS NOT NULL AND target_person_id IN (
+                SELECT id FROM public.app_people WHERE cpf_normalized=$2
+              ))
+            )
+          LIMIT 1`,
+        [input.email, input.targetCpf ?? null],
       );
       if (pending.rowCount) {
         await client.query("ROLLBACK");
-        return { status: "conflict" };
+        return { status: "conflict", message: "Já existe convite administrativo pendente." };
       }
 
-      const existing = await client.query<{
-        user_id: string;
-        status: string;
-        roles: string[];
-      }>(
-        `SELECT p.user_id,u.status,
-                COALESCE(array_agg(r.role_code) FILTER (
-                  WHERE r.role_code IS NOT NULL
-                    AND r.revoked_at IS NULL
-                    AND (r.expires_at IS NULL OR r.expires_at>now())
-                ),'{}') AS roles
-           FROM public.app_people p
-           JOIN public.app_users u ON u.id=p.user_id
-           LEFT JOIN public.app_user_role_assignments r ON r.user_id=p.user_id
-          WHERE p.email_normalized=$1
-          GROUP BY p.user_id,u.status
+      const emailInUse = await client.query(
+        `SELECT 1
+           FROM public.app_admin_principals
+          WHERE admin_email=$1
           LIMIT 1`,
         [input.email],
       );
+      if (emailInUse.rowCount) {
+        await client.query("ROLLBACK");
+        return { status: "conflict", message: "Este e-mail administrativo já está em uso." };
+      }
 
-      const identity = existing.rows[0];
-      if (identity) {
-        if (
-          identity.status !== "active" ||
-          identity.roles.includes(input.targetRole) ||
-          identity.roles.includes("platform_super_admin")
-        ) {
+      if (input.targetCpf) {
+        const person = await client.query<{
+          id: string;
+          user_id: string;
+          email_normalized: string;
+          status: string;
+        }>(
+          `SELECT p.id,p.user_id,p.email_normalized,u.status
+             FROM public.app_people p
+             JOIN public.app_users u ON u.id=p.user_id
+            WHERE p.cpf_normalized=$1
+            LIMIT 1`,
+          [input.targetCpf],
+        );
+        const existing = person.rows[0];
+        if (!existing || existing.status !== "active") {
           await client.query("ROLLBACK");
-          return { status: "conflict" };
+          return { status: "conflict", message: "CPF não localizado em cadastro ativo." };
         }
+
+        const publicRoles = await client.query(
+          `SELECT 1
+             FROM public.app_user_role_assignments
+            WHERE user_id=$1
+              AND role_code IN ('consumer','producer')
+              AND revoked_at IS NULL
+              AND (expires_at IS NULL OR expires_at>now())
+            LIMIT 1`,
+          [existing.user_id],
+        );
+        if (!publicRoles.rowCount) {
+          await client.query("ROLLBACK");
+          return { status: "conflict", message: "CPF não pertence a Consumidor ou Produtor ativo." };
+        }
+
+        const alreadyLinked = await client.query(
+          `SELECT 1
+             FROM public.app_admin_principals
+            WHERE person_id=$1
+            LIMIT 1`,
+          [existing.id],
+        );
+        if (alreadyLinked.rowCount) {
+          await client.query("ROLLBACK");
+          return { status: "conflict", message: "Esta pessoa já possui credencial administrativa." };
+        }
+
+        if (existing.email_normalized === input.email) {
+          await client.query("ROLLBACK");
+          return {
+            status: "conflict",
+            message: "Use um e-mail administrativo diferente do e-mail do cadastro público.",
+          };
+        }
+
         identityMode = "existing";
-        existingUserId = identity.user_id;
+        targetPersonId = existing.id;
+      } else {
+        const publicEmail = await client.query(
+          `SELECT 1 FROM public.app_people WHERE email_normalized=$1 LIMIT 1`,
+          [input.email],
+        );
+        if (publicEmail.rowCount) {
+          await client.query("ROLLBACK");
+          return {
+            status: "conflict",
+            message: "Informe o CPF do cadastro existente para vinculá-lo ao acesso administrativo.",
+          };
+        }
       }
 
       if (input.targetRole === "platform_admin") {
@@ -692,7 +728,7 @@ export class AdminGovernanceService {
         );
         if (valid.rowCount !== input.sectors.length) {
           await client.query("ROLLBACK");
-          return { status: "conflict" };
+          return { status: "conflict", message: "Setor administrativo inválido." };
         }
       }
 
@@ -702,8 +738,8 @@ export class AdminGovernanceService {
       expiresAt = new Date(Date.now() + INVITE_TTL_HOURS * 60 * 60_000);
       const inserted = await client.query<{ created_at: Date | string }>(
         `INSERT INTO public.app_admin_invites
-          (id,email,target_role,token_digest,invited_by,expires_at,auth_user_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7)
+          (id,email,target_role,token_digest,invited_by,expires_at,target_person_id,identity_mode)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
          RETURNING created_at`,
         [
           inviteId,
@@ -712,7 +748,8 @@ export class AdminGovernanceService {
           digest,
           actorId,
           expiresAt,
-          existingUserId,
+          targetPersonId,
+          identityMode,
         ],
       );
       createdAt = new Date(inserted.rows[0]?.created_at ?? Date.now());
@@ -730,7 +767,7 @@ export class AdminGovernanceService {
         actorId,
         actorRole,
         action: identityMode === "existing"
-          ? "admin.identity.migration_invited"
+          ? "admin.identity.link_invited"
           : "admin.invite.created",
         targetEntity: "app_admin_invites",
         targetId: inviteId,
@@ -739,6 +776,7 @@ export class AdminGovernanceService {
           targetRole: input.targetRole,
           sectors: input.sectors,
           identityMode,
+          targetPersonId,
         },
         commandId: input.commandId,
         ipHash,
@@ -755,58 +793,46 @@ export class AdminGovernanceService {
     try { base = new URL(origin).origin; } catch {}
     const redirectTo = `${base}/admin/aceitar-convite?token=${encodeURIComponent(token)}`;
 
-    if (identityMode === "existing") {
-      const publicClient = createSupabasePublicClient();
-      if (!publicClient) return { status: "unavailable" };
-      const sent = await publicClient.auth.signInWithOtp({
-        email: input.email,
-        options: {
-          shouldCreateUser: false,
-          emailRedirectTo: redirectTo,
-        },
-      });
-      if (sent.error) {
-        await dbPool.query(
-          `UPDATE public.app_admin_invites
-              SET invalidated_at=clock_timestamp(),revision=revision+1
-            WHERE id=$1 AND is_accepted=false`,
-          [inviteId],
-        ).catch(() => undefined);
-        return { status: "unavailable" };
-      }
-    } else {
-      const sent = await supabaseAdmin.auth.admin.inviteUserByEmail(input.email, {
-        redirectTo,
-        data: { hvm_admin_invite_id: inviteId, hvm_admin_role: input.targetRole },
-      });
-      if (sent.error || !sent.data.user) {
-        if (sent.data.user?.id) {
-          await supabaseAdmin.auth.admin.deleteUser(sent.data.user.id).catch(() => undefined);
-        }
-        await dbPool.query(
-          `UPDATE public.app_admin_invites
-              SET invalidated_at=clock_timestamp(),revision=revision+1
-            WHERE id=$1 AND is_accepted=false`,
-          [inviteId],
-        ).catch(() => undefined);
-        return { status: "unavailable" };
-      }
-
-      try {
-        await dbPool.query(
-          `UPDATE public.app_admin_invites SET auth_user_id=$2 WHERE id=$1`,
-          [inviteId, sent.data.user.id],
-        );
-      } catch {
+    const sent = await supabaseAdmin.auth.admin.inviteUserByEmail(input.email, {
+      redirectTo,
+      data: {
+        hvm_admin_invite_id: inviteId,
+        hvm_admin_role: input.targetRole,
+        hvm_identity_mode: identityMode,
+      },
+    });
+    if (sent.error || !sent.data.user) {
+      if (sent.data.user?.id) {
         await supabaseAdmin.auth.admin.deleteUser(sent.data.user.id).catch(() => undefined);
-        await dbPool.query(
-          `UPDATE public.app_admin_invites
-              SET invalidated_at=clock_timestamp(),revision=revision+1
-            WHERE id=$1 AND is_accepted=false`,
-          [inviteId],
-        ).catch(() => undefined);
-        return { status: "unavailable" };
       }
+      await dbPool.query(
+        `UPDATE public.app_admin_invites
+            SET invalidated_at=clock_timestamp(),revision=revision+1
+          WHERE id=$1 AND is_accepted=false`,
+        [inviteId],
+      ).catch(() => undefined);
+      return {
+        status: sent.error?.status === 422 ? "conflict" : "unavailable",
+        message: sent.error?.status === 422
+          ? "Este e-mail já possui uma credencial de acesso."
+          : undefined,
+      };
+    }
+
+    try {
+      await dbPool.query(
+        `UPDATE public.app_admin_invites SET auth_user_id=$2 WHERE id=$1`,
+        [inviteId, sent.data.user.id],
+      );
+    } catch {
+      await supabaseAdmin.auth.admin.deleteUser(sent.data.user.id).catch(() => undefined);
+      await dbPool.query(
+        `UPDATE public.app_admin_invites
+            SET invalidated_at=clock_timestamp(),revision=revision+1
+          WHERE id=$1 AND is_accepted=false`,
+        [inviteId],
+      ).catch(() => undefined);
+      return { status: "unavailable" };
     }
 
     return {
@@ -844,12 +870,7 @@ export class AdminGovernanceService {
       created_at: Date | string; invalidated_at: Date | string | null;
       invited_by: string; sectors: AdminSectorCode[] | null;
     }>(
-      `SELECT i.id,i.email,i.target_role,
-              CASE WHEN EXISTS (
-                SELECT 1 FROM public.app_people p
-                 WHERE p.user_id=i.auth_user_id AND p.email_normalized=i.email
-              ) THEN 'existing' ELSE 'new' END AS identity_mode,
-              i.revision,i.is_accepted,i.expires_at,
+      `SELECT i.id,i.email,i.target_role,i.identity_mode,i.revision,i.is_accepted,i.expires_at,
               i.created_at,i.invalidated_at,i.invited_by,
               COALESCE(array_agg(s.sector_code) FILTER (WHERE s.sector_code IS NOT NULL),'{}') AS sectors
          FROM public.app_admin_invites i
@@ -877,15 +898,12 @@ export class AdminGovernanceService {
     if (!dbPool || !/^[0-9a-f]{64}$/i.test(token)) return { status: "invalid" };
     const result = await dbPool.query<{
       id: string; email: string; target_role: AdminRole; identity_mode: "new" | "existing";
-      auth_user_id: string | null; is_accepted: boolean; expires_at: Date | string;
+      target_person_id: string | null; auth_user_id: string | null;
+      is_accepted: boolean; expires_at: Date | string;
       invalidated_at: Date | string | null; sectors: AdminSectorCode[] | null;
     }>(
-      `SELECT i.id,i.email,i.target_role,
-              CASE WHEN EXISTS (
-                SELECT 1 FROM public.app_people p
-                 WHERE p.user_id=i.auth_user_id AND p.email_normalized=i.email
-              ) THEN 'existing' ELSE 'new' END AS identity_mode,
-              i.auth_user_id,i.is_accepted,i.expires_at,i.invalidated_at,
+      `SELECT i.id,i.email,i.target_role,i.identity_mode,i.target_person_id,i.auth_user_id,
+              i.is_accepted,i.expires_at,i.invalidated_at,
               COALESCE(array_agg(s.sector_code) FILTER (WHERE s.sector_code IS NOT NULL),'{}') AS sectors
          FROM public.app_admin_invites i
          LEFT JOIN public.app_admin_invite_sectors s ON s.invite_id=i.id
@@ -899,16 +917,17 @@ export class AdminGovernanceService {
     if (new Date(row.expires_at).getTime() <= Date.now()) return { status: "expired" };
 
     let existingRoles: Array<"consumer" | "producer"> = [];
-    if (row.identity_mode === "existing" && row.auth_user_id) {
+    if (row.identity_mode === "existing" && row.target_person_id) {
       const roles = await dbPool.query<{ role_code: "consumer" | "producer" }>(
-        `SELECT role_code
-           FROM public.app_user_role_assignments
-          WHERE user_id=$1
-            AND role_code IN ('consumer','producer')
-            AND revoked_at IS NULL
-            AND (expires_at IS NULL OR expires_at>now())
-          ORDER BY role_code`,
-        [row.auth_user_id],
+        `SELECT r.role_code
+           FROM public.app_people p
+           JOIN public.app_user_role_assignments r ON r.user_id=p.user_id
+          WHERE p.id=$1
+            AND r.role_code IN ('consumer','producer')
+            AND r.revoked_at IS NULL
+            AND (r.expires_at IS NULL OR r.expires_at>now())
+          ORDER BY r.role_code`,
+        [row.target_person_id],
       );
       existingRoles = roles.rows.map((item) => item.role_code);
     }
@@ -939,20 +958,17 @@ export class AdminGovernanceService {
         email: string;
         target_role: AdminRole;
         identity_mode: "new" | "existing";
+        target_person_id: string | null;
         auth_user_id: string | null;
         invited_by: string;
         is_accepted: boolean;
         expires_at: Date | string;
         invalidated_at: Date | string | null;
       }>(
-        `SELECT i.id,i.email,i.target_role,
-                CASE WHEN EXISTS (
-                  SELECT 1 FROM public.app_people p
-                   WHERE p.user_id=i.auth_user_id AND p.email_normalized=i.email
-                ) THEN 'existing' ELSE 'new' END AS identity_mode,
-                i.auth_user_id,i.invited_by,i.is_accepted,i.expires_at,i.invalidated_at
-           FROM public.app_admin_invites i
-          WHERE i.token_digest=$1
+        `SELECT id,email,target_role,identity_mode,target_person_id,auth_user_id,invited_by,
+                is_accepted,expires_at,invalidated_at
+           FROM public.app_admin_invites
+          WHERE token_digest=$1
           FOR UPDATE`,
         [sha256(input.token)],
       );
@@ -985,66 +1001,83 @@ export class AdminGovernanceService {
       }
 
       const targetUserId = invite.auth_user_id;
+      let personId = invite.target_person_id;
+
+      const updated = await supabaseAdmin.auth.admin.updateUserById(
+        targetUserId,
+        {
+          password: input.password,
+          email_confirm: true,
+          user_metadata: {
+            full_name: input.fullName ?? undefined,
+            hvm_portal: "administrative",
+            hvm_admin_role: invite.target_role,
+            hvm_identity_mode: invite.identity_mode,
+          },
+        },
+      );
+      if (updated.error) {
+        await client.query("ROLLBACK");
+        return { status: "unavailable" };
+      }
+
+      await client.query(
+        `INSERT INTO public.app_users(id,status) VALUES ($1,'active')
+         ON CONFLICT (id) DO UPDATE
+           SET status='active',
+               blocked_at=NULL,
+               blocked_by=NULL,
+               block_reason=NULL,
+               authorization_revision=public.app_users.authorization_revision+1,
+               revision=public.app_users.revision+1,
+               updated_at=clock_timestamp()`,
+        [targetUserId],
+      );
 
       if (invite.identity_mode === "existing") {
+        if (!personId) {
+          await client.query("ROLLBACK");
+          return { status: "unavailable" };
+        }
         const person = await client.query<{
-          user_id: string;
+          id: string;
           cpf_normalized: string;
-          email_normalized: string;
           status: string;
         }>(
-          `SELECT p.user_id,p.cpf_normalized,p.email_normalized,u.status
+          `SELECT p.id,p.cpf_normalized,u.status
              FROM public.app_people p
              JOIN public.app_users u ON u.id=p.user_id
-            WHERE p.user_id=$1
+            WHERE p.id=$1
             FOR UPDATE`,
-          [targetUserId],
+          [personId],
         );
         const existing = person.rows[0];
         if (
           !existing ||
           existing.status !== "active" ||
-          existing.email_normalized !== invite.email ||
           existing.cpf_normalized !== input.cpf
         ) {
           await client.query("ROLLBACK");
           return {
             status: "identity_conflict",
-            message: "Os dados não correspondem ao cadastro existente.",
+            message: "Os dados não correspondem ao cadastro público selecionado.",
           };
         }
 
-        const authClient = createSupabasePublicClient();
-        if (!authClient) {
-          await client.query("ROLLBACK");
-          return { status: "unavailable" };
-        }
-        const verified = await authClient.auth.signInWithPassword({
-          email: invite.email,
-          password: input.password,
-        });
-        if (
-          verified.error ||
-          !verified.data.user ||
-          verified.data.user.id !== targetUserId
-        ) {
-          await authClient.auth.signOut().catch(() => undefined);
+        const alreadyLinked = await client.query(
+          `SELECT 1 FROM public.app_admin_principals
+            WHERE person_id=$1 OR admin_email=$2
+            LIMIT 1`,
+          [personId, invite.email],
+        );
+        if (alreadyLinked.rowCount) {
           await client.query("ROLLBACK");
           return {
             status: "identity_conflict",
-            message: "Credenciais do cadastro existente não confirmadas.",
+            message: "A pessoa já possui credencial administrativa.",
           };
         }
-        await authClient.auth.signOut().catch(() => undefined);
       } else {
-        const strongPassword = StrongPasswordSchema.safeParse(input.password);
-        if (!strongPassword.success) {
-          await client.query("ROLLBACK");
-          return {
-            status: "validation_failed",
-            message: "A senha não atende aos requisitos de segurança.",
-          };
-        }
         if (!input.fullName || !input.phone) {
           await client.query("ROLLBACK");
           return {
@@ -1064,42 +1097,27 @@ export class AdminGovernanceService {
           return { status: "identity_conflict", message: "CPF ou e-mail já vinculado." };
         }
 
-        const updated = await supabaseAdmin.auth.admin.updateUserById(
-          targetUserId,
-          {
-            password: input.password,
-            email_confirm: true,
-            user_metadata: {
-              full_name: input.fullName,
-              hvm_portal: "administrative",
-              hvm_admin_role: invite.target_role,
-            },
-          },
-        );
-        if (updated.error) {
-          await client.query("ROLLBACK");
-          return { status: "unavailable" };
-        }
-
-        await client.query(
-          `INSERT INTO public.app_users(id,status) VALUES ($1,'active')
-           ON CONFLICT (id) DO UPDATE
-             SET status='active',
-                 blocked_at=NULL,
-                 blocked_by=NULL,
-                 block_reason=NULL,
-                 authorization_revision=public.app_users.authorization_revision+1,
-                 revision=public.app_users.revision+1,
-                 updated_at=clock_timestamp()`,
-          [targetUserId],
-        );
-        await client.query(
+        const createdPerson = await client.query<{ id: string }>(
           `INSERT INTO public.app_people
             (user_id,full_name,cpf_normalized,email_normalized,phone_e164,email_verified_at)
-           VALUES ($1,$2,$3,$4,$5,clock_timestamp())`,
+           VALUES ($1,$2,$3,$4,$5,clock_timestamp())
+           RETURNING id`,
           [targetUserId, input.fullName, input.cpf, invite.email, input.phone],
         );
+        personId = createdPerson.rows[0]?.id ?? null;
       }
+
+      if (!personId) {
+        await client.query("ROLLBACK");
+        return { status: "unavailable" };
+      }
+
+      await client.query(
+        `INSERT INTO public.app_admin_principals
+          (admin_user_id,person_id,admin_email,created_by)
+         VALUES ($1,$2,$3,$4)`,
+        [targetUserId, personId, invite.email, invite.invited_by],
+      );
 
       await client.query(
         `INSERT INTO public.app_user_role_assignments
@@ -1181,13 +1199,14 @@ export class AdminGovernanceService {
         actorId: targetUserId,
         actorRole: invite.target_role,
         action: invite.identity_mode === "existing"
-          ? "admin.identity.migrated"
+          ? "admin.identity.linked"
           : "admin.invite.accepted",
-        targetEntity: "app_admin_invites",
-        targetId: invite.id,
+        targetEntity: "app_admin_principals",
+        targetId: targetUserId,
         after: {
           role: invite.target_role,
           identityMode: invite.identity_mode,
+          personId,
           preservedPublicIdentity: invite.identity_mode === "existing",
         },
         commandId: input.commandId,

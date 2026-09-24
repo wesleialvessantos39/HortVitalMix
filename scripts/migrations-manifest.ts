@@ -44,6 +44,9 @@ const remoteVersionAliases: Readonly<Record<string, string>> = {
   // A migration de hardening T05 foi aplicada em produção com timestamp gerado
   // pelo Supabase. O conteúdo/nome são canônicos; somente a versão física difere.
   "20260923022554": "20260923022000",
+  // A migration de credencial administrativa T05 foi aplicada pelo Supabase
+  // com timestamp físico próprio; conteúdo e nome permanecem canônicos.
+  "20260924023250": "20260924023000",
 };
 
 export function validateHistory(rows: { version: string; name: string }[]) {

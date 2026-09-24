@@ -321,53 +321,58 @@ adminGovernanceRouter.get(
       res.status(503).json({ error: "UNAVAILABLE" });
       return;
     }
-    const parsedEmail = z.string().trim().toLowerCase().email().safeParse(
-      String(req.query.email ?? ""),
-    );
-    if (!parsedEmail.success) {
+
+    const rawCpf = String(req.query.cpf ?? "").replace(/\D/g, "");
+    const rawEmail = String(req.query.email ?? "").trim().toLowerCase();
+    if (!/^\d{11}$/.test(rawCpf) && !z.string().email().safeParse(rawEmail).success) {
       res.status(422).json({ error: "VALIDATION_FAILED" });
       return;
     }
+
     const result = await dbPool.query<{
+      id: string;
       user_id: string;
       full_name: string;
+      cpf_normalized: string;
       email_normalized: string;
       status: string;
       public_roles: string[];
-      admin_roles: string[];
+      has_admin_principal: boolean;
     }>(
-      `SELECT p.user_id,p.full_name,p.email_normalized,u.status,
+      `SELECT p.id,p.user_id,p.full_name,p.cpf_normalized,p.email_normalized,u.status,
               COALESCE(array_agg(DISTINCT r.role_code) FILTER (
                 WHERE r.role_code IN ('consumer','producer')
                   AND r.revoked_at IS NULL
                   AND (r.expires_at IS NULL OR r.expires_at>now())
               ),'{}') AS public_roles,
-              COALESCE(array_agg(DISTINCT r.role_code) FILTER (
-                WHERE r.role_code IN ('platform_admin','platform_super_admin')
-                  AND r.revoked_at IS NULL
-                  AND (r.expires_at IS NULL OR r.expires_at>now())
-              ),'{}') AS admin_roles
+              EXISTS(
+                SELECT 1 FROM public.app_admin_principals ap WHERE ap.person_id=p.id
+              ) AS has_admin_principal
          FROM public.app_people p
          JOIN public.app_users u ON u.id=p.user_id
          LEFT JOIN public.app_user_role_assignments r ON r.user_id=p.user_id
-        WHERE p.email_normalized=$1
-        GROUP BY p.user_id,p.full_name,p.email_normalized,u.status
+        WHERE ($1::text <> '' AND p.cpf_normalized=$1)
+           OR ($2::text <> '' AND p.email_normalized=$2)
+        GROUP BY p.id,p.user_id,p.full_name,p.cpf_normalized,p.email_normalized,u.status
         LIMIT 1`,
-      [parsedEmail.data],
+      [rawCpf, rawEmail],
     );
+
     const identity = result.rows[0];
     if (!identity) {
       res.status(200).json({ found: false });
       return;
     }
+
     res.status(200).json({
       found: true,
       identity: {
         fullName: identity.full_name,
-        email: identity.email_normalized,
+        cpf: identity.cpf_normalized,
+        publicEmail: identity.email_normalized,
         status: identity.status,
         publicRoles: identity.public_roles,
-        adminRoles: identity.admin_roles,
+        hasAdminAccess: identity.has_admin_principal,
       },
     });
   },
@@ -403,7 +408,7 @@ adminGovernanceRouter.get(
     }
 
     const result = await dbPool.query(
-      `SELECT u.id,u.status,p.full_name,p.email_normalized,
+      `SELECT u.id,u.status,p.full_name,ap.admin_email AS email_normalized,
               ar.role_code,
               COALESCE(array_agg(DISTINCT m.sector_code) FILTER (
                 WHERE m.sector_code IS NOT NULL
@@ -414,18 +419,19 @@ adminGovernanceRouter.get(
                   AND (pr.expires_at IS NULL OR pr.expires_at>now())
               ),'{}') AS public_roles
          FROM public.app_users u
-         JOIN public.app_people p ON p.user_id=u.id
+         JOIN public.app_admin_principals ap ON ap.admin_user_id=u.id
+         JOIN public.app_people p ON p.id=ap.person_id
          JOIN public.app_user_role_assignments ar ON ar.user_id=u.id
            AND ar.revoked_at IS NULL
            AND (ar.expires_at IS NULL OR ar.expires_at>now())
            AND ar.role_code IN ('platform_admin','platform_super_admin')
-         LEFT JOIN public.app_user_role_assignments pr ON pr.user_id=u.id
+         LEFT JOIN public.app_user_role_assignments pr ON pr.user_id=p.user_id
            AND pr.role_code IN ('consumer','producer')
          LEFT JOIN public.app_admin_sector_members m ON m.user_id=u.id
            AND m.revoked_at IS NULL
            AND (m.expires_at IS NULL OR m.expires_at>now())
         WHERE 1=1 ${scope}
-        GROUP BY u.id,p.full_name,p.email_normalized,ar.role_code
+        GROUP BY u.id,p.full_name,ap.admin_email,ar.role_code
         ORDER BY p.full_name`,
       params,
     );

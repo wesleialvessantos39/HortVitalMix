@@ -45,7 +45,7 @@ export function AdminAcceptInvitePage({onNavigate}:Props){
    if(result.status==="accepted"){
     setMessage(
      state.identityMode==="existing"
-      ? "Acesso administrativo adicionado. Seus perfis de Consumidor ou Produtor foram preservados."
+      ? "Acesso administrativo criado. Seus perfis de Consumidor ou Produtor continuam preservados e usam o cadastro público normalmente."
       : "Convite aceito. Seu acesso administrativo está pronto."
     );
     setTimeout(()=>onNavigate("/admin/entrar"),900);
@@ -54,7 +54,7 @@ export function AdminAcceptInvitePage({onNavigate}:Props){
    const status=(err as {status?:number}).status;
    setMessage(
     status===409
-     ? "Cadastro não autorizado. Confirme o CPF e a senha da conta existente."
+     ? "Cadastro não autorizado. Confirme o CPF vinculado a este convite."
      : status===422
        ? "Revise os dados informados."
        : "Não foi possível concluir o convite. Tente novamente."
@@ -85,7 +85,7 @@ export function AdminAcceptInvitePage({onNavigate}:Props){
     {existing&&<div className="admin-alert admin-alert--success">
      Este CPF já possui cadastro no HortiVitalMix.
      {(state.existingRoles?.length??0)>0&&<> Perfis preservados: {state.existingRoles!.map(publicRoleLabel).join(" • ")}.</>}
-     {" "}O convite adicionará somente o acesso administrativo.
+     {" "}O convite criará uma credencial administrativa separada e não altera o login público.
     </div>}
     {message&&<div className="admin-alert">{message}</div>}
     <form onSubmit={submit} className="admin-form-grid">
@@ -97,9 +97,9 @@ export function AdminAcceptInvitePage({onNavigate}:Props){
 
      {!existing&&<PhoneInput value={form.phone} onChange={value=>setForm({...form,phone:value})}/>}
 
-     <label className="admin-span-2">{existing?"Confirme a senha atual":"Crie sua senha"}
-      <PasswordInput value={form.password} onChange={value=>setForm({...form,password:value})} autoComplete={existing?"current-password":"new-password"}/>
-      {!existing&&<PasswordStrengthMeter value={form.password}/>}
+     <label className="admin-span-2">Crie a senha do acesso administrativo
+      <PasswordInput value={form.password} onChange={value=>setForm({...form,password:value})} autoComplete="new-password"/>
+      <PasswordStrengthMeter value={form.password}/>
      </label>
 
      <button className="admin-primary admin-span-2" disabled={busy}>

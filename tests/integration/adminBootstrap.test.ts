@@ -5,6 +5,7 @@ describe("Trilha 05 — bootstrap administrativo",()=>{
  const service=readFileSync("server/services/AdminGovernanceService.ts","utf8");
  const migration=readFileSync("supabase/migrations/20260922200604_trilha05_admin_governance.sql","utf8");
  const bootstrapRpc=readFileSync("supabase/migrations/20260923194253_trilha05_bootstrap_rpc_finalize.sql","utf8");
+ const principalMigration=readFileSync("supabase/migrations/20260924023000_trilha05_admin_principals.sql","utf8");
  const page=readFileSync("src/pages/admin/AdminBootstrapPage.tsx","utf8");
  const transport=readFileSync("src/lib/adminBootstrapTransport.ts","utf8");
  const edge=readFileSync("supabase/functions/admin-bootstrap/index.ts","utf8");
@@ -51,6 +52,14 @@ describe("Trilha 05 — bootstrap administrativo",()=>{
   expect(edge).toContain("fn_finalize_first_super_admin");
   expect(edge).toContain("BOOTSTRAP_EMAIL_NOT_AUTHORIZED");
   expect(edge).toContain("CANONICAL_EMAIL_SHA256");
+ });
+ it("permite primeiro Super administrador com CPF público existente sem duplicar app_people",()=>{
+  expect(principalMigration).toContain("CREATE TABLE public.app_admin_principals");
+  expect(principalMigration).toContain("linkedExistingPerson");
+  expect(principalMigration).toContain("v_person_id");
+  expect(principalMigration).toContain("app_admin_principals");
+  expect(service).not.toContain('cpfConflict');
+  expect(edge).not.toContain('cpfConflict');
  });
  it("reutiliza os componentes canônicos de CPF e celular",()=>{
   expect(page).toContain("<CPFInput");

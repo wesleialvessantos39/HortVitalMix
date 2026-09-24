@@ -233,36 +233,6 @@ Deno.serve(async (req) => {
       origin,
     );
 
-  const [emailConflict, cpfConflict] = await Promise.all([
-    admin
-      .from("app_people")
-      .select("user_id")
-      .eq("email_normalized", email)
-      .limit(1),
-    admin
-      .from("app_people")
-      .select("user_id")
-      .eq("cpf_normalized", cpf)
-      .limit(1),
-  ]);
-
-  if (emailConflict.error || cpfConflict.error)
-    return json(
-      503,
-      { status: "unavailable", error: "BOOTSTRAP_UNAVAILABLE" },
-      origin,
-    );
-
-  if (emailConflict.data?.length || cpfConflict.data?.length)
-    return json(
-      409,
-      {
-        status: "identity_conflict",
-        error: "BOOTSTRAP_IDENTITY_CONFLICT",
-      },
-      origin,
-    );
-
   const created = await admin.auth.admin.createUser({
     email,
     password,
