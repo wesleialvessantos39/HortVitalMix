@@ -1,11 +1,12 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { app } from "./app.ts";
+import { vercelRequestUrl } from "./vercelRequestUrl.ts";
 
 export default function vercelHandler(
   req: IncomingMessage,
   res: ServerResponse,
 ) {
-  req.url = (req.url ?? "/").replace(/^\/api(?=\/|\?|$)/, "") || "/";
+  req.url = vercelRequestUrl(req.url);
   return new Promise<void>((resolve, reject) => {
     res.on("finish", resolve);
     res.on("close", resolve);

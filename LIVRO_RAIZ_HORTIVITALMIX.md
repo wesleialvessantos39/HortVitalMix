@@ -2856,3 +2856,14 @@ A correção removeu essa dependência artificial. Agora:
 - o banco direto continua preferencial quando disponível, mas deixou de ser ponto único de falha em Vercel.
 
 Isso alinha o comportamento de Google Studio e Vercel sem criar implementações diferentes por ambiente.
+
+
+### RCA 2026-09-24 — rotas administrativas ausentes na Vercel
+
+Sondagem HTTP real no domínio canônico: `/api/v1/admin/bootstrap/status` retornou 200, mas POST `/api/v1/admin/auth/login` retornou 404 NOT_FOUND da Vercel, sem atingir Express. O catch-all de arquivo não encaminhava essas rotas aninhadas. Foi incluído rewrite explícito de `/api/:path*` para o dispatcher `api/index`, com restauração do caminho e preservação dos parâmetros. O mesmo dispatcher atende login, MFA e verificação de sessão.
+
+O AdminAccessGate também redirecionava ao login em qualquer erro de transporte. Agora somente 401 reinicia o login; 403 apresenta falta de permissão e falhas de rede/servidor permitem consultar novamente a sessão existente, sem pedir outro código. Respostas de consultas canceladas não alteram a tela.
+
+Foram corrigidos tipos nulos já existentes no bootstrap e no desafio MFA para restabelecer `typecheck:app`. Validação local: typecheck passou, 15 testes de roteamento/MFA passaram e `vite build` passou. Os testes não usam contas reais nem enviam e-mails. Login completo com credenciais reais ainda depende de validação autenticada; não se declara homologação apenas por build.
+
+Validação ampliada T05: 28/29 testes passaram. Falha preexistente em `trilha05SealRegression.test.ts`: o teste proíbe o texto “Código de atendimento:” já presente em Account.tsx; esse arquivo não foi alterado nesta correção.

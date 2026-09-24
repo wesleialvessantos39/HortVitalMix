@@ -32,6 +32,10 @@
   },
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "/api?__hvm_path=:path*"
+    },
+    {
       "source": "/((?!api(?:/|$)|assets/|favicon.svg).*)",
       "destination": "/index.html"
     }

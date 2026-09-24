@@ -436,15 +436,16 @@ export class AdminGovernanceService {
     }
 
     const authUserId = created.data.user.id;
+    const bootstrapClient = supabaseAdmin;
 
     const cleanup = async () => {
       try {
-        await supabaseAdmin.auth.admin.deleteUser(authUserId);
+        await bootstrapClient.auth.admin.deleteUser(authUserId);
       } catch {
         // Melhor esforço: a função RPC não confirmou o bootstrap.
       }
       try {
-        await supabaseAdmin.from("app_users").delete().eq("id", authUserId);
+        await bootstrapClient.from("app_users").delete().eq("id", authUserId);
       } catch {
         // O trigger de auth pode deixar um espelho suspenso; não bloqueia nova tentativa.
       }
@@ -782,13 +783,14 @@ export class AdminGovernanceService {
     if (role.role_code === "platform_super_admin") {
       // O e-mail já foi confirmado. Este segundo código é MFA obrigatório do
       // Super administrador (Manual Mestre T05), nunca repetição da confirmação.
-      let pending: {
+      type PendingChallenge = {
         id: string;
         expires_at: string;
         created_at: string;
         attempts: number;
         max_attempts: number;
-      } | null = null;
+      };
+      let pending: PendingChallenge | null = null;
 
       if (supabaseAdmin) {
         const result = await supabaseAdmin
@@ -806,10 +808,10 @@ export class AdminGovernanceService {
           await client.auth.signOut({ scope: "local" }).catch(() => undefined);
           return { status: "unavailable" };
         }
-        pending = result.data as typeof pending;
+        pending = result.data as PendingChallenge | null;
       } else if (dbPool) {
         try {
-          const result = await dbPool.query<NonNullable<typeof pending>>(
+          const result = await dbPool.query<PendingChallenge>(
             `SELECT id,expires_at::text,created_at::text,attempts,max_attempts
                FROM public.app_admin_mfa_challenges
               WHERE user_id=$1

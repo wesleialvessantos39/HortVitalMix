@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { api } from "../../lib/api";
+import { api, type ApiFailure } from "../../lib/api";
 import type { AdminSectorCode, AdminVerifySessionResponse } from "../../../shared/contracts/adminGovernance";
 
 type Props = {
@@ -19,14 +19,18 @@ export function AdminAccessGate({
     | { kind: "loading" }
     | { kind: "ready"; access: AdminVerifySessionResponse }
     | { kind: "error" }
+    | { kind: "denied" }
   >({ kind: "loading" });
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const abort = new AbortController();
+    setState({ kind: "loading" });
     api<AdminVerifySessionResponse>("/v1/admin/auth/verify-session", {
       signal: abort.signal,
     })
       .then((access) => {
+        if (abort.signal.aborted) return;
         const roleDenied =
           requiredRole === "platform_super_admin" &&
           access.role !== "platform_super_admin";
@@ -34,17 +38,23 @@ export function AdminAccessGate({
           Boolean(requiredSector) &&
           access.role !== "platform_super_admin" &&
           !access.sectors.includes(requiredSector!);
-        if (!access.authorized || !access.role || roleDenied || sectorDenied) {
+        if (!access.authorized || !access.role) {
           onNavigate("/admin/entrar");
+          return;
+        }
+        if (roleDenied || sectorDenied) {
+          setState({ kind: "denied" });
           return;
         }
         setState({ kind: "ready", access });
       })
-      .catch(() => {
-        if (!abort.signal.aborted) onNavigate("/admin/entrar");
+      .catch((error: ApiFailure) => {
+        if (abort.signal.aborted) return;
+        if (error.status === 401) onNavigate("/admin/entrar");
+        else setState({ kind: error.status === 403 ? "denied" : "error" });
       });
     return () => abort.abort();
-  }, [onNavigate, requiredRole, requiredSector]);
+  }, [onNavigate, requiredRole, requiredSector, attempt]);
 
   if (state.kind === "loading")
     return (
@@ -58,11 +68,15 @@ export function AdminAccessGate({
     return (
       <section className="admin-loading">
         <strong>Não foi possível validar a sessão.</strong>
-        <button className="admin-primary" onClick={() => location.reload()}>
+        <p>Sua sessão será verificada novamente sem solicitar outro código.</p>
+        <button className="admin-primary" onClick={() => setAttempt((value) => value + 1)}>
           Tentar novamente
         </button>
       </section>
     );
+
+  if (state.kind === "denied")
+    return <section className="admin-loading"><strong>Seu perfil não tem permissão para acessar esta área.</strong></section>;
 
   return <>{children(state.access)}</>;
 }
