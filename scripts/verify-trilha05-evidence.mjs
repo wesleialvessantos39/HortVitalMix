@@ -167,7 +167,7 @@ const checks = {
       !bootstrapPage.includes("O servidor está esperando") &&
       bootstrapPage.includes("O e-mail informado não foi reconhecido") &&
       bootstrapPage.includes("Cadastro não autorizado. Os dados informados já estão vinculados a outra conta.") &&
-      bootstrapPage.includes("backend não conseguiu acessar uma dependência obrigatória") &&
+      bootstrapPage.includes("Não foi possível concluir a configuração inicial agora") &&
       bootstrapPage.includes("<CPFInput") &&
       bootstrapPage.includes("<PhoneInput") &&
       bootstrapPage.includes("BootstrapRequestSchema.safeParse") &&
