@@ -25,7 +25,12 @@ const client = { auth: {
 const admin = { from(table) {
   let mutation = false;
   const result = () => mutation ? { error: null } : {
-    data: table === 'app_admin_principals' ? { admin_user_id: 'admin-id', email_verified_at: '2026-09-24' }
+    data: table === 'app_admin_principals' ? [{
+      admin_user_id: 'admin-id',
+      email_verified_at: '2026-09-24',
+      portal_role: 'platform_super_admin',
+      auth_email: 'admin@example.invalid',
+    }]
       : table === 'app_users' ? { status: 'active' }
       : table === 'app_user_role_assignments' ? [{ role_code: 'platform_super_admin', expires_at: null }]
       : pending,
@@ -50,7 +55,13 @@ beforeEach(() => {
   pending = { id: 'existing-challenge', expires_at: new Date(Date.now() + 60000).toISOString(), attempts: 0, max_attempts: 5 };
   pendingError = null; passwordValid = true; sent = 0; signedOut = 0; writes = 0;
 });
-const login = () => AdminGovernanceService.login('admin@example.invalid', 'password', 'ip-hash', 'request-id');
+const login = () => AdminGovernanceService.login(
+  'admin@example.invalid',
+  'password',
+  'ip-hash',
+  'request-id',
+  'platform_super_admin',
+);
 test('resumes pending MFA after password validation without another email or invalidation', async () => {
   const result = await login();
   assert.equal(result.status, 'mfa_required');
