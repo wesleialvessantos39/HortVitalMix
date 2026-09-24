@@ -33,12 +33,13 @@ export async function findActiveIdentityForRole(
     if (isAdministrativeRole(role)) {
       const { data: principal, error } = await supabaseAdmin
         .from("app_admin_principals")
-        .select("admin_user_id,admin_email")
+        .select("admin_user_id,admin_email,auth_email,portal_role")
         .eq("admin_email", normalized)
+        .eq("portal_role", role)
         .maybeSingle();
       if (error) return null;
       userId = principal?.admin_user_id ?? null;
-      identityEmail = principal?.admin_email ?? normalized;
+      identityEmail = principal?.auth_email ?? principal?.admin_email ?? normalized;
     } else {
       const { data: person, error } = await supabaseAdmin
         .from("app_people")
@@ -77,11 +78,12 @@ export async function findActiveIdentityForRole(
   if (!dbPool) return null;
   if (isAdministrativeRole(role)) {
     const result = await dbPool.query<{ user_id: string; email_normalized: string }>(
-      `SELECT u.id AS user_id, ap.admin_email AS email_normalized
+      `SELECT u.id AS user_id, COALESCE(ap.auth_email,ap.admin_email) AS email_normalized
          FROM public.app_users u
          JOIN public.app_admin_principals ap ON ap.admin_user_id=u.id
          JOIN public.app_user_role_assignments r ON r.user_id=u.id
         WHERE ap.admin_email=$1
+          AND ap.portal_role=$2
           AND u.status='active'
           AND r.role_code=$2
           AND r.revoked_at IS NULL
