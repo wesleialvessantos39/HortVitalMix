@@ -46,6 +46,15 @@ describe("Trilha 05 — contratos de governança administrativa", () => {
     ).toBe(true);
     expect(
       CreateInviteSchema.safeParse({
+        email: "gestao@example.com",
+        targetCpf: "52998224725",
+        targetRole: "platform_admin",
+        sectors: ["catalog_moderation"],
+        commandId: crypto.randomUUID(),
+      }).success,
+    ).toBe(true);
+    expect(
+      CreateInviteSchema.safeParse({
         email: "setorial@example.com",
         targetRole: "platform_admin",
         sectors: [],
@@ -70,7 +79,7 @@ describe("Trilha 05 — contratos de governança administrativa", () => {
     ).toBe(false);
   });
 
-  it("preserva senha forte no bootstrap e aceita confirmação da conta existente", () => {
+  it("preserva senha forte no bootstrap e na credencial administrativa separada", () => {
     const base = {
       fullName: "Administrador Teste",
       cpf: "52998224725",
