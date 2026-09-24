@@ -1,6 +1,6 @@
 import { useEffect,useState } from "react";
 import { Leaf,ShieldPlus } from "lucide-react";
-import type { ApiFailure } from "../../lib/api";
+import { api, type ApiFailure } from "../../lib/api";
 import { getBootstrapStatus, runBootstrap } from "../../lib/adminBootstrapTransport";
 import { cryptoRandomUUID } from "../../lib/uuid";
 import { PasswordInput } from "../../components/forms/PasswordInput";
@@ -78,8 +78,15 @@ export function AdminBootstrapPage({onNavigate}:Props){
   try{
    const result=await runBootstrap(parsed.data);
    if(result.status==="completed"){
-    setMessage("Configuração inicial concluída.");
-    setTimeout(()=>onNavigate("/admin/entrar"),800);
+    setMessage("Configuração inicial concluída. Agora confirme o e-mail administrativo.");
+    try{
+     await api("/v1/admin/auth/email-confirmation/request",{
+      method:"POST",
+      body:JSON.stringify({email:parsed.data.email}),
+     });
+    }catch{}
+    const target="/admin/confirmar-email?email="+encodeURIComponent(parsed.data.email);
+    setTimeout(()=>onNavigate(target),500);
    }
   }catch(caught){
    const failure=caught as ApiFailure;
