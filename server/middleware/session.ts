@@ -1,6 +1,9 @@
 import { hasConfirmedEmail } from "../../shared/securityCodes.ts";
 import type { NextFunction, Request, Response } from "express";
-import { supabaseAdmin } from "../supabase/client.ts";
+import {
+  createSupabasePublicClient,
+  supabaseAdmin,
+} from "../supabase/client.ts";
 import { resolveIdentityAccess } from "../services/IdentityAccessService.ts";
 import { reportFailure } from "../config/reportFailure.ts";
 
@@ -59,13 +62,19 @@ export async function sessionMiddleware(
     authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
   const token = bearer || readCookie(req, "hvm_access");
 
-  if (!token || !supabaseAdmin) {
+  if (!token) {
+    next();
+    return;
+  }
+
+  const authClient = supabaseAdmin ?? createSupabasePublicClient();
+  if (!authClient) {
     next();
     return;
   }
 
   try {
-    const { data, error } = await supabaseAdmin.auth.getUser(token);
+    const { data, error } = await authClient.auth.getUser(token);
     if (error || !data.user || !hasConfirmedEmail(data.user)) {
       next();
       return;
