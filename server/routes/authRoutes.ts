@@ -795,6 +795,22 @@ authRouter.post("/reset-password", async (req, res, next) => {
       return;
     }
 
+    await supabaseAdmin
+      .from("app_audit_events")
+      .insert({
+        request_id: res.locals.requestId,
+        actor_id: challenge.userId,
+        actor_role: "anonymous",
+        action: "password.reset.completed",
+        target_entity: "app_role_security_challenges",
+        target_id: challenge.id,
+        client_ip_hash: req.clientIpHash,
+      })
+      .then(({ error }) => {
+        if (error)
+          reportFailure("password_reset_audit_failed", res.locals.requestId);
+      });
+
     clear(res);
     res.status(204).end();
   } catch (error) {
