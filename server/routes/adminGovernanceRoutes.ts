@@ -117,6 +117,9 @@ adminGovernanceRouter.post(
       res.status(503).json(result);
       return;
     }
+    if (result.status === "cooldown" && result.retryAfterSeconds) {
+      res.setHeader("Retry-After", String(result.retryAfterSeconds));
+    }
 
     // Resposta deliberadamente não enumera contas administrativas.
     res.status(202).json(result);
@@ -179,7 +182,10 @@ adminGovernanceRouter.post(
       res.status(200).json(result);
       return;
     }
-    if (result.status === "rate_limited") {
+    if (
+      result.status === "rate_limited" ||
+      result.status === "email_rate_limited"
+    ) {
       res.setHeader("Retry-After", String(result.retryAfterSeconds));
       res.status(429).json(result);
       return;
