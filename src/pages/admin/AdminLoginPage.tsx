@@ -95,7 +95,9 @@ export function AdminLoginPage({
         }),
       });
       if (result.status === "session_created") {
-        await onSessionRefresh();
+        // A sessão administrativa é validada pelo AdminAccessGate. Não use o
+        // endpoint público /v1/auth/session aqui: credenciais administrativas
+        // podem representar uma pessoa cujo user_id público é diferente.
         onNavigate("/admin/painel");
         return;
       }
@@ -185,7 +187,8 @@ export function AdminLoginPage({
         body: JSON.stringify({ challengeId, otp }),
       });
       if (result.status !== "verified") throw new Error("MFA_INVALID");
-      await onSessionRefresh();
+      // O POST de MFA já definiu os cookies hvm_access/hvm_refresh/portal_role.
+      // A próxima tela valida a sessão pelo endpoint administrativo canônico.
       onNavigate("/admin/painel");
     } catch {
       setError("Código inválido ou expirado. Solicite um novo acesso.");
