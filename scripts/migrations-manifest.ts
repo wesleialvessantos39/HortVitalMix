@@ -47,6 +47,9 @@ const remoteVersionAliases: Readonly<Record<string, string>> = {
   // A migration de credencial administrativa T05 foi aplicada pelo Supabase
   // com timestamp físico próprio; conteúdo e nome permanecem canônicos.
   "20260924023250": "20260924023000",
+  // Confirmação explícita do e-mail administrativo aplicada pelo Supabase
+  // com timestamp físico próprio.
+  "20260924115207": "20260924114500",
 };
 
 export function validateHistory(rows: { version: string; name: string }[]) {
