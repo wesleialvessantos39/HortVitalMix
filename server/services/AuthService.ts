@@ -294,6 +294,8 @@ async function addRoleToExistingIdentity(
   }
 
   try {
+    if (!verified.data.user.email_confirmed_at)
+      throw registrationError("REGISTRATION_EXISTING_ACCOUNT_CONFIRM_REQUIRED", 409);
     if (verified.data.user.id !== person.user_id)
       throw registrationError("REGISTRATION_IDENTITY_CONFLICT", 409);
 

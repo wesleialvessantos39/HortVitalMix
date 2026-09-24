@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Leaf, MailCheck, RefreshCw } from "lucide-react";
 import { api } from "../../lib/api";
 import { OtpInput } from "../../components/forms/OtpInput";
+import { PROVIDER_OTP_LENGTH, validProviderOtp } from "../../../shared/securityCodes";
 
 export function AdminEmailConfirmationPage({
   onNavigate,
@@ -90,7 +91,7 @@ export function AdminEmailConfirmationPage({
 
   async function verifyCode(event: React.FormEvent) {
     event.preventDefault();
-    if (otp.length !== 6) return;
+    if (!validProviderOtp(otp)) return;
     setBusy(true);
     setNotice("");
     try {
@@ -195,12 +196,12 @@ export function AdminEmailConfirmationPage({
               ) : (
                 <form onSubmit={verifyCode}>
                   <p className="admin-muted">
-                    Digite o código de 6 dígitos enviado para {destination}.
+                    Digite o código de 8 dígitos enviado para {destination}.
                   </p>
-                  <OtpInput value={otp} onChange={setOtp} length={6} />
+                  <OtpInput value={otp} onChange={setOtp} length={PROVIDER_OTP_LENGTH} />
                   <button
                     className="admin-primary"
-                    disabled={busy || otp.length !== 6}
+                    disabled={busy || !validProviderOtp(otp)}
                   >
                     {busy ? "Confirmando…" : "Confirmar e-mail"}
                   </button>

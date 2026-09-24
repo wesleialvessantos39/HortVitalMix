@@ -39,7 +39,7 @@ export function ContactConfirmationPage({
   const [role, setRole] = useState<PortalRole | null>(initialRole);
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
-  const [confirmed, setConfirmed] = useState(Boolean(session));
+  const [confirmed, setConfirmed] = useState(false);
   const [notice, setNotice] = useState("");
   const [linkHandled, setLinkHandled] = useState(false);
 
@@ -197,3 +197,4 @@ export function ContactConfirmationPage({
     </section>
   );
 }
+

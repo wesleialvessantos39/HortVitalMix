@@ -86,7 +86,7 @@ describe("contratos e limites de confiança", () => {
     expect(
       PasswordChangeSchema.safeParse({
         password: "SenhaNovaMuitoForte!2026",
-        nonce: "123456",
+        nonce: "01234567",
       }).success,
     ).toBe(true);
     expect(
@@ -301,3 +301,4 @@ describe("contratos e limites de confiança", () => {
     error.mockRestore();
   });
 });
+

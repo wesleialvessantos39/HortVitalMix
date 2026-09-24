@@ -1,3 +1,4 @@
+import { PROVIDER_OTP_PATTERN } from "../securityCodes.ts";
 import { z } from "zod";
 import { formatBrazilMobile, formatCpf, normalizeBrazilMobile, onlyDigits } from "../utils/normalization.ts";
 
@@ -140,7 +141,7 @@ export const SecurityCodeRequestSchema = z
 export const RoleScopedPasswordChangeSchema = z
   .object({
     password: StrongPasswordSchema,
-    nonce: z.string().regex(/^\d{6,8}$/, "Código de segurança inválido"),
+    nonce: z.string().regex(PROVIDER_OTP_PATTERN, "Código de segurança deve ter 8 dígitos"),
     challengeId: z.string().uuid(),
     portalRole: PortalRoleSchema,
   })
@@ -159,7 +160,7 @@ export const NewPasswordSchema = z
 export const PasswordChangeSchema = z
   .object({
     password: StrongPasswordSchema,
-    nonce: z.string().regex(/^\d{6,8}$/, "Código de segurança inválido"),
+    nonce: z.string().regex(PROVIDER_OTP_PATTERN, "Código de segurança deve ter 8 dígitos"),
   })
   .strict();
 
@@ -170,3 +171,4 @@ export type Registration = z.infer<typeof RegisterConsumerSchema> &
       "propertyName" | "activityType"
     >
   >;
+

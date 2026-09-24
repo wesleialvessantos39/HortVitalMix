@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PROVIDER_OTP_PATTERN } from "../securityCodes.ts";
 import {
   StrongPasswordSchema,
   validCpf,
@@ -74,7 +75,7 @@ export const AdminEmailConfirmationRequestSchema = z
 export const AdminEmailConfirmationVerifySchema = z
   .object({
     email,
-    otp: z.string().regex(/^\d{6}$/, "Código de 6 dígitos"),
+    otp: z.string().regex(PROVIDER_OTP_PATTERN, "Código de 8 dígitos"),
   })
   .strict();
 
@@ -118,7 +119,7 @@ export type AdminLoginResult = z.infer<typeof AdminLoginResultSchema>;
 export const MfaVerifySchema = z
   .object({
     challengeId: z.string().uuid(),
-    otp: z.string().regex(/^\d{6}$/, "Código de 6 dígitos"),
+    otp: z.string().regex(PROVIDER_OTP_PATTERN, "Código de 8 dígitos"),
   })
   .strict();
 export type MfaVerifyInput = z.infer<typeof MfaVerifySchema>;

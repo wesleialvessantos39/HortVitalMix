@@ -2736,3 +2736,17 @@ Status: implementação e testes locais concluídos; build completo, publicaçã
 - Cadastro: removido reenvio automático redundante quando o backend já aceitou ou adiou o despacho.
 - Testes: seis cenários comportamentais aprovados com Node 24, usando mocks do provedor: JSON objeto/string/Buffer, JSON inválido/limite, retomada MFA, senha incorreta, indisponibilidade de consulta e emissão inicial. Comando: `node --experimental-test-module-mocks --test scripts/tests/auth-hotfix.node.mjs`.
 - Limitações: sem envio de e-mails reais, sem alteração de senha real e sem teste de navegador autenticado. A conexão Vercel retornou lista de projetos vazia. O código de atendimento informado não foi localizado em logs nesta execução. Nenhuma alteração de esquema ou privilégio foi necessária.
+
+
+## 2026-09-24 — OTP de oito dígitos e bloqueio antes da confirmação pública
+
+Status: correções implementadas; quatro testes comportamentais locais aprovados. Build completo, publicação e homologação com e-mail real ainda não comprovados nesta execução.
+
+- Relato de código Supabase com oito dígitos: confirmação administrativa, MFA administrativo e reautenticação de consumidor/produtor passam a usar oito posições e regex compartilhada de oito dígitos. Colagem/autopreenchimento completo e grade responsiva acompanham a quantidade. Não foi armazenado o código informado pelo usuário.
+- OTP local de contato permanece com seis dígitos, coerente com seu gerador, contrato e verificador próprios. Confirmação pública do cadastro usa link. O comprimento do OTP não substitui identidade, finalidade ou validação de desafio.
+- Consulta ao banco comprovou zero identidades Auth compartilhadas entre os principais administrativos e as contas públicas. Importação pela rota pública passa a rejeitar perfil administrativo e identidades exclusivamente administrativas; MFA não é substituído pelo callback público.
+- Login, refresh, importação de sessão e middleware exigem confirmação de e-mail válida. Conta existente também precisa estar confirmada antes de adicionar papel público. Cadastro limpa cookies anteriores e a sessão visual; cadastro pendente abre a confirmação, sem entrar na conta. A tela não considera qualquer sessão anterior como prova de confirmação.
+- Corrigida regressão da execução anterior: confirmationDispatchDeferred não representava um envio agendado. O envio inicial agora é tentado no backend depois da criação, sem reenvio automático duplicado no frontend. Falha de envio mantém o cadastro pendente e permite reenvio manual.
+- Supabase config.toml: confirmação obrigatória preservada, OTP de e-mail alinhado a oito, reparadas quebras literais inválidas no bloco de templates; arquivo validado com tomllib. Esta alteração de arquivo não comprova alteração da configuração remota do provedor; comprimento de produção foi informado pelo usuário.
+- Testes executados: `node --experimental-test-module-mocks --test scripts/tests/confirmation-otp.node.mjs`: quatro aprovados, incluindo código de oito dígitos com zero inicial, rejeição de timestamp ausente/inválido, bloqueio por cookie/Bearer sem confirmação e acesso com confirmação e sessão viva. Contratos Vitest existentes atualizados, mas suíte Vitest não executada neste ambiente sem dependências.
+- Banco consultado somente em leitura. Não houve concessão de acesso, confirmação artificial, criação de usuário de teste ou envio de mensagem nesta execução.

@@ -6,6 +6,7 @@ import { CPFInput } from "./forms/CPFInput";
 import { PhoneInput } from "./forms/PhoneInput";
 import { PasswordStrengthMeter } from "./forms/PasswordStrengthMeter";
 import { OtpInput } from "./forms/OtpInput";
+import { PROVIDER_OTP_LENGTH } from "../../shared/securityCodes";
 import type { ShellSession } from "../hooks/useSession";
 import {
   NewPasswordSchema,
@@ -456,16 +457,10 @@ export function Account({
         });
 
         const targetRole = mode;
-        const targetEmail = String(form.email ?? "");
-        if (!result.existingIdentity && result.confirmationRequired &&
-            !result.confirmationDispatchAccepted && !result.confirmationDispatchDeferred) {
-          void api("/v1/auth/resend-confirmation", {
-            method: "POST",
-            body: JSON.stringify({
-              email: targetEmail,
-              portalRole: targetRole,
-            }),
-          }).catch(() => undefined);
+        onSessionAdopt(null);
+        if (result.confirmationRequired) {
+          navigate(`/confirmar-contato?portal=${targetRole}&pending=1`);
+          return;
         }
 
         setMode("login");
@@ -872,6 +867,7 @@ export function Account({
             <label className="t04-security-code-label">
               Código de segurança
               <OtpInput
+                length={PROVIDER_OTP_LENGTH}
                 value={securityNonce}
                 onChange={setSecurityNonce}
                 disabled={busy}

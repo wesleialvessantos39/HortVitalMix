@@ -12,7 +12,7 @@ import {
 const strong = "SenhaForte#123";
 
 describe("Trilha 05 — contratos de governança administrativa", () => {
-  it("valida confirmação administrativa com e-mail e OTP de seis dígitos", () => {
+  it("valida confirmação administrativa com e-mail e OTP de oito dígitos", () => {
     expect(
       AdminEmailConfirmationRequestSchema.safeParse({
         email: "admin@example.com",
@@ -21,7 +21,7 @@ describe("Trilha 05 — contratos de governança administrativa", () => {
     expect(
       AdminEmailConfirmationVerifySchema.safeParse({
         email: "admin@example.com",
-        otp: "123456",
+        otp: "01234567",
       }).success,
     ).toBe(true);
     expect(
@@ -32,7 +32,7 @@ describe("Trilha 05 — contratos de governança administrativa", () => {
     ).toBe(false);
   });
 
-  it("mantém login estrito e MFA com seis dígitos", () => {
+  it("mantém login estrito e MFA com oito dígitos", () => {
     expect(
       AdminLoginSchema.safeParse({ email: "admin@example.com", password: strong }).success,
     ).toBe(true);
@@ -46,7 +46,7 @@ describe("Trilha 05 — contratos de governança administrativa", () => {
     expect(
       MfaVerifySchema.safeParse({
         challengeId: crypto.randomUUID(),
-        otp: "123456",
+        otp: "01234567",
       }).success,
     ).toBe(true);
     expect(
@@ -135,3 +135,4 @@ describe("Trilha 05 — contratos de governança administrativa", () => {
     ).toBe(false);
   });
 });
+

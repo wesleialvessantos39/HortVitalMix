@@ -1,3 +1,4 @@
+import { hasConfirmedEmail } from "../../shared/securityCodes.ts";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import {
   LoginSchema,
@@ -194,6 +195,12 @@ async function handlePublicLoginRequest(
 
     const response = await tokenGrant({ email, password }, "password");
     if (!response.ok) {
+      const failure = await response.json().catch(() => ({}));
+      if (failure.error_code === "email_not_confirmed" || failure.code === "email_not_confirmed") {
+        clear(res);
+        res.status(403).json({ error: "EMAIL_CONFIRMATION_REQUIRED" });
+        return;
+      }
       res.status(response.status === 400 ? 401 : 503).json({
         error: response.status === 400 ? "INVALID_CREDENTIALS" : "DEPENDENCY_UNAVAILABLE",
       });
@@ -201,9 +208,10 @@ async function handlePublicLoginRequest(
     }
 
     const data = await response.json();
-    if (!data.user?.email_confirmed_at) {
+    if (!hasConfirmedEmail(data.user)) {
       if (supabaseAdmin && data.access_token)
         await supabaseAdmin.auth.admin.signOut(data.access_token, "local").catch(() => undefined);
+      clear(res);
       res.status(403).json({ error: "EMAIL_CONFIRMATION_REQUIRED" });
       return;
     }
@@ -282,7 +290,8 @@ authRouter.post("/refresh", async (req, res, next) => {
     }
 
     const data = await response.json();
-    if (!data.user?.email_confirmed_at) {
+    if (!hasConfirmedEmail(data.user)) {
+      clear(res);
       clear(res);
       res.status(403).json({ error: "EMAIL_CONFIRMATION_REQUIRED" });
       return;
@@ -335,6 +344,10 @@ authRouter.post("/import-session", async (req, res, next) => {
       return;
     }
 
+    if (input.data.portalRole === "platform_admin" || input.data.portalRole === "platform_super_admin") {
+      res.status(403).json({ error: "ADMIN_GOVERNANCE_LOGIN_REQUIRED" });
+      return;
+    }
     const client = createSupabasePublicClient();
     if (!client) {
       res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
@@ -351,7 +364,8 @@ authRouter.post("/import-session", async (req, res, next) => {
       return;
     }
 
-    if (!restored.data.user.email_confirmed_at) {
+    if (!hasConfirmedEmail(restored.data.user)) {
+      clear(res);
       res.status(403).json({ error: "EMAIL_CONFIRMATION_REQUIRED" });
       return;
     }
@@ -363,6 +377,11 @@ authRouter.post("/import-session", async (req, res, next) => {
     }
 
     const access = await resolveIdentityAccess(restored.data.user.id, sessionId);
+    if (access && !access.roles.some((role) => role === "consumer" || role === "producer")) {
+      await client.auth.signOut({ scope: "local" }).catch(() => undefined);
+      res.status(403).json({ error: "ADMIN_GOVERNANCE_LOGIN_REQUIRED" });
+      return;
+    }
     if (!access?.liveSession || access.status !== "active") {
       res.status(401).json({ error: "SESSION_IMPORT_FAILED" });
       return;
@@ -424,7 +443,7 @@ authRouter.get("/session", async (req, res, next) => {
     if (
       result.error ||
       !result.data.user ||
-      !result.data.user.email_confirmed_at
+      !hasConfirmedEmail(result.data.user)
     ) {
       res.status(401).json({ error: "SESSION_EXPIRED" });
       return;
@@ -977,7 +996,29 @@ for (const role of ["consumer", "producer"] as const)
         res.locals.requestId,
       );
       res.setHeader("Server-Timing", "auth-register;dur=" + Math.max(0, Date.now() - startedAt));
-      res.status(201).json(result);
+      // A previous browser session is not proof that this new account was confirmed.
+      clear(res);
+      let confirmationDispatchAccepted = false;
+      if (result.confirmationRequired && supabasePublic) {
+        const target = redirectUrl(req, `/confirmar-contato?portal=${role}`);
+        if (target) {
+          try {
+            const sent = await supabasePublic.auth.resend({
+              type: "signup",
+              email: parsed.data.email,
+              options: { emailRedirectTo: target },
+            });
+            confirmationDispatchAccepted = !sent.error;
+          } catch {
+            reportFailure("registration_confirmation_not_dispatched", res.locals.requestId);
+          }
+        }
+      }
+      res.status(201).json({
+        ...result,
+        confirmationDispatchAccepted,
+        confirmationDispatchDeferred: result.confirmationRequired && !confirmationDispatchAccepted,
+      });
     } catch (error) {
       const message = (error as Error)?.message;
       const status =

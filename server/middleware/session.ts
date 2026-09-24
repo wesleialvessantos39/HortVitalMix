@@ -1,3 +1,4 @@
+import { hasConfirmedEmail } from "../../shared/securityCodes.ts";
 import type { NextFunction, Request, Response } from "express";
 import { supabaseAdmin } from "../supabase/client.ts";
 import { resolveIdentityAccess } from "../services/IdentityAccessService.ts";
@@ -65,7 +66,7 @@ export async function sessionMiddleware(
 
   try {
     const { data, error } = await supabaseAdmin.auth.getUser(token);
-    if (error || !data.user || !data.user.email_confirmed_at) {
+    if (error || !data.user || !hasConfirmedEmail(data.user)) {
       next();
       return;
     }
@@ -96,3 +97,4 @@ export async function sessionMiddleware(
     next();
   }
 }
+

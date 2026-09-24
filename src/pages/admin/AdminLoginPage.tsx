@@ -3,6 +3,7 @@ import { KeyRound, Leaf, ShieldCheck } from "lucide-react";
 import { api, type ApiFailure } from "../../lib/api";
 import { getBootstrapStatus } from "../../lib/adminBootstrapTransport";
 import { OtpInput } from "../../components/forms/OtpInput";
+import { PROVIDER_OTP_LENGTH, validProviderOtp } from "../../../shared/securityCodes";
 import { PasswordInput } from "../../components/forms/PasswordInput";
 
 type Props = {
@@ -166,7 +167,7 @@ export function AdminLoginPage({
 
   async function submitMfa(e: React.FormEvent) {
     e.preventDefault();
-    if (!challengeId || otp.length !== 6) return;
+    if (!challengeId || !validProviderOtp(otp)) return;
     setBusy(true);
     setError("");
     try {
@@ -293,15 +294,15 @@ export function AdminLoginPage({
             <form onSubmit={submitMfa}>
               <div className="admin-login-icon"><ShieldCheck /></div>
               <h2>Confirme o código de segurança</h2>
-              <p className="admin-muted">Enviamos um código de 6 dígitos para {destination}.</p>
+              <p className="admin-muted">Enviamos um código de 8 dígitos para {destination}.</p>
               {error && <div className="admin-alert admin-alert--error">{error}</div>}
               {mailCooldown > 0 && (
                 <div className="admin-alert" role="status">
                   Código enviado. Um novo envio ficará disponível em {mailCooldown}s.
                 </div>
               )}
-              <OtpInput value={otp} onChange={setOtp} length={6} />
-              <button className="admin-primary" disabled={busy || otp.length !== 6}>
+              <OtpInput value={otp} onChange={setOtp} length={PROVIDER_OTP_LENGTH} />
+              <button className="admin-primary" disabled={busy || !validProviderOtp(otp)}>
                 {busy ? "Verificando…" : "Confirmar acesso"}
               </button>
               <button

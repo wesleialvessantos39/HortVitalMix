@@ -49,7 +49,7 @@ export function OtpInput({
   }
 
   return (
-    <div className="t04-otp" role="group" aria-label="Código de segurança">
+    <div className="t04-otp" style={{ gridTemplateColumns: `repeat(${length}, minmax(0, 1fr))` }} role="group" aria-label={`Código de segurança de ${length} dígitos`}>
       {digits.map((digit, index) => (
         <input
           key={index}
@@ -60,7 +60,7 @@ export function OtpInput({
           disabled={disabled}
           inputMode="numeric"
           pattern="[0-9]*"
-          maxLength={1}
+          maxLength={index === 0 ? length : 1}
           autoComplete={index === 0 ? "one-time-code" : "off"}
           aria-label={`Dígito ${index + 1} de ${length}`}
           onChange={(event) => setDigit(index, event.currentTarget.value)}
