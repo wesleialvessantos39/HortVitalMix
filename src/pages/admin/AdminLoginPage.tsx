@@ -3,6 +3,7 @@ import { KeyRound, Leaf, ShieldCheck } from "lucide-react";
 import { api, type ApiFailure } from "../../lib/api";
 import { getBootstrapStatus } from "../../lib/adminBootstrapTransport";
 import { OtpInput } from "../../components/forms/OtpInput";
+import { PasswordInput } from "../../components/forms/PasswordInput";
 
 type Props = {
   onNavigate: (to: string) => void;
@@ -13,6 +14,7 @@ type Props = {
 type LoginResponse =
   | { status: "session_created"; role: string; sectors: string[] }
   | { status: "mfa_required"; mfaChallengeId: string; maskedDestination: string; expiresAt: string }
+  | { status: "email_confirmation_required"; maskedDestination: string }
   | { status: string; retryAfterSeconds?: number };
 
 export function AdminLoginPage({
@@ -87,6 +89,15 @@ export function AdminLoginPage({
         setDestination(result.maskedDestination);
         return;
       }
+      if (
+        result.status === "email_confirmation_required" &&
+        "maskedDestination" in result
+      ) {
+        const target = "/admin/confirmar-email?email=" +
+          encodeURIComponent(email.trim().toLowerCase());
+        onNavigate(target);
+        return;
+      }
       setError("Não foi possível concluir o acesso administrativo.");
     } catch (caught) {
       const failure = caught as ApiFailure;
@@ -99,6 +110,29 @@ export function AdminLoginPage({
             ? "Dados inválidos ou cadastro não autorizado."
             : "Não foi possível entrar agora. Tente novamente em alguns instantes.",
       );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resendMfa() {
+    setBusy(true);
+    setError("");
+    try {
+      const result = await api<LoginResponse>("/v1/admin/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+      if (result.status === "mfa_required" && "mfaChallengeId" in result) {
+        setChallengeId(result.mfaChallengeId);
+        setDestination(result.maskedDestination);
+        setOtp("");
+        setError("Novo código enviado para o e-mail administrativo.");
+        return;
+      }
+      setError("Não foi possível reenviar o código de segurança.");
+    } catch {
+      setError("Não foi possível reenviar o código de segurança agora.");
     } finally {
       setBusy(false);
     }
@@ -174,15 +208,45 @@ export function AdminLoginPage({
               <label>E-mail
                 <input type="email" autoComplete="username" value={email} onChange={(e)=>setEmail(e.target.value)} required />
               </label>
-              <label>Senha
-                <input type="password" autoComplete="current-password" value={password} onChange={(e)=>setPassword(e.target.value)} required />
-              </label>
+              <PasswordInput
+                label="Senha"
+                value={password}
+                onChange={setPassword}
+                autoComplete="current-password"
+              />
               <button className="admin-primary" disabled={busy}>
                 {busy
                   ? "Validando…"
                   : intendedRole
                     ? `Entrar como ${roleTitle}`
                     : "Entrar"}
+              </button>
+              <button
+                type="button"
+                className="admin-link"
+                onClick={() =>
+                  onNavigate(
+                    intendedRole
+                      ? `/recuperar-senha?portal=${intendedRole}`
+                      : "/recuperar-senha",
+                  )
+                }
+              >
+                Esqueci minha senha
+              </button>
+              <button
+                type="button"
+                className="admin-link"
+                onClick={() =>
+                  onNavigate(
+                    "/admin/confirmar-email" +
+                      (email.trim()
+                        ? "?email=" + encodeURIComponent(email.trim().toLowerCase())
+                        : ""),
+                  )
+                }
+              >
+                Confirmar ou reenviar confirmação do e-mail
               </button>
               {intendedRole !== "platform_admin" && bootstrapOpen && (
                 <button
@@ -204,9 +268,17 @@ export function AdminLoginPage({
               <button className="admin-primary" disabled={busy || otp.length !== 6}>
                 {busy ? "Verificando…" : "Confirmar acesso"}
               </button>
+              <button
+                type="button"
+                className="admin-link"
+                disabled={busy}
+                onClick={() => void resendMfa()}
+              >
+                Reenviar código de segurança
+              </button>
               <button type="button" className="admin-link" onClick={() => {
                 setChallengeId(null); setOtp(""); setError("");
-              }}>Voltar e solicitar outro código</button>
+              }}>Voltar para e-mail e senha</button>
             </form>
           )}
         </div>
