@@ -2537,3 +2537,102 @@ A criação do primeiro Super administrador continua sendo executada pelo backen
 - bootstrap continua fechando automaticamente após o primeiro Super administrador ativo;
 - nenhum usuário foi criado manualmente durante o diagnóstico;
 - schema lógico permanece 22.
+
+
+---
+
+## 2026-09-24 — CORREÇÃO DO LOGIN, CONFIRMAÇÃO, RECUPERAÇÃO E MFA ADMINISTRATIVOS
+
+### Evidência do erro após criação do primeiro Super administrador
+
+O primeiro Super administrador foi efetivamente criado no Supabase, com `app_admin_principals`, `app_users` ativo e papel `platform_super_admin`.
+
+Na tentativa posterior de login, os logs não registraram chamada de senha ao Supabase Auth e não existia desafio em `app_admin_mfa_challenges`. Isso confirmou que a falha ocorria **antes da validação das credenciais**.
+
+A causa foi localizada em `AdminGovernanceService.login()`: o método encerrava imediatamente com `unavailable` quando `dbPool` não estava disponível no runtime serverless.
+
+### Correção do login e MFA
+
+O login administrativo deixa de depender obrigatoriamente do Transaction Pooler.
+
+Passam a utilizar Supabase Data API, com Pooler apenas como fallback:
+
+- resolução do papel administrativo;
+- leitura de status da conta;
+- setores do Administrador setorial;
+- rate limit persistente;
+- criação/invalidação dos desafios MFA;
+- atualização de tentativas do MFA;
+- resolução de identidade/sessão administrativa.
+
+O Super administrador continua obedecendo à sequência inviolável:
+
+**e-mail + senha → confirmação de e-mail, quando pendente → código MFA de 6 dígitos → sessão administrativa**.
+
+Nenhuma sessão é entregue antes do MFA.
+
+### Confirmação explícita do e-mail administrativo
+
+A criação via Admin API do Supabase havia utilizado confirmação automática do Auth, razão pela qual nenhum e-mail de confirmação de cadastro foi enviado no bootstrap.
+
+Foi adicionada confirmação de propriedade do e-mail no domínio administrativo:
+
+- nova coluna `app_admin_principals.email_verified_at`;
+- nova tela `/admin/confirmar-email`;
+- envio de código pelo Supabase Auth SMTP;
+- campo OTP com 6 dígitos;
+- reenvio do código;
+- verificação de que o usuário retornado pelo OTP é exatamente o `admin_user_id` do principal;
+- nenhuma sessão administrativa é mantida pelo fluxo de confirmação.
+
+O primeiro Super administrador já criado permanece com `email_verified_at = NULL` até confirmar o e-mail. Ao informar senha válida no login, o sistema envia automaticamente a confirmação e direciona para a tela de código.
+
+Administradores criados por convite recebem `email_verified_at` no aceite do convite, pois a posse do endereço já foi comprovada pelo próprio link enviado ao e-mail.
+
+### Recuperação de senha administrativa
+
+A opção **Esqueci minha senha** foi conectada ao fluxo T04 com escopo de papel.
+
+`RoleSecurityService` passa a resolver:
+
+- Consumidor/Produtor por `app_people`;
+- Administrador/Super administrador por `app_admin_principals`.
+
+A redefinição mantém:
+
+- link de recuperação emitido pelo Supabase Auth;
+- desafio com `userId + portalRole`;
+- nova senha forte;
+- revogação global das sessões após a troca.
+
+### Ergonomia da tela administrativa
+
+O campo de senha agora usa o componente canônico `PasswordInput`, incluindo **Mostrar/Ocultar**.
+
+A tela de login também expõe:
+
+- **Esqueci minha senha**;
+- **Confirmar ou reenviar confirmação do e-mail**;
+- campo OTP após o desafio MFA;
+- **Reenviar código de segurança**.
+
+### Banco e preservação
+
+Migration canônica: `20260924114500_trilha05_admin_email_verification.sql`.
+
+Versão física aplicada em produção: `20260924115207`.
+
+Schema lógico: **23**.
+
+Hash do histórico: `80d77398387420550887ee34268decf583ab49a96cb78765aa41910f0577927f`.
+
+Preservado integralmente:
+
+- o Super administrador já criado;
+- CPF e pessoa canônica;
+- perfis Consumidor/Produtor;
+- senha pública separada da senha administrativa;
+- MFA obrigatório;
+- proteção do último Super administrador;
+- convites e hierarquia administrativa;
+- migrations e dados anteriores.
