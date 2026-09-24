@@ -144,6 +144,7 @@ export function AdminLoginPage({
         setChallengeId(result.mfaChallengeId);
         setDestination(result.maskedDestination);
         setOtp("");
+        setMailCooldown(60);
         setError("Novo código enviado para o e-mail administrativo.");
         return;
       }
