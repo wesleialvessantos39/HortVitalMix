@@ -5,6 +5,7 @@ export type ApiFailure = Error & {
   fields?: Array<{ field: string; message: string }>;
   requestId?: string;
   currentRevision?: number;
+  retryAfterSeconds?: number;
 };
 
 function failure(
@@ -156,6 +157,7 @@ export async function api<T>(
     fields?: Array<{ field: string; message: string }>;
     requestId?: string;
     currentRevision?: number;
+    retryAfterSeconds?: number;
   };
   const { json, requestId } = parsed;
 
@@ -173,6 +175,10 @@ export async function api<T>(
         currentRevision:
           typeof body.currentRevision === "number"
             ? body.currentRevision
+            : undefined,
+        retryAfterSeconds:
+          typeof body.retryAfterSeconds === "number"
+            ? body.retryAfterSeconds
             : undefined,
       },
     );
