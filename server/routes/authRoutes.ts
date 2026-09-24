@@ -318,7 +318,7 @@ authRouter.post("/import-session", async (req, res, next) => {
     }
 
     const client = createSupabasePublicClient();
-    if (!client || !dbPool) {
+    if (!client) {
       res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
       return;
     }

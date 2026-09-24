@@ -59,7 +59,15 @@ describe("Trilha 05 — regressões de selagem v11", () => {
       version: "20260924023250",
     };
 
-    expect(validateHistory(productionRows)).toBe(22);
+    const confirmationIndex = productionRows.findIndex(
+      (row) => row.name === "trilha05_admin_email_verification",
+    );
+    productionRows[confirmationIndex] = {
+      ...productionRows[confirmationIndex],
+      version: "20260924115207",
+    };
+
+    expect(validateHistory(productionRows)).toBe(23);
 
     const unknownRows = productionRows.map((row) => ({ ...row }));
     unknownRows[hardeningIndex].version = "20260923999999";
@@ -69,7 +77,7 @@ describe("Trilha 05 — regressões de selagem v11", () => {
   });
 
   it("alinha readiness ao schema lógico efetivo da T05", () => {
-    expect(manifest.schemaVersion).toBe(22);
-    expect(FOUNDATION_SCHEMA_VERSION).toBe(22);
+    expect(manifest.schemaVersion).toBe(23);
+    expect(FOUNDATION_SCHEMA_VERSION).toBe(23);
   });
 });

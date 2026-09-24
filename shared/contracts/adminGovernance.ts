@@ -66,6 +66,18 @@ export const AdminLoginSchema = z
   .strict();
 export type AdminLoginInput = z.infer<typeof AdminLoginSchema>;
 
+
+export const AdminEmailConfirmationRequestSchema = z
+  .object({ email })
+  .strict();
+
+export const AdminEmailConfirmationVerifySchema = z
+  .object({
+    email,
+    otp: z.string().regex(/^\d{6}$/, "Código de 6 dígitos"),
+  })
+  .strict();
+
 export const AdminSessionPayloadSchema = z.object({
   accessToken: z.string(),
   refreshToken: z.string(),
@@ -83,6 +95,10 @@ export const AdminLoginResultSchema = z.discriminatedUnion("status", [
     expiresAt: z.string().datetime(),
   }),
   z.object({ status: z.literal("session_created") }).merge(AdminSessionPayloadSchema),
+  z.object({
+    status: z.literal("email_confirmation_required"),
+    maskedDestination: z.string(),
+  }),
   z.object({ status: z.literal("invalid_credentials") }),
   z.object({ status: z.literal("account_blocked") }),
   z.object({ status: z.literal("no_admin_role") }),

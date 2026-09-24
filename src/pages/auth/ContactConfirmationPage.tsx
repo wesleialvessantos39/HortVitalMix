@@ -80,6 +80,13 @@ export function ContactConfirmationPage({
       setNotice("Escolha o perfil do cadastro.");
       return;
     }
+    if (role === "platform_admin" || role === "platform_super_admin") {
+      onNavigate(
+        "/admin/confirmar-email?email=" +
+          encodeURIComponent(email.trim().toLowerCase()),
+      );
+      return;
+    }
     setBusy(true);
     setNotice("");
     try {

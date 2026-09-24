@@ -4,6 +4,7 @@ const read = (path) => readFileSync(path, "utf8");
 const migration = read("supabase/migrations/20260922200604_trilha05_admin_governance.sql");
 const bootstrapRpc = read("supabase/migrations/20260923194253_trilha05_bootstrap_rpc_finalize.sql");
 const adminPrincipalMigration = read("supabase/migrations/20260924023000_trilha05_admin_principals.sql");
+const adminEmailVerificationMigration = read("supabase/migrations/20260924114500_trilha05_admin_email_verification.sql");
 const service = read("server/services/AdminGovernanceService.ts");
 const routes = read("server/routes/adminGovernanceRoutes.ts");
 const middleware = read("server/middleware/adminSession.ts");
@@ -110,6 +111,8 @@ const checks = {
     "/bootstrap/status",
     "/auth/login",
     "/auth/mfa/verify",
+    "/auth/email-confirmation/request",
+    "/auth/email-confirmation/verify",
     "/auth/verify-session",
     "/invites",
     "/invites/validate",
@@ -130,6 +133,7 @@ const checks = {
     "AdminGovernancePage",
     "AdminDashboardPage",
     "AdminUsersPage",
+    "AdminEmailConfirmationPage",
   ].every((name) => router.includes(name)),
   appIntegration:
     app.includes("AdminRouter") && app.includes("admin-route-layout"),
@@ -141,11 +145,12 @@ const checks = {
     legacyAuth.includes('authRouter.post("/admin-login"') &&
     legacyAuth.includes('"ADMIN_GOVERNANCE_LOGIN_REQUIRED"') &&
     !account.includes('"/v1/auth/admin-login"'),
-  readinessSchema22:
-    foundation.includes("FOUNDATION_SCHEMA_VERSION = 22"),
+  readinessSchema23:
+    foundation.includes("FOUNDATION_SCHEMA_VERSION = 23"),
   remoteMigrationAlias:
     migrationManifest.includes('"20260923022554": "20260923022000"') &&
-    migrationManifest.includes('"20260924023250": "20260924023000"'),
+    migrationManifest.includes('"20260924023250": "20260924023000"') &&
+    migrationManifest.includes('"20260924115207": "20260924114500"'),
   adminScreenDiscovery:
     account.includes("admin-bootstrap-discovery") &&
     account.includes('navigate("/admin/bootstrap")') &&
@@ -157,6 +162,26 @@ const checks = {
   friendlyAdminErrors:
     read("src/pages/admin/AdminLoginPage.tsx").includes("Dados inválidos ou cadastro não autorizado.") &&
     bootstrapPageDoesNotExposeTechnicalDetails(),
+  adminSecurityUx:
+    read("src/pages/admin/AdminLoginPage.tsx").includes("<PasswordInput") &&
+    read("src/pages/admin/AdminLoginPage.tsx").includes("Esqueci minha senha") &&
+    read("src/pages/admin/AdminLoginPage.tsx").includes("Reenviar código de segurança") &&
+    read("src/pages/admin/AdminLoginPage.tsx").includes("Confirmar ou reenviar confirmação do e-mail") &&
+    read("src/pages/admin/AdminEmailConfirmationPage.tsx").includes("<OtpInput") &&
+    read("src/pages/admin/AdminEmailConfirmationPage.tsx").includes("Enviar código de confirmação") &&
+    router.includes('path==="/admin/confirmar-email"'),
+  adminServerlessAuth:
+    service.includes('.from("app_admin_auth_attempts")') &&
+    service.includes('.from("app_admin_mfa_challenges")') &&
+    read("server/services/RoleSecurityService.ts").includes("app_admin_principals") &&
+    read("server/services/IdentityAccessService.ts").includes("resolveViaDataApi") &&
+    read("server/routes/authRoutes.ts").includes('client.auth.signOut({ scope: "global" })'),
+  adminEmailOwnership:
+    adminEmailVerificationMigration.includes("email_verified_at") &&
+    service.includes("requestAdminEmailConfirmation") &&
+    service.includes("verifyAdminEmailConfirmation") &&
+    service.includes('status: "email_confirmation_required"') &&
+    service.includes("(admin_user_id,person_id,admin_email,created_by,email_verified_at)"),
   publicRegistrationDiscovery:
     account.includes("access-discovery") &&
     account.includes('navigate("/cadastro")'),
