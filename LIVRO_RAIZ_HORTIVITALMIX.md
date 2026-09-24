@@ -2636,3 +2636,89 @@ Preservado integralmente:
 - proteção do último Super administrador;
 - convites e hierarquia administrativa;
 - migrations e dados anteriores.
+
+
+---
+
+## 2026-09-24 — RCA DEFINITIVO: LINK DE RECOVERY, LOGIN E CÓDIGOS DE SEGURANÇA
+
+### Diagnóstico comprovado por logs e banco
+
+A investigação desta execução identificou três falhas encadeadas e reproduzíveis:
+
+1. O Supabase aceitou o primeiro pedido de recuperação e validou o link one-time. A tela HortiVitalMix, porém, dependia da presença/importação de uma sessão no fragmento da URL para liberar a nova senha.
+2. Um segundo pedido de recuperação invalidava o challenge HortiVitalMix anterior **antes** de confirmar que um novo e-mail seria entregue. O Supabase recusou esse segundo envio por `over_email_send_rate_limit`; com isso, o challenge anterior e o novo ficaram inutilizados.
+3. Confirmação administrativa e MFA tratavam o cooldown de e-mail do Supabase como indisponibilidade genérica, produzindo as mensagens “Não foi possível entrar agora” e “Não foi possível enviar o código agora”.
+
+Evidência de produção observada em 24/09/2026:
+- recovery aceito pelo Supabase às 12:18:07 UTC;
+- verificação `type=recovery` bem-sucedida às 12:18:25 UTC;
+- segundo pedido às 12:18:48 UTC;
+- resposta Auth 429 às 12:18:49 UTC, com código `over_email_send_rate_limit`;
+- os dois challenges HortiVitalMix ficaram invalidados e não consumidos;
+- não havia challenge MFA administrativo pendente durante as mensagens genéricas reportadas.
+
+### Decisão canônica de recuperação
+
+A autorização da redefinição passa a ser o `flowToken` HortiVitalMix:
+
+- entropia de 32 bytes;
+- digest SHA-256 no banco, nunca token bruto;
+- escopo obrigatório de papel;
+- expiração curta;
+- uso único;
+- validação por endpoint público específico;
+- não exige sessão anterior, cookie ou fragmento Supabase.
+
+O e-mail continua sendo entregue pelo Supabase Auth. O link do provedor comprova a entrega, mas o frontend deixa de depender da sessão implícita do navegador para concluir a troca de senha.
+
+### Regra de reenvio
+
+Um challenge de recuperação já entregue **não pode ser invalidado antecipadamente**.
+
+A nova ordem é:
+
+**criar novo challenge → solicitar e-mail ao Supabase → somente se o envio for aceito, invalidar challenges anteriores**.
+
+Em cooldown/falha:
+- invalida-se apenas o challenge novo não entregue;
+- preserva-se o último link entregue;
+- a UI bloqueia novo pedido durante o contador.
+
+### Revogação pós-reset
+
+Nova função:
+`public.fn_revoke_auth_sessions(p_user_id uuid)`.
+
+Propriedades:
+- SECURITY DEFINER;
+- search_path fixo;
+- EXECUTE removido de PUBLIC/anon/authenticated;
+- EXECUTE concedido somente a service_role;
+- remove todas as sessões Auth do usuário após a senha ser atualizada.
+
+Migration canônica:
+`20260924125000_auth_recovery_session_revoke.sql`.
+
+Versão física aplicada:
+`20260924124802`.
+
+### Login, confirmação e MFA
+
+- validação de senha administrativa não dispara mais e-mail de confirmação automaticamente;
+- e-mail pendente retorna estado explícito e conduz à tela correta;
+- confirmação e MFA interpretam o cooldown real do Supabase;
+- o tempo restante é apresentado ao usuário;
+- reenvio fica desabilitado até o contador chegar a zero;
+- cooldown de entrega não é contabilizado como senha incorreta;
+- o challenge MFA só é persistido após envio aceito;
+- Super administrador continua sem sessão antes do MFA.
+
+### Estado lógico
+
+Schema: **24**.
+
+Hash:
+`a23b076a67b259ce44f87501657be592d5d0eeca9b5d83cedba0397cb9250ca0`.
+
+Nenhuma estrutura, dado, RLS, papel ou implementação anterior foi removida.
