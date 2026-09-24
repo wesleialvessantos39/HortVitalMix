@@ -17,8 +17,8 @@ export function AdminDashboardPage({access,onNavigate}:Props){
   <div className="admin-card">
    <h2>Atalhos</h2>
    <div className="admin-action-grid">
-    {superAdmin&&<button onClick={()=>onNavigate("/admin/governanca")}><ShieldCheck/><span><strong>Governança</strong><small>Emitir convites e revisar escopos.</small></span></button>}
-    {superAdmin&&<button onClick={()=>onNavigate("/admin/usuarios")}><UsersRound/><span><strong>Usuários</strong><small>Consultar acessos administrativos ativos.</small></span></button>}
+    <button onClick={()=>onNavigate("/admin/governanca")}><ShieldCheck/><span><strong>Governança</strong><small>{superAdmin?"Criar Administradores ou Super administradores por convite.":"Criar Administradores setoriais dentro dos seus setores."}</small></span></button>
+    <button onClick={()=>onNavigate("/admin/usuarios")}><UsersRound/><span><strong>Usuários</strong><small>Consultar acessos administrativos e perfis vinculados.</small></span></button>
     {superAdmin&&<button onClick={()=>onNavigate("/admin/configuracao")}><Settings/><span><strong>Configuração</strong><small>Ajustar parâmetros globais da plataforma.</small></span></button>}
    </div>
   </div>
