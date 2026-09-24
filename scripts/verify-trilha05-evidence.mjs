@@ -77,6 +77,18 @@ const checks = {
     service.includes("FOR UPDATE") &&
     service.includes("sha256(token)") &&
     migration.includes("token_digest char(64)"),
+  identityMigrationHierarchy:
+    service.includes('identityMode = "existing"') &&
+    service.includes("signInWithPassword") &&
+    service.includes("preservedPublicIdentity") &&
+    service.includes('actorRole === "platform_admin"') &&
+    service.includes('input.targetRole !== "platform_admin"') &&
+    routes.includes('"/identities/lookup"') &&
+    read("src/pages/admin/AdminAcceptInvitePage.tsx").includes("Perfis preservados") &&
+    read("src/pages/admin/AdminGovernancePage.tsx").includes("Cadastro existente localizado") &&
+    read("src/pages/admin/AdminUsersPage.tsx").includes("Perfis vinculados") &&
+    router.includes('const superOnly = path==="/admin/configuracao"') &&
+    read("src/components/admin/AdminPortalShell.tsx").includes('return to !== "/admin/configuracao"'),
   persistentRateLimit:
     service.includes("app_admin_auth_attempts") &&
     service.includes("RATE_MAX_FAILURES = 10") &&
