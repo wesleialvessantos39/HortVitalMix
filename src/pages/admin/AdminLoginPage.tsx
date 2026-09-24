@@ -31,6 +31,7 @@ export function AdminLoginPage({
   const [error, setError] = useState("");
   const [showHelp, setShowHelp] = useState(false);
   const [bootstrapOpen, setBootstrapOpen] = useState(false);
+  const [mailCooldown, setMailCooldown] = useState(0);
 
   const roleTitle =
     intendedRole === "platform_admin"
@@ -70,6 +71,15 @@ export function AdminLoginPage({
     return () => window.removeEventListener("keydown", onKey);
   }, [showHelp]);
 
+  useEffect(() => {
+    if (mailCooldown <= 0) return;
+    const timer = window.setInterval(
+      () => setMailCooldown((value) => Math.max(0, value - 1)),
+      1000,
+    );
+    return () => window.clearInterval(timer);
+  }, [mailCooldown]);
+
   async function submitLogin(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -87,32 +97,36 @@ export function AdminLoginPage({
       if (result.status === "mfa_required" && "mfaChallengeId" in result) {
         setChallengeId(result.mfaChallengeId);
         setDestination(result.maskedDestination);
+        setMailCooldown(60);
         return;
       }
       if (
         result.status === "email_confirmation_required" &&
         "maskedDestination" in result
       ) {
-        const target =
+        onNavigate(
           "/admin/confirmar-email?email=" +
-          encodeURIComponent(email.trim().toLowerCase()) +
-          "&sent=1&dest=" +
-          encodeURIComponent(result.maskedDestination);
-        onNavigate(target);
+            encodeURIComponent(email.trim().toLowerCase()),
+        );
         return;
       }
       setError("Não foi possível concluir o acesso administrativo.");
     } catch (caught) {
       const failure = caught as ApiFailure;
-      setError(
-        failure.status === 429
-          ? "Muitas tentativas. Aguarde alguns minutos e tente novamente."
-          : failure.status === 401 ||
-              failure.status === 403 ||
-              failure.status === 409
-            ? "Dados inválidos ou cadastro não autorizado."
-            : "Não foi possível entrar agora. Tente novamente em alguns instantes.",
-      );
+      if (failure.status === 429 && failure.message === "email_rate_limited") {
+        setMailCooldown(failure.retryAfterSeconds ?? 60);
+        setError("");
+      } else {
+        setError(
+          failure.status === 429
+            ? "Muitas tentativas de credenciais. Aguarde alguns minutos e tente novamente."
+            : failure.status === 401 ||
+                failure.status === 403 ||
+                failure.status === 409
+              ? "Dados inválidos ou cadastro não autorizado."
+              : "Não foi possível entrar agora. Tente novamente em alguns instantes.",
+        );
+      }
     } finally {
       setBusy(false);
     }
@@ -134,8 +148,14 @@ export function AdminLoginPage({
         return;
       }
       setError("Não foi possível reenviar o código de segurança.");
-    } catch {
-      setError("Não foi possível reenviar o código de segurança agora.");
+    } catch (caught) {
+      const failure = caught as ApiFailure;
+      if (failure.status === 429 && failure.message === "email_rate_limited") {
+        setMailCooldown(failure.retryAfterSeconds ?? 60);
+        setError("");
+      } else {
+        setError("Não foi possível reenviar o código de segurança agora.");
+      }
     } finally {
       setBusy(false);
     }
@@ -208,6 +228,11 @@ export function AdminLoginPage({
                 </button>
               </p>
               {error && <div className="admin-alert admin-alert--error">{error}</div>}
+              {mailCooldown > 0 && (
+                <div className="admin-alert" role="status">
+                  O provedor protege o envio de e-mails de segurança. Aguarde {mailCooldown}s para solicitar outro código.
+                </div>
+              )}
               <label>E-mail
                 <input type="email" autoComplete="username" value={email} onChange={(e)=>setEmail(e.target.value)} required />
               </label>
@@ -267,6 +292,11 @@ export function AdminLoginPage({
               <h2>Confirme o código de segurança</h2>
               <p className="admin-muted">Enviamos um código de 6 dígitos para {destination}.</p>
               {error && <div className="admin-alert admin-alert--error">{error}</div>}
+              {mailCooldown > 0 && (
+                <div className="admin-alert" role="status">
+                  Código enviado. Um novo envio ficará disponível em {mailCooldown}s.
+                </div>
+              )}
               <OtpInput value={otp} onChange={setOtp} length={6} />
               <button className="admin-primary" disabled={busy || otp.length !== 6}>
                 {busy ? "Verificando…" : "Confirmar acesso"}
@@ -274,10 +304,12 @@ export function AdminLoginPage({
               <button
                 type="button"
                 className="admin-link"
-                disabled={busy}
+                disabled={busy || mailCooldown > 0}
                 onClick={() => void resendMfa()}
               >
-                Reenviar código de segurança
+                {mailCooldown > 0
+                  ? `Reenviar em ${mailCooldown}s`
+                  : "Reenviar código de segurança"}
               </button>
               <button type="button" className="admin-link" onClick={() => {
                 setChallengeId(null); setOtp(""); setError("");
