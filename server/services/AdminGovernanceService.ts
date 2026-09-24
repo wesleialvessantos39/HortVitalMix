@@ -53,29 +53,60 @@ async function adminPrincipalFor(
   unavailable: boolean;
   ambiguous: boolean;
 }> {
-  if (!supabaseAdmin)
-    return { principal: null, unavailable: true, ambiguous: false };
-
   const normalized = email.trim().toLowerCase();
-  let query = supabaseAdmin
-    .from("app_admin_principals")
-    .select("admin_user_id,email_verified_at,portal_role,auth_email")
-    .eq("admin_email", normalized);
-  if (portalRole) query = query.eq("portal_role", portalRole);
 
-  const { data, error } = await query.limit(2);
-  if (error)
-    return { principal: null, unavailable: true, ambiguous: false };
+  if (supabaseAdmin) {
+    let query = supabaseAdmin
+      .from("app_admin_principals")
+      .select("admin_user_id,email_verified_at,portal_role,auth_email")
+      .eq("admin_email", normalized);
+    if (portalRole) query = query.eq("portal_role", portalRole);
 
-  const rows = (data ?? []) as AdminPrincipalRow[];
-  if (!portalRole && rows.length > 1)
-    return { principal: null, unavailable: false, ambiguous: true };
+    const { data, error } = await query.limit(2);
+    if (!error) {
+      const rows = (data ?? []) as AdminPrincipalRow[];
+      if (!portalRole && rows.length > 1)
+        return { principal: null, unavailable: false, ambiguous: true };
+      return {
+        principal: rows[0] ?? null,
+        unavailable: false,
+        ambiguous: false,
+      };
+    }
+  }
 
-  return {
-    principal: rows[0] ?? null,
-    unavailable: false,
-    ambiguous: false,
-  };
+  // Vercel pode estar com a chave server-side do Supabase indisponível,
+  // mas com o Postgres configurado. Não transformar isso em HTTP 503 se a
+  // mesma fonte canônica puder ser consultada diretamente no banco.
+  if (dbPool) {
+    try {
+      const params: unknown[] = [normalized];
+      let roleSql = "";
+      if (portalRole) {
+        params.push(portalRole);
+        roleSql = " AND portal_role=$2";
+      }
+      const result = await dbPool.query<AdminPrincipalRow>(
+        `SELECT admin_user_id,email_verified_at,portal_role,auth_email
+           FROM public.app_admin_principals
+          WHERE admin_email=$1${roleSql}
+          ORDER BY created_at DESC
+          LIMIT 2`,
+        params,
+      );
+      if (!portalRole && result.rows.length > 1)
+        return { principal: null, unavailable: false, ambiguous: true };
+      return {
+        principal: result.rows[0] ?? null,
+        unavailable: false,
+        ambiguous: false,
+      };
+    } catch {
+      return { principal: null, unavailable: true, ambiguous: false };
+    }
+  }
+
+  return { principal: null, unavailable: true, ambiguous: false };
 }
 
 function roleScopedInviteAuthEmail(
@@ -674,8 +705,6 @@ export class AdminGovernanceService {
     requestId: string,
     portalRole?: AdminRole,
   ): Promise<AdminLoginResult> {
-    if (!supabaseAdmin) return { status: "unavailable" };
-
     const normalized = email.trim().toLowerCase();
     const resolved = await adminPrincipalFor(normalized, portalRole);
     if (resolved.unavailable) return { status: "unavailable" };
