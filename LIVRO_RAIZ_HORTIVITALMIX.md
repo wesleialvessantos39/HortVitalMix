@@ -2750,3 +2750,34 @@ Status: correções implementadas; quatro testes comportamentais locais aprovado
 - Supabase config.toml: confirmação obrigatória preservada, OTP de e-mail alinhado a oito, reparadas quebras literais inválidas no bloco de templates; arquivo validado com tomllib. Esta alteração de arquivo não comprova alteração da configuração remota do provedor; comprimento de produção foi informado pelo usuário.
 - Testes executados: `node --experimental-test-module-mocks --test scripts/tests/confirmation-otp.node.mjs`: quatro aprovados, incluindo código de oito dígitos com zero inicial, rejeição de timestamp ausente/inválido, bloqueio por cookie/Bearer sem confirmação e acesso com confirmação e sessão viva. Contratos Vitest existentes atualizados, mas suíte Vitest não executada neste ambiente sem dependências.
 - Banco consultado somente em leitura. Não houve concessão de acesso, confirmação artificial, criação de usuário de teste ou envio de mensagem nesta execução.
+
+
+## 2026-09-24 — Hotfix de identidade administrativa por portal e correção da falsa repetição de confirmação
+
+Status: backend, frontend e Supabase atualizados. A migration `20260924165427_admin_role_scoped_credentials` foi aplicada no projeto canônico e registrada como schema lógico **25**. O deploy Vercel da revisão final ainda deve concluir o gate automático antes da homologação externa.
+
+### Causa-raiz confirmada
+
+- O e-mail da credencial Super administradora já estava confirmado no banco. O código solicitado depois de e-mail + senha era o **MFA obrigatório do Super administrador**, e não uma segunda confirmação de cadastro.
+- O frontend não enviava o portal selecionado no login; por isso a resolução por e-mail podia escolher o papel `platform_super_admin` e disparar MFA mesmo quando o operador havia aberto o portal de Administrador.
+- `app_admin_principals` possuía unicidade global por `person_id` e por `admin_email`, impedindo que a mesma pessoa/CPF e o mesmo Gmail possuíssem credenciais administrativas independentes de Administrador e Super administrador.
+
+### Correção canônica
+
+- Login, confirmação de e-mail e recuperação de senha administrativas passaram a ser resolvidos por **e-mail + portalRole**.
+- `platform_admin` e `platform_super_admin` são credenciais distintas, com usuários Auth e senhas independentes.
+- A mesma pessoa canônica pode possuir os dois papéis. A unicidade foi alterada para `(person_id, portal_role)` e `(admin_email, portal_role)`.
+- Para Gmail/Googlemail compartilhado entre papéis, `admin_email` permanece o endereço digitado pelo usuário, enquanto `auth_email` usa alias técnico interno por portal; assim os dois logins chegam à mesma caixa de e-mail sem compartilhar senha.
+- Administrador setorial, depois da confirmação do e-mail, recebe sessão direta com somente os setores atribuídos.
+- Super administrador continua exigindo MFA em todo acesso, conforme a Trilha 05; a interface agora identifica explicitamente esse código como **Segundo fator do Super administrador**, evitando confusão com confirmação de cadastro.
+- Convites e aceite foram ajustados para permitir o segundo papel administrativo da mesma pessoa sem duplicar CPF nem `app_people`.
+- A tela de governança passou a informar os papéis administrativos já existentes e explica que o mesmo Gmail visível pode ser usado com senhas separadas.
+- Manifesto de migrations atualizado para schema 25 e hash `0fc58f8e0b0e4fd66f2f12a7b59e9de269339ab0fce014bb449abfd539cc8ea7`; readiness e gates T05 foram alinhados ao novo schema.
+
+### Invariantes preservados
+
+- Consumidor/Produtor continuam isolados dos portais administrativos.
+- Administrador não herda poderes globais: exige ao menos um setor ativo e permanece limitado a seus setores.
+- Super administrador mantém escopo global e MFA obrigatório.
+- O último Super administrador ativo continua protegido contra remoção/bloqueio.
+- Nenhuma senha é compartilhada entre credenciais administrativas distintas.
