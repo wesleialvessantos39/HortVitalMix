@@ -122,5 +122,5 @@
       "file": "20260924125000_auth_recovery_session_revoke.sql"
     }
   ],
-  "migrationHistoryHash": "PENDING_SCHEMA24_HASH"
+  "migrationHistoryHash": "a23b076a67b259ce44f87501657be592d5d0eeca9b5d83cedba0397cb9250ca0"
 }
