@@ -11,8 +11,16 @@ export default defineConfig(({ mode }) => {
         name: "hortivitalmix-same-origin-api",
         async configureServer(server) {
           const { app } = await import("./server/app.ts");
-          // Google AI Studio usa /api como caminho especial no preview. O
-          // prefixo interno evita que o proxy do Studio intercepte a API local.
+          // Google AI Studio pode executar o projeto pelo servidor de
+          // desenvolvimento. Mantemos os dois prefixos compatíveis.
+          server.middlewares.use("/_hvm_api", app);
+          server.middlewares.use("/api", app);
+        },
+        async configurePreviewServer(server) {
+          const { app } = await import("./server/app.ts");
+          // O preview de produção do Google Studio não executa
+          // configureServer. Sem este hook, o frontend abre normalmente mas
+          // POSTs administrativos retornam 404/rede antes de chegar ao backend.
           server.middlewares.use("/_hvm_api", app);
           server.middlewares.use("/api", app);
         },
