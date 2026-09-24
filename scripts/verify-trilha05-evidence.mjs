@@ -183,6 +183,7 @@ const checks = {
       bootstrapTransport.includes("/functions/v1/admin-bootstrap") &&
       bootstrapTransport.includes("getBootstrapStatus") &&
       bootstrapTransport.includes("runBootstrap") &&
+      !bootstrapTransport.includes('edgeRequest("POST"') &&
       bootstrapEdge.includes("fn_finalize_first_super_admin") &&
       bootstrapEdge.includes("CANONICAL_EMAIL_SHA256") &&
       bootstrapEdge.includes("status === 204 ? null") &&
