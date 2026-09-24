@@ -50,6 +50,8 @@ const remoteVersionAliases: Readonly<Record<string, string>> = {
   // Confirmação explícita do e-mail administrativo aplicada pelo Supabase
   // com timestamp físico próprio.
   "20260924115207": "20260924114500",
+  // Revogação de sessões do recovery aplicada com timestamp físico Supabase.
+  "20260924124802": "20260924125000",
 };
 
 export function validateHistory(rows: { version: string; name: string }[]) {
