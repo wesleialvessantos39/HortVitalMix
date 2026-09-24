@@ -33,6 +33,19 @@ export function createSupabasePublicClient() {
     : null;
 }
 
+export function createSupabaseUserClient(accessToken: string) {
+  if (!valid || !runtime.anonKey || !accessToken) return null;
+  return createClient(cleanUrl, runtime.anonKey, {
+    ...options,
+    global: {
+      fetch: timedFetch,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  });
+}
+
 export const supabasePublic = createSupabasePublicClient();
 
 export const supabaseAdmin =
