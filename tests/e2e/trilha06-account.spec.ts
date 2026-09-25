@@ -88,7 +88,7 @@ for (const viewport of [
     await mockAccount(page);
     await page.goto("/conta");
     await expect(page.getByText("Minha conta").first()).toBeVisible();
-    await expect(page.getByText("Centro · Ariquemes/RO")).toBeVisible();
+    await expect(page.getByText("Centro · Ariquemes/RO").first()).toBeVisible();
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > window.innerWidth,
     );
