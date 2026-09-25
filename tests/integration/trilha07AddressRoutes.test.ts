@@ -10,6 +10,7 @@ import { profilePrivacyRouter } from "../../server/routes/profilePrivacyRoutes";
 import {
   AddressManagementError,
   AddressManagementService,
+  addressDeletionMode,
 } from "../../server/services/AddressManagementService";
 import { verifyRecentAuthProof } from "../../server/security/recentAuth";
 
@@ -128,7 +129,9 @@ describe("rotas HTTP de endereço", () => {
     expect(response.body.error).toBe("ADDRESS_LIMIT_EXCEEDED");
   });
 
-  it("DELETE encaminha expectedRevision e preserva o modo retornado", async () => {
+  it("DELETE encaminha revisão e preserva a decisão soft/hard", async () => {
+    expect(addressDeletionMode(0)).toBe("hard");
+    expect(addressDeletionMode(1)).toBe("soft");
     const remove = vi
       .spyOn(AddressManagementService, "deleteAddress")
       .mockResolvedValue({
