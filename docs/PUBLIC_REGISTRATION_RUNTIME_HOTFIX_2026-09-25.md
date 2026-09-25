@@ -105,3 +105,18 @@ Gate local:
 ## Banco
 
 Nenhum DDL novo. O schema lógico permanece **29**, com o hash e as 30 migrations atuais preservados.
+
+
+## Promoção para produção
+
+O PR #52 foi mergeado na `main` no commit funcional `904054e00659751f46a2b22eec4ff61c4a2f726b`.
+
+Evidências pós-merge:
+- GitHub: PR #52 fechado como merged;
+- Vercel: status `success`, descrição `Deployment has completed`;
+- Supabase Edge: `public-registration` ACTIVE version 2;
+- schema lógico: 29, sem migration nova;
+- release: `auth-reg-hotfix-904054e`;
+- GitHub Actions automáticas: nenhuma execução.
+
+O cadastro real não foi simulado com dados fictícios em produção. A validação operacional de ponta a ponta deve usar um cadastro legítimo do proprietário para comprovar também a entrega real do e-mail de confirmação.
