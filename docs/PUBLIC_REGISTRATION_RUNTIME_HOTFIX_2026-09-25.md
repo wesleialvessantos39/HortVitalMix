@@ -144,4 +144,15 @@ A suíte `publicRegistrationTransport.test.ts` foi invertida para provar:
 5. validação 400, conflito 409 e rate limit 429 não são mascarados.
 
 Schema lógico permanece **29**. A T01–T07 continua preservada.
+## Promoção final — AUTH-REG-20260925-02
+
+- PR #54 (`fix(auth): cadastro público direto pela Edge`) mergeado na `main` em `5cbc05da363b8a667f584dcb4b1e2009bc47a2fb`;
+- esse SHA recebeu Vercel `success` com `Deployment has completed`;
+- PR #55 (`fix(auth): fixar cadastro no Supabase canônico`) mergeado na `main` em `74c458a365b00c629e7a510af923187fded782c4`;
+- o SHA `74c458a365b00c629e7a510af923187fded782c4` recebeu Vercel `success` com `Deployment has completed` em 2026-09-25;
+- `public-registration` permanece ACTIVE version 2 no projeto canônico `xipbsazvymkqqfmfegwu`;
+- schema lógico permanece 29 e nenhuma migration nova foi criada;
+- o cadastro público agora é Edge-first e o destino não depende de `VITE_SUPABASE_URL`.
+
+A homologação AUTH-REG-20260925-01 deve ser considerada superseded para o fluxo de cadastro. A referência funcional vigente é AUTH-REG-20260925-02.
 
