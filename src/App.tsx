@@ -25,6 +25,7 @@ import {
 } from "../shared/contracts/foundation";
 import { api } from "./lib/api";
 import { Account } from "./components/Account";
+import { AccountHub } from "./pages/account/AccountHub";
 import { AdminRouter } from "./pages/admin/AdminRouter";
 import { ChoosePortalPage } from "./pages/auth/ChoosePortalPage";
 import { ContactConfirmationPage } from "./pages/auth/ContactConfirmationPage";
@@ -78,7 +79,8 @@ export default function App() {
     [path, setPath] = useState(location.pathname),
     [modal, setModal] = useState<string | null>(null),
     [query, setQuery] = useState(""),
-    [category, setCategory] = useState(categories[0]);
+    [category, setCategory] = useState(categories[0]),
+    [deliveryLabel, setDeliveryLabel] = useState<string | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const {
     session: shellSession,
@@ -93,6 +95,7 @@ export default function App() {
     path === "/acesso/administracao" ||
     path === "/acesso/super-administracao";
   const accountTarget = shellSession ? "/minha-conta" : "/conta";
+  const isAccountDataRoute = path === "/conta" || path.startsWith("/conta/");
   const publicPortalSession =
     Boolean(shellSession) &&
     (shellSession?.portalKind === "public" ||
@@ -121,6 +124,41 @@ export default function App() {
     if (modal) dialog.current?.showModal();
     else dialog.current?.close();
   }, [modal]);
+  useEffect(() => {
+    let cancelled = false;
+    async function refreshDefaultAddress() {
+      if (!publicPortalSession) {
+        if (!cancelled) setDeliveryLabel(null);
+        return;
+      }
+      try {
+        const result = await api<{
+          addresses: Array<{
+            isDefault: boolean;
+            neighborhood: string;
+            city: string;
+            state: string;
+          }>;
+        }>("/v1/account/addresses");
+        const current = result.addresses.find((address) => address.isDefault);
+        if (!cancelled)
+          setDeliveryLabel(
+            current
+              ? current.neighborhood + " · " + current.city + "/" + current.state
+              : null,
+          );
+      } catch {
+        if (!cancelled) setDeliveryLabel(null);
+      }
+    }
+    void refreshDefaultAddress();
+    const sync = () => void refreshDefaultAddress();
+    window.addEventListener("hortivitalmix:default-address-changed", sync);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("hortivitalmix:default-address-changed", sync);
+    };
+  }, [publicPortalSession, shellSession?.userId]);
   const go = useCallback((to: string) => {
     const next = new URL(to, location.origin);
     history.pushState({}, "", next.pathname + next.search + next.hash);
@@ -197,10 +235,10 @@ export default function App() {
           <div className="header-actions">
             <button
               className="location-pill"
-              onClick={() => setModal("Localização")}
+              onClick={() => publicPortalSession ? go("/conta/enderecos") : setModal("Localização")}
             >
               <MapPin size={16} />
-              <span>Selecionar localização</span>
+              <span>{deliveryLabel ? "Entrega para: " + deliveryLabel : "Selecionar localização"}</span>
             </button>
             <button
               className="icon"
@@ -290,6 +328,16 @@ export default function App() {
           />
         ) : path === "/cadastro" ? (
           <ChoosePortalPage onNavigate={go} />
+        ) : isAccountDataRoute && shellSession ? (
+          <AccountHub path={path} session={shellSession} onNavigate={go} />
+        ) : isAccountDataRoute && path !== "/conta" ? (
+          <Account
+            path="/minha-conta"
+            onNavigate={go}
+            session={shellSession}
+            onSessionAdopt={adoptSession}
+            onSessionRefresh={refreshSession}
+          />
         ) : accountPaths.has(path) ? (
           <Account
             path={path}
@@ -305,10 +353,10 @@ export default function App() {
                 <MapPin />
                 <div>
                   <small>Entrega para</small>
-                  <strong>Selecionar localização</strong>
+                  <strong>{deliveryLabel ?? "Selecionar localização"}</strong>
                   <button
                     className="text-button"
-                    onClick={() => setModal("Localização")}
+                    onClick={() => publicPortalSession ? go("/conta/enderecos") : setModal("Localização")}
                   >
                     Alterar localização
                   </button>
