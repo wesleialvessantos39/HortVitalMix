@@ -5,7 +5,7 @@ import {
 } from "./profilePrivacy";
 
 const nullableCoordinate = (min: number, max: number) =>
-  z.number().finite().min(min).max(max).nullable().optional();
+  z.number().min(min).max(max).nullable().optional();
 
 const baseAddressShape = {
   label: z.string().trim().min(1).max(64).default("Casa"),
