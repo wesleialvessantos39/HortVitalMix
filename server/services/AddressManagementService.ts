@@ -360,7 +360,10 @@ export class AddressManagementService {
           [replayTarget, personId],
         );
         await client.query("COMMIT");
-        return replay.rows[0] ? mapAddress(replay.rows[0]) : null;
+        return {
+          status: "idempotent_replay" as const,
+          address: replay.rows[0] ? mapAddress(replay.rows[0]) : null,
+        };
       }
 
       const current = (
