@@ -2998,3 +2998,53 @@ Corrigida a navegação pública após login para /conta, onde estão Perfil, En
 Saudação com nome completo canônico de /v1/account/profile para consumidor, produtor, administrador e super administrador; manhã 05–11h, tarde 12–17h e noite 18–04h no relógio local do dispositivo, atualizada a cada minuto e ao retornar à janela. Antes de obter a identidade, não inventar nome nem usar o e-mail como substituto. E-mail e tipo da conta concentrados em Preferências, retirados do cabeçalho e da tela antiga de segurança.
 
 Experiência das quatro seções personalizada conforme activeRole: consumidor com entrega e compras; produtor com identificação do responsável, endereços pessoais claramente separados de imóveis/coleta/produção e comunicações pessoais; administrador com ferramentas de usuários/convites; super administrador também com acesso à configuração global. Não criar campos fictícios nem reclassificar preferências de compras como alertas administrativos. APIs, controles de autorização e persistência T06 permanecem os existentes. Privacidade apresenta revisão de escolhas, exportação e histórico; cartões, resumos e layout responsivo preservam verde/branco. Testes adicionados para manhã/tarde/noite, quatro perfis, ocultação de e-mail no hub e distinção das ferramentas administrativas.
+
+
+## 2026-09-25 — T07-20260925-01 — Múltiplos endereços urbanos e geocodificação assistiva
+
+### Objetivo
+Evoluir de forma aditiva a base de endereços pessoais já homologada, entregando lifecycle logístico urbano, até dez endereços ativos, instruções de entrega, geocodificação gratuita e edição completa, sem iniciar imóveis rurais, pedidos, documentos ou qualquer módulo posterior.
+
+### Alterações consolidadas
+- Schema lógico avançado de **28 para 29**, sem reescrever migrations promovidas.
+- Histórico reconciliado em **30 migrations**.
+- Migration lógica: `20260925153500_trilha07_address_geocoding.sql`.
+- Migration física Supabase: `20260925192227_trilha07_address_geocoding`.
+- Hash canônico: `500a5d5ff51d5608c07768a8b63f681328b37d1f3c99a19dd7ab5c612851689a`.
+- `app_user_addresses` recebeu latitude/longitude NUMERIC(10,7), acurácia, instruções, ativo e último uso.
+- UNIQUE de padrão passou a considerar apenas endereço ativo; índice de checkout criado.
+- Trigger físico limita dez endereços ativos e devolve SQLSTATE 23514 no excesso.
+- RLS permanece ENABLE + FORCE com quatro policies explícitas; authenticated possui somente SELECT e escrita direta continua revogada.
+- O fingerprint SHA-256 e o touch/revision anteriores foram preservados.
+- CRUD de endereço foi centralizado em `AddressManagementService.ts`; `ProfilePrivacyService.ts` deixou de duplicar essas mutações.
+- Cinco operações canônicas: listar, criar, editar, trocar padrão e excluir.
+- Todas as mutações exigem originProtection + prova recente `hvm_reauth`.
+- A exclusão consulta dinamicamente `to_regclass('public.app_orders')`; enquanto a relation não existe, pedidos abertos equivalem a zero e a exclusão é hard. O branch soft-delete já contém a FSM `pending/confirmed/in_harvest/in_route`, sem criar `app_orders`.
+- Geocodificação backend usa somente ViaCEP + OpenStreetMap/Nominatim, com timeout de 3 s no geocoder, no máximo uma repetição e User-Agent identificável. Falha externa nunca impede cadastro. Pin manual prevalece.
+- `/conta/enderecos` foi evoluída com rótulos rápidos, delivery notes, mapa OSM sem chave, geolocalização mediante permissão, pin manual, cards desktop, bottom sheet mobile, cinco estados de UI e limite visual de dez.
+- O evento `hortivitalmix:default-address-changed` permanece responsável por sincronizar “Entrega para” no shell.
+- CSP Vercel recebeu somente `tile.openstreetmap.org` em `img-src`; policy de deploy continua `main=true` e branches=false; buildCommand não recebeu suíte pesada.
+- GitHub Actions continuam sem gatilho automático de push/pull_request.
+
+### Evidência de banco
+Foi executado `BEGIN ... ROLLBACK` real no Supabase canônico validando primeiro padrão, fingerprint, único padrão ativo, limite dez/23514, ausência de `app_orders` tratada como zero, hard-delete atual e eleição determinística por `created_at ASC,id ASC`. Uma segunda prova sob role `authenticated` confirmou leitura RLS do próprio titular. Consulta pós-prova confirmou **zero resíduos**.
+
+Estado físico conferido:
+- RLS enabled=true e forced=true;
+- exatamente quatro policies em `app_user_addresses`;
+- authenticated: SELECT=true, INSERT/UPDATE/DELETE=false;
+- anon: SELECT=false;
+- triggers ativos: `trg_app_user_addresses_limit` e `trg_app_user_addresses_touch`.
+
+Os advisors do Supabase não apontaram novo finding ligado à T07. Achados exibidos permanecem em componentes anteriores e não foram alterados nesta entrega.
+
+### Testes e gates
+Foram adicionados exatamente **25 casos dedicados**: 9 contratos/unidade, 6 geocodificação, 5 HTTP e 5 E2E. O gate local `verify:t07:free` inclui manifesto, typecheck, security check, 20 testes Vitest, evidência arquitetural, Vite/bundle e 5 testes Playwright com Chromium portátil já existente.
+
+A checagem estrutural dos arquivos e a prova SQL foram executadas e aprovadas nesta sessão. **Vitest/Playwright/typecheck não foram executados nesta sessão**, pois o runtime local disponível não consegue resolver o host do GitHub para materializar o repositório e a política do projeto proíbe usar GitHub Actions automáticas como substituto. Assim, o status correto é: **implementação candidata à homologação operacional; gate local ainda deve ser executado antes do merge**.
+
+### Segurança, custo e não regressão
+Nenhum recurso pago foi adicionado. Não foram usados Google Maps Platform, Mapbox, Twilio, Resend, PostGIS, Supabase Branches ou preview Vercel. Nenhuma tabela `app_properties`, `app_orders` ou bucket foi criada. T01–T06 permanecem preservadas e a evolução é estritamente aditiva.
+
+### Próximo gate
+Executar `npm run verify:t07:free` em ambiente local/Google Studio com dependências instaladas. Somente após gate verde e revisão do PR, fazer merge em `main`; o deploy Vercel deve ocorrer exclusivamente a partir da `main`.
