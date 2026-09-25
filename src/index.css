@@ -1998,6 +1998,7 @@ dialog p {
   cursor: grabbing;
 }
 .osm-pin > span {
+  position: relative;
   width: 22px;
   height: 22px;
   border-radius: 50% 50% 50% 0;
