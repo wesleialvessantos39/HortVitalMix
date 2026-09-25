@@ -1,10 +1,9 @@
 import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
 import { redactPII } from "../security/redactPII.ts";
+import { AddressManagementService } from "./AddressManagementService.ts";
 import type {
-  AddressView,
   ConsentView,
-  CreateAddressInput,
   PreferencesView,
   ProfileView,
   UpdatePreferencesInput,
@@ -95,24 +94,6 @@ async function writeAudit(
   );
 }
 
-function mapAddress(row: Record<string, any>): AddressView {
-  return {
-    id: row.id,
-    label: row.label,
-    cep: row.cep,
-    street: row.street,
-    number: row.number,
-    complement: row.complement,
-    neighborhood: row.neighborhood,
-    city: row.city,
-    state: row.state,
-    isDefault: row.is_default,
-    revision: row.revision,
-    createdAt: new Date(row.created_at).toISOString(),
-    updatedAt: new Date(row.updated_at).toISOString(),
-  };
-}
-
 export class ProfilePrivacyService {
   static async getProfile(userId: string): Promise<ProfileView> {
     const result = await requirePool().query<{
@@ -182,237 +163,6 @@ export class ProfilePrivacyService {
       });
       await client.query("COMMIT");
       return { status: "updated" as const, revision: current.revision + 1 };
-    } catch (error) {
-      try {
-        await client.query("ROLLBACK");
-      } catch {}
-      throw error;
-    } finally {
-      client.release();
-    }
-  }
-
-  static async listAddresses(userId: string) {
-    const pool = requirePool();
-    const person = await pool.query<{ id: string }>(
-      "SELECT id FROM public.app_people WHERE user_id=$1",
-      [userId],
-    );
-    if (!person.rows[0])
-      throw new ProfilePrivacyError("PERSON_NOT_FOUND", 404);
-    const result = await pool.query<Record<string, any>>(
-      "SELECT * FROM public.app_user_addresses WHERE person_id=$1 ORDER BY is_default DESC,created_at ASC",
-      [person.rows[0].id],
-    );
-    return result.rows.map(mapAddress);
-  }
-
-  static async createAddress(
-    userId: string,
-    role: string,
-    input: CreateAddressInput,
-    requestId: string,
-    ipHash: string,
-  ) {
-    const client = await requirePool().connect();
-    try {
-      await client.query("BEGIN");
-      const personId = await getPersonId(client, userId, true);
-      const replayTarget = await findReplayTarget(client, input.commandId, userId, "address.created");
-      if (replayTarget) {
-        const replay = await client.query<Record<string, any>>(
-          "SELECT * FROM public.app_user_addresses WHERE id=$1 AND person_id=$2",
-          [replayTarget, personId],
-        );
-        await client.query("COMMIT");
-        return replay.rows[0] ? mapAddress(replay.rows[0]) : null;
-      }
-
-      const count = await client.query<{ count: string }>(
-        "SELECT count(*) FROM public.app_user_addresses WHERE person_id=$1",
-        [personId],
-      );
-      const makeDefault =
-        Number(count.rows[0]?.count ?? 0) === 0 || input.isDefault;
-      if (makeDefault) {
-        await client.query(
-          "UPDATE public.app_user_addresses SET is_default=false WHERE person_id=$1 AND is_default=true",
-          [personId],
-        );
-      }
-
-      try {
-        const inserted = await client.query<Record<string, any>>(
-          [
-            "INSERT INTO public.app_user_addresses",
-            "(person_id,label,cep,street,number,complement,neighborhood,city,state,is_default)",
-            "VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *",
-          ].join(" "),
-          [
-            personId,
-            input.label,
-            input.cep,
-            input.street,
-            input.number,
-            input.complement ?? null,
-            input.neighborhood,
-            input.city,
-            input.state,
-            makeDefault,
-          ],
-        );
-        const row = inserted.rows[0];
-        await writeAudit(client, {
-          requestId,
-          userId,
-          role,
-          action: "address.created",
-          entity: "app_user_addresses",
-          targetId: row.id,
-          after: {
-            isDefault: row.is_default,
-            fingerprintSha256: row.fingerprint_sha256,
-          },
-          ipHash,
-          commandId: input.commandId,
-        });
-        await client.query("COMMIT");
-        return mapAddress(row);
-      } catch (error) {
-        if ((error as { code?: string }).code === "23505")
-          throw new ProfilePrivacyError("ADDRESS_DUPLICATE", 409);
-        throw error;
-      }
-    } catch (error) {
-      try {
-        await client.query("ROLLBACK");
-      } catch {}
-      throw error;
-    } finally {
-      client.release();
-    }
-  }
-
-  static async setDefaultAddress(
-    userId: string,
-    role: string,
-    addressId: string,
-    commandId: string,
-    requestId: string,
-    ipHash: string,
-  ) {
-    const client = await requirePool().connect();
-    try {
-      await client.query("BEGIN");
-      const personId = await getPersonId(client, userId, true);
-      if (await findReplayTarget(client, commandId, userId, "address.default_changed")) {
-        await client.query("COMMIT");
-        return { status: "idempotent_replay" as const, addressId };
-      }
-      const address = await client.query<{ id: string }>(
-        "SELECT id FROM public.app_user_addresses WHERE id=$1 AND person_id=$2 FOR UPDATE",
-        [addressId, personId],
-      );
-      if (!address.rows[0])
-        throw new ProfilePrivacyError("ADDRESS_NOT_FOUND", 404);
-
-      await client.query(
-        "UPDATE public.app_user_addresses SET is_default=false WHERE person_id=$1 AND is_default=true",
-        [personId],
-      );
-      await client.query(
-        "UPDATE public.app_user_addresses SET is_default=true WHERE id=$1 AND person_id=$2",
-        [addressId, personId],
-      );
-      await writeAudit(client, {
-        requestId,
-        userId,
-        role,
-        action: "address.default_changed",
-        entity: "app_user_addresses",
-        targetId: addressId,
-        after: { isDefault: true },
-        ipHash,
-        commandId,
-      });
-      await client.query("COMMIT");
-      return { status: "updated" as const, addressId };
-    } catch (error) {
-      try {
-        await client.query("ROLLBACK");
-      } catch {}
-      throw error;
-    } finally {
-      client.release();
-    }
-  }
-
-  static async deleteAddress(
-    userId: string,
-    role: string,
-    addressId: string,
-    commandId: string,
-    requestId: string,
-    ipHash: string,
-  ) {
-    const client = await requirePool().connect();
-    try {
-      await client.query("BEGIN");
-      const personId = await getPersonId(client, userId, true);
-      if (await findReplayTarget(client, commandId, userId, "address.deleted")) {
-        await client.query("COMMIT");
-        return { status: "idempotent_replay" as const };
-      }
-      const address = (
-        await client.query<{
-          id: string;
-          is_default: boolean;
-          fingerprint_sha256: string;
-        }>(
-          "SELECT id,is_default,fingerprint_sha256 FROM public.app_user_addresses WHERE id=$1 AND person_id=$2 FOR UPDATE",
-          [addressId, personId],
-        )
-      ).rows[0];
-      if (!address)
-        throw new ProfilePrivacyError("ADDRESS_NOT_FOUND", 404);
-
-      await client.query(
-        "DELETE FROM public.app_user_addresses WHERE id=$1 AND person_id=$2",
-        [addressId, personId],
-      );
-
-      let replacementDefaultId: string | null = null;
-      if (address.is_default) {
-        const next = await client.query<{ id: string }>(
-          "SELECT id FROM public.app_user_addresses WHERE person_id=$1 ORDER BY created_at ASC,id ASC LIMIT 1 FOR UPDATE",
-          [personId],
-        );
-        if (next.rows[0]) {
-          replacementDefaultId = next.rows[0].id;
-          await client.query(
-            "UPDATE public.app_user_addresses SET is_default=true WHERE id=$1",
-            [replacementDefaultId],
-          );
-        }
-      }
-
-      await writeAudit(client, {
-        requestId,
-        userId,
-        role,
-        action: "address.deleted",
-        entity: "app_user_addresses",
-        targetId: addressId,
-        before: {
-          isDefault: address.is_default,
-          fingerprintSha256: address.fingerprint_sha256,
-        },
-        after: { replacementDefaultId },
-        ipHash,
-        commandId,
-      });
-      await client.query("COMMIT");
-      return { status: "deleted" as const, replacementDefaultId };
     } catch (error) {
       try {
         await client.query("ROLLBACK");
@@ -610,7 +360,7 @@ export class ProfilePrivacyService {
   static async exportData(userId: string) {
     const profile = await this.getProfile(userId);
     const [addresses, data] = await Promise.all([
-      this.listAddresses(userId),
+      AddressManagementService.listAddresses(userId, { includeInactive: true }),
       this.getPreferences(userId, true),
     ]);
     return {

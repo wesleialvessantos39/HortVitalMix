@@ -1511,3 +1511,668 @@ dialog p {
     min-height: 48px;
   }
 }
+
+
+/* Gestão avançada de endereços urbanos — extensão aditiva da conta */
+.account-hub {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+}
+.account-hub-detail {
+  min-width: 0;
+}
+.account-panel {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 2px 10px #143d2408;
+}
+.account-panel-title,
+.address-manager-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+.account-panel-title h2 {
+  color: var(--dark);
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+.account-panel-title p {
+  margin: 0;
+  font-size: 12px;
+  max-width: 680px;
+}
+.account-small-button,
+.address-state-card .primary,
+.address-state-card .secondary {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+.account-small-button svg,
+.address-state-card button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.address-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.address-card {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 13px;
+  padding: 17px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: #fff;
+}
+.address-card-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--light);
+  color: var(--primary);
+}
+.address-card-icon svg {
+  width: 19px;
+  height: 19px;
+}
+.address-card-body {
+  min-width: 0;
+}
+.address-card-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+.address-card-title > strong {
+  color: var(--dark);
+  font-size: 14px;
+}
+.address-default-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  background: var(--light);
+  color: var(--primary);
+  border: 1px solid #cfe6d3;
+  padding: 4px 7px;
+  font-size: 9px;
+  font-weight: 800;
+}
+.address-default-badge svg {
+  width: 12px;
+  height: 12px;
+}
+.address-card p {
+  margin: 0 0 3px;
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.address-delivery-note {
+  margin-top: 11px;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: #f8faf8;
+  border: 1px solid var(--line);
+  display: grid;
+  gap: 3px;
+}
+.address-delivery-note strong {
+  color: var(--dark);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.address-delivery-note span {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.address-location-status {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary);
+  font-size: 10px;
+  font-weight: 700;
+}
+.address-location-status svg {
+  width: 14px;
+  height: 14px;
+}
+.address-location-status.is-none {
+  color: #8a4b12;
+}
+.address-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 13px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.address-actions button {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #d7e4d9;
+  border-radius: 9px;
+  padding: 8px 10px;
+  color: var(--primary);
+  background: #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
+.address-actions button:hover {
+  background: var(--light);
+}
+.address-actions button svg {
+  width: 14px;
+  height: 14px;
+}
+.address-actions .danger-link {
+  color: #9c2f24;
+  border-color: #f0d6d2;
+}
+.address-actions .danger-link:hover {
+  background: #fff7f5;
+}
+
+.address-state-card {
+  min-height: 150px;
+  border: 1px dashed #cfdacf;
+  background: #fbfcfb;
+  border-radius: 15px;
+  padding: 22px;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+}
+.address-state-card > svg {
+  width: 34px;
+  height: 34px;
+  padding: 8px;
+  border-radius: 11px;
+  background: var(--light);
+  color: var(--primary);
+}
+.address-state-card h3 {
+  margin: 0 0 4px;
+  color: var(--dark);
+  font-size: 14px;
+}
+.address-state-card p {
+  margin: 0;
+  font-size: 11px;
+}
+.address-state-error {
+  border-style: solid;
+  border-color: #ecd7d2;
+  background: #fff9f7;
+}
+.address-state-error > svg,
+.address-state-conflict > svg {
+  color: var(--accent);
+  background: #fff1e8;
+}
+.address-state-conflict {
+  min-height: 0;
+  margin-bottom: 14px;
+  border-style: solid;
+  border-color: #f2d7c6;
+  background: #fffaf6;
+}
+.address-state-empty {
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+}
+.address-limit-notice,
+.address-location-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border-radius: 10px;
+  padding: 11px 12px;
+  margin: 0 0 14px;
+  background: #fff7f0;
+  border: 1px solid #f1d8c5;
+  color: #82410f;
+  font-size: 11px;
+  line-height: 1.45;
+  font-weight: 700;
+}
+.address-limit-notice svg,
+.address-location-message svg {
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+}
+.address-location-message {
+  margin: 8px 0 0;
+  background: var(--light);
+  border-color: #cfe3d2;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.address-card-skeleton {
+  min-height: 150px;
+}
+.skeleton-block {
+  display: block;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #edf2ed 25%, #f8faf8 50%, #edf2ed 75%);
+  background-size: 200% 100%;
+}
+.skeleton-icon {
+  width: 42px;
+  height: 42px;
+}
+.skeleton-title {
+  width: 42%;
+  height: 16px;
+  margin: 2px 0 14px;
+}
+.skeleton-line {
+  width: 92%;
+  height: 10px;
+  margin-bottom: 8px;
+}
+.skeleton-line.short {
+  width: 65%;
+}
+
+.account-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  padding: 24px;
+  background: #102b206b;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+}
+.account-sheet {
+  width: min(720px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  padding: 24px;
+  box-shadow: 0 20px 70px #0d2f1c33;
+}
+.account-sheet header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.account-sheet header h2 {
+  margin: 0;
+  color: var(--dark);
+  font-size: 20px;
+}
+.account-sheet header > button {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--primary);
+  border: 1px solid var(--line);
+}
+.account-sheet label,
+.address-quick-labels legend {
+  color: var(--dark);
+  font-size: 11px;
+  font-weight: 700;
+}
+.account-sheet input,
+.account-sheet select,
+.account-sheet textarea {
+  width: 100%;
+  min-width: 0;
+  display: block;
+  margin-top: 7px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  padding: 12px;
+  font: inherit;
+  font-size: 13px;
+  color: #26372b;
+}
+.account-sheet textarea {
+  min-height: 82px;
+  resize: vertical;
+}
+.account-sheet input:focus,
+.account-sheet select:focus,
+.account-sheet textarea:focus {
+  outline: 2px solid var(--leaf);
+  outline-offset: 1px;
+}
+.account-sheet > label,
+.account-sheet > .account-time-grid,
+.account-sheet > fieldset,
+.account-sheet > section {
+  margin-top: 14px;
+}
+.account-sheet > .primary {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 20px;
+}
+.account-time-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.address-quick-labels {
+  border: 0;
+  padding: 0;
+  margin-inline: 0;
+}
+.address-quick-labels > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 8px 0 10px;
+}
+.address-quick-labels > div button {
+  min-height: 38px;
+  padding: 8px 11px;
+  border-radius: 999px;
+  border: 1px solid #d6e4d8;
+  background: #fff;
+  color: var(--primary);
+  font-size: 10px;
+  font-weight: 800;
+}
+.address-quick-labels > div button[aria-pressed="true"] {
+  background: var(--light);
+  border-color: var(--leaf);
+  box-shadow: inset 0 0 0 1px var(--leaf);
+}
+
+.address-map-section {
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: #fbfcfb;
+}
+.address-map-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.address-map-heading > div {
+  display: grid;
+  gap: 3px;
+}
+.address-map-heading strong {
+  color: var(--dark);
+  font-size: 12px;
+}
+.address-map-heading span {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+.address-location-button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.address-location-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.osm-pin-map-shell {
+  min-width: 0;
+}
+.osm-pin-map {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid #cbd9ce;
+  background: #e8efe9;
+  touch-action: none;
+  user-select: none;
+}
+.osm-tile-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.osm-tile-layer img {
+  position: absolute;
+  width: 256px;
+  height: 256px;
+  max-width: none;
+  transform: translate(-50%, -50%);
+}
+.osm-pin {
+  position: absolute;
+  z-index: 5;
+  width: 42px;
+  height: 42px;
+  transform: translate(-50%, -88%);
+  display: grid;
+  place-items: center;
+  cursor: grab;
+}
+.osm-pin:active {
+  cursor: grabbing;
+}
+.osm-pin > span {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: var(--accent);
+  border: 3px solid #fff;
+  box-shadow: 0 3px 10px #143d2440;
+}
+.osm-pin > span::after {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  left: 5px;
+  top: 5px;
+}
+.osm-map-controls {
+  position: absolute;
+  z-index: 6;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  border-radius: 9px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px #143d2420;
+}
+.osm-map-controls button {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  color: var(--primary);
+  border-bottom: 1px solid var(--line);
+}
+.osm-map-controls button:last-child {
+  border-bottom: 0;
+}
+.osm-map-controls svg {
+  width: 17px;
+  height: 17px;
+}
+.osm-attribution {
+  position: absolute;
+  z-index: 6;
+  right: 6px;
+  bottom: 5px;
+  border-radius: 5px;
+  background: #ffffffe8;
+  padding: 3px 5px;
+  color: #425248;
+  font-size: 8px;
+  text-decoration: underline;
+}
+.osm-map-help {
+  margin: 6px 0 0;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton-block {
+    animation: hvm-skeleton 1.4s ease-in-out infinite;
+  }
+}
+@keyframes hvm-skeleton {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+@media (max-width: 1023px) {
+  .address-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 767px) {
+  .account-panel {
+    padding: 16px;
+    border-radius: 14px;
+  }
+  .account-panel-title,
+  .address-manager-heading,
+  .address-map-heading {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .account-small-button,
+  .address-location-button {
+    width: 100%;
+    min-height: 48px;
+  }
+  .address-card {
+    grid-template-columns: 38px minmax(0, 1fr);
+    padding: 14px;
+    gap: 11px;
+    border-radius: 13px;
+  }
+  .address-card-icon {
+    width: 38px;
+    height: 38px;
+  }
+  .address-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .address-actions button {
+    width: 100%;
+    min-height: 48px;
+    justify-content: center;
+    font-size: 11px;
+  }
+  .address-state-card,
+  .address-state-empty {
+    grid-template-columns: 1fr;
+    justify-items: start;
+    padding: 18px;
+  }
+  .address-state-card button {
+    width: 100%;
+    min-height: 48px;
+  }
+  .account-sheet-backdrop {
+    padding: 0;
+    place-items: end stretch;
+  }
+  .account-sheet {
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 22px 22px 0 0;
+    border-bottom: 0;
+    padding: 18px 16px calc(20px + env(safe-area-inset-bottom));
+  }
+  .account-sheet header > button {
+    min-width: 48px;
+    min-height: 48px;
+  }
+  .account-time-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .address-quick-labels > div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .address-quick-labels > div button {
+    min-height: 48px;
+  }
+  .osm-pin-map {
+    height: 230px;
+  }
+  .osm-map-controls button {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 359px) {
+  .account-panel {
+    padding: 13px;
+  }
+  .address-card {
+    grid-template-columns: 1fr;
+  }
+  .address-card-icon {
+    width: 36px;
+    height: 36px;
+  }
+  .address-quick-labels > div {
+    grid-template-columns: 1fr;
+  }
+  .osm-pin-map {
+    height: 210px;
+  }
+}

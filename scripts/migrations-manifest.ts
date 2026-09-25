@@ -60,6 +60,8 @@ const remoteVersionAliases: Readonly<Record<string, string>> = {
   "20260925010313": "20260925010000",
   // Correção de normalização do fingerprint T06 aplicada com timestamp físico próprio.
   "20260925010505": "20260925011000",
+  // Múltiplos endereços T07 aplicada pelo Supabase com timestamp físico próprio.
+  "20260925192227": "20260925153500",
 };
 
 export function validateHistory(rows: { version: string; name: string }[]) {

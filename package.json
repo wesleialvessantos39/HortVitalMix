@@ -54,7 +54,11 @@
     "verify:t06:evidence": "node scripts/verify-trilha06-evidence.mjs",
     "test:t06": "npm run test:t06:unit && npm run verify:t06:evidence",
     "verify:t06:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t06:unit && npm run verify:t06:evidence && vite build && node --import tsx scripts/check-bundle.ts",
-    "test:t06:e2e": "playwright test tests/e2e/trilha06-account.spec.ts"
+    "test:t06:e2e": "playwright test tests/e2e/trilha06-account.spec.ts",
+    "test:t07:unit": "vitest run tests/unit/addressAdvancedContracts.test.ts tests/unit/geocodingHelper.test.ts tests/integration/trilha07AddressRoutes.test.ts",
+    "test:t07:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha07-addresses.spec.ts",
+    "verify:t07:evidence": "node scripts/verify-trilha07-evidence.mjs",
+    "verify:t07:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t07:unit && npm run verify:t07:evidence && vite build && node --import tsx scripts/check-bundle.ts && npm run test:t07:e2e"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",

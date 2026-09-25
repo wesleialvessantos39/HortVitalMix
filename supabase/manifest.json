@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 28,
+  "schemaVersion": 29,
   "migrations": [
     {
       "version": "20260919030126",
@@ -145,7 +145,12 @@
       "version": "20260925011000",
       "name": "trilha06_fingerprint_normalization_fix",
       "file": "20260925011000_trilha06_fingerprint_normalization_fix.sql"
+    },
+    {
+      "version": "20260925153500",
+      "name": "trilha07_address_geocoding",
+      "file": "20260925153500_trilha07_address_geocoding.sql"
     }
   ],
-  "migrationHistoryHash": "93466eeb7a5c11eb9d9f847e2c51c16b8e88798acfc7e63acf9e7b311aaea05d"
+  "migrationHistoryHash": "500a5d5ff51d5608c07768a8b63f681328b37d1f3c99a19dd7ab5c612851689a"
 }
