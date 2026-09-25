@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type FormEvent,
 } from "react";
@@ -16,7 +17,7 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import { api } from "../../lib/api";
+import { api, type ApiFailure } from "../../lib/api";
 import type { ShellSession } from "../../hooks/useSession";
 import type {
   AddressView,
@@ -59,12 +60,14 @@ export function AccountHub({ path, session, onNavigate }: Props) {
     try {
       const [profileResult, addressResult, preferenceResult] =
         await Promise.all([
-          api<ProfileView>("/v1/account/profile"),
-          api<{ addresses: AddressView[] }>("/v1/account/addresses"),
-          api<{
+          path === "/conta" || path === "/conta/perfil"
+            ? api<ProfileView>("/v1/account/profile") : Promise.resolve(profile),
+          path === "/conta" || path === "/conta/enderecos"
+            ? api<{ addresses: AddressView[] }>("/v1/account/addresses") : Promise.resolve({addresses}),
+          path === "/conta/preferencias" || path === "/conta/privacidade" ? api<{
             preferences: PreferencesView;
             consents: ConsentView[];
-          }>("/v1/account/preferences"),
+          }>("/v1/account/preferences") : Promise.resolve({preferences,consents}),
         ]);
       setProfile(profileResult);
       setAddresses(addressResult.addresses);
@@ -77,7 +80,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
 
   useEffect(() => {
     void load();
-  }, [session.userId]);
+  }, [session.userId, path]);
 
   const defaultAddress = useMemo(
     () => addresses.find((address) => address.isDefault) ?? null,
@@ -180,6 +183,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
       {path === "/conta/perfil" && profile && (
         <form
           className="account-panel"
+          key={profile.revision}
           onSubmit={async (event) => {
             event.preventDefault();
             setBusy(true);
@@ -206,8 +210,11 @@ export function AccountHub({ path, session, onNavigate }: Props) {
               }
               await load();
               setNotice("Perfil atualizado.");
-            } catch {
-              setNotice("Não foi possível atualizar o perfil.");
+            } catch (error) {
+              if ((error as ApiFailure).status === 409) {
+                await load();
+                setNotice("Seus dados mudaram em outra sessão. Confira a versão atual e tente novamente.");
+              } else setNotice("Não foi possível atualizar o perfil.");
             } finally {
               setBusy(false);
             }
@@ -391,6 +398,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
       {path === "/conta/preferencias" && preferences && (
         <form
           className="account-panel"
+          key={preferences.revision}
           onSubmit={async (event) => {
             event.preventDefault();
             setBusy(true);
@@ -426,8 +434,11 @@ export function AccountHub({ path, session, onNavigate }: Props) {
               }
               await load();
               setNotice("Preferências salvas.");
-            } catch {
-              setNotice("Não foi possível salvar as preferências.");
+            } catch (error) {
+              if ((error as ApiFailure).status === 409) {
+                await load();
+                setNotice("Suas preferências mudaram em outra sessão. Confira a versão atual.");
+              } else setNotice("Não foi possível salvar as preferências.");
             } finally {
               setBusy(false);
             }
@@ -559,6 +570,9 @@ function AddressSheet({
   onCreated: () => Promise<void>;
 }) {
   const [lookingUp, setLookingUp] = useState(false);
+  const [saving,setSaving]=useState(false);
+  const submission=useRef(false);
+  const lookupVersion=useRef(0);
   const [fields, setFields] = useState({
     street: "",
     neighborhood: "",
@@ -569,8 +583,10 @@ function AddressSheet({
 
   async function postalLookup(raw: string) {
     if (raw.replace(/\D/g, "").length !== 8) return;
+    const version=++lookupVersion.current;
     setLookingUp(true);
     const result = await PostalLookupService.lookup(raw);
+    if(version!==lookupVersion.current)return;
     setLookingUp(false);
     if (result) {
       setFields({
@@ -584,6 +600,8 @@ function AddressSheet({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if(submission.current)return;
+    submission.current=true;setSaving(true);
     setError("");
     const form = Object.fromEntries(
       new FormData(event.currentTarget),
@@ -604,7 +622,7 @@ function AddressSheet({
           ? "Este endereço já está cadastrado."
           : "Revise os dados e tente novamente.",
       );
-    }
+    } finally { submission.current=false;setSaving(false); }
   }
 
   return (
@@ -630,6 +648,7 @@ function AddressSheet({
             name="cep"
             inputMode="numeric"
             placeholder="00000-000"
+            onChange={() => { lookupVersion.current++; setLookingUp(false); }}
             onBlur={(event) =>
               void postalLookup(event.currentTarget.value)
             }
@@ -715,8 +734,8 @@ function AddressSheet({
             {error}
           </p>
         )}
-        <button className="primary" disabled={busy}>
-          Salvar endereço
+        <button className="primary" disabled={busy || saving}>
+          {saving ? "Salvando…" : "Salvar endereço"}
         </button>
       </form>
     </div>

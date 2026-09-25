@@ -2964,3 +2964,18 @@ Todos foram corrigidos.
 
 ### 2026-09-25 — Ajuste operacional do gate Vercel Hobby após falha de build
 A primeira promoção da homologação T06 (`b994d3c`) retornou status Vercel `failure` quando o `buildCommand` passou a exigir o typecheck global do projeto. Para respeitar a regra de custo zero e evitar repetição de builds por dívidas de tipagem fora do escopo T06, o gate de produção Hobby foi reduzido aos controles diretamente necessários ao deploy: manifesto de migrations, security check, testes T06, evidence, Vite build e bundle check. O `typecheck:app` **não foi removido do projeto**: continua obrigatório em `verify:t06:free`, apenas separado do deploy de produção. Não foi habilitado recurso pago ou preview de branch.
+
+
+### 2026-09-25 — revisão T06 e nova política explícita de login
+
+A instrução expressa do proprietário nesta execução substitui a exigência de MFA a cada login contida no Manual v11/T05. Administrador e Super administrador com e-mail confirmado entram por senha, mantendo credenciais separadas, status ativo, limitação de tentativas e setores. Login não emite OTP; a rota MFA antiga responde 410 e não cria sessão. Convites, recuperação e confirmação inicial continuam disponíveis.
+
+Desempenho: resolução de principal e limitação de tentativas administrativas em paralelo; eliminadas emissão e validação do segundo fator; handoff de UI de uso único por até cinco segundos evita reconsultar imediatamente a sessão que o próprio login acabou de validar. Não armazena tokens nem altera autorização das APIs. Login público recém-validado consulta a Data API antes de aguardar o pooler; sessões existentes preservam a checagem no banco. Hub da conta busca apenas os dados necessários à seção aberta. Nenhuma confirmação de cadastro foi antecipada artificialmente.
+
+Sincronização: botões de Usuários e Convites usam estado real da requisição, giro CSS, aria-busy e bloqueio de clique repetido; finalizam em finally também em erro. Configurações mostram indicador animado durante o carregamento e não impõem atraso artificial. Respeita preferência de movimento reduzido.
+
+Correções T06: idempotência delimitada por usuário e ação; desempate estável por id na eleição de endereço padrão; exportação inclui todo histórico de consentimentos, em vez do limite de 100 da tela; formulário de endereço bloqueia submissões simultâneas e descarta retorno de CEP obsoleto; conflitos 409 de perfil/preferências recarregam revisão e remontam os campos; rotas não tentam responder novamente após negar usuário sem sessão. Melhorada identificação acessível do campo Senha.
+
+Validação desta execução: gate completo verify:t06:free aprovado (22 testes, tipagem, manifesto, segurança, evidências, build e bundle). T05: 30 testes e evidências aprovados. Testes de UI T06: 8 aprovados, com cinco breakpoints; 4 testes de UI administrativos aprovados para login sem OTP e giro/parada do indicador em ambos os perfis. Testes de navegador usam respostas controladas e não comprovam entrega de e-mail nem latência de produção. Consulta real ao banco confirmou RLS ENABLE/FORCE, leitura e ausência de escrita direta autenticada nas três tabelas T06 e os índices únicos de padrão/fingerprint. Sem nova migration.
+
+Homologação técnica local aprovada; meta de 2–4 segundos para cadastro/login reais e ciclo de e-mails permanece pendente de medição autenticada em produção. Não se declara homologação operacional irrestrita com base em mocks. Livro-Raiz e documentos atualizados no mesmo commit.

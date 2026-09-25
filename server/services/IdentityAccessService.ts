@@ -62,6 +62,13 @@ export async function resolveIdentityAccess(
   sessionId: string | null = null,
   accessToken: string | null = null,
 ): Promise<IdentityAccessSnapshot | null> {
+  // A fresh password grant has just been validated by Auth. Resolve its roles
+  // through the Data API without first waiting for a cold/unreachable pooler.
+  // Existing sessions still use the auth.sessions check below.
+  if (!sessionId && accessToken) {
+    const fresh = await resolveViaDataApi(userId, accessToken);
+    if (fresh) return fresh;
+  }
   if (dbPool) {
     try {
       const result = await dbPool.query<{

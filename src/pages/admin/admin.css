@@ -60,3 +60,7 @@ body:has(.admin-route-layout) .admin-route-layout{min-height:100vh}
  .admin-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
  .admin-governance-grid{grid-template-columns:1fr}
 }
+
+@keyframes hvm-sync-spin { to { transform: rotate(360deg); } }
+.hvm-sync-spinning { animation: hvm-sync-spin .8s linear infinite; transform-origin: center; }
+@media (prefers-reduced-motion: reduce) { .hvm-sync-spinning { animation: none; } }

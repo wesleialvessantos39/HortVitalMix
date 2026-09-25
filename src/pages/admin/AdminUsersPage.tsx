@@ -1,4 +1,4 @@
-import { useEffect,useState } from "react";
+import { useEffect,useRef,useState } from "react";
 import { RefreshCw,UserCog,UsersRound } from "lucide-react";
 import { api } from "../../lib/api";
 import { cryptoRandomUUID } from "../../lib/uuid";
@@ -20,10 +20,15 @@ export function AdminUsersPage({access}:{access:AdminVerifySessionResponse}){
  const [busy,setBusy]=useState<string|null>(null),[error,setError]=useState("");
  const isSuper=access.role==="platform_super_admin";
 
+ const [refreshing,setRefreshing]=useState(false);
+ const manualRefresh=useRef(false);
  async function load(){
+  if(manualRefresh.current)return;
+  manualRefresh.current=true;setRefreshing(true);
   setError("");
   try{const r=await api<{users:UserRow[]}>("/v1/admin/users");setUsers(r.users)}
   catch{setError("Não foi possível carregar os acessos administrativos.")}
+  finally{manualRefresh.current=false;setRefreshing(false)}
  }
  useEffect(()=>{void load()},[]);
 
@@ -47,7 +52,7 @@ export function AdminUsersPage({access}:{access:AdminVerifySessionResponse}){
     <h1>Usuários administrativos</h1>
     <p>O cadastro pessoal é único, mas os perfis públicos e o acesso administrativo são exibidos separadamente.</p>
    </div>
-   <button className="admin-secondary compact" onClick={()=>void load()}><RefreshCw size={16}/> Atualizar</button>
+   <button className="admin-secondary compact" disabled={refreshing} aria-busy={refreshing} onClick={()=>void load()}><RefreshCw size={16} className={refreshing?"hvm-sync-spinning":undefined}/> {refreshing?"Atualizando…":"Atualizar"}</button>
   </header>
   {!isSuper&&<div className="admin-alert">Você visualiza Administradores setoriais que compartilham ao menos um de seus setores. A gestão de Super administradores permanece no nível superior.</div>}
   {error&&<div className="admin-alert admin-alert--error">{error}</div>}

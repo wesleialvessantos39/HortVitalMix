@@ -558,8 +558,7 @@ export function Account({
       const code = failure.message;
 
       if (code === "VALIDATION_ERROR" && !failure.fields?.length) {
-        setNotice("Não foi possível validar os dados enviados. Revise o e-mail e o perfil selecionado." +
-          (failure.requestId ? ` Código de atendimento: ${failure.requestId}.` : ""));
+        setNotice("Não foi possível validar os dados enviados. Revise o e-mail e o perfil selecionado.");
         return;
       }
 

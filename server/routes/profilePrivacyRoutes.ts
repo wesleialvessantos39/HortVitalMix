@@ -195,6 +195,7 @@ profilePrivacyRouter.patch(
   originProtection,
   async (req: Request, res: Response) => {
     const actor = currentActor(req, res);
+    if (!actor) return;
     const addressId = parseAddressId(req, res);
     if (!actor || !addressId) return;
     const parsed = SetDefaultAddressSchema.safeParse(req.body);
@@ -226,6 +227,7 @@ profilePrivacyRouter.delete(
   originProtection,
   async (req: Request, res: Response) => {
     const actor = currentActor(req, res);
+    if (!actor) return;
     const addressId = parseAddressId(req, res);
     if (!actor || !addressId) return;
     const parsed = DeleteAddressSchema.safeParse(req.body);

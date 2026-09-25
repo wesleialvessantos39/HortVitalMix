@@ -68,10 +68,10 @@ const checks = {
     service.includes("isCanonicalBootstrapAdminEmail") &&
     service.includes("timingSafeEqual") &&
     env.includes("BOOTSTRAP_ADMIN_EMAIL="),
-  superAdminMfa:
-    service.includes("signInWithOtp") &&
-    service.includes("verifyOtp") &&
-    service.includes('status: "mfa_required"'),
+  administrativePasswordLogin:
+    service.includes("signInWithPassword") &&
+    service.includes('status: "session_created"') &&
+    !service.includes('status: "mfa_required"'),
   supabaseOnlyDelivery:
     service.includes("inviteUserByEmail") &&
     !service.includes("Resend") &&
@@ -148,7 +148,7 @@ const checks = {
     legacyAuth.includes('"ADMIN_GOVERNANCE_LOGIN_REQUIRED"') &&
     !account.includes('"/v1/auth/admin-login"'),
   readinessSchema25:
-    foundation.includes("FOUNDATION_SCHEMA_VERSION = 25"),
+    Number(foundation.match(/FOUNDATION_SCHEMA_VERSION = (\d+)/)?.[1]) >= 25,
   remoteMigrationAlias:
     migrationManifest.includes('"20260923022554": "20260923022000"') &&
     migrationManifest.includes('"20260924023250": "20260924023000"') &&
@@ -168,7 +168,7 @@ const checks = {
   adminSecurityUx:
     read("src/pages/admin/AdminLoginPage.tsx").includes("<PasswordInput") &&
     read("src/pages/admin/AdminLoginPage.tsx").includes("Esqueci minha senha") &&
-    read("src/pages/admin/AdminLoginPage.tsx").includes("Reenviar código de segurança") &&
+    !read("src/pages/admin/AdminLoginPage.tsx").includes("submitMfa") &&
     read("src/pages/admin/AdminLoginPage.tsx").includes("Confirmar ou reenviar confirmação do e-mail") &&
     read("src/pages/admin/AdminEmailConfirmationPage.tsx").includes("<OtpInput") &&
     read("src/pages/admin/AdminEmailConfirmationPage.tsx").includes("Enviar código de confirmação") &&
@@ -183,9 +183,8 @@ const checks = {
     recoverySessionMigration.includes("TO service_role"),
   adminMailCooldown:
     service.includes("authEmailRetryAfter") &&
-    service.includes('status: "email_rate_limited"') &&
     service.includes('status: "cooldown"') &&
-    read("src/pages/admin/AdminLoginPage.tsx").includes("mailCooldown") &&
+    !read("src/pages/admin/AdminLoginPage.tsx").includes("resendMfa") &&
     read("src/pages/admin/AdminEmailConfirmationPage.tsx").includes("retryAfter"),
   recoveryRootCauseClosed:
     legacyAuth.includes("recoveryRequestCooldown") &&

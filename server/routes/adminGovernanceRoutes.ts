@@ -14,7 +14,6 @@ import {
   AdminLoginSchema,
   BootstrapRequestSchema,
   CreateInviteSchema,
-  MfaVerifySchema,
 } from "../../shared/contracts/adminGovernance.ts";
 import { dbPool } from "../db/pool.ts";
 import { runtime } from "../config/runtime.ts";
@@ -202,33 +201,9 @@ adminGovernanceRouter.post(
 adminGovernanceRouter.post(
   "/auth/mfa/verify",
   originProtection,
-  async (req: Request, res: Response) => {
-    const parsed = MfaVerifySchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(422).json({ status: "validation_failed" });
-      return;
-    }
-    const result = await AdminGovernanceService.verifyMfa(
-      parsed.data.challengeId,
-      parsed.data.otp,
-      req.clientIpHash,
-    );
-    if (result.status === "verified") {
-      setAdminSession(res, result);
-      res.status(200).json({
-        status: result.status,
-        role: result.role,
-        sectors: result.sectors,
-      });
-      return;
-    }
-    const code =
-      result.status === "invalid_code"
-        ? 422
-        : result.status === "unavailable"
-          ? 503
-          : 410;
-    res.status(code).json(result);
+  (_req: Request, res: Response) => {
+    // Legacy challenges must not mint sessions after switching to password login.
+    res.status(410).json({ status: "password_login_required" });
   },
 );
 

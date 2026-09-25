@@ -129,7 +129,7 @@ for (const viewport of [
     await mockAccount(page);
     await page.goto("/conta");
     await expect(page.getByText("Minha conta").first()).toBeVisible();
-    await expect(page.getByText("Centro · Ariquemes/RO").first()).toBeVisible();
+    await expect(page.locator(".account-delivery-card").getByText("Centro · Ariquemes/RO", { exact: true })).toBeVisible();
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > window.innerWidth,
     );
@@ -146,7 +146,7 @@ test("T06 expõe as quatro áreas da conta", async ({ page }) => {
     ["/conta/privacidade", "Privacidade"],
   ]) {
     await page.goto(route);
-    await expect(page.getByRole("heading", { name: heading })).toBeVisible();
+    await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
   }
 });
 

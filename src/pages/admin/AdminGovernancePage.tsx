@@ -41,7 +41,11 @@ export function AdminGovernancePage({onNavigate,access}:Props){
 
  const refreshInFlight = useRef(false);
  const [syncError,setSyncError]=useState("");
+ const [refreshing,setRefreshing]=useState(false);
+ const manualRefresh=useRef(false);
  async function load(){
+  if(manualRefresh.current)return;
+  manualRefresh.current=true;setRefreshing(true);
   setError("");
   try{
    const [s,i]=await Promise.all([
@@ -50,6 +54,7 @@ export function AdminGovernancePage({onNavigate,access}:Props){
    ]);
    setSectors(s.sectors);setInvites(i.invites);
   }catch{setError("Não foi possível carregar a governança administrativa.")}
+  finally{manualRefresh.current=false;setRefreshing(false)}
  }
  useEffect(()=>{void load()},[]);
  const hasPending = invites.some(i=>!i.isAccepted&&!i.invalidatedAt&&new Date(i.expiresAt).getTime()>Date.now());
@@ -128,7 +133,7 @@ export function AdminGovernancePage({onNavigate,access}:Props){
     <h1>Convites administrativos</h1>
     <p>Crie novos acessos sem duplicar CPF ou cadastro pessoal. Perfis de Consumidor e Produtor permanecem separados do acesso administrativo.</p>
    </div>
-   <button className="admin-secondary compact" onClick={()=>void load()}><RefreshCw size={16}/> Atualizar</button>
+   <button className="admin-secondary compact" disabled={refreshing} aria-busy={refreshing} onClick={()=>void load()}><RefreshCw size={16} className={refreshing?"hvm-sync-spinning":undefined}/> {refreshing?"Atualizando…":"Atualizar"}</button>
   </header>
 
   <div className="admin-alert">

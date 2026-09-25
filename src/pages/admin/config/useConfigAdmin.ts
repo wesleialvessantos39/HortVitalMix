@@ -13,14 +13,6 @@ type State = {
   errorMessage: string | null;
 };
 
-const MINIMUM_SKELETON_MS = 120;
-
-function minimumSkeletonDelay() {
-  return new Promise<void>((resolve) =>
-    window.setTimeout(resolve, MINIMUM_SKELETON_MS),
-  );
-}
-
 export function useConfigAdmin() {
   const [state, setState] = useState<State>({
     status: "loading",
@@ -43,11 +35,9 @@ export function useConfigAdmin() {
       errorMessage: null,
     }));
 
-    const minimumDelay = minimumSkeletonDelay();
 
     try {
       const data = await api<unknown>("/v1/admin/configuration");
-      await minimumDelay;
       if (!mounted.current) return;
 
       if (!data) {
@@ -67,7 +57,6 @@ export function useConfigAdmin() {
 
       setState({ status: "ready", config: parsed.data, errorMessage: null });
     } catch (error) {
-      await minimumDelay;
       if (!mounted.current) return;
 
       const failure = error as ApiFailure;

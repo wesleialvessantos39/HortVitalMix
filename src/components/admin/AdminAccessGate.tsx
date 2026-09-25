@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { takeAdminAccess } from "../../lib/adminAccessHandoff";
 import { api, type ApiFailure } from "../../lib/api";
 import type { AdminSectorCode, AdminVerifySessionResponse } from "../../../shared/contracts/adminGovernance";
 
@@ -15,15 +16,17 @@ export function AdminAccessGate({
   requiredSector,
   children,
 }: Props) {
+  const [initialAccess] = useState(takeAdminAccess);
   const [state, setState] = useState<
     | { kind: "loading" }
     | { kind: "ready"; access: AdminVerifySessionResponse }
     | { kind: "error" }
     | { kind: "denied" }
-  >({ kind: "loading" });
+  >(initialAccess ? {kind:"ready",access:initialAccess} : {kind:"loading"});
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
+    if (initialAccess && attempt === 0) return;
     const abort = new AbortController();
     setState({ kind: "loading" });
     api<AdminVerifySessionResponse>("/v1/admin/auth/verify-session", {
@@ -43,7 +46,7 @@ export function AdminAccessGate({
         else setState({ kind: error.status === 403 ? "denied" : "error" });
       });
     return () => abort.abort();
-  }, [onNavigate, attempt]);
+  }, [onNavigate, attempt, initialAccess]);
 
   if (state.kind === "loading")
     return (

@@ -726,10 +726,10 @@ export class AdminGovernanceService {
     portalRole?: AdminRole,
   ): Promise<AdminLoginResult> {
     const normalized = email.trim().toLowerCase();
-    const resolved = await adminPrincipalFor(normalized, portalRole);
+    const [resolved, limited] = await Promise.all([
+      adminPrincipalFor(normalized, portalRole), this.rateLimit(normalized, ipHash),
+    ]);
     if (resolved.unavailable) return { status: "unavailable" };
-
-    const limited = await this.rateLimit(normalized, ipHash);
     if (limited.limited)
       return {
         status: "rate_limited",
@@ -760,7 +760,7 @@ export class AdminGovernanceService {
       return { status: "no_admin_role" };
     }
 
-    if (!principal.email_verified_at) {
+    if (!principal.email_verified_at || !signed.data.user.email_confirmed_at) {
       await client.auth.signOut({ scope: "local" }).catch(() => undefined);
       return {
         status: "email_confirmation_required",
@@ -780,147 +780,8 @@ export class AdminGovernanceService {
       return { status: "account_blocked" };
     }
 
-    if (role.role_code === "platform_super_admin") {
-      // O e-mail já foi confirmado. Este segundo código é MFA obrigatório do
-      // Super administrador (Manual Mestre T05), nunca repetição da confirmação.
-      type PendingChallenge = {
-        id: string;
-        expires_at: string;
-        created_at: string;
-        attempts: number;
-        max_attempts: number;
-      };
-      let pending: PendingChallenge | null = null;
-
-      if (supabaseAdmin) {
-        const result = await supabaseAdmin
-          .from("app_admin_mfa_challenges")
-          .select("id,expires_at,created_at,attempts,max_attempts")
-          .eq("user_id", signed.data.user.id)
-          .eq("is_verified", false)
-          .is("invalidated_at", null)
-          .gt("expires_at", new Date().toISOString())
-          .gt("created_at", new Date(Date.now() - 60_000).toISOString())
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (result.error) {
-          await client.auth.signOut({ scope: "local" }).catch(() => undefined);
-          return { status: "unavailable" };
-        }
-        pending = result.data as PendingChallenge | null;
-      } else if (dbPool) {
-        try {
-          const result = await dbPool.query<PendingChallenge>(
-            `SELECT id,expires_at::text,created_at::text,attempts,max_attempts
-               FROM public.app_admin_mfa_challenges
-              WHERE user_id=$1
-                AND is_verified=false
-                AND invalidated_at IS NULL
-                AND expires_at>now()
-                AND created_at>now()-interval '60 seconds'
-              ORDER BY created_at DESC
-              LIMIT 1`,
-            [signed.data.user.id],
-          );
-          pending = result.rows[0] ?? null;
-        } catch {
-          await client.auth.signOut({ scope: "local" }).catch(() => undefined);
-          return { status: "unavailable" };
-        }
-      } else {
-        await client.auth.signOut({ scope: "local" }).catch(() => undefined);
-        return { status: "unavailable" };
-      }
-      if (pending && Number(pending.attempts) < Number(pending.max_attempts)) {
-        await client.auth.signOut({ scope: "local" }).catch(() => undefined);
-        return {
-          status: "mfa_required",
-          mfaChallengeId: pending.id,
-          maskedDestination: maskEmail(normalized),
-          expiresAt: pending.expires_at,
-        };
-      }
-
-      const otpClient = createSupabasePublicClient();
-      if (!otpClient) return { status: "unavailable" };
-      const sent = await otpClient.auth.signInWithOtp({
-        email: authEmail,
-        options: { shouldCreateUser: false },
-      });
-      await client.auth.signOut({ scope: "local" }).catch(() => undefined);
-      if (sent.error) {
-        const retryAfterSeconds = authEmailRetryAfter(sent.error);
-        if (retryAfterSeconds)
-          return {
-            status: "email_rate_limited",
-            retryAfterSeconds,
-            phase: "mfa",
-          };
-        return { status: "unavailable" };
-      }
-
-      const challengeId = randomUUID();
-      const expiresAt = new Date(Date.now() + MFA_TTL_MINUTES * 60_000);
-
-      if (supabaseAdmin) {
-        const invalidated = await supabaseAdmin
-          .from("app_admin_mfa_challenges")
-          .update({ invalidated_at: new Date().toISOString() })
-          .eq("user_id", signed.data.user.id)
-          .eq("is_verified", false)
-          .is("invalidated_at", null);
-        if (invalidated.error) return { status: "unavailable" };
-
-        const inserted = await supabaseAdmin
-          .from("app_admin_mfa_challenges")
-          .insert({
-            id: challengeId,
-            user_id: signed.data.user.id,
-            provider: "supabase_auth_email_otp",
-            expires_at: expiresAt.toISOString(),
-            request_id: requestId,
-            command_id: randomUUID(),
-          });
-        if (inserted.error) return { status: "unavailable" };
-      } else if (dbPool) {
-        try {
-          await dbPool.query(
-            `UPDATE public.app_admin_mfa_challenges
-                SET invalidated_at=clock_timestamp()
-              WHERE user_id=$1 AND is_verified=false AND invalidated_at IS NULL`,
-            [signed.data.user.id],
-          );
-          await dbPool.query(
-            `INSERT INTO public.app_admin_mfa_challenges
-              (id,user_id,provider,expires_at,request_id,command_id)
-             VALUES ($1,$2,'supabase_auth_email_otp',$3,$4,$5)`,
-            [
-              challengeId,
-              signed.data.user.id,
-              expiresAt.toISOString(),
-              requestId,
-              randomUUID(),
-            ],
-          );
-        } catch {
-          return { status: "unavailable" };
-        }
-      } else {
-        return { status: "unavailable" };
-      }
-
-      await this.recordAttempt(normalized, ipHash, "mfa_pending");
-      return {
-        status: "mfa_required",
-        mfaChallengeId: challengeId,
-        maskedDestination: maskEmail(normalized),
-        expiresAt: expiresAt.toISOString(),
-      };
-    }
-
-    const sectors = await sectorsFor(signed.data.user.id);
-    if (!sectors.length) {
+    const sectors = role.role_code === "platform_admin" ? await sectorsFor(signed.data.user.id) : [];
+    if (role.role_code === "platform_admin" && !sectors.length) {
       await client.auth.signOut({ scope: "local" }).catch(() => undefined);
       await this.recordAttempt(normalized, ipHash, "failure");
       return { status: "no_admin_role" };
@@ -932,7 +793,7 @@ export class AdminGovernanceService {
       accessToken: signed.data.session.access_token,
       refreshToken: signed.data.session.refresh_token,
       expiresIn: signed.data.session.expires_in,
-      role: "platform_admin",
+      role: role.role_code,
       sectors,
     };
   }

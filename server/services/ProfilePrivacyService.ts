@@ -50,10 +50,10 @@ async function getPersonId(
   return result.rows[0].id;
 }
 
-async function findReplayTarget(client: PoolClient, commandId: string) {
+async function findReplayTarget(client: PoolClient, commandId: string, userId: string, action: string) {
   const result = await client.query<{ target_id: string | null }>(
-    "SELECT target_id FROM public.app_audit_events WHERE command_id=$1 LIMIT 1",
-    [commandId],
+    "SELECT target_id FROM public.app_audit_events WHERE command_id=$1 AND actor_id=$2 AND action=$3 LIMIT 1",
+    [commandId, userId, action],
   );
   return result.rows[0]?.target_id ?? null;
 }
@@ -147,7 +147,7 @@ export class ProfilePrivacyService {
     try {
       await client.query("BEGIN");
       const personId = await getPersonId(client, userId, true);
-      if (await findReplayTarget(client, input.commandId)) {
+      if (await findReplayTarget(client, input.commandId, userId, "profile.updated")) {
         await client.query("COMMIT");
         return { status: "idempotent_replay" as const };
       }
@@ -218,7 +218,7 @@ export class ProfilePrivacyService {
     try {
       await client.query("BEGIN");
       const personId = await getPersonId(client, userId, true);
-      const replayTarget = await findReplayTarget(client, input.commandId);
+      const replayTarget = await findReplayTarget(client, input.commandId, userId, "address.created");
       if (replayTarget) {
         const replay = await client.query<Record<string, any>>(
           "SELECT * FROM public.app_user_addresses WHERE id=$1 AND person_id=$2",
@@ -305,7 +305,7 @@ export class ProfilePrivacyService {
     try {
       await client.query("BEGIN");
       const personId = await getPersonId(client, userId, true);
-      if (await findReplayTarget(client, commandId)) {
+      if (await findReplayTarget(client, commandId, userId, "address.default_changed")) {
         await client.query("COMMIT");
         return { status: "idempotent_replay" as const, addressId };
       }
@@ -359,7 +359,7 @@ export class ProfilePrivacyService {
     try {
       await client.query("BEGIN");
       const personId = await getPersonId(client, userId, true);
-      if (await findReplayTarget(client, commandId)) {
+      if (await findReplayTarget(client, commandId, userId, "address.deleted")) {
         await client.query("COMMIT");
         return { status: "idempotent_replay" as const };
       }
@@ -384,7 +384,7 @@ export class ProfilePrivacyService {
       let replacementDefaultId: string | null = null;
       if (address.is_default) {
         const next = await client.query<{ id: string }>(
-          "SELECT id FROM public.app_user_addresses WHERE person_id=$1 ORDER BY created_at ASC LIMIT 1 FOR UPDATE",
+          "SELECT id FROM public.app_user_addresses WHERE person_id=$1 ORDER BY created_at ASC,id ASC LIMIT 1 FOR UPDATE",
           [personId],
         );
         if (next.rows[0]) {
@@ -425,6 +425,7 @@ export class ProfilePrivacyService {
 
   static async getPreferences(
     userId: string,
+    completeHistory = false,
   ): Promise<{ preferences: PreferencesView; consents: ConsentView[] }> {
     const pool = requirePool();
     const person = await pool.query<{ id: string }>(
@@ -440,7 +441,7 @@ export class ProfilePrivacyService {
         [personId],
       ),
       pool.query<Record<string, any>>(
-        "SELECT id,consent_type,is_granted,policy_version,registered_at FROM public.app_consent_records WHERE person_id=$1 ORDER BY registered_at DESC LIMIT 100",
+        "SELECT id,consent_type,is_granted,policy_version,registered_at FROM public.app_consent_records WHERE person_id=$1 ORDER BY registered_at DESC,id DESC" + (completeHistory ? "" : " LIMIT 100"),
         [personId],
       ),
     ]);
@@ -493,7 +494,7 @@ export class ProfilePrivacyService {
     try {
       await client.query("BEGIN");
       const personId = await getPersonId(client, userId, true);
-      if (await findReplayTarget(client, input.commandId)) {
+      if (await findReplayTarget(client, input.commandId, userId, "preferences.updated")) {
         await client.query("COMMIT");
         return { status: "idempotent_replay" as const };
       }
@@ -610,7 +611,7 @@ export class ProfilePrivacyService {
     const profile = await this.getProfile(userId);
     const [addresses, data] = await Promise.all([
       this.listAddresses(userId),
-      this.getPreferences(userId),
+      this.getPreferences(userId, true),
     ]);
     return {
       exportedAt: new Date().toISOString(),

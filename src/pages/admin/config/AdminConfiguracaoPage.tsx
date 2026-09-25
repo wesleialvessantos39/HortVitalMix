@@ -304,6 +304,7 @@ function LoadingSkeleton() {
       aria-busy="true"
       aria-label="Carregando configuração"
     >
+      <RefreshCw className="hvm-sync-spinning" aria-label="Atualizando" />
       <div className="admin-config-skeleton admin-config-skeleton--title" />
       <div className="admin-config-skeleton admin-config-skeleton--field" />
       <div className="admin-config-skeleton admin-config-skeleton--field" />
@@ -353,8 +354,7 @@ function EmptyCard({
         <div>
           <h2>Configuração ausente</h2>
           <p>
-            O singleton de configuração não está presente. Contate o suporte
-            técnico antes de prosseguir.
+            As configurações não estão disponíveis. Contate o suporte para continuar.
           </p>
           <button type="button" onClick={() => void onRetry()}>
             <RefreshCw size={16} /> Tentar novamente

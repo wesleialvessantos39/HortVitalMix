@@ -91,3 +91,12 @@ A primeira tentativa de produção com o `typecheck:app` global dentro do `build
 - **Vercel produção (free/Hobby):** migrations + security check + 22 testes T06 + evidence + Vite build + bundle check.
 - **Gate técnico completo:** `npm run verify:t06:free` continua incluindo `typecheck:app`.
 - O deploy de branches continua desativado, evitando previews e consumo desnecessário.
+
+
+## Revisão independente — 25/09/2026
+
+Corrigidos escopo de idempotência por ator/ação, eleição determinística com desempate por ID, exportação sem truncar consentimentos, submissão concorrente do formulário, retorno obsoleto de CEP e tratamento dos conflitos 409. Formulários recarregados adotam a revisão recebida.
+
+Resultado: 22 testes T06 + gate completo (incluindo typecheck) aprovados. Oito testes de navegador T06 aprovados em 320/360/768/1024/1440, com respostas controladas. Consultas reais confirmaram RLS forçada, grants somente de leitura e índices únicos no banco canônico. Não houve necessidade de migration. Quatro testes adicionais de navegador validaram login sem segundo fator e animação durante consulta nos dois perfis administrativos.
+
+As antigas exigências de MFA no login são substituídas por instrução explícita do proprietário, preservando senha, confirmação inicial e autorização no backend. Homologação técnica local aprovada; homologação operacional de latência 2–4s e entrega real de e-mail continua pendente.
