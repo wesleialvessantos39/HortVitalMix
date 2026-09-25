@@ -1,10 +1,13 @@
 import { useState, type FormEvent } from "react";
 import { Download, Eye, EyeOff, X } from "lucide-react";
 import { api } from "../../lib/api";
+import type { ShellSession } from "../../hooks/useSession";
 
 export function PrivacyExportButton({
+  session,
   onNotice,
 }: {
+  session: ShellSession;
   onNotice: (message: string) => void;
 }) {
   const [busy, setBusy] = useState(false);
@@ -12,6 +15,13 @@ export function PrivacyExportButton({
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [reauthError, setReauthError] = useState("");
+
+  const portalRole =
+    session.activeRole === "consumer" || session.activeRole === "producer"
+      ? session.activeRole
+      : session.roles.find(
+          (role) => role === "consumer" || role === "producer",
+        );
 
   async function downloadExport() {
     const data = await api<unknown>("/v1/account/profile?export=1");
@@ -48,12 +58,21 @@ export function PrivacyExportButton({
 
   async function reauthenticate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!portalRole) {
+      setReauthError("Entre novamente pelo portal de consumidor ou produtor.");
+      return;
+    }
+
     setBusy(true);
     setReauthError("");
     try {
-      await api("/v1/account/reauthenticate", {
+      await api("/v1/auth/login", {
         method: "POST",
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({
+          email: session.email,
+          password,
+          portalRole,
+        }),
       });
       setPassword("");
       setReauthOpen(false);
