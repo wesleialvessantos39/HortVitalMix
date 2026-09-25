@@ -3046,5 +3046,11 @@ A checagem estrutural dos arquivos e a prova SQL foram executadas e aprovadas ne
 ### Segurança, custo e não regressão
 Nenhum recurso pago foi adicionado. Não foram usados Google Maps Platform, Mapbox, Twilio, Resend, PostGIS, Supabase Branches ou preview Vercel. Nenhuma tabela `app_properties`, `app_orders` ou bucket foi criada. T01–T06 permanecem preservadas e a evolução é estritamente aditiva.
 
+### Git / promoção
+- Branch de implementação: `trilha07-v11`.
+- Pull request aberto para `main`: **PR #49**.
+- O PR está mergeable no GitHub e não há execução automática de Actions associada ao head.
+- Nenhum deploy da branch foi disparado.
+
 ### Próximo gate
 Executar `npm run verify:t07:free` em ambiente local/Google Studio com dependências instaladas. Somente após gate verde e revisão do PR, fazer merge em `main`; o deploy Vercel deve ocorrer exclusivamente a partir da `main`.
