@@ -20,7 +20,8 @@ requireTokens(
   [
     'z.enum(["consumer", "producer"])',
     ".strict()",
-    "publicClient.auth.signUp",
+    "admin.auth.admin.createUser",
+    "publicClient.auth.resend",
     "complete_public_registration",
     "add_public_role_to_existing_identity",
     "SUPABASE_SERVICE_ROLE_KEY",
