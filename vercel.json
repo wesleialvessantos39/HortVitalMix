@@ -1,6 +1,6 @@
 {
   "framework": "vite",
-  "buildCommand": "npm run migrations:verify && (npm run typecheck:app > public/__hvm_typecheck.txt 2>&1 || true) && vite build",
+  "buildCommand": "npm run migrations:verify && (npm run typecheck:app > public/__hvm_typecheck.txt 2>&1 || true) && npm run test:t06:unit && npm run verify:t06:evidence && vite build",
   "installCommand": "npm ci --no-audit --no-fund",
   "outputDirectory": "dist",
   "regions": [
@@ -41,6 +41,19 @@
     }
   ],
   "headers": [
+    {
+      "source": "/conta/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0, must-revalidate"
+        },
+        {
+          "key": "Pragma",
+          "value": "no-cache"
+        }
+      ]
+    },
     {
       "source": "/admin/bootstrap",
       "headers": [
@@ -313,7 +326,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.supabase.co https://viacep.com.br; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
         }
       ]
     }
