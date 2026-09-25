@@ -53,7 +53,8 @@
     "test:t06:unit": "vitest run tests/unit/profilePrivacyContracts.test.ts",
     "verify:t06:evidence": "node scripts/verify-trilha06-evidence.mjs",
     "test:t06": "npm run test:t06:unit && npm run verify:t06:evidence",
-    "verify:t06:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t06:unit && npm run verify:t06:evidence && vite build && node --import tsx scripts/check-bundle.ts"
+    "verify:t06:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t06:unit && npm run verify:t06:evidence && vite build && node --import tsx scripts/check-bundle.ts",
+    "test:t06:e2e": "playwright test tests/e2e/trilha06-account.spec.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",
