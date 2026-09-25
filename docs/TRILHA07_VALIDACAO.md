@@ -167,3 +167,18 @@ A aplicação só deve ser chamada de operacionalmente homologada após:
 3. revisar o PR do branch `trilha07-v11`;
 4. fazer merge em `main`;
 5. somente então permitir o deploy automático da `main` no Vercel Hobby.
+
+
+## 10. Promoção concluída
+
+A implementação funcional foi promovida pelo PR #49 para a `main` no commit `c3a09bea41f25da224ae4941c572021fab2f9918`.
+
+Evidência pós-merge:
+- GitHub confirmou o PR como mergeado;
+- a integração Vercel do commit retornou `success` / `Deployment has completed`;
+- `public.app_releases` foi atualizado somente depois desse sucesso, com `schema_version=29`, hash canônico da T07 e release `trilha07-v1-c3a09be`;
+- nenhum workflow GitHub automático foi disparado;
+- nenhuma branch preview Vercel foi criada;
+- nenhum recurso pago foi habilitado.
+
+Este apêndice registra a promoção. O commit documental que o contém não modifica o runtime; se ele próprio disparar um novo deployment de `main`, a release canônica deve apontar para o SHA desse commit somente depois de o novo deployment obter `success`.
