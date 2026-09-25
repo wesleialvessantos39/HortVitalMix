@@ -377,15 +377,17 @@ Deno.serve(async (req) => {
   const redirectTo =
     CANONICAL_APP_ORIGIN + "/confirmar-contato?portal=" + role;
 
-  const created = await publicClient.auth.signUp({
+  // Mantém a mesma ordem transacional já homologada no Express:
+  // 1) identidade não confirmada, 2) domínio atômico, 3) confirmação por e-mail.
+  // Assim uma falha do domínio nunca deixa um link de confirmação para uma
+  // identidade que será compensada.
+  const created = await admin.auth.admin.createUser({
     email: data.email,
     password: data.password,
-    options: {
-      emailRedirectTo: redirectTo,
-      data: {
-        full_name: data.fullName,
-        hvm_portal: "public",
-      },
+    email_confirm: false,
+    user_metadata: {
+      full_name: data.fullName,
+      hvm_portal: "public",
     },
   });
 
@@ -393,7 +395,7 @@ Deno.serve(async (req) => {
     const status = Number(created.error?.status ?? 0);
     logFailure(
       requestId,
-      "public_registration_auth_signup_failed",
+      "public_registration_auth_create_failed",
       created.error?.code ?? String(status || "unknown"),
     );
 
@@ -412,10 +414,6 @@ Deno.serve(async (req) => {
   }
 
   const userId = created.data.user.id;
-  const identities = created.data.user.identities ?? [];
-  if (identities.length === 0) {
-    return safeFailure(409, "IDENTITY_CONFLICT", requestId, origin);
-  }
 
   const completed = await admin.rpc("complete_public_registration", {
     p_user_id: userId,
@@ -433,13 +431,31 @@ Deno.serve(async (req) => {
     return mapRpcError(completed.error, requestId, origin);
   }
 
+  let confirmationDispatchAccepted = false;
+  try {
+    const sent = await publicClient.auth.resend({
+      type: "signup",
+      email: data.email,
+      options: { emailRedirectTo: redirectTo },
+    });
+    confirmationDispatchAccepted = !sent.error;
+    if (sent.error)
+      logFailure(
+        requestId,
+        "public_registration_confirmation_deferred",
+        sent.error.code ?? String(sent.error.status ?? "unknown"),
+      );
+  } catch {
+    logFailure(requestId, "public_registration_confirmation_transport");
+  }
+
   return json(
     201,
     {
       userId,
       confirmationRequired: true,
-      confirmationDispatchAccepted: true,
-      confirmationDispatchDeferred: false,
+      confirmationDispatchAccepted,
+      confirmationDispatchDeferred: !confirmationDispatchAccepted,
       existingIdentity: false,
       roleAdded: true,
       role,
