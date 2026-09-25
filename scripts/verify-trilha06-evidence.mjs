@@ -1,0 +1,11 @@
+import {readFileSync} from "node:fs";
+const read=p=>readFileSync(p,"utf8");
+const migration=read("supabase/migrations/20260925002000_trilha06_profile_privacy.sql");
+const service=read("server/services/ProfilePrivacyService.ts");
+const routes=read("server/routes/profilePrivacyRoutes.ts");
+const ui=read("src/pages/account/AccountHub.tsx");
+for(const token of ["app_user_addresses","app_user_preferences","app_consent_records","FORCE ROW LEVEL SECURITY","uq_app_user_addresses_default","trg_app_consent_records_immutable"])if(!migration.includes(token))throw new Error("T06_MIGRATION_EVIDENCE_MISSING:"+token);
+for(const token of ["FOR UPDATE","fingerprint","replacementDefaultId","policyVersion","exportData"])if(!service.includes(token))throw new Error("T06_SERVICE_EVIDENCE_MISSING:"+token);
+for(const token of ["/account/profile","/account/addresses","/account/preferences","RECENT_AUTH_REQUIRED"])if(!routes.includes(token))throw new Error("T06_ROUTE_EVIDENCE_MISSING:"+token);
+for(const token of ["/conta/perfil","/conta/enderecos","/conta/preferencias","/conta/privacidade","hortivitalmix:default-address-changed","PostalLookupService"])if(!ui.includes(token))throw new Error("T06_UI_EVIDENCE_MISSING:"+token);
+console.log(JSON.stringify({trail:"06",status:"evidence-ok"}));
