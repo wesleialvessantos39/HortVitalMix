@@ -295,7 +295,7 @@ test("endereços permanecem sem overflow nos cinco breakpoints oficiais", async 
     await page.setViewportSize(viewport);
     await page.goto("/conta/enderecos");
     await expect(
-      page.getByRole("heading", { name: "Meus endereços de entrega" }),
+      page.getByRole("heading", { name: "Seus locais de entrega" }),
     ).toBeVisible();
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > window.innerWidth,
