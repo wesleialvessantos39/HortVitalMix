@@ -19,9 +19,6 @@ export const CreateAddressSchema = z.object({
 }).strict();
 export const SetDefaultAddressSchema = z.object({commandId:CommandIdSchema}).strict();
 export const DeleteAddressSchema = z.object({commandId:CommandIdSchema}).strict();
-export const ReauthenticateSchema = z.object({
-  password: z.string().min(1).max(128),
-}).strict();
 export const UpdateProfileSchema = z.object({
   fullName:z.string().trim().min(3).max(255),
   expectedRevision:z.number().int().positive(),
