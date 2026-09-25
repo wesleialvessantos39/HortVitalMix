@@ -5,6 +5,7 @@ import {
   Settings,
   LogOut,
   Leaf,
+  UserRound,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import type { AdminVerifySessionResponse } from "../../../shared/contracts/adminGovernance";
@@ -99,6 +100,9 @@ export function AdminPortalShell({
           </button>
         </div>
         {logoutError && <p role="alert" className="admin-alert admin-alert--error">{logoutError}</p>}
+        <button className="secondary account-action" type="button" onClick={() => onNavigate("/minha-conta")}>
+          <UserRound size={18} aria-hidden="true" /> Minha conta e privacidade
+        </button>
         {children}
         <nav className="admin-bottom-nav" aria-label="Administração mobile">
           {visible.map(([to, label, Icon]) => (

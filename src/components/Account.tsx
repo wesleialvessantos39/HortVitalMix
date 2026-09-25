@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { ChevronRight, Crown, Plus, ShieldCheck, ShoppingBag, Sprout } from "lucide-react";
+import { ChevronRight, Crown, Plus, ShieldCheck, ShoppingBag, Sprout, UserRound, MapPin, SlidersHorizontal } from "lucide-react";
 import { api } from "../lib/api";
 import { getBootstrapStatus } from "../lib/adminBootstrapTransport";
 import { CPFInput } from "./forms/CPFInput";
@@ -440,7 +440,7 @@ export function Account({
           },
         );
         onSessionAdopt(authenticated);
-        navigate("/minha-conta");
+        navigate("/conta");
         return;
       }
 
@@ -826,6 +826,20 @@ export function Account({
         {session.roles.length > 1 && (
           <p>Perfis disponíveis: {session.roles.map((role) => roleLabel(role)).join(", ")}.</p>
         )}
+
+        <nav className="account-hub-grid" aria-label="Dados da minha conta">
+          {([
+            ["/conta/perfil", "Perfil", "Dados pessoais", UserRound],
+            ["/conta/enderecos", "Endereços", "Locais de entrega", MapPin],
+            ["/conta/preferencias", "Preferências", "Avisos e horários", SlidersHorizontal],
+            ["/conta/privacidade", "Privacidade", "Consentimentos e exportação", ShieldCheck],
+          ] as const).map(([to, label, description, Icon]) => (
+            <button key={to} type="button" className="account-hub-card" onClick={() => navigate(to)}>
+              <Icon aria-hidden="true" />
+              <span><strong>{label}</strong><small>{description}</small></span>
+            </button>
+          ))}
+        </nav>
 
         {session.activeRole === "platform_super_admin" && (
           <button

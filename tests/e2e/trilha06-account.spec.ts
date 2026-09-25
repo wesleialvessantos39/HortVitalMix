@@ -191,3 +191,18 @@ test("T06 exige senha recente antes da exportação LGPD", async ({ page }) => {
     page.getByText("Identidade confirmada. Seus dados foram exportados."),
   ).toBeVisible();
 });
+
+
+test("conta antiga oferece acesso às quatro seções e retorno à segurança", async ({ page }) => {
+  await mockAccount(page);
+  await page.goto("/minha-conta");
+  const navigation = page.getByRole("navigation", { name: "Dados da minha conta" });
+  for (const label of ["Perfil", "Endereços", "Preferências", "Privacidade"]) {
+    await expect(navigation.getByRole("button", { name: new RegExp(label) })).toBeVisible();
+  }
+  await navigation.getByRole("button", { name: /Privacidade/ }).click();
+  await expect(page.getByRole("heading", { name: "Privacidade", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Voltar", exact: true }).click();
+  await page.getByRole("button", { name: "Segurança e sair da conta" }).click();
+  await expect(page.getByRole("button", { name: "Sair da conta", exact: true })).toBeVisible();
+});

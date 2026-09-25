@@ -2986,3 +2986,8 @@ Homologação técnica local aprovada; meta de 2–4 segundos para cadastro/logi
 Por instrução expressa do proprietário, os quatro workflows deixam de executar em push/pull request; ficam apenas como histórico acionável manualmente e não são necessários para publicar. A homologação é local por `npm run verify:t06:free`, testes T05 e testes de navegador. A publicação continua pela integração Git da Vercel, somente main, sem upgrade de plano. Não executar Actions como etapa de entrega.
 
 O build Vercel mantém manifesto, tipagem, segurança, Vite e verificação de segredos no bundle. Testes e evidências T06 já aprovados localmente deixam de ser repetidos no build remoto. Nenhum erro é ignorado e nenhum controle de autenticação/RLS foi removido. Esta redução de trabalho não é apresentada como diagnóstico da falha remota: o deploy de 6a5419 falhou e o conector Vercel não disponibiliza o projeto/logs nesta sessão. Homologação operacional e latência real permanecem pendentes até produção validada.
+
+
+### 2026-09-25 — Acesso visível às telas da T06
+
+Corrigida a navegação pública após login para /conta, onde estão Perfil, Endereços, Preferências e Privacidade. A rota antiga /minha-conta agora também apresenta os quatro atalhos com ícones e estilos existentes, preservando senha, confirmação e saída. O hub oferece retorno explícito à segurança/saída. O painel administrativo tem acesso visível à conta e privacidade, sem ampliar permissões de API. Nenhum texto técnico de trilha foi adicionado à interface. Teste de navegador cobre entrada antiga, abertura de Privacidade e retorno à saída. Mantidos os endpoints reais T06 e RLS existentes; esta correção é de navegação, sem alteração de contrato ou migração.
