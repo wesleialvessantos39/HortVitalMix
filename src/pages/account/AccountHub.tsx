@@ -1,0 +1,758 @@
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type FormEvent,
+} from "react";
+import {
+  ArrowLeft,
+  Check,
+  Download,
+  Home,
+  MapPin,
+  Plus,
+  ShieldCheck,
+  SlidersHorizontal,
+  Trash2,
+  UserRound,
+  X,
+} from "lucide-react";
+import { api } from "../../lib/api";
+import type { ShellSession } from "../../hooks/useSession";
+import type {
+  AddressView,
+  ConsentView,
+  PreferencesView,
+  ProfileView,
+} from "../../../shared/contracts/profilePrivacy";
+import { PostalLookupService } from "../../services/PostalLookupService";
+
+type Props = {
+  path: string;
+  session: ShellSession;
+  onNavigate: (to: string) => void;
+};
+
+const sections = [
+  ["/conta/perfil", "Perfil", UserRound],
+  ["/conta/enderecos", "Endereços", MapPin],
+  ["/conta/preferencias", "Preferências", SlidersHorizontal],
+  ["/conta/privacidade", "Privacidade", ShieldCheck],
+] as const;
+
+function commandId() {
+  return crypto.randomUUID();
+}
+
+export function AccountHub({ path, session, onNavigate }: Props) {
+  const [profile, setProfile] = useState<ProfileView | null>(null);
+  const [addresses, setAddresses] = useState<AddressView[]>([]);
+  const [preferences, setPreferences] =
+    useState<PreferencesView | null>(null);
+  const [consents, setConsents] = useState<ConsentView[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  async function load() {
+    setNotice("");
+    try {
+      const [profileResult, addressResult, preferenceResult] =
+        await Promise.all([
+          api<ProfileView>("/v1/account/profile"),
+          api<{ addresses: AddressView[] }>("/v1/account/addresses"),
+          api<{
+            preferences: PreferencesView;
+            consents: ConsentView[];
+          }>("/v1/account/preferences"),
+        ]);
+      setProfile(profileResult);
+      setAddresses(addressResult.addresses);
+      setPreferences(preferenceResult.preferences);
+      setConsents(preferenceResult.consents);
+    } catch {
+      setNotice("Não foi possível carregar os dados da conta agora.");
+    }
+  }
+
+  useEffect(() => {
+    void load();
+  }, [session.userId]);
+
+  const defaultAddress = useMemo(
+    () => addresses.find((address) => address.isDefault) ?? null,
+    [addresses],
+  );
+
+  if (path === "/conta") {
+    return (
+      <section className="account-hub">
+        <header className="account-hub-heading">
+          <div>
+            <span className="eyebrow">Minha conta</span>
+            <h1>
+              Olá
+              {profile?.fullName
+                ? ", " + profile.fullName.split(" ")[0]
+                : ""}
+            </h1>
+            <p>{session.email}</p>
+          </div>
+        </header>
+
+        {defaultAddress && (
+          <button
+            className="account-delivery-card"
+            onClick={() => onNavigate("/conta/enderecos")}
+          >
+            <MapPin />
+            <span>
+              <small>Entrega para</small>
+              <strong>
+                {defaultAddress.neighborhood +
+                  " · " +
+                  defaultAddress.city +
+                  "/" +
+                  defaultAddress.state}
+              </strong>
+            </span>
+          </button>
+        )}
+
+        <div className="account-hub-grid">
+          {sections.map(([to, label, Icon]) => (
+            <button
+              key={to}
+              className="account-hub-card"
+              onClick={() => onNavigate(to)}
+            >
+              <Icon />
+              <span>
+                <strong>{label}</strong>
+                <small>
+                  {label === "Perfil"
+                    ? "Dados pessoais"
+                    : label === "Endereços"
+                      ? "Locais de entrega"
+                      : label === "Preferências"
+                        ? "Avisos e horários"
+                        : "Consentimentos e exportação"}
+                </small>
+              </span>
+            </button>
+          ))}
+        </div>
+        {notice && (
+          <p role="status" className="account-notice">
+            {notice}
+          </p>
+        )}
+      </section>
+    );
+  }
+
+  return (
+    <section className="account-hub account-hub-detail">
+      <header className="account-detail-top">
+        <button aria-label="Voltar" onClick={() => onNavigate("/conta")}>
+          <ArrowLeft />
+        </button>
+        <div>
+          <span className="eyebrow">Minha conta</span>
+          <h1>
+            {sections.find(([route]) => route === path)?.[1] ?? "Conta"}
+          </h1>
+        </div>
+      </header>
+
+      <nav className="account-section-nav" aria-label="Seções da conta">
+        {sections.map(([to, label]) => (
+          <button
+            key={to}
+            className={to === path ? "active" : ""}
+            onClick={() => onNavigate(to)}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+
+      {path === "/conta/perfil" && profile && (
+        <form
+          className="account-panel"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            setBusy(true);
+            setNotice("");
+            const form = new FormData(event.currentTarget);
+            try {
+              const result = await api<{
+                status: string;
+                currentRevision?: number;
+              }>("/v1/account/profile", {
+                method: "PATCH",
+                body: JSON.stringify({
+                  fullName: form.get("fullName"),
+                  expectedRevision: profile.revision,
+                  commandId: commandId(),
+                }),
+              });
+              if (result.status === "conflict") {
+                setNotice(
+                  "Seus dados foram alterados em outra sessão. Recarregamos a versão atual.",
+                );
+                await load();
+                return;
+              }
+              await load();
+              setNotice("Perfil atualizado.");
+            } catch {
+              setNotice("Não foi possível atualizar o perfil.");
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          <label>
+            Nome completo
+            <input
+              name="fullName"
+              defaultValue={profile.fullName}
+              minLength={3}
+              maxLength={255}
+              required
+            />
+          </label>
+          <label>
+            CPF
+            <input value={profile.cpfMasked} disabled />
+          </label>
+          <label>
+            E-mail
+            <input value={profile.email} disabled />
+          </label>
+          <label>
+            Celular
+            <input value={profile.phone} disabled />
+          </label>
+          <button className="primary" disabled={busy}>
+            {busy ? "Salvando…" : "Salvar alterações"}
+          </button>
+        </form>
+      )}
+
+      {path === "/conta/enderecos" && (
+        <div className="account-panel">
+          <div className="account-panel-title">
+            <div>
+              <h2>Locais de entrega</h2>
+              <p>
+                Residência de entrega não é imóvel rural de produção.
+              </p>
+            </div>
+            <button
+              className="primary account-small-button"
+              onClick={() => setSheetOpen(true)}
+            >
+              <Plus />
+              Novo endereço
+            </button>
+          </div>
+
+          <div className="address-list">
+            {addresses.map((address) => (
+              <article key={address.id} className="address-card">
+                <div className="address-card-icon">
+                  <Home />
+                </div>
+                <div>
+                  <div className="address-card-title">
+                    <strong>{address.label}</strong>
+                    {address.isDefault && <span>Padrão</span>}
+                  </div>
+                  <p>
+                    {address.street +
+                      ", " +
+                      address.number +
+                      (address.complement
+                        ? " · " + address.complement
+                        : "")}
+                  </p>
+                  <p>
+                    {address.neighborhood +
+                      " · " +
+                      address.city +
+                      "/" +
+                      address.state +
+                      " · CEP " +
+                      address.cep.replace(
+                        /(\d{5})(\d{3})/,
+                        "$1-$2",
+                      )}
+                  </p>
+                  <div className="address-actions">
+                    {!address.isDefault && (
+                      <button
+                        disabled={busy}
+                        onClick={async () => {
+                          setBusy(true);
+                          try {
+                            await api(
+                              "/v1/account/addresses/" +
+                                address.id +
+                                "/default",
+                              {
+                                method: "PATCH",
+                                body: JSON.stringify({
+                                  commandId: commandId(),
+                                }),
+                              },
+                            );
+                            await load();
+                            window.dispatchEvent(
+                              new Event(
+                                "hortivitalmix:default-address-changed",
+                              ),
+                            );
+                          } catch {
+                            setNotice(
+                              "Não foi possível alterar o endereço padrão.",
+                            );
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                      >
+                        Tornar padrão
+                      </button>
+                    )}
+                    <button
+                      className="danger-link"
+                      disabled={busy}
+                      onClick={async () => {
+                        if (!confirm("Remover este endereço?")) return;
+                        setBusy(true);
+                        try {
+                          await api(
+                            "/v1/account/addresses/" + address.id,
+                            {
+                              method: "DELETE",
+                              body: JSON.stringify({
+                                commandId: commandId(),
+                              }),
+                            },
+                          );
+                          await load();
+                          window.dispatchEvent(
+                            new Event(
+                              "hortivitalmix:default-address-changed",
+                            ),
+                          );
+                        } catch {
+                          setNotice(
+                            "Não foi possível remover o endereço.",
+                          );
+                        } finally {
+                          setBusy(false);
+                        }
+                      }}
+                    >
+                      <Trash2 />
+                      Remover
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          {addresses.length === 0 && (
+            <p className="account-empty">
+              Nenhum endereço cadastrado.
+            </p>
+          )}
+
+          {sheetOpen && (
+            <AddressSheet
+              busy={busy}
+              onClose={() => setSheetOpen(false)}
+              onCreated={async () => {
+                setSheetOpen(false);
+                await load();
+                window.dispatchEvent(
+                  new Event("hortivitalmix:default-address-changed"),
+                );
+              }}
+            />
+          )}
+        </div>
+      )}
+
+      {path === "/conta/preferencias" && preferences && (
+        <form
+          className="account-panel"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            setBusy(true);
+            setNotice("");
+            const form = new FormData(event.currentTarget);
+            try {
+              const result = await api<{ status: string }>(
+                "/v1/account/preferences",
+                {
+                  method: "PATCH",
+                  body: JSON.stringify({
+                    marketingConsent:
+                      form.get("marketingConsent") === "on",
+                    orderUpdatesChannel:
+                      form.get("orderUpdatesChannel"),
+                    quietHoursEnabled:
+                      form.get("quietHoursEnabled") === "on",
+                    quietHoursStart:
+                      form.get("quietHoursStart") || null,
+                    quietHoursEnd:
+                      form.get("quietHoursEnd") || null,
+                    expectedRevision: preferences.revision,
+                    commandId: commandId(),
+                  }),
+                },
+              );
+              if (result.status === "conflict") {
+                setNotice(
+                  "Preferências alteradas em outra sessão. Recarregamos os dados.",
+                );
+                await load();
+                return;
+              }
+              await load();
+              setNotice("Preferências salvas.");
+            } catch {
+              setNotice("Não foi possível salvar as preferências.");
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          <fieldset>
+            <legend>Avisos sobre pedidos</legend>
+            {(["email", "sms", "both"] as const).map((value) => (
+              <label className="account-radio" key={value}>
+                <input
+                  type="radio"
+                  name="orderUpdatesChannel"
+                  value={value}
+                  defaultChecked={
+                    preferences.orderUpdatesChannel === value
+                  }
+                />
+                <span>
+                  {value === "email"
+                    ? "E-mail"
+                    : value === "sms"
+                      ? "SMS"
+                      : "E-mail e SMS"}
+                </span>
+              </label>
+            ))}
+          </fieldset>
+
+          <label className="account-toggle">
+            <input
+              type="checkbox"
+              name="quietHoursEnabled"
+              defaultChecked={preferences.quietHoursEnabled}
+            />
+            <span>Ativar horário de silêncio</span>
+          </label>
+          <div className="account-time-grid">
+            <label>
+              Início
+              <input
+                type="time"
+                name="quietHoursStart"
+                defaultValue={preferences.quietHoursStart ?? ""}
+              />
+            </label>
+            <label>
+              Fim
+              <input
+                type="time"
+                name="quietHoursEnd"
+                defaultValue={preferences.quietHoursEnd ?? ""}
+              />
+            </label>
+          </div>
+          <label className="account-toggle">
+            <input
+              type="checkbox"
+              name="marketingConsent"
+              defaultChecked={preferences.marketingConsent}
+            />
+            <span>Receber novidades e ofertas</span>
+          </label>
+          <button className="primary" disabled={busy}>
+            {busy ? "Salvando…" : "Salvar preferências"}
+          </button>
+        </form>
+      )}
+
+      {path === "/conta/privacidade" && (
+        <div className="account-panel">
+          <h2>Privacidade e consentimentos</h2>
+          <p>
+            Seu histórico de consentimento é imutável e vinculado à
+            versão da política.
+          </p>
+          <button
+            className="secondary account-export"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              setNotice("");
+              try {
+                const data = await api<unknown>(
+                  "/v1/account/profile?export=1",
+                );
+                const blob = new Blob(
+                  [JSON.stringify(data, null, 2)],
+                  { type: "application/json" },
+                );
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = "hortivitalmix-meus-dados.json";
+                link.click();
+                URL.revokeObjectURL(url);
+              } catch (error) {
+                setNotice(
+                  (error as Error).message ===
+                    "RECENT_AUTH_REQUIRED"
+                    ? "Por segurança, entre novamente antes de exportar seus dados."
+                    : "Não foi possível gerar a exportação.",
+                );
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            <Download />
+            Exportar meus dados (JSON)
+          </button>
+
+          <div className="consent-list">
+            {consents.length ? (
+              consents.map((consent) => (
+                <article key={consent.id}>
+                  <Check />
+                  <div>
+                    <strong>
+                      {consent.consentType === "marketing"
+                        ? "Comunicações de marketing"
+                        : consent.consentType}
+                    </strong>
+                    <span>
+                      {(consent.isGranted
+                        ? "Consentimento concedido"
+                        : "Consentimento retirado") +
+                        " · política " +
+                        consent.policyVersion}
+                    </span>
+                    <small>
+                      {new Date(
+                        consent.registeredAt,
+                      ).toLocaleString("pt-BR")}
+                    </small>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <p className="account-empty">
+                Nenhum consentimento registrado ainda.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {notice && (
+        <p role="status" className="account-notice">
+          {notice}
+        </p>
+      )}
+    </section>
+  );
+}
+
+function AddressSheet({
+  busy,
+  onClose,
+  onCreated,
+}: {
+  busy: boolean;
+  onClose: () => void;
+  onCreated: () => Promise<void>;
+}) {
+  const [lookingUp, setLookingUp] = useState(false);
+  const [fields, setFields] = useState({
+    street: "",
+    neighborhood: "",
+    city: "",
+    state: "RO",
+  });
+  const [error, setError] = useState("");
+
+  async function postalLookup(raw: string) {
+    if (raw.replace(/\D/g, "").length !== 8) return;
+    setLookingUp(true);
+    const result = await PostalLookupService.lookup(raw);
+    setLookingUp(false);
+    if (result) {
+      setFields({
+        street: result.street,
+        neighborhood: result.neighborhood,
+        city: result.city,
+        state: result.state || "RO",
+      });
+    }
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    const form = Object.fromEntries(
+      new FormData(event.currentTarget),
+    );
+    try {
+      await api("/v1/account/addresses", {
+        method: "POST",
+        body: JSON.stringify({
+          ...form,
+          isDefault: form.isDefault === "on",
+          commandId: commandId(),
+        }),
+      });
+      await onCreated();
+    } catch (caught) {
+      setError(
+        (caught as Error).message === "ADDRESS_DUPLICATE"
+          ? "Este endereço já está cadastrado."
+          : "Revise os dados e tente novamente.",
+      );
+    }
+  }
+
+  return (
+    <div className="account-sheet-backdrop" role="presentation">
+      <form className="account-sheet" onSubmit={submit}>
+        <header>
+          <div>
+            <span className="eyebrow">Local de entrega</span>
+            <h2>Novo endereço</h2>
+          </div>
+          <button type="button" aria-label="Fechar" onClick={onClose}>
+            <X />
+          </button>
+        </header>
+
+        <label>
+          Rótulo
+          <input name="label" defaultValue="Casa" maxLength={64} required />
+        </label>
+        <label>
+          CEP
+          <input
+            name="cep"
+            inputMode="numeric"
+            placeholder="00000-000"
+            onBlur={(event) =>
+              void postalLookup(event.currentTarget.value)
+            }
+            required
+          />
+          {lookingUp && <small>Buscando endereço…</small>}
+        </label>
+        <label>
+          Rua
+          <input
+            name="street"
+            value={fields.street}
+            onChange={(event) =>
+              setFields({
+                ...fields,
+                street: event.target.value,
+              })
+            }
+            required
+          />
+        </label>
+        <div className="account-time-grid">
+          <label>
+            Número
+            <input name="number" defaultValue="S/N" required />
+          </label>
+          <label>
+            Complemento
+            <input name="complement" />
+          </label>
+        </div>
+        <label>
+          Bairro
+          <input
+            name="neighborhood"
+            value={fields.neighborhood}
+            onChange={(event) =>
+              setFields({
+                ...fields,
+                neighborhood: event.target.value,
+              })
+            }
+            required
+          />
+        </label>
+        <div className="account-time-grid">
+          <label>
+            Cidade
+            <input
+              name="city"
+              value={fields.city}
+              onChange={(event) =>
+                setFields({
+                  ...fields,
+                  city: event.target.value,
+                })
+              }
+              required
+            />
+          </label>
+          <label>
+            UF
+            <input
+              name="state"
+              maxLength={2}
+              value={fields.state}
+              onChange={(event) =>
+                setFields({
+                  ...fields,
+                  state: event.target.value.toUpperCase(),
+                })
+              }
+              required
+            />
+          </label>
+        </div>
+        <label className="account-toggle">
+          <input type="checkbox" name="isDefault" />
+          <span>Definir como endereço padrão</span>
+        </label>
+        {error && (
+          <p role="alert" className="field-error">
+            {error}
+          </p>
+        )}
+        <button className="primary" disabled={busy}>
+          Salvar endereço
+        </button>
+      </form>
+    </div>
+  );
+}
