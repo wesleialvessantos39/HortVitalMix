@@ -68,16 +68,24 @@ export function OsmPinMap({
   longitude,
   onChange,
 }: Props) {
-  const hasPin =
-    latitude !== null &&
-    longitude !== null &&
-    Number.isFinite(latitude) &&
-    Number.isFinite(longitude);
+  const pinCoordinates = useMemo<Coordinates | null>(() => {
+    if (
+      typeof latitude !== "number" ||
+      typeof longitude !== "number" ||
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude)
+    )
+      return null;
+    return { latitude, longitude };
+  }, [latitude, longitude]);
+  const hasPin = pinCoordinates !== null;
 
   const [center, setCenter] = useState<Coordinates>(
-    hasPin ? { latitude, longitude } : DEFAULT_CENTER,
+    () => pinCoordinates ?? DEFAULT_CENTER,
   );
-  const [zoom, setZoom] = useState(hasPin ? DETAIL_ZOOM : DEFAULT_ZOOM);
+  const [zoom, setZoom] = useState(
+    () => (pinCoordinates ? DETAIL_ZOOM : DEFAULT_ZOOM),
+  );
   const mapRef = useRef<HTMLDivElement | null>(null);
   const panRef = useRef<{
     pointerId: number;
@@ -88,9 +96,9 @@ export function OsmPinMap({
   } | null>(null);
 
   useEffect(() => {
-    if (!hasPin) return;
-    setCenter({ latitude, longitude });
-  }, [hasPin, latitude, longitude]);
+    if (!pinCoordinates) return;
+    setCenter(pinCoordinates);
+  }, [pinCoordinates]);
 
   const centerWorld = useMemo(
     () => project(center.latitude, center.longitude, zoom),
@@ -125,13 +133,17 @@ export function OsmPinMap({
   }, [centerWorld, zoom]);
 
   const pinOffset = useMemo(() => {
-    if (!hasPin) return null;
-    const pinWorld = project(latitude, longitude, zoom);
+    if (!pinCoordinates) return null;
+    const pinWorld = project(
+      pinCoordinates.latitude,
+      pinCoordinates.longitude,
+      zoom,
+    );
     return {
       x: pinWorld.x - centerWorld.x,
       y: pinWorld.y - centerWorld.y,
     };
-  }, [centerWorld, hasPin, latitude, longitude, zoom]);
+  }, [centerWorld, pinCoordinates, zoom]);
 
   function coordinateAtClient(clientX: number, clientY: number) {
     const element = mapRef.current;
