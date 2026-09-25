@@ -94,7 +94,7 @@ export default function App() {
     path === "/entrar/super-administrador" ||
     path === "/acesso/administracao" ||
     path === "/acesso/super-administracao";
-  const accountTarget = shellSession ? "/minha-conta" : "/conta";
+  const accountTarget = "/conta";
   const isAccountDataRoute = path === "/conta" || path.startsWith("/conta/");
   const publicPortalSession =
     Boolean(shellSession) &&
