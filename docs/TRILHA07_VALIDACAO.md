@@ -182,3 +182,12 @@ Evidência pós-merge:
 - nenhum recurso pago foi habilitado.
 
 Este apêndice registra a promoção. O commit documental que o contém não modifica o runtime; se ele próprio disparar um novo deployment de `main`, a release canônica deve apontar para o SHA desse commit somente depois de o novo deployment obter `success`.
+
+
+## 11. Correção final do build Hobby
+
+O fechamento da promoção confirmou e corrigiu uma divergência entre documentação e configuração: `typecheck:app` ainda constava no `buildCommand` da Vercel. O build de produção foi reduzido ao conjunto leve previsto para Hobby:
+
+`migrations:verify -> security:check -> vite build -> check-bundle`.
+
+O typecheck integral continua em `verify:t07:free`, junto da suíte dedicada T07. Nenhuma suíte pesada é executada automaticamente na Vercel e nenhum gatilho automático de GitHub Actions foi ligado.
