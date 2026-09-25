@@ -11,6 +11,7 @@ import {
   AddressManagementError,
   AddressManagementService,
 } from "../../server/services/AddressManagementService";
+import { verifyRecentAuthProof } from "../../server/security/recentAuth";
 
 function app() {
   const server = express();
@@ -53,6 +54,8 @@ const address = {
 
 beforeEach(() => {
   vi.restoreAllMocks();
+  vi.mocked(verifyRecentAuthProof).mockReset();
+  vi.mocked(verifyRecentAuthProof).mockReturnValue(true);
 });
 
 describe("rotas HTTP de endereço", () => {
@@ -66,8 +69,7 @@ describe("rotas HTTP de endereço", () => {
   });
 
   it("POST exige prova recente antes da mutação", async () => {
-    const recent = await import("../../server/security/recentAuth");
-    vi.mocked(recent.verifyRecentAuthProof).mockReturnValueOnce(false);
+    vi.mocked(verifyRecentAuthProof).mockReturnValueOnce(false);
     const response = await request(app())
       .post("/v1/account/addresses")
       .set("X-HVM-Request", "1")
