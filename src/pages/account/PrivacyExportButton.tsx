@@ -58,7 +58,7 @@ export function PrivacyExportButton({
 
   async function reauthenticate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!portalRole) {
+    if (!portalRole || !session.email) {
       setReauthError("Entre novamente pelo portal de consumidor ou produtor.");
       return;
     }
