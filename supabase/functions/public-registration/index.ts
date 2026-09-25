@@ -186,6 +186,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return json(204, null, origin);
   if (req.method !== "POST")
     return safeFailure(405, "METHOD_NOT_ALLOWED", requestId, origin);
+  if (req.headers.get("x-hvm-request") !== "1")
+    return safeFailure(403, "ORIGIN_NOT_ALLOWED", requestId, origin);
 
   const length = Number(req.headers.get("content-length") ?? "0");
   if (Number.isFinite(length) && length > MAX_BODY_BYTES)
