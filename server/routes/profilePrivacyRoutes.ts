@@ -2,16 +2,23 @@ import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import { originProtection } from "../security/originProtection.ts";
 import {
-  CreateAddressSchema,
-  DeleteAddressSchema,
-  SetDefaultAddressSchema,
   UpdatePreferencesSchema,
   UpdateProfileSchema,
 } from "../../shared/contracts/profilePrivacy.ts";
 import {
+  CreateAddressAdvancedSchema,
+  DeleteAddressAdvancedSchema,
+  SetDefaultAddressAdvancedSchema,
+  UpdateAddressAdvancedSchema,
+} from "../../shared/contracts/addressAdvanced.ts";
+import {
   ProfilePrivacyError,
   ProfilePrivacyService,
 } from "../services/ProfilePrivacyService.ts";
+import {
+  AddressManagementError,
+  AddressManagementService,
+} from "../services/AddressManagementService.ts";
 import { verifyRecentAuthProof } from "../security/recentAuth.ts";
 
 export const profilePrivacyRouter = Router();
@@ -33,10 +40,15 @@ function currentActor(req: Request, res: Response) {
 }
 
 function sendError(res: Response, error: unknown) {
-  if (error instanceof ProfilePrivacyError) {
-    res
-      .status(error.status)
-      .json({ error: error.code, requestId: res.locals.requestId });
+  if (
+    error instanceof ProfilePrivacyError ||
+    error instanceof AddressManagementError
+  ) {
+    res.status(error.status).json({
+      error: error.code,
+      message: error.message,
+      requestId: res.locals.requestId,
+    });
     return;
   }
   res
@@ -152,7 +164,7 @@ profilePrivacyRouter.get(
     if (!actor) return;
     try {
       res.status(200).json({
-        addresses: await ProfilePrivacyService.listAddresses(actor.userId),
+        addresses: await AddressManagementService.listAddresses(actor.userId),
       });
     } catch (error) {
       sendError(res, error);
@@ -166,7 +178,9 @@ profilePrivacyRouter.post(
   async (req: Request, res: Response) => {
     const actor = currentActor(req, res);
     if (!actor) return;
-    const parsed = CreateAddressSchema.safeParse(req.body);
+    if (!requireRecentAuth(req, res, actor.userId)) return;
+
+    const parsed = CreateAddressAdvancedSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({
         error: "VALIDATION_ERROR",
@@ -175,8 +189,9 @@ profilePrivacyRouter.post(
       });
       return;
     }
+
     try {
-      const address = await ProfilePrivacyService.createAddress(
+      const address = await AddressManagementService.createAddress(
         actor.userId,
         actor.role,
         parsed.data,
@@ -191,31 +206,72 @@ profilePrivacyRouter.post(
 );
 
 profilePrivacyRouter.patch(
+  "/account/addresses/:id",
+  originProtection,
+  async (req: Request, res: Response) => {
+    const actor = currentActor(req, res);
+    if (!actor) return;
+    const addressId = parseAddressId(req, res);
+    if (!addressId) return;
+    if (!requireRecentAuth(req, res, actor.userId)) return;
+
+    const parsed = UpdateAddressAdvancedSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: "VALIDATION_ERROR",
+        fields: parsed.error.issues,
+        requestId: req.requestId,
+      });
+      return;
+    }
+
+    try {
+      const result = await AddressManagementService.updateAddress(
+        actor.userId,
+        actor.role,
+        addressId,
+        parsed.data,
+        req.requestId,
+        req.clientIpHash,
+      );
+      res.status(result?.status === "conflict" ? 409 : 200).json(result);
+    } catch (error) {
+      sendError(res, error);
+    }
+  },
+);
+
+profilePrivacyRouter.patch(
   "/account/addresses/:id/default",
   originProtection,
   async (req: Request, res: Response) => {
     const actor = currentActor(req, res);
     if (!actor) return;
     const addressId = parseAddressId(req, res);
-    if (!actor || !addressId) return;
-    const parsed = SetDefaultAddressSchema.safeParse(req.body);
+    if (!addressId) return;
+    if (!requireRecentAuth(req, res, actor.userId)) return;
+
+    const parsed = SetDefaultAddressAdvancedSchema.safeParse(req.body);
     if (!parsed.success) {
-      res
-        .status(400)
-        .json({ error: "VALIDATION_ERROR", requestId: req.requestId });
+      res.status(400).json({
+        error: "VALIDATION_ERROR",
+        fields: parsed.error.issues,
+        requestId: req.requestId,
+      });
       return;
     }
+
     try {
-      res.status(200).json(
-        await ProfilePrivacyService.setDefaultAddress(
-          actor.userId,
-          actor.role,
-          addressId,
-          parsed.data.commandId,
-          req.requestId,
-          req.clientIpHash,
-        ),
+      const result = await AddressManagementService.setDefaultAddress(
+        actor.userId,
+        actor.role,
+        addressId,
+        parsed.data.expectedRevision,
+        parsed.data.commandId,
+        req.requestId,
+        req.clientIpHash,
       );
+      res.status(result?.status === "conflict" ? 409 : 200).json(result);
     } catch (error) {
       sendError(res, error);
     }
@@ -229,25 +285,30 @@ profilePrivacyRouter.delete(
     const actor = currentActor(req, res);
     if (!actor) return;
     const addressId = parseAddressId(req, res);
-    if (!actor || !addressId) return;
-    const parsed = DeleteAddressSchema.safeParse(req.body);
+    if (!addressId) return;
+    if (!requireRecentAuth(req, res, actor.userId)) return;
+
+    const parsed = DeleteAddressAdvancedSchema.safeParse(req.body);
     if (!parsed.success) {
-      res
-        .status(400)
-        .json({ error: "VALIDATION_ERROR", requestId: req.requestId });
+      res.status(400).json({
+        error: "VALIDATION_ERROR",
+        fields: parsed.error.issues,
+        requestId: req.requestId,
+      });
       return;
     }
+
     try {
-      res.status(200).json(
-        await ProfilePrivacyService.deleteAddress(
-          actor.userId,
-          actor.role,
-          addressId,
-          parsed.data.commandId,
-          req.requestId,
-          req.clientIpHash,
-        ),
+      const result = await AddressManagementService.deleteAddress(
+        actor.userId,
+        actor.role,
+        addressId,
+        parsed.data.expectedRevision,
+        parsed.data.commandId,
+        req.requestId,
+        req.clientIpHash,
       );
+      res.status(result?.status === "conflict" ? 409 : 200).json(result);
     } catch (error) {
       sendError(res, error);
     }
