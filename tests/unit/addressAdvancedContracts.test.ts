@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   CreateAddressAdvancedSchema,
@@ -76,12 +77,19 @@ describe("endereços avançados", () => {
     ).toBe(false);
   });
 
-  it("expõe somente os quatro rótulos rápidos canônicos", () => {
+  it("preserva rótulos, limite 10 e fingerprint canônicos", () => {
     expect([...QUICK_ADDRESS_LABELS]).toEqual([
       "Casa",
       "Trabalho",
       "Sítio Pessoal",
       "Comercial",
     ]);
+    const migration = readFileSync(
+      "supabase/migrations/20260925153500_trilha07_address_geocoding.sql",
+      "utf8",
+    );
+    expect(migration).toContain("active_count >= 10");
+    expect(migration).toContain("fingerprint_sha256");
+    expect(migration).toContain("extensions.digest");
   });
 });
