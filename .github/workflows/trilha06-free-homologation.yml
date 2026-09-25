@@ -1,0 +1,37 @@
+name: Trilha 06 - Homologacao gratuita
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "server/**"
+      - "shared/**"
+      - "src/**"
+      - "supabase/**"
+      - "tests/**"
+      - "scripts/**"
+      - "package.json"
+      - "vercel.json"
+      - ".github/workflows/trilha06-free-homologation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Manifesto, tipos, seguranca e testes T06
+        run: npm run verify:t06:free
+      - name: Chromium para responsividade
+        run: npx playwright install --with-deps chromium
+      - name: E2E T06 - 320 360 768 1024 1440
+        run: npm run test:t06:e2e
