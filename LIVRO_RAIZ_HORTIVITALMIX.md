@@ -3054,3 +3054,27 @@ Nenhum recurso pago foi adicionado. Não foram usados Google Maps Platform, Mapb
 
 ### Próximo gate
 Executar `npm run verify:t07:free` em ambiente local/Google Studio com dependências instaladas. Somente após gate verde e revisão do PR, fazer merge em `main`; o deploy Vercel deve ocorrer exclusivamente a partir da `main`.
+
+
+## 2026-09-25 — Promoção da T07 para main e produção
+
+### Resultado da promoção
+- Pull request **#49** foi mergeado por squash em `main`.
+- Commit funcional promovido: `c3a09bea41f25da224ae4941c572021fab2f9918`.
+- O status de integração **Vercel** desse commit mudou para `success`, com descrição `Deployment has completed`.
+- Nenhum preview de branch foi habilitado; o deploy ocorreu somente após merge em `main`.
+- GitHub Actions permaneceram sem execução automática.
+- Nenhum recurso pago foi habilitado em GitHub, Vercel ou Supabase.
+
+### Release de produção
+Após o status Vercel `success`, o registro canônico `public.app_releases` foi promovido para:
+- release: `trilha07-v1-c3a09be`;
+- environment: `production`;
+- schema lógico: **29**;
+- hash: `500a5d5ff51d5608c07768a8b63f681328b37d1f3c99a19dd7ab5c612851689a`;
+- commit funcional: `c3a09bea41f25da224ae4941c572021fab2f9918`.
+
+Este registro documental é aditivo e não altera a lógica funcional da T07. Caso este próprio registro gere um novo commit de `main`, `app_releases.commit_sha` deve ser sincronizado apenas depois de o deployment correspondente receber status Vercel `success`, preservando a regra de readiness por SHA exato.
+
+### Estado final da T07
+A implementação funcional da T07 está no repositório principal e o banco canônico está em schema 29. A implementação inclui CRUD avançado de endereço, limite de dez ativos, geocodificação gratuita, pin OSM, endereço padrão ativo único, branch soft/hard preparada sem criar `app_orders`, RLS FORCE, auditoria, idempotência e sincronização da shell. T01–T06 foram preservadas e T08+ não foi iniciado.
