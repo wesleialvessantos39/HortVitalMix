@@ -8,6 +8,93 @@ import type { Registration } from "../../shared/contracts/auth.ts";
 type RegistrationFailure = Error & { status?: number };
 type ChainState = "complete" | "incomplete" | "unknown";
 
+const CANONICAL_PUBLIC_REGISTRATION_EDGE =
+  "https://xipbsazvymkqqfmfegwu.supabase.co/functions/v1/public-registration";
+
+function edgeRegistrationError(
+  code: string,
+  status: number,
+): RegistrationFailure {
+  const mapped =
+    code === "IDENTITY_CONFLICT"
+      ? "REGISTRATION_IDENTITY_CONFLICT"
+      : code === "ROLE_ALREADY_ASSIGNED"
+        ? "REGISTRATION_ROLE_ALREADY_ASSIGNED"
+        : code === "CPF_LINKED_TO_EXISTING_ACCOUNT"
+          ? "REGISTRATION_CPF_LINKED_TO_EXISTING_ACCOUNT"
+          : code === "EXISTING_ACCOUNT_CREDENTIALS_INVALID"
+            ? "REGISTRATION_EXISTING_ACCOUNT_CREDENTIALS_INVALID"
+            : code === "EXISTING_ACCOUNT_CONFIRM_REQUIRED"
+              ? "REGISTRATION_EXISTING_ACCOUNT_CONFIRM_REQUIRED"
+              : code === "AUTH_UNAVAILABLE"
+                ? "REGISTRATION_AUTH_UNAVAILABLE"
+                : code === "DATABASE_UNAVAILABLE"
+                  ? "REGISTRATION_DATABASE_UNAVAILABLE"
+                  : code === "VALIDATION_ERROR"
+                    ? "REGISTRATION_DATA_REJECTED"
+                    : code.startsWith("REGISTRATION_")
+                      ? code
+                      : "REGISTRATION_UNEXPECTED_FAILURE";
+  return registrationError(mapped, status || 503);
+}
+
+async function registerThroughEdge(
+  data: Registration,
+  role: "consumer" | "producer",
+  requestId: string,
+) {
+  let response: Response;
+  try {
+    response = await fetch(CANONICAL_PUBLIC_REGISTRATION_EDGE, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-HVM-Request": "1",
+        "X-Request-Id": requestId,
+      },
+      body: JSON.stringify({ role, data }),
+      signal: AbortSignal.timeout(20_000),
+    });
+  } catch (error) {
+    reportFailure({
+      category: "registration_edge_transport_failed",
+      requestId,
+      detail: (error as { name?: string })?.name ?? "unknown",
+    });
+    throw registrationError("REGISTRATION_AUTH_UNAVAILABLE", 503);
+  }
+
+  const body = (await response.json().catch(() => ({}))) as Record<
+    string,
+    unknown
+  >;
+
+  if (!response.ok) {
+    const code = String(body.error ?? `HTTP_${response.status}`);
+    reportFailure({
+      category: "registration_edge_failed",
+      requestId,
+      detail: code,
+    });
+    throw edgeRegistrationError(code, response.status);
+  }
+
+  return {
+    userId: typeof body.userId === "string" ? body.userId : undefined,
+    confirmationRequired: Boolean(body.confirmationRequired),
+    confirmationDispatchAccepted: Boolean(
+      body.confirmationDispatchAccepted,
+    ),
+    confirmationDispatchDeferred: Boolean(
+      body.confirmationDispatchDeferred,
+    ),
+    existingIdentity: Boolean(body.existingIdentity),
+    roleAdded: body.roleAdded !== false,
+    role,
+    transport: "supabase_edge" as const,
+  };
+}
+
 function registrationError(code: string, status: number): RegistrationFailure {
   return Object.assign(new Error(code), { status });
 }
@@ -328,8 +415,14 @@ export async function register(
   role: "consumer" | "producer",
   requestId: string,
 ) {
-  if (!supabaseAdmin)
-    throw registrationError("REGISTRATION_AUTH_UNAVAILABLE", 503);
+  if (!supabaseAdmin) {
+    reportFailure({
+      category: "registration_privileged_client_unavailable",
+      requestId,
+      detail: "edge_fallback",
+    });
+    return registerThroughEdge(data, role, requestId);
+  }
 
   const existing = await addRoleToExistingIdentity(
     data,
