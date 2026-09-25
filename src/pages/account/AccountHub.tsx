@@ -503,7 +503,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
             Seu histórico de consentimento é imutável e vinculado à
             versão da política.
           </p>
-          <PrivacyExportButton onNotice={setNotice} />
+          <PrivacyExportButton session={session} onNotice={setNotice} />
 
           <div className="consent-list">
             {consents.length ? (
