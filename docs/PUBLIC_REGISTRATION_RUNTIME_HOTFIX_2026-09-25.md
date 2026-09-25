@@ -33,7 +33,7 @@ Criada e implantada a função gratuita:
 
 Estado no Supabase canônico:
 - status: ACTIVE;
-- version: 1;
+- version: 2;
 - `verify_jwt=false` porque este endpoint representa cadastro anônimo público, não uma ação autenticada;
 - nenhum segredo é enviado ao frontend.
 
