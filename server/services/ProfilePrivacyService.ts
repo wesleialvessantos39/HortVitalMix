@@ -1,6 +1,6 @@
 import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
-import { sha256Hex } from "../security/hash.ts";
+import { redactPII } from "../security/redactPII.ts";
 import type {
   AddressView,
   ConsentView,
@@ -36,25 +36,6 @@ function maskCpf(cpf: string) {
     : "***.***.***-**";
 }
 
-function addressFingerprint(input: CreateAddressInput) {
-  const normalized = [
-    input.cep,
-    input.street,
-    input.number,
-    input.complement ?? "",
-    input.neighborhood,
-    input.city,
-    input.state,
-  ]
-    .map((value) =>
-      String(value)
-        .trim()
-        .toLocaleLowerCase("pt-BR")
-        .replace(/\s+/g, " "),
-    )
-    .join("|");
-  return sha256Hex(normalized);
-}
 
 async function getPersonId(
   client: PoolClient,
@@ -106,8 +87,8 @@ async function writeAudit(
       args.action,
       args.entity,
       args.targetId,
-      args.before ? JSON.stringify(args.before) : null,
-      args.after ? JSON.stringify(args.after) : null,
+      args.before ? JSON.stringify(redactPII(args.before)) : null,
+      args.after ? JSON.stringify(redactPII(args.after)) : null,
       args.ipHash,
       args.commandId,
     ],
@@ -194,8 +175,8 @@ export class ProfilePrivacyService {
         action: "profile.updated",
         entity: "app_people",
         targetId: personId,
-        before: { fullName: current.full_name },
-        after: { fullName: input.fullName },
+        before: { changedFields: ["fullName"], revision: current.revision },
+        after: { changedFields: ["fullName"], revision: current.revision + 1 },
         ipHash,
         commandId: input.commandId,
       });
@@ -260,13 +241,12 @@ export class ProfilePrivacyService {
         );
       }
 
-      const fingerprint = addressFingerprint(input);
       try {
         const inserted = await client.query<Record<string, any>>(
           [
             "INSERT INTO public.app_user_addresses",
-            "(person_id,label,cep,street,number,complement,neighborhood,city,state,is_default,fingerprint_sha256)",
-            "VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *",
+            "(person_id,label,cep,street,number,complement,neighborhood,city,state,is_default)",
+            "VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *",
           ].join(" "),
           [
             personId,
@@ -279,7 +259,6 @@ export class ProfilePrivacyService {
             input.city,
             input.state,
             makeDefault,
-            fingerprint,
           ],
         );
         const row = inserted.rows[0];
@@ -291,10 +270,8 @@ export class ProfilePrivacyService {
           entity: "app_user_addresses",
           targetId: row.id,
           after: {
-            label: row.label,
-            city: row.city,
-            state: row.state,
             isDefault: row.is_default,
+            fingerprintSha256: row.fingerprint_sha256,
           },
           ipHash,
           commandId: input.commandId,
@@ -390,11 +367,9 @@ export class ProfilePrivacyService {
         await client.query<{
           id: string;
           is_default: boolean;
-          label: string;
-          city: string;
-          state: string;
+          fingerprint_sha256: string;
         }>(
-          "SELECT id,is_default,label,city,state FROM public.app_user_addresses WHERE id=$1 AND person_id=$2 FOR UPDATE",
+          "SELECT id,is_default,fingerprint_sha256 FROM public.app_user_addresses WHERE id=$1 AND person_id=$2 FOR UPDATE",
           [addressId, personId],
         )
       ).rows[0];
@@ -429,10 +404,8 @@ export class ProfilePrivacyService {
         entity: "app_user_addresses",
         targetId: addressId,
         before: {
-          label: address.label,
-          city: address.city,
-          state: address.state,
           isDefault: address.is_default,
+          fingerprintSha256: address.fingerprint_sha256,
         },
         after: { replacementDefaultId },
         ipHash,
