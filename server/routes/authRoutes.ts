@@ -1026,8 +1026,14 @@ for (const role of ["consumer", "producer"] as const)
       );
       // A previous browser session is not proof that this new account was confirmed.
       clear(res);
-      let confirmationDispatchAccepted = false;
-      if (result.confirmationRequired && supabasePublic) {
+      let confirmationDispatchAccepted = Boolean(
+        result.confirmationDispatchAccepted,
+      );
+      if (
+        result.confirmationRequired &&
+        !confirmationDispatchAccepted &&
+        supabasePublic
+      ) {
         const target = redirectUrl(req, `/confirmar-contato?portal=${role}`);
         if (target) {
           try {
