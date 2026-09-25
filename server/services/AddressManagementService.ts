@@ -310,13 +310,18 @@ export class AddressManagementService {
 
     const old = snapshot.rows[0];
     const coreChanged = [
-      "cep",
-      "street",
-      "number",
-      "neighborhood",
-      "city",
-      "state",
-    ].some((key) => Object.prototype.hasOwnProperty.call(input, key));
+      ["cep", "cep"],
+      ["street", "street"],
+      ["number", "number"],
+      ["neighborhood", "neighborhood"],
+      ["city", "city"],
+      ["state", "state"],
+    ].some(
+      ([inputKey, rowKey]) =>
+        Object.prototype.hasOwnProperty.call(input, inputKey) &&
+        String((input as Record<string, unknown>)[inputKey] ?? "") !==
+          String(old[rowKey] ?? ""),
+    );
     const coordinatesTouched =
       Object.prototype.hasOwnProperty.call(input, "latitude") ||
       Object.prototype.hasOwnProperty.call(input, "longitude");
