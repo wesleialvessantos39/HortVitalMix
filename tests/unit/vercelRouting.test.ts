@@ -12,6 +12,7 @@ describe("Vercel API dispatcher", () => {
   it.each([
     "v1/admin/auth/login", "v1/admin/auth/mfa/verify",
     "v1/admin/auth/verify-session", "v1/auth/login",
+    "v1/auth/register-consumer", "v1/auth/register-producer",
     "v1/admin/bootstrap/status", "v1/admin/invites",
   ])("restores %s for both rewrite and direct function invocations", (path) => {
     expect(vercelRequestUrl(`/api?__hvm_path=${path}`)).toBe(`/${path}`);
