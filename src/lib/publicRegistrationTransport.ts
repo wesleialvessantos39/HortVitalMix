@@ -18,13 +18,10 @@ const CANONICAL_SUPABASE_URL =
   "https://xipbsazvymkqqfmfegwu.supabase.co";
 
 function edgeUrl() {
-  const configured = String(import.meta.env.VITE_SUPABASE_URL ?? "")
-    .trim()
-    .replace(/\/+$/, "");
-  const base = /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(configured)
-    ? configured
-    : CANONICAL_SUPABASE_URL;
-  return base + "/functions/v1/public-registration";
+  // Cadastro público deve atingir sempre o projeto canônico. Isso impede que
+  // Vercel/Google Studio apontem o fluxo para um projeto antigo por variável
+  // de ambiente divergente.
+  return CANONICAL_SUPABASE_URL + "/functions/v1/public-registration";
 }
 
 function asFailure(
