@@ -38,6 +38,7 @@ import {
 } from "../services/RoleSecurityService.ts";
 import { loginRateLimit, resetLoginRateLimit } from "../security/loginRateLimit.ts";
 import { authEmailRetryAfter } from "../security/authEmailRateLimit.ts";
+import { issueRecentAuthProof, RECENT_AUTH_WINDOW_MS } from "../security/recentAuth.ts";
 
 export const authRouter = Router();
 
@@ -55,7 +56,7 @@ export function cookie(req: Request, name: string) {
 }
 
 function clear(res: Response) {
-  for (const name of ["hvm_access", "hvm_refresh", "hvm_portal_role"])
+  for (const name of ["hvm_access", "hvm_refresh", "hvm_portal_role", "hvm_reauth"])
     res.clearCookie(name, {
       path: "/",
       httpOnly: true,
@@ -89,6 +90,21 @@ function setSession(
       ...opts,
       maxAge: 30 * 86400 * 1000,
     });
+}
+
+function setRecentAuth(
+  res: Response,
+  userId: string,
+  accessToken: string,
+) {
+  const proof = issueRecentAuthProof(userId, accessToken);
+  res.cookie("hvm_reauth", proof, {
+    httpOnly: true,
+    secure: runtime.secureCookies,
+    sameSite: "strict",
+    path: "/",
+    maxAge: RECENT_AUTH_WINDOW_MS,
+  });
 }
 
 const PUBLIC_APP_ORIGIN = "https://hortvitalmix.vercel.app";
@@ -240,6 +256,7 @@ async function handlePublicLoginRequest(
     }
 
     setSession(res, data, portalRole);
+    setRecentAuth(res, data.user.id, data.access_token);
     resetLoginRateLimit(req.clientIpHash);
     res.setHeader("Server-Timing", "auth-login;dur=" + Math.max(0, Date.now() - startedAt));
     res.json({

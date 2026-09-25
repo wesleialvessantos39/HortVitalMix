@@ -7,7 +7,6 @@ import {
 import {
   ArrowLeft,
   Check,
-  Download,
   Home,
   MapPin,
   Plus,
@@ -26,6 +25,7 @@ import type {
   ProfileView,
 } from "../../../shared/contracts/profilePrivacy";
 import { PostalLookupService } from "../../services/PostalLookupService";
+import { PrivacyExportButton } from "./PrivacyExportButton";
 
 type Props = {
   path: string;
@@ -503,41 +503,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
             Seu histórico de consentimento é imutável e vinculado à
             versão da política.
           </p>
-          <button
-            className="secondary account-export"
-            disabled={busy}
-            onClick={async () => {
-              setBusy(true);
-              setNotice("");
-              try {
-                const data = await api<unknown>(
-                  "/v1/account/profile?export=1",
-                );
-                const blob = new Blob(
-                  [JSON.stringify(data, null, 2)],
-                  { type: "application/json" },
-                );
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement("a");
-                link.href = url;
-                link.download = "hortivitalmix-meus-dados.json";
-                link.click();
-                URL.revokeObjectURL(url);
-              } catch (error) {
-                setNotice(
-                  (error as Error).message ===
-                    "RECENT_AUTH_REQUIRED"
-                    ? "Por segurança, entre novamente antes de exportar seus dados."
-                    : "Não foi possível gerar a exportação.",
-                );
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            <Download />
-            Exportar meus dados (JSON)
-          </button>
+          <PrivacyExportButton session={session} onNotice={setNotice} />
 
           <div className="consent-list">
             {consents.length ? (

@@ -48,3 +48,37 @@ Hash do manifesto: 3d2b3207abe752f3edb2394efae3988c6e764738039cd587d26ccb782ffc4
 - npm run verify:t06:evidence
 - npm run verify:t06:free
 - npm run test:t06:e2e
+
+
+## Revisão de homologação — free tier only
+
+A revisão final da T06 foi executada sem habilitar recurso pago em GitHub, Vercel ou Supabase. A política de deploy continua limitada à branch `main`, com previews de branches desativados. Não foram adicionados Cron Jobs, Fluid Compute, Skew Protection ou qualquer recurso Vercel que dependa de upgrade de plano.
+
+### Correções encontradas e aplicadas
+
+1. **Reautenticação LGPD real:** o gate anterior se apoiava apenas na idade do JWT. Agora somente login público por senha emite uma prova HMAC `hvm_reauth`, HttpOnly, SameSite=Strict, ligada ao `userId`, ao `session_id` do Supabase e a uma janela de 15 minutos. Refresh de token e importação de sessão não renovam essa prova.
+2. **Auditoria sem PII bruta:** mutações T06 passam por `redactPII`; nome e endereço deixaram de ser persistidos em claro no payload de auditoria. O endereço é identificado por fingerprint SHA-256 e flags operacionais.
+3. **Fingerprint canônico no banco:** `trg_fn_t06_touch_address` passou a gerar SHA-256 no PostgreSQL, colapsando whitespace com classe POSIX e aplicando lowercase. Isso elimina bypass por chamadas fora do serviço.
+4. **Primeiro endereço padrão:** o trigger força `is_default=true` quando a pessoa ainda não possui endereço.
+5. **Escrita direta bloqueada:** `authenticated` mantém SELECT sob RLS, mas não possui GRANT de INSERT/UPDATE/DELETE nas três tabelas T06. Escritas passam pelo backend auditado.
+6. **Build Vercel fail-closed:** removido o `|| true` que permitia ignorar falha de TypeScript. O build agora exige migrations, typecheck, security check, testes T06, evidências, Vite e bundle check.
+7. **GitHub Actions econômico:** workflow T06 usa apenas runner padrão e ganhou `concurrency.cancel-in-progress` para não gastar execução duplicada.
+
+### Banco homologado
+
+- Migrations lógicas T06: `20260925002000`, `20260925003500`, `20260925010000`, `20260925011000`.
+- Versões físicas Supabase correspondentes: `20260925002406`, `20260925002930`, `20260925010313`, `20260925010505`.
+- Schema lógico final desta homologação: **28**.
+- Histórico reconciliado: **29 migrations**.
+- Hash canônico: `93466eeb7a5c11eb9d9f847e2c51c16b8e88798acfc7e63acf9e7b311aaea05d`.
+- Estrutura T06 preservada: **3 tabelas, 3 triggers, 6 policies e 8 operações HTTP canônicas**.
+- GRANT final para `authenticated`: leitura permitida; escrita direta negada.
+- Teste transacional real com `ROLLBACK` aprovado para: primeiro padrão, normalização SHA-256, duplicidade, troca de padrão, bump de revision de preferências e imutabilidade de consentimentos.
+- Supabase Advisor reexecutado: nenhum finding novo referente às tabelas T06. Findings restantes são preexistentes de T01–T05 e não foram alterados nesta homologação.
+
+### Matriz de testes T06
+
+- Contratos de perfil/endereço/preferências: **16 casos determinísticos**.
+- Prova de reautenticação recente: **6 casos determinísticos**.
+- Total unitário/contratual T06: **22 casos**.
+- E2E adicional: 5 breakpoints (320/360/768/1024/1440), quatro áreas da conta, bottom sheet mobile e reautenticação/exportação LGPD.

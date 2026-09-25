@@ -1,11 +1,32 @@
 import {readFileSync} from "node:fs";
 const read=p=>readFileSync(p,"utf8");
 const migration=read("supabase/migrations/20260925002000_trilha06_profile_privacy.sql");
+const hardening=read("supabase/migrations/20260925010000_trilha06_homologation_hardening.sql");
+const fingerprintFix=read("supabase/migrations/20260925011000_trilha06_fingerprint_normalization_fix.sql");
 const service=read("server/services/ProfilePrivacyService.ts");
 const routes=read("server/routes/profilePrivacyRoutes.ts");
+const recentAuth=read("server/security/recentAuth.ts");
 const ui=read("src/pages/account/AccountHub.tsx");
+const privacyUi=read("src/pages/account/PrivacyExportButton.tsx");
+const vercel=read("vercel.json");
 for(const token of ["app_user_addresses","app_user_preferences","app_consent_records","FORCE ROW LEVEL SECURITY","uq_app_user_addresses_default","trg_app_consent_records_immutable"])if(!migration.includes(token))throw new Error("T06_MIGRATION_EVIDENCE_MISSING:"+token);
-for(const token of ["FOR UPDATE","fingerprint","replacementDefaultId","policyVersion","exportData"])if(!service.includes(token))throw new Error("T06_SERVICE_EVIDENCE_MISSING:"+token);
-for(const token of ["/account/profile","/account/addresses","/account/preferences","RECENT_AUTH_REQUIRED"])if(!routes.includes(token))throw new Error("T06_ROUTE_EVIDENCE_MISSING:"+token);
-for(const token of ["/conta/perfil","/conta/enderecos","/conta/preferencias","/conta/privacidade","hortivitalmix:default-address-changed","PostalLookupService"])if(!ui.includes(token))throw new Error("T06_UI_EVIDENCE_MISSING:"+token);
-console.log(JSON.stringify({trail:"06",status:"evidence-ok"}));
+for(const token of ["trg_fn_t06_touch_address","extensions.digest","fingerprint_sha256","REVOKE INSERT, UPDATE, DELETE"])if(!hardening.includes(token))throw new Error("T06_HARDENING_EVIDENCE_MISSING:"+token);
+for(const token of ["[[:space:]]+","extensions.digest","fingerprint_sha256"])if(!fingerprintFix.includes(token))throw new Error("T06_FINGERPRINT_FIX_EVIDENCE_MISSING:"+token);
+for(const token of ["FOR UPDATE","replacementDefaultId","policyVersion","exportData","redactPII"])if(!service.includes(token))throw new Error("T06_SERVICE_EVIDENCE_MISSING:"+token);
+for(const token of ["/account/profile","/account/addresses","/account/preferences","verifyRecentAuthProof"])if(!routes.includes(token))throw new Error("T06_ROUTE_EVIDENCE_MISSING:"+token);
+for(const token of ["RECENT_AUTH_WINDOW_MS","timingSafeEqual","session_id","hvm:recent-auth:v1"])if(!recentAuth.includes(token))throw new Error("T06_REAUTH_EVIDENCE_MISSING:"+token);
+for(const token of ["/conta/perfil","/conta/enderecos","/conta/preferencias","/conta/privacidade","hortivitalmix:default-address-changed","PostalLookupService","PrivacyExportButton"])if(!ui.includes(token))throw new Error("T06_UI_EVIDENCE_MISSING:"+token);
+for(const token of ["current-password","Confirmar e exportar","/v1/auth/login"])if(!privacyUi.includes(token))throw new Error("T06_PRIVACY_UI_EVIDENCE_MISSING:"+token);
+const authRoutes=read("server/routes/authRoutes.ts");
+for(const token of ["setRecentAuth","issueRecentAuthProof","hvm_reauth"])if(!authRoutes.includes(token))throw new Error("T06_LOGIN_REAUTH_EVIDENCE_MISSING:"+token);
+if(vercel.includes("|| true"))throw new Error("T06_VERCEL_TYPECHECK_BYPASS_PRESENT");
+if(!vercel.includes('"main": true')||!vercel.includes('"*": false'))throw new Error("T06_VERCEL_FREE_BRANCH_POLICY_MISSING");
+if(/"crons"|"fluid"|"skewProtection"/.test(vercel))throw new Error("T06_VERCEL_PAID_FEATURE_PRESENT");
+const canonicalOperations=[
+  ["GET","/account/profile"],["PATCH","/account/profile"],
+  ["GET","/account/addresses"],["POST","/account/addresses"],
+  ["PATCH","/account/addresses/:id/default"],["DELETE","/account/addresses/:id"],
+  ["GET","/account/preferences"],["PATCH","/account/preferences"],
+];
+if(canonicalOperations.length!==8)throw new Error("T06_CANONICAL_ROUTE_COUNT");
+console.log(JSON.stringify({trail:"06",status:"evidence-ok",freeTierOnly:true}));

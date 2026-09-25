@@ -30,7 +30,12 @@ const address = {
   updatedAt: "2026-09-24T20:00:00.000Z",
 };
 
-async function mockAccount(page: import("@playwright/test").Page) {
+async function mockAccount(
+  page: import("@playwright/test").Page,
+  options: { requireRecentAuth?: boolean } = {},
+) {
+  let reauthenticated = !options.requireRecentAuth;
+
   await page.route("**/*", async (route) => {
     const url = new URL(route.request().url());
     if (!url.pathname.includes("/v1/")) {
@@ -38,13 +43,29 @@ async function mockAccount(page: import("@playwright/test").Page) {
       return;
     }
     const path = url.pathname.replace(/^\/(?:_hvm_api|api)/, "");
-    const json = (body: unknown) =>
+    const json = (body: unknown, status = 200) =>
       route.fulfill({
-        status: 200,
+        status,
         contentType: "application/json",
         body: JSON.stringify(body),
       });
+
     if (path === "/v1/auth/session") return json(session);
+    if (path === "/v1/auth/login" && route.request().method() === "POST") {
+      const body = route.request().postDataJSON() as {
+        email?: string;
+        password?: string;
+        portalRole?: string;
+      };
+      if (
+        body.email !== session.email ||
+        body.password !== "SenhaAtual#2026" ||
+        body.portalRole !== "consumer"
+      )
+        return json({ error: "INVALID_CREDENTIALS" }, 401);
+      reauthenticated = true;
+      return json({ ...session, status: "authenticated" });
+    }
     if (path === "/v1/config")
       return json({
         platformName: "HortiVitalMix",
@@ -57,7 +78,27 @@ async function mockAccount(page: import("@playwright/test").Page) {
         supportPhone: null,
         revision: 1,
       });
-    if (path === "/v1/account/profile") return json(profile);
+    if (path === "/v1/account/profile") {
+      if (url.searchParams.get("export") === "1") {
+        if (!reauthenticated)
+          return json({ error: "RECENT_AUTH_REQUIRED" }, 401);
+        return json({
+          exportedAt: "2026-09-25T00:00:00.000Z",
+          profile,
+          addresses: [address],
+          preferences: {
+            marketingConsent: false,
+            orderUpdatesChannel: "both",
+            quietHoursEnabled: false,
+            quietHoursStart: null,
+            quietHoursEnd: null,
+            revision: 1,
+          },
+          consents: [],
+        });
+      }
+      return json(profile);
+    }
     if (path === "/v1/account/addresses")
       return json({ addresses: [address] });
     if (path === "/v1/account/preferences")
@@ -109,14 +150,44 @@ test("T06 expõe as quatro áreas da conta", async ({ page }) => {
   }
 });
 
-test("T06 abre cadastro de endereço como bottom sheet no mobile", async ({ page }) => {
+test("T06 abre cadastro de endereço como bottom sheet no mobile", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 360, height: 800 });
   await mockAccount(page);
   await page.goto("/conta/enderecos");
   await page.getByRole("button", { name: "Novo endereço" }).click();
-  await expect(page.getByRole("heading", { name: "Novo endereço" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Novo endereço" }),
+  ).toBeVisible();
   const position = await page.locator(".account-sheet-backdrop").evaluate(
     (element) => getComputedStyle(element).placeItems,
   );
   expect(position).toContain("end");
+});
+
+test("T06 exige senha recente antes da exportação LGPD", async ({ page }) => {
+  await mockAccount(page, { requireRecentAuth: true });
+  await page.goto("/conta/privacidade");
+
+  await page.getByRole("button", { name: "Exportar meus dados (JSON)" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Confirme sua identidade" }),
+  ).toBeVisible();
+
+  await page.getByLabel("Senha atual").fill("SenhaAtual#2026");
+
+  const loginRequest = page.waitForRequest((request) =>
+    request.url().includes("/v1/auth/login") &&
+    request.method() === "POST",
+  );
+  await page.getByRole("button", { name: "Confirmar e exportar" }).click();
+  await loginRequest;
+
+  await expect(
+    page.getByRole("heading", { name: "Confirme sua identidade" }),
+  ).toBeHidden();
+  await expect(
+    page.getByText("Identidade confirmada. Seus dados foram exportados."),
+  ).toBeVisible();
 });
