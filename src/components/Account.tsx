@@ -3,6 +3,7 @@ import { AccountGreeting } from "./AccountGreeting";
 import { useEffect, useState, type FormEvent } from "react";
 import { ChevronRight, Crown, Plus, ShieldCheck, ShoppingBag, Sprout, UserRound, MapPin, SlidersHorizontal } from "lucide-react";
 import { api } from "../lib/api";
+import { registerPublicAccount } from "../lib/publicRegistrationTransport";
 import { getBootstrapStatus } from "../lib/adminBootstrapTransport";
 import { CPFInput } from "./forms/CPFInput";
 import { PhoneInput } from "./forms/PhoneInput";
@@ -447,16 +448,10 @@ export function Account({
       }
 
       if (mode === "consumer" || mode === "producer") {
-        const result = await api<{
-          confirmationRequired: boolean;
-          confirmationDispatchAccepted: boolean;
-          confirmationDispatchDeferred?: boolean;
-          existingIdentity?: boolean;
-          roleAdded?: boolean;
-        }>("/v1/auth/register-" + mode, {
-          method: "POST",
-          body: JSON.stringify(form),
-        });
+        const result = await registerPublicAccount(
+          mode,
+          form as Record<string, unknown>,
+        );
 
         const targetRole = mode;
         onSessionAdopt(null);

@@ -3093,3 +3093,40 @@ Correção aditiva:
 - nenhum recurso pago foi adicionado.
 
 Este ajuste não altera schema, contratos, API, banco ou comportamento funcional da T07. Ele apenas alinha a promoção à governança de custo zero e ao gate local definido para a entrega.
+
+
+## 2026-09-25 — AUTH-REG-20260925-01 — Hotfix de cadastro público no Vercel e Google Studio
+
+### Sintomas confirmados
+O proprietário informou HTTP 500 no cadastro Consumer/Producer pelo Vercel e HTTP 403 (“Cadastro não autorizado”) no Google Studio.
+
+A investigação do estado canônico confirmou que as tentativas atuais não chegaram ao Supabase Auth: não houve criação recente em `auth.users`, `app_users`, `app_people` ou papéis e os logs Auth não receberam chamada recente correspondente.
+
+Para o Google Studio existe causa histórica documentada: o proxy já havia devolvido HTTP 403 antes do Express em 2026-09-20. O fallback público que contornava esse proxy foi posteriormente removido e o frontend atual voltou a depender exclusivamente de `/_hvm_api` e `/api`.
+
+Para o Vercel, o conector desta sessão não expõe runtime logs do projeto, portanto não se fabrica uma causa específica do HTTP 500. Foi confirmado no código, porém, que o cadastro ainda tinha `supabaseAdmin` como dependência obrigatória, enquanto login e sessão já haviam recebido fallbacks para o runtime serverless.
+
+### Correção aditiva
+- criada `supabase/functions/public-registration/index.ts`;
+- função `public-registration` implantada no projeto canônico, ACTIVE version 2;
+- função anônima pública restrita exclusivamente a `consumer|producer`, com Zod strict, CPF Módulo 11, celular BR, senha forte e payload limitado;
+- identidade nova é criada pelo Auth Admin somente dentro da Edge; o domínio é concluído antes do reenvio de confirmação pelo Supabase Auth, preservando a ordem transacional já homologada;
+- domínio continua transacional pelas RPCs service-role já existentes;
+- conta existente exige senha correta e e-mail confirmado antes de adicionar novo papel;
+- nenhum papel administrativo pode nascer nesse caminho;
+- criada camada frontend `publicRegistrationTransport`: Express same-origin continua primário e a Edge entra apenas em falhas de infraestrutura/transporte, inclusive Studio 403 e Vercel 500;
+- erros de validação, conflito e rate limit não são mascarados pelo fallback;
+- `AuthService.register` usa a mesma Edge caso o client privilegiado esteja indisponível no Vercel;
+- rota de cadastro respeita confirmação já aceita pela Edge e não duplica e-mail;
+- dispatcher Vercel passou a ter cobertura explícita para as duas rotas de cadastro.
+
+### Segurança e custo
+Nenhum wildcard CORS foi reintroduzido no Express. A abertura cross-origin existe somente na Function pública de cadastro, que não usa cookies e só permite papéis públicos. A service-role permanece interna ao Supabase. Não foram adicionados Google Maps, Mapbox, Twilio, Resend, PostGIS, preview Vercel, branch Supabase paga ou GitHub Actions automáticas.
+
+### Banco e não regressão
+Nenhuma migration nova. Schema lógico permanece **29**, 30 migrations e hash canônico da T07 inalterados. T01–T07 são preservadas e T08+ não foi iniciado.
+
+### Testes e gate
+Foram adicionados testes de fallback Studio 403, Vercel 500, não-fallback em 400/409, erro Edge estruturado, fallback server-side e roteamento Vercel de Consumer/Producer. Gate local: `verify:registration:free`.
+
+A função Edge foi implantada e conferida como ACTIVE no projeto `xipbsazvymkqqfmfegwu`. A promoção do frontend/backend ao Vercel permanece condicionada ao merge deste hotfix na `main`.

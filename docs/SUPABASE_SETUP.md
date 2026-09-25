@@ -116,3 +116,12 @@ Segurança da RPC:
 Migration: `20260920023000_registration_rpc.sql`.
 
 Schema lógico: **11**.
+
+
+## Fallback gratuito de cadastro público
+
+Consumidor e Produtor mantêm o Express same-origin como caminho primário. Para falhas de infraestrutura do preview Google Studio ou do runtime Vercel, a aplicação pode usar a Edge Function canônica `public-registration` no mesmo projeto Supabase.
+
+A Function não cria novos papéis nem outro modelo de identidade: reutiliza `complete_public_registration` e `add_public_role_to_existing_identity`, mantém CPF único e envia a confirmação somente depois de o domínio estar concluído. A chave privilegiada permanece dentro do runtime Supabase. Nenhum secret privilegiado é exposto ao navegador.
+
+Este fallback não requer migration, projeto Supabase adicional, branch paga ou provedor externo.
