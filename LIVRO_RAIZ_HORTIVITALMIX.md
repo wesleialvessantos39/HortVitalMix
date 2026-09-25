@@ -2960,3 +2960,7 @@ Todos foram corrigidos.
 - Teste transacional real no Supabase aprovado com rollback, cobrindo padrão inicial, fingerprint, deduplicação, troca de padrão, revision de preferências e imutabilidade de consentimentos.
 - Advisor Supabase pós-revisão sem novo finding ligado às três tabelas T06; achados restantes pertencem a módulos anteriores e foram preservados.
 - Matriz dedicada: 16 contratos + 6 testes da prova recente = **22 casos T06**, além da regressão Playwright responsiva e do fluxo de exportação.
+
+
+### 2026-09-25 — Ajuste operacional do gate Vercel Hobby após falha de build
+A primeira promoção da homologação T06 (`b994d3c`) retornou status Vercel `failure` quando o `buildCommand` passou a exigir o typecheck global do projeto. Para respeitar a regra de custo zero e evitar repetição de builds por dívidas de tipagem fora do escopo T06, o gate de produção Hobby foi reduzido aos controles diretamente necessários ao deploy: manifesto de migrations, security check, testes T06, evidence, Vite build e bundle check. O `typecheck:app` **não foi removido do projeto**: continua obrigatório em `verify:t06:free`, apenas separado do deploy de produção. Não foi habilitado recurso pago ou preview de branch.

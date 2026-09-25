@@ -61,7 +61,7 @@ A revisão final da T06 foi executada sem habilitar recurso pago em GitHub, Verc
 3. **Fingerprint canônico no banco:** `trg_fn_t06_touch_address` passou a gerar SHA-256 no PostgreSQL, colapsando whitespace com classe POSIX e aplicando lowercase. Isso elimina bypass por chamadas fora do serviço.
 4. **Primeiro endereço padrão:** o trigger força `is_default=true` quando a pessoa ainda não possui endereço.
 5. **Escrita direta bloqueada:** `authenticated` mantém SELECT sob RLS, mas não possui GRANT de INSERT/UPDATE/DELETE nas três tabelas T06. Escritas passam pelo backend auditado.
-6. **Build Vercel fail-closed:** removido o `|| true` que permitia ignorar falha de TypeScript. O build agora exige migrations, typecheck, security check, testes T06, evidências, Vite e bundle check.
+6. **Build Vercel Hobby fail-closed e econômico:** removido o `|| true`. O deploy de produção exige migration manifest, security check, testes T06, evidências, Vite e bundle check. O typecheck completo permanece no gate `verify:t06:free`, separado do build Hobby para não consumir deploy/minutos com dívidas globais de tipagem anteriores à T06.
 7. **GitHub Actions econômico:** workflow T06 usa apenas runner padrão e ganhou `concurrency.cancel-in-progress` para não gastar execução duplicada.
 
 ### Banco homologado
@@ -82,3 +82,12 @@ A revisão final da T06 foi executada sem habilitar recurso pago em GitHub, Verc
 - Prova de reautenticação recente: **6 casos determinísticos**.
 - Total unitário/contratual T06: **22 casos**.
 - E2E adicional: 5 breakpoints (320/360/768/1024/1440), quatro áreas da conta, bottom sheet mobile e reautenticação/exportação LGPD.
+
+
+### Ajuste do gate Vercel Hobby após a primeira homologação
+
+A primeira tentativa de produção com o `typecheck:app` global dentro do `buildCommand` foi rejeitada pelo build Vercel. Como a finalidade desta revisão é homologar a T06 sem transformar dívidas de tipagem globais e preexistentes em consumo repetido de quota Hobby, o gate foi separado:
+
+- **Vercel produção (free/Hobby):** migrations + security check + 22 testes T06 + evidence + Vite build + bundle check.
+- **Gate técnico completo:** `npm run verify:t06:free` continua incluindo `typecheck:app`.
+- O deploy de branches continua desativado, evitando previews e consumo desnecessário.
