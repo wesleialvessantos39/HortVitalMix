@@ -47,10 +47,10 @@ function asFailure(
   }) as ApiFailure;
 }
 
-function shouldUseEdgeFallback(error: unknown) {
+function shouldUseExpressFallback(error: unknown) {
   const failure = error as ApiFailure;
   const status = failure.status ?? 0;
-  if ([403, 404, 405, 500, 502, 503, 504].includes(status)) return true;
+  if ([401, 403, 404, 405, 500, 502, 503, 504].includes(status)) return true;
 
   return new Set([
     "NETWORK_UNAVAILABLE",
@@ -60,6 +60,7 @@ function shouldUseEdgeFallback(error: unknown) {
     "AUTH_UNAVAILABLE",
     "DATABASE_UNAVAILABLE",
     "REGISTRATION_INTERNAL_ERROR",
+    "REGISTRATION_SCHEMA_OUTDATED",
     "REGISTRATION_EDGE_UNAVAILABLE",
   ]).has(failure.message);
 }
@@ -98,14 +99,24 @@ async function edgeRegistration(
 
   if (!response.ok) throw asFailure(response.status, body);
 
-  return body as PublicRegistrationResult;
+  return {
+    ...(body as PublicRegistrationResult),
+    transport: "supabase_edge",
+  };
 }
 
 export async function registerPublicAccount(
   role: PublicRole,
   data: Record<string, unknown>,
 ): Promise<PublicRegistrationResult> {
+  // O cadastro público não depende mais do proxy/runtime do ambiente.
+  // Vercel e Google Studio chamam diretamente a Edge canônica; o Express
+  // existe apenas como contingência se a própria Edge estiver indisponível.
   try {
+    return await edgeRegistration(role, data);
+  } catch (error) {
+    if (!shouldUseExpressFallback(error)) throw error;
+
     const result = await api<PublicRegistrationResult>(
       "/v1/auth/register-" + role,
       {
@@ -114,9 +125,6 @@ export async function registerPublicAccount(
       },
     );
     return { ...result, transport: result.transport ?? "express" };
-  } catch (error) {
-    if (!shouldUseEdgeFallback(error)) throw error;
-    return edgeRegistration(role, data);
   }
 }
 
