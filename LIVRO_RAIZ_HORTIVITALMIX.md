@@ -2991,3 +2991,10 @@ O build Vercel mantém manifesto, tipagem, segurança, Vite e verificação de s
 ### 2026-09-25 — Acesso visível às telas da T06
 
 Corrigida a navegação pública após login para /conta, onde estão Perfil, Endereços, Preferências e Privacidade. A rota antiga /minha-conta agora também apresenta os quatro atalhos com ícones e estilos existentes, preservando senha, confirmação e saída. O hub oferece retorno explícito à segurança/saída. O painel administrativo tem acesso visível à conta e privacidade, sem ampliar permissões de API. Nenhum texto técnico de trilha foi adicionado à interface. Teste de navegador cobre entrada antiga, abertura de Privacidade e retorno à saída. Mantidos os endpoints reais T06 e RLS existentes; esta correção é de navegação, sem alteração de contrato ou migração.
+
+
+### 2026-09-25 — Conta personalizada e saudação pelo nome
+
+Saudação com nome completo canônico de /v1/account/profile para consumidor, produtor, administrador e super administrador; manhã 05–11h, tarde 12–17h e noite 18–04h no relógio local do dispositivo, atualizada a cada minuto e ao retornar à janela. Antes de obter a identidade, não inventar nome nem usar o e-mail como substituto. E-mail e tipo da conta concentrados em Preferências, retirados do cabeçalho e da tela antiga de segurança.
+
+Experiência das quatro seções personalizada conforme activeRole: consumidor com entrega e compras; produtor com identificação do responsável, endereços pessoais claramente separados de imóveis/coleta/produção e comunicações pessoais; administrador com ferramentas de usuários/convites; super administrador também com acesso à configuração global. Não criar campos fictícios nem reclassificar preferências de compras como alertas administrativos. APIs, controles de autorização e persistência T06 permanecem os existentes. Privacidade apresenta revisão de escolhas, exportação e histórico; cartões, resumos e layout responsivo preservam verde/branco. Testes adicionados para manhã/tarde/noite, quatro perfis, ocultação de e-mail no hub e distinção das ferramentas administrativas.

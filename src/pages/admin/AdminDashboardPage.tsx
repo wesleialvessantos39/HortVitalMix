@@ -1,3 +1,4 @@
+import { AccountGreeting } from "../../components/AccountGreeting";
 import { ShieldCheck, UsersRound, Settings } from "lucide-react";
 import type { AdminVerifySessionResponse } from "../../../shared/contracts/adminGovernance";
 
@@ -6,8 +7,8 @@ export function AdminDashboardPage({access,onNavigate}:Props){
  const superAdmin=access.role==="platform_super_admin";
  return <section className="admin-page">
   <header className="admin-page-header">
-   <div><h1>Painel administrativo</h1><p>Gerencie os acessos e as configurações do HortiVitalMix.</p></div>
-   <span className="admin-role-pill">{superAdmin?"Super administrador":"Administrador setorial"}</span>
+   <div><h1><AccountGreeting /></h1><p>Gerencie os acessos e as configurações do HortiVitalMix.</p></div>
+
   </header>
   <div className="admin-stat-grid">
    <article className="admin-stat-card"><ShieldCheck/><div><strong>{superAdmin?"Acesso global":"Acesso setorial"}</strong><span>{superAdmin?"Acesso a todas as áreas da administração.":access.sectors.join(" • ")}</span></div></article>

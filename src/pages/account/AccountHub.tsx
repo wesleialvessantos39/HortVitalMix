@@ -1,3 +1,5 @@
+import { AccountGreeting } from "../../components/AccountGreeting";
+import { accountExperience } from "./accountExperience";
 import {
   useEffect,
   useMemo,
@@ -46,6 +48,8 @@ function commandId() {
 }
 
 export function AccountHub({ path, session, onNavigate }: Props) {
+  const experience = accountExperience(session.activeRole);
+  const administrative = session.activeRole === "platform_admin" || session.activeRole === "platform_super_admin";
   const [profile, setProfile] = useState<ProfileView | null>(null);
   const [addresses, setAddresses] = useState<AddressView[]>([]);
   const [preferences, setPreferences] =
@@ -60,7 +64,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
     try {
       const [profileResult, addressResult, preferenceResult] =
         await Promise.all([
-          path === "/conta" || path === "/conta/perfil"
+          path === "/conta" || path === "/conta/perfil" || path === "/conta/preferencias"
             ? api<ProfileView>("/v1/account/profile") : Promise.resolve(profile),
           path === "/conta" || path === "/conta/enderecos"
             ? api<{ addresses: AddressView[] }>("/v1/account/addresses") : Promise.resolve({addresses}),
@@ -93,13 +97,8 @@ export function AccountHub({ path, session, onNavigate }: Props) {
         <header className="account-hub-heading">
           <div>
             <span className="eyebrow">Minha conta</span>
-            <h1>
-              Olá
-              {profile?.fullName
-                ? ", " + profile.fullName.split(" ")[0]
-                : ""}
-            </h1>
-            <p>{session.email}</p>
+            <h1><AccountGreeting fullName={profile?.fullName ?? ""} /></h1>
+            <p>{experience.introduction}</p>
           </div>
         </header>
 
@@ -123,7 +122,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
         )}
 
         <div className="account-hub-grid">
-          {sections.map(([to, label, Icon]) => (
+          {sections.map(([to, label, Icon], index) => (
             <button
               key={to}
               className="account-hub-card"
@@ -133,13 +132,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
               <span>
                 <strong>{label}</strong>
                 <small>
-                  {label === "Perfil"
-                    ? "Dados pessoais"
-                    : label === "Endereços"
-                      ? "Locais de entrega"
-                      : label === "Preferências"
-                        ? "Avisos e horários"
-                        : "Consentimentos e exportação"}
+                  {experience.cards[index]}
                 </small>
               </span>
             </button>
@@ -223,6 +216,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
             }
           }}
         >
+          <div className="account-section-intro"><h2>Identificação e contato</h2><p>{experience.profile}</p></div>
           <label>
             Nome completo
             <input
@@ -237,10 +231,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
             CPF
             <input value={profile.cpfMasked} disabled />
           </label>
-          <label>
-            E-mail
-            <input value={profile.email} disabled />
-          </label>
+
           <label>
             Celular
             <input value={profile.phone} disabled />
@@ -255,10 +246,8 @@ export function AccountHub({ path, session, onNavigate }: Props) {
         <div className="account-panel">
           <div className="account-panel-title">
             <div>
-              <h2>Locais de entrega</h2>
-              <p>
-                Residência de entrega não é imóvel rural de produção.
-              </p>
+              <h2>{experience.addressTitle}</h2>
+              <p>{experience.addressHelp}</p>
             </div>
             <button
               className="primary account-small-button"
@@ -447,8 +436,19 @@ export function AccountHub({ path, session, onNavigate }: Props) {
             }
           }}
         >
-          <fieldset>
-            <legend>Avisos sobre pedidos</legend>
+          <div className="account-section-intro"><h2>Sua conta e suas escolhas</h2><p>{experience.preferences}</p></div>
+          <dl className="account-identity-summary">
+            <div><dt>Tipo de conta</dt><dd>{experience.label}</dd></div>
+            <div><dt>E-mail de acesso</dt><dd>{profile?.email || session.email || "Não informado"}</dd></div>
+          </dl>
+          {administrative && <div className="account-work-tools">
+            <h3>Ferramentas de trabalho</h3>
+            <button type="button" className="secondary" onClick={() => onNavigate("/admin/usuarios")}>Consultar usuários</button>
+            <button type="button" className="secondary" onClick={() => onNavigate("/admin/governanca")}>Gerenciar convites</button>
+            {session.activeRole === "platform_super_admin" && <button type="button" className="secondary" onClick={() => onNavigate("/admin/configuracao")}>Configurações globais</button>}
+          </div>}
+          {!administrative ? <fieldset>
+            <legend>Avisos sobre {session.activeRole === "producer" ? "suas compras pessoais" : "pedidos"}</legend>
             {(["email", "sms", "both"] as const).map((value) => (
               <label className="account-radio" key={value}>
                 <input
@@ -468,8 +468,8 @@ export function AccountHub({ path, session, onNavigate }: Props) {
                 </span>
               </label>
             ))}
-          </fieldset>
-
+          </fieldset> : <input type="hidden" name="orderUpdatesChannel" value={preferences.orderUpdatesChannel} />}
+          <p className="account-context-note">Horário de silêncio e novidades são escolhas pessoais. Avisos obrigatórios de segurança continuam ativos.</p>
           <label className="account-toggle">
             <input
               type="checkbox"
@@ -513,10 +513,11 @@ export function AccountHub({ path, session, onNavigate }: Props) {
       {path === "/conta/privacidade" && (
         <div className="account-panel">
           <h2>Privacidade e consentimentos</h2>
-          <p>
-            Seu histórico de consentimento é imutável e vinculado à
-            versão da política.
-          </p>
+          <p>{experience.privacy}</p>
+          <div className="account-privacy-summary">
+            <article><ShieldCheck /><h3>Você escolhe</h3><p>Atualize a autorização de novidades em Preferências quando quiser.</p><button type="button" className="secondary" onClick={() => onNavigate("/conta/preferencias")}>Revisar minhas escolhas</button></article>
+            <article><UserRound /><h3>Seus dados com você</h3><p>A exportação reúne seus dados pessoais e exige confirmação recente da senha.</p></article>
+          </div>
           <PrivacyExportButton session={session} onNotice={setNotice} />
 
           <div className="consent-list">

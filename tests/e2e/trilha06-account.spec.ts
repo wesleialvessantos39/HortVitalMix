@@ -32,7 +32,7 @@ const address = {
 
 async function mockAccount(
   page: import("@playwright/test").Page,
-  options: { requireRecentAuth?: boolean } = {},
+  options: { requireRecentAuth?: boolean; role?: string } = {},
 ) {
   let reauthenticated = !options.requireRecentAuth;
 
@@ -50,7 +50,7 @@ async function mockAccount(
         body: JSON.stringify(body),
       });
 
-    if (path === "/v1/auth/session") return json(session);
+    if (path === "/v1/auth/session") return json({ ...session, activeRole: options.role ?? "consumer", roles: [options.role ?? "consumer"] });
     if (path === "/v1/auth/login" && route.request().method() === "POST") {
       const body = route.request().postDataJSON() as {
         email?: string;
@@ -206,3 +206,28 @@ test("conta antiga oferece acesso às quatro seções e retorno à segurança", 
   await page.getByRole("button", { name: "Segurança e sair da conta" }).click();
   await expect(page.getByRole("button", { name: "Sair da conta", exact: true })).toBeVisible();
 });
+
+
+for (const [hour, greeting] of [[9, "Bom dia"], [14, "Boa tarde"], [20, "Boa noite"]] as const) {
+  test(`saudação local às ${hour}h usa nome completo`, async ({ page }) => {
+    await page.clock.install({ time: new Date(2026, 8, 25, hour, 0) });
+    await mockAccount(page);
+    await page.goto("/conta");
+    await expect(page.getByRole("heading", { name: `${greeting}, Pessoa Consumidora`, exact: true })).toBeVisible();
+    await expect(page.getByText(session.email, { exact: true })).toHaveCount(0);
+  });
+}
+for (const [role, label] of [["consumer", "Consumidor"], ["producer", "Produtor"], ["platform_admin", "Administrador"], ["platform_super_admin", "Super administrador"]]) {
+  test(`preferências específicas: ${role}`, async ({ page }) => {
+    await mockAccount(page, { role });
+    await page.goto("/conta/preferencias");
+    await expect(page.locator(".account-identity-summary").getByText(label, { exact: true })).toBeVisible();
+    await expect(page.locator(".account-identity-summary").getByText(session.email, { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Configurações globais", exact: true })).toHaveCount(role === "platform_super_admin" ? 1 : 0);
+    await expect(page.getByRole("button", { name: "Gerenciar convites" })).toHaveCount(role.startsWith("platform_") ? 1 : 0);
+    if (role === "producer") {
+      await page.getByRole("button", { name: "Endereços", exact: true }).click();
+      await expect(page.getByText(/não definem a localização da propriedade/)).toBeVisible();
+    }
+  });
+}

@@ -6,7 +6,8 @@ for (const role of ['platform_admin','platform_super_admin']) {
    const path=new URL(route.request().url()).pathname;
    if(!path.includes('/v1/'))return route.continue();
    let body:unknown={},status=200;
-   if(path.endsWith('/admin/auth/login'))body={status:'session_created',role,sectors:[]};
+   if(path.endsWith('/account/profile'))body={fullName:'Weslei Alves Santos'};
+   else if(path.endsWith('/admin/auth/login'))body={status:'session_created',role,sectors:[]};
    else if(path.endsWith('/admin/auth/verify-session')){verificationCalls++;body={authorized:true,role,sectors:[],requiresReauth:false};}
    else if(path.endsWith('/auth/session')){status=401;body={error:'SESSION_REQUIRED'};}
    else if(path.endsWith('/bootstrap/status'))body={status:'closed'};
@@ -16,7 +17,7 @@ for (const role of ['platform_admin','platform_super_admin']) {
   await page.getByLabel('E-mail',{exact:true}).fill('fixture@example.invalid');
   await page.getByLabel('Senha',{exact:true}).fill('fixture-password');
   await page.getByRole('button',{name:/^Entrar como/}).click();
-  await expect(page.getByRole('heading',{name:'Painel administrativo'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:/Bom dia, Weslei Alves Santos|Boa tarde, Weslei Alves Santos|Boa noite, Weslei Alves Santos/})).toBeVisible();
   expect(verificationCalls).toBe(0);
   await expect(page.getByText('Segundo fator do Super administrador')).toHaveCount(0);
  });

@@ -1,3 +1,5 @@
+import { accountExperience } from "../pages/account/accountExperience";
+import { AccountGreeting } from "./AccountGreeting";
 import { useEffect, useState, type FormEvent } from "react";
 import { ChevronRight, Crown, Plus, ShieldCheck, ShoppingBag, Sprout, UserRound, MapPin, SlidersHorizontal } from "lucide-react";
 import { api } from "../lib/api";
@@ -817,15 +819,8 @@ export function Account({
     return (
       <section className="account card">
         <span className="eyebrow">Acesso seguro</span>
-        <h1>Minha conta</h1>
-        <p>{session.email}</p>
-        <p>
-          Acesso atual:{" "}
-          <strong>{session.activeRole ? roleLabel(session.activeRole) : "Conta"}</strong>
-        </p>
-        {session.roles.length > 1 && (
-          <p>Perfis disponíveis: {session.roles.map((role) => roleLabel(role)).join(", ")}.</p>
-        )}
+        <h1><AccountGreeting /></h1>
+        <p>Cuide da sua conta e da sua segurança.</p>
 
         <nav className="account-hub-grid" aria-label="Dados da minha conta">
           {([
@@ -833,10 +828,10 @@ export function Account({
             ["/conta/enderecos", "Endereços", "Locais de entrega", MapPin],
             ["/conta/preferencias", "Preferências", "Avisos e horários", SlidersHorizontal],
             ["/conta/privacidade", "Privacidade", "Consentimentos e exportação", ShieldCheck],
-          ] as const).map(([to, label, description, Icon]) => (
+          ] as const).map(([to, label, description, Icon], index) => (
             <button key={to} type="button" className="account-hub-card" onClick={() => navigate(to)}>
               <Icon aria-hidden="true" />
-              <span><strong>{label}</strong><small>{description}</small></span>
+              <span><strong>{label}</strong><small>{accountExperience(session.activeRole).cards[index]}</small></span>
             </button>
           ))}
         </nav>
@@ -871,7 +866,6 @@ export function Account({
           >
             <h2>
               Alterar senha
-              {session.activeRole ? ` — ${roleLabel(session.activeRole)}` : ""}
             </h2>
             <p>
               Digite o código enviado para este perfil. Códigos emitidos em

@@ -76,14 +76,6 @@ export function AdminPortalShell({
           ))}
         </nav>
         <div className="admin-sidebar-footer">
-          <span className="admin-role-pill">
-            {access.role === "platform_super_admin"
-              ? "Super administrador"
-              : "Administrador setorial"}
-          </span>
-          {access.sectors.length > 0 && (
-            <small>{access.sectors.join(" • ")}</small>
-          )}
           <button className="admin-logout" onClick={logout} disabled={leaving}>
             <LogOut size={17} /> Sair
           </button>
