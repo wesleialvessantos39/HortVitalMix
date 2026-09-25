@@ -3161,6 +3161,15 @@ O transporte anterior ainda fazia o cadastro tentar primeiro o backend same-orig
 - schema permanece 29 e nenhuma migration foi criada;
 - T01–T07 permanecem preservadas.
 
-### Estado de promoção
-A correção foi preparada na branch `hotfix-registration-edge-primary`. A promoção para `main` e a homologação de produção devem considerar somente o commit resultante desta correção Edge-first, não o hotfix anterior.
+### Promoção concluída
+- PR **#54** (`fix(auth): cadastro público direto pela Edge`) mergeado em `main` no commit `5cbc05da363b8a667f584dcb4b1e2009bc47a2fb`;
+- o commit `5cbc05d` recebeu Vercel **success** (`Deployment has completed`);
+- PR **#55** (`fix(auth): fixar cadastro no Supabase canônico`) mergeado em `main` no commit `74c458a365b00c629e7a510af923187fded782c4`;
+- o commit `74c458a` recebeu Vercel **success** (`Deployment has completed`);
+- `public-registration` permanece **ACTIVE version 2** no projeto canônico `xipbsazvymkqqfmfegwu`;
+- o cadastro público não depende mais de `/api`, `/_hvm_api` ou `VITE_SUPABASE_URL` no caminho normal;
+- a referência funcional vigente passa a ser **AUTH-REG-20260925-02**; a homologação AUTH-REG-20260925-01 fica explicitamente superada para cadastro público.
+
+### Homologação desta correção
+A homologação técnica confirma promoção do código correto para produção, Edge canônica ativa, schema 29 preservado e ausência de nova migration. A comprovação de um cadastro real continua devendo usar dados legítimos do proprietário, sem criar identidade fictícia em produção.
 
