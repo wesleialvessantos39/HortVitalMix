@@ -4,7 +4,6 @@ import { originProtection } from "../security/originProtection.ts";
 import {
   CreateAddressSchema,
   DeleteAddressSchema,
-  ReauthenticateSchema,
   SetDefaultAddressSchema,
   UpdatePreferencesSchema,
   UpdateProfileSchema,
@@ -13,20 +12,7 @@ import {
   ProfilePrivacyError,
   ProfilePrivacyService,
 } from "../services/ProfilePrivacyService.ts";
-import {
-  createSupabasePublicClient,
-  supabaseAdmin,
-} from "../supabase/client.ts";
-import { runtime } from "../config/runtime.ts";
-import {
-  loginRateLimit,
-  resetLoginRateLimit,
-} from "../security/loginRateLimit.ts";
-import {
-  issueRecentAuthProof,
-  RECENT_AUTH_WINDOW_MS,
-  verifyRecentAuthProof,
-} from "../security/recentAuth.ts";
+import { verifyRecentAuthProof } from "../security/recentAuth.ts";
 
 export const profilePrivacyRouter = Router();
 
@@ -106,80 +92,6 @@ function requireRecentAuth(req: Request, res: Response, userId: string) {
   }
   return true;
 }
-
-profilePrivacyRouter.post(
-  "/account/reauthenticate",
-  loginRateLimit,
-  originProtection,
-  async (req: Request, res: Response) => {
-    const actor = currentActor(req, res);
-    if (!actor) return;
-    const parsed = ReauthenticateSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({
-        error: "VALIDATION_ERROR",
-        fields: parsed.error.issues,
-        requestId: req.requestId,
-      });
-      return;
-    }
-    const accessToken = readAccessToken(req);
-    if (!accessToken || !actor.email) {
-      res.status(401).json({
-        error: "RECENT_AUTH_REQUIRED",
-        requestId: req.requestId,
-      });
-      return;
-    }
-
-    const client = createSupabasePublicClient();
-    if (!client || !supabaseAdmin) {
-      res.status(503).json({
-        error: "DEPENDENCY_UNAVAILABLE",
-        requestId: req.requestId,
-      });
-      return;
-    }
-
-    const verified = await client.auth.signInWithPassword({
-      email: actor.email,
-      password: parsed.data.password,
-    });
-
-    if (
-      verified.error ||
-      !verified.data.user ||
-      verified.data.user.id !== actor.userId ||
-      !verified.data.session
-    ) {
-      res.status(401).json({
-        error: "INVALID_CREDENTIALS",
-        requestId: req.requestId,
-      });
-      return;
-    }
-
-    try {
-      const proof = issueRecentAuthProof(actor.userId, accessToken);
-      res.cookie("hvm_reauth", proof, {
-        path: "/",
-        httpOnly: true,
-        secure: runtime.secureCookies,
-        sameSite: "strict",
-        maxAge: RECENT_AUTH_WINDOW_MS,
-      });
-      resetLoginRateLimit(req.clientIpHash);
-      res.status(200).json({
-        status: "verified",
-        expiresInSeconds: RECENT_AUTH_WINDOW_MS / 1000,
-      });
-    } finally {
-      await supabaseAdmin.auth.admin
-        .signOut(verified.data.session.access_token, "local")
-        .catch(() => undefined);
-    }
-  },
-);
 
 profilePrivacyRouter.get(
   "/account/profile",
