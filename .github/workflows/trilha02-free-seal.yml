@@ -1,17 +1,7 @@
 name: Trilha 02 - Selagem gratuita
 
+# Sem execucao automatica: homologacao local, deploy pela integracao Git da Vercel.
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/trilha02-free-seal.yml"
-      - "tests/setup/globalSetup.ts"
-      - "scripts/verify-trilha02-evidence.mjs"
-      - "server/config/runtime.ts"
-      - "server/db/pool.ts"
-      - "scripts/require-integration.ts"
-      - "package.json"
   workflow_dispatch:
 
 permissions:

@@ -1,26 +1,7 @@
 name: Trilha 03 - Homologacao gratuita
 
+# Sem execucao automatica: homologacao local, deploy pela integracao Git da Vercel.
 on:
-  push:
-    branches: [main]
-    paths:
-      - "server/routes/authRoutes.ts"
-      - "server/security/loginRateLimit.ts"
-      - "shared/contracts/auth.ts"
-      - "shared/utils/normalization.ts"
-      - "src/components/Account.tsx"
-      - "src/components/forms/**"
-      - "src/hooks/useSession.ts"
-      - "src/pages/auth/**"
-      - "supabase/migrations/20260922002647_trilha03_identity_hardening.sql"
-      - "supabase/migrations/20260922004505_trilha03_function_grants_hardening.sql"
-      - "supabase/manifest.json"
-      - "tests/unit/trilha03*.test.ts"
-      - "tests/integration/trilha03*.test.ts"
-      - "tests/e2e/trilha03-auth.spec.ts"
-      - "scripts/verify-trilha03-evidence.mjs"
-      - "package.json"
-      - ".github/workflows/trilha03-free-homologation.yml"
   workflow_dispatch:
 
 permissions:

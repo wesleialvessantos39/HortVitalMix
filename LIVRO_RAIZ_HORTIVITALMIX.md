@@ -2979,3 +2979,10 @@ Correções T06: idempotência delimitada por usuário e ação; desempate está
 Validação desta execução: gate completo verify:t06:free aprovado (22 testes, tipagem, manifesto, segurança, evidências, build e bundle). T05: 30 testes e evidências aprovados. Testes de UI T06: 8 aprovados, com cinco breakpoints; 4 testes de UI administrativos aprovados para login sem OTP e giro/parada do indicador em ambos os perfis. Testes de navegador usam respostas controladas e não comprovam entrega de e-mail nem latência de produção. Consulta real ao banco confirmou RLS ENABLE/FORCE, leitura e ausência de escrita direta autenticada nas três tabelas T06 e os índices únicos de padrão/fingerprint. Sem nova migration.
 
 Homologação técnica local aprovada; meta de 2–4 segundos para cadastro/login reais e ciclo de e-mails permanece pendente de medição autenticada em produção. Não se declara homologação operacional irrestrita com base em mocks. Livro-Raiz e documentos atualizados no mesmo commit.
+
+
+### 2026-09-25 — Publicação sem dependência de GitHub Actions
+
+Por instrução expressa do proprietário, os quatro workflows deixam de executar em push/pull request; ficam apenas como histórico acionável manualmente e não são necessários para publicar. A homologação é local por `npm run verify:t06:free`, testes T05 e testes de navegador. A publicação continua pela integração Git da Vercel, somente main, sem upgrade de plano. Não executar Actions como etapa de entrega.
+
+O build Vercel mantém manifesto, tipagem, segurança, Vite e verificação de segredos no bundle. Testes e evidências T06 já aprovados localmente deixam de ser repetidos no build remoto. Nenhum erro é ignorado e nenhum controle de autenticação/RLS foi removido. Esta redução de trabalho não é apresentada como diagnóstico da falha remota: o deploy de 6a5419 falhou e o conector Vercel não disponibiliza o projeto/logs nesta sessão. Homologação operacional e latência real permanecem pendentes até produção validada.

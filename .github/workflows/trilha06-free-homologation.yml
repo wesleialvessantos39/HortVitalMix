@@ -1,18 +1,7 @@
 name: Trilha 06 - Homologacao gratuita
 
+# Sem execucao automatica: homologacao local, deploy pela integracao Git da Vercel.
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - "server/**"
-      - "shared/**"
-      - "src/**"
-      - "supabase/**"
-      - "tests/**"
-      - "scripts/**"
-      - "package.json"
-      - "vercel.json"
-      - ".github/workflows/trilha06-free-homologation.yml"
   workflow_dispatch:
 
 permissions:
