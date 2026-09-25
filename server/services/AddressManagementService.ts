@@ -146,6 +146,10 @@ function mapDbError(error: unknown): never {
   throw error;
 }
 
+export function addressDeletionMode(openOrderCount: number): "soft" | "hard" {
+  return openOrderCount > 0 ? "soft" : "hard";
+}
+
 async function countOpenOrders(client: PoolClient, addressId: string) {
   const relation = await client.query<{ relation: string | null }>(
     "SELECT to_regclass('public.app_orders')::text AS relation",
@@ -551,16 +555,14 @@ export class AddressManagementService {
 
       const openOrders = await countOpenOrders(client, addressId);
       const wasDefault = Boolean(current.is_default && current.is_active);
-      let mode: "soft" | "hard";
+      const mode = addressDeletionMode(openOrders);
 
-      if (openOrders > 0) {
-        mode = "soft";
+      if (mode === "soft") {
         await client.query(
           "UPDATE public.app_user_addresses SET is_active=false,is_default=false WHERE id=$1 AND person_id=$2",
           [addressId, personId],
         );
       } else {
-        mode = "hard";
         await client.query(
           "DELETE FROM public.app_user_addresses WHERE id=$1 AND person_id=$2",
           [addressId, personId],
