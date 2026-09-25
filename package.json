@@ -50,7 +50,7 @@
     "test:t05:e2e": "playwright test tests/e2e/trilha05-admin.spec.ts",
     "test:t05": "npm run test:t05:unit && npm run test:t05:integration && npm run verify:t05:evidence",
     "verify:t05:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t05:unit && npm run verify:t05:evidence && vite build && node --import tsx scripts/check-bundle.ts",
-    "test:t06:unit": "vitest run tests/unit/profilePrivacyContracts.test.ts",
+    "test:t06:unit": "vitest run tests/unit/profilePrivacyContracts.test.ts tests/unit/recentAuth.test.ts",
     "verify:t06:evidence": "node scripts/verify-trilha06-evidence.mjs",
     "test:t06": "npm run test:t06:unit && npm run verify:t06:evidence",
     "verify:t06:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t06:unit && npm run verify:t06:evidence && vite build && node --import tsx scripts/check-bundle.ts",
