@@ -3143,3 +3143,24 @@ A função Edge foi implantada e conferida como ACTIVE no projeto `xipbsazvymkqq
 - Nenhum preview Vercel ou recurso pago foi habilitado.
 
 O hotfix está, portanto, promovido no repositório principal e no runtime de produção. A comprovação funcional final do formulário com uma identidade real deve ser feita pelo proprietário, pois esta execução não cria conta fictícia nem dispara cadastro real para um e-mail de terceiros.
+## 2026-09-25 — AUTH-REG-20260925-02 — Correção definitiva do cadastro público
+
+### Homologação anterior invalidada
+O teste real do proprietário após AUTH-REG-20260925-01 confirmou persistência dos sintomas: Vercel com HTTP 500 no cadastro de Produtor/Consumidor e Google Studio com HTTP 403 / “Cadastro não autorizado”. Assim, a homologação anterior foi considerada insuficiente e não pode ser tratada como conclusão funcional.
+
+### Causa operacional
+O transporte anterior ainda fazia o cadastro tentar primeiro o backend same-origin (`/api` no Vercel e `/_hvm_api`/`/api` no Google Studio). A Edge `public-registration` só era usada depois da falha. Isso mantinha o fluxo normal preso justamente ao proxy/runtime que estava falhando.
+
+### Correção
+- `public-registration` passa a ser o transporte primário de `consumer` e `producer`;
+- o navegador chama diretamente a Edge canônica do Supabase, sem depender do proxy Vercel/Google Studio no caminho normal;
+- Express fica somente como contingência quando a própria Edge estiver indisponível;
+- 400/409/429 da Edge não geram retry no Express;
+- sucesso da Edge é marcado como `transport: "supabase_edge"`;
+- testes foram invertidos para exigir Edge-first e zero chamadas ao backend do ambiente quando a Edge responde;
+- schema permanece 29 e nenhuma migration foi criada;
+- T01–T07 permanecem preservadas.
+
+### Estado de promoção
+A correção foi preparada na branch `hotfix-registration-edge-primary`. A promoção para `main` e a homologação de produção devem considerar somente o commit resultante desta correção Edge-first, não o hotfix anterior.
+

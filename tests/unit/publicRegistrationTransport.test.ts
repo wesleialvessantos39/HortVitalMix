@@ -25,44 +25,29 @@ beforeEach(() => {
 });
 
 describe("public registration resilient transport", () => {
-  it("uses Express first when it succeeds", async () => {
-    mocks.api.mockResolvedValue({
-      confirmationRequired: true,
-      confirmationDispatchAccepted: true,
-    });
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
-    const result = await registerPublicAccount("consumer", payload);
-    expect(mocks.api).toHaveBeenCalledOnce();
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(result.transport).toBe("express");
-  });
-
-  it("falls back to Edge after Studio proxy 403", async () => {
-    mocks.api.mockRejectedValue(failure("HTTP_403", 403));
+  it("uses Edge first and never touches the environment API when Edge succeeds", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
           confirmationRequired: true,
           confirmationDispatchAccepted: true,
-          transport: "supabase_edge",
         }),
         { status: 201, headers: { "Content-Type": "application/json" } },
       ),
     );
     vi.stubGlobal("fetch", fetchMock);
+
     const result = await registerPublicAccount("consumer", payload);
+
     expect(fetchMock).toHaveBeenCalledWith(
       PUBLIC_REGISTRATION_EDGE_URL,
       expect.objectContaining({ method: "POST", credentials: "omit" }),
     );
-    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body ?? "{}"));
-    expect(body.role).toBe("consumer");
+    expect(mocks.api).not.toHaveBeenCalled();
     expect(result.transport).toBe("supabase_edge");
   });
 
-  it("falls back to Edge after Vercel HTTP 500", async () => {
-    mocks.api.mockRejectedValue(failure("HTTP_500", 500));
+  it("uses the same Edge-first path for producer registration", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
@@ -70,12 +55,12 @@ describe("public registration resilient transport", () => {
           JSON.stringify({
             confirmationRequired: true,
             confirmationDispatchAccepted: true,
-            transport: "supabase_edge",
           }),
           { status: 201, headers: { "Content-Type": "application/json" } },
         ),
       ),
     );
+
     await expect(
       registerPublicAccount("producer", {
         ...payload,
@@ -83,30 +68,74 @@ describe("public registration resilient transport", () => {
         activityType: "misto",
       }),
     ).resolves.toMatchObject({ transport: "supabase_edge" });
+
+    expect(mocks.api).not.toHaveBeenCalled();
   });
 
-  it("does not mask validation errors", async () => {
-    mocks.api.mockRejectedValue(failure("VALIDATION_ERROR", 400));
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
-    await expect(registerPublicAccount("consumer", payload)).rejects.toThrow(
-      "VALIDATION_ERROR",
+  it("falls back to Express only when the Edge infrastructure is unavailable", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            error: "AUTH_UNAVAILABLE",
+            requestId: "edge-unavailable",
+          }),
+          { status: 503, headers: { "Content-Type": "application/json" } },
+        ),
+      ),
     );
-    expect(fetchMock).not.toHaveBeenCalled();
+    mocks.api.mockResolvedValue({
+      confirmationRequired: true,
+      confirmationDispatchAccepted: true,
+    });
+
+    const result = await registerPublicAccount("consumer", payload);
+
+    expect(mocks.api).toHaveBeenCalledOnce();
+    expect(result.transport).toBe("express");
   });
 
-  it("does not mask identity conflicts", async () => {
-    mocks.api.mockRejectedValue(failure("IDENTITY_CONFLICT", 409));
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
-    await expect(registerPublicAccount("consumer", payload)).rejects.toThrow(
-      "IDENTITY_CONFLICT",
+  it("does not mask Edge validation errors with an API retry", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            error: "VALIDATION_ERROR",
+            fields: [{ field: "cpf", message: "CPF inválido" }],
+          }),
+          { status: 400, headers: { "Content-Type": "application/json" } },
+        ),
+      ),
     );
-    expect(fetchMock).not.toHaveBeenCalled();
+
+    await expect(registerPublicAccount("consumer", payload)).rejects.toMatchObject({
+      message: "VALIDATION_ERROR",
+      status: 400,
+    });
+    expect(mocks.api).not.toHaveBeenCalled();
   });
 
-  it("preserves structured Edge failures", async () => {
-    mocks.api.mockRejectedValue(failure("HTTP_500", 500));
+  it("does not mask Edge identity conflicts with an API retry", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: "IDENTITY_CONFLICT" }), {
+          status: 409,
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+    );
+
+    await expect(registerPublicAccount("consumer", payload)).rejects.toMatchObject({
+      message: "IDENTITY_CONFLICT",
+      status: 409,
+    });
+    expect(mocks.api).not.toHaveBeenCalled();
+  });
+
+  it("preserves structured Edge rate-limit failures", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
@@ -119,12 +148,12 @@ describe("public registration resilient transport", () => {
         ),
       ),
     );
-    await expect(
-      registerPublicAccount("consumer", payload),
-    ).rejects.toMatchObject({
+
+    await expect(registerPublicAccount("consumer", payload)).rejects.toMatchObject({
       message: "REGISTRATION_RATE_LIMITED",
       status: 429,
       requestId: "edge-test-request",
     });
+    expect(mocks.api).not.toHaveBeenCalled();
   });
 });

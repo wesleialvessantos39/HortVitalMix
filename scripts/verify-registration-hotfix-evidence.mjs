@@ -44,8 +44,9 @@ requireTokens(
   [
     "public-registration",
     "credentials: \"omit\"",
-    "[403, 404, 405, 500, 502, 503, 504]",
-    "REGISTRATION_INTERNAL_ERROR",
+    "[401, 403, 404, 405, 500, 502, 503, 504]",
+    "shouldUseExpressFallback",
+    "return await edgeRegistration(role, data)",
     "PUBLIC_REGISTRATION_EDGE_URL",
   ],
   "REGISTRATION_TRANSPORT_EVIDENCE_MISSING",
@@ -87,6 +88,7 @@ console.log(
     status: "registration-hotfix-evidence-ok",
     schemaVersion: 29,
     freeTierOnly: true,
-    edgeFallback: true,
+    edgePrimary: true,
+    expressFallbackOnly: true,
   }),
 );
