@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 26,
+  "schemaVersion": 27,
   "migrations": [
     {
       "version": "20260919030126",
@@ -135,7 +135,12 @@
       "version": "20260925003500",
       "name": "trilha06_rls_policy_hardening",
       "file": "20260925003500_trilha06_rls_policy_hardening.sql"
+    },
+    {
+      "version": "20260925010000",
+      "name": "trilha06_homologation_hardening",
+      "file": "20260925010000_trilha06_homologation_hardening.sql"
     }
   ],
-  "migrationHistoryHash": "3d2b3207abe752f3edb2394efae3988c6e764738039cd587d26ccb782ffc4253"
+  "migrationHistoryHash": "887990f6191fa32d779db6c5b64dda01da080ca3875a95dc121676fdc015746a"
 }
