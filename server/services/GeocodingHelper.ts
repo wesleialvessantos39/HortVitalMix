@@ -164,6 +164,12 @@ async function queryNominatim(
     );
 
     if (result?.[0]) return result[0];
+
+    if (attempt === 0) {
+      const retryBudget = deadline - Date.now();
+      if (retryBudget <= 0) return null;
+      await sleep(Math.min(1000, retryBudget));
+    }
   }
 
   return null;
