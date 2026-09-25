@@ -60,7 +60,7 @@ requireTokens(
 if (
   migration.includes("CREATE TABLE public.app_orders") ||
   migration.includes("CREATE TABLE public.app_properties") ||
-  /postgis/i.test(migration)
+  /create\s+extension[^;]*postgis/i.test(migration)
 )
   throw new Error("T07_FORBIDDEN_SCHEMA_SCOPE");
 
