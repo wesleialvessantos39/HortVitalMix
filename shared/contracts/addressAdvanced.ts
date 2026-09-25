@@ -26,7 +26,7 @@ const baseAddressShape = {
 
 function pairedCoordinates(
   value: { latitude?: number | null; longitude?: number | null },
-  ctx: z.RefinementCtx,
+  ctx: any,
 ) {
   const hasLatitude = value.latitude !== undefined && value.latitude !== null;
   const hasLongitude = value.longitude !== undefined && value.longitude !== null;
