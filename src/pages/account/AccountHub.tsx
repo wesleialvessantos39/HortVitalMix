@@ -3,32 +3,27 @@ import { accountExperience } from "./accountExperience";
 import {
   useEffect,
   useMemo,
-  useRef,
   useState,
   type FormEvent,
 } from "react";
 import {
   ArrowLeft,
   Check,
-  Home,
   MapPin,
-  Plus,
   ShieldCheck,
   SlidersHorizontal,
-  Trash2,
   UserRound,
-  X,
 } from "lucide-react";
 import { api, type ApiFailure } from "../../lib/api";
 import type { ShellSession } from "../../hooks/useSession";
 import type {
-  AddressView,
   ConsentView,
   PreferencesView,
   ProfileView,
 } from "../../../shared/contracts/profilePrivacy";
-import { PostalLookupService } from "../../services/PostalLookupService";
+import type { AddressAdvancedView } from "../../../shared/contracts/addressAdvanced";
 import { PrivacyExportButton } from "./PrivacyExportButton";
+import { AddressManager } from "./AddressManager";
 
 type Props = {
   path: string;
@@ -51,13 +46,12 @@ export function AccountHub({ path, session, onNavigate }: Props) {
   const experience = accountExperience(session.activeRole);
   const administrative = session.activeRole === "platform_admin" || session.activeRole === "platform_super_admin";
   const [profile, setProfile] = useState<ProfileView | null>(null);
-  const [addresses, setAddresses] = useState<AddressView[]>([]);
+  const [addresses, setAddresses] = useState<AddressAdvancedView[]>([]);
   const [preferences, setPreferences] =
     useState<PreferencesView | null>(null);
   const [consents, setConsents] = useState<ConsentView[]>([]);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
-  const [sheetOpen, setSheetOpen] = useState(false);
 
   async function load() {
     setNotice("");
@@ -66,8 +60,8 @@ export function AccountHub({ path, session, onNavigate }: Props) {
         await Promise.all([
           path === "/conta" || path === "/conta/perfil" || path === "/conta/preferencias"
             ? api<ProfileView>("/v1/account/profile") : Promise.resolve(profile),
-          path === "/conta" || path === "/conta/enderecos"
-            ? api<{ addresses: AddressView[] }>("/v1/account/addresses") : Promise.resolve({addresses}),
+          path === "/conta"
+            ? api<{ addresses: AddressAdvancedView[] }>("/v1/account/addresses") : Promise.resolve({addresses}),
           path === "/conta/preferencias" || path === "/conta/privacidade" ? api<{
             preferences: PreferencesView;
             consents: ConsentView[];
@@ -243,148 +237,10 @@ export function AccountHub({ path, session, onNavigate }: Props) {
       )}
 
       {path === "/conta/enderecos" && (
-        <div className="account-panel">
-          <div className="account-panel-title">
-            <div>
-              <h2>{experience.addressTitle}</h2>
-              <p>{experience.addressHelp}</p>
-            </div>
-            <button
-              className="primary account-small-button"
-              onClick={() => setSheetOpen(true)}
-            >
-              <Plus />
-              Novo endereço
-            </button>
-          </div>
-
-          <div className="address-list">
-            {addresses.map((address) => (
-              <article key={address.id} className="address-card">
-                <div className="address-card-icon">
-                  <Home />
-                </div>
-                <div>
-                  <div className="address-card-title">
-                    <strong>{address.label}</strong>
-                    {address.isDefault && <span>Padrão</span>}
-                  </div>
-                  <p>
-                    {address.street +
-                      ", " +
-                      address.number +
-                      (address.complement
-                        ? " · " + address.complement
-                        : "")}
-                  </p>
-                  <p>
-                    {address.neighborhood +
-                      " · " +
-                      address.city +
-                      "/" +
-                      address.state +
-                      " · CEP " +
-                      address.cep.replace(
-                        /(\d{5})(\d{3})/,
-                        "$1-$2",
-                      )}
-                  </p>
-                  <div className="address-actions">
-                    {!address.isDefault && (
-                      <button
-                        disabled={busy}
-                        onClick={async () => {
-                          setBusy(true);
-                          try {
-                            await api(
-                              "/v1/account/addresses/" +
-                                address.id +
-                                "/default",
-                              {
-                                method: "PATCH",
-                                body: JSON.stringify({
-                                  commandId: commandId(),
-                                }),
-                              },
-                            );
-                            await load();
-                            window.dispatchEvent(
-                              new Event(
-                                "hortivitalmix:default-address-changed",
-                              ),
-                            );
-                          } catch {
-                            setNotice(
-                              "Não foi possível alterar o endereço padrão.",
-                            );
-                          } finally {
-                            setBusy(false);
-                          }
-                        }}
-                      >
-                        Tornar padrão
-                      </button>
-                    )}
-                    <button
-                      className="danger-link"
-                      disabled={busy}
-                      onClick={async () => {
-                        if (!confirm("Remover este endereço?")) return;
-                        setBusy(true);
-                        try {
-                          await api(
-                            "/v1/account/addresses/" + address.id,
-                            {
-                              method: "DELETE",
-                              body: JSON.stringify({
-                                commandId: commandId(),
-                              }),
-                            },
-                          );
-                          await load();
-                          window.dispatchEvent(
-                            new Event(
-                              "hortivitalmix:default-address-changed",
-                            ),
-                          );
-                        } catch {
-                          setNotice(
-                            "Não foi possível remover o endereço.",
-                          );
-                        } finally {
-                          setBusy(false);
-                        }
-                      }}
-                    >
-                      <Trash2 />
-                      Remover
-                    </button>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-
-          {addresses.length === 0 && (
-            <p className="account-empty">
-              Nenhum endereço cadastrado.
-            </p>
-          )}
-
-          {sheetOpen && (
-            <AddressSheet
-              busy={busy}
-              onClose={() => setSheetOpen(false)}
-              onCreated={async () => {
-                setSheetOpen(false);
-                await load();
-                window.dispatchEvent(
-                  new Event("hortivitalmix:default-address-changed"),
-                );
-              }}
-            />
-          )}
-        </div>
+        <AddressManager
+          title={experience.addressTitle}
+          help={experience.addressHelp}
+        />
       )}
 
       {path === "/conta/preferencias" && preferences && (
@@ -564,184 +420,3 @@ export function AccountHub({ path, session, onNavigate }: Props) {
   );
 }
 
-function AddressSheet({
-  busy,
-  onClose,
-  onCreated,
-}: {
-  busy: boolean;
-  onClose: () => void;
-  onCreated: () => Promise<void>;
-}) {
-  const [lookingUp, setLookingUp] = useState(false);
-  const [saving,setSaving]=useState(false);
-  const submission=useRef(false);
-  const lookupVersion=useRef(0);
-  const [fields, setFields] = useState({
-    street: "",
-    neighborhood: "",
-    city: "",
-    state: "RO",
-  });
-  const [error, setError] = useState("");
-
-  async function postalLookup(raw: string) {
-    if (raw.replace(/\D/g, "").length !== 8) return;
-    const version=++lookupVersion.current;
-    setLookingUp(true);
-    const result = await PostalLookupService.lookup(raw);
-    if(version!==lookupVersion.current)return;
-    setLookingUp(false);
-    if (result) {
-      setFields({
-        street: result.street,
-        neighborhood: result.neighborhood,
-        city: result.city,
-        state: result.state || "RO",
-      });
-    }
-  }
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if(submission.current)return;
-    submission.current=true;setSaving(true);
-    setError("");
-    const form = Object.fromEntries(
-      new FormData(event.currentTarget),
-    );
-    try {
-      await api("/v1/account/addresses", {
-        method: "POST",
-        body: JSON.stringify({
-          ...form,
-          isDefault: form.isDefault === "on",
-          commandId: commandId(),
-        }),
-      });
-      await onCreated();
-    } catch (caught) {
-      setError(
-        (caught as Error).message === "ADDRESS_DUPLICATE"
-          ? "Este endereço já está cadastrado."
-          : "Revise os dados e tente novamente.",
-      );
-    } finally { submission.current=false;setSaving(false); }
-  }
-
-  return (
-    <div className="account-sheet-backdrop" role="presentation">
-      <form className="account-sheet" onSubmit={submit}>
-        <header>
-          <div>
-            <span className="eyebrow">Local de entrega</span>
-            <h2>Novo endereço</h2>
-          </div>
-          <button type="button" aria-label="Fechar" onClick={onClose}>
-            <X />
-          </button>
-        </header>
-
-        <label>
-          Rótulo
-          <input name="label" defaultValue="Casa" maxLength={64} required />
-        </label>
-        <label>
-          CEP
-          <input
-            name="cep"
-            inputMode="numeric"
-            placeholder="00000-000"
-            onChange={() => { lookupVersion.current++; setLookingUp(false); }}
-            onBlur={(event) =>
-              void postalLookup(event.currentTarget.value)
-            }
-            required
-          />
-          {lookingUp && <small>Buscando endereço…</small>}
-        </label>
-        <label>
-          Rua
-          <input
-            name="street"
-            value={fields.street}
-            onChange={(event) =>
-              setFields({
-                ...fields,
-                street: event.target.value,
-              })
-            }
-            required
-          />
-        </label>
-        <div className="account-time-grid">
-          <label>
-            Número
-            <input name="number" defaultValue="S/N" required />
-          </label>
-          <label>
-            Complemento
-            <input name="complement" />
-          </label>
-        </div>
-        <label>
-          Bairro
-          <input
-            name="neighborhood"
-            value={fields.neighborhood}
-            onChange={(event) =>
-              setFields({
-                ...fields,
-                neighborhood: event.target.value,
-              })
-            }
-            required
-          />
-        </label>
-        <div className="account-time-grid">
-          <label>
-            Cidade
-            <input
-              name="city"
-              value={fields.city}
-              onChange={(event) =>
-                setFields({
-                  ...fields,
-                  city: event.target.value,
-                })
-              }
-              required
-            />
-          </label>
-          <label>
-            UF
-            <input
-              name="state"
-              maxLength={2}
-              value={fields.state}
-              onChange={(event) =>
-                setFields({
-                  ...fields,
-                  state: event.target.value.toUpperCase(),
-                })
-              }
-              required
-            />
-          </label>
-        </div>
-        <label className="account-toggle">
-          <input type="checkbox" name="isDefault" />
-          <span>Definir como endereço padrão</span>
-        </label>
-        {error && (
-          <p role="alert" className="field-error">
-            {error}
-          </p>
-        )}
-        <button className="primary" disabled={busy || saving}>
-          {saving ? "Salvando…" : "Salvar endereço"}
-        </button>
-      </form>
-    </div>
-  );
-}
