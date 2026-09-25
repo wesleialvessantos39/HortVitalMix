@@ -56,6 +56,8 @@ const remoteVersionAliases: Readonly<Record<string, string>> = {
   "20260925002406": "20260925002000",
   // Hardening RLS T06 aplicado pelo Supabase com timestamp físico próprio.
   "20260925002930": "20260925003500",
+  // Homologação/hardening T06 aplicada pelo Supabase com timestamp físico próprio.
+  "20260925010313": "20260925010000",
 };
 
 export function validateHistory(rows: { version: string; name: string }[]) {
