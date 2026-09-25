@@ -55,7 +55,7 @@ export function cookie(req: Request, name: string) {
 }
 
 function clear(res: Response) {
-  for (const name of ["hvm_access", "hvm_refresh", "hvm_portal_role"])
+  for (const name of ["hvm_access", "hvm_refresh", "hvm_portal_role", "hvm_reauth"])
     res.clearCookie(name, {
       path: "/",
       httpOnly: true,
