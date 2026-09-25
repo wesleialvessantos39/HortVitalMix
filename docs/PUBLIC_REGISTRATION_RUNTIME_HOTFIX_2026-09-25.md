@@ -42,8 +42,9 @@ A função:
 - usa Zod `.strict()`;
 - valida CPF Módulo 11, e-mail, celular brasileiro e senha forte;
 - aceita somente os campos já existentes nos contratos públicos;
-- cria identidade nova pelo Supabase Auth público `signUp`, preservando os limites do próprio Auth;
+- cria a identidade nova pelo Supabase Auth Admin interno à Edge, sem confirmar o e-mail antes da gravação do domínio;
 - conclui o domínio pela RPC service-role `complete_public_registration`;
+- somente depois do domínio concluído solicita ao Supabase Auth o envio da confirmação, evitando link válido para cadastro compensado;
 - para CPF/e-mail existentes, exige a senha real da conta e e-mail confirmado antes de chamar `add_public_role_to_existing_identity`;
 - jamais cria papel administrativo;
 - usa apenas SMTP/Auth já centralizado no Supabase;
