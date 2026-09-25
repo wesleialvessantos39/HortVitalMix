@@ -38,9 +38,9 @@ A suíte Playwright valida 320, 360, 768, 1024 e 1440 px sem overflow horizontal
 ## Banco canônico
 
 Migration lógica: 20260925002000_trilha06_profile_privacy.sql.
-Migration física aplicada pelo Supabase: 20260925002406_trilha06_profile_privacy.
+Migrations físicas aplicadas pelo Supabase: 20260925002406_trilha06_profile_privacy e 20260925002930_trilha06_rls_policy_hardening.
 Schema lógico do repositório: 26.
-Hash do manifesto: af2e6c44aab1d8f0e80156ad6ebdc939540b125bb4c3bcca7517030f3e7ef749.
+Hash do manifesto: 3d2b3207abe752f3edb2394efae3988c6e764738039cd587d26ccb782ffc4253.
 
 ## Gates
 
