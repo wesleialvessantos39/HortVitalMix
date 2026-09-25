@@ -120,3 +120,28 @@ Evidências pós-merge:
 - GitHub Actions automáticas: nenhuma execução.
 
 O cadastro real não foi simulado com dados fictícios em produção. A validação operacional de ponta a ponta deve usar um cadastro legítimo do proprietário para comprovar também a entrega real do e-mail de confirmação.
+## Correção definitiva — AUTH-REG-20260925-02 — Edge como transporte primário
+
+A homologação anterior foi invalidada pelo teste real do proprietário: o Vercel continuou exibindo falha HTTP 500 e o Google Studio continuou exibindo HTTP 403 / “Cadastro não autorizado”.
+
+### Causa operacional corrigida
+O hotfix anterior ainda preservava o Express same-origin como primeiro transporte. Isso mantinha o cadastro público dependente do proxy/runtime do ambiente antes de alcançar a Edge Function. Portanto, o mesmo ponto que falhava no Vercel/Google Studio ainda era exercitado em toda tentativa.
+
+### Mudança definitiva
+- `registerPublicAccount` agora chama **primeiro e diretamente** a Edge canônica `public-registration`;
+- o cadastro de `consumer` e `producer` deixa de depender do `/api` do Vercel e do `/_hvm_api`/`/api` do Google Studio no caminho normal;
+- o Express passa a ser utilizado somente se a própria Edge apresentar falha de infraestrutura (401/403/404/405/500/502/503/504, timeout, rede ou dependência indisponível);
+- respostas reais de validação, conflito e rate limit da Edge não geram segunda tentativa no Express;
+- a resposta de sucesso é marcada explicitamente como `transport: "supabase_edge"`;
+- nenhum papel administrativo foi incluído e nenhuma migration foi criada.
+
+### Testes de regressão
+A suíte `publicRegistrationTransport.test.ts` foi invertida para provar:
+1. Edge é o transporte primário para Consumidor;
+2. Edge é o transporte primário para Produtor;
+3. sucesso da Edge implica **zero chamadas** ao backend do ambiente;
+4. Express só entra quando a Edge está indisponível;
+5. validação 400, conflito 409 e rate limit 429 não são mascarados.
+
+Schema lógico permanece **29**. A T01–T07 continua preservada.
+
