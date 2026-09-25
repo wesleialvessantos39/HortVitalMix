@@ -60,7 +60,8 @@
     "verify:t07:evidence": "node scripts/verify-trilha07-evidence.mjs",
     "verify:t07:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t07:unit && npm run verify:t07:evidence && vite build && node --import tsx scripts/check-bundle.ts && npm run test:t07:e2e",
     "test:registration:hotfix": "vitest run tests/unit/publicRegistrationTransport.test.ts tests/unit/publicRegistrationServerFallback.test.ts tests/unit/vercelRouting.test.ts",
-    "verify:registration:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:registration:hotfix && vite build && node --import tsx scripts/check-bundle.ts"
+    "verify:registration:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:registration:hotfix && npm run verify:registration:evidence && vite build && node --import tsx scripts/check-bundle.ts",
+    "verify:registration:evidence": "node scripts/verify-registration-hotfix-evidence.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",
