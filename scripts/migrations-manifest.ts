@@ -52,6 +52,10 @@ const remoteVersionAliases: Readonly<Record<string, string>> = {
   "20260924115207": "20260924114500",
   // Revogação de sessões do recovery aplicada com timestamp físico Supabase.
   "20260924124802": "20260924125000",
+  // Trilha 06 aplicada pelo Supabase com timestamp físico próprio.
+  "20260925002406": "20260925002000",
+  // Hardening RLS T06 aplicado pelo Supabase com timestamp físico próprio.
+  "20260925002930": "20260925003500",
 };
 
 export function validateHistory(rows: { version: string; name: string }[]) {

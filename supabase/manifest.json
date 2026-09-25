@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 25,
+  "schemaVersion": 26,
   "migrations": [
     {
       "version": "20260919030126",
@@ -125,7 +125,17 @@
       "version": "20260924165427",
       "name": "admin_role_scoped_credentials",
       "file": "20260924165427_admin_role_scoped_credentials.sql"
+    },
+    {
+      "version": "20260925002000",
+      "name": "trilha06_profile_privacy",
+      "file": "20260925002000_trilha06_profile_privacy.sql"
+    },
+    {
+      "version": "20260925003500",
+      "name": "trilha06_rls_policy_hardening",
+      "file": "20260925003500_trilha06_rls_policy_hardening.sql"
     }
   ],
-  "migrationHistoryHash": "0fc58f8e0b0e4fd66f2f12a7b59e9de269339ab0fce014bb449abfd539cc8ea7"
+  "migrationHistoryHash": "3d2b3207abe752f3edb2394efae3988c6e764738039cd587d26ccb782ffc4253"
 }

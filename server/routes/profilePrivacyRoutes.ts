@@ -1,0 +1,307 @@
+import { Router, type Request, type Response } from "express";
+import { z } from "zod";
+import { originProtection } from "../security/originProtection.ts";
+import {
+  CreateAddressSchema,
+  DeleteAddressSchema,
+  SetDefaultAddressSchema,
+  UpdatePreferencesSchema,
+  UpdateProfileSchema,
+} from "../../shared/contracts/profilePrivacy.ts";
+import {
+  ProfilePrivacyError,
+  ProfilePrivacyService,
+} from "../services/ProfilePrivacyService.ts";
+
+export const profilePrivacyRouter = Router();
+
+function currentActor(req: Request, res: Response) {
+  if (!req.actor) {
+    res
+      .status(401)
+      .json({ error: "AUTH_REQUIRED", requestId: req.requestId });
+    return null;
+  }
+  const role =
+    req.actor.roles.includes("producer")
+      ? "producer"
+      : req.actor.roles.includes("consumer")
+        ? "consumer"
+        : req.actor.roles[0] ?? "consumer";
+  return { userId: req.actor.userId, role };
+}
+
+function sendError(res: Response, error: unknown) {
+  if (error instanceof ProfilePrivacyError) {
+    res
+      .status(error.status)
+      .json({ error: error.code, requestId: res.locals.requestId });
+    return;
+  }
+  res
+    .status(503)
+    .json({
+      error: "DEPENDENCY_UNAVAILABLE",
+      requestId: res.locals.requestId,
+    });
+}
+
+function parseAddressId(req: Request, res: Response) {
+  const parsed = z.string().uuid().safeParse(req.params.id);
+  if (!parsed.success) {
+    res
+      .status(400)
+      .json({ error: "VALIDATION_ERROR", requestId: req.requestId });
+    return null;
+  }
+  return parsed.data;
+}
+
+function readAccessToken(req: Request) {
+  const authorization = req.headers.authorization;
+  if (authorization?.startsWith("Bearer "))
+    return authorization.slice(7).trim();
+  const part = req.headers.cookie
+    ?.split(";")
+    .map((value) => value.trim())
+    .find((value) => value.startsWith("hvm_access="));
+  if (!part) return "";
+  try {
+    return decodeURIComponent(part.slice("hvm_access=".length));
+  } catch {
+    return "";
+  }
+}
+
+function requireRecentAuth(req: Request, res: Response) {
+  const token = readAccessToken(req);
+  if (!token) {
+    res
+      .status(401)
+      .json({ error: "RECENT_AUTH_REQUIRED", requestId: req.requestId });
+    return false;
+  }
+  try {
+    const payload = JSON.parse(
+      Buffer.from(token.split(".")[1], "base64url").toString(),
+    ) as { iat?: number };
+    const issuedAt = Number(payload.iat) * 1000;
+    if (
+      !Number.isFinite(issuedAt) ||
+      Date.now() - issuedAt > 15 * 60_000 ||
+      issuedAt > Date.now() + 30_000
+    )
+      throw new Error("stale");
+    return true;
+  } catch {
+    res
+      .status(401)
+      .json({ error: "RECENT_AUTH_REQUIRED", requestId: req.requestId });
+    return false;
+  }
+}
+
+profilePrivacyRouter.get(
+  "/account/profile",
+  async (req: Request, res: Response) => {
+    const actor = currentActor(req, res);
+    if (!actor) return;
+    try {
+      if (req.query.export === "1") {
+        if (!requireRecentAuth(req, res)) return;
+        res
+          .status(200)
+          .json(await ProfilePrivacyService.exportData(actor.userId));
+        return;
+      }
+      res
+        .status(200)
+        .json(await ProfilePrivacyService.getProfile(actor.userId));
+    } catch (error) {
+      sendError(res, error);
+    }
+  },
+);
+
+profilePrivacyRouter.patch(
+  "/account/profile",
+  originProtection,
+  async (req: Request, res: Response) => {
+    const actor = currentActor(req, res);
+    if (!actor) return;
+    const parsed = UpdateProfileSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: "VALIDATION_ERROR",
+        fields: parsed.error.issues,
+        requestId: req.requestId,
+      });
+      return;
+    }
+    try {
+      const result = await ProfilePrivacyService.updateProfile(
+        actor.userId,
+        actor.role,
+        parsed.data,
+        req.requestId,
+        req.clientIpHash,
+      );
+      res.status(result.status === "conflict" ? 409 : 200).json(result);
+    } catch (error) {
+      sendError(res, error);
+    }
+  },
+);
+
+profilePrivacyRouter.get(
+  "/account/addresses",
+  async (req: Request, res: Response) => {
+    const actor = currentActor(req, res);
+    if (!actor) return;
+    try {
+      res.status(200).json({
+        addresses: await ProfilePrivacyService.listAddresses(actor.userId),
+      });
+    } catch (error) {
+      sendError(res, error);
+    }
+  },
+);
+
+profilePrivacyRouter.post(
+  "/account/addresses",
+  originProtection,
+  async (req: Request, res: Response) => {
+    const actor = currentActor(req, res);
+    if (!actor) return;
+    const parsed = CreateAddressSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: "VALIDATION_ERROR",
+        fields: parsed.error.issues,
+        requestId: req.requestId,
+      });
+      return;
+    }
+    try {
+      const address = await ProfilePrivacyService.createAddress(
+        actor.userId,
+        actor.role,
+        parsed.data,
+        req.requestId,
+        req.clientIpHash,
+      );
+      res.status(201).json({ address });
+    } catch (error) {
+      sendError(res, error);
+    }
+  },
+);
+
+profilePrivacyRouter.patch(
+  "/account/addresses/:id/default",
+  originProtection,
+  async (req: Request, res: Response) => {
+    const actor = currentActor(req, res);
+    const addressId = parseAddressId(req, res);
+    if (!actor || !addressId) return;
+    const parsed = SetDefaultAddressSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res
+        .status(400)
+        .json({ error: "VALIDATION_ERROR", requestId: req.requestId });
+      return;
+    }
+    try {
+      res.status(200).json(
+        await ProfilePrivacyService.setDefaultAddress(
+          actor.userId,
+          actor.role,
+          addressId,
+          parsed.data.commandId,
+          req.requestId,
+          req.clientIpHash,
+        ),
+      );
+    } catch (error) {
+      sendError(res, error);
+    }
+  },
+);
+
+profilePrivacyRouter.delete(
+  "/account/addresses/:id",
+  originProtection,
+  async (req: Request, res: Response) => {
+    const actor = currentActor(req, res);
+    const addressId = parseAddressId(req, res);
+    if (!actor || !addressId) return;
+    const parsed = DeleteAddressSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res
+        .status(400)
+        .json({ error: "VALIDATION_ERROR", requestId: req.requestId });
+      return;
+    }
+    try {
+      res.status(200).json(
+        await ProfilePrivacyService.deleteAddress(
+          actor.userId,
+          actor.role,
+          addressId,
+          parsed.data.commandId,
+          req.requestId,
+          req.clientIpHash,
+        ),
+      );
+    } catch (error) {
+      sendError(res, error);
+    }
+  },
+);
+
+profilePrivacyRouter.get(
+  "/account/preferences",
+  async (req: Request, res: Response) => {
+    const actor = currentActor(req, res);
+    if (!actor) return;
+    try {
+      res
+        .status(200)
+        .json(await ProfilePrivacyService.getPreferences(actor.userId));
+    } catch (error) {
+      sendError(res, error);
+    }
+  },
+);
+
+profilePrivacyRouter.patch(
+  "/account/preferences",
+  originProtection,
+  async (req: Request, res: Response) => {
+    const actor = currentActor(req, res);
+    if (!actor) return;
+    const parsed = UpdatePreferencesSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: "VALIDATION_ERROR",
+        fields: parsed.error.issues,
+        requestId: req.requestId,
+      });
+      return;
+    }
+    try {
+      const result = await ProfilePrivacyService.updatePreferences(
+        actor.userId,
+        actor.role,
+        parsed.data,
+        req.requestId,
+        req.clientIpHash,
+        String(req.headers["user-agent"] ?? "unknown"),
+      );
+      res.status(result.status === "conflict" ? 409 : 200).json(result);
+    } catch (error) {
+      sendError(res, error);
+    }
+  },
+);
