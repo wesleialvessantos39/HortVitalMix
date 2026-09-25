@@ -52,6 +52,12 @@ requireTokens(
   "REGISTRATION_TRANSPORT_EVIDENCE_MISSING",
 );
 
+if (
+  transport.includes("import.meta.env.VITE_SUPABASE_URL") ||
+  !transport.includes("https://xipbsazvymkqqfmfegwu.supabase.co")
+)
+  throw new Error("REGISTRATION_CANONICAL_EDGE_TARGET_MISSING");
+
 if (!account.includes("registerPublicAccount"))
   throw new Error("REGISTRATION_ACCOUNT_TRANSPORT_MISSING");
 
