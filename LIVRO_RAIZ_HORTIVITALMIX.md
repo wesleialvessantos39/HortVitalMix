@@ -3130,3 +3130,16 @@ Nenhuma migration nova. Schema lógico permanece **29**, 30 migrations e hash ca
 Foram adicionados testes de fallback Studio 403, Vercel 500, não-fallback em 400/409, erro Edge estruturado, fallback server-side e roteamento Vercel de Consumer/Producer. Gate local: `verify:registration:free`.
 
 A função Edge foi implantada e conferida como ACTIVE no projeto `xipbsazvymkqqfmfegwu`. A promoção do frontend/backend ao Vercel permanece condicionada ao merge deste hotfix na `main`.
+
+
+### Promoção de produção — AUTH-REG-20260925-01
+- PR **#52** foi mergeado por squash em `main`.
+- Commit funcional promovido: `904054e00659751f46a2b22eec4ff61c4a2f726b`.
+- A integração Vercel do commit retornou **success** com `Deployment has completed`.
+- A Edge Function `public-registration` permanece **ACTIVE version 2** no Supabase canônico.
+- O conteúdo implantado da Edge foi comparado ao arquivo versionado e coincidiu integralmente.
+- Release de produção registrada após o Vercel success: `auth-reg-hotfix-904054e`, schema 29 e hash `500a5d5ff51d5608c07768a8b63f681328b37d1f3c99a19dd7ab5c612851689a`.
+- Nenhum GitHub Action automático foi disparado.
+- Nenhum preview Vercel ou recurso pago foi habilitado.
+
+O hotfix está, portanto, promovido no repositório principal e no runtime de produção. A comprovação funcional final do formulário com uma identidade real deve ser feita pelo proprietário, pois esta execução não cria conta fictícia nem dispara cadastro real para um e-mail de terceiros.
