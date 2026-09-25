@@ -3078,3 +3078,18 @@ Este registro documental é aditivo e não altera a lógica funcional da T07. Ca
 
 ### Estado final da T07
 A implementação funcional da T07 está no repositório principal e o banco canônico está em schema 29. A implementação inclui CRUD avançado de endereço, limite de dez ativos, geocodificação gratuita, pin OSM, endereço padrão ativo único, branch soft/hard preparada sem criar `app_orders`, RLS FORCE, auditoria, idempotência e sincronização da shell. T01–T06 foram preservadas e T08+ não foi iniciado.
+
+
+## 2026-09-25 — Ajuste final T07 do gate Vercel Hobby
+
+Revisão final da promoção identificou que o `buildCommand` ainda carregava `typecheck:app`, contrariando a regra operacional desta entrega de manter o typecheck completo no gate local e não inflar o build do Vercel Hobby.
+
+Correção aditiva:
+- `vercel.json` agora executa somente `migrations:verify`, `security:check`, `vite build` e `check-bundle`;
+- `typecheck:app` permanece obrigatório dentro de `verify:t07:free`;
+- a suíte de 25 casos T07 permanece fora do build Vercel;
+- deploy continua habilitado apenas para `main`;
+- previews de branch continuam desabilitados;
+- nenhum recurso pago foi adicionado.
+
+Este ajuste não altera schema, contratos, API, banco ou comportamento funcional da T07. Ele apenas alinha a promoção à governança de custo zero e ao gate local definido para a entrega.
