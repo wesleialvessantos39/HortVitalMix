@@ -3108,7 +3108,7 @@ Para o Vercel, o conector desta sessão não expõe runtime logs do projeto, por
 
 ### Correção aditiva
 - criada `supabase/functions/public-registration/index.ts`;
-- função `public-registration` implantada no projeto canônico, ACTIVE version 1;
+- função `public-registration` implantada no projeto canônico, ACTIVE version 2;
 - função anônima pública restrita exclusivamente a `consumer|producer`, com Zod strict, CPF Módulo 11, celular BR, senha forte e payload limitado;
 - identidade nova é criada pelo Auth Admin somente dentro da Edge; o domínio é concluído antes do reenvio de confirmação pelo Supabase Auth, preservando a ordem transacional já homologada;
 - domínio continua transacional pelas RPCs service-role já existentes;
