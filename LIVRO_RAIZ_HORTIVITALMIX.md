@@ -2880,3 +2880,55 @@ Cadastro consumidor/produtor usa uma única busca indexável por CPF/e-mail; val
 Convites inserem os setores em lote na mesma transação. A interface apresenta imediatamente o convite retornado pelo servidor, sem recarregar setores e histórico antes de liberar o botão. Enquanto houver convite pendente, consulta aceitação a cada 3 segundos, somente com a página visível, sem sobrepor consultas; cancela ao sair e informa falhas de sincronização. Isso acompanha aceitação, não comprova leitura ou entrega pelo Gmail.
 
 Removidos Volume/Trilha e referências ao provedor de autenticação nas telas públicas e administrativas. Nenhuma alteração de esquema necessária. Validação: typecheck e build aprovados, 30 testes específicos aprovados (incluindo cadastro confirmado obrigatório, conflito CPF/e-mail, bloqueio de administrador suspenso e acessos separados). Meta de 2–4 segundos não homologada sem medição com contas reais e entrega de e-mail.
+
+
+## 2026-09-24 — TRILHA 06 v11 — Perfil canônico, endereços residenciais e privacidade LGPD
+
+### Decisão de engenharia
+A Trilha 06 foi implementada de forma estritamente aditiva sobre o estado homologado das Trilhas 01 a 05. Nenhuma adaptação anterior de autenticação, governança administrativa, Supabase, Vercel ou Google AI Studio foi removida. O MANUAL MESTRE TÉCNICO v11 passou a reger este bloco como fonte normativa, mantendo as decisões operacionais já registradas neste Livro-Raiz.
+
+### Backend e contratos
+- Criado `shared/contracts/profilePrivacy.ts` com schemas Zod estritos para perfil, endereço, endereço padrão e preferências.
+- Criado `server/services/ProfilePrivacyService.ts` com transações, idempotência por `commandId`, auditoria append-only e concorrência otimista.
+- A troca do endereço padrão é serializada por `FOR UPDATE` em `app_people`.
+- A exclusão do padrão elege deterministicamente o endereço restante mais antigo por `created_at`.
+- Fingerprint SHA-256 bloqueia cadastro repetido do mesmo endereço.
+- Exportação LGPD mascara CPF e exige token de sessão emitido há no máximo 15 minutos.
+- Criado `server/routes/profilePrivacyRoutes.ts` com oito operações HTTP canônicas sob `/v1/account/*`, preservando os aliases `/api` e `/_hvm_api`.
+
+### Frontend e design
+- Criado hub autenticado `/conta` com subrotas `/conta/perfil`, `/conta/enderecos`, `/conta/preferencias` e `/conta/privacidade`.
+- A identidade visual reutiliza os tokens oficiais já presentes no shell e nas referências limpas: verde escuro #143D24, verde primário #1B4D2E, verde folha #2E7D32, verde claro #E8F5E9, laranja #E65100 e Inter.
+- Endereços usam cards com badge “Padrão”; o cadastro usa bottom sheet no mobile.
+- A consulta de CEP via ViaCEP é assistiva, com timeout de 4 s e preenchimento manual preservado.
+- O evento `hortivitalmix:default-address-changed` atualiza o shell para “Entrega para: Bairro · Cidade/UF”.
+- Matriz responsiva automatizada preparada para 320, 360, 768, 1024 e 1440 px.
+
+### Banco Supabase canônico
+- Migration lógica: `20260925002000_trilha06_profile_privacy.sql`.
+- Migration física Supabase: `20260925002406_trilha06_profile_privacy`.
+- Hardening lógico pós-advisor: `20260925003500_trilha06_rls_policy_hardening.sql`.
+- Hardening físico Supabase: `20260925002930_trilha06_rls_policy_hardening`.
+- Schema lógico do repositório: **26**.
+- Manifesto canônico: 27 migrations, hash `3d2b3207abe752f3edb2394efae3988c6e764738039cd587d26ccb782ffc4253`.
+- Criadas `app_user_addresses`, `app_user_preferences` e `app_consent_records`.
+- RLS `ENABLE + FORCE` nas três tabelas, com seis policies finais de dados pessoais.
+- Três triggers T06: touch/revision em endereços, touch/revision em preferências e imutabilidade de consentimentos.
+- Teste transacional real em produção foi executado com `ROLLBACK`, validando: padrão único, fingerprint único, troca de padrão e bloqueio de UPDATE/DELETE em consentimentos.
+- Advisor de performance foi reexecutado após o hardening: as duas advertências novas de múltiplas policies permissivas da T06 foram eliminadas. Permanecem somente achados preexistentes de módulos anteriores, que não foram alterados nesta entrega.
+
+### Testes e gates
+- Matriz T06: 15 casos de contrato + 7 cenários Playwright = aproximadamente 22 casos dedicados, alinhados ao Manual v11.
+- Gates adicionados: `test:t06:unit`, `verify:t06:evidence`, `verify:t06:free` e `test:t06:e2e`.
+- Workflow gratuito criado em `.github/workflows/trilha06-free-homologation.yml`.
+- No primeiro disparo do GitHub Actions, o job encerrou antes da alocação de runner (`runner_id=0`, zero steps executados), comportamento também observado nos workflows existentes da branch principal. Portanto, esse resultado foi classificado como indisponibilidade/cota de infraestrutura do Actions e não como falha de código.
+
+### Vercel
+- `vercel.json` preserva o modelo gratuito com deploy de produção apenas na `main`; branches continuam sem preview pago.
+- Adicionada CSP para `https://viacep.com.br` e política `no-store` para `/conta/(.*)`.
+- Build command da Vercel passou a executar os gates T06 antes do Vite.
+- O conector Vercel não retornou projetos no time conectado nesta execução; por isso a comprovação do deploy será feita pelo status GitHub/Vercel após a promoção para `main`, sem inventar um deploy inexistente.
+
+### GitHub
+- Branch de entrega: `trilha06-v11`.
+- Pull request de homologação: **#46 — feat: implementar Trilha 06 do Manual Mestre Técnico v11**.
