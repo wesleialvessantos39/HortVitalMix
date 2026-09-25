@@ -66,6 +66,12 @@ describe("T06 recent auth proof", () => {
     ).toBe(false);
   });
 
+  it("rejeita prova emitida mais de 30 segundos no futuro", () => {
+    const now = 1_800_000_000_000;
+    const proof = issueRecentAuthProof(userId, token(), now + 30_001, secret);
+    expect(verifyRecentAuthProof(proof, userId, token(), now, secret)).toBe(false);
+  });
+
   it("rejeita assinatura adulterada", () => {
     const now = 1_800_000_000_000;
     const proof = issueRecentAuthProof(userId, token(), now, secret);
