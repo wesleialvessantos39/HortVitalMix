@@ -1,5 +1,5 @@
 import {describe,expect,it} from "vitest";
-import {CreateAddressSchema,UpdatePreferencesSchema,UpdateProfileSchema} from "../../shared/contracts/profilePrivacy";
+import {CreateAddressSchema,ReauthenticateSchema,UpdatePreferencesSchema,UpdateProfileSchema} from "../../shared/contracts/profilePrivacy";
 describe("Trilha 06 contracts",()=>{
  it("normaliza CEP",()=>expect(CreateAddressSchema.parse({label:"Casa",cep:"76870-000",street:"Rua A",number:"1",neighborhood:"Centro",city:"Ariquemes",state:"RO",commandId:crypto.randomUUID()}).cep).toBe("76870000"));
  it.each(["123","abcdefgh","123456789"])("rejeita CEP inválido %s",cep=>expect(CreateAddressSchema.safeParse({label:"Casa",cep,street:"Rua A",number:"1",neighborhood:"Centro",city:"Ariquemes",state:"RO",commandId:crypto.randomUUID()}).success).toBe(false));
@@ -12,5 +12,6 @@ describe("Trilha 06 contracts",()=>{
  it.each(["email","sms","both"] as const)("aceita canal %s",orderUpdatesChannel=>expect(UpdatePreferencesSchema.safeParse({orderUpdatesChannel,expectedRevision:1,commandId:crypto.randomUUID()}).success).toBe(true));
  it("exige horários quando silêncio é ligado",()=>expect(UpdatePreferencesSchema.safeParse({quietHoursEnabled:true,expectedRevision:1,commandId:crypto.randomUUID()}).success).toBe(false));
  it("aceita horários válidos",()=>expect(UpdatePreferencesSchema.safeParse({quietHoursEnabled:true,quietHoursStart:"22:00",quietHoursEnd:"06:00",expectedRevision:1,commandId:crypto.randomUUID()}).success).toBe(true));
+ it("valida senha de reautenticação sem aceitar campos extras",()=>expect(ReauthenticateSchema.safeParse({password:"senha-atual",role:"admin"}).success).toBe(false));
  it("rejeita horário impossível",()=>expect(UpdatePreferencesSchema.safeParse({quietHoursEnabled:true,quietHoursStart:"25:00",quietHoursEnd:"06:00",expectedRevision:1,commandId:crypto.randomUUID()}).success).toBe(false));
 });
