@@ -2932,3 +2932,31 @@ A Trilha 06 foi implementada de forma estritamente aditiva sobre o estado homolo
 ### GitHub
 - Branch de entrega: `trilha06-v11`.
 - Pull request de homologação: **#46 — feat: implementar Trilha 06 do Manual Mestre Técnico v11**.
+
+
+## 2026-09-25 — Revisão e homologação final da TRILHA 06 v11 — somente planos gratuitos
+
+### Regra financeira consolidada
+Por determinação do proprietário do projeto, toda implementação do HortiVitalMix deve permanecer compatível com os planos gratuitos atualmente utilizados em GitHub, Vercel e Supabase. Para a T06, não foi habilitado qualquer recurso premium. Previews Vercel de branches permanecem desativados; somente `main` pode disparar deploy. O workflow do GitHub usa runner padrão e cancela execuções duplicadas.
+
+### Achados da revisão
+A revisão do código T06 contra o Manual Mestre Técnico v11 encontrou quatro pontos que precisavam de hardening antes da homologação definitiva:
+- a exportação LGPD validava apenas o `iat` do JWT, que poderia ser renovado sem nova senha;
+- payloads de auditoria T06 ainda carregavam nome/localização em claro;
+- o fingerprint de endereço era calculado apenas no serviço, sem garantia física no banco;
+- o build Vercel permitia ignorar falha do TypeScript por `|| true`.
+
+Todos foram corrigidos.
+
+### Estado técnico homologado
+- Reautenticação LGPD usa o login público já existente, sem criar uma nona rota T06. Login por senha emite prova HMAC HttpOnly `hvm_reauth`, vinculada ao usuário e ao `session_id`, com TTL de 15 minutos. Refresh e importação de sessão não renovam a prova.
+- Auditoria T06 passa por `redactPII` e armazena apenas metadados operacionais necessários.
+- O PostgreSQL calcula o fingerprint SHA-256 canônico em trigger, com `trim`, colapso POSIX de whitespace e lowercase.
+- O primeiro endereço de cada pessoa é forçado como padrão; o índice parcial continua garantindo um único padrão.
+- `authenticated` possui SELECT sob RLS nas tabelas T06, mas escrita direta foi revogada; mutações continuam pelo backend com commandId e auditoria.
+- Build Vercel tornou-se fail-closed: migration manifest + typecheck + security + testes T06 + evidence + Vite + bundle check.
+- Schema lógico: **28**; migrations reconciliadas: **29**; hash: `93466eeb7a5c11eb9d9f847e2c51c16b8e88798acfc7e63acf9e7b311aaea05d`.
+- Migrations físicas desta revisão no Supabase: `20260925010313_trilha06_homologation_hardening` e `20260925010505_trilha06_fingerprint_normalization_fix`.
+- Teste transacional real no Supabase aprovado com rollback, cobrindo padrão inicial, fingerprint, deduplicação, troca de padrão, revision de preferências e imutabilidade de consentimentos.
+- Advisor Supabase pós-revisão sem novo finding ligado às três tabelas T06; achados restantes pertencem a módulos anteriores e foram preservados.
+- Matriz dedicada: 16 contratos + 6 testes da prova recente = **22 casos T06**, além da regressão Playwright responsiva e do fluxo de exportação.
