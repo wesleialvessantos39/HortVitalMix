@@ -451,6 +451,7 @@ authRouter.get("/session", async (req, res, next) => {
       res.json({
         userId: req.actor.userId,
         email: req.actor.email,
+        fullName: req.actor.fullName,
         roles: req.actor.roles,
         activeRole,
         portalKind: portalKindForRole(activeRole),
@@ -504,6 +505,7 @@ authRouter.get("/session", async (req, res, next) => {
     res.json({
       userId: id,
       email: result.data.user.email,
+      fullName: access.fullName,
       roles: access.roles,
       activeRole,
       portalKind: portalKindForRole(activeRole),
@@ -1101,4 +1103,3 @@ for (const role of ["consumer", "producer"] as const)
       });
     }
   });
-

@@ -39,6 +39,7 @@ function address(
 async function mockT07(
   page: import("@playwright/test").Page,
   initial = [address(1), address(2)],
+  role = "consumer",
 ) {
   const addresses = [...initial] as ReturnType<typeof address>[];
   const mutations: unknown[] = [];
@@ -83,7 +84,7 @@ async function mockT07(
         body: JSON.stringify(body),
       });
 
-    if (path === "/v1/auth/session") return json(session);
+    if (path === "/v1/auth/session") return json({ ...session, fullName: "Pessoa Cadastrada", roles: [role], activeRole: role });
     if (path === "/v1/config")
       return json({
         platformName: "HortiVitalMix",
@@ -183,12 +184,33 @@ async function mockT07(
   return { addresses, mutations };
 }
 
+test("conta e endereço vazio usam identidade pronta e uma única ação em mobile", async ({ page }) => {
+  await mockT07(page, []);
+  await page.setViewportSize({ width: 360, height: 780 });
+  await page.goto("/conta");
+  await expect(page.getByRole("heading", { name: /Pessoa Cadastrada/ })).toBeVisible();
+  await expect(page.getByText("Consumidor · consumidor@example.com")).toBeVisible();
+  await page.goto("/conta/enderecos");
+  await expect(page.getByRole("button", { name: "Adicionar um endereço" })).toHaveCount(1);
+  await expect(page.locator(".address-state-empty button")).toHaveCount(0);
+});
+
+test("produtor vê endereço pessoal sem convite de entrega ao consumidor", async ({ page }) => {
+  await mockT07(page, [address(1)], "producer");
+  await page.goto("/conta");
+  await expect(page.getByText("Produtor · consumidor@example.com")).toBeVisible();
+  await expect(page.getByText("Entrega para")).toHaveCount(0);
+  await page.goto("/conta/enderecos");
+  await expect(page.getByRole("heading", { name: "Endereços pessoais" }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Adicionar novo endereço" })).toHaveCount(1);
+});
+
 test("rótulos rápidos e instruções de entrega são persistidos", async ({
   page,
 }) => {
   const mocked = await mockT07(page);
   await page.goto("/conta/enderecos");
-  await page.getByRole("button", { name: "Novo endereço" }).click();
+  await page.getByRole("button", { name: "Adicionar novo endereço" }).click();
 
   await page.getByRole("button", { name: "Trabalho", exact: true }).click();
   await page.getByLabel("CEP").fill("76870010");
@@ -219,7 +241,7 @@ test("geolocalização do aparelho envia latitude e longitude como pin manual", 
   const mocked = await mockT07(page);
 
   await page.goto("/conta/enderecos");
-  await page.getByRole("button", { name: "Novo endereço" }).click();
+  await page.getByRole("button", { name: "Adicionar novo endereço" }).click();
   await page.getByLabel("CEP").fill("76870020");
   await page.getByLabel("Rua").fill("Rua Mapa");
   await page.getByLabel("Número").fill("30");
@@ -277,7 +299,7 @@ test("limite de dez endereços bloqueia novo cadastro com mensagem amigável", a
     }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Novo endereço" }),
+    page.getByRole("button", { name: "Adicionar novo endereço" }),
   ).toBeDisabled();
 });
 

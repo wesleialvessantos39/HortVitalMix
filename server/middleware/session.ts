@@ -99,6 +99,7 @@ export async function sessionMiddleware(
       email: data.user.email ?? null,
       roles: access.roles,
       personId: access.personId,
+      fullName: access.fullName,
     };
 
     next();
@@ -108,4 +109,3 @@ export async function sessionMiddleware(
     next();
   }
 }
-

@@ -8,6 +8,7 @@ export type IdentityAccessSnapshot = {
   status: string;
   roles: string[];
   personId: string | null;
+  fullName: string | null;
   liveSession: boolean;
 };
 
@@ -32,7 +33,7 @@ async function resolveViaDataApi(
         .eq("user_id", userId)
         .is("revoked_at", null),
       dataClient.from("app_admin_principals").select("person_id").eq("admin_user_id", userId).maybeSingle(),
-      dataClient.from("app_people").select("id").eq("user_id", userId).maybeSingle(),
+      dataClient.from("app_people").select("id,full_name").eq("user_id", userId).maybeSingle(),
     ]);
 
   if (userError || rolesError || !user) return null;
@@ -50,6 +51,7 @@ async function resolveViaDataApi(
     status: user.status,
     roles: activeRoles,
     personId,
+    fullName: person.data?.full_name ?? null,
     // O chamador já validou o access token com Supabase Auth. Quando o
     // Transaction Pooler não está disponível, essa validação Auth é a fonte
     // de verdade para a sessão viva.
@@ -74,12 +76,14 @@ export async function resolveIdentityAccess(
       const result = await dbPool.query<{
         status: string;
         person_id: string | null;
+        full_name: string | null;
         live_session: boolean;
         roles: string[] | null;
       }>(
         `SELECT
            u.status,
            COALESCE(public_person.id, admin_person.id)::text AS person_id,
+           COALESCE(public_person.full_name, admin_person.full_name) AS full_name,
            CASE
              WHEN $2::uuid IS NULL THEN true
              ELSE EXISTS (
@@ -120,6 +124,7 @@ export async function resolveIdentityAccess(
           status: row.status,
           roles: row.roles ?? [],
           personId: row.person_id ?? null,
+          fullName: row.full_name ?? null,
           liveSession: row.live_session,
         };
     } catch {

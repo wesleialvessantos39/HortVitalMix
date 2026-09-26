@@ -816,13 +816,14 @@ export function Account({
     return (
       <section className="account card">
         <span className="eyebrow">Acesso seguro</span>
-        <h1><AccountGreeting /></h1>
+        <h1><AccountGreeting fullName={session.fullName ?? undefined} /></h1>
+        <p>{accountExperience(session.activeRole).label} · {session.email}</p>
         <p>Cuide da sua conta e da sua segurança.</p>
 
         <nav className="account-hub-grid" aria-label="Dados da minha conta">
           {([
             ["/conta/perfil", "Perfil", "Dados pessoais", UserRound],
-            ["/conta/enderecos", "Endereços", "Locais de entrega", MapPin],
+            ["/conta/enderecos", session.activeRole === "producer" ? "Endereços pessoais" : "Locais de entrega", "Endereços", MapPin],
             ["/conta/preferencias", "Preferências", "Avisos e horários", SlidersHorizontal],
             ["/conta/privacidade", "Privacidade", "Consentimentos e exportação", ShieldCheck],
           ] as const).map(([to, label, description, Icon], index) => (

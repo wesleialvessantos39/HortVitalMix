@@ -11,7 +11,7 @@ const producer = {
   cards: ["Identificação e contato do responsável", "Seus endereços residenciais", "Organize seus horários de comunicação", "Proteja sua identidade e acompanhe seus consentimentos"],
   profile: "Estas são as informações pessoais do responsável pela conta. Dados da propriedade e da produção são cadastrados separadamente.",
   addressTitle: "Endereços pessoais", addressHelp: "Cadastre sua residência e locais de entrega pessoal. Estes endereços não definem a localização da propriedade, coleta ou área de produção.",
-  preferences: "Organize suas comunicações pessoais em torno da sua rotina no campo. As opções de pedidos abaixo são referentes às suas compras.",
+  preferences: "Organize suas comunicações pessoais em torno da sua rotina no campo. Avisos de vendas serão configurados quando o módulo de pedidos estiver disponível.",
   privacy: "Controle os consentimentos da sua conta pessoal. Endereços residenciais permanecem separados dos registros da propriedade e da produção.",
 };
 const administrator = {

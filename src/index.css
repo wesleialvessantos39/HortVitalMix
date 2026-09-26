@@ -1746,7 +1746,7 @@ dialog p {
   background: #fffaf6;
 }
 .address-state-empty {
-  grid-template-columns: 42px minmax(0, 1fr) auto;
+  grid-template-columns: 42px minmax(0, 1fr);
 }
 .address-limit-notice,
 .address-location-message {

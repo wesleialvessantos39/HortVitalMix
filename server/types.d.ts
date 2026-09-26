@@ -11,6 +11,7 @@ declare global {
         email: string | null;
         roles: string[];
         personId: string | null;
+        fullName: string | null;
       } | null;
     }
   }

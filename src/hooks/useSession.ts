@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 export type ShellSession = {
   userId: string;
   email: string | null;
+  fullName?: string | null;
   roles: string[];
   activeRole?: string | null;
   portalKind?: "public" | "administrative";

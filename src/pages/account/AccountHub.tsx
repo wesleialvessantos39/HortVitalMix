@@ -49,6 +49,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
   const administrative = session.activeRole === "platform_admin" || session.activeRole === "platform_super_admin";
   const [profile, setProfile] = useState<ProfileView | null>(null);
   const [addresses, setAddresses] = useState<AddressAdvancedView[]>([]);
+  const [addressesLoaded, setAddressesLoaded] = useState(false);
   const [preferences, setPreferences] =
     useState<PreferencesView | null>(null);
   const [consents, setConsents] = useState<ConsentView[]>([]);
@@ -57,25 +58,16 @@ export function AccountHub({ path, session, onNavigate }: Props) {
 
   async function load() {
     setNotice("");
-    try {
-      const [profileResult, addressResult, preferenceResult] =
-        await Promise.all([
-          path === "/conta" || path === "/conta/perfil" || path === "/conta/preferencias"
-            ? api<ProfileView>("/v1/account/profile") : Promise.resolve(profile),
-          path === "/conta"
-            ? api<{ addresses: AddressAdvancedView[] }>("/v1/account/addresses") : Promise.resolve({addresses}),
-          path === "/conta/preferencias" || path === "/conta/privacidade" ? api<{
-            preferences: PreferencesView;
-            consents: ConsentView[];
-          }>("/v1/account/preferences") : Promise.resolve({preferences,consents}),
-        ]);
-      setProfile(profileResult);
-      setAddresses(addressResult.addresses);
-      setPreferences(preferenceResult.preferences);
-      setConsents(preferenceResult.consents);
-    } catch {
-      setNotice("Não foi possível carregar os dados da conta agora.");
-    }
+    const failed = () => setNotice("Não foi possível carregar parte dos dados da conta agora.");
+    // Independent sections must not hold up the identity already returned by the session.
+    if (path === "/conta/perfil" || path === "/conta/preferencias")
+      void api<ProfileView>("/v1/account/profile").then(setProfile).catch(failed);
+    if (path === "/conta")
+      void api<{ addresses: AddressAdvancedView[] }>("/v1/account/addresses")
+        .then((result) => { setAddresses(result.addresses); setAddressesLoaded(true); }).catch(failed);
+    if (path === "/conta/preferencias" || path === "/conta/privacidade")
+      void api<{ preferences: PreferencesView; consents: ConsentView[] }>("/v1/account/preferences")
+        .then((result) => { setPreferences(result.preferences); setConsents(result.consents); }).catch(failed);
   }
 
   useEffect(() => {
@@ -93,12 +85,13 @@ export function AccountHub({ path, session, onNavigate }: Props) {
         <header className="account-hub-heading">
           <div>
             <span className="eyebrow">Minha conta</span>
-            <h1><AccountGreeting fullName={profile?.fullName ?? ""} /></h1>
+            <h1><AccountGreeting fullName={profile?.fullName ?? session.fullName ?? ""} /></h1>
+            <p>{experience.label} · {session.email}</p>
             <p>{experience.introduction}</p>
           </div>
         </header>
 
-        {!administrative && (
+        {session.activeRole === "consumer" && (
           <button className="account-delivery-card" onClick={() => onNavigate("/conta/enderecos")}>
             <MapPin />
             <span>
@@ -108,7 +101,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
           </button>
         )}
 
-        {defaultAddress && (
+        {session.activeRole === "consumer" && defaultAddress && (
           <button
             className="account-delivery-card"
             onClick={() => onNavigate("/conta/enderecos")}
@@ -165,7 +158,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
         <div>
           <span className="eyebrow">Minha conta</span>
           <h1>
-            {sections.find(([route]) => route === path)?.[1] ?? "Conta"}
+            {path === "/conta/enderecos" ? experience.addressTitle : sections.find(([route]) => route === path)?.[1] ?? "Conta"}
           </h1>
         </div>
       </header>
@@ -250,8 +243,10 @@ export function AccountHub({ path, session, onNavigate }: Props) {
 
       {path === "/conta/enderecos" && (
         <AddressManager
+          key={session.userId}
           title={experience.addressTitle}
           help={experience.addressHelp}
+          initialAddresses={addressesLoaded ? addresses : undefined}
         />
       )}
 
@@ -315,8 +310,8 @@ export function AccountHub({ path, session, onNavigate }: Props) {
             <button type="button" className="secondary" onClick={() => onNavigate("/admin/governanca")}>Gerenciar convites</button>
             {session.activeRole === "platform_super_admin" && <button type="button" className="secondary" onClick={() => onNavigate("/admin/configuracao")}>Configurações globais</button>}
           </div>}
-          {!administrative ? <fieldset>
-            <legend>Avisos sobre {session.activeRole === "producer" ? "suas compras pessoais" : "pedidos"}</legend>
+          {session.activeRole === "consumer" ? <fieldset>
+            <legend>Avisos sobre seus pedidos</legend>
             {(["email", "sms", "both"] as const).map((value) => (
               <label className="account-radio" key={value}>
                 <input
@@ -431,4 +426,3 @@ export function AccountHub({ path, session, onNavigate }: Props) {
     </section>
   );
 }
-

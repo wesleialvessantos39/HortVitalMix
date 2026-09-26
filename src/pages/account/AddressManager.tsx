@@ -33,6 +33,7 @@ type AddressState =
 type Props = {
   title: string;
   help: string;
+  initialAddresses?: AddressAdvancedView[];
 };
 
 function commandId() {
@@ -69,16 +70,16 @@ function LocationStatus({ address }: { address: AddressAdvancedView }) {
   );
 }
 
-export function AddressManager({ title, help }: Props) {
-  const [addresses, setAddresses] = useState<AddressAdvancedView[]>([]);
-  const [state, setState] = useState<AddressState>("loading");
+export function AddressManager({ title, help, initialAddresses }: Props) {
+  const [addresses, setAddresses] = useState<AddressAdvancedView[]>(initialAddresses ?? []);
+  const [state, setState] = useState<AddressState>(initialAddresses ? (initialAddresses.length ? "ready" : "empty") : "loading");
   const [notice, setNotice] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<AddressAdvancedView | null>(null);
 
   const load = useCallback(async (keepConflict = false) => {
-    if (!keepConflict) setState("loading");
+    if (!keepConflict) setState((current) => current === "ready" || current === "empty" ? current : "loading");
     setNotice("");
     try {
       const result = await api<{ addresses: AddressAdvancedView[] }>(
@@ -184,10 +185,10 @@ export function AddressManager({ title, help }: Props) {
         className="primary account-small-button"
         type="button"
         onClick={openCreate}
-        disabled={limitReached}
+        disabled={limitReached || state === "loading" || state === "error"}
       >
         <Plus />
-        Novo endereço
+        {state === "empty" ? "Adicionar um endereço" : "Adicionar novo endereço"}
       </button>
     </div>
   );
@@ -266,12 +267,8 @@ export function AddressManager({ title, help }: Props) {
           <MapPin />
           <div>
             <h3>Nenhum endereço cadastrado</h3>
-            <p>Adicione um local de entrega. O primeiro será definido como padrão automaticamente.</p>
+            <p>Cadastre seu primeiro endereço pessoal. Ele será definido como padrão automaticamente.</p>
           </div>
-          <button className="primary" type="button" onClick={openCreate}>
-            <Plus />
-            Adicionar endereço
-          </button>
         </div>
       ) : (
         <div className="address-list">
