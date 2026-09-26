@@ -238,6 +238,29 @@ async function assertComplete(client: PoolClient, row: Record<string, any>) {
     throw new RuralPropertyError("WASHING_FACILITY_REQUIRED", 422);
 }
 
+async function transitionToSubmitted(
+  client: PoolClient,
+  producerId: string,
+  current: Record<string, any>,
+) {
+  if (current.status === "rejected") {
+    await client.query(
+      "UPDATE public.app_properties SET status='draft' WHERE id=$1 AND producer_id=$2",
+      [current.id, producerId],
+    );
+  }
+
+  const updated = await client.query<Record<string, any>>(
+    [
+      "UPDATE public.app_properties",
+      "SET wizard_current_step=5,status='submitted'",
+      "WHERE id=$1 AND producer_id=$2 RETURNING *",
+    ].join(" "),
+    [current.id, producerId],
+  );
+  return updated.rows[0];
+}
+
 function mapDbError(error: unknown): never {
   if (error instanceof RuralPropertyError) throw error;
   const dbError = error as { code?: string; message?: string };
@@ -489,16 +512,7 @@ export class RuralPropertyService {
           ).rows[0];
         } else {
           await assertComplete(client, current);
-          row = (
-            await client.query<Record<string, any>>(
-              [
-                "UPDATE public.app_properties SET",
-                "wizard_current_step=5,status='submitted'",
-                "WHERE id=$1 AND producer_id=$2 RETURNING *",
-              ].join(" "),
-              [propertyId, producerId],
-            )
-          ).rows[0];
+          row = await transitionToSubmitted(client, producerId, current);
         }
       }
 
@@ -591,15 +605,11 @@ export class RuralPropertyService {
       assertRevision(current, input.expectedRevision);
       await assertComplete(client, current);
 
-      const updated = await client.query<Record<string, any>>(
-        [
-          "UPDATE public.app_properties",
-          "SET wizard_current_step=5,status='submitted'",
-          "WHERE id=$1 AND producer_id=$2 RETURNING *",
-        ].join(" "),
-        [propertyId, producerId],
+      const row = await transitionToSubmitted(
+        client,
+        producerId,
+        current,
       );
-      const row = updated.rows[0];
 
       await audit(client, {
         requestId,
