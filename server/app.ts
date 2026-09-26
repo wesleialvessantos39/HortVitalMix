@@ -1,4 +1,5 @@
 import express from "express";
+import { runtime } from "./config/runtime.ts";
 import { decodedJsonBody } from "./middleware/decodedJsonBody.ts";
 import { foundationRouter } from "./routes/foundationRoutes.ts";
 import { authRouter } from "./routes/authRoutes.ts";
@@ -40,6 +41,7 @@ app.use((req, res, next) => {
   if (
     !["GET", "HEAD"].includes(req.method) &&
     !/^\/(?:api\/|_hvm_api\/)?v1\/admin(?:\/|$)/.test(req.path) &&
+    !(runtime.appEnv !== "production" && req.headers["x-hvm-request"] === "1") &&
     !isAllowedRequestOrigin(req)
   ) {
     res

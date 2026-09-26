@@ -1,3 +1,4 @@
+// Auth flow: resetPasswordForEmail dispatches before challenge finalization
 import { hasConfirmedEmail } from "../../shared/securityCodes.ts";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import {

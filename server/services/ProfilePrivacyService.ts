@@ -2,6 +2,8 @@ import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
 import { redactPII } from "../security/redactPII.ts";
 import { AddressManagementService } from "./AddressManagementService.ts";
+export { AddressManagementService };
+// Gerenciamento de endereços e atribuição de replacementDefaultId unificados
 import type {
   ConsentView,
   PreferencesView,

@@ -33,10 +33,37 @@ function requestOrigin(req: Request) {
 }
 
 export function isAllowedRequestOrigin(req: Request) {
+  // Google Studio e desenvolvimento local: chamadas internas do app carregam
+  // X-HVM-Request e podem vir através de proxies que alteram Sec-Fetch-Site.
+  if (
+    runtime.appEnv !== "production" &&
+    firstHeader(req.headers["x-hvm-request"]) === "1"
+  ) {
+    return true;
+  }
+
+  const origin = requestOrigin(req);
+
+  // Verifica se a origem pertence explicitamente aos ambientes do Google AI Studio
+  if (origin) {
+    try {
+      const parsedOrigin = new URL(origin);
+      if (
+        parsedOrigin.protocol === "https:" &&
+        (parsedOrigin.hostname.endsWith(".usercontent.goog") ||
+          parsedOrigin.hostname.endsWith(".googleusercontent.com") ||
+          parsedOrigin.hostname === "aistudio.google.com")
+      ) {
+        return true;
+      }
+    } catch {
+      // Ignora erro de parsing e segue para validações estritas
+    }
+  }
+
   const fetchSite = firstHeader(req.headers["sec-fetch-site"]);
   if (fetchSite === "cross-site") return false;
 
-  const origin = requestOrigin(req);
   if (!origin) {
     // Alguns proxies do Google Studio removem Origin, mas preservam
     // Sec-Fetch-Site. Aceitamos somente navegação same-origin.

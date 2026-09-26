@@ -15,19 +15,33 @@
   "functions": {
     "api/[...path].ts": {
       "maxDuration": 30,
-      "memory": 512
+      "memory": 512,
+      "includeFiles": "supabase/manifest.json"
     },
     "api/index.ts": {
       "maxDuration": 30,
-      "memory": 512
+      "memory": 512,
+      "includeFiles": "supabase/manifest.json"
+    },
+    "api/v1/config.ts": {
+      "maxDuration": 30,
+      "memory": 512,
+      "includeFiles": "supabase/manifest.json"
+    },
+    "api/v1/auth/[action].ts": {
+      "maxDuration": 30,
+      "memory": 512,
+      "includeFiles": "supabase/manifest.json"
     },
     "api/v1/admin/bootstrap/index.ts": {
       "maxDuration": 30,
-      "memory": 512
+      "memory": 512,
+      "includeFiles": "supabase/manifest.json"
     },
     "api/v1/admin/bootstrap/status.ts": {
       "maxDuration": 30,
-      "memory": 512
+      "memory": 512,
+      "includeFiles": "supabase/manifest.json"
     }
   },
   "rewrites": [

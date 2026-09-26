@@ -377,6 +377,7 @@ export function Account({
     const rawForm = Object.fromEntries(new FormData(e.currentTarget));
     const { confirmPassword: confirmation, ...form } = rawForm;
 
+    let publicRegistrationPayload: Record<string, unknown> | null = null;
     if (mode === "consumer" || mode === "producer") {
       const parsed = (
         mode === "producer" ? RegisterProducerSchema : RegisterConsumerSchema
@@ -404,6 +405,7 @@ export function Account({
         showFieldErrors(errors);
         return;
       }
+      publicRegistrationPayload = parsed.data as Record<string, unknown>;
     }
 
     if (mode === "reset") {
@@ -450,7 +452,7 @@ export function Account({
       if (mode === "consumer" || mode === "producer") {
         const result = await registerPublicAccount(
           mode,
-          form as Record<string, unknown>,
+          publicRegistrationPayload ?? (form as Record<string, unknown>),
         );
 
         const targetRole = mode;
@@ -493,7 +495,7 @@ export function Account({
           setNotice("Escolha primeiro o perfil de acesso para reenviar a confirmação.");
           return;
         }
-        await api("/v1/auth/resend-confirmation", {
+        void api("/v1/auth/resend-confirmation", {
           method: "POST",
           body: JSON.stringify({
             email: form.email,
@@ -779,7 +781,7 @@ export function Account({
             type="button"
             onClick={() => navigate("/admin/configuracao")}
           >
-            Abrir configurações
+            Abrir Configuração Global — Trilha 02
           </button>
         )}
 

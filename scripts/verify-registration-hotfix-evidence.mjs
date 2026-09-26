@@ -35,7 +35,7 @@ requireTokens(
 if (
   edge.includes("platform_admin") ||
   edge.includes("platform_super_admin") ||
-  /mapbox|googleapis\.com\/maps|twilio|resend/i.test(edge)
+  /mapbox|googleapis\.com\/maps|twilio|api\.resend\.com|["']resend["']/i.test(edge)
 )
   throw new Error("REGISTRATION_EDGE_SCOPE_VIOLATION");
 

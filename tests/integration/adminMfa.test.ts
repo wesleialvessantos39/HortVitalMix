@@ -14,11 +14,11 @@ beforeEach(()=>{
  vi.spyOn(AdminGovernanceService as any,"recordAttempt").mockResolvedValue(undefined);
  m.signOut.mockResolvedValue({error:null});
  m.signIn.mockResolvedValue({data:{user:{id:"u",email_confirmed_at:"2026-09-01"},session:{access_token:"access",refresh_token:"refresh",expires_in:3600}},error:null});
- m.from.mockImplementation(table=>query({
+ m.from.mockImplementation(table=>query(({
  app_admin_principals:[{admin_user_id:"u",portal_role:role,email_verified_at:confirmed?"2026-09-01":null,auth_email:"test@example.invalid"}],
  app_users:{status},app_user_role_assignments:[{role_code:assigned,expires_at:null}],
  app_admin_sector_members:[{sector_code:"operations",expires_at:null}],
- }[table]));
+ } as any)[table]));
 });
 describe("administrative password login — user policy 2026-09-25",()=>{
  it.each(["platform_admin","platform_super_admin"] as const)("creates %s session with password, without email OTP",async portal=>{

@@ -34,11 +34,11 @@ describe("authentication request performance without authorization bypass", () =
  });
  it.each(["platform_super_admin", "platform_admin"])("validates %s once and retains its sector restrictions", async role => {
   mocks.getUser.mockResolvedValue({data:{user:{id:"user",email_confirmed_at:"2026-01-01"}},error:null});
-  mocks.from.mockImplementation(table => chain({
+  mocks.from.mockImplementation(table => chain(({
    app_admin_principals:{admin_user_id:"user",portal_role:role},
    app_user_role_assignments:[{role_code:role,expires_at:null}],
    app_users:{status:"active"}, app_admin_sector_members:[{sector_code:"operations",expires_at:null}],
-  }[table]));
+  } as any)[table]));
   const req:any={headers:{cookie:`hvm_access=token; hvm_portal_role=${role}`}};
   const next=vi.fn(); await adminSessionMiddleware(req,response() as unknown as Response,next);
   expect(next).toHaveBeenCalledOnce(); expect(mocks.getUser).toHaveBeenCalledOnce();

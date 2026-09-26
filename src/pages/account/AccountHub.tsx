@@ -24,6 +24,8 @@ import type {
 import type { AddressAdvancedView } from "../../../shared/contracts/addressAdvanced";
 import { PrivacyExportButton } from "./PrivacyExportButton";
 import { AddressManager } from "./AddressManager";
+import { PostalLookupService } from "../../services/PostalLookupService";
+// Coordinates AddressManager events: "hortivitalmix:default-address-changed" and PostalLookupService
 
 type Props = {
   path: string;
