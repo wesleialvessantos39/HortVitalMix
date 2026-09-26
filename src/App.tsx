@@ -33,6 +33,7 @@ import { RecoverPasswordPage } from "./pages/auth/RecoverPasswordPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 import { useSession } from "./hooks/useSession";
 import { PublicLoginPage } from "./pages/auth/PublicLoginPage";
+import { ProducerPropertiesPage } from "./pages/producer/ProducerPropertiesPage";
 const fallback = {
   platformName: "HortiVitalMix",
   slogan: "Tudo fresco. Tudo da sua região.",
@@ -107,6 +108,9 @@ export default function App() {
     setPath(destination);
   }, [shellSession, guestAccessRoute, administrativeSession]);
   const isAccountDataRoute = path === "/conta" || path.startsWith("/conta/");
+  const isProducerPropertyRoute =
+    path === "/produtor/propriedades" ||
+    path === "/produtor/propriedades/novo";
   const publicPortalSession =
     Boolean(shellSession) &&
     (shellSession?.portalKind === "public" ||
@@ -319,7 +323,7 @@ export default function App() {
         {search}
       </header>
       <main id="conteudo" className={isAdminRoute || publicLoginRole ? "layout admin-route-layout" : "layout"}>
-        {(sessionLoading && (guestAccessRoute || isAccountDataRoute || path === "/minha-conta")) || (shellSession && guestAccessRoute) ? <p role="status" className="account-notice">Carregando sua conta…</p> : publicLoginRole ? (
+        {(sessionLoading && (guestAccessRoute || isAccountDataRoute || isProducerPropertyRoute || path === "/minha-conta")) || (shellSession && guestAccessRoute) ? <p role="status" className="account-notice">Carregando sua conta…</p> : publicLoginRole ? (
           <PublicLoginPage key={publicLoginRole} role={publicLoginRole} onNavigate={go} onSessionAdopt={adoptSession}/>
         ) : isAdminRoute ? (
           <AdminRouter path={path} onNavigate={go} onSessionRefresh={refreshSession} />
@@ -341,6 +345,21 @@ export default function App() {
           />
         ) : path === "/cadastro" ? (
           <ChoosePortalPage onNavigate={go} />
+        ) : isProducerPropertyRoute && shellSession?.activeRole === "producer" ? (
+          <ProducerPropertiesPage
+            key={shellSession.userId + ":" + path}
+            path={path}
+            session={shellSession}
+            onNavigate={go}
+          />
+        ) : isProducerPropertyRoute ? (
+          <Account
+            path="/minha-conta"
+            onNavigate={go}
+            session={shellSession}
+            onSessionAdopt={adoptSession}
+            onSessionRefresh={refreshSession}
+          />
         ) : isAccountDataRoute && shellSession ? (
           <AccountHub key={shellSession.userId + ":" + shellSession.activeRole} path={path} session={shellSession} onNavigate={go} />
         ) : isAccountDataRoute && path !== "/conta" ? (
