@@ -92,7 +92,7 @@ export function AdminPortalShell({
           </button>
         </div>
         {logoutError && <p role="alert" className="admin-alert admin-alert--error">{logoutError}</p>}
-        <button className="secondary account-action" type="button" onClick={() => onNavigate("/minha-conta")}>
+        <button className="secondary account-action" type="button" onClick={() => onNavigate("/conta")}>
           <UserRound size={18} aria-hidden="true" /> Minha conta e privacidade
         </button>
         {children}
