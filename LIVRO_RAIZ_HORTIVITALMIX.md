@@ -3209,3 +3209,53 @@ Validação: manifesto, typecheck, security check, 20 testes T07 iniciais, 19 te
 - Sessões autenticadas não veem convites de cadastro no catálogo nem formulários de entrar/cadastrar via navegação ou URL direta. Essas rotas conduzem à conta/painel correto. A checagem inicial da sessão termina antes de exibir os formulários. Respostas atrasadas não substituem uma sessão recém-adotada; falhas transitórias não apagam a sessão em memória. Respostas reais de sessão inválida continuam respeitadas.
 - Logout público volta à página inicial e libera os convites de cadastro novamente. O login público devolve o nome junto da sessão já autenticada.
 - Validação: typecheck, segurança, manifesto schema 29, build/bundle; 21 testes T07 e 16 T03; 23 testes de navegador (respostas controladas), incluindo os quatro perfis, recarga pela marca, logout, navegação autenticada e layout público em 320/1440 px. Capturas mobile/desktop inspecionadas. Nenhum serviço pago ou migração adicionados. A pendência anterior de CRUD real autenticado da homologação operacional T07 permanece registrada.
+
+
+## 2026-09-26 — T07-SELAGEM-20260926-01 — Reauditoria real e bloqueio da prova operacional
+
+### Objetivo
+Reexecutar o fechamento da Trilha 07 contra o Manual Mestre Técnico v11, Volume 3, §7, antes de qualquer início da T08, distinguindo rigorosamente validação técnica de prova operacional autenticada em produção.
+
+### Alterações
+- Reauditados contratos, `AddressManagementService.ts`, `GeocodingHelper.ts`, rotas, migration T07, testes, `package.json` e `vercel.json`.
+- Confirmados: limite de 10 ativos, rótulos/notas, ViaCEP + OSM/Nominatim com fallback manual, ordenação por recência, lock/revisão/`commandId`, branch soft-delete futuro sem `app_orders` e eleição determinística do novo padrão por `created_at ASC, id ASC`.
+- Criado `tests/unit/trilha07RegressionGuards.test.ts` para lockfile/`npm ci`, imports ESM com extensão e buildCommand Hobby enxuto; o guard foi incluído em `test:t07:unit`.
+- O teste já existente que rejeita update sem campo mutável foi preservado.
+- Nenhuma migration, tabela, bucket, rota ou componente da T08/T09+ foi criado.
+
+### Evidência de banco
+Projeto canônico Supabase `xipbsazvymkqqfmfegwu`:
+- 30 migrations e schema lógico 29;
+- `app_orders` inexistente;
+- `app_properties` inexistente;
+- `app_user_addresses`: 4 policies, RLS hardening preservado e privilégios de `authenticated` somente SELECT;
+- triggers ativos: `trg_app_user_addresses_limit` e `trg_app_user_addresses_touch`;
+- 2 atribuições ativas de produtor e 5 de consumidor;
+- 0 linhas de endereço e 0 endereços ativos no momento da consulta;
+- release production corrente `portal-navigation-afc8ff7`, commit `afc8ff73572d175b826d06644bcb064352f2e832`, schema 29 e hash `500a5d5ff51d5608c07768a8b63f681328b37d1f3c99a19dd7ab5c612851689a`.
+
+### Testes e gates
+- Validações técnicas previamente registradas continuam válidas.
+- A inspeção desta sessão confirmou que os quatro bugs históricos permanecem corrigidos no código atual: lockfile presente; imports ESM críticos com `.ts`; update vazio rejeitado; Vercel com build enxuto.
+- Novos guards de regressão foram versionados, mas não são marcados como executados localmente nesta sessão, pois o runtime não conseguiu resolver `github.com` para clonar o repositório.
+- Nenhum Playwright controlado, status READY ou consulta SQL foi contado como prova de CRUD autenticado real.
+
+### Segurança e custo
+- Nenhum recurso pago foi usado ou habilitado.
+- Nenhuma credencial real foi extraída, redefinida ou contornada.
+- Não houve impersonação de produtor/consumidor, criação de identidade fictícia, escrita direta no banco para simular fluxo, Supabase Branch, preview Vercel ou Actions automático.
+
+### Git e promoção
+- Branch de correção: `correcao-t07-selagem-operacional-20260926`.
+- Base: `main` no SHA `afc8ff73572d175b826d06644bcb064352f2e832`.
+- Produção Vercel desse SHA confirmada `READY`; `app_releases` aponta para o mesmo SHA.
+- Este branch não deve ser tratado como selagem operacional nem promovido como conclusão T07 até a prova real obrigatória.
+
+### Estado e pendências
+**T07: tecnicamente conforme, operacionalmente NÃO selada.**
+
+Pendência única de definição de pronto: autenticar uma conta real de Produtor e uma conta real de Consumidor na versão publicada e executar criar, editar, definir padrão, excluir (inclusive o padrão e validar substituto) e confirmar o limite de 10.
+
+A sessão atual possui acesso aos conectores de GitHub/Supabase/Vercel, mas não possui as credenciais nem uma sessão de navegador autenticada dessas contas reais. Por isso a prova não foi fabricada nem substituída por mocks.
+
+**T08 permanece não iniciada**, conforme a trava explícita do proprietário e a entrada anterior do Livro-Raiz.
