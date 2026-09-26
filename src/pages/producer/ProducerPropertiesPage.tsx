@@ -763,6 +763,8 @@ function RuralPropertyWizard({
                 pinLabel="Sede do imóvel rural. Arraste para ajustar."
                 emptyHelp="Toque no mapa para marcar a sede do imóvel rural."
                 pinnedHelp="Arraste o marcador ou toque em outro ponto para ajustar a sede."
+                initialCenter={{ latitude: -9.9132, longitude: -63.0408 }}
+                initialZoom={11}
                 onChange={(coordinates) =>
                   patch({
                     latitudeSede: coordinates.latitude,
