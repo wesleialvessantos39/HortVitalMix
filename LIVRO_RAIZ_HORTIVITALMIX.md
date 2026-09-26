@@ -3185,3 +3185,125 @@ Correções: lockfile restaurado do pai, alinhado a Node 22; imports ESM T07 exp
 Segurança: contratos strict, confirmação obrigatória, segregação de perfis e controles de autorização preservados. Nenhuma migration alterada ou adicionada; schema 29 e hash canônico preservados. Nenhum Actions, plano pago ou dado fictício de produção utilizado.
 
 Validação: manifesto, typecheck, security check, 20 testes T07 iniciais, 19 testes de transporte/cadastro/roteamento, evidências, build e bundle aprovados. Importação nativa com transformação TypeScript aprovada após correção. Testes de navegador tentados: Chromium portátil encerrou com SIGSEGV antes de executar as telas; isso não é homologação visual. Consulta sem dados à Edge pública retornou VALIDATION_ERROR esperado, sem criar conta ou enviar e-mail. Cadastro real, persistência autenticada e homologação operacional permanecem pendentes; status de deploy não substitui essas provas.
+
+
+## 2026-09-25 — T06-CORR-PESSOA-ADMIN-20260925-01 — correção da pessoa canônica em credenciais administrativas
+
+**Objetivo:** corrigir os defeitos residuais do Módulo 06 no estado vivo posterior à T07, sem recriar T06, sem reverter T01–T05, sem retirar recursos T07 e sem iniciar T08.
+
+**Base de execução:** `main` em `8d1924c68a382e25859d6df0e46a7bbacb0057b1`.  
+**Branch:** `trilha06-correcao-pessoa-admin`.  
+**Banco canônico:** Supabase `xipbsazvymkqqfmfegwu`.  
+**Governança financeira:** free tier only; nenhuma feature paga adicionada.  
+**Deploy:** branch sem preview por `vercel.json` (`main=true`, `*=false`). Nenhum workflow possui gatilho de push; homologação automatizada continua somente por `workflow_dispatch`.
+
+### Verificação arquitetural antes do patch
+
+Foram preservados os invariantes já homologados da T06/T07:
+
+- `app_user_addresses`, `app_user_preferences` e `app_consent_records` continuam com RLS ENABLE + FORCE;
+- `authenticated` mantém SELECT e não possui INSERT/UPDATE/DELETE nas três tabelas;
+- `uq_app_user_addresses_default` continua parcial sobre endereço ativo e `uq_app_user_addresses_fingerprint` continua único por pessoa;
+- `trg_fn_t06_touch_address` continua gerando fingerprint SHA-256 no PostgreSQL com `trim`, colapso POSIX `[[:space:]]+` e `lower`;
+- primeiro endereço ativo continua forçado como padrão;
+- consentimentos continuam append-only por `trg_fn_prevent_audit_tampering` com SQLSTATE 42501;
+- `current_person_id()` permanece restrita a `app_people.user_id = auth.uid()`; não foi ampliada para credencial administrativa;
+- T07 permanece com latitude/longitude, `is_active`, instruções de entrega, último uso, OSM, soft-delete e limite de dez endereços;
+- nenhuma migration T06 foi alterada e nenhuma migration nova foi necessária.
+
+Consulta real ao banco confirmou o defeito D1: a credencial administrativa existente possui `admin_user_id` diferente de `app_people.user_id`, embora ambos apontem para o mesmo `person_id`. A conta administrativa e o papel estão ativos.
+
+### D1 — helper único de pessoa canônica
+
+Criado `server/services/AccountPersonResolver.ts` com `resolveAccountPersonId(userId, role)`.
+
+Ordem de resolução:
+
+1. procura `app_people.user_id = userId`;
+2. se o papel da sessão for `platform_admin` ou `platform_super_admin`, procura `app_admin_principals.admin_user_id = userId`, exige `app_users.status='active'`, atribuição de papel ativa e `portal_role` igual ao papel da sessão, e retorna o `person_id` já vinculado;
+3. sem correspondência, retorna `PERSON_NOT_FOUND`/404.
+
+Não existe fallback por CPF ou e-mail. Uma sessão pública nunca usa principal administrativo como segunda chance.
+
+`ProfilePrivacyService` e `AddressManagementService` passaram a usar o mesmo helper. Mutações mantêm `FOR UPDATE` sobre a linha de `app_people`. O CRUD T07 não foi duplicado nem movido.
+
+### D2 — isolamento de carga do hub /conta
+
+`AccountHub.load()` deixou de ser um `Promise.all` único.
+
+- `/conta`: perfil e endereços são independentes; falha de endereço não limpa a saudação;
+- `/conta/perfil`: somente perfil;
+- `/conta/enderecos`: `AddressManager` continua dono da carga;
+- `/conta/preferencias`: somente preferências;
+- `/conta/privacidade`: somente preferências e consentimentos.
+
+Nenhum nome é inferido de e-mail. A saudação permanece ligada exclusivamente ao `fullName` civil.
+
+### D3 — prova recente para exportação administrativa
+
+O login administrativo por senha passou a emitir `hvm_reauth` HMAC com o mesmo vínculo `uid + session_id` e TTL de 15 minutos da T06 pública.
+
+`PrivacyExportButton` agora reautentica no portal correspondente:
+
+- público -> `POST /v1/auth/login`;
+- administrativo -> `POST /v1/admin/auth/login`.
+
+A senha deve pertencer à credencial administrativa do `portalRole`; a senha da credencial pública não autentica esse endpoint. Refresh/import de sessão não recebeu emissão de nova prova.
+
+A exportação continua em `GET /v1/account/profile?export=1`, exige `hvm_reauth`, mantém CPF mascarado e reúne somente a pessoa resolvida: perfil, endereços T07 inclusive inativos, preferências e histórico completo de consentimentos.
+
+### D4 — actor correto nas rotas /v1/account/*
+
+Foi criada uma fronteira de sessão no próprio router T06:
+
+- se `hvm_portal_role` for administrativo, `adminSessionMiddleware` valida a sessão e fornece `admin_user_id + portalRole`;
+- caso contrário, a sessão pública usa `req.actor.userId` e respeita o papel ativo do cookie;
+- JWT público com consumidor+produtor não é mais automaticamente promovido a produtor; ausência de papel ativo inequívoco retorna `ACTIVE_ROLE_REQUIRED`.
+
+O acesso civil a partir da administração usa `/v1/admin/auth/verify-session`. Foi criado `AccountSessionGate` para abrir `/conta` de Admin/Super Admin sem usar `/v1/auth/session` como handoff administrativo.
+
+### D5 — documentação e evidência
+
+`docs/TRILHA06_VALIDACAO.md` foi corrigido para registrar a selagem histórica T06 em schema 28 e o estado vivo aditivo T07 em schema 29, sem apagar o histórico.
+
+`scripts/verify-trilha06-evidence.mjs` passou a verificar:
+- helper canônico sem inferência por CPF/e-mail;
+- actor administrativo e papel ativo;
+- emissão de `hvm_reauth` no login administrativo;
+- handoff administrativo sem chamada executável a `/v1/auth/session`;
+- preservação de soft-delete, eleição determinística, limite 10 e helper único em T07;
+- documentação de schema 28/29;
+- ausência de recurso Vercel pago e preview de branch.
+
+### Testes adicionados
+
+`tests/unit/trilha06AdminPersonCorrection.test.ts` adiciona oito casos determinísticos:
+
+1. consumer resolve apenas `app_people.user_id`;
+2. producer mantém pessoa civil separada de imóvel rural;
+3. admin com `admin_user_id != people.user_id` resolve o `person_id` vinculado;
+4. admin sem principal ativo retorna 404 sem CPF/e-mail;
+5. consumer sem pessoa não pode cair em principal administrativo;
+6. mutações preservam lock `FOR UPDATE OF p`;
+7. hub isola falha de endereço da saudação e carrega somente a seção necessária;
+8. exportação administrativa usa endpoint administrativo e T07 mantém CRUD/soft-delete/limite 10.
+
+`tests/e2e/trilha06-account.spec.ts` recebeu cenários adicionais para:
+- erro de endereços sem perda da saudação;
+- senha pública rejeitada na reautenticação administrativa e senha administrativa aceita no endpoint correto.
+
+O script `test:t06:unit` inclui a nova suíte. A evidência T07 continua em `verify:t07:evidence`.
+
+### Garantias de não regressão
+
+- nenhuma migration promovida foi reescrita;
+- nenhuma tabela, bucket, PostGIS, `app_properties` ou wizard rural foi criado;
+- `AddressManagementService` continua autoridade única do CRUD de endereço;
+- login administrativo permanece sem MFA conforme decisão atual do proprietário;
+- nenhuma Action foi ligada a push;
+- nenhum preview Vercel de branch foi habilitado;
+- nenhuma dependência ou serviço pago foi incluído.
+
+### Estado da execução
+
+Código, testes e documentação estão concentrados na branch `trilha06-correcao-pessoa-admin`. A promoção para `main` deve ocorrer por Pull Request. Como esta execução não possui um runner local conectado e Actions em push estão proibidas, o gate executável `npm run verify:t06:free` e `npm run verify:t07:evidence` permanecem comandos obrigatórios de validação no ambiente local/autorizado antes do merge; a verificação estática e as consultas reais de invariantes do banco foram concluídas sem alteração de schema.
