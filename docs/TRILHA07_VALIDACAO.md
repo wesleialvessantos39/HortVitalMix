@@ -205,3 +205,58 @@ O typecheck integral continua em `verify:t07:free`, junto da suíte dedicada T07
 - Sem migration, projeto pago, preview Vercel ou GitHub Actions automático. Publicação pela integração Git da main. O registro app_releases deve ser sincronizado com o SHA publicado somente depois de READY, seguido de health/ready/config.
 
 **Estado:** verificações técnicas da T07 aprovadas. A selagem operacional integral continua pendente de cadastro, edição, padrão e exclusão com contas reais autenticadas de produtor e consumidor na versão publicada. Não declarar esses testes reais como realizados, nem iniciar T08 com base somente em deploy READY.
+
+
+## 2026-09-26 — Reauditoria normativa e trava da selagem operacional
+
+### Conferência Manual v11 §7
+
+Revisão item a item contra o Volume 3, páginas 25 a 27, preservando as decisões vigentes do Livro-Raiz:
+
+- até 10 endereços ativos por pessoa: confirmado no trigger físico `trg_app_user_addresses_limit` e no serviço;
+- rótulos rápidos e `delivery_notes`: confirmados nos contratos e na interface;
+- geocodificação assistiva: ViaCEP + OpenStreetMap/Nominatim, pin manual prevalente, timeout Nominatim de 3 s e no máximo um retry;
+- ordenação operacional: `last_used_at DESC NULLS LAST, created_at ASC, id ASC`;
+- exclusão: `to_regclass('public.app_orders')` mantém hard-delete enquanto a tabela não existe e preserva o branch soft-delete para pedido aberto, sem criar `app_orders`;
+- exclusão do padrão: substituto eleito deterministicamente por `created_at ASC, id ASC`;
+- concorrência/idempotência: `FOR UPDATE`, revisão otimista e `commandId`;
+- RLS/hardening: ENABLE + FORCE, quatro policies, role `authenticated` somente com SELECT; mutações permanecem exclusivas do backend e protegidas por `originProtection` + `hvm_reauth`;
+- residência/endereço pessoal e imóvel rural continuam separados; `app_properties` não existe e T08 não foi iniciada.
+
+Nenhuma divergência normativa não autorizada foi encontrada nessa reauditoria.
+
+### Evidência ao vivo do banco e produção
+
+No projeto Supabase canônico `xipbsazvymkqqfmfegwu` foram confirmados nesta sessão:
+
+- 30 migrations; schema lógico 29;
+- `public.app_orders` ausente;
+- `public.app_properties` ausente;
+- exatamente quatro policies em `app_user_addresses`;
+- privilégios de `authenticated`: SELECT=true e INSERT/UPDATE/DELETE=false;
+- exatamente os triggers ativos `trg_app_user_addresses_limit` e `trg_app_user_addresses_touch`;
+- 2 atribuições ativas de papel produtor e 5 de consumidor;
+- 0 linhas em `app_user_addresses`, portanto nenhuma prova operacional real de CRUD foi inferida;
+- release corrente `portal-navigation-afc8ff7`, schema 29, hash `500a5d5ff51d5608c07768a8b63f681328b37d1f3c99a19dd7ab5c612851689a`, commit `afc8ff73572d175b826d06644bcb064352f2e832`.
+
+A Vercel confirmou o deployment de produção do mesmo commit `afc8ff73572d175b826d06644bcb064352f2e832` como `READY`.
+
+### Regressões históricas
+
+Foi adicionado `tests/unit/trilha07RegressionGuards.test.ts` e incluído em `test:t07:unit` para proteger explicitamente:
+
+1. presença/coerência do `package-lock.json` com o `npm ci` do Vercel;
+2. extensões `.ts` nos imports ESM críticos da T07;
+3. `buildCommand` Hobby exatamente enxuto, sem typecheck ou suíte T07.
+
+O teste de update parcial vazio já existia em `addressAdvancedContracts.test.ts` e foi preservado.
+
+Esses novos guards foram versionados, porém **não são declarados como executados localmente nesta sessão**: o runtime desta conversa não possui acesso de rede para clonar o repositório e não se substitui execução real por inspeção estrutural.
+
+### Estado operacional e bloqueio
+
+A selagem operacional integral **permanece pendente**. Para fechá-la é obrigatório autenticar, na versão publicada, uma conta real de Produtor e uma conta real de Consumidor e executar criar → editar → definir padrão → excluir, incluindo exclusão do padrão com validação do substituto e confirmação do limite de 10.
+
+Nesta sessão há acesso administrativo ao GitHub, Supabase e Vercel, mas não há credenciais/sessão interativa autenticada das contas reais de produtor e consumidor. Não foi feito bypass de autenticação, reset de senha, impersonação, criação de identidade fictícia ou escrita direta no banco para simular essa prova.
+
+**Consequência normativa:** T07 continua tecnicamente aprovada, mas não operacionalmente selada; por ordem expressa do proprietário e pelo próprio Livro-Raiz, **T08 não foi iniciada**.
