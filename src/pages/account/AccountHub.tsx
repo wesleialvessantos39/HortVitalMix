@@ -11,6 +11,7 @@ import {
   MapPin,
   ShieldCheck,
   SlidersHorizontal,
+  Sprout,
   UserRound,
 } from "lucide-react";
 import { api, type ApiFailure } from "../../lib/api";
@@ -100,6 +101,18 @@ export function AccountHub({ path, session, onNavigate }: Props) {
               </span>
             </button>
           ))}
+          {session.activeRole === "producer" && (
+            <button
+              className="account-hub-card account-hub-card-rural"
+              onClick={() => onNavigate("/produtor/propriedades")}
+            >
+              <Sprout />
+              <span>
+                <strong>Imóveis rurais</strong>
+                <small>Cadastre propriedades, áreas, água e atividades produtivas</small>
+              </span>
+            </button>
+          )}
         </div>
         <button className="secondary account-action" type="button" onClick={() => onNavigate(administrative ? "/admin/painel" : "/minha-conta")}>
           {administrative ? "Voltar ao painel administrativo" : "Segurança e sair da conta"}
