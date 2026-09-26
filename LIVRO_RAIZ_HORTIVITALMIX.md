@@ -3272,3 +3272,66 @@ O proprietário revogou a trava que impedia o desenvolvimento da T08 enquanto o 
 - manter a distinção entre implementação pronta para homologação e homologação efetivamente executada.
 
 Esta decisão substitui apenas a trava de sequência registrada nas entradas imediatamente anteriores. Ela não altera os requisitos funcionais, de segurança, RLS, custo zero, deploy main-only ou separação entre endereço pessoal e imóvel rural.
+
+
+## 2026-09-26 — T08-IMPLEMENTACAO-V11 — Imóveis rurais prontos para homologação no Work
+
+### Decisão de sequência
+Por decisão expressa do proprietário, a homologação operacional real da T07 foi adiada para execução posterior no ChatGPT Work e deixou de bloquear o desenvolvimento. Nenhum “teste de pronto” adicional de produção foi criado. A T07 não foi falsamente marcada como homologada.
+
+### Introspecção anterior à T08
+Antes de criar qualquer artefato da T08, o Supabase real foi consultado. Confirmou-se schema lógico 29/30 migrations, ausência de `app_properties` e `app_orders`, e a coexistência necessária entre:
+- `app_producer_profiles.property_name`: “Nome de seu imóvel” do cadastro inicial;
+- `app_properties.property_name`: nome específico de cada propriedade/chácara do módulo rural.
+
+Nenhum campo anterior foi renomeado ou reaproveitado silenciosamente.
+
+### Implementação T08
+Foi criado o branch `trilha08-v11` a partir das correções T07. A implementação contém:
+
+- migration aditiva `20260926190000_trilha08_rural_properties.sql`;
+- schema lógico planejado **30**, com 31 migrations no manifesto;
+- hash canônico planejado `2a8994804e8af48902a745860e9aa1307788c1baa6ab7ec9b4e2eba874edcf0c`;
+- tabelas `app_properties`, `app_property_boundaries` e `app_rural_activities`;
+- índices de produtor/localização;
+- dois triggers em `app_properties`: revisão/timestamp e guarda de status/re-homologação;
+- RLS ENABLE + FORCE nas três tabelas;
+- leitura do próprio produtor e de administradores;
+- `authenticated` somente SELECT; mutações pelo backend;
+- contratos estritos em `shared/contracts/ruralProperty.ts`;
+- validação GeoJSON Polygon, anel fechado e coordenadas de Rondônia;
+- `RuralPropertyService.ts` com ownership, transação, advisory lock, revisão, idempotência e auditoria;
+- rotas de lista, detalhe, save-step e submit;
+- interface `/produtor/propriedades` e `/produtor/propriedades/novo`;
+- wizard de cinco etapas;
+- autosave de 2 s nas etapas editáveis;
+- persistência local/offline e reconexão;
+- mapa OSM sem chave, centralizado em Ariquemes para o cadastro rural;
+- “Continuar mais tarde”;
+- separação explícita de `/conta/enderecos`;
+- responsividade oficial;
+- 32 casos de teste preparados;
+- `verify:t08:free` e evidência estrutural.
+
+### Decisão contra dados fictícios
+O exemplo do Manual criava o rascunho do passo 1 com valores artificiais para campos de etapas futuras. Isso não foi reproduzido. Áreas, água e irrigação permanecem `NULL` enquanto ainda não foram informadas. A transição para estado não-draft exige os dados obrigatórios reais.
+
+### Ambiguidade dos dois triggers
+A referência do Manual a dois triggers foi concretizada como:
+1. bump de `revision` + `updated_at`;
+2. FSM de status e bloqueio de alteração direta de imóvel verificado.
+
+### Estado de execução
+**Código T08 implementado; homologação deliberadamente pendente para o Work.**
+
+Nesta sessão NÃO foram:
+- aplicadas migrations T08 no Supabase de produção;
+- executados os 32 testes como prova;
+- executada homologação real com conta Produtor;
+- feito merge em `main`;
+- feito deploy;
+- atualizado `app_releases`.
+
+O comando completo deixado para o Work é `npm run verify:t08:free`. Depois da aplicação real da migration, eventual versão física gerada pelo Supabase deverá ser reconciliada no mapa de aliases se diferir de `20260926190000`. A promoção só poderá atualizar `app_releases` depois que o SHA exato de `main` estiver READY na Vercel.
+
+T09+ permanece não iniciada.
