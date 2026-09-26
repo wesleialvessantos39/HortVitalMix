@@ -86,6 +86,7 @@ export const AdminEmailConfirmationVerifySchema = z
 
 export const AdminSessionPayloadSchema = z.object({
   accessToken: z.string(),
+  userId: z.string().uuid().optional(),
   refreshToken: z.string(),
   expiresIn: z.number().int().positive().default(3600),
   role: AdminRoleSchema,

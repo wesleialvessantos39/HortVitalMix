@@ -40,9 +40,12 @@ async function mockT07(
   page: import("@playwright/test").Page,
   initial = [address(1), address(2)],
   role = "consumer",
+  requireReauth = false,
 ) {
   const addresses = [...initial] as ReturnType<typeof address>[];
   const mutations: unknown[] = [];
+  let reauthenticated = !requireReauth;
+  const loginPaths: string[] = [];
 
   await page.route("**/*", async (route) => {
     const request = route.request();
@@ -85,6 +88,18 @@ async function mockT07(
       });
 
     if (path === "/v1/auth/session") return json({ ...session, fullName: "Pessoa Cadastrada", roles: [role], activeRole: role });
+    if (path === "/v1/admin/auth/verify-session") return json({ authorized: true, role, sectors: ["support"], requiresReauth: false });
+    if (path === "/v1/admin/auth/login") {
+      loginPaths.push(path);
+      if (request.postDataJSON().portalRole !== role) return json({ error: "INVALID_CREDENTIALS" }, 401);
+      reauthenticated = true;
+      return json({ status: "session_created", role, sectors: [] });
+    }
+    if (path === "/v1/account/profile") {
+      if (url.searchParams.get("export") === "1" && !reauthenticated) return json({ error: "RECENT_AUTH_REQUIRED" }, 401);
+      return json({ fullName: "Pessoa Cadastrada", cpfMasked: "***.***.123-45", phone: "+5569999999999", email: session.email, revision: 1 });
+    }
+    if (path === "/v1/account/preferences") return json({ preferences: { marketingConsent: false, orderUpdatesChannel: "email", quietHoursEnabled: false, quietHoursStart: null, quietHoursEnd: null, revision: 1 }, consents: [] });
     if (path === "/v1/config")
       return json({
         platformName: "HortiVitalMix",
@@ -181,7 +196,7 @@ async function mockT07(
     return json({});
   });
 
-  return { addresses, mutations };
+  return { addresses, mutations, loginPaths };
 }
 
 test("conta e endereço vazio usam identidade pronta e uma única ação em mobile", async ({ page }) => {
@@ -190,10 +205,48 @@ test("conta e endereço vazio usam identidade pronta e uma única ação em mobi
   await page.goto("/conta");
   await expect(page.getByRole("heading", { name: /Pessoa Cadastrada/ })).toBeVisible();
   await expect(page.getByText("Consumidor · consumidor@example.com")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Gerenciar meus endereços" })).toHaveCount(0);
+  await expect(page.locator(".account-delivery-card")).toHaveCount(0);
   await page.goto("/conta/enderecos");
   await expect(page.getByRole("button", { name: "Adicionar um endereço" })).toHaveCount(1);
   await expect(page.locator(".address-state-empty button")).toHaveCount(0);
 });
+
+for (const role of ["platform_admin", "platform_super_admin"]) {
+  test(`exportação confirma senha no portal correto: ${role}`, async ({ page }) => {
+    const mocked = await mockT07(page, [], role, true);
+    await page.goto("/admin/conta/privacidade");
+    await page.getByRole("button", { name: "Exportar meus dados (JSON)" }).click();
+    await page.getByLabel("Senha atual").fill("SenhaTeste#2026");
+    const downloaded = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Confirmar e exportar" }).click();
+    expect((await downloaded).suggestedFilename()).toBe("hortivitalmix-meus-dados.json");
+    expect(mocked.loginPaths).toEqual(["/v1/admin/auth/login"]);
+    await expect(page).toHaveURL(/\/admin\/conta\/privacidade$/);
+  });
+  for (const width of [360, 1440]) {
+    test(`conta administrativa permanece no portal: ${role} ${width}px`, async ({ page }) => {
+      await mockT07(page, [], role);
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/admin/painel");
+      const shortcut = page.locator(".admin-action-grid").getByRole("button", { name: /Minha conta e privacidade/ });
+      await expect(shortcut).toBeVisible();
+      await shortcut.click();
+      await expect(page).toHaveURL(/\/admin\/conta$/);
+      await expect(page.locator(".admin-shell .account-hub")).toBeVisible();
+      await page.screenshot({ path: `test-results/admin-account-${role}-${width}.png`, fullPage: true });
+      await page.locator(".account-hub-grid").getByRole("button", { name: /^Perfil/ }).click();
+      await expect(page).toHaveURL(/\/admin\/conta\/perfil$/);
+      await expect(page.getByLabel("Nome completo")).toHaveValue("Pessoa Cadastrada");
+      await page.getByRole("navigation", { name: "Seções da conta" }).getByRole("button", { name: "Preferências" }).click();
+      await expect(page).toHaveURL(/\/admin\/conta\/preferencias$/);
+      await expect(page.getByText("Avisos sobre seus pedidos")).toHaveCount(0);
+      await page.getByRole("navigation", { name: "Seções da conta" }).getByRole("button", { name: "Privacidade" }).click();
+      await expect(page.getByRole("button", { name: "Exportar meus dados (JSON)" })).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    });
+  }
+}
 
 test("produtor vê endereço pessoal sem convite de entrega ao consumidor", async ({ page }) => {
   await mockT07(page, [address(1)], "producer");
@@ -317,7 +370,7 @@ test("endereços permanecem sem overflow nos cinco breakpoints oficiais", async 
     await page.setViewportSize(viewport);
     await page.goto("/conta/enderecos");
     await expect(
-      page.getByRole("heading", { name: "Seus locais de entrega" }),
+      page.getByRole("heading", { name: "Seus locais de entrega", level: 2 }),
     ).toBeVisible();
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > window.innerWidth,

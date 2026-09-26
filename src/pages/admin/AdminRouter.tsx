@@ -9,6 +9,7 @@ import { AdminGovernancePage } from "./AdminGovernancePage";
 import { AdminDashboardPage } from "./AdminDashboardPage";
 import { AdminUsersPage } from "./AdminUsersPage";
 import { AdminEmailConfirmationPage } from "./AdminEmailConfirmationPage";
+import { AdminAccountPage } from "./AdminAccountPage";
 
 type Props={
  path:string;
@@ -53,7 +54,9 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
     onNavigate={onNavigate}
     onSessionRefresh={onSessionRefresh}
    >
-    {path==="/admin/governanca"
+    {path==="/admin/conta" || path.startsWith("/admin/conta/")
+      ? <AdminAccountPage path={path} access={access} onNavigate={onNavigate}/>
+      : path==="/admin/governanca"
       ? <AdminGovernancePage onNavigate={onNavigate} access={access}/>
       : path==="/admin/usuarios"
         ? <AdminUsersPage access={access}/>

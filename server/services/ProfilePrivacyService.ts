@@ -1,3 +1,4 @@
+import { ACCOUNT_PERSON_SCOPE } from "./accountPersonScope.ts";
 import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
 import { redactPII } from "../security/redactPII.ts";
@@ -44,7 +45,7 @@ async function getPersonId(
   lock = false,
 ) {
   const sql =
-    "SELECT id FROM public.app_people WHERE user_id=$1" +
+    "SELECT id FROM public.app_people WHERE " + ACCOUNT_PERSON_SCOPE +
     (lock ? " FOR UPDATE" : "");
   const result = await client.query<{ id: string }>(sql, [userId]);
   if (!result.rows[0]) throw new ProfilePrivacyError("PERSON_NOT_FOUND", 404);
@@ -105,7 +106,7 @@ export class ProfilePrivacyService {
       phone_e164: string;
       revision: number;
     }>(
-      "SELECT full_name,cpf_normalized,email_normalized,phone_e164,revision FROM public.app_people WHERE user_id=$1",
+      "SELECT full_name,cpf_normalized,email_normalized,phone_e164,revision FROM public.app_people WHERE " + ACCOUNT_PERSON_SCOPE,
       [userId],
     );
     const row = result.rows[0];
@@ -181,7 +182,7 @@ export class ProfilePrivacyService {
   ): Promise<{ preferences: PreferencesView; consents: ConsentView[] }> {
     const pool = requirePool();
     const person = await pool.query<{ id: string }>(
-      "SELECT id FROM public.app_people WHERE user_id=$1",
+      "SELECT id FROM public.app_people WHERE " + ACCOUNT_PERSON_SCOPE,
       [userId],
     );
     if (!person.rows[0])

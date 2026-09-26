@@ -17,7 +17,7 @@ export function PrivacyExportButton({
   const [reauthError, setReauthError] = useState("");
 
   const portalRole =
-    session.activeRole === "consumer" || session.activeRole === "producer"
+    session.activeRole === "consumer" || session.activeRole === "producer" || session.activeRole === "platform_admin" || session.activeRole === "platform_super_admin"
       ? session.activeRole
       : session.roles.find(
           (role) => role === "consumer" || role === "producer",
@@ -59,14 +59,14 @@ export function PrivacyExportButton({
   async function reauthenticate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!portalRole || !session.email) {
-      setReauthError("Entre novamente pelo portal de consumidor ou produtor.");
+      setReauthError("Entre novamente pelo portal da sua conta.");
       return;
     }
 
     setBusy(true);
     setReauthError("");
     try {
-      await api("/v1/auth/login", {
+      await api(portalRole === "platform_admin" || portalRole === "platform_super_admin" ? "/v1/admin/auth/login" : "/v1/auth/login", {
         method: "POST",
         body: JSON.stringify({
           email: session.email,

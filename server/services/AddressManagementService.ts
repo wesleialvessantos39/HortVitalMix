@@ -1,3 +1,4 @@
+import { ACCOUNT_PERSON_SCOPE } from "./accountPersonScope.ts";
 import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
 import { redactPII } from "../security/redactPII.ts";
@@ -57,7 +58,7 @@ async function getPersonId(
   lock = false,
 ) {
   const result = await client.query<{ id: string }>(
-    "SELECT id FROM public.app_people WHERE user_id=$1" +
+    "SELECT id FROM public.app_people WHERE " + ACCOUNT_PERSON_SCOPE +
       (lock ? " FOR UPDATE" : ""),
     [userId],
   );
@@ -174,7 +175,7 @@ export class AddressManagementService {
   ) {
     const pool = requirePool();
     const person = await pool.query<{ id: string }>(
-      "SELECT id FROM public.app_people WHERE user_id=$1",
+      "SELECT id FROM public.app_people WHERE " + ACCOUNT_PERSON_SCOPE,
       [userId],
     );
     if (!person.rows[0])

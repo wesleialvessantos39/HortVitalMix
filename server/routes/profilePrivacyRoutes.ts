@@ -30,7 +30,8 @@ function currentActor(req: Request, res: Response) {
       .json({ error: "AUTH_REQUIRED", requestId: req.requestId });
     return null;
   }
-  const role =
+  const selectedRole = readCookie(req, "hvm_portal_role");
+  const role = req.actor.roles.includes(selectedRole) ? selectedRole :
     req.actor.roles.includes("producer")
       ? "producer"
       : req.actor.roles.includes("consumer")

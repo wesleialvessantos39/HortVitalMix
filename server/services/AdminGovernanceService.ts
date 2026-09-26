@@ -790,6 +790,7 @@ export class AdminGovernanceService {
     await this.recordAttempt(normalized, ipHash, "success");
     return {
       status: "session_created",
+      userId: signed.data.user.id,
       accessToken: signed.data.session.access_token,
       refreshToken: signed.data.session.refresh_token,
       expiresIn: signed.data.session.expires_in,

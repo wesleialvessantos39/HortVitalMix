@@ -3185,3 +3185,17 @@ Correções: lockfile restaurado do pai, alinhado a Node 22; imports ESM T07 exp
 Segurança: contratos strict, confirmação obrigatória, segregação de perfis e controles de autorização preservados. Nenhuma migration alterada ou adicionada; schema 29 e hash canônico preservados. Nenhum Actions, plano pago ou dado fictício de produção utilizado.
 
 Validação: manifesto, typecheck, security check, 20 testes T07 iniciais, 19 testes de transporte/cadastro/roteamento, evidências, build e bundle aprovados. Importação nativa com transformação TypeScript aprovada após correção. Testes de navegador tentados: Chromium portátil encerrou com SIGSEGV antes de executar as telas; isso não é homologação visual. Consulta sem dados à Edge pública retornou VALIDATION_ERROR esperado, sem criar conta ou enviar e-mail. Cadastro real, persistência autenticada e homologação operacional permanecem pendentes; status de deploy não substitui essas provas.
+
+
+## 2026-09-26 — Correção da conta administrativa e validação técnica da T07
+
+- Minha conta e privacidade passa a integrar os menus administrativos e os atalhos do painel, com ícones, estados ativos e adaptação mobile/desktop. Administrador e Super administrador acessam `/admin/conta` e suas subseções dentro do shell administrativo.
+- O hub do consumidor não apresenta mais Gerenciar meus endereços nem o segundo atalho de endereço acima dos cartões.
+- O backend resolve a pessoa vinculada ao usuário autenticado também por `app_admin_principals`, sem aceitar person_id do cliente. Auditoria mantém o id e o papel do ator autenticado. Consulta real confirmou o vínculo administrativo existente e RLS ENABLE/FORCE de pessoas e endereços.
+- Confirmação de senha para exportação usa o login do próprio portal. Login administrativo emite prova de autenticação recente vinculada ao usuário e à sessão. Navegação administrativa não usa a sessão pública obsoleta em memória.
+- Corrigida a espera das recargas após salvamento e cancelamento de consultas ao sair da seção. Dados da conta são remontados quando muda usuário/papel.
+- Validação: typecheck integral, manifesto schema 29/hash canônico, segurança e build aprovados; 21 testes T07 de contratos/rotas, 30 T05, 22 T06 e 13 cenários Playwright aprovados (11 de fluxo/layout e 2 de reautenticação administrativa). Layout de endereços verificado em cinco larguras; conta administrativa em 360 e 1440 px para ambos os papéis. Captura mobile inspecionada.
+- Os cenários Playwright usam respostas controladas; não comprovam gravação autenticada em produção. O Chromium foi executado por extração local do pacote existente, sem serviço pago. O verificador auxiliar agent-browser não iniciou seu daemon; a validação visual foi feita com Playwright.
+- Sem migration, projeto pago, preview Vercel ou GitHub Actions automático. Publicação pela integração Git da main. O registro app_releases deve ser sincronizado com o SHA publicado somente depois de READY, seguido de health/ready/config.
+
+**Estado:** verificações técnicas da T07 aprovadas. A selagem operacional integral continua pendente de cadastro, edição, padrão e exclusão com contas reais autenticadas de produtor e consumidor na versão publicada. Não declarar esses testes reais como realizados, nem iniciar T08 com base somente em deploy READY.

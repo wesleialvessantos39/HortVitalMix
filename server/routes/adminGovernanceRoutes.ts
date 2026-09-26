@@ -18,6 +18,7 @@ import {
 import { dbPool } from "../db/pool.ts";
 import { runtime } from "../config/runtime.ts";
 import { safeRequestOrigin } from "../security/origin.ts";
+import { issueRecentAuthProof, RECENT_AUTH_WINDOW_MS } from "../security/recentAuth.ts";
 
 export const adminGovernanceRouter = Router();
 
@@ -25,6 +26,7 @@ function setAdminSession(
   res: Response,
   data: {
     accessToken: string;
+    userId?: string;
     refreshToken: string;
     expiresIn: number;
     role: "platform_admin" | "platform_super_admin";
@@ -47,6 +49,9 @@ function setAdminSession(
   res.cookie("hvm_portal_role", data.role, {
     ...opts,
     maxAge: 30 * 86400 * 1000,
+  });
+  if (data.userId) res.cookie("hvm_reauth", issueRecentAuthProof(data.userId, data.accessToken), {
+    ...opts, sameSite: "strict", maxAge: RECENT_AUTH_WINDOW_MS,
   });
 }
 

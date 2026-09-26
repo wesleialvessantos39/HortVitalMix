@@ -2,7 +2,6 @@ import { AccountGreeting } from "../../components/AccountGreeting";
 import { accountExperience } from "./accountExperience";
 import {
   useEffect,
-  useMemo,
   useState,
   type FormEvent,
 } from "react";
@@ -48,77 +47,42 @@ export function AccountHub({ path, session, onNavigate }: Props) {
   const experience = accountExperience(session.activeRole);
   const administrative = session.activeRole === "platform_admin" || session.activeRole === "platform_super_admin";
   const [profile, setProfile] = useState<ProfileView | null>(null);
-  const [addresses, setAddresses] = useState<AddressAdvancedView[]>([]);
-  const [addressesLoaded, setAddressesLoaded] = useState(false);
   const [preferences, setPreferences] =
     useState<PreferencesView | null>(null);
   const [consents, setConsents] = useState<ConsentView[]>([]);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
 
-  async function load() {
+  async function load(signal?: AbortSignal) {
     setNotice("");
-    const failed = () => setNotice("Não foi possível carregar parte dos dados da conta agora.");
+    const pending: Promise<unknown>[] = [];
+    const failed = () => { if (!signal?.aborted) setNotice("Não foi possível carregar parte dos dados da conta agora."); };
     // Independent sections must not hold up the identity already returned by the session.
     if (path === "/conta/perfil" || path === "/conta/preferencias")
-      void api<ProfileView>("/v1/account/profile").then(setProfile).catch(failed);
-    if (path === "/conta")
-      void api<{ addresses: AddressAdvancedView[] }>("/v1/account/addresses")
-        .then((result) => { setAddresses(result.addresses); setAddressesLoaded(true); }).catch(failed);
+      pending.push(api<ProfileView>("/v1/account/profile", { signal }).then((value) => { if (!signal?.aborted) setProfile(value); }).catch(failed));
     if (path === "/conta/preferencias" || path === "/conta/privacidade")
-      void api<{ preferences: PreferencesView; consents: ConsentView[] }>("/v1/account/preferences")
-        .then((result) => { setPreferences(result.preferences); setConsents(result.consents); }).catch(failed);
+      pending.push(api<{ preferences: PreferencesView; consents: ConsentView[] }>("/v1/account/preferences", { signal })
+        .then((result) => { if (!signal?.aborted) { setPreferences(result.preferences); setConsents(result.consents); } }).catch(failed));
+    await Promise.all(pending);
   }
 
   useEffect(() => {
-    void load();
+    const controller = new AbortController();
+    void load(controller.signal);
+    return () => controller.abort();
   }, [session.userId, path]);
-
-  const defaultAddress = useMemo(
-    () => addresses.find((address) => address.isDefault) ?? null,
-    [addresses],
-  );
 
   if (path === "/conta") {
     return (
       <section className="account-hub">
         <header className="account-hub-heading">
           <div>
-            <span className="eyebrow">Minha conta</span>
-            <h1><AccountGreeting fullName={profile?.fullName ?? session.fullName ?? ""} /></h1>
+            <span className="eyebrow">{administrative ? "Minha conta e privacidade" : "Minha conta"}</span>
+            <h1><AccountGreeting fullName={profile?.fullName ?? session.fullName ?? undefined} /></h1>
             <p>{experience.label} · {session.email}</p>
             <p>{experience.introduction}</p>
           </div>
         </header>
-
-        {session.activeRole === "consumer" && (
-          <button className="account-delivery-card" onClick={() => onNavigate("/conta/enderecos")}>
-            <MapPin />
-            <span>
-              <strong>Gerenciar meus endereços</strong>
-              <small>Adicionar, editar, escolher o endereço padrão e ajustar o ponto no mapa.</small>
-            </span>
-          </button>
-        )}
-
-        {session.activeRole === "consumer" && defaultAddress && (
-          <button
-            className="account-delivery-card"
-            onClick={() => onNavigate("/conta/enderecos")}
-          >
-            <MapPin />
-            <span>
-              <small>Entrega para</small>
-              <strong>
-                {defaultAddress.neighborhood +
-                  " · " +
-                  defaultAddress.city +
-                  "/" +
-                  defaultAddress.state}
-              </strong>
-            </span>
-          </button>
-        )}
 
         <div className="account-hub-grid">
           {sections.map(([to, label, Icon], index) => (
@@ -137,8 +101,8 @@ export function AccountHub({ path, session, onNavigate }: Props) {
             </button>
           ))}
         </div>
-        <button className="secondary account-action" type="button" onClick={() => onNavigate("/minha-conta")}>
-          Segurança e sair da conta
+        <button className="secondary account-action" type="button" onClick={() => onNavigate(administrative ? "/admin/painel" : "/minha-conta")}>
+          {administrative ? "Voltar ao painel administrativo" : "Segurança e sair da conta"}
         </button>
         {notice && (
           <p role="status" className="account-notice">
@@ -156,7 +120,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
           <ArrowLeft />
         </button>
         <div>
-          <span className="eyebrow">Minha conta</span>
+          <span className="eyebrow">{administrative ? "Minha conta e privacidade" : "Minha conta"}</span>
           <h1>
             {path === "/conta/enderecos" ? experience.addressTitle : sections.find(([route]) => route === path)?.[1] ?? "Conta"}
           </h1>
@@ -246,7 +210,6 @@ export function AccountHub({ path, session, onNavigate }: Props) {
           key={session.userId}
           title={experience.addressTitle}
           help={experience.addressHelp}
-          initialAddresses={addressesLoaded ? addresses : undefined}
         />
       )}
 
@@ -302,7 +265,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
           <div className="account-section-intro"><h2>Sua conta e suas escolhas</h2><p>{experience.preferences}</p></div>
           <dl className="account-identity-summary">
             <div><dt>Tipo de conta</dt><dd>{experience.label}</dd></div>
-            <div><dt>E-mail de acesso</dt><dd>{profile?.email || session.email || "Não informado"}</dd></div>
+            <div><dt>E-mail de acesso</dt><dd>{session.email || profile?.email || "Não informado"}</dd></div>
           </dl>
           {administrative && <div className="account-work-tools">
             <h3>Ferramentas de trabalho</h3>

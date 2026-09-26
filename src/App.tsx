@@ -329,7 +329,7 @@ export default function App() {
         ) : path === "/cadastro" ? (
           <ChoosePortalPage onNavigate={go} />
         ) : isAccountDataRoute && shellSession ? (
-          <AccountHub path={path} session={shellSession} onNavigate={go} />
+          <AccountHub key={shellSession.userId + ":" + shellSession.activeRole} path={path} session={shellSession} onNavigate={go} />
         ) : isAccountDataRoute && path !== "/conta" ? (
           <Account
             path="/minha-conta"

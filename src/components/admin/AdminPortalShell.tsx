@@ -24,6 +24,7 @@ const items = [
   ["/admin/governanca", "Governança", ShieldCheck],
   ["/admin/usuarios", "Usuários", UsersRound],
   ["/admin/configuracao", "Configuração", Settings],
+  ["/admin/conta", "Minha conta e privacidade", UserRound],
 ] as const;
 
 export function AdminPortalShell({
@@ -67,7 +68,7 @@ export function AdminPortalShell({
           {visible.map(([to, label, Icon]) => (
             <button
               key={to}
-              className={"admin-nav-item " + (currentPath === to ? "is-active" : "")}
+              className={"admin-nav-item " + (currentPath === to || currentPath.startsWith(to + "/") ? "is-active" : "")}
               onClick={() => onNavigate(to)}
             >
               <Icon size={18} />
@@ -92,18 +93,16 @@ export function AdminPortalShell({
           </button>
         </div>
         {logoutError && <p role="alert" className="admin-alert admin-alert--error">{logoutError}</p>}
-        <button className="secondary account-action" type="button" onClick={() => onNavigate("/minha-conta")}>
-          <UserRound size={18} aria-hidden="true" /> Minha conta e privacidade
-        </button>
         {children}
         <nav className="admin-bottom-nav" aria-label="Administração mobile">
           {visible.map(([to, label, Icon]) => (
             <button
               key={to}
-              className={currentPath === to ? "is-active" : ""}
+              className={currentPath === to || currentPath.startsWith(to + "/") ? "is-active" : ""}
+              aria-label={label}
               onClick={() => onNavigate(to)}
             >
-              <Icon size={19} /><span>{label}</span>
+              <Icon size={19} /><span>{to === "/admin/conta" ? "Minha conta" : label}</span>
             </button>
           ))}
         </nav>
