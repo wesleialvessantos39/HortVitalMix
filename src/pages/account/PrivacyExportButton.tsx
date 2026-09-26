@@ -17,11 +17,16 @@ export function PrivacyExportButton({
   const [reauthError, setReauthError] = useState("");
 
   const portalRole =
-    session.activeRole === "consumer" || session.activeRole === "producer"
+    session.activeRole === "consumer" ||
+    session.activeRole === "producer" ||
+    session.activeRole === "platform_admin" ||
+    session.activeRole === "platform_super_admin"
       ? session.activeRole
-      : session.roles.find(
-          (role) => role === "consumer" || role === "producer",
-        );
+      : null;
+
+  const administrative =
+    portalRole === "platform_admin" ||
+    portalRole === "platform_super_admin";
 
   async function downloadExport() {
     const data = await api<unknown>("/v1/account/profile?export=1");
@@ -59,21 +64,30 @@ export function PrivacyExportButton({
   async function reauthenticate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!portalRole || !session.email) {
-      setReauthError("Entre novamente pelo portal de consumidor ou produtor.");
+      setReauthError("Não foi possível identificar a credencial desta sessão.");
       return;
     }
 
     setBusy(true);
     setReauthError("");
     try {
-      await api("/v1/auth/login", {
-        method: "POST",
-        body: JSON.stringify({
-          email: session.email,
-          password,
-          portalRole,
-        }),
-      });
+      const login = await api<{ status?: string }>(
+        administrative ? "/v1/admin/auth/login" : "/v1/auth/login",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            email: session.email,
+            password,
+            portalRole,
+          }),
+        },
+      );
+      if (
+        administrative &&
+        login.status !== "session_created"
+      ) {
+        throw new Error("ADMIN_REAUTH_FAILED");
+      }
       setPassword("");
       setReauthOpen(false);
       await downloadExport();
@@ -81,8 +95,8 @@ export function PrivacyExportButton({
     } catch (error) {
       const code = (error as Error).message;
       setReauthError(
-        code === "INVALID_CREDENTIALS"
-          ? "Senha incorreta. Tente novamente."
+        code === "INVALID_CREDENTIALS" || code === "invalid_credentials"
+          ? "Senha incorreta para esta credencial. Tente novamente."
           : "Não foi possível confirmar sua identidade agora.",
       );
     } finally {

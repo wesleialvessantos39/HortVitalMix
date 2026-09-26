@@ -25,7 +25,7 @@ import {
 } from "../shared/contracts/foundation";
 import { api } from "./lib/api";
 import { Account } from "./components/Account";
-import { AccountHub } from "./pages/account/AccountHub";
+import { AccountSessionGate } from "./pages/account/AccountSessionGate";
 import { AdminRouter } from "./pages/admin/AdminRouter";
 import { ChoosePortalPage } from "./pages/auth/ChoosePortalPage";
 import { ContactConfirmationPage } from "./pages/auth/ContactConfirmationPage";
@@ -328,15 +328,20 @@ export default function App() {
           />
         ) : path === "/cadastro" ? (
           <ChoosePortalPage onNavigate={go} />
-        ) : isAccountDataRoute && shellSession ? (
-          <AccountHub path={path} session={shellSession} onNavigate={go} />
-        ) : isAccountDataRoute && path !== "/conta" ? (
-          <Account
-            path="/minha-conta"
+        ) : isAccountDataRoute ? (
+          <AccountSessionGate
+            path={path}
+            publicSession={shellSession}
             onNavigate={go}
-            session={shellSession}
-            onSessionAdopt={adoptSession}
-            onSessionRefresh={refreshSession}
+            fallback={
+              <Account
+                path={path === "/conta" ? path : "/minha-conta"}
+                onNavigate={go}
+                session={shellSession}
+                onSessionAdopt={adoptSession}
+                onSessionRefresh={refreshSession}
+              />
+            }
           />
         ) : accountPaths.has(path) ? (
           <Account

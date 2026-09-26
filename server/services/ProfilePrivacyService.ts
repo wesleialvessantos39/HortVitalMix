@@ -2,6 +2,10 @@ import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
 import { redactPII } from "../security/redactPII.ts";
 import { AddressManagementService } from "./AddressManagementService.ts";
+import {
+  resolveAccountPersonId,
+  type AccountRole,
+} from "./AccountPersonResolver.ts";
 export { AddressManagementService };
 // Gerenciamento de endereços e atribuição de replacementDefaultId unificados
 import type {
@@ -37,19 +41,6 @@ function maskCpf(cpf: string) {
     : "***.***.***-**";
 }
 
-
-async function getPersonId(
-  client: PoolClient,
-  userId: string,
-  lock = false,
-) {
-  const sql =
-    "SELECT id FROM public.app_people WHERE user_id=$1" +
-    (lock ? " FOR UPDATE" : "");
-  const result = await client.query<{ id: string }>(sql, [userId]);
-  if (!result.rows[0]) throw new ProfilePrivacyError("PERSON_NOT_FOUND", 404);
-  return result.rows[0].id;
-}
 
 async function findReplayTarget(client: PoolClient, commandId: string, userId: string, action: string) {
   const result = await client.query<{ target_id: string | null }>(
@@ -97,16 +88,21 @@ async function writeAudit(
 }
 
 export class ProfilePrivacyService {
-  static async getProfile(userId: string): Promise<ProfileView> {
-    const result = await requirePool().query<{
+  static async getProfile(
+    userId: string,
+    role: AccountRole,
+  ): Promise<ProfileView> {
+    const pool = requirePool();
+    const personId = await resolveAccountPersonId(pool, userId, role);
+    const result = await pool.query<{
       full_name: string;
       cpf_normalized: string;
       email_normalized: string;
       phone_e164: string;
       revision: number;
     }>(
-      "SELECT full_name,cpf_normalized,email_normalized,phone_e164,revision FROM public.app_people WHERE user_id=$1",
-      [userId],
+      "SELECT full_name,cpf_normalized,email_normalized,phone_e164,revision FROM public.app_people WHERE id=$1",
+      [personId],
     );
     const row = result.rows[0];
     if (!row) throw new ProfilePrivacyError("PERSON_NOT_FOUND", 404);
@@ -121,7 +117,7 @@ export class ProfilePrivacyService {
 
   static async updateProfile(
     userId: string,
-    role: string,
+    role: AccountRole,
     input: UpdateProfileInput,
     requestId: string,
     ipHash: string,
@@ -129,7 +125,9 @@ export class ProfilePrivacyService {
     const client = await requirePool().connect();
     try {
       await client.query("BEGIN");
-      const personId = await getPersonId(client, userId, true);
+      const personId = await resolveAccountPersonId(client, userId, role, {
+        lock: true,
+      });
       if (await findReplayTarget(client, input.commandId, userId, "profile.updated")) {
         await client.query("COMMIT");
         return { status: "idempotent_replay" as const };
@@ -177,16 +175,11 @@ export class ProfilePrivacyService {
 
   static async getPreferences(
     userId: string,
+    role: AccountRole,
     completeHistory = false,
   ): Promise<{ preferences: PreferencesView; consents: ConsentView[] }> {
     const pool = requirePool();
-    const person = await pool.query<{ id: string }>(
-      "SELECT id FROM public.app_people WHERE user_id=$1",
-      [userId],
-    );
-    if (!person.rows[0])
-      throw new ProfilePrivacyError("PERSON_NOT_FOUND", 404);
-    const personId = person.rows[0].id;
+    const personId = await resolveAccountPersonId(pool, userId, role);
     const [preferencesResult, consentsResult] = await Promise.all([
       pool.query<Record<string, any>>(
         "SELECT * FROM public.app_user_preferences WHERE person_id=$1",
@@ -236,7 +229,7 @@ export class ProfilePrivacyService {
 
   static async updatePreferences(
     userId: string,
-    role: string,
+    role: AccountRole,
     input: UpdatePreferencesInput,
     requestId: string,
     ipHash: string,
@@ -245,7 +238,9 @@ export class ProfilePrivacyService {
     const client = await requirePool().connect();
     try {
       await client.query("BEGIN");
-      const personId = await getPersonId(client, userId, true);
+      const personId = await resolveAccountPersonId(client, userId, role, {
+        lock: true,
+      });
       if (await findReplayTarget(client, input.commandId, userId, "preferences.updated")) {
         await client.query("COMMIT");
         return { status: "idempotent_replay" as const };
@@ -359,11 +354,13 @@ export class ProfilePrivacyService {
     }
   }
 
-  static async exportData(userId: string) {
-    const profile = await this.getProfile(userId);
+  static async exportData(userId: string, role: AccountRole) {
+    const profile = await this.getProfile(userId, role);
     const [addresses, data] = await Promise.all([
-      AddressManagementService.listAddresses(userId, { includeInactive: true }),
-      this.getPreferences(userId, true),
+      AddressManagementService.listAddresses(userId, role, {
+        includeInactive: true,
+      }),
+      this.getPreferences(userId, role, true),
     ]);
     return {
       exportedAt: new Date().toISOString(),

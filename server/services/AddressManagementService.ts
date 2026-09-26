@@ -8,6 +8,10 @@ import type {
   UpdateAddressAdvancedInput,
 } from "../../shared/contracts/addressAdvanced.ts";
 import { GeocodingHelper } from "./GeocodingHelper.ts";
+import {
+  resolveAccountPersonId,
+  type AccountRole,
+} from "./AccountPersonResolver.ts";
 
 export class AddressManagementError extends Error {
   constructor(
@@ -49,21 +53,6 @@ function mapAddress(row: Record<string, any>): AddressAdvancedView {
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(),
   };
-}
-
-async function getPersonId(
-  client: PoolClient,
-  userId: string,
-  lock = false,
-) {
-  const result = await client.query<{ id: string }>(
-    "SELECT id FROM public.app_people WHERE user_id=$1" +
-      (lock ? " FOR UPDATE" : ""),
-    [userId],
-  );
-  if (!result.rows[0])
-    throw new AddressManagementError("PERSON_NOT_FOUND", 404);
-  return result.rows[0].id;
 }
 
 async function findReplayTarget(
@@ -170,15 +159,11 @@ async function countOpenOrders(client: PoolClient, addressId: string) {
 export class AddressManagementService {
   static async listAddresses(
     userId: string,
+    role: AccountRole,
     options: { includeInactive?: boolean } = {},
   ) {
     const pool = requirePool();
-    const person = await pool.query<{ id: string }>(
-      "SELECT id FROM public.app_people WHERE user_id=$1",
-      [userId],
-    );
-    if (!person.rows[0])
-      throw new AddressManagementError("PERSON_NOT_FOUND", 404);
+    const personId = await resolveAccountPersonId(pool, userId, role);
 
     const result = await pool.query<Record<string, any>>(
       [
@@ -187,14 +172,14 @@ export class AddressManagementService {
         options.includeInactive ? "" : "AND is_active=true",
         "ORDER BY last_used_at DESC NULLS LAST,created_at ASC,id ASC",
       ].join(" "),
-      [person.rows[0].id],
+      [personId],
     );
     return result.rows.map(mapAddress);
   }
 
   static async createAddress(
     userId: string,
-    role: string,
+    role: AccountRole,
     input: CreateAddressAdvancedInput,
     requestId: string,
     ipHash: string,
@@ -203,7 +188,9 @@ export class AddressManagementService {
     const client = await requirePool().connect();
     try {
       await client.query("BEGIN");
-      const personId = await getPersonId(client, userId, true);
+      const personId = await resolveAccountPersonId(client, userId, role, {
+        lock: true,
+      });
       const replayTarget = await findReplayTarget(
         client,
         input.commandId,
@@ -290,20 +277,17 @@ export class AddressManagementService {
 
   static async updateAddress(
     userId: string,
-    role: string,
+    role: AccountRole,
     addressId: string,
     input: UpdateAddressAdvancedInput,
     requestId: string,
     ipHash: string,
   ) {
     const pool = requirePool();
+    const snapshotPersonId = await resolveAccountPersonId(pool, userId, role);
     const snapshot = await pool.query<Record<string, any>>(
-      [
-        "SELECT a.* FROM public.app_user_addresses a",
-        "JOIN public.app_people p ON p.id=a.person_id",
-        "WHERE a.id=$1 AND p.user_id=$2 AND a.is_active=true",
-      ].join(" "),
-      [addressId, userId],
+      "SELECT * FROM public.app_user_addresses WHERE id=$1 AND person_id=$2 AND is_active=true",
+      [addressId, snapshotPersonId],
     );
     if (!snapshot.rows[0])
       throw new AddressManagementError("ADDRESS_NOT_FOUND", 404);
@@ -347,7 +331,9 @@ export class AddressManagementService {
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
-      const personId = await getPersonId(client, userId, true);
+      const personId = await resolveAccountPersonId(client, userId, role, {
+        lock: true,
+      });
       const replayTarget = await findReplayTarget(
         client,
         input.commandId,
@@ -436,7 +422,7 @@ export class AddressManagementService {
 
   static async setDefaultAddress(
     userId: string,
-    role: string,
+    role: AccountRole,
     addressId: string,
     expectedRevision: number,
     commandId: string,
@@ -446,7 +432,9 @@ export class AddressManagementService {
     const client = await requirePool().connect();
     try {
       await client.query("BEGIN");
-      const personId = await getPersonId(client, userId, true);
+      const personId = await resolveAccountPersonId(client, userId, role, {
+        lock: true,
+      });
       const replayTarget = await findReplayTarget(
         client,
         commandId,
@@ -523,7 +511,7 @@ export class AddressManagementService {
 
   static async deleteAddress(
     userId: string,
-    role: string,
+    role: AccountRole,
     addressId: string,
     expectedRevision: number,
     commandId: string,
@@ -533,7 +521,9 @@ export class AddressManagementService {
     const client = await requirePool().connect();
     try {
       await client.query("BEGIN");
-      const personId = await getPersonId(client, userId, true);
+      const personId = await resolveAccountPersonId(client, userId, role, {
+        lock: true,
+      });
       const replayTarget = await findReplayTarget(
         client,
         commandId,

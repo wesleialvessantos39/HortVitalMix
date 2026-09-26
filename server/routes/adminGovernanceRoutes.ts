@@ -18,8 +18,26 @@ import {
 import { dbPool } from "../db/pool.ts";
 import { runtime } from "../config/runtime.ts";
 import { safeRequestOrigin } from "../security/origin.ts";
+import {
+  issueRecentAuthProof,
+  RECENT_AUTH_WINDOW_MS,
+} from "../security/recentAuth.ts";
 
 export const adminGovernanceRouter = Router();
+
+function userIdFromAccessToken(token: string) {
+  try {
+    const payload = JSON.parse(
+      Buffer.from(token.split(".")[1], "base64url").toString(),
+    ) as { sub?: unknown };
+    return typeof payload.sub === "string" &&
+      /^[0-9a-f-]{36}$/i.test(payload.sub)
+      ? payload.sub
+      : null;
+  } catch {
+    return null;
+  }
+}
 
 function setAdminSession(
   res: Response,
@@ -30,6 +48,16 @@ function setAdminSession(
     role: "platform_admin" | "platform_super_admin";
   },
 ) {
+  const userId = userIdFromAccessToken(data.accessToken);
+  if (!userId) return false;
+
+  let recentAuthProof = "";
+  try {
+    recentAuthProof = issueRecentAuthProof(userId, data.accessToken);
+  } catch {
+    return false;
+  }
+
   const opts = {
     httpOnly: true,
     secure: runtime.secureCookies,
@@ -48,6 +76,14 @@ function setAdminSession(
     ...opts,
     maxAge: 30 * 86400 * 1000,
   });
+  res.cookie("hvm_reauth", recentAuthProof, {
+    httpOnly: true,
+    secure: runtime.secureCookies,
+    sameSite: "strict",
+    path: "/",
+    maxAge: RECENT_AUTH_WINDOW_MS,
+  });
+  return true;
 }
 
 adminGovernanceRouter.get("/bootstrap/status", async (_req, res) => {
@@ -169,7 +205,13 @@ adminGovernanceRouter.post(
       parsed.data.portalRole,
     );
     if (result.status === "session_created") {
-      setAdminSession(res, result);
+      if (!setAdminSession(res, result)) {
+        res.status(503).json({
+          status: "unavailable",
+          requestId: req.requestId,
+        });
+        return;
+      }
       res.status(200).json({
         status: result.status,
         role: result.role,
@@ -216,8 +258,13 @@ adminGovernanceRouter.get(
     const { role, sectors, sessionIssuedAt } = req.adminActor;
     const issued = new Date(sessionIssuedAt).getTime();
     res.status(200).json({
-      authorized: true, role, sectors,
-      requiresReauth: !Number.isFinite(issued) || Date.now() - issued > 15 * 60_000,
+      authorized: true,
+      userId: req.adminActor.userId,
+      email: req.adminActor.email,
+      role,
+      sectors,
+      requiresReauth:
+        !Number.isFinite(issued) || Date.now() - issued > 15 * 60_000,
     });
   },
 );

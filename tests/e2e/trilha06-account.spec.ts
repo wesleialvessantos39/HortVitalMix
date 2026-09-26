@@ -7,6 +7,10 @@ const session = {
   activeRole: "consumer",
   portalKind: "public",
 };
+const adminSession = {
+  userId: "33333333-3333-4333-8333-333333333333",
+  email: "admin@example.com",
+};
 const profile = {
   fullName: "Pessoa Consumidora",
   cpfMasked: "***.***.123-45",
@@ -25,15 +29,31 @@ const address = {
   city: "Ariquemes",
   state: "RO",
   isDefault: true,
+  isActive: true,
+  latitude: null,
+  longitude: null,
+  geocodingAccuracy: "none",
+  deliveryNotes: null,
+  lastUsedAt: null,
   revision: 1,
   createdAt: "2026-09-24T20:00:00.000Z",
   updatedAt: "2026-09-24T20:00:00.000Z",
 };
 
+function isAdminRole(role: string) {
+  return role === "platform_admin" || role === "platform_super_admin";
+}
+
 async function mockAccount(
   page: import("@playwright/test").Page,
-  options: { requireRecentAuth?: boolean; role?: string } = {},
+  options: {
+    requireRecentAuth?: boolean;
+    role?: string;
+    addressFailure?: boolean;
+  } = {},
 ) {
+  const role = options.role ?? "consumer";
+  const administrative = isAdminRole(role);
   let reauthenticated = !options.requireRecentAuth;
 
   await page.route("**/*", async (route) => {
@@ -50,7 +70,28 @@ async function mockAccount(
         body: JSON.stringify(body),
       });
 
-    if (path === "/v1/auth/session") return json({ ...session, activeRole: options.role ?? "consumer", roles: [options.role ?? "consumer"] });
+    if (path === "/v1/auth/session") {
+      if (administrative) return json({ error: "AUTH_REQUIRED" }, 401);
+      return json({
+        ...session,
+        activeRole: role,
+        roles: [role],
+      });
+    }
+
+    if (path === "/v1/admin/auth/verify-session") {
+      if (!administrative)
+        return json({ error: "ADMIN_UNAUTHORIZED" }, 401);
+      return json({
+        authorized: true,
+        userId: adminSession.userId,
+        email: adminSession.email,
+        role,
+        sectors: role === "platform_admin" ? ["catalog_moderation"] : [],
+        requiresReauth: false,
+      });
+    }
+
     if (path === "/v1/auth/login" && route.request().method() === "POST") {
       const body = route.request().postDataJSON() as {
         email?: string;
@@ -60,12 +101,43 @@ async function mockAccount(
       if (
         body.email !== session.email ||
         body.password !== "SenhaAtual#2026" ||
-        body.portalRole !== "consumer"
+        body.portalRole !== role ||
+        administrative
       )
         return json({ error: "INVALID_CREDENTIALS" }, 401);
       reauthenticated = true;
-      return json({ ...session, status: "authenticated" });
+      return json({
+        ...session,
+        activeRole: role,
+        roles: [role],
+        status: "authenticated",
+      });
     }
+
+    if (
+      path === "/v1/admin/auth/login" &&
+      route.request().method() === "POST"
+    ) {
+      const body = route.request().postDataJSON() as {
+        email?: string;
+        password?: string;
+        portalRole?: string;
+      };
+      if (
+        !administrative ||
+        body.email !== adminSession.email ||
+        body.password !== "SenhaAdmin#2026" ||
+        body.portalRole !== role
+      )
+        return json({ status: "invalid_credentials" }, 401);
+      reauthenticated = true;
+      return json({
+        status: "session_created",
+        role,
+        sectors: role === "platform_admin" ? ["catalog_moderation"] : [],
+      });
+    }
+
     if (path === "/v1/config")
       return json({
         platformName: "HortiVitalMix",
@@ -78,6 +150,7 @@ async function mockAccount(
         supportPhone: null,
         revision: 1,
       });
+
     if (path === "/v1/account/profile") {
       if (url.searchParams.get("export") === "1") {
         if (!reauthenticated)
@@ -99,8 +172,13 @@ async function mockAccount(
       }
       return json(profile);
     }
-    if (path === "/v1/account/addresses")
+
+    if (path === "/v1/account/addresses") {
+      if (options.addressFailure)
+        return json({ error: "DEPENDENCY_UNAVAILABLE" }, 503);
       return json({ addresses: [address] });
+    }
+
     if (path === "/v1/account/preferences")
       return json({
         preferences: {
@@ -113,6 +191,7 @@ async function mockAccount(
         },
         consents: [],
       });
+
     return json({});
   });
 }
@@ -129,7 +208,11 @@ for (const viewport of [
     await mockAccount(page);
     await page.goto("/conta");
     await expect(page.getByText("Minha conta").first()).toBeVisible();
-    await expect(page.locator(".account-delivery-card").getByText("Centro · Ariquemes/RO", { exact: true })).toBeVisible();
+    await expect(
+      page
+        .locator(".account-delivery-card")
+        .getByText("Centro · Ariquemes/RO", { exact: true }),
+    ).toBeVisible();
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > window.innerWidth,
     );
@@ -146,7 +229,9 @@ test("T06 expõe as quatro áreas da conta", async ({ page }) => {
     ["/conta/privacidade", "Privacidade"],
   ]) {
     await page.goto(route);
-    await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: heading, exact: true }),
+    ).toBeVisible();
   }
 });
 
@@ -166,20 +251,26 @@ test("T06 abre cadastro de endereço como bottom sheet no mobile", async ({
   expect(position).toContain("end");
 });
 
-test("T06 exige senha recente antes da exportação LGPD", async ({ page }) => {
+test("T06 exige senha recente antes da exportação LGPD pública", async ({
+  page,
+}) => {
   await mockAccount(page, { requireRecentAuth: true });
   await page.goto("/conta/privacidade");
 
-  await page.getByRole("button", { name: "Exportar meus dados (JSON)" }).click();
+  await page
+    .getByRole("button", { name: "Exportar meus dados (JSON)" })
+    .click();
   await expect(
     page.getByRole("heading", { name: "Confirme sua identidade" }),
   ).toBeVisible();
 
   await page.getByLabel("Senha atual").fill("SenhaAtual#2026");
 
-  const loginRequest = page.waitForRequest((request) =>
-    request.url().includes("/v1/auth/login") &&
-    request.method() === "POST",
+  const loginRequest = page.waitForRequest(
+    (request) =>
+      request.url().includes("/v1/auth/login") &&
+      !request.url().includes("/v1/admin/auth/login") &&
+      request.method() === "POST",
   );
   await page.getByRole("button", { name: "Confirmar e exportar" }).click();
   await loginRequest;
@@ -192,42 +283,134 @@ test("T06 exige senha recente antes da exportação LGPD", async ({ page }) => {
   ).toBeVisible();
 });
 
-
-test("conta antiga oferece acesso às quatro seções e retorno à segurança", async ({ page }) => {
-  await mockAccount(page);
-  await page.goto("/minha-conta");
-  const navigation = page.getByRole("navigation", { name: "Dados da minha conta" });
-  for (const label of ["Perfil", "Endereços", "Preferências", "Privacidade"]) {
-    await expect(navigation.getByRole("button", { name: new RegExp(label) })).toBeVisible();
-  }
-  await navigation.getByRole("button", { name: /Privacidade/ }).click();
-  await expect(page.getByRole("heading", { name: "Privacidade", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Voltar", exact: true }).click();
-  await page.getByRole("button", { name: "Segurança e sair da conta" }).click();
-  await expect(page.getByRole("button", { name: "Sair da conta", exact: true })).toBeVisible();
+test("falha de endereços no hub não apaga a saudação do perfil", async ({
+  page,
+}) => {
+  await mockAccount(page, { addressFailure: true });
+  await page.goto("/conta");
+  await expect(
+    page.getByRole("heading", {
+      name: /Pessoa Consumidora/,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Seus endereços não puderam ser carregados agora."),
+  ).toBeVisible();
 });
 
+test("exportação LGPD administrativa exige a senha da credencial administrativa", async ({
+  page,
+}) => {
+  await mockAccount(page, {
+    role: "platform_admin",
+    requireRecentAuth: true,
+  });
+  await page.goto("/conta/privacidade");
 
-for (const [hour, greeting] of [[9, "Bom dia"], [14, "Boa tarde"], [20, "Boa noite"]] as const) {
+  await page
+    .getByRole("button", { name: "Exportar meus dados (JSON)" })
+    .click();
+  await page.getByLabel("Senha atual").fill("SenhaAtual#2026");
+  await page.getByRole("button", { name: "Confirmar e exportar" }).click();
+  await expect(
+    page.getByText("Senha incorreta para esta credencial. Tente novamente."),
+  ).toBeVisible();
+
+  await page.getByLabel("Senha atual").fill("SenhaAdmin#2026");
+  const adminLoginRequest = page.waitForRequest(
+    (request) =>
+      request.url().includes("/v1/admin/auth/login") &&
+      request.method() === "POST",
+  );
+  await page.getByRole("button", { name: "Confirmar e exportar" }).click();
+  await adminLoginRequest;
+
+  await expect(
+    page.getByText("Identidade confirmada. Seus dados foram exportados."),
+  ).toBeVisible();
+});
+
+test("conta antiga oferece acesso às quatro seções e retorno à segurança", async ({
+  page,
+}) => {
+  await mockAccount(page);
+  await page.goto("/minha-conta");
+  const navigation = page.getByRole("navigation", {
+    name: "Dados da minha conta",
+  });
+  for (const label of ["Perfil", "Endereços", "Preferências", "Privacidade"]) {
+    await expect(
+      navigation.getByRole("button", { name: new RegExp(label) }),
+    ).toBeVisible();
+  }
+  await navigation.getByRole("button", { name: /Privacidade/ }).click();
+  await expect(
+    page.getByRole("heading", { name: "Privacidade", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Voltar", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Segurança e sair da conta" })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Sair da conta", exact: true }),
+  ).toBeVisible();
+});
+
+for (const [hour, greeting] of [
+  [9, "Bom dia"],
+  [14, "Boa tarde"],
+  [20, "Boa noite"],
+] as const) {
   test(`saudação local às ${hour}h usa nome completo`, async ({ page }) => {
     await page.clock.install({ time: new Date(2026, 8, 25, hour, 0) });
     await mockAccount(page);
     await page.goto("/conta");
-    await expect(page.getByRole("heading", { name: `${greeting}, Pessoa Consumidora`, exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("heading", {
+        name: `${greeting}, Pessoa Consumidora`,
+        exact: true,
+      }),
+    ).toBeVisible();
     await expect(page.getByText(session.email, { exact: true })).toHaveCount(0);
   });
 }
-for (const [role, label] of [["consumer", "Consumidor"], ["producer", "Produtor"], ["platform_admin", "Administrador"], ["platform_super_admin", "Super administrador"]]) {
+
+for (const [role, label] of [
+  ["consumer", "Consumidor"],
+  ["producer", "Produtor"],
+  ["platform_admin", "Administrador"],
+  ["platform_super_admin", "Super administrador"],
+]) {
   test(`preferências específicas: ${role}`, async ({ page }) => {
     await mockAccount(page, { role });
     await page.goto("/conta/preferencias");
-    await expect(page.locator(".account-identity-summary").getByText(label, { exact: true })).toBeVisible();
-    await expect(page.locator(".account-identity-summary").getByText(session.email, { exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Configurações globais", exact: true })).toHaveCount(role === "platform_super_admin" ? 1 : 0);
-    await expect(page.getByRole("button", { name: "Gerenciar convites" })).toHaveCount(role.startsWith("platform_") ? 1 : 0);
+    await expect(
+      page
+        .locator(".account-identity-summary")
+        .getByText(label, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page
+        .locator(".account-identity-summary")
+        .getByText(
+          isAdminRole(role) ? adminSession.email : session.email,
+          { exact: true },
+        ),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", {
+        name: "Configurações globais",
+        exact: true,
+      }),
+    ).toHaveCount(role === "platform_super_admin" ? 1 : 0);
+    await expect(
+      page.getByRole("button", { name: "Gerenciar convites" }),
+    ).toHaveCount(role.startsWith("platform_") ? 1 : 0);
     if (role === "producer") {
       await page.getByRole("button", { name: "Endereços", exact: true }).click();
-      await expect(page.getByText(/não definem a localização da propriedade/)).toBeVisible();
+      await expect(
+        page.getByText(/não definem a localização da propriedade/),
+      ).toBeVisible();
     }
   });
 }

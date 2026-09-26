@@ -9,6 +9,7 @@ import { AdminErrorCode } from "../../shared/contracts/adminGovernance.ts";
 
 export interface AdminActorContext {
   userId: string;
+  email: string;
   role: AdminRole;
   sectors: AdminSectorCode[];
   isSuperAdmin: boolean;
@@ -82,13 +83,17 @@ export async function adminSessionMiddleware(
   // administrativa pode apontar para a mesma pessoa/CPF de uma conta pública,
   // mas ter outro auth user_id e outra senha. A fronteira administrativa
   // valida sua própria identidade pelo token + app_admin_principals.
-  let principalData: { admin_user_id: string; portal_role: AdminRole } | null = null;
+  let principalData: {
+    admin_user_id: string;
+    admin_email: string;
+    portal_role: AdminRole;
+  } | null = null;
   let active: Array<{ role_code: AdminRole; expires_at: string | null }> = [];
 
   if (supabaseAdmin) {
     const [principal, roles, account] = await Promise.all([
       supabaseAdmin.from("app_admin_principals")
-        .select("admin_user_id,portal_role").eq("admin_user_id", userData.user.id).maybeSingle(),
+        .select("admin_user_id,admin_email,portal_role").eq("admin_user_id", userData.user.id).maybeSingle(),
       supabaseAdmin.from("app_user_role_assignments")
         .select("role_code,expires_at,revoked_at").eq("user_id", userData.user.id)
         .in("role_code", ["platform_admin", "platform_super_admin"]).is("revoked_at", null),
@@ -105,6 +110,7 @@ export async function adminSessionMiddleware(
     if (!principal.error && principal.data) {
       principalData = {
         admin_user_id: principal.data.admin_user_id,
+        admin_email: principal.data.admin_email,
         portal_role: principal.data.portal_role as AdminRole,
       };
     }
@@ -126,9 +132,10 @@ export async function adminSessionMiddleware(
     try {
       const principal = await dbPool.query<{
         admin_user_id: string;
+        admin_email: string;
         portal_role: AdminRole;
       }>(
-        `SELECT admin_user_id,portal_role
+        `SELECT admin_user_id,admin_email,portal_role
            FROM public.app_admin_principals ap
            JOIN public.app_users u ON u.id=ap.admin_user_id AND u.status='active'
           WHERE admin_user_id=$1
@@ -243,6 +250,7 @@ export async function adminSessionMiddleware(
 
   req.adminActor = {
     userId: userData.user.id,
+    email: principalData.admin_email,
     role,
     sectors,
     isSuperAdmin: role === "platform_super_admin",
