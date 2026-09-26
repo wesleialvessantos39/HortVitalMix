@@ -1,4 +1,4 @@
-import type { Pool, PoolClient } from "pg";
+import type { PoolClient } from "pg";
 
 export type AccountRole =
   | "consumer"
@@ -6,7 +6,7 @@ export type AccountRole =
   | "platform_admin"
   | "platform_super_admin";
 
-type Queryable = Pick<Pool, "query"> | Pick<PoolClient, "query">;
+type Queryable = Pick<PoolClient, "query">;
 
 export class AccountPersonResolutionError extends Error {
   constructor(
