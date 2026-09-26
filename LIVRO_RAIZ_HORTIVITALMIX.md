@@ -3306,4 +3306,10 @@ O script `test:t06:unit` inclui a nova suíte. A evidência T07 continua em `ver
 
 ### Estado da execução
 
-Código, testes e documentação estão concentrados na branch `trilha06-correcao-pessoa-admin`. A promoção para `main` deve ocorrer por Pull Request. Como esta execução não possui um runner local conectado e Actions em push estão proibidas, o gate executável `npm run verify:t06:free` e `npm run verify:t07:evidence` permanecem comandos obrigatórios de validação no ambiente local/autorizado antes do merge; a verificação estática e as consultas reais de invariantes do banco foram concluídas sem alteração de schema.
+Código, testes e documentação estão concentrados na branch `trilha06-correcao-pessoa-admin`. O Pull Request **#56** foi aberto contra `main` e o GitHub o reportou como **mergeable/clean**, sem divergência da base `8d1924c`.
+
+A consulta transacional reversível no Supabase executou com sucesso o SQL exato de resolução administrativa com `LIMIT 1 FOR UPDATE OF p`, confirmando que a credencial administrativa ativa alcança somente o `person_id` já vinculado.
+
+Não houve status de deploy Vercel na branch e a consulta de runs do GitHub retornou zero execuções para a branch, preservando a regra sem preview e sem Actions em push.
+
+Como esta execução não possui um runner local conectado e Actions estão proibidas para homologação automática, os gates executáveis `npm run verify:t06:free` e `npm run verify:t07:evidence` permanecem obrigatórios no ambiente local/autorizado antes do merge; a verificação estática e as consultas reais de invariantes do banco foram concluídas sem alteração de schema.
