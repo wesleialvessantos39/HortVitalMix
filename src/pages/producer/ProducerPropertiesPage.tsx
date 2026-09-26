@@ -352,13 +352,13 @@ function RuralPropertyWizard({
     setDraft((current) => ({ ...current, ...values }));
   }
 
-  function persistLocal(next = draft) {
+  function persistLocal(next = draft, announce = true) {
     try {
       localStorage.setItem(
         localKey(session.userId, next.propertyId),
         JSON.stringify(next),
       );
-      setSaveState("local");
+      if (announce) setSaveState("local");
     } catch {}
   }
 
@@ -420,7 +420,7 @@ function RuralPropertyWizard({
 
   useEffect(() => {
     if (!hydrated.current) return;
-    persistLocal(draft);
+    persistLocal(draft, false);
   }, [draft]);
 
   const signature = useMemo(
@@ -581,11 +581,17 @@ function RuralPropertyWizard({
   async function next() {
     const ok = await saveStep(step);
     if (!ok) return;
-    if (step < 5)
-      setDraft((current) => ({
-        ...current,
-        step: Math.min(5, current.step + 1),
-      }));
+    if (step === 5) {
+      try {
+        localStorage.removeItem(localKey(session.userId, draft.propertyId));
+      } catch {}
+      onNavigate("/produtor/propriedades");
+      return;
+    }
+    setDraft((current) => ({
+      ...current,
+      step: Math.min(5, current.step + 1),
+    }));
   }
 
   async function continueLater() {
