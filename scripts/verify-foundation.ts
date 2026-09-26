@@ -23,7 +23,7 @@ async function main() {
       "SELECT version,name FROM supabase_migrations.schema_migrations ORDER BY version",
     );
     const schemaVersion = validateHistory(history.rows);
-    if (schemaVersion !== 29) throw new Error("MIGRATION_HISTORY_GATE_FAILED");
+    if (schemaVersion !== 30) throw new Error("MIGRATION_HISTORY_GATE_FAILED");
     const migrationHistoryHash = assertManifestHash();
 
     const extensions = await client.query<{ extname: string }>(
@@ -39,7 +39,7 @@ async function main() {
     const tables = await client.query<{ n: number }>(
       "SELECT count(*)::int n FROM pg_class WHERE relnamespace='public'::regnamespace AND relname LIKE 'app\\_%' ESCAPE '\\' AND relkind='r'",
     );
-    add("A2", "Tabelas app_* presentes", tables.rows[0].n === 9, `count=${tables.rows[0].n}/9`);
+    add("A2", "Tabelas app_* presentes", tables.rows[0].n === 12, `count=${tables.rows[0].n}/12`);
 
     const rlsDisabled = await client.query<{ table_name: string }>(
       "SELECT table_name FROM public.v_rls_audit WHERE rls_enabled=false ORDER BY table_name",
