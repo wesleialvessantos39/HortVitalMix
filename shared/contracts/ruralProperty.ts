@@ -1,0 +1,272 @@
+import { z } from "zod";
+import { CommandIdSchema } from "./profilePrivacy.ts";
+
+export const PropertyStatusSchema = z.enum([
+  "draft",
+  "submitted",
+  "verified",
+  "rejected",
+  "suspended",
+]);
+
+export const BoundaryTypeSchema = z.enum([
+  "perimeter",
+  "cultivated_plot",
+  "legal_reserve",
+  "app_preservation",
+]);
+
+export const WaterSourceSchema = z.enum([
+  "poco_artesiano",
+  "nascente_propria",
+  "rio_corrego",
+  "rede_tratada",
+]);
+
+export const IrrigationSystemSchema = z.enum([
+  "gotejamento",
+  "microaspersao",
+  "aspersao_convencional",
+  "nenhum",
+]);
+
+export const RuralActivityCategorySchema = z.enum([
+  "hortalicas_folhosas",
+  "legumes_picados",
+  "frutas_tropicais",
+  "ervas_temperos",
+  "misto",
+]);
+
+export const ProductionSystemSchema = z.enum([
+  "organico_certificado",
+  "agroecologico_declarado",
+  "hidroponia",
+  "convencional_transicao",
+]);
+
+const longitude = z.number().min(-67).max(-59);
+const latitude = z.number().min(-14).max(-7);
+const PositionSchema = z.tuple([longitude, latitude]);
+
+export const GeoJsonPolygonSchema = z
+  .object({
+    type: z.literal("Polygon"),
+    coordinates: z.array(z.array(PositionSchema).min(4)).min(1),
+  })
+  .strict()
+  .superRefine((polygon, ctx) => {
+    polygon.coordinates.forEach((ring, ringIndex) => {
+      const first = ring[0];
+      const last = ring[ring.length - 1];
+      if (!first || !last || first[0] !== last[0] || first[1] !== last[1]) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["coordinates", ringIndex],
+          message: "O anel GeoJSON deve terminar no mesmo vértice em que começou",
+        });
+      }
+    });
+  });
+
+export const PropertyBoundaryInputSchema = z
+  .object({
+    boundaryType: BoundaryTypeSchema,
+    polygonGeojson: GeoJsonPolygonSchema,
+    calculatedAreaHa: z.number().nonnegative().max(1_000_000).nullable().optional(),
+  })
+  .strict();
+
+export const Step1IdentificationSchema = z
+  .object({
+    propertyName: z.string().trim().min(2).max(128),
+    registrationNumber: z.string().trim().max(64).nullable().optional(),
+    lineVicinal: z.string().trim().min(2).max(64),
+    ruralZoneSector: z.string().trim().min(2).max(64),
+    municipality: z.string().trim().min(2).max(100).default("Ariquemes"),
+    state: z.literal("RO").default("RO"),
+    latitudeSede: latitude,
+    longitudeSede: longitude,
+    accessDirections: z.string().trim().max(500).nullable().optional(),
+  })
+  .strict();
+
+export const Step2DimensionsSchema = z
+  .object({
+    totalAreaHectares: z.number().positive().max(1_000_000),
+    cultivatedAreaHectares: z.number().nonnegative().max(1_000_000),
+    boundaries: z.array(PropertyBoundaryInputSchema).max(32).default([]),
+  })
+  .strict()
+  .refine(
+    (value) => value.cultivatedAreaHectares <= value.totalAreaHectares,
+    {
+      path: ["cultivatedAreaHectares"],
+      message: "A área cultivada não pode ser maior que a área total",
+    },
+  );
+
+export const Step3WaterSchema = z
+  .object({
+    waterSource: WaterSourceSchema,
+    irrigationSystem: IrrigationSystemSchema,
+  })
+  .strict();
+
+export const Step4ActivitySchema = z
+  .object({
+    activityCategory: RuralActivityCategorySchema,
+    productionSystem: ProductionSystemSchema,
+    hasWashingFacility: z.boolean(),
+  })
+  .strict()
+  .refine(
+    (value) =>
+      value.activityCategory !== "legumes_picados" ||
+      value.hasWashingFacility === true,
+    {
+      path: ["hasWashingFacility"],
+      message:
+        "Legumes picados exigem instalação física adequada para lavagem e higienização",
+    },
+  );
+
+export const Step5ReviewSchema = z
+  .object({
+    agroecologicalCommitment: z.literal(true),
+  })
+  .strict();
+
+const commonSaveFields = {
+  commandId: CommandIdSchema,
+} as const;
+
+export const SaveWizardStepSchema = z.discriminatedUnion("step", [
+  z
+    .object({
+      propertyId: z.uuid().optional(),
+      expectedRevision: z.number().int().positive().optional(),
+      step: z.literal(1),
+      stepData: Step1IdentificationSchema,
+      ...commonSaveFields,
+    })
+    .strict()
+    .superRefine((value, ctx) => {
+      if (value.propertyId && !value.expectedRevision) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["expectedRevision"],
+          message: "A revisão atual é obrigatória ao editar um rascunho",
+        });
+      }
+      if (!value.propertyId && value.expectedRevision) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["expectedRevision"],
+          message: "Um novo imóvel ainda não possui revisão anterior",
+        });
+      }
+    }),
+  z
+    .object({
+      propertyId: z.uuid(),
+      expectedRevision: z.number().int().positive(),
+      step: z.literal(2),
+      stepData: Step2DimensionsSchema,
+      ...commonSaveFields,
+    })
+    .strict(),
+  z
+    .object({
+      propertyId: z.uuid(),
+      expectedRevision: z.number().int().positive(),
+      step: z.literal(3),
+      stepData: Step3WaterSchema,
+      ...commonSaveFields,
+    })
+    .strict(),
+  z
+    .object({
+      propertyId: z.uuid(),
+      expectedRevision: z.number().int().positive(),
+      step: z.literal(4),
+      stepData: Step4ActivitySchema,
+      ...commonSaveFields,
+    })
+    .strict(),
+  z
+    .object({
+      propertyId: z.uuid(),
+      expectedRevision: z.number().int().positive(),
+      step: z.literal(5),
+      stepData: Step5ReviewSchema,
+      ...commonSaveFields,
+    })
+    .strict(),
+]);
+
+export const SubmitPropertySchema = z
+  .object({
+    expectedRevision: z.number().int().positive(),
+    agroecologicalCommitment: z.literal(true),
+    commandId: CommandIdSchema,
+  })
+  .strict();
+
+export type SaveWizardStepInput = z.infer<typeof SaveWizardStepSchema>;
+export type SubmitPropertyInput = z.infer<typeof SubmitPropertySchema>;
+export type PropertyStatus = z.infer<typeof PropertyStatusSchema>;
+
+export type PropertyBoundaryView = {
+  id: string;
+  boundaryType: z.infer<typeof BoundaryTypeSchema>;
+  polygonGeojson: z.infer<typeof GeoJsonPolygonSchema>;
+  calculatedAreaHa: number | null;
+  createdAt: string;
+};
+
+export type RuralActivityView = {
+  id: string;
+  activityCategory: z.infer<typeof RuralActivityCategorySchema>;
+  productionSystem: z.infer<typeof ProductionSystemSchema>;
+  hasWashingFacility: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type RuralPropertyView = {
+  id: string;
+  propertyName: string;
+  registrationNumber: string | null;
+  totalAreaHectares: number | null;
+  cultivatedAreaHectares: number | null;
+  ruralZoneSector: string;
+  lineVicinal: string;
+  municipality: string;
+  state: "RO";
+  latitudeSede: number;
+  longitudeSede: number;
+  accessDirections: string | null;
+  waterSource: z.infer<typeof WaterSourceSchema> | null;
+  irrigationSystem: z.infer<typeof IrrigationSystemSchema> | null;
+  status: PropertyStatus;
+  wizardCurrentStep: number;
+  revision: number;
+  createdAt: string;
+  updatedAt: string;
+  boundaries: PropertyBoundaryView[];
+  activity: RuralActivityView | null;
+};
+
+export type RuralPropertySummary = Pick<
+  RuralPropertyView,
+  | "id"
+  | "propertyName"
+  | "lineVicinal"
+  | "municipality"
+  | "state"
+  | "status"
+  | "wizardCurrentStep"
+  | "revision"
+  | "updatedAt"
+>;
