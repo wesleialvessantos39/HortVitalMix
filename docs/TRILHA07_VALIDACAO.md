@@ -260,3 +260,13 @@ A selagem operacional integral **permanece pendente**. Para fechá-la é obrigat
 Nesta sessão há acesso administrativo ao GitHub, Supabase e Vercel, mas não há credenciais/sessão interativa autenticada das contas reais de produtor e consumidor. Não foi feito bypass de autenticação, reset de senha, impersonação, criação de identidade fictícia ou escrita direta no banco para simular essa prova.
 
 **Consequência normativa:** T07 continua tecnicamente aprovada, mas não operacionalmente selada; por ordem expressa do proprietário e pelo próprio Livro-Raiz, **T08 não foi iniciada**.
+
+
+## 12. Decisão operacional posterior — execução no Work
+
+Em 2026-09-26, o proprietário decidiu que a prova operacional com contas reais de Produtor e Consumidor será executada posteriormente no ChatGPT Work. Portanto:
+
+- a T07 permanece tecnicamente corrigida e pronta para essa validação;
+- não será criado script adicional de “teste de pronto” contra produção;
+- a ausência dessa execução nesta sessão não deve ser confundida com falha técnica;
+- a implementação da T08 está autorizada a prosseguir, sem fabricar ou registrar como executada a homologação real da T07.
