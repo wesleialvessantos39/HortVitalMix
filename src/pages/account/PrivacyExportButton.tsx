@@ -71,14 +71,23 @@ export function PrivacyExportButton({
     setBusy(true);
     setReauthError("");
     try {
-      await api(administrative ? "/v1/admin/auth/login" : "/v1/auth/login", {
-        method: "POST",
-        body: JSON.stringify({
-          email: session.email,
-          password,
-          portalRole,
-        }),
-      });
+      const login = await api<{ status?: string }>(
+        administrative ? "/v1/admin/auth/login" : "/v1/auth/login",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            email: session.email,
+            password,
+            portalRole,
+          }),
+        },
+      );
+      if (
+        administrative &&
+        login.status !== "session_created"
+      ) {
+        throw new Error("ADMIN_REAUTH_FAILED");
+      }
       setPassword("");
       setReauthOpen(false);
       await downloadExport();
