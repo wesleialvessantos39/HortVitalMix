@@ -344,11 +344,13 @@ function RuralPropertyWizard({
   );
   const hydrated = useRef(false);
   const saving = useRef(false);
+  const dirty = useRef(false);
 
   const step = draft.step;
   const stepMeta = steps[step - 1];
 
   function patch(values: Partial<Draft>) {
+    dirty.current = true;
     setDraft((current) => ({ ...current, ...values }));
   }
 
@@ -406,6 +408,7 @@ function RuralPropertyWizard({
         if (stored) {
           const parsed = JSON.parse(stored) as Draft;
           setDraft({ ...blankDraft, ...parsed, propertyId: null, revision: null });
+          dirty.current = true;
           setNotice("Rascunho local recuperado.");
         }
       } catch {}
@@ -427,8 +430,6 @@ function RuralPropertyWizard({
     () =>
       JSON.stringify({
         step: draft.step,
-        propertyId: draft.propertyId,
-        revision: draft.revision,
         propertyName: draft.propertyName,
         registrationNumber: draft.registrationNumber,
         lineVicinal: draft.lineVicinal,
@@ -464,6 +465,11 @@ function RuralPropertyWizard({
       });
     }
     if (targetStep === 2) {
+      if (
+        !draft.totalAreaHectares.trim() ||
+        !draft.cultivatedAreaHectares.trim()
+      )
+        return { success: false as const, error: null };
       const boundaries = parseBoundary(draft.polygonGeojson);
       if (boundaries === null)
         return { success: false as const, error: null };
@@ -546,6 +552,7 @@ function RuralPropertyWizard({
           JSON.stringify({ ...draft, propertyId: result.property.id, revision: result.property.revision }),
         );
       } catch {}
+      dirty.current = false;
       setSaveState("saved");
       setNotice(
         targetStep === 5
@@ -569,7 +576,13 @@ function RuralPropertyWizard({
   }
 
   useEffect(() => {
-    if (!hydrated.current || step === 5 || state !== "ready") return;
+    if (
+      !hydrated.current ||
+      !dirty.current ||
+      step === 5 ||
+      state !== "ready"
+    )
+      return;
     const parsed = buildStepData(step);
     if (!parsed.success) return;
     const timer = setTimeout(() => {
