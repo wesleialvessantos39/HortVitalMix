@@ -179,8 +179,14 @@ export function AccountHub({ path, session, onNavigate }: Props) {
             </button>
           ))}
         </div>
-        <button className="secondary account-action" type="button" onClick={() => onNavigate("/minha-conta")}>
-          Segurança e sair da conta
+        <button
+          className="secondary account-action"
+          type="button"
+          onClick={() =>
+            onNavigate(administrative ? "/admin/painel" : "/minha-conta")
+          }
+        >
+          {administrative ? "Voltar para a administração" : "Segurança e sair da conta"}
         </button>
         {notice && (
           <p role="status" className="account-notice">
