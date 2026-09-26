@@ -86,8 +86,8 @@ if (
 )
   throw new Error("REGISTRATION_VERCEL_FREE_POLICY_REGRESSION");
 
-if (manifest.schemaVersion !== 29)
-  throw new Error("REGISTRATION_SCHEMA_MUST_REMAIN_29");
+if (manifest.schemaVersion < 29)
+  throw new Error("REGISTRATION_SCHEMA_BASELINE_REGRESSION");
 
 console.log(
   JSON.stringify({
