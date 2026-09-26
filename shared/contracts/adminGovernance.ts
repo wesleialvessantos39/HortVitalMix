@@ -227,6 +227,8 @@ export type AcceptInviteResult = z.infer<typeof AcceptInviteResultSchema>;
 
 export const AdminVerifySessionResponseSchema = z.object({
   authorized: z.boolean(),
+  userId: z.string().uuid().optional(),
+  email: z.string().email().optional(),
   role: AdminRoleSchema.nullable(),
   sectors: z.array(AdminSectorCodeSchema),
   requiresReauth: z.boolean(),
