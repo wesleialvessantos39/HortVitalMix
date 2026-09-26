@@ -57,24 +57,59 @@ export function AccountHub({ path, session, onNavigate }: Props) {
 
   async function load() {
     setNotice("");
-    try {
-      const [profileResult, addressResult, preferenceResult] =
-        await Promise.all([
-          path === "/conta" || path === "/conta/perfil" || path === "/conta/preferencias"
-            ? api<ProfileView>("/v1/account/profile") : Promise.resolve(profile),
-          path === "/conta"
-            ? api<{ addresses: AddressAdvancedView[] }>("/v1/account/addresses") : Promise.resolve({addresses}),
-          path === "/conta/preferencias" || path === "/conta/privacidade" ? api<{
-            preferences: PreferencesView;
-            consents: ConsentView[];
-          }>("/v1/account/preferences") : Promise.resolve({preferences,consents}),
-        ]);
-      setProfile(profileResult);
-      setAddresses(addressResult.addresses);
-      setPreferences(preferenceResult.preferences);
-      setConsents(preferenceResult.consents);
-    } catch {
-      setNotice("Não foi possível carregar os dados da conta agora.");
+    const errors: string[] = [];
+
+    if (path === "/conta") {
+      const [profileResult, addressResult] = await Promise.allSettled([
+        api<ProfileView>("/v1/account/profile"),
+        api<{ addresses: AddressAdvancedView[] }>("/v1/account/addresses"),
+      ]);
+
+      if (profileResult.status === "fulfilled") {
+        setProfile(profileResult.value);
+      } else {
+        setProfile(null);
+        errors.push("Não foi possível carregar seu perfil agora.");
+      }
+
+      if (addressResult.status === "fulfilled") {
+        setAddresses(addressResult.value.addresses);
+      } else {
+        setAddresses([]);
+        errors.push("Seus endereços não puderam ser carregados agora.");
+      }
+
+      setNotice(errors.join(" "));
+      return;
+    }
+
+    if (path === "/conta/perfil") {
+      try {
+        setProfile(await api<ProfileView>("/v1/account/profile"));
+      } catch {
+        setProfile(null);
+        setNotice("Não foi possível carregar seu perfil agora.");
+      }
+      return;
+    }
+
+    if (path === "/conta/preferencias" || path === "/conta/privacidade") {
+      try {
+        const result = await api<{
+          preferences: PreferencesView;
+          consents: ConsentView[];
+        }>("/v1/account/preferences");
+        setPreferences(result.preferences);
+        setConsents(result.consents);
+      } catch {
+        setPreferences(null);
+        setConsents([]);
+        setNotice(
+          path === "/conta/privacidade"
+            ? "Não foi possível carregar seus consentimentos agora."
+            : "Não foi possível carregar suas preferências agora.",
+        );
+      }
     }
   }
 
