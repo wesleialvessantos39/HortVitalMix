@@ -92,7 +92,7 @@ if (manifest.schemaVersion !== 29)
 console.log(
   JSON.stringify({
     status: "registration-hotfix-evidence-ok",
-    schemaVersion: 29,
+    schemaVersion: manifest.schemaVersion,
     freeTierOnly: true,
     edgePrimary: true,
     expressFallbackOnly: true,
