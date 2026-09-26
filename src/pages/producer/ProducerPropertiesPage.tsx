@@ -298,25 +298,28 @@ function PropertyList({
                 <span style={{ width: `${property.wizardCurrentStep * 20}%` }} />
               </div>
               <small>Etapa {property.wizardCurrentStep} de 5</small>
-              <button
-                className="secondary"
-                onClick={() =>
-                  onNavigate(
-                    "/produtor/propriedades/novo?id=" +
-                      encodeURIComponent(property.id),
-                  )
-                }
-                disabled={
-                  property.status === "verified" ||
-                  property.status === "submitted" ||
-                  property.status === "suspended"
-                }
-              >
-                {property.status === "draft" || property.status === "rejected"
-                  ? "Continuar cadastro"
-                  : "Visualizar cadastro"}
-                <ChevronRight />
-              </button>
+              {property.status === "draft" || property.status === "rejected" ? (
+                <button
+                  className="secondary"
+                  onClick={() =>
+                    onNavigate(
+                      "/produtor/propriedades/novo?id=" +
+                        encodeURIComponent(property.id),
+                    )
+                  }
+                >
+                  Continuar cadastro
+                  <ChevronRight />
+                </button>
+              ) : (
+                <p className="rural-readonly-note">
+                  {property.status === "submitted"
+                    ? "Cadastro enviado e aguardando análise."
+                    : property.status === "verified"
+                      ? "Imóvel verificado. Alterações exigem re-homologação."
+                      : "Cadastro suspenso para edição."}
+                </p>
+              )}
             </article>
           ))}
         </div>
