@@ -17,6 +17,8 @@ type Props = {
   pinLabel?: string;
   emptyHelp?: string;
   pinnedHelp?: string;
+  initialCenter?: Coordinates;
+  initialZoom?: number;
 };
 
 const TILE_SIZE = 256;
@@ -75,6 +77,8 @@ export function OsmPinMap({
   pinLabel = "Localização do endereço. Arraste para ajustar.",
   emptyHelp = "Toque no mapa para posicionar o endereço.",
   pinnedHelp = "Arraste o marcador ou toque em outro ponto para ajustar.",
+  initialCenter,
+  initialZoom,
 }: Props) {
   const pinCoordinates = useMemo<Coordinates | null>(() => {
     if (
@@ -89,10 +93,10 @@ export function OsmPinMap({
   const hasPin = pinCoordinates !== null;
 
   const [center, setCenter] = useState<Coordinates>(
-    () => pinCoordinates ?? DEFAULT_CENTER,
+    () => pinCoordinates ?? initialCenter ?? DEFAULT_CENTER,
   );
   const [zoom, setZoom] = useState(
-    () => (pinCoordinates ? DETAIL_ZOOM : DEFAULT_ZOOM),
+    () => (pinCoordinates ? DETAIL_ZOOM : initialZoom ?? DEFAULT_ZOOM),
   );
   const mapRef = useRef<HTMLDivElement | null>(null);
   const panRef = useRef<{
