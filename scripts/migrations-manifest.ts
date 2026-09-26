@@ -62,6 +62,10 @@ const remoteVersionAliases: Readonly<Record<string, string>> = {
   "20260925010505": "20260925011000",
   // Múltiplos endereços T07 aplicada pelo Supabase com timestamp físico próprio.
   "20260925192227": "20260925153500",
+  // Cadastro rural T08 aplicado pelo Supabase com timestamp físico próprio.
+  "20260926223504": "20260926190000",
+  // Revogação de privilégios herdados T07/T08.
+  "20260926223741": "20260926223700",
 };
 
 export function validateHistory(rows: { version: string; name: string }[]) {

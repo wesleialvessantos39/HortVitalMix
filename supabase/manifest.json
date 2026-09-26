@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 30,
+  "schemaVersion": 31,
   "migrations": [
     {
       "version": "20260919030126",
@@ -155,7 +155,12 @@
       "version": "20260926190000",
       "name": "trilha08_rural_properties",
       "file": "20260926190000_trilha08_rural_properties.sql"
+    },
+    {
+      "version": "20260926223700",
+      "name": "trilha08_table_privileges_hardening",
+      "file": "20260926223700_trilha08_table_privileges_hardening.sql"
     }
   ],
-  "migrationHistoryHash": "2a8994804e8af48902a745860e9aa1307788c1baa6ab7ec9b4e2eba874edcf0c"
+  "migrationHistoryHash": "7ca8848d8d498e2a948058ddd65d4a6c7d293d9b9f890d4fbc5aae7e6ddf920d"
 }

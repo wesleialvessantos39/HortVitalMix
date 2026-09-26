@@ -20,18 +20,18 @@ const required = (source, tokens, code) => {
       throw new Error(code + ":" + token);
 };
 
-if (manifest.schemaVersion !== 30)
-  throw new Error("T08_SCHEMA_VERSION_MUST_BE_30");
-if (manifest.migrations.length !== 31)
-  throw new Error("T08_MIGRATION_COUNT_MUST_BE_31");
+if (manifest.schemaVersion !== 31)
+  throw new Error("T08_SCHEMA_VERSION_MUST_BE_31");
+if (manifest.migrations.length !== 32)
+  throw new Error("T08_MIGRATION_COUNT_MUST_BE_32");
 if (
   manifest.migrations.at(-1)?.file !==
-  "20260926190000_trilha08_rural_properties.sql"
+  "20260926223700_trilha08_table_privileges_hardening.sql"
 )
   throw new Error("T08_LAST_MIGRATION_MISMATCH");
 if (
   manifest.migrationHistoryHash !==
-  "2a8994804e8af48902a745860e9aa1307788c1baa6ab7ec9b4e2eba874edcf0c"
+  "7ca8848d8d498e2a948058ddd65d4a6c7d293d9b9f890d4fbc5aae7e6ddf920d"
 )
   throw new Error("T08_MIGRATION_HASH_MISMATCH");
 
@@ -204,10 +204,10 @@ for (const script of [
 console.log(
   JSON.stringify({
     status: "trilha08-evidence-ok",
-    schemaVersion: 30,
-    migrationCount: 31,
-    plannedTests: 32,
+    schemaVersion: 31,
+    migrationCount: 32,
+    baselineTests: 32,
     freeTierOnly: true,
-    productionMigrationApplied: false,
+    scope: "repository-structure-only",
   }),
 );

@@ -270,3 +270,8 @@ Em 2026-09-26, o proprietário decidiu que a prova operacional com contas reais 
 - não será criado script adicional de “teste de pronto” contra produção;
 - a ausência dessa execução nesta sessão não deve ser confundida com falha técnica;
 - a implementação da T08 está autorizada a prosseguir, sem fabricar ou registrar como executada a homologação real da T07.
+
+
+## 2026-09-26 — Correção executada no Work
+
+24 testes unitários/rotas e 23 testes de navegador de endereços/navegação passaram. Evidência do mapa ajustada para o rótulo neutro dos endereços administrativos. Migration aditiva `20260926223700_trilha08_table_privileges_hardening.sql` remove privilégios herdados além de SELECT de `app_user_addresses`; consulta remota confirmou somente SELECT para authenticated e ausência de grants anon. Nenhum dado de usuário foi alterado. CRUD com contas reais permanece pendente pela decisão registrada no Livro Raiz.

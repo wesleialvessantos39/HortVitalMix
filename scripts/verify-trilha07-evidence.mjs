@@ -161,7 +161,8 @@ requireTokens(
     "tile.openstreetmap.org",
     "© OpenStreetMap",
     "onPointerMove",
-    "Ponto de entrega",
+    'pinLabel = "Localização do endereço. Arraste para ajustar."',
+    "aria-label={pinLabel}",
   ],
   "T07_MAP_EVIDENCE_MISSING",
 );

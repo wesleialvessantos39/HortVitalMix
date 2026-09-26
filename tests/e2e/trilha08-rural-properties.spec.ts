@@ -295,6 +295,7 @@ test("06 legumes picados exigem instalação de lavagem", async ({ page }) => {
 test("07 queda de conexão mantém rascunho local e informa o produtor", async ({ page }) => {
   await mockT08(page);
   await page.goto("/produtor/propriedades/novo");
+  await expect(page.getByLabel("Nome da propriedade ou chácara")).toBeVisible();
   await page.evaluate(() => window.dispatchEvent(new Event("offline")));
   await expect(page.getByText(/Sem conexão. Alterações ficam salvas localmente/)).toBeVisible();
   await page.getByLabel("Nome da propriedade ou chácara").fill("Rascunho offline");
@@ -325,5 +326,55 @@ test("08 layout não cria overflow nos cinco breakpoints oficiais", async ({ pag
       ),
       "overflow em " + viewport.width + "px",
     ).toBe(true);
+    await page.screenshot({ path: `/tmp/t08-layout-${viewport.width}.png`, fullPage: true });
   }
+});
+
+test("09 recarregar preserva imóvel e alterações locais ainda não sincronizadas", async ({ page }) => {
+  const mocked = await mockT08(page);
+  await page.goto("/produtor/propriedades/novo");
+  await page.getByLabel("Nome da propriedade ou chácara").fill("Sítio Persistente");
+  await page.getByLabel("Linha vicinal / travessão").fill("Linha C-70");
+  await page.getByLabel("Setor rural / gleba").fill("Gleba 2");
+  await page.getByLabel("Mapa para marcar a sede do imóvel rural").click({ position: { x: 160, y: 120 } });
+  await page.getByRole("button", { name: /Salvar e continuar/ }).click();
+  await expect(page).toHaveURL(new RegExp("id=" + propertyId));
+  await page.getByLabel("Área total (ha)").fill("8");
+  await page.reload();
+  await expect(page.getByLabel("Área total (ha)")).toHaveValue("8");
+  await page.getByLabel("Área cultivada ativa (ha)").fill("3");
+  await page.getByRole("button", { name: /Salvar e continuar/ }).click();
+  await expect(page.getByRole("heading", { name: "Segurança hídrica" })).toBeVisible();
+  expect(mocked.property?.totalAreaHectares).toBe(8);
+});
+
+test("10 autosave salva também a edição feita enquanto a resposta estava pendente", async ({ page }) => {
+  const mocked = await mockT08(page, fullProperty());
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => { release = resolve; });
+  let first = true;
+  await page.route("**/producer/properties/wizard/save-step", async (route) => {
+    if (first) { first = false; await pending; }
+    await route.fallback();
+  });
+  await page.goto("/produtor/propriedades/novo?id=" + propertyId);
+  await page.getByLabel("Nome da propriedade ou chácara").fill("Primeira edição");
+  await page.waitForRequest((req) => req.url().includes("wizard/save-step"));
+  await page.getByLabel("Nome da propriedade ou chácara").fill("Última edição");
+  release();
+  await expect.poll(() => mocked.property?.propertyName, { timeout: 10000 }).toBe("Última edição");
+});
+
+test("11 completa as cinco etapas e submete o imóvel", async ({ page }) => {
+  const mocked = await mockT08(page, fullProperty({ wizardCurrentStep: 2 }));
+  await page.goto("/produtor/propriedades/novo?id=" + propertyId);
+  await page.getByRole("button", { name: /Salvar e continuar/ }).click();
+  await page.getByRole("button", { name: /Salvar e continuar/ }).click();
+  await page.getByLabel("Atividade principal").selectOption("hortalicas_folhosas");
+  await page.getByLabel("Sistema de produção").selectOption("agroecologico_declarado");
+  await page.getByRole("button", { name: /Salvar e continuar/ }).click();
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: /Revisar e enviar/ }).click();
+  await expect(page.getByText("Enviado para análise")).toBeVisible();
+  expect(mocked.property?.status).toBe("submitted");
 });

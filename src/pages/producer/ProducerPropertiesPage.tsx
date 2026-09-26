@@ -332,10 +332,11 @@ function RuralPropertyWizard({
   session,
   onNavigate,
 }: Omit<Props, "path">) {
-  const requestedId =
+  const [requestedId] = useState(() =>
     typeof location === "undefined"
       ? null
-      : new URLSearchParams(location.search).get("id");
+      : new URLSearchParams(location.search).get("id"),
+  );
   const [draft, setDraft] = useState<Draft>(blankDraft);
   const [state, setState] = useState<PageState>(
     requestedId ? "loading" : "ready",
@@ -348,12 +349,16 @@ function RuralPropertyWizard({
   const hydrated = useRef(false);
   const saving = useRef(false);
   const dirty = useRef(false);
+  const editVersion = useRef(0);
+  const pendingSave = useRef<{ payload: Record<string, unknown>; version: number } | null>(null);
 
   const step = draft.step;
   const stepMeta = steps[step - 1];
 
   function patch(values: Partial<Draft>) {
     dirty.current = true;
+    editVersion.current += 1;
+    setSaveState((current) => current === "error" ? "idle" : current);
     setDraft((current) => ({ ...current, ...values }));
   }
 
@@ -370,6 +375,7 @@ function RuralPropertyWizard({
   useEffect(() => {
     const handleOnline = () => {
       setOnline(true);
+      setSaveState("idle");
       setNotice("Conexão restabelecida. O rascunho será sincronizado.");
     };
     const handleOffline = () => {
@@ -395,9 +401,22 @@ function RuralPropertyWizard({
             "/v1/producer/properties/" + encodeURIComponent(requestedId),
           );
           if (cancelled) return;
-          const next = draftFromProperty(result.property);
+          let next = draftFromProperty(result.property);
+          let conflict = false;
+          try {
+            const raw = localStorage.getItem(localKey(session.userId, requestedId));
+            const stored = raw ? JSON.parse(raw) as Draft : null;
+            if (stored?.propertyId === requestedId && stored.step >= 1 && stored.step <= 5) {
+              next = { ...next, ...stored };
+              conflict = stored.revision !== result.property.revision;
+              dirty.current = true;
+              setNotice(conflict
+                ? "Há um rascunho local e uma versão diferente no servidor. Copie suas alterações antes de recarregar."
+                : "Rascunho local recuperado.");
+            }
+          } catch {}
           setDraft(next);
-          setState("ready");
+          setState(conflict ? "conflict" : "ready");
           hydrated.current = true;
           return;
         } catch {
@@ -501,7 +520,7 @@ function RuralPropertyWizard({
   }
 
   async function saveStep(targetStep: number, automatic = false) {
-    if (saving.current || targetStep === 5 && automatic) return false;
+    if (saving.current || state !== "ready" || targetStep === 5 && automatic) return false;
 
     const parsed = buildStepData(targetStep);
     if (!parsed.success) {
@@ -525,13 +544,15 @@ function RuralPropertyWizard({
     setNotice("");
 
     try {
-      const payload = {
+      const attempt = pendingSave.current ?? { version: editVersion.current, payload: {
         propertyId: draft.propertyId ?? undefined,
         expectedRevision: draft.propertyId ? draft.revision ?? undefined : undefined,
         step: targetStep,
         stepData: parsed.data,
         commandId: commandId(),
-      };
+      } };
+      pendingSave.current = attempt;
+      const payload = attempt.payload;
       const result = await api<{
         status: string;
         property: RuralPropertyView;
@@ -541,6 +562,8 @@ function RuralPropertyWizard({
         body: JSON.stringify(payload),
       });
 
+      pendingSave.current = null;
+      const changedDuringSave = editVersion.current !== attempt.version;
       const next = draftFromProperty(result.property);
       next.step = targetStep === 5 ? 5 : draft.step;
       setDraft((current) => ({
@@ -548,6 +571,9 @@ function RuralPropertyWizard({
         propertyId: next.propertyId,
         revision: next.revision,
       }));
+      if (!draft.propertyId) {
+        history.replaceState(history.state, "", "/produtor/propriedades/novo?id=" + result.property.id);
+      }
       try {
         localStorage.removeItem(localKey(session.userId, null));
         localStorage.setItem(
@@ -555,7 +581,7 @@ function RuralPropertyWizard({
           JSON.stringify({ ...draft, propertyId: result.property.id, revision: result.property.revision }),
         );
       } catch {}
-      dirty.current = false;
+      dirty.current = changedDuringSave;
       setSaveState("saved");
       setNotice(
         targetStep === 5
@@ -564,9 +590,10 @@ function RuralPropertyWizard({
             ? "Rascunho salvo."
             : "Etapa salva.",
       );
-      return true;
+      return !changedDuringSave;
     } catch (error) {
       const failure = error as ApiFailure;
+      if (failure.status && failure.status >= 400 && failure.status < 500) pendingSave.current = null;
       if (failure.message === "PROPERTY_REVISION_CONFLICT" || failure.status === 409)
         setState("conflict");
       persistLocal();
@@ -583,7 +610,8 @@ function RuralPropertyWizard({
       !hydrated.current ||
       !dirty.current ||
       step === 5 ||
-      state !== "ready"
+      state !== "ready" ||
+      saveState === "saving" || saveState === "error"
     )
       return;
     const parsed = buildStepData(step);
@@ -592,7 +620,7 @@ function RuralPropertyWizard({
       void saveStep(step, true);
     }, 2000);
     return () => clearTimeout(timer);
-  }, [signature, online, state]);
+  }, [signature, online, state, saveState]);
 
   async function next() {
     const ok = await saveStep(step);
@@ -656,7 +684,7 @@ function RuralPropertyWizard({
           <h1>{draft.propertyName || "Novo imóvel rural"}</h1>
           <p>Etapa {step} de 5 · {stepMeta[0]}</p>
         </div>
-        <button className="secondary" onClick={() => void continueLater()}>
+        <button className="secondary" disabled={saving.current} onClick={() => void continueLater()}>
           Continuar mais tarde
         </button>
       </header>
@@ -692,10 +720,13 @@ function RuralPropertyWizard({
           <AlertTriangle />
           <div>
             <h2>O imóvel mudou em outra sessão</h2>
-            <p>Volte à lista e abra novamente para usar a revisão mais recente.</p>
+            <p>Copie suas alterações antes de descartar o rascunho local e abrir a versão do servidor.</p>
           </div>
-          <button className="secondary" onClick={() => onNavigate("/produtor/propriedades")}>
-            Recarregar pela lista
+          <button className="secondary" onClick={() => {
+            try { localStorage.removeItem(localKey(session.userId, draft.propertyId)); } catch {}
+            onNavigate("/produtor/propriedades");
+          }}>
+            Descartar rascunho local e voltar à lista
           </button>
         </div>
       )}

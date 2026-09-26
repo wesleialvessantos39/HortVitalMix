@@ -3,7 +3,7 @@
 Data de implementação: 2026-09-26  
 Branch: `trilha08-v11`  
 Base funcional: correções T07 preservadas  
-Estado: **implementada no código e pronta para homologação no Work; migration não aplicada em produção e testes não declarados como executados nesta sessão**.
+Estado atual: **conclusão técnica validada no Work, migrations aplicadas; homologação operacional com conta real pendente**. As seções 1–11 abaixo preservam o registro original da branch; a seção 12 apresenta a execução posterior.
 
 ## 1. Fonte normativa
 
@@ -245,3 +245,39 @@ Nenhum item acima é declarado como concluído antecipadamente.
 - nenhum workflow automático em push/PR;
 - `vercel.json` continua com build Hobby enxuto e deploy somente de `main`;
 - T09+ não foi iniciada.
+
+
+## 12. Execução no Work — 2026-09-26
+
+
+- Integradas as branches `correcao-t07-selagem-operacional-20260926` e `trilha08-v11`, preservando as correções administrativas, login e sessão da main `afc8ff73572d175b826d06644bcb064352f2e832`.
+- T07: executadas as guardas de lockfile, imports ESM e build Hobby; corrigida a evidência estrutural do mapa para o rótulo neutro de endereço já utilizado pelos portais administrativos.
+- T08: cadastro rural em cinco etapas, lista, salvamento automático, retomada, mapa livre, validação e submissão integrados.
+- Corrigida perda de rascunho ao recarregar: URL passa a incluir o imóvel criado e dados locais da mesma revisão são recuperados. Divergência de revisão bloqueia sobrescrita e permite descarte explícito do rascunho local.
+- Corrigido autosave quando o usuário digita durante uma resposta pendente. Tentativas de salvamento com resposta incerta reutilizam o commandId enquanto a página permanece aberta.
+- Limites e precisão das áreas alinhados ao NUMERIC(10,4), evitando arredondamento silencioso ou overflow no banco.
+- Nenhum verificador adicional de prontidão de produção foi criado. O verificador estrutural existente informa apenas seu escopo local, sem afirmar estado do banco remoto.
+
+### Supabase — evidência efetiva
+
+- Aplicada `trilha08_rural_properties`: versão canônica `20260926190000`, física `20260926223504`.
+- A inspeção completa revelou privilégios herdados `TRUNCATE`, `REFERENCES` e `TRIGGER` em endereços e nas três tabelas rurais. Aplicada migration aditiva `trilha08_table_privileges_hardening`: canônica `20260926223700`, física `20260926223741`.
+- Após a correção, `authenticated` possui **somente SELECT** em `app_user_addresses`, `app_properties`, `app_property_boundaries` e `app_rural_activities`; `anon` não possui grants nessas tabelas. Nenhum dado de usuário foi modificado.
+- As três novas tabelas têm ENABLE/FORCE RLS e 15 policies. Mutações continuam no backend com sessão, escopo produtor, origem e autenticação recente.
+- Schema lógico final **31**, histórico de **32 migrations**, hash canônico `7ca8848d8d498e2a948058ddd65d4a6c7d293d9b9f890d4fbc5aae7e6ddf920d`.
+- Aliases físicos reconciliados no manifesto. O advisor de segurança não apontou avisos novos da T08; mantém os avisos anteriores das funções de identidade/RLS e proteção de senhas vazadas.
+
+### Validação executada
+
+- `npm run verify:t08:free`: aprovado (manifesto, TypeScript, segurança, 24 casos unitários/rotas, evidência estrutural, build, bundle e 11 casos de navegador).
+- T07 unitários/rotas: **24 aprovados**; evidência estrutural T07 aprovada.
+- Navegador T07 e navegação/sessão: **23 aprovados**.
+- Total de casos distintos aprovados nesta entrega: **82**.
+- Screenshots da T08 inspecionados em 320, 360, 768, 1024 e 1440 px; sem overflow horizontal.
+- Testes de navegador usam API/sessão simuladas. Não são prova de CRUD autenticado em produção.
+
+### Pendência operacional explícita
+
+Ainda executar com contas reais: CRUD de endereços de Produtor/Consumidor (incluindo substituição do padrão e limite 10) e cadastro/submissão rural de Produtor. Sem credenciais de usuário disponíveis nesta sessão, não houve impersonação, redefinição de senhas, criação de contas artificiais ou gravação de dados fictícios para declarar homologação. A liberação da T08 segue a autorização registrada pelo proprietário.
+
+Publicação segue main-only e Hobby; T09+ não iniciada. O registro final do deploy deve usar tag `t08-rural-20260926`, SHA exato READY, schema 31 e o hash acima.

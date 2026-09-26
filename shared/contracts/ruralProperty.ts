@@ -73,7 +73,7 @@ export const PropertyBoundaryInputSchema = z
   .object({
     boundaryType: BoundaryTypeSchema,
     polygonGeojson: GeoJsonPolygonSchema,
-    calculatedAreaHa: z.number().nonnegative().max(1_000_000).nullable().optional(),
+    calculatedAreaHa: z.number().nonnegative().max(999_999.9999).multipleOf(0.0001).nullable().optional(),
   })
   .strict();
 
@@ -93,8 +93,8 @@ export const Step1IdentificationSchema = z
 
 export const Step2DimensionsSchema = z
   .object({
-    totalAreaHectares: z.number().positive().max(1_000_000),
-    cultivatedAreaHectares: z.number().nonnegative().max(1_000_000),
+    totalAreaHectares: z.number().positive().max(999_999.9999).multipleOf(0.0001),
+    cultivatedAreaHectares: z.number().nonnegative().max(999_999.9999).multipleOf(0.0001),
     boundaries: z.array(PropertyBoundaryInputSchema).max(32).default([]),
   })
   .strict()
