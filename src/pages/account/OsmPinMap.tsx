@@ -221,7 +221,7 @@ export function OsmPinMap({
       <div
         ref={mapRef}
         className="osm-pin-map"
-        aria-label="Mapa para ajustar o ponto de entrega"
+        aria-label="Mapa para ajustar a localização do endereço"
         onPointerDown={startPan}
         onPointerMove={movePan}
         onPointerUp={stopPan}
@@ -249,7 +249,7 @@ export function OsmPinMap({
             type="button"
             className="osm-pin"
             data-map-pin
-            aria-label="Ponto de entrega. Arraste para ajustar."
+            aria-label="Localização do endereço. Arraste para ajustar."
             style={{
               left: `calc(50% + ${pinOffset.x}px)`,
               top: `calc(50% + ${pinOffset.y}px)`,
@@ -298,7 +298,7 @@ export function OsmPinMap({
       <p className="osm-map-help">
         {hasPin
           ? "Arraste o marcador ou toque em outro ponto para ajustar."
-          : "Toque no mapa para posicionar o ponto de entrega."}
+          : "Toque no mapa para posicionar o endereço."}
       </p>
     </div>
   );

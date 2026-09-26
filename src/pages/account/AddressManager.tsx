@@ -34,6 +34,7 @@ type Props = {
   title: string;
   help: string;
   initialAddresses?: AddressAdvancedView[];
+  administrative?: boolean;
 };
 
 function commandId() {
@@ -51,13 +52,13 @@ function mutationMessage(error: unknown) {
   return "Não foi possível concluir a alteração agora.";
 }
 
-function LocationStatus({ address }: { address: AddressAdvancedView }) {
+function LocationStatus({ address, administrative }: { address: AddressAdvancedView; administrative: boolean }) {
   const accuracy = address.geocodingAccuracy;
   const label =
     accuracy === "manual"
       ? "Ponto ajustado por você"
       : accuracy === "rooftop"
-        ? "Ponto de entrega localizado"
+        ? administrative ? "Localização identificada" : "Ponto de entrega localizado"
         : accuracy === "street" || accuracy === "neighborhood"
           ? "Localização aproximada"
           : "Sem ponto no mapa";
@@ -70,7 +71,7 @@ function LocationStatus({ address }: { address: AddressAdvancedView }) {
   );
 }
 
-export function AddressManager({ title, help, initialAddresses }: Props) {
+export function AddressManager({ title, help, initialAddresses, administrative = false }: Props) {
   const [addresses, setAddresses] = useState<AddressAdvancedView[]>(initialAddresses ?? []);
   const [state, setState] = useState<AddressState>(initialAddresses ? (initialAddresses.length ? "ready" : "empty") : "loading");
   const [notice, setNotice] = useState("");
@@ -267,7 +268,7 @@ export function AddressManager({ title, help, initialAddresses }: Props) {
           <MapPin />
           <div>
             <h3>Nenhum endereço cadastrado</h3>
-            <p>Cadastre seu primeiro endereço pessoal. Ele será definido como padrão automaticamente.</p>
+            <p>{administrative ? "Cadastre seu primeiro endereço de contato administrativo. Ele será definido como padrão." : "Cadastre seu primeiro endereço pessoal. Ele será definido como padrão automaticamente."}</p>
           </div>
         </div>
       ) : (
@@ -308,12 +309,12 @@ export function AddressManager({ title, help, initialAddresses }: Props) {
 
                 {address.deliveryNotes && (
                   <div className="address-delivery-note">
-                    <strong>Para a entrega</strong>
+                    <strong>{administrative ? "Orientações de acesso" : "Para a entrega"}</strong>
                     <span>{address.deliveryNotes}</span>
                   </div>
                 )}
 
-                <LocationStatus address={address} />
+                <LocationStatus address={address} administrative={administrative} />
 
                 <div className="address-actions">
                   <button
@@ -360,6 +361,7 @@ export function AddressManager({ title, help, initialAddresses }: Props) {
 
       {sheetOpen && (
         <AddressEditorSheet
+          administrative={administrative}
           initial={editing}
           onClose={() => {
             setSheetOpen(false);
@@ -386,12 +388,14 @@ export function AddressManager({ title, help, initialAddresses }: Props) {
 }
 
 function AddressEditorSheet({
+  administrative,
   initial,
   onClose,
   onSaved,
   onConflict,
   onNotice,
 }: {
+  administrative: boolean;
   initial: AddressAdvancedView | null;
   onClose: () => void;
   onSaved: () => Promise<void>;
@@ -399,7 +403,7 @@ function AddressEditorSheet({
   onNotice: (message: string) => void;
 }) {
   const editing = Boolean(initial);
-  const [label, setLabel] = useState(initial?.label ?? "Casa");
+  const [label, setLabel] = useState(initial?.label ?? (administrative ? "Contato" : "Casa"));
   const [lookingUp, setLookingUp] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deliveryNotes, setDeliveryNotes] = useState(
@@ -568,7 +572,7 @@ function AddressEditorSheet({
       >
         <header>
           <div>
-            <span className="eyebrow">Local de entrega</span>
+            <span className="eyebrow">{administrative ? "Contato administrativo" : "Local de entrega"}</span>
             <h2>{editing ? "Editar endereço" : "Novo endereço"}</h2>
           </div>
           <button type="button" aria-label="Fechar" onClick={onClose}>
@@ -579,7 +583,7 @@ function AddressEditorSheet({
         <fieldset className="address-quick-labels">
           <legend>Rótulo</legend>
           <div>
-            {QUICK_ADDRESS_LABELS.map((quickLabel) => (
+            {(administrative ? ["Contato", "Escritório", "Correspondência", "Outro"] : QUICK_ADDRESS_LABELS).map((quickLabel) => (
               <button
                 key={quickLabel}
                 type="button"
@@ -709,13 +713,13 @@ function AddressEditorSheet({
         </div>
 
         <label>
-          Instruções para entrega
+          {administrative ? "Referências e orientações de acesso" : "Instruções para entrega"}
           <textarea
             name="deliveryNotes"
             value={deliveryNotes}
             onChange={(event) => setDeliveryNotes(event.target.value)}
             maxLength={255}
-            placeholder="Ex.: portão branco, chamar no interfone"
+            placeholder={administrative ? "Ex.: sala, bloco ou recepção" : "Ex.: portão branco, chamar no interfone"}
           />
           <small>{deliveryNotes.length}/255</small>
         </label>
@@ -723,7 +727,7 @@ function AddressEditorSheet({
         <section className="address-map-section" aria-labelledby="map-heading">
           <div className="address-map-heading">
             <div>
-              <strong id="map-heading">Ponto de entrega no mapa</strong>
+              <strong id="map-heading">{administrative ? "Localização do endereço no mapa" : "Ponto de entrega no mapa"}</strong>
               <span>
                 Ajuste apenas se ajudar a localizar sua entrada com mais precisão.
               </span>

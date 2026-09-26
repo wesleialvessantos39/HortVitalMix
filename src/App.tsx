@@ -32,6 +32,7 @@ import { ContactConfirmationPage } from "./pages/auth/ContactConfirmationPage";
 import { RecoverPasswordPage } from "./pages/auth/RecoverPasswordPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 import { useSession } from "./hooks/useSession";
+import { PublicLoginPage } from "./pages/auth/PublicLoginPage";
 const fallback = {
   platformName: "HortiVitalMix",
   slogan: "Tudo fresco. Tudo da sua região.",
@@ -84,6 +85,7 @@ export default function App() {
   const dialog = useRef<HTMLDialogElement>(null);
   const {
     session: shellSession,
+    loading: sessionLoading,
     adoptSession,
     refresh: refreshSession,
   } = useSession();
@@ -95,6 +97,15 @@ export default function App() {
     path === "/acesso/administracao" ||
     path === "/acesso/super-administracao";
   const accountTarget = "/conta";
+  const publicLoginRole = path === "/entrar/produtor" ? "producer" : path === "/entrar/consumidor" ? "consumer" : null;
+  const guestAccessRoute = path === "/entrar" || path.startsWith("/entrar/") || path === "/cadastro" || path.startsWith("/cadastro/") || path === "/administracao" || path === "/admin/entrar" || path.startsWith("/acesso/");
+  const administrativeSession = shellSession?.activeRole === "platform_admin" || shellSession?.activeRole === "platform_super_admin";
+  useEffect(() => {
+    if (!shellSession || !guestAccessRoute) return;
+    const destination = administrativeSession ? "/admin/painel" : "/conta";
+    history.replaceState({}, "", destination);
+    setPath(destination);
+  }, [shellSession, guestAccessRoute, administrativeSession]);
   const isAccountDataRoute = path === "/conta" || path.startsWith("/conta/");
   const publicPortalSession =
     Boolean(shellSession) &&
@@ -168,10 +179,10 @@ export default function App() {
   const logo = (
     <a
       className="brand"
-      href="/"
+      href={administrativeSession ? "/admin/painel" : "/"}
       onClick={(e) => {
         e.preventDefault();
-        go("/");
+        go(administrativeSession ? "/admin/painel" : "/");
       }}
     >
       <span className="brand-icon">
@@ -307,8 +318,10 @@ export default function App() {
         </div>
         {search}
       </header>
-      <main id="conteudo" className={isAdminRoute ? "layout admin-route-layout" : "layout"}>
-        {isAdminRoute ? (
+      <main id="conteudo" className={isAdminRoute || publicLoginRole ? "layout admin-route-layout" : "layout"}>
+        {(sessionLoading && (guestAccessRoute || isAccountDataRoute || path === "/minha-conta")) || (shellSession && guestAccessRoute) ? <p role="status" className="account-notice">Carregando sua conta…</p> : publicLoginRole ? (
+          <PublicLoginPage key={publicLoginRole} role={publicLoginRole} onNavigate={go} onSessionAdopt={adoptSession}/>
+        ) : isAdminRoute ? (
           <AdminRouter path={path} onNavigate={go} onSessionRefresh={refreshSession} />
         ) : path === "/confirmar-contato" || path === "/confirmarcontato" ? (
           <ContactConfirmationPage
@@ -384,7 +397,7 @@ export default function App() {
                   ))}
                 </nav>
               </section>
-              <section className="producer-invite">
+              {!shellSession && !sessionLoading && <section className="producer-invite">
                 <Sprout />
                 <h3>Você produz por aqui?</h3>
                 <p>Traga o frescor da sua produção para mais famílias.</p>
@@ -394,7 +407,7 @@ export default function App() {
                 >
                   Faça parte <ChevronRight size={15} />
                 </button>
-              </section>
+              </section>}
             </aside>
             <div className="main-content">
               {path === "/" && (
@@ -497,12 +510,12 @@ export default function App() {
                         ? `Não foi possível consultar “${query}” agora.`
                         : "Estamos preparando este espaço para conectar você à nossa região."}
                     </p>
-                    <button
+                    {!shellSession && !sessionLoading && <button
                       className="text-button"
                       onClick={() => go("/cadastro")}
                     >
                       Conheça as opções de cadastro <ChevronRight size={15} />
-                    </button>
+                    </button>}
                   </div>
                 </section>
               )}

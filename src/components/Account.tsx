@@ -929,6 +929,7 @@ export function Account({
             try {
               await api("/v1/auth/logout", { method: "POST" });
               onSessionAdopt(null);
+              navigate("/");
                           } catch {
               setNotice("Não foi possível encerrar a sessão. Tente novamente.");
             } finally {

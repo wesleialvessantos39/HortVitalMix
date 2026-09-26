@@ -210,6 +210,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
           key={session.userId}
           title={experience.addressTitle}
           help={experience.addressHelp}
+          administrative={administrative}
         />
       )}
 

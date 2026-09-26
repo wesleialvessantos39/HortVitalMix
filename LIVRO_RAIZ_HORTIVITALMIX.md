@@ -3199,3 +3199,13 @@ Validação: manifesto, typecheck, security check, 20 testes T07 iniciais, 19 te
 - Sem migration, projeto pago, preview Vercel ou GitHub Actions automático. Publicação pela integração Git da main. O registro app_releases deve ser sincronizado com o SHA publicado somente depois de READY, seguido de health/ready/config.
 
 **Estado:** verificações técnicas da T07 aprovadas. A selagem operacional integral continua pendente de cadastro, edição, padrão e exclusão com contas reais autenticadas de produtor e consumidor na versão publicada. Não declarar esses testes reais como realizados, nem iniciar T08 com base somente em deploy READY.
+
+
+## 2026-09-26 — Navegação autenticada, endereços administrativos e login público
+
+- A marca do shell administrativo, em desktop e mobile, recarrega `/admin/painel` mantendo os cookies da sessão. Apenas a ação Sair executa logout. O logout administrativo limpa a sessão em memória em todos os consumidores do hook.
+- Administrador e Super administrador veem Endereços administrativos, rótulos Contato/Escritório/Correspondência/Outro e referências de acesso. Formulário, cartões e mapa não exibem instruções de entrega nesses perfis. A persistência continua privada, vinculada à pessoa; não cria endereços de outros usuários nem locais operacionais globais.
+- Logins públicos de Produtor e Consumidor usam o padrão visual completo do login administrativo, preservando e-mail, senha/visibilidade, cadastro por papel, recuperação e confirmação de e-mail. Endpoint público e papel continuam sendo validados no backend.
+- Sessões autenticadas não veem convites de cadastro no catálogo nem formulários de entrar/cadastrar via navegação ou URL direta. Essas rotas conduzem à conta/painel correto. A checagem inicial da sessão termina antes de exibir os formulários. Respostas atrasadas não substituem uma sessão recém-adotada; falhas transitórias não apagam a sessão em memória. Respostas reais de sessão inválida continuam respeitadas.
+- Logout público volta à página inicial e libera os convites de cadastro novamente. O login público devolve o nome junto da sessão já autenticada.
+- Validação: typecheck, segurança, manifesto schema 29, build/bundle; 21 testes T07 e 16 T03; 23 testes de navegador (respostas controladas), incluindo os quatro perfis, recarga pela marca, logout, navegação autenticada e layout público em 320/1440 px. Capturas mobile/desktop inspecionadas. Nenhum serviço pago ou migração adicionados. A pendência anterior de CRUD real autenticado da homologação operacional T07 permanece registrada.

@@ -47,8 +47,8 @@ export function AdminPortalShell({
     setLogoutError("");
     try {
       await api("/v1/auth/logout", { method: "POST", body: "{}" });
+      window.dispatchEvent(new Event("hvm:session-cleared"));
       onNavigate("/admin/entrar");
-      void onSessionRefresh();
     } catch {
       setLogoutError("Não foi possível sair. Tente novamente.");
     } finally { setLeaving(false); }
@@ -57,7 +57,7 @@ export function AdminPortalShell({
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar">
-        <button className="admin-brand" onClick={() => onNavigate("/")}>
+        <button className="admin-brand" onClick={() => window.location.assign("/admin/painel")}>
           <span className="admin-brand-mark"><Leaf /></span>
           <span>
             <strong>Horti<span>Vital</span>Mix</strong>
@@ -84,7 +84,7 @@ export function AdminPortalShell({
       </aside>
       <main className="admin-main">
         <div className="admin-mobile-bar">
-          <button className="admin-brand compact" onClick={() => onNavigate("/")}>
+          <button className="admin-brand compact" onClick={() => window.location.assign("/admin/painel")}>
             <span className="admin-brand-mark"><Leaf /></span>
             <strong>Horti<span>Vital</span>Mix</strong>
           </button>

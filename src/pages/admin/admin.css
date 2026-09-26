@@ -64,3 +64,6 @@ body:has(.admin-route-layout) .admin-route-layout{min-height:100vh}
 @keyframes hvm-sync-spin { to { transform: rotate(360deg); } }
 .hvm-sync-spinning { animation: hvm-sync-spin .8s linear infinite; transform-origin: center; }
 @media (prefers-reduced-motion: reduce) { .hvm-sync-spinning { animation: none; } }
+
+.public-login-page .admin-login-header{height:auto;min-height:74px;gap:12px;flex-wrap:wrap;padding-top:12px;padding-bottom:12px}
+.public-login-page .admin-login-brand{border:0;background:transparent;cursor:pointer;padding:0}

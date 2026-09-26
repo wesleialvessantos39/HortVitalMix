@@ -78,6 +78,7 @@ export function AdminLoginPage({
         }),
       });
       if (result.status === "session_created") {
+        window.dispatchEvent(new Event("hvm:session-changed"));
         // A sessão administrativa é validada pelo AdminAccessGate. Não use o
         // endpoint público /v1/auth/session aqui: credenciais administrativas
         // podem representar uma pessoa cujo user_id público é diferente.

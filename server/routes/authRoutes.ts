@@ -264,6 +264,7 @@ async function handlePublicLoginRequest(
       status: "authenticated",
       userId: data.user.id,
       email: data.user.email ?? null,
+      fullName: access.fullName,
       roles: access.roles,
       activeRole: portalRole,
       portalKind: portalKindForRole(portalRole),

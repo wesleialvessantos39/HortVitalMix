@@ -16,15 +16,15 @@ const producer = {
 };
 const administrator = {
   label: "Administrador", introduction: "Cuide da sua conta e acesse suas ferramentas de trabalho.",
-  cards: ["Sua identificação e contato pessoal", "Endereços particulares da sua conta", "Sua conta e ferramentas dos setores", "Seus dados pessoais e consentimentos"],
+  cards: ["Sua identificação e contato pessoal", "Endereços de contato administrativo", "Sua conta e ferramentas dos setores", "Seus dados pessoais e consentimentos"],
   profile: "Sua identificação pessoal é independente dos usuários que você administra. Alterar estes dados não altera seus setores ou permissões.",
-  addressTitle: "Endereços particulares", addressHelp: "Os endereços desta seção pertencem à sua conta pessoal e não representam locais de atendimento da plataforma.",
+  addressTitle: "Endereços administrativos", addressHelp: "Organize seus endereços de contato, escritório e correspondência administrativa. Estes dados são privados da sua conta.",
   preferences: "Consulte seu tipo de acesso e abra as ferramentas disponíveis para os seus setores. As escolhas de comunicação abaixo são pessoais e não alteram permissões.",
   privacy: "Consulte seus consentimentos e exporte seus dados pessoais. Esta exportação não concede acesso aos dados de outras pessoas.",
 };
 export function accountExperience(role?: string | null) {
   if (role === "producer") return producer;
   if (role === "platform_admin") return administrator;
-  if (role === "platform_super_admin") return { ...administrator, label: "Super administrador", introduction: "Sua conta pessoal e os controles da plataforma organizados para o dia a dia.", cards: ["Identificação do responsável pela conta", "Seus endereços particulares", "Sua conta e os controles globais", "Privacidade pessoal e histórico de consentimentos"], preferences: "Acesse a governança e os parâmetros globais da plataforma. As preferências pessoais desta página não modificam as configurações gerais." };
+  if (role === "platform_super_admin") return { ...administrator, label: "Super administrador", introduction: "Sua conta pessoal e os controles da plataforma organizados para o dia a dia.", cards: ["Identificação do responsável pela conta", "Endereços de contato da superadministração", "Sua conta e os controles globais", "Privacidade pessoal e histórico de consentimentos"], preferences: "Acesse a governança e os parâmetros globais da plataforma. As preferências pessoais desta página não modificam as configurações gerais." };
   return consumer;
 }
