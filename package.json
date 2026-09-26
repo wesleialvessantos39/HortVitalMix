@@ -61,7 +61,11 @@
     "verify:t07:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t07:unit && npm run verify:t07:evidence && vite build && node --import tsx scripts/check-bundle.ts && npm run test:t07:e2e",
     "test:registration:hotfix": "vitest run tests/unit/publicRegistrationTransport.test.ts tests/unit/publicRegistrationServerFallback.test.ts tests/unit/vercelRouting.test.ts",
     "verify:registration:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:registration:hotfix && npm run verify:registration:evidence && vite build && node --import tsx scripts/check-bundle.ts",
-    "verify:registration:evidence": "node scripts/verify-registration-hotfix-evidence.mjs"
+    "verify:registration:evidence": "node scripts/verify-registration-hotfix-evidence.mjs",
+    "test:t08:unit": "vitest run tests/unit/ruralPropertyContracts.test.ts tests/integration/trilha08RuralPropertyRoutes.test.ts",
+    "test:t08:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha08-rural-properties.spec.ts",
+    "verify:t08:evidence": "node scripts/verify-trilha08-evidence.mjs",
+    "verify:t08:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t08:unit && npm run verify:t08:evidence && vite build && node --import tsx scripts/check-bundle.ts && npm run test:t08:e2e"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",
