@@ -1,9 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
-import {
-  AccountPersonResolutionError,
-  resolveAccountPersonId,
-} from "../../server/services/AccountPersonResolver";
+import { resolveAccountPersonId } from "../../server/services/AccountPersonResolver";
 
 function clientWith(
   handler: (sql: string, params: unknown[]) => { rows: Array<Record<string, unknown>> },
@@ -76,7 +73,7 @@ describe("T06 — correção da pessoa canônica em sessão administrativa", () 
         "orphan-admin",
         "platform_super_admin",
       ),
-    ).rejects.toMatchObject<AccountPersonResolutionError>({
+    ).rejects.toMatchObject({
       code: "PERSON_NOT_FOUND",
       status: 404,
     });
