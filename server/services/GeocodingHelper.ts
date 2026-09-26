@@ -1,7 +1,7 @@
 import type {
   CreateAddressAdvancedInput,
   GeocodingAccuracy,
-} from "../../shared/contracts/addressAdvanced";
+} from "../../shared/contracts/addressAdvanced.ts";
 
 type FetchLike = typeof fetch;
 

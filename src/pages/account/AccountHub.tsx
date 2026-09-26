@@ -98,6 +98,16 @@ export function AccountHub({ path, session, onNavigate }: Props) {
           </div>
         </header>
 
+        {!administrative && (
+          <button className="account-delivery-card" onClick={() => onNavigate("/conta/enderecos")}>
+            <MapPin />
+            <span>
+              <strong>Gerenciar meus endereços</strong>
+              <small>Adicionar, editar, escolher o endereço padrão e ajustar o ponto no mapa.</small>
+            </span>
+          </button>
+        )}
+
         {defaultAddress && (
           <button
             className="account-delivery-card"

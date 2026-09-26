@@ -77,6 +77,16 @@ describe("endereços avançados", () => {
     ).toBe(false);
   });
 
+  it("editar instruções não redefine rótulo nem número", () => {
+    const parsed = UpdateAddressAdvancedSchema.parse({
+      deliveryNotes: "Chamar no interfone",
+      expectedRevision: 1,
+      commandId: crypto.randomUUID(),
+    });
+    expect(parsed).not.toHaveProperty("label");
+    expect(parsed).not.toHaveProperty("number");
+  });
+
   it("preserva rótulos, limite 10 e fingerprint canônicos", () => {
     expect([...QUICK_ADDRESS_LABELS]).toEqual([
       "Casa",

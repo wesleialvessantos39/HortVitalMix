@@ -2,7 +2,7 @@ import { z } from "zod";
 import {
   BrazilianStatesEnum,
   CommandIdSchema,
-} from "./profilePrivacy";
+} from "./profilePrivacy.ts";
 
 const nullableCoordinate = (min: number, max: number) =>
   z.number().min(min).max(max).nullable().optional();
@@ -50,10 +50,10 @@ export const CreateAddressAdvancedSchema = z
 
 export const UpdateAddressAdvancedSchema = z
   .object({
-    label: baseAddressShape.label.optional(),
+    label: baseAddressShape.label.removeDefault().optional(),
     cep: baseAddressShape.cep.optional(),
     street: baseAddressShape.street.optional(),
-    number: baseAddressShape.number.optional(),
+    number: baseAddressShape.number.removeDefault().optional(),
     complement: baseAddressShape.complement,
     neighborhood: baseAddressShape.neighborhood.optional(),
     city: baseAddressShape.city.optional(),

@@ -3173,3 +3173,15 @@ O transporte anterior ainda fazia o cadastro tentar primeiro o backend same-orig
 ### Homologação desta correção
 A homologação técnica confirma promoção do código correto para produção, Edge canônica ativa, schema 29 preservado e ausência de nova migration. A comprovação de um cadastro real continua devendo usar dados legítimos do proprietário, sem criar identidade fictícia em produção.
 
+
+## 2026-09-25 — T07-REVIEW-20260925-03 — Recuperação do deploy e acesso aos endereços
+
+Objetivo: revisar a T07 e investigar HTTP 500 de acesso público e telas ausentes.
+
+Evidências: main 2145a6c possui status Vercel failure e removeu package-lock.json apesar de manter npm ci. A consulta HTTP ao login publicado retornou FUNCTION_INVOCATION_FAILED antes da API. Importar a API com Node reproduziu ERR_MODULE_NOT_FOUND em shared/contracts/addressAdvanced.ts (import sem extensão). O gate T07 detectou update vazio aceito por defaults de label/number.
+
+Correções: lockfile restaurado do pai, alinhado a Node 22; imports ESM T07 explícitos; update parcial deixa de inserir Casa/S/N e rejeita payload vazio; atalho Gerenciar meus endereços visível no hub público, apontando /conta/enderecos. T07 corresponde a endereços pessoais, mapa e instruções de entrega, não a imóveis rurais. Revisão de UI considera acessibilidade e reutiliza estilos existentes.
+
+Segurança: contratos strict, confirmação obrigatória, segregação de perfis e controles de autorização preservados. Nenhuma migration alterada ou adicionada; schema 29 e hash canônico preservados. Nenhum Actions, plano pago ou dado fictício de produção utilizado.
+
+Validação: manifesto, typecheck, security check, 20 testes T07 iniciais, 19 testes de transporte/cadastro/roteamento, evidências, build e bundle aprovados. Importação nativa com transformação TypeScript aprovada após correção. Testes de navegador tentados: Chromium portátil encerrou com SIGSEGV antes de executar as telas; isso não é homologação visual. Consulta sem dados à Edge pública retornou VALIDATION_ERROR esperado, sem criar conta ou enviar e-mail. Cadastro real, persistência autenticada e homologação operacional permanecem pendentes; status de deploy não substitui essas provas.
