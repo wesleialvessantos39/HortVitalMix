@@ -13,6 +13,10 @@ type Props = {
   latitude: number | null;
   longitude: number | null;
   onChange: (coordinates: Coordinates) => void;
+  ariaLabel?: string;
+  pinLabel?: string;
+  emptyHelp?: string;
+  pinnedHelp?: string;
 };
 
 const TILE_SIZE = 256;
@@ -67,6 +71,10 @@ export function OsmPinMap({
   latitude,
   longitude,
   onChange,
+  ariaLabel = "Mapa para ajustar a localização do endereço",
+  pinLabel = "Localização do endereço. Arraste para ajustar.",
+  emptyHelp = "Toque no mapa para posicionar o endereço.",
+  pinnedHelp = "Arraste o marcador ou toque em outro ponto para ajustar.",
 }: Props) {
   const pinCoordinates = useMemo<Coordinates | null>(() => {
     if (
@@ -221,7 +229,7 @@ export function OsmPinMap({
       <div
         ref={mapRef}
         className="osm-pin-map"
-        aria-label="Mapa para ajustar a localização do endereço"
+        aria-label={ariaLabel}
         onPointerDown={startPan}
         onPointerMove={movePan}
         onPointerUp={stopPan}
@@ -249,7 +257,7 @@ export function OsmPinMap({
             type="button"
             className="osm-pin"
             data-map-pin
-            aria-label="Localização do endereço. Arraste para ajustar."
+            aria-label={pinLabel}
             style={{
               left: `calc(50% + ${pinOffset.x}px)`,
               top: `calc(50% + ${pinOffset.y}px)`,
@@ -296,9 +304,7 @@ export function OsmPinMap({
       </div>
 
       <p className="osm-map-help">
-        {hasPin
-          ? "Arraste o marcador ou toque em outro ponto para ajustar."
-          : "Toque no mapa para posicionar o endereço."}
+        {hasPin ? pinnedHelp : emptyHelp}
       </p>
     </div>
   );
