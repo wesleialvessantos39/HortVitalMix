@@ -3259,3 +3259,16 @@ Pendência única de definição de pronto: autenticar uma conta real de Produto
 A sessão atual possui acesso aos conectores de GitHub/Supabase/Vercel, mas não possui as credenciais nem uma sessão de navegador autenticada dessas contas reais. Por isso a prova não foi fabricada nem substituída por mocks.
 
 **T08 permanece não iniciada**, conforme a trava explícita do proprietário e a entrada anterior do Livro-Raiz.
+
+
+## 2026-09-26 — Decisão do proprietário: homologação operacional da T07 adiada para o Work
+
+O proprietário revogou a trava que impedia o desenvolvimento da T08 enquanto o CRUD autenticado real da T07 não fosse executado nesta sessão. A decisão atual é:
+
+- preservar as correções técnicas e os guards de regressão da T07;
+- **não criar verificador adicional de “teste de pronto” para produção**;
+- deixar a homologação operacional com contas reais para execução posterior no ChatGPT Work;
+- autorizar o início da implementação da T08 agora, sem declarar que a prova operacional T07 foi realizada;
+- manter a distinção entre implementação pronta para homologação e homologação efetivamente executada.
+
+Esta decisão substitui apenas a trava de sequência registrada nas entradas imediatamente anteriores. Ela não altera os requisitos funcionais, de segurança, RLS, custo zero, deploy main-only ou separação entre endereço pessoal e imóvel rural.
