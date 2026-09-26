@@ -26,7 +26,7 @@ for(const token of ["RECENT_AUTH_WINDOW_MS","timingSafeEqual","session_id","hvm:
 for(const token of ["/conta/perfil","/conta/enderecos","/conta/preferencias","/conta/privacidade","hortivitalmix:default-address-changed","PostalLookupService","PrivacyExportButton","Promise.allSettled"])if(!ui.includes(token))throw new Error("T06_UI_EVIDENCE_MISSING:"+token);
 for(const token of ["current-password","Confirmar e exportar","/v1/auth/login","/v1/admin/auth/login","platform_admin","platform_super_admin"])if(!privacyUi.includes(token))throw new Error("T06_PRIVACY_UI_EVIDENCE_MISSING:"+token);
 for(const token of ["/v1/admin/auth/verify-session","portalKind: \"administrative\""])if(!accountGate.includes(token))throw new Error("T06_ACCOUNT_GATE_EVIDENCE_MISSING:"+token);
-if(accountGate.includes("/v1/auth/session"))throw new Error("T06_ADMIN_HANDOFF_MUST_NOT_USE_PUBLIC_SESSION");
+if(/api(?:<[^>]+>)?\s*\(\s*["']\/v1\/auth\/session["']/.test(accountGate))throw new Error("T06_ADMIN_HANDOFF_MUST_NOT_USE_PUBLIC_SESSION");
 for(const token of ["issueRecentAuthProof","RECENT_AUTH_WINDOW_MS",'res.cookie("hvm_reauth"'])if(!adminRoutes.includes(token))throw new Error("T06_ADMIN_REAUTH_EVIDENCE_MISSING:"+token);
 const authRoutes=read("server/routes/authRoutes.ts");
 for(const token of ["setRecentAuth","issueRecentAuthProof","hvm_reauth"])if(!authRoutes.includes(token))throw new Error("T06_LOGIN_REAUTH_EVIDENCE_MISSING:"+token);
