@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 29,
+  "schemaVersion": 30,
   "migrations": [
     {
       "version": "20260919030126",
@@ -150,7 +150,12 @@
       "version": "20260925153500",
       "name": "trilha07_address_geocoding",
       "file": "20260925153500_trilha07_address_geocoding.sql"
+    },
+    {
+      "version": "20260926190000",
+      "name": "trilha08_rural_properties",
+      "file": "20260926190000_trilha08_rural_properties.sql"
     }
   ],
-  "migrationHistoryHash": "500a5d5ff51d5608c07768a8b63f681328b37d1f3c99a19dd7ab5c612851689a"
+  "migrationHistoryHash": "2a8994804e8af48902a745860e9aa1307788c1baa6ab7ec9b4e2eba874edcf0c"
 }
