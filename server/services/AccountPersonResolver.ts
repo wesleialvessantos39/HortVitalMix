@@ -69,8 +69,8 @@ export async function resolveAccountPersonId(
         AND r.revoked_at IS NULL
         AND (r.expires_at IS NULL OR r.expires_at>now())
       WHERE ap.admin_user_id=$1
-        AND ap.portal_role=$2${lock}
-      LIMIT 1`,
+        AND ap.portal_role=$2
+      LIMIT 1${lock}`,
     [userId, role],
   );
 
