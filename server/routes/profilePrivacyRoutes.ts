@@ -20,29 +20,63 @@ import {
   AddressManagementService,
 } from "../services/AddressManagementService.ts";
 import { verifyRecentAuthProof } from "../security/recentAuth.ts";
+import { adminSessionMiddleware } from "../middleware/adminSession.ts";
+import {
+  AccountPersonResolutionError,
+  type AccountRole,
+} from "../services/AccountPersonResolver.ts";
 
 export const profilePrivacyRouter = Router();
 
-function currentActor(req: Request, res: Response) {
+function currentActor(
+  req: Request,
+  res: Response,
+): { userId: string; email: string | null; role: AccountRole } | null {
+  if (req.adminActor) {
+    return {
+      userId: req.adminActor.userId,
+      email: req.adminActor.email,
+      role: req.adminActor.role,
+    };
+  }
+
   if (!req.actor) {
     res
       .status(401)
       .json({ error: "AUTH_REQUIRED", requestId: req.requestId });
     return null;
   }
+
+  const selected = readCookie(req, "hvm_portal_role");
+  const publicRoles = req.actor.roles.filter(
+    (role): role is "consumer" | "producer" =>
+      role === "consumer" || role === "producer",
+  );
+
   const role =
-    req.actor.roles.includes("producer")
-      ? "producer"
-      : req.actor.roles.includes("consumer")
-        ? "consumer"
-        : req.actor.roles[0] ?? "consumer";
+    (selected === "consumer" || selected === "producer") &&
+    publicRoles.includes(selected)
+      ? selected
+      : publicRoles.length === 1
+        ? publicRoles[0]
+        : null;
+
+  if (!role) {
+    res.status(409).json({
+      error: "ACTIVE_ROLE_REQUIRED",
+      requestId: req.requestId,
+    });
+    return null;
+  }
+
   return { userId: req.actor.userId, email: req.actor.email, role };
 }
 
 function sendError(res: Response, error: unknown) {
   if (
     error instanceof ProfilePrivacyError ||
-    error instanceof AddressManagementError
+    error instanceof AddressManagementError ||
+    error instanceof AccountPersonResolutionError
   ) {
     res.status(error.status).json({
       error: error.code,
@@ -83,6 +117,24 @@ function readCookie(req: Request, name: string) {
   }
 }
 
+function accountSessionBoundary(
+  req: Request,
+  res: Response,
+  next: import("express").NextFunction,
+) {
+  const portalRole = readCookie(req, "hvm_portal_role");
+  if (
+    portalRole === "platform_admin" ||
+    portalRole === "platform_super_admin"
+  ) {
+    void adminSessionMiddleware(req, res, next);
+    return;
+  }
+  next();
+}
+
+profilePrivacyRouter.use(accountSessionBoundary);
+
 function readAccessToken(req: Request) {
   const authorization = req.headers.authorization;
   if (authorization?.startsWith("Bearer "))
@@ -115,12 +167,12 @@ profilePrivacyRouter.get(
         if (!requireRecentAuth(req, res, actor.userId)) return;
         res
           .status(200)
-          .json(await ProfilePrivacyService.exportData(actor.userId));
+          .json(await ProfilePrivacyService.exportData(actor.userId, actor.role));
         return;
       }
       res
         .status(200)
-        .json(await ProfilePrivacyService.getProfile(actor.userId));
+        .json(await ProfilePrivacyService.getProfile(actor.userId, actor.role));
     } catch (error) {
       sendError(res, error);
     }
@@ -164,7 +216,7 @@ profilePrivacyRouter.get(
     if (!actor) return;
     try {
       res.status(200).json({
-        addresses: await AddressManagementService.listAddresses(actor.userId),
+        addresses: await AddressManagementService.listAddresses(actor.userId, actor.role),
       });
     } catch (error) {
       sendError(res, error);
@@ -323,7 +375,7 @@ profilePrivacyRouter.get(
     try {
       res
         .status(200)
-        .json(await ProfilePrivacyService.getPreferences(actor.userId));
+        .json(await ProfilePrivacyService.getPreferences(actor.userId, actor.role));
     } catch (error) {
       sendError(res, error);
     }
