@@ -114,7 +114,7 @@ function statusLabel(status: RuralPropertySummary["status"]) {
 function messageForFailure(error: unknown) {
   const failure = error as ApiFailure;
   if (failure.message === "RECENT_AUTH_REQUIRED")
-    return "Sua confirmação de segurança venceu. Saia e entre novamente como Produtor antes de continuar salvando.";
+    return "Confirme sua senha abaixo para continuar. Seu rascunho está preservado.";
   if (failure.message === "PROPERTY_REVISION_CONFLICT" || failure.status === 409)
     return "Este imóvel foi alterado em outra sessão. Recarregue os dados antes de continuar.";
   if (failure.message === "PROPERTY_INCOMPLETE")
@@ -343,6 +343,8 @@ function RuralPropertyWizard({
   );
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [notice, setNotice] = useState("");
+  const [reauth, setReauth] = useState(false);
+  const [password, setPassword] = useState("");
   const [online, setOnline] = useState(
     typeof navigator === "undefined" ? true : navigator.onLine,
   );
@@ -520,7 +522,7 @@ function RuralPropertyWizard({
   }
 
   async function saveStep(targetStep: number, automatic = false) {
-    if (saving.current || state !== "ready" || targetStep === 5 && automatic) return false;
+    if (saving.current || state !== "ready" || targetStep === 5 && automatic || targetStep > 1 && !draft.propertyId) return false;
 
     const parsed = buildStepData(targetStep);
     if (!parsed.success) {
@@ -593,6 +595,7 @@ function RuralPropertyWizard({
       return !changedDuringSave;
     } catch (error) {
       const failure = error as ApiFailure;
+      if (failure.message === "RECENT_AUTH_REQUIRED") setReauth(true);
       if (failure.status && failure.status >= 400 && failure.status < 500) pendingSave.current = null;
       if (failure.message === "PROPERTY_REVISION_CONFLICT" || failure.status === 409)
         setState("conflict");
@@ -622,20 +625,61 @@ function RuralPropertyWizard({
     return () => clearTimeout(timer);
   }, [signature, online, state, saveState]);
 
-  async function next() {
-    const ok = await saveStep(step);
-    if (!ok) return;
-    if (step === 5) {
-      try {
-        localStorage.removeItem(localKey(session.userId, draft.propertyId));
-      } catch {}
-      onNavigate("/produtor/propriedades");
+  async function submitAll() {
+    const missing = [1,2,3,4].filter(n => !buildStepData(n).success);
+    if (missing.length || !draft.agroecologicalCommitment) {
+      setNotice(missing.length ? "Complete as etapas pendentes: " + missing.join(", ") + ". Você pode voltar a elas pelos botões acima." : "Confirme o compromisso antes de enviar.");
       return;
     }
-    setDraft((current) => ({
-      ...current,
-      step: Math.min(5, current.step + 1),
-    }));
+    if (!online) { persistLocal(); setNotice("Conecte-se à internet para enviar o imóvel."); return; }
+    if (saving.current || state !== "ready") return;
+    saving.current = true; setSaveState("saving"); setNotice("");
+    let propertyId = draft.propertyId, revision = draft.revision;
+    async function send(payload: Record<string,unknown>) {
+      pendingSave.current = {payload,version:editVersion.current};
+      const result = await api<{property:RuralPropertyView}>("/v1/producer/properties/wizard/save-step",{method:"POST",body:JSON.stringify(payload)});
+      pendingSave.current = null;
+      propertyId=result.property.id;revision=result.property.revision;
+      setDraft(current=>({...current,propertyId,revision}));
+      persistLocal({...draft,propertyId,revision},false);
+      history.replaceState(history.state,"","/produtor/propriedades/novo?id="+propertyId);
+    }
+    try {
+      // Recover an uncertain response with its original command before sending new edits.
+      if (pendingSave.current) await send(pendingSave.current.payload);
+      for (const n of [1,2,3,4,5]) {
+        const parsed=buildStepData(n);
+        if (!parsed.success) throw new Error("PROPERTY_INCOMPLETE");
+        await send({propertyId:propertyId??undefined,expectedRevision:propertyId?revision:undefined,step:n,stepData:parsed.data,commandId:commandId()});
+      }
+      try {localStorage.removeItem(localKey(session.userId,null));localStorage.removeItem(localKey(session.userId,propertyId))}catch{}
+      dirty.current=false;setSaveState("saved");onNavigate("/produtor/propriedades");
+    } catch(error) {
+      const failure=error as ApiFailure;
+      if(failure.message==="RECENT_AUTH_REQUIRED")setReauth(true);
+      if(failure.status && failure.status>=400 && failure.status<500)pendingSave.current=null;
+      if(failure.status===409)setState("conflict");
+      setSaveState("error");setNotice(messageForFailure(error));
+    } finally {saving.current=false;}
+  }
+
+  async function next() {
+    if (step===5) {await submitAll();return;}
+    if (saving.current) return;
+    const valid=buildStepData(step).success;
+    if(valid && (draft.propertyId || step===1)) await saveStep(step);
+    else persistLocal();
+    setNotice(valid ? "" : "Etapa com pendências. Você pode voltar para completar antes de enviar.");
+    setDraft(current=>({...current,step:Math.min(5,current.step+1)}));
+  }
+
+  async function confirmPassword() {
+    if(!password)return;
+    try {
+      const response=await api<ShellSession>("/v1/auth/login",{method:"POST",body:JSON.stringify({email:session.email,password,portalRole:"producer"})});
+      if(response.userId!==session.userId)throw new Error("IDENTITY_MISMATCH");
+      setPassword("");setReauth(false);setSaveState("idle");setNotice("Identidade confirmada. Clique novamente em enviar para concluir.");
+    }catch{setNotice("Não foi possível confirmar sua senha. Confira e tente novamente.");}
   }
 
   async function continueLater() {
@@ -691,22 +735,28 @@ function RuralPropertyWizard({
 
       <div className="rural-step-progress" aria-label={`Progresso: etapa ${step} de 5`}>
         {steps.map(([title], index) => (
-          <div
+          <button
+            type="button"
+            disabled={saving.current}
+            onClick={()=>patch({step:index+1})}
+            aria-label={`Etapa ${index+1}: ${title}${buildStepData(index+1).success ? ", completa" : ", pendente"}`}
             key={title}
             className={
               "rural-step-dot " +
-              (index + 1 < step
+              (buildStepData(index+1).success
                 ? "is-complete"
                 : index + 1 === step
                   ? "is-current"
                   : "")
             }
           >
-            <span>{index + 1 < step ? "✓" : index + 1}</span>
-            <small>{title}</small>
-          </div>
+            <span>{buildStepData(index+1).success ? "✓" : index + 1}</span>
+            <small>{title}{!buildStepData(index+1).success ? " · Pendente" : ""}</small>
+          </button>
         ))}
       </div>
+
+      <p className="account-notice">Etapas pendentes: {[1,2,3,4].filter(n=>!buildStepData(n).success).join(", ") || "nenhuma"}. Toque em uma etapa para continuar o preenchimento.</p>
 
       {!online && (
         <div className="rural-connectivity-notice" role="status">
@@ -731,7 +781,8 @@ function RuralPropertyWizard({
         </div>
       )}
 
-      <div className="rural-wizard-card">
+      {reauth && <div className="rural-state-card" role="alert"><label>Confirme sua senha para salvar<input type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}/></label><button className="secondary" onClick={()=>void confirmPassword()}>Confirmar senha</button></div>}
+      <div className="rural-wizard-card" inert={step===5 && saveState==="saving" ? true : undefined}>
         <div className="rural-step-copy">
           <span>Passo {step}</span>
           <h2>{stepMeta[0]}</h2>

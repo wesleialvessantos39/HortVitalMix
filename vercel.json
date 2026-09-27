@@ -4,7 +4,7 @@
   "installCommand": "npm ci --no-audit --no-fund",
   "outputDirectory": "dist",
   "regions": [
-    "gru1"
+    "pdx1"
   ],
   "git": {
     "deploymentEnabled": {

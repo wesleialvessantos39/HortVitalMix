@@ -23,6 +23,7 @@ const items = [
   ["/admin/painel", "Painel", LayoutDashboard],
   ["/admin/governanca", "Governança", ShieldCheck],
   ["/admin/usuarios", "Usuários", UsersRound],
+  ["/admin/imoveis", "Imóveis rurais", Leaf],
   ["/admin/configuracao", "Configuração", Settings],
   ["/admin/conta", "Minha conta e privacidade", UserRound],
 ] as const;
@@ -36,7 +37,7 @@ export function AdminPortalShell({
 }: Props) {
   const visible = items.filter(([to]) => {
     if (access.role === "platform_super_admin") return true;
-    return to !== "/admin/configuracao";
+    return to !== "/admin/configuracao" && (to !== "/admin/imoveis" || access.sectors.includes("document_verification"));
   });
 
   const [leaving, setLeaving] = useState(false);

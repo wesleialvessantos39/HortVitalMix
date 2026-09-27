@@ -15,8 +15,8 @@ test("Trilha 04 — confirmação usa página própria e Supabase-only", async (
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/confirmar-contato");
   await expect(page.getByRole("heading", { name: "Confirme seu e-mail" })).toBeVisible();
-  await expect(page.getByText("Seu acesso protegido, sem complicação.")).toBeVisible();
-  await expect(page.getByRole("button", { name: /Consumidor/ })).toBeVisible();
+  await expect(page.getByLabel("E-mail do cadastro")).toBeVisible();
+  await expect(page.getByLabel("Perfil", {exact:true})).toHaveValue("consumer");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 

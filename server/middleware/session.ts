@@ -38,7 +38,7 @@ function sessionIdFromAccessToken(token: string) {
 }
 
 function isPublicAuthFastPath(path: string): boolean {
-  return /^\/(?:api\/|_hvm_api\/)?v1\/auth\/(?:login|admin-login|register-consumer|register-producer|refresh|import-session|resend-confirmation|request-password-reset|reset-password|magic-link|contact\/confirm-token|password\/recovery|password\/reset)$/.test(
+  return /^\/(?:api\/|_hvm_api\/)?v1\/auth\/(?:confirmation|login|admin-login|register-consumer|register-producer|refresh|import-session|resend-confirmation|request-password-reset|reset-password|magic-link|contact\/confirm-token|password\/recovery|password\/reset)$/.test(
     path,
   );
 }
@@ -52,7 +52,7 @@ export async function sessionMiddleware(
 
   // Login/cadastro não dependem de uma sessão anterior. Ignorar cookies antigos
   // aqui evita uma validação Auth + banco antes do próprio request solicitado.
-  if (isPublicAuthFastPath(req.path) ||
+  if (/^\/(?:api\/|_hvm_api\/)?(?:health|ready|v1\/config)$/.test(req.path) || isPublicAuthFastPath(req.path) ||
       /^\/(?:api\/|_hvm_api\/)?v1\/admin(?:\/|$)/.test(req.path) ||
       /^\/(?:api\/|_hvm_api\/)?v1\/auth\/(?:logout|session)$/.test(req.path)) {
     next();

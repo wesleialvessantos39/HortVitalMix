@@ -374,8 +374,7 @@ Deno.serve(async (req) => {
     }
   }
 
-  const redirectTo =
-    CANONICAL_APP_ORIGIN + "/confirmar-contato?portal=" + role;
+
 
   // Mantém a mesma ordem transacional já homologada no Express:
   // 1) identidade não confirmada, 2) domínio atômico, 3) confirmação por e-mail.
@@ -414,6 +413,11 @@ Deno.serve(async (req) => {
   }
 
   const userId = created.data.user.id;
+  const contextValue = btoa(JSON.stringify({uid:userId,role,exp:Date.now()+24*60*60_000})).replace(/=/g, "").replace(/\+/g,"-").replace(/\//g,"_");
+  const contextKey = await crypto.subtle.importKey("raw",new TextEncoder().encode(serviceRole),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
+  const mac = await crypto.subtle.sign("HMAC",contextKey,new TextEncoder().encode("hvm:confirmation:v1:"+contextValue));
+  const context = contextValue+"."+Array.from(new Uint8Array(mac),b=>b.toString(16).padStart(2,"0")).join("");
+  const redirectTo = CANONICAL_APP_ORIGIN+"/confirmar-contato?portal="+role+"&context="+encodeURIComponent(context);
 
   const completed = await admin.rpc("complete_public_registration", {
     p_user_id: userId,

@@ -41,7 +41,10 @@ import { loginRateLimit, resetLoginRateLimit } from "../security/loginRateLimit.
 import { authEmailRetryAfter } from "../security/authEmailRateLimit.ts";
 import { issueRecentAuthProof, RECENT_AUTH_WINDOW_MS } from "../security/recentAuth.ts";
 
+import { issueConfirmationContext } from "../security/confirmationContext.ts";
+import { confirmationRouter } from "./confirmationRoutes.ts";
 export const authRouter = Router();
+authRouter.use(confirmationRouter);
 
 export function cookie(req: Request, name: string) {
   const part = req.headers.cookie
@@ -561,7 +564,7 @@ authRouter.post("/resend-confirmation", async (req, res) => {
   if (identity && supabasePublic) {
     const target = redirectUrl(
       req,
-      `/confirmar-contato?portal=${encodeURIComponent(input.data.portalRole)}`,
+      `/confirmar-contato?portal=${encodeURIComponent(input.data.portalRole)}&context=${encodeURIComponent(issueConfirmationContext(identity.user_id, input.data.portalRole as "consumer" | "producer"))}`,
     );
     if (target) {
       const { error } = await supabasePublic.auth.resend({
@@ -1038,7 +1041,8 @@ for (const role of ["consumer", "producer"] as const)
         !confirmationDispatchAccepted &&
         supabasePublic
       ) {
-        const target = redirectUrl(req, `/confirmar-contato?portal=${role}`);
+        const context = result.userId ? issueConfirmationContext(result.userId, role) : "";
+        const target = redirectUrl(req, `/confirmar-contato?portal=${role}&context=${encodeURIComponent(context)}`);
         if (target) {
           try {
             const sent = await supabasePublic.auth.resend({

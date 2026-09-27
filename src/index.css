@@ -2672,3 +2672,20 @@ dialog p {
   font-size: 0.88rem;
   line-height: 1.45;
 }
+
+/* Touch devices: safe areas, dynamic browser bars and readable form controls. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { min-height: 100svh; }
+#root { min-height: 100svh; }
+input, select, textarea, button { max-width: 100%; }
+textarea { min-width: 0; }
+@media (max-width: 768px), (pointer: coarse) {
+  input, select, textarea { font-size: 16px !important; }
+  button, a { touch-action: manipulation; }
+  input, select, button { min-height: 44px; }
+  body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+  dialog { max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y: auto; }
+}
+.rural-step-dot { border: 0; background: transparent; text-align: left; cursor: pointer; }
+.rural-step-dot:not(.is-complete) > span { outline: 2px solid #bc8e36; }
+.admin-card textarea { display:block; width:100%; min-height:80px; margin:12px 0; font:inherit; }

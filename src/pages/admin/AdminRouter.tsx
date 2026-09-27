@@ -1,4 +1,5 @@
 import "./admin.css";
+import { AdminRuralPropertiesPage } from "./AdminRuralPropertiesPage";
 import { AdminAccessGate } from "../../components/admin/AdminAccessGate";
 import { AdminPortalShell } from "../../components/admin/AdminPortalShell";
 import { AdminConfiguracaoPage } from "./config/AdminConfiguracaoPage";
@@ -47,6 +48,7 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
  return <AdminAccessGate
   onNavigate={onNavigate}
   requiredRole={superOnly ? "platform_super_admin" : undefined}
+  requiredSector={path==="/admin/imoveis" ? "document_verification" : undefined}
  >
   {access=><AdminPortalShell
     access={access}
@@ -58,6 +60,7 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
       ? <AdminAccountPage path={path} access={access} onNavigate={onNavigate}/>
       : path==="/admin/governanca"
       ? <AdminGovernancePage onNavigate={onNavigate} access={access}/>
+      : path==="/admin/imoveis" ? <AdminRuralPropertiesPage/>
       : path==="/admin/usuarios"
         ? <AdminUsersPage access={access}/>
         : path==="/admin/configuracao" && access.role==="platform_super_admin"

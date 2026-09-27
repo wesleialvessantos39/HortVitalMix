@@ -67,3 +67,5 @@ body:has(.admin-route-layout) .admin-route-layout{min-height:100vh}
 
 .public-login-page .admin-login-header{height:auto;min-height:74px;gap:12px;flex-wrap:wrap;padding-top:12px;padding-bottom:12px}
 .public-login-page .admin-login-brand{border:0;background:transparent;cursor:pointer;padding:0}
+@supports (height: 100dvh) { .admin-shell { min-height: 100dvh; } .admin-sidebar { height: 100dvh; } }
+@media(max-width:768px) { .admin-main { min-width:0; padding-bottom:calc(100px + env(safe-area-inset-bottom)); } .admin-topbar { padding-top:env(safe-area-inset-top); } .admin-page-header { flex-wrap:wrap; } .admin-card { min-width:0; overflow-wrap:anywhere; } .admin-sidebar { height:auto; } }

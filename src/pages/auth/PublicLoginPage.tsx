@@ -10,7 +10,7 @@ export function PublicLoginPage({ role, onNavigate, onSessionAdopt }: {
   onNavigate: (path: string) => void;
   onSessionAdopt: (session: ShellSession) => void;
 }) {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => { try { return sessionStorage.getItem("hvm:login-email:" + role) || ""; } catch { return ""; } });
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");

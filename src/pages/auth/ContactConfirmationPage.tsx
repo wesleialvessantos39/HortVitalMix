@@ -1,200 +1,251 @@
-import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, ChevronRight, Mail, ShieldCheck, Sprout } from "lucide-react";
-import { api } from "../../lib/api";
+import { useEffect, useRef, useState } from "react";
+import { CheckCircle2, Mail, Sprout } from "lucide-react";
+import { api, type ApiFailure } from "../../lib/api";
 import type { ShellSession } from "../../hooks/useSession";
-import { PortalRoleSchema, type PortalRole } from "../../../shared/contracts/auth";
 import "./auth.css";
 
-const ROLES: Array<{ role: PortalRole; label: string; help: string }> = [
-  { role: "consumer", label: "Consumidor", help: "Conta de compras e assinaturas." },
-  { role: "producer", label: "Produtor", help: "Conta de produção e oferta." },
-  { role: "platform_admin", label: "Administrador", help: "Acesso administrativo." },
-  { role: "platform_super_admin", label: "Super administrador", help: "Governança da plataforma." },
-];
-
-function readPortal(): PortalRole | null {
-  const parsed = PortalRoleSchema.safeParse(new URLSearchParams(location.search).get("portal"));
-  return parsed.success ? parsed.data : null;
-}
-
-function loginPath(role: PortalRole) {
-  if (role === "consumer") return "/entrar/consumidor";
-  if (role === "producer") return "/entrar/produtor";
-  if (role === "platform_admin") return "/entrar/administrador";
-  return "/entrar/super-administrador";
-}
-
+type Result = {
+  status: "confirmed" | "pending" | "sent";
+  fullName?: string;
+  email?: string;
+  role: "consumer" | "producer";
+};
 export function ContactConfirmationPage({
-  session,
   onNavigate,
+  session,
   onSessionAdopt,
-  onSessionRefresh,
 }: {
   session: ShellSession | null;
   onNavigate: (path: string) => void;
   onSessionAdopt: (session: ShellSession | null) => void;
   onSessionRefresh: () => Promise<void>;
 }) {
-  const initialRole = useMemo(readPortal, []);
-  const [role, setRole] = useState<PortalRole | null>(initialRole);
-  const [email, setEmail] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [confirmed, setConfirmed] = useState(false);
+  const [link] = useState(() => {
+    const query = new URLSearchParams(location.search),
+      hash = new URLSearchParams(location.hash.slice(1));
+    return {
+      context: query.get("context") || undefined,
+      accessToken: hash.get("access_token") || undefined,
+      portalRole:
+        query.get("portal") === "producer"
+          ? ("producer" as const)
+          : ("consumer" as const),
+      error: hash.get("error_code"),
+    };
+  });
+  const [result, setResult] = useState<Result | null>(null);
+  const [email, setEmail] = useState(
+    () =>
+      new URLSearchParams(location.search).get("email") ||
+      (() => {
+        try {
+          return (
+            sessionStorage.getItem("hvm:login-email:" + link.portalRole) || ""
+          );
+        } catch {
+          return "";
+        }
+      })(),
+  );
+  const [role, setRole] = useState(link.portalRole);
+  const [busy, setBusy] = useState(Boolean(link.context || link.accessToken));
   const [notice, setNotice] = useState("");
-  const [linkHandled, setLinkHandled] = useState(false);
-
+  const [retry, setRetry] = useState(0);
+  const request = useRef<Promise<Result> | null>(null);
+  const [cooldown, setCooldown] = useState(false);
   useEffect(() => {
-    if (linkHandled) return;
-    const hash = new URLSearchParams(location.hash.replace(/^#/, ""));
-    const accessToken = hash.get("access_token");
-    const refreshToken = hash.get("refresh_token");
-    const type = hash.get("type");
-    if (!accessToken || !refreshToken) return;
-
-    setLinkHandled(true);
+    if (!link.context && !link.accessToken) {
+      if (link.error)
+        setNotice(
+          "Não foi possível validar este link antigo. Solicite uma nova confirmação abaixo.",
+        );
+      return;
+    }
+    let active = true;
     setBusy(true);
-    void api<ShellSession & { status?: string }>("/v1/auth/import-session", {
+    request.current ??= api<Result>("/v1/auth/confirmation", {
       method: "POST",
       body: JSON.stringify({
-        accessToken,
-        refreshToken,
-        portalRole: initialRole ?? undefined,
+        context: link.context,
+        accessToken: link.accessToken,
+        portalRole: link.portalRole,
       }),
-    })
-      .then(async (imported) => {
-        onSessionAdopt(imported);
-        history.replaceState({}, "", location.pathname + location.search);
-        await onSessionRefresh();
-        setConfirmed(type === "signup" || Boolean(imported.userId));
-        setNotice("E-mail confirmado com sucesso. Sua conta está pronta para uso.");
+    });
+    void request.current
+      .then((value) => {
+        if (!active) return;
+        setResult(value);
+        setRole(value.role);
+        setEmail(value.email ?? "");
+        setNotice(
+          value.status === "confirmed"
+            ? "Seu e-mail foi confirmado. Agora você pode entrar com sua senha."
+            : "A confirmação ainda está pendente. Reenvie o link para o mesmo e-mail com o botão abaixo.",
+        );
+        history.replaceState(
+          history.state,
+          "",
+          location.pathname + location.search,
+        );
       })
-      .catch(() => {
-        setNotice("Este link expirou ou já foi utilizado. Solicite uma nova confirmação.");
+      .catch((e: ApiFailure) => {
+        if (active)
+          setNotice(
+            e.status === 401
+              ? "Este link não pode mais ser validado. Solicite uma nova confirmação."
+              : "Não foi possível consultar a confirmação agora. Tente novamente; isso não significa que o link expirou.",
+          );
       })
-      .finally(() => setBusy(false));
-  }, [initialRole, linkHandled, onSessionAdopt, onSessionRefresh]);
-
+      .finally(() => {
+        if (active) setBusy(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [link, retry]);
   async function resend(event: React.FormEvent) {
     event.preventDefault();
-    if (!role) {
-      setNotice("Escolha o perfil do cadastro.");
-      return;
-    }
-    if (role === "platform_admin" || role === "platform_super_admin") {
-      onNavigate(
-        "/admin/confirmar-email?email=" +
-          encodeURIComponent(email.trim().toLowerCase()),
-      );
-      return;
-    }
+    if (busy || cooldown) return;
     setBusy(true);
-    setNotice("");
     try {
-      await api("/v1/auth/resend-confirmation", {
-        method: "POST",
-        body: JSON.stringify({ email, portalRole: role }),
-      });
+      if (link.context) {
+        const value = await api<Result>("/v1/auth/confirmation", {
+          method: "POST",
+          body: JSON.stringify({ context: link.context, resend: true }),
+        });
+        setResult(value);
+        if (value.status === "confirmed") {
+          setEmail(value.email ?? "");
+          setNotice("Seu e-mail já está confirmado.");
+          return;
+        }
+      } else
+        await api("/v1/auth/resend-confirmation", {
+          method: "POST",
+          body: JSON.stringify({ email, portalRole: role }),
+        });
       setNotice(
-        `Se houver um cadastro ${ROLES.find((item) => item.role === role)?.label} pendente para este e-mail, a confirmação será enviada por e-mail.`,
+        "Solicitação recebida. Confira o e-mail cadastrado e a pasta de spam. Use o link mais recente.",
       );
+      setCooldown(true);
+      window.setTimeout(() => setCooldown(false), 60000);
     } catch {
-      setNotice("Não foi possível solicitar o reenvio agora. Tente novamente.");
+      setNotice(
+        "Não foi possível reenviar agora. Aguarde um minuto e tente novamente.",
+      );
     } finally {
       setBusy(false);
     }
   }
-
+  async function login() {
+    setBusy(true);
+    try {
+      if (session) {
+        await api("/v1/auth/logout", { method: "POST" });
+        onSessionAdopt(null);
+      }
+      try {
+        sessionStorage.setItem("hvm:login-email:" + role, email);
+      } catch {}
+      onNavigate(
+        role === "producer" ? "/entrar/produtor" : "/entrar/consumidor",
+      );
+    } catch {
+      setNotice("Não foi possível preparar o login agora. Tente novamente.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  const confirmed = result?.status === "confirmed";
   return (
-    <section className="t04-security-layout" aria-labelledby="t04-confirm-title">
+    <section
+      className="t04-security-layout"
+      aria-labelledby="t04-confirm-title"
+    >
       <aside className="t04-security-aside" aria-hidden="true">
-        <div className="t04-brand-mark"><Sprout /></div>
-        <span className="t04-kicker">HortiVitalMix • Segurança</span>
-        <h2>Seu acesso protegido, sem complicação.</h2>
-        <p>Confirme seu e-mail para ativar o acesso à sua conta.</p>
-        <div className="t04-steps">
-          <span><b>1</b> Solicite a confirmação</span>
-          <span><b>2</b> Abra o e-mail recebido</span>
-          <span><b>3</b> Confirme pelo link seguro</span>
+        <div className="t04-brand-mark">
+          <Sprout />
         </div>
+        <span className="t04-kicker">HortiVitalMix</span>
+        <h2>Seu cadastro, pronto para começar.</h2>
+        <p>Confirme seu e-mail e entre com sua senha.</p>
       </aside>
-
       <div className="t04-security-card">
-        <div className="t04-title-icon success"><Mail /></div>
-        <span className="eyebrow">Confirmação de cadastro</span>
-        <h1 id="t04-confirm-title">{confirmed ? "E-mail confirmado" : "Confirme seu e-mail"}</h1>
-        <p className="t04-lead">
-          {confirmed
-            ? "A confirmação foi reconhecida e sua sessão segura está disponível."
-            : "Escolha o perfil correto e solicite um novo e-mail somente se ainda não tiver confirmado o cadastro."}
-        </p>
-
-        {notice && <div className="t04-banner" role="status">{notice}</div>}
-
-        {confirmed ? (
-          <div className="t04-success-panel">
-            <CheckCircle2 />
-            <div>
-              <strong>Confirmação concluída</strong>
-              <span>{session?.email ?? "E-mail confirmado."}</span>
-            </div>
-          </div>
-        ) : (
-          <form className="t04-form" onSubmit={resend}>
-            {!role ? (
-              <div>
-                <span className="t04-field-label">Qual cadastro você quer confirmar?</span>
-                <div className="t04-role-grid">
-                  {ROLES.map((item) => (
-                    <button
-                      key={item.role}
-                      type="button"
-                      className="t04-role-option"
-                      onClick={() => setRole(item.role)}
-                    >
-                      <ShieldCheck />
-                      <span><strong>{item.label}</strong><small>{item.help}</small></span>
-                      <ChevronRight />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="t04-context">
-                  Perfil selecionado: <strong>{ROLES.find((item) => item.role === role)?.label}</strong>
-                  <button type="button" onClick={() => setRole(null)}>Trocar</button>
-                </div>
-                <label>
-                  E-mail do cadastro
-                  <input
-                    type="email"
-                    autoComplete="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.currentTarget.value)}
-                    required
-                    maxLength={255}
-                    placeholder="seuemail@exemplo.com"
-                  />
-                </label>
-                <button className="t04-primary" disabled={busy}>
-                  {busy ? "Enviando…" : "Reenviar confirmação"}
-                </button>
-              </>
-            )}
-          </form>
-        )}
-
-        <div className="t04-footer-actions">
-          <button
-            type="button"
-            className="t04-link-button"
-            onClick={() => onNavigate(session ? "/minha-conta" : role ? loginPath(role) : "/entrar")}
-          >
-            {session ? "Ir para minha conta" : "Voltar para entrar"}
-          </button>
+        <div className="t04-title-icon success">
+          {confirmed ? <CheckCircle2 /> : <Mail />}
         </div>
+        <h1 id="t04-confirm-title">
+          {confirmed
+            ? `Boas-vindas, ${result.fullName}!`
+            : busy
+              ? "Verificando seu e-mail…"
+              : "Confirme seu e-mail"}
+        </h1>
+        {notice && (
+          <p className="t04-banner" role="status">
+            {notice}
+          </p>
+        )}
+        {confirmed ? (
+          <button
+            className="t04-primary"
+            disabled={busy}
+            onClick={() => void login()}
+          >
+            Login
+          </button>
+        ) : (
+          !busy && (
+            <>
+              {link.context || link.accessToken ? (
+                <button
+                  className="t04-link-button"
+                  onClick={() => {
+                    request.current = null;
+                    setRetry((v) => v + 1);
+                  }}
+                >
+                  Verificar novamente
+                </button>
+              ) : null}
+              <form className="t04-form" onSubmit={resend}>
+                {!link.context && (
+                  <>
+                    <label>
+                      Perfil
+                      <select
+                        value={role}
+                        onChange={(e) => setRole(e.target.value as typeof role)}
+                      >
+                        <option value="consumer">Consumidor</option>
+                        <option value="producer">Produtor</option>
+                      </select>
+                    </label>
+                    <label>
+                      E-mail do cadastro
+                      <input
+                        type="email"
+                        required
+                        autoComplete="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </label>
+                  </>
+                )}
+                <button className="t04-primary" disabled={busy || cooldown}>
+                  {cooldown
+                    ? "Aguarde um minuto para reenviar"
+                    : "Reenviar confirmação"}
+                </button>
+              </form>
+              <button className="t04-link-button" onClick={() => void login()}>
+                Ir para o login
+              </button>
+            </>
+          )
+        )}
       </div>
     </section>
   );
 }
-

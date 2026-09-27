@@ -3374,3 +3374,30 @@ T09+ permanece não iniciada.
 Ainda executar com contas reais: CRUD de endereços de Produtor/Consumidor (incluindo substituição do padrão e limite 10) e cadastro/submissão rural de Produtor. Sem credenciais de usuário disponíveis nesta sessão, não houve impersonação, redefinição de senhas, criação de contas artificiais ou gravação de dados fictícios para declarar homologação. A liberação da T08 segue a autorização registrada pelo proprietário.
 
 Publicação segue main-only e Hobby; T09+ não iniciada. O registro final do deploy deve usar tag `t08-rural-20260926`, SHA exato READY, schema 31 e o hash acima.
+
+## 2026-09-26 — Correções de acesso, usuários, confirmação e análise rural (Work; publicação em 27/09 UTC)
+
+Solicitação do proprietário: reduzir espera ao entrar/sair e navegar nos quatro perfis; incluir Consumidor/Produtor em Usuários; permitir avançar no cadastro rural com pendências; enviar imóveis à administração; corrigir confirmação e reenvio de e-mail; adaptar telas ao iPhone. Mantida a proibição de serviços pagos e GitHub Actions.
+
+### Alterações entregues neste commit
+
+- **Desempenho:** confirmado pelo Supabase que o banco está em `us-west-2`. A função Vercel passa de `gru1` para `pdx1`, junto do banco, em uma única região Hobby. HTML/assets continuam na CDN. Endpoints públicos de configuração/saúde não fazem consultas de sessão desnecessárias. Autorização das APIs privadas e revogação no logout preservadas. Não foi inventado percentual de melhoria: medição com login real continua necessária.
+- **Usuários:** consulta une contas públicas de `app_people`/`auth.users` com seus papéis ativos às contas administrativas. Consulta somente de leitura no banco real confirmou 3 contas públicas e 1 administrativa. A tela diferencia perfis e e-mail pendente; bloqueio administrativo não é indevidamente aplicado a contas públicas. Administradores preservam o escopo setorial sobre outros administradores.
+- **Imóvel rural:** etapas clicáveis, pendências visíveis, avanço sem obrigar conclusão de cada etapa e rascunho local preservado. Envio final valida todas as etapas, salva os dados e submete o imóvel. Campos obrigatórios permanecem obrigatórios para submissão; nenhuma informação fictícia é gravada. Confirmação recente de senha pode ser feita no próprio formulário sem sair da conta.
+- **Análise administrativa:** nova fila `/admin/imoveis`, leitura dos imóveis enviados, aprovação/devolução com justificativa, revisão otimista e auditoria transacional. Super administrador tem acesso; Administrador precisa do setor `document_verification`, mantendo as permissões existentes.
+- **Confirmação pública:** nova conclusão `/v1/auth/confirmation` valida prova do link, consulta o nome cadastrado e mostra boas-vindas com botão **Login**, sem iniciar sessão automaticamente. A requisição é deduplicada para evitar consumo concorrente na montagem da tela. Falha transitória é distinguida de link inválido.
+- **Novos e-mails:** a Edge `public-registration` envia contexto assinado de finalidade restrita (identidade, papel e validade de 24 horas) no redirecionamento. Esse contexto permite reconhecer confirmação já concluída e reenviar para o mesmo cadastro sem pedir e-mail novamente; ele não autentica a pessoa nem confirma sozinho o e-mail. Links antigos sem prova recuperável não permitem divulgar identidade arbitrariamente.
+- **Prazos:** o contrato existente `supabase/config.toml` mantém OTP/link em 3600 segundos (1 hora). A validade de 24 horas é apenas do contexto auxiliar para consulta/reenvio; não prolonga o token do provedor. Não houve alteração nem alegação de leitura da configuração Auth hospedada por uma API não disponível nesta sessão.
+- **Supabase:** Edge `public-registration` publicada na versão 3, ACTIVE, mantendo `verify_jwt=false` já existente para cadastro público e suas validações de entrada/origem. Schema continua 31, 32 migrations e hash `7ca8848d8d498e2a948058ddd65d4a6c7d293d9b9f890d4fbc5aae7e6ddf920d`. Nenhuma migração nem alteração de dados de usuário foi necessária.
+- **Mobile/iPhone:** `viewport-fit=cover` já existente preservado; ajustes para áreas seguras, `svh`/`dvh`, toque, formulários de 16 px e rolagem de diálogos. Adaptação usa características de viewport/toque, sem depender de nomes de aparelhos.
+
+### Evidências e limites
+
+- Typecheck, `npm run build`, segurança do bundle e verificadores estruturais passaram; o build executou 102 testes das trilhas existentes.
+- 27 testes direcionados de servidor/contratos passaram, incluindo assinatura/expiração/adulteração do contexto, reenvio, ausência de cookies no sucesso da confirmação, permissões e revisão administrativa. T07 e T08 tiveram também 24 testes unitários/rotas aprovados cada.
+- 26 testes de navegador dos fluxos de confirmação, usuários, fila administrativa, cadastro rural e navegação/sessão passaram com API simulada.
+- 4 testes adicionais de viewport/toque iPhone passaram nos quatro papéis, em 375×812, 390×844, 430×932 e 844×390; screenshots revisados. Esses testes usaram Chromium com emulação de dispositivo. WebKit foi baixado, mas não executou por bibliotecas de sistema ausentes; a instalação das dependências não foi permitida pelo ambiente. Não declarado teste em Safari ou iPhone físico.
+- Não houve envio de e-mail real, uso de senha real, criação de contas fictícias ou impersonação. Validação operacional de e-mail/login, comparação de latência autenticada e Safari físico seguem como verificações reais pendentes, distintas dos testes automatizados.
+- Publicação destinada à `main`; após Vercel READY no SHA exato, registrar `access-flow-20260927` em `app_releases` e verificar `/api/health`, `/api/ready` e bloqueio anônimo das rotas administrativas. Registro final de produção fica em `app_releases`.
+
+Referências técnicas consultadas: https://vercel.com/docs/functions/configuring-functions/region ; https://vercel.com/docs/regions ; https://supabase.com/docs/guides/auth/auth-email-templates (incluindo pré-leitura de links por provedores de e-mail).

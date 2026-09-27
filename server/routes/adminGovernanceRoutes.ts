@@ -20,7 +20,12 @@ import { runtime } from "../config/runtime.ts";
 import { safeRequestOrigin } from "../security/origin.ts";
 import { issueRecentAuthProof, RECENT_AUTH_WINDOW_MS } from "../security/recentAuth.ts";
 
+import { adminRuralPropertyRouter } from "./adminRuralPropertyRoutes.ts";
 export const adminGovernanceRouter = Router();
+adminGovernanceRouter.use((req,res,next) => {
+  if (req.path === "/rural-properties" || req.path.startsWith("/rural-properties/")) adminRuralPropertyRouter(req,res,next);
+  else next();
+});
 
 function setAdminSession(
   res: Response,
@@ -456,7 +461,8 @@ adminGovernanceRouter.get(
 
     const result = await dbPool.query(
       `SELECT u.id,u.status,p.full_name,ap.admin_email AS email_normalized,
-              ar.role_code,
+              ar.role_code, 'administrative'::text AS account_kind,
+              (ap.email_verified_at IS NOT NULL) AS email_confirmed,
               COALESCE(array_agg(DISTINCT m.sector_code) FILTER (
                 WHERE m.sector_code IS NOT NULL
               ),'{}') AS sectors,
@@ -478,8 +484,21 @@ adminGovernanceRouter.get(
            AND m.revoked_at IS NULL
            AND (m.expires_at IS NULL OR m.expires_at>now())
         WHERE 1=1 ${scope}
-        GROUP BY u.id,p.full_name,ap.admin_email,ar.role_code
-        ORDER BY p.full_name`,
+        GROUP BY u.id,p.full_name,ap.admin_email,ap.email_verified_at,ar.role_code
+        UNION ALL
+        SELECT u.id,u.status,p.full_name,p.email_normalized,
+               NULL::varchar AS role_code,'public'::text AS account_kind,
+               (au.email_confirmed_at IS NOT NULL) AS email_confirmed,
+               ARRAY[]::varchar[] AS sectors,
+               array_agg(DISTINCT r.role_code) AS public_roles
+          FROM public.app_people p
+          JOIN public.app_users u ON u.id=p.user_id
+          JOIN auth.users au ON au.id=u.id
+          JOIN public.app_user_role_assignments r ON r.user_id=u.id
+            AND r.role_code IN ('consumer','producer')
+            AND r.revoked_at IS NULL AND (r.expires_at IS NULL OR r.expires_at>now())
+         GROUP BY u.id,p.full_name,p.email_normalized,au.email_confirmed_at
+         ORDER BY full_name LIMIT 500`,
       params,
     );
     res.status(200).json({ users: result.rows });

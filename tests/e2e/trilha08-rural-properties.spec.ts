@@ -251,7 +251,7 @@ test("04 passo 1 salva e avança sem valor fictício de área", async ({ page })
   expect(mocked.property?.cultivatedAreaHectares).toBeNull();
 });
 
-test("05 área cultivada maior que total não avança", async ({ page }) => {
+test("05 área inválida permite avançar com pendência e bloqueia submissão", async ({ page }) => {
   await mockT08(
     page,
     fullProperty({
@@ -266,8 +266,8 @@ test("05 área cultivada maior que total não avança", async ({ page }) => {
   await page.getByLabel("Área total (ha)").fill("5");
   await page.getByLabel("Área cultivada ativa (ha)").fill("6");
   await page.getByRole("button", { name: /Salvar e continuar/ }).click();
-  await expect(page.getByText(/Preencha os campos obrigatórios desta etapa/)).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Dimensões" })).toBeVisible();
+  await expect(page.getByText(/Etapa com pendências/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Segurança hídrica" })).toBeVisible();
 });
 
 test("06 legumes picados exigem instalação de lavagem", async ({ page }) => {
@@ -289,7 +289,8 @@ test("06 legumes picados exigem instalação de lavagem", async ({ page }) => {
   await page.getByLabel(/instalação adequada para lavagem/).uncheck();
   await expect(page.getByText(/Para legumes picados, essa estrutura é obrigatória/)).toBeVisible();
   await page.getByRole("button", { name: /Salvar e continuar/ }).click();
-  await expect(page.getByRole("heading", { name: "Culturas e processamento" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Revisão e submissão" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Etapa 4:.*pendente/ })).toBeVisible();
 });
 
 test("07 queda de conexão mantém rascunho local e informa o produtor", async ({ page }) => {
