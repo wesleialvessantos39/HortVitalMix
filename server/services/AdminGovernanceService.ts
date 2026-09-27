@@ -1,3 +1,4 @@
+import { effectiveAccountStatus, accountBlockCode, type AccountBlock } from "../../shared/accountBlock.ts";
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
@@ -276,7 +277,7 @@ async function activeAdminRole(userId: string) {
   if (supabaseAdmin) {
     const [{ data: user, error: userError }, { data: roles, error: rolesError }] =
       await Promise.all([
-        supabaseAdmin.from("app_users").select("status").eq("id", userId).maybeSingle(),
+        supabaseAdmin.from("app_users").select("status,block_starts_at,block_ends_at").eq("id", userId).maybeSingle(),
         supabaseAdmin
           .from("app_user_role_assignments")
           .select("role_code,expires_at")
@@ -289,12 +290,12 @@ async function activeAdminRole(userId: string) {
         .filter((row) => !row.expires_at || new Date(row.expires_at).getTime() > Date.now())
         .sort((a, b) => a.role_code === "platform_super_admin" ? -1 : b.role_code === "platform_super_admin" ? 1 : 0);
       const role = active[0]?.role_code as AdminRole | undefined;
-      return role ? { status: user.status, role_code: role } : null;
+      return role ? { status: effectiveAccountStatus(user), blockCode: accountBlockCode(user), role_code: role } : null;
     }
   }
   if (!dbPool) return null;
-  const result = await dbPool.query<{ status: string; role_code: AdminRole }>(
-    `SELECT u.status,r.role_code
+  const result = await dbPool.query<AccountBlock & { role_code: AdminRole }>(
+    `SELECT u.status,u.block_starts_at,u.block_ends_at,r.role_code
        FROM public.app_users u
        JOIN public.app_user_role_assignments r ON r.user_id=u.id
       WHERE u.id=$1
@@ -305,7 +306,8 @@ async function activeAdminRole(userId: string) {
       LIMIT 1`,
     [userId],
   );
-  return result.rows[0] ?? null;
+  const row=result.rows[0];
+  return row ? {...row,status:effectiveAccountStatus(row),blockCode:accountBlockCode(row)} : null;
 }
 
 async function sectorsFor(userId: string): Promise<AdminSectorCode[]> {
@@ -777,7 +779,7 @@ export class AdminGovernanceService {
     if (role.status !== "active") {
       await client.auth.signOut({ scope: "local" }).catch(() => undefined);
       await this.recordAttempt(normalized, ipHash, "failure");
-      return { status: "account_blocked" };
+      return { status: "account_blocked", error: role.blockCode };
     }
 
     const sectors = role.role_code === "platform_admin" ? await sectorsFor(signed.data.user.id) : [];

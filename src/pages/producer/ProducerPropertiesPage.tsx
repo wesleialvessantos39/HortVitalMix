@@ -104,6 +104,7 @@ function localKey(userId: string, propertyId: string | null) {
 function statusLabel(status: RuralPropertySummary["status"]) {
   return {
     draft: "Rascunho",
+    completed: "Concluído — pronto para enviar",
     submitted: "Enviado para análise",
     verified: "Verificado",
     rejected: "Revisão necessária",
@@ -148,8 +149,6 @@ function draftFromProperty(property: RuralPropertyView): Draft {
     property.boundaries[0];
 
   return {
-    propertyId: property.id,
-    revision: property.revision,
     step: Math.min(5, Math.max(1, property.wizardCurrentStep)),
     propertyName: property.propertyName,
     registrationNumber: property.registrationNumber ?? "",
@@ -177,6 +176,8 @@ function draftFromProperty(property: RuralPropertyView): Draft {
     productionSystem: property.activity?.productionSystem ?? "",
     hasWashingFacility: property.activity?.hasWashingFacility ?? true,
     agroecologicalCommitment: property.status !== "draft",
+    ...(property.draftData ?? {}),
+    propertyId: property.id, revision: property.revision,
   };
 }
 
@@ -203,6 +204,8 @@ function PropertyList({
   onNavigate,
 }: Omit<Props, "path">) {
   const [state, setState] = useState<PageState>("loading");
+  const [listNotice,setListNotice]=useState("");
+  const [busyId,setBusyId]=useState<string|null>(null);
   const [properties, setProperties] = useState<RuralPropertySummary[]>([]);
 
   async function load() {
@@ -221,6 +224,18 @@ function PropertyList({
   useEffect(() => {
     void load();
   }, [session.userId]);
+
+  async function deleteDraft(property:RuralPropertySummary){
+    if(!confirm("Excluir este rascunho? Esta ação não pode ser desfeita."))return;
+    setBusyId(property.id);setListNotice("");
+    try{await api("/v1/producer/properties/"+property.id,{method:"DELETE",body:JSON.stringify({expectedRevision:property.revision,commandId:commandId()})});localStorage.removeItem(localKey(session.userId,property.id));await load();}
+    catch(e){setListNotice((e as ApiFailure).message==="RECENT_AUTH_REQUIRED"?"Entre novamente para confirmar a exclusão. Seu rascunho está salvo.":"Não foi possível excluir. Somente rascunhos nunca concluídos podem ser excluídos.");}finally{setBusyId(null);}
+  }
+  async function submitCompleted(property:RuralPropertySummary){
+    setBusyId(property.id);setListNotice("");
+    try{await api("/v1/producer/properties/"+property.id+"/submit",{method:"POST",body:JSON.stringify({expectedRevision:property.revision,commandId:commandId(),agroecologicalCommitment:true})});await load();}
+    catch(e){setListNotice(messageForFailure(e));}finally{setBusyId(null);}
+  }
 
   return (
     <section className="rural-properties-page">
@@ -242,6 +257,7 @@ function PropertyList({
         </button>
       </header>
 
+      {listNotice && <p className="account-notice" role="alert">{listNotice}</p>}
       {state === "loading" && (
         <div className="rural-properties-grid" aria-busy="true">
           {[0, 1].map((item) => (
@@ -290,7 +306,7 @@ function PropertyList({
                   {statusLabel(property.status)}
                 </span>
               </div>
-              <h2>{property.propertyName}</h2>
+              <h2>{property.propertyName || "Imóvel sem nome — rascunho"}</h2>
               <p>
                 {property.lineVicinal} · {property.municipality}/{property.state}
               </p>
@@ -298,7 +314,7 @@ function PropertyList({
                 <span style={{ width: `${property.wizardCurrentStep * 20}%` }} />
               </div>
               <small>Etapa {property.wizardCurrentStep} de 5</small>
-              {property.status === "draft" || property.status === "rejected" ? (
+              {property.status !== "suspended" ? (
                 <button
                   className="secondary"
                   onClick={() =>
@@ -308,18 +324,17 @@ function PropertyList({
                     )
                   }
                 >
-                  Continuar cadastro
+                  {property.status==="draft" ? "Continuar cadastro" : "Editar cadastro"}
                   <ChevronRight />
                 </button>
               ) : (
                 <p className="rural-readonly-note">
-                  {property.status === "submitted"
-                    ? "Cadastro enviado e aguardando análise."
-                    : property.status === "verified"
-                      ? "Imóvel verificado. Alterações exigem re-homologação."
-                      : "Cadastro suspenso para edição."}
+                  Cadastro suspenso para edição.
                 </p>
               )}
+              {property.status==="draft" && !property.completedAt && <button className="secondary" disabled={busyId===property.id} onClick={()=>void deleteDraft(property)}>Excluir rascunho</button>}
+              {property.status==="completed" && <button className="primary" disabled={busyId===property.id} onClick={()=>void submitCompleted(property)}>Enviar para análise</button>}
+              {property.completedAt && <small>Já concluído: não pode ser excluído. Edições exigem nova análise.</small>}
             </article>
           ))}
         </div>
@@ -521,111 +536,47 @@ function RuralPropertyWizard({
     } as const;
   }
 
-  async function saveStep(targetStep: number, automatic = false) {
-    if (saving.current || state !== "ready" || targetStep === 5 && automatic || targetStep > 1 && !draft.propertyId) return false;
+  const pendingKey=`hvm:rural-pending:${session.userId}:${draft.propertyId??requestedId??"new"}`;
+  const pendingDraft=useRef<{payload:Record<string,unknown>;version:number}|null>(null);
+  const pendingLoaded=useRef(false);
+  if(!pendingLoaded.current){pendingLoaded.current=true;try{const stored=JSON.parse(localStorage.getItem(pendingKey)||"null");if(stored?.payload?.commandId)pendingDraft.current={payload:stored.payload,version:-1};}catch{}}
 
-    const parsed = buildStepData(targetStep);
-    if (!parsed.success) {
-      if (!automatic)
-        setNotice(
-          targetStep === 2 && draft.polygonGeojson.trim()
-            ? "Confira o GeoJSON. Use um Polygon fechado com coordenadas dentro de Rondônia."
-            : "Preencha os campos obrigatórios desta etapa antes de continuar.",
-        );
-      return false;
-    }
-
-    if (!online) {
-      persistLocal();
-      setNotice("Sem conexão. Rascunho salvo localmente neste aparelho.");
-      return false;
-    }
-
-    saving.current = true;
-    setSaveState("saving");
-    setNotice("");
-
-    try {
-      const attempt = pendingSave.current ?? { version: editVersion.current, payload: {
-        propertyId: draft.propertyId ?? undefined,
-        expectedRevision: draft.propertyId ? draft.revision ?? undefined : undefined,
-        step: targetStep,
-        stepData: parsed.data,
-        commandId: commandId(),
-      } };
-      pendingSave.current = attempt;
-      const payload = attempt.payload;
-      const result = await api<{
-        status: string;
-        property: RuralPropertyView;
-        nextStep: number;
-      }>("/v1/producer/properties/wizard/save-step", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-
-      pendingSave.current = null;
-      const changedDuringSave = editVersion.current !== attempt.version;
-      const next = draftFromProperty(result.property);
-      next.step = targetStep === 5 ? 5 : draft.step;
-      setDraft((current) => ({
-        ...current,
-        propertyId: next.propertyId,
-        revision: next.revision,
-      }));
-      if (!draft.propertyId) {
-        history.replaceState(history.state, "", "/produtor/propriedades/novo?id=" + result.property.id);
-      }
-      try {
-        localStorage.removeItem(localKey(session.userId, null));
-        localStorage.setItem(
-          localKey(session.userId, result.property.id),
-          JSON.stringify({ ...draft, propertyId: result.property.id, revision: result.property.revision }),
-        );
-      } catch {}
-      dirty.current = changedDuringSave;
-      setSaveState("saved");
-      setNotice(
-        targetStep === 5
-          ? "Cadastro enviado para análise."
-          : automatic
-            ? "Rascunho salvo."
-            : "Etapa salva.",
-      );
-      return !changedDuringSave;
-    } catch (error) {
-      const failure = error as ApiFailure;
-      if (failure.message === "RECENT_AUTH_REQUIRED") setReauth(true);
-      if (failure.status && failure.status >= 400 && failure.status < 500) pendingSave.current = null;
-      if (failure.message === "PROPERTY_REVISION_CONFLICT" || failure.status === 409)
-        setState("conflict");
-      persistLocal();
-      setSaveState("error");
-      setNotice(messageForFailure(error));
-      return false;
-    } finally {
-      saving.current = false;
-    }
+  async function saveStep(_targetStep:number, automatic=false){
+    if(saving.current || state!=="ready")return false;
+    if(!online){persistLocal();return false;}
+    saving.current=true;setSaveState("saving");
+    const {propertyId,revision,...data}=draft;
+    const attempt=pendingDraft.current ?? {version:editVersion.current,payload:{propertyId:propertyId??undefined,expectedRevision:propertyId?revision:undefined,commandId:commandId(),draft:data}};
+    pendingDraft.current=attempt;
+    try{localStorage.setItem(pendingKey,JSON.stringify(attempt));}catch{}
+    try{
+      const result=await api<{property:RuralPropertyView}>("/v1/producer/properties/wizard/draft",{method:"POST",body:JSON.stringify(attempt.payload)});
+      pendingDraft.current=null;try{localStorage.removeItem(pendingKey);}catch{}
+      const changed=editVersion.current!==attempt.version;
+      setDraft(current=>({...current,propertyId:result.property.id,revision:result.property.revision}));
+      history.replaceState(history.state,"","/produtor/propriedades/novo?id="+result.property.id);
+      localStorage.removeItem(localKey(session.userId,null));
+      persistLocal({...draft,propertyId:result.property.id,revision:result.property.revision},false);
+      dirty.current=changed;setSaveState("saved");if(!automatic)setNotice("Rascunho salvo na sua conta.");return !changed;
+    }catch(e){const failure=e as ApiFailure;if(failure.status && failure.status>=400 && failure.status<500){pendingDraft.current=null;try{localStorage.removeItem(pendingKey);}catch{}}if(failure.status===409)setState("conflict");persistLocal();setSaveState("error");setNotice(messageForFailure(e));return false;}
+    finally{saving.current=false;}
   }
 
   useEffect(() => {
     if (
       !hydrated.current ||
       !dirty.current ||
-      step === 5 ||
       state !== "ready" ||
       saveState === "saving" || saveState === "error"
     )
       return;
-    const parsed = buildStepData(step);
-    if (!parsed.success) return;
     const timer = setTimeout(() => {
       void saveStep(step, true);
     }, 2000);
     return () => clearTimeout(timer);
   }, [signature, online, state, saveState]);
 
-  async function submitAll() {
+  async function submitAll(completeOnly=false) {
     const missing = [1,2,3,4].filter(n => !buildStepData(n).success);
     if (missing.length || !draft.agroecologicalCommitment) {
       setNotice(missing.length ? "Complete as etapas pendentes: " + missing.join(", ") + ". Você pode voltar a elas pelos botões acima." : "Confirme o compromisso antes de enviar.");
@@ -633,6 +584,7 @@ function RuralPropertyWizard({
     }
     if (!online) { persistLocal(); setNotice("Conecte-se à internet para enviar o imóvel."); return; }
     if (saving.current || state !== "ready") return;
+    if(pendingDraft.current){setNotice("Salve o rascunho novamente antes de concluir.");return;}
     saving.current = true; setSaveState("saving"); setNotice("");
     let propertyId = draft.propertyId, revision = draft.revision;
     async function send(payload: Record<string,unknown>) {
@@ -650,7 +602,7 @@ function RuralPropertyWizard({
       for (const n of [1,2,3,4,5]) {
         const parsed=buildStepData(n);
         if (!parsed.success) throw new Error("PROPERTY_INCOMPLETE");
-        await send({propertyId:propertyId??undefined,expectedRevision:propertyId?revision:undefined,step:n,stepData:parsed.data,commandId:commandId()});
+        await send({propertyId:propertyId??undefined,expectedRevision:propertyId?revision:undefined,step:n,stepData:parsed.data,completeOnly:n===5?completeOnly:undefined,commandId:commandId()});
       }
       try {localStorage.removeItem(localKey(session.userId,null));localStorage.removeItem(localKey(session.userId,propertyId))}catch{}
       dirty.current=false;setSaveState("saved");onNavigate("/produtor/propriedades");
@@ -667,8 +619,7 @@ function RuralPropertyWizard({
     if (step===5) {await submitAll();return;}
     if (saving.current) return;
     const valid=buildStepData(step).success;
-    if(valid && (draft.propertyId || step===1)) await saveStep(step);
-    else persistLocal();
+    await saveStep(step);
     setNotice(valid ? "" : "Etapa com pendências. Você pode voltar para completar antes de enviar.");
     setDraft(current=>({...current,step:Math.min(5,current.step+1)}));
   }
@@ -684,7 +635,8 @@ function RuralPropertyWizard({
 
   async function continueLater() {
     persistLocal();
-    if (step < 5) await saveStep(step, true);
+    const saved=await saveStep(step, true);
+    if(!saved){setNotice("O rascunho permanece neste aparelho. Tente salvar novamente antes de sair.");return;}
     onNavigate("/produtor/propriedades");
   }
 
@@ -1012,6 +964,7 @@ function RuralPropertyWizard({
             <label className="account-toggle rural-commitment">
               <input
                 type="checkbox"
+                disabled={saveState === "saving"}
                 checked={draft.agroecologicalCommitment}
                 onChange={(event) =>
                   patch({ agroecologicalCommitment: event.target.checked })
@@ -1041,6 +994,7 @@ function RuralPropertyWizard({
               <><WifiOff /> Rascunho salvo localmente</>
             ) : null}
           </div>
+          {step===5 && <button className="secondary" disabled={saving.current || state!=="ready"} onClick={()=>void submitAll(true)}>Concluir e salvar</button>}
           <button
             className="primary"
             disabled={saving.current || state === "conflict"}

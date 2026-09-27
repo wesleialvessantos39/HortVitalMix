@@ -107,7 +107,7 @@ export const AdminLoginResultSchema = z.discriminatedUnion("status", [
     maskedDestination: z.string(),
   }),
   z.object({ status: z.literal("invalid_credentials") }),
-  z.object({ status: z.literal("account_blocked") }),
+  z.object({ status: z.literal("account_blocked"), error:z.string().optional() }),
   z.object({ status: z.literal("no_admin_role") }),
   z.object({
     status: z.literal("rate_limited"),

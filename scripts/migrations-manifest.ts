@@ -41,6 +41,7 @@ export function assertManifestHash() {
 }
 
 const remoteVersionAliases: Readonly<Record<string, string>> = {
+  "20260927144553": "20260927143315",
   // A migration de hardening T05 foi aplicada em produção com timestamp gerado
   // pelo Supabase. O conteúdo/nome são canônicos; somente a versão física difere.
   "20260923022554": "20260923022000",

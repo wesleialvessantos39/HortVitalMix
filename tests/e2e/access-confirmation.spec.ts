@@ -88,7 +88,7 @@ test("temporary failure is recoverable and does not claim expiration", async ({
     page.getByText(/isso não significa que o link expirou/),
   ).toBeVisible();
 });
-test("users include public identities and hide administrative blocking on them", async ({
+test("super admin can block public identities", async ({
   page,
 }) => {
   await base(page);
@@ -123,7 +123,12 @@ test("users include public identities and hide administrative blocking on them",
   );
   await page.goto("/admin/usuarios");
   await expect(page.getByText("Produtor Cadastrado")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Bloquear" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Bloquear" })).toHaveCount(1);
+  await page.getByRole("button",{name:"Bloquear",exact:true}).click();
+  await page.getByLabel("Tipo de bloqueio").selectOption("custom");
+  await expect(page.getByLabel("Início",{exact:true})).toBeVisible();
+  await expect(page.getByLabel("Término",{exact:true})).toBeVisible();
+  await page.screenshot({path:"/tmp/hvm-account-block-form.png",fullPage:true});
 });
 test("submitted properties are visible and review uses revision and command id", async ({
   page,

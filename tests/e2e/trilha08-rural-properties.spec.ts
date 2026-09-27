@@ -37,6 +37,7 @@ function summary(property: ReturnType<typeof fullProperty>) {
     municipality: property.municipality,
     state: property.state,
     status: property.status,
+    completedAt:property.completedAt,
     wizardCurrentStep: property.wizardCurrentStep,
     revision: property.revision,
     updatedAt: property.updatedAt,
@@ -113,6 +114,11 @@ async function mockT08(
         ? json({ property: current })
         : json({ error: "PROPERTY_NOT_FOUND" }, 404);
 
+    if(path==="/v1/producer/properties/wizard/draft" && method==="POST"){
+      const body=request.postDataJSON();current=current ?? fullProperty({totalAreaHectares:null,cultivatedAreaHectares:null});
+      current.draftData=body.draft;current.propertyName=body.draft.propertyName;current.wizardCurrentStep=body.draft.step;current.revision++;
+      return json({property:current});
+    }
     if (
       path === "/v1/producer/properties/wizard/save-step" &&
       method === "POST"
@@ -183,7 +189,7 @@ async function mockT08(
           updatedAt: "2026-09-26T00:00:00.000Z",
         };
       } else if (body.step === 5) {
-        current.status = "submitted";
+        current.status = body.completeOnly ? "completed" : "submitted";current.completedAt=new Date().toISOString();current.draftData=null;
       }
 
       return json({
@@ -223,7 +229,7 @@ test("02 lista rascunho com estado e progresso", async ({ page }) => {
   await mockT08(page, fullProperty({ wizardCurrentStep: 3 }));
   await page.goto("/produtor/propriedades");
   await expect(page.getByText("Chácara Boa Colheita")).toBeVisible();
-  await expect(page.getByText("Rascunho")).toBeVisible();
+  await expect(page.getByText("Rascunho", {exact:true})).toBeVisible();
   await expect(page.getByText("Etapa 3 de 5")).toBeVisible();
 });
 
@@ -346,7 +352,7 @@ test("09 recarregar preserva imóvel e alterações locais ainda não sincroniza
   await page.getByLabel("Área cultivada ativa (ha)").fill("3");
   await page.getByRole("button", { name: /Salvar e continuar/ }).click();
   await expect(page.getByRole("heading", { name: "Segurança hídrica" })).toBeVisible();
-  expect(mocked.property?.totalAreaHectares).toBe(8);
+  expect(mocked.property?.draftData.totalAreaHectares).toBe("8");
 });
 
 test("10 autosave salva também a edição feita enquanto a resposta estava pendente", async ({ page }) => {
@@ -354,13 +360,13 @@ test("10 autosave salva também a edição feita enquanto a resposta estava pend
   let release!: () => void;
   const pending = new Promise<void>((resolve) => { release = resolve; });
   let first = true;
-  await page.route("**/producer/properties/wizard/save-step", async (route) => {
+  await page.route("**/producer/properties/wizard/draft", async (route) => {
     if (first) { first = false; await pending; }
     await route.fallback();
   });
   await page.goto("/produtor/propriedades/novo?id=" + propertyId);
   await page.getByLabel("Nome da propriedade ou chácara").fill("Primeira edição");
-  await page.waitForRequest((req) => req.url().includes("wizard/save-step"));
+  await page.waitForRequest((req) => req.url().includes("wizard/draft"));
   await page.getByLabel("Nome da propriedade ou chácara").fill("Última edição");
   release();
   await expect.poll(() => mocked.property?.propertyName, { timeout: 10000 }).toBe("Última edição");
@@ -374,8 +380,25 @@ test("11 completa as cinco etapas e submete o imóvel", async ({ page }) => {
   await page.getByLabel("Atividade principal").selectOption("hortalicas_folhosas");
   await page.getByLabel("Sistema de produção").selectOption("agroecologico_declarado");
   await page.getByRole("button", { name: /Salvar e continuar/ }).click();
-  await page.getByRole("checkbox").check();
+  await page.getByLabel(/Confirmo que revisei os dados/).check();
+  await expect(page.getByLabel(/Confirmo que revisei os dados/)).toBeChecked();
   await page.getByRole("button", { name: /Revisar e enviar/ }).click();
   await expect(page.getByText("Enviado para análise")).toBeVisible();
   expect(mocked.property?.status).toBe("submitted");
+});
+
+test("12 conclui sem enviar, protege exclusão e permite envio posterior",async({page})=>{
+ const mocked=await mockT08(page,fullProperty({wizardCurrentStep:4}));
+ await page.goto("/produtor/propriedades/novo?id="+propertyId);
+ await page.getByLabel("Atividade principal").selectOption("hortalicas_folhosas");
+ await page.getByLabel("Sistema de produção").selectOption("agroecologico_declarado");
+ await page.getByRole("button",{name:/Salvar e continuar/}).click();
+ await page.getByLabel(/Confirmo que revisei os dados/).check();
+ await expect(page.getByLabel(/Confirmo que revisei os dados/)).toBeChecked();
+ await page.getByRole("button",{name:"Concluir e salvar"}).click();
+ await expect(page.getByText("Concluído — pronto para enviar")).toBeVisible();
+ await expect(page.getByRole("button",{name:"Excluir rascunho"})).toHaveCount(0);
+ expect(mocked.property?.status).toBe("completed");
+ await page.getByRole("button",{name:"Enviar para análise"}).click();
+ await expect(page.getByText("Enviado para análise")).toBeVisible();
 });

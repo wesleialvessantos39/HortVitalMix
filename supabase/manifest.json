@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 31,
+  "schemaVersion": 32,
   "migrations": [
     {
       "version": "20260919030126",
@@ -160,7 +160,12 @@
       "version": "20260926223700",
       "name": "trilha08_table_privileges_hardening",
       "file": "20260926223700_trilha08_table_privileges_hardening.sql"
+    },
+    {
+      "version": "20260927143315",
+      "name": "access_blocks_rural_lifecycle",
+      "file": "20260927143315_access_blocks_rural_lifecycle.sql"
     }
   ],
-  "migrationHistoryHash": "7ca8848d8d498e2a948058ddd65d4a6c7d293d9b9f890d4fbc5aae7e6ddf920d"
+  "migrationHistoryHash": "7f6db57329a8f39ed9b4fbf681438811ce80c45a39f1f4f6ae6a8cad6253c422"
 }

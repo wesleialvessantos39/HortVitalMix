@@ -3401,3 +3401,35 @@ Solicitação do proprietário: reduzir espera ao entrar/sair e navegar nos quat
 - Publicação destinada à `main`; após Vercel READY no SHA exato, registrar `access-flow-20260927` em `app_releases` e verificar `/api/health`, `/api/ready` e bloqueio anônimo das rotas administrativas. Registro final de produção fica em `app_releases`.
 
 Referências técnicas consultadas: https://vercel.com/docs/functions/configuring-functions/region ; https://vercel.com/docs/regions ; https://supabase.com/docs/guides/auth/auth-email-templates (incluindo pré-leitura de links por provedores de e-mail).
+
+## 2026-09-27 — Bloqueio de acessos e ciclo de vida rural
+
+Solicitação direta do proprietário: bloqueio por prazo indeterminado ou intervalo personalizado, mensagens com suporte, rascunhos persistentes, conclusão separada do envio, proibição de exclusão após conclusão e reanálise após edição. Continuação autorizada sem GitHub Actions nem serviços pagos.
+
+### Implementação e permissões
+
+- Somente Super administrador pode bloquear/desbloquear contas, incluindo Consumidor e Produtor. Administrador setorial mantém visualização e seus setores; não recebe poder de bloqueio.
+- Bloqueio personalizado armazena início/fim em timestamptz. Formulário informa o fuso do aparelho e converte para UTC. Acesso é permitido antes do início, bloqueado no início inclusivo e liberado no término exclusivo, sem cron. Registro original permanece como histórico; a listagem e autorização usam status efetivo.
+- Credenciais corretas de conta bloqueada recebem mensagem distinta para prazo indeterminado ou temporário, com link mailto:hortivitalmix@gmail.com. Senhas incorretas não revelam o bloqueio.
+- Mutações exigem sessão de Super administrador e autenticação recente, usam transação, lock, commandId e auditoria. Proteção do último Super administrador considera também agendamentos, mantendo pelo menos um Super administrador disponível sem bloqueio futuro.
+- Autorização de sessão e helpers RLS foram alinhados ao intervalo. Não há relaxamento de isolamento de dados nem uso de metadados editáveis para autorizar.
+- Imóvel rural aceita dados parciais em draft_data no servidor, sem preencher colunas canônicas com dados fictícios. Salvamento automático, Salvar e continuar e Continuar mais tarde preservam rascunhos. Backup local permanece para indisponibilidade; a tela informa quando não conseguiu sincronizar.
+- Concluir e salvar valida todas as etapas e compromisso e produz estado completed. Enviar para análise é separado e disponível depois. Envio incompleto é rejeitado no backend.
+- Rascunhos nunca concluídos podem ser excluídos com confirmação, revisão otimista, sessão recente e auditoria. completed_at é preservado pelo banco: após a primeira conclusão, o imóvel nunca mais pode ser excluído, mesmo que retorne a rascunho para edição.
+- Edição de imóvel concluído/enviado/verificado/devolvido retorna a rascunho e retira sua aprovação; é necessário concluir e reenviar para nova análise. Suspensão administrativa continua impedindo edição. Fila administrativa não mostra rascunhos nem concluídos ainda não enviados.
+
+### Banco e validações
+
+- Migration canônica 20260927143315_access_blocks_rural_lifecycle.sql aplicada no Supabase com versão física 20260927144553. Schema lógico 32, 33 migrations, hash 7f6db57329a8f39ed9b4fbf681438811ce80c45a39f1f4f6ae6a8cad6253c422. Alias físico registrado no verificador.
+- Consulta real confirmou início inclusivo, fim exclusivo, acesso antes do início e bloqueio indeterminado; ENABLE/FORCE RLS e helper de identidade com intervalo confirmados.
+- Advisor antes/depois sem novos avisos: permanecem os avisos anteriores dos helpers RLS SECURITY DEFINER, tabela privada de desafios sem policies e proteção de senhas vazadas. Referências: https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable e https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection .
+- Build e verificações TypeScript/segurança aprovados; 19 testes novos de bloqueio, permissão, datas e ciclo de exclusão/submissão aprovados. Suítes direcionadas adicionais executadas; resultado consolidado da entrega registrado em app_releases.
+- 17 testes de navegador aprovados (API simulada), incluindo conclusão sem envio, envio posterior, persistência, mudanças durante autosave, bloqueio de submissão incompleta, listagem pública administrativa e confirmação de e-mail. Teste de revisão corrigido para selecionar explicitamente o compromisso, evitando atingir a caixa de lavagem da etapa anterior durante transição.
+- Nenhuma conta real foi bloqueada e nenhum e-mail de teste foi enviado a terceiros para obter estas evidências.
+
+### Limites operacionais que não podem ser declarados concluídos
+
+- Safari em iPhone físico ainda exige um aparelho real. Emulação Chromium não equivale a Safari físico.
+- Confirmação por e-mail real exige uma conta controlada pelo proprietário e acesso à caixa correspondente; não foram usadas senhas, impersonação ou identidades fictícias.
+- O painel Auth hospedado do Supabase foi aberto, mas redirecionou para login. A conexão MCP não expõe configuração Auth. Prazo hospedado não foi alterado nem inferido a partir de config.toml. Continuação prevista por autenticação segura do proprietário, sem receber senha no chat; contrato local continua 3600 segundos e contexto auxiliar 24h continua sem prolongar token de confirmação.
+- Publicação main-only prevista com tag lifecycle-blocks-20260927; confirmação do SHA exato READY e registro final de produção em app_releases após o commit.

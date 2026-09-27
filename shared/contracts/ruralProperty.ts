@@ -3,6 +3,7 @@ import { CommandIdSchema } from "./profilePrivacy.ts";
 
 export const PropertyStatusSchema = z.enum([
   "draft",
+  "completed",
   "submitted",
   "verified",
   "rejected",
@@ -138,6 +139,7 @@ export const Step5ReviewSchema = z
   .strict();
 
 const commonSaveFields = {
+  completeOnly: z.boolean().optional(),
   commandId: CommandIdSchema,
 } as const;
 
@@ -236,6 +238,8 @@ export type RuralActivityView = {
 
 export type RuralPropertyView = {
   id: string;
+  draftData?: Record<string,unknown> | null;
+  completedAt?: string | null;
   propertyName: string;
   registrationNumber: string | null;
   totalAreaHectares: number | null;
@@ -260,6 +264,7 @@ export type RuralPropertyView = {
 
 export type RuralPropertySummary = Pick<
   RuralPropertyView,
+  | "completedAt"
   | "id"
   | "propertyName"
   | "lineVicinal"
@@ -270,3 +275,15 @@ export type RuralPropertySummary = Pick<
   | "revision"
   | "updatedAt"
 >;
+
+// Partial input remains draft-only. Completion still uses the strict step schemas.
+export const RuralDraftDataSchema=z.object({
+ step:z.number().int().min(1).max(5), propertyName:z.string().max(128), registrationNumber:z.string().max(64),
+ lineVicinal:z.string().max(64),ruralZoneSector:z.string().max(64),municipality:z.string().max(100),state:z.literal("RO"),
+ latitudeSede:z.number().min(-14).max(-7).nullable(),longitudeSede:z.number().min(-67).max(-59).nullable(),
+ accessDirections:z.string().max(500),totalAreaHectares:z.string().max(30),cultivatedAreaHectares:z.string().max(30),
+ polygonGeojson:z.string().max(60000),waterSource:z.string().max(64),irrigationSystem:z.string().max(64),
+ activityCategory:z.string().max(64),productionSystem:z.string().max(64),hasWashingFacility:z.boolean(),agroecologicalCommitment:z.boolean(),
+}).strict();
+export const SaveRuralDraftSchema=z.object({propertyId:z.uuid().optional(),expectedRevision:z.number().int().positive().optional(),commandId:CommandIdSchema,draft:RuralDraftDataSchema}).strict().refine(v=>!v.propertyId || !!v.expectedRevision);
+export type SaveRuralDraftInput=z.infer<typeof SaveRuralDraftSchema>;

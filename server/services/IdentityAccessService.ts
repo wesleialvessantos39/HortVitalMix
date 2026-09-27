@@ -1,3 +1,4 @@
+import { effectiveAccountStatus, accountBlockCode } from "../../shared/accountBlock.ts";
 import { dbPool } from "../db/pool.ts";
 import {
   createSupabaseUserClient,
@@ -6,6 +7,9 @@ import {
 
 export type IdentityAccessSnapshot = {
   status: string;
+  blockCode?: string;
+  block_starts_at?: string;
+  block_ends_at?: string;
   roles: string[];
   personId: string | null;
   fullName: string | null;
@@ -24,7 +28,7 @@ async function resolveViaDataApi(
     await Promise.all([
       dataClient
         .from("app_users")
-        .select("status")
+        .select("status,block_starts_at,block_ends_at")
         .eq("id", userId)
         .maybeSingle(),
       dataClient
@@ -48,7 +52,7 @@ async function resolveViaDataApi(
   const personId = principal.data?.person_id ?? person.data?.id ?? null;
 
   return {
-    status: user.status,
+    status: effectiveAccountStatus(user), blockCode: accountBlockCode(user),
     roles: activeRoles,
     personId,
     fullName: person.data?.full_name ?? null,
@@ -81,7 +85,7 @@ export async function resolveIdentityAccess(
         roles: string[] | null;
       }>(
         `SELECT
-           u.status,
+           u.status,u.block_starts_at,u.block_ends_at,
            COALESCE(public_person.id, admin_person.id)::text AS person_id,
            COALESCE(public_person.full_name, admin_person.full_name) AS full_name,
            CASE
@@ -121,7 +125,7 @@ export async function resolveIdentityAccess(
       const row = result.rows[0];
       if (row)
         return {
-          status: row.status,
+          status: effectiveAccountStatus(row), blockCode: accountBlockCode(row),
           roles: row.roles ?? [],
           personId: row.person_id ?? null,
           fullName: row.full_name ?? null,

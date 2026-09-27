@@ -2,6 +2,7 @@ import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
 import { redactPII } from "../security/redactPII.ts";
 import type {
+  SaveRuralDraftInput,
   RuralPropertyView,
   SaveWizardStepInput,
   SubmitPropertyInput,
@@ -162,7 +163,9 @@ async function mapProperty(
 ): Promise<RuralPropertyView> {
   return {
     id: row.id,
-    propertyName: row.property_name,
+    propertyName: row.draft_data?.propertyName ?? row.property_name ?? "",
+    completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
+    draftData: row.draft_data,
     registrationNumber: row.registration_number,
     totalAreaHectares:
       row.total_area_hectares === null ? null : Number(row.total_area_hectares),
@@ -174,8 +177,8 @@ async function mapProperty(
     lineVicinal: row.line_vicinal,
     municipality: row.municipality,
     state: row.state,
-    latitudeSede: Number(row.latitude_sede),
-    longitudeSede: Number(row.longitude_sede),
+    latitudeSede: row.latitude_sede === null ? null as unknown as number : Number(row.latitude_sede),
+    longitudeSede: row.longitude_sede === null ? null as unknown as number : Number(row.longitude_sede),
     accessDirections: row.access_directions,
     waterSource: row.water_source,
     irrigationSystem: row.irrigation_system,
@@ -189,19 +192,8 @@ async function mapProperty(
   };
 }
 
-function assertEditable(row: Record<string, any>) {
-  if (row.status === "verified")
-    throw new RuralPropertyError(
-      "PROPERTY_REHOMOLOGATION_REQUIRED",
-      409,
-      "Imóvel verificado exige processo de re-homologação para alterações.",
-    );
-  if (row.status === "submitted" || row.status === "suspended")
-    throw new RuralPropertyError(
-      "PROPERTY_NOT_EDITABLE",
-      409,
-      "Este imóvel não está disponível para edição do onboarding.",
-    );
+function assertEditable(row: Record<string,any>) {
+ if(row.status==="suspended")throw new RuralPropertyError("PROPERTY_NOT_EDITABLE",409);
 }
 
 function assertRevision(row: Record<string, any>, expected?: number) {
@@ -215,6 +207,7 @@ function assertRevision(row: Record<string, any>, expected?: number) {
 
 async function assertComplete(client: PoolClient, row: Record<string, any>) {
   if (
+    !row.property_name || !row.line_vicinal || !row.rural_zone_sector || row.latitude_sede === null || row.longitude_sede === null ||
     row.total_area_hectares === null ||
     row.cultivated_area_hectares === null ||
     !row.water_source ||
@@ -242,6 +235,7 @@ async function transitionToSubmitted(
   client: PoolClient,
   producerId: string,
   current: Record<string, any>,
+  completeOnly = false,
 ) {
   if (current.status === "rejected") {
     await client.query(
@@ -253,10 +247,10 @@ async function transitionToSubmitted(
   const updated = await client.query<Record<string, any>>(
     [
       "UPDATE public.app_properties",
-      "SET wizard_current_step=5,status='submitted'",
+      "SET wizard_current_step=5,status=$3,draft_data=NULL,completed_at=COALESCE(completed_at,now())",
       "WHERE id=$1 AND producer_id=$2 RETURNING *",
     ].join(" "),
-    [current.id, producerId],
+    [current.id, producerId, completeOnly ? "completed" : "submitted"],
   );
   return updated.rows[0];
 }
@@ -278,6 +272,40 @@ function mapDbError(error: unknown): never {
 }
 
 export class RuralPropertyService {
+  static async saveDraft(userId:string,role:string,input:SaveRuralDraftInput,requestId:string,ipHash:string) {
+    const client=await requirePool().connect();
+    try {
+      await client.query("BEGIN");const producerId=await resolveProducer(client,userId,true);
+      const replay=await replayTarget(client,input.commandId,userId,"rural_property.draft_saved");
+      let row:Record<string,any>;
+      if(replay){row=(await client.query("SELECT * FROM public.app_properties WHERE id=$1 AND producer_id=$2",[replay,producerId])).rows[0];}
+      else {
+        if(input.propertyId){
+          const current=await lockProperty(client,producerId,input.propertyId);assertEditable(current);assertRevision(current,input.expectedRevision);
+          row=(await client.query("UPDATE public.app_properties SET draft_data=$3::jsonb,status='draft',wizard_current_step=$4 WHERE id=$1 AND producer_id=$2 RETURNING *",[input.propertyId,producerId,JSON.stringify(input.draft),input.draft.step])).rows[0];
+        }else{
+          row=(await client.query("INSERT INTO public.app_properties(producer_id,draft_data,wizard_current_step) VALUES($1,$2::jsonb,$3) RETURNING *",[producerId,JSON.stringify(input.draft),input.draft.step])).rows[0];
+        }
+        await audit(client,{requestId,userId,role,action:"rural_property.draft_saved",targetId:row.id,after:summaryMetadata(row),ipHash,commandId:input.commandId});
+      }
+      if(!row)throw new RuralPropertyError("PROPERTY_NOT_FOUND",404);
+      const property=await mapProperty(client,row);await client.query("COMMIT");return {property};
+    }catch(e){await client.query("ROLLBACK");mapDbError(e);}finally{client.release();}
+  }
+  static async deleteDraft(userId:string,propertyId:string,expectedRevision:number,commandId:string,requestId:string,ipHash:string){
+    const client=await requirePool().connect();
+    try{
+      await client.query("BEGIN");const producerId=await resolveProducer(client,userId,true);
+      const replay=await replayTarget(client,commandId,userId,"rural_property.draft_deleted");
+      if(!replay){
+        const row=await lockProperty(client,producerId,propertyId);assertRevision(row,expectedRevision);
+        if(row.status!=="draft" || row.completed_at)throw new RuralPropertyError("COMPLETED_PROPERTY_DELETE_FORBIDDEN",409);
+        await audit(client,{userId,role:"producer",requestId,ipHash,commandId,action:"rural_property.draft_deleted",targetId:propertyId,before:summaryMetadata(row)});
+        await client.query("DELETE FROM public.app_properties WHERE id=$1 AND producer_id=$2",[propertyId,producerId]);
+      }
+      await client.query("COMMIT");
+    }catch(e){await client.query("ROLLBACK");mapDbError(e);}finally{client.release();}
+  }
   static async listProperties(userId: string) {
     const client = await requirePool().connect();
     try {
@@ -285,7 +313,7 @@ export class RuralPropertyService {
       const result = await client.query<Record<string, any>>(
         [
           "SELECT id,property_name,line_vicinal,municipality,state,status,",
-          "wizard_current_step,revision,updated_at",
+          "wizard_current_step,revision,updated_at,completed_at,draft_data",
           "FROM public.app_properties",
           "WHERE producer_id=$1",
           "ORDER BY updated_at DESC,id ASC",
@@ -294,7 +322,9 @@ export class RuralPropertyService {
       );
       return result.rows.map((row) => ({
         id: row.id,
-        propertyName: row.property_name,
+        propertyName: row.draft_data?.propertyName ?? row.property_name ?? "",
+    completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
+    draftData: row.draft_data,
         lineVicinal: row.line_vicinal,
         municipality: row.municipality,
         state: row.state,
@@ -397,6 +427,9 @@ export class RuralPropertyService {
         before = current;
         assertEditable(current);
         assertRevision(current, input.expectedRevision);
+        if(input.step<5 && current.status!=="draft") {
+          await client.query("UPDATE public.app_properties SET status='draft' WHERE id=$1 AND producer_id=$2",[propertyId,producerId]);
+        }
 
         if (input.step === 1) {
           const data = input.stepData;
@@ -404,7 +437,7 @@ export class RuralPropertyService {
             await client.query<Record<string, any>>(
               [
                 "UPDATE public.app_properties SET",
-                "property_name=$1,registration_number=$2,rural_zone_sector=$3,",
+                "draft_data=NULL,property_name=$1,registration_number=$2,rural_zone_sector=$3,",
                 "line_vicinal=$4,municipality=$5,state=$6,latitude_sede=$7,",
                 "longitude_sede=$8,access_directions=$9,",
                 "wizard_current_step=GREATEST(wizard_current_step,1)",
@@ -511,8 +544,9 @@ export class RuralPropertyService {
             )
           ).rows[0];
         } else {
+          if(current.draft_data)throw new RuralPropertyError("PROPERTY_INCOMPLETE",422);
           await assertComplete(client, current);
-          row = await transitionToSubmitted(client, producerId, current);
+          row = await transitionToSubmitted(client, producerId, current, input.completeOnly);
         }
       }
 
@@ -538,7 +572,7 @@ export class RuralPropertyService {
       const property = await mapProperty(client, row);
       await client.query("COMMIT");
       return {
-        status: input.step === 5 ? ("submitted" as const) : ("step_saved" as const),
+        status: input.step === 5 ? (input.completeOnly ? "completed" as const : "submitted" as const) : ("step_saved" as const),
         property,
         nextStep: Math.min(5, input.step + 1),
       };
@@ -603,6 +637,7 @@ export class RuralPropertyService {
 
       assertEditable(current);
       assertRevision(current, input.expectedRevision);
+      if(current.draft_data)throw new RuralPropertyError("PROPERTY_INCOMPLETE",422);
       await assertComplete(client, current);
 
       const row = await transitionToSubmitted(

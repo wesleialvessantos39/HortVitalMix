@@ -460,7 +460,7 @@ adminGovernanceRouter.get(
     }
 
     const result = await dbPool.query(
-      `SELECT u.id,u.status,p.full_name,ap.admin_email AS email_normalized,
+      `SELECT u.id,public.effective_account_status(u.status,u.block_starts_at,u.block_ends_at) AS status,u.block_starts_at,u.block_ends_at,u.status AS stored_status,p.full_name,ap.admin_email AS email_normalized,
               ar.role_code, 'administrative'::text AS account_kind,
               (ap.email_verified_at IS NOT NULL) AS email_confirmed,
               COALESCE(array_agg(DISTINCT m.sector_code) FILTER (
@@ -486,7 +486,7 @@ adminGovernanceRouter.get(
         WHERE 1=1 ${scope}
         GROUP BY u.id,p.full_name,ap.admin_email,ap.email_verified_at,ar.role_code
         UNION ALL
-        SELECT u.id,u.status,p.full_name,p.email_normalized,
+        SELECT u.id,public.effective_account_status(u.status,u.block_starts_at,u.block_ends_at) AS status,u.block_starts_at,u.block_ends_at,u.status AS stored_status,p.full_name,p.email_normalized,
                NULL::varchar AS role_code,'public'::text AS account_kind,
                (au.email_confirmed_at IS NOT NULL) AS email_confirmed,
                ARRAY[]::varchar[] AS sectors,
@@ -506,49 +506,40 @@ adminGovernanceRouter.get(
 );
 
 const StatusChangeSchema = z.object({
-  status: z.enum(["active", "blocked"]),
-  commandId: z.string().uuid(),
-}).strict();
-
-adminGovernanceRouter.patch(
-  "/users/:userId/status",
-  originProtection,
-  adminSessionMiddleware,
-  requireSuperAdmin,
-  requireRecentAuth,
-  async (req: Request, res: Response) => {
-    if (!dbPool || !req.adminActor) {
-      res.status(503).json({ error: "UNAVAILABLE" });
-      return;
-    }
-    const parsed = StatusChangeSchema.safeParse(req.body);
-    const userId = z.string().uuid().safeParse(req.params.userId);
-    if (!parsed.success || !userId.success) {
-      res.status(422).json({ error: "VALIDATION_FAILED" });
-      return;
-    }
-    if (parsed.data.status === "blocked") {
-      const last = await dbPool.query<{ protected: boolean }>(
-        `SELECT public.fn_is_last_active_super_admin($1) AS protected`,
-        [userId.data],
-      );
-      if (last.rows[0]?.protected) {
-        res.status(409).json({ error: "LAST_SUPER_ADMIN_PROTECTED" });
-        return;
-      }
-    }
-    await dbPool.query(
-      `UPDATE public.app_users
-       SET status=$2,
-           blocked_at=CASE WHEN $2='blocked' THEN clock_timestamp() ELSE NULL END,
-           blocked_by=CASE WHEN $2='blocked' THEN $3 ELSE NULL END,
-           block_reason=CASE WHEN $2='blocked' THEN 'administrative_governance' ELSE NULL END,
-           authorization_revision=authorization_revision+1,
-           revision=revision+1,
-           updated_at=clock_timestamp()
-       WHERE id=$1`,
-      [userId.data, parsed.data.status, req.adminActor.userId],
-    );
-    res.status(200).json({ status: "updated" });
-  },
-);
+ status:z.enum(["active","blocked"]), commandId:z.string().uuid(),
+ mode:z.enum(["indefinite","custom"]).optional(),
+ startsAt:z.string().datetime({offset:true}).optional(), endsAt:z.string().datetime({offset:true}).optional(),
+}).strict().superRefine((v,ctx)=>{
+ if(v.status==="blocked" && v.mode==="custom" && (!v.startsAt || !v.endsAt || Date.parse(v.endsAt)<=Date.parse(v.startsAt) || Date.parse(v.endsAt)<=Date.now())) ctx.addIssue({code:"custom",message:"Informe um intervalo válido com término futuro."});
+ if(v.status==="blocked" && v.mode!=="custom" && (v.startsAt || v.endsAt))ctx.addIssue({code:"custom",message:"Datas exigem bloqueio personalizado."});
+});
+adminGovernanceRouter.patch("/users/:userId/status",originProtection,adminSessionMiddleware,requireSuperAdmin,requireRecentAuth,async(req,res)=>{
+ if(!dbPool || !req.adminActor){res.status(503).json({error:"UNAVAILABLE"});return;}
+ const parsed=StatusChangeSchema.safeParse(req.body), id=z.string().uuid().safeParse(req.params.userId);
+ if(!parsed.success || !id.success){res.status(422).json({error:"VALIDATION_FAILED"});return;}
+ const client=await dbPool.connect();
+ try{
+  await client.query("BEGIN");
+  await client.query("SELECT pg_advisory_xact_lock(hashtext('hvm-account-blocks'))");
+  const replay=await client.query("SELECT 1 FROM public.app_audit_events WHERE actor_id=$1 AND command_id=$2 AND action='account.block_changed'",[req.adminActor.userId,parsed.data.commandId]);
+  if(replay.rowCount){await client.query("COMMIT");res.json({status:"updated"});return;}
+  const target=await client.query("SELECT * FROM public.app_users WHERE id=$1 FOR UPDATE",[id.data]);
+  if(!target.rowCount){await client.query("ROLLBACK");res.status(404).json({error:"USER_NOT_FOUND"});return;}
+  const v=parsed.data;
+  if(v.status==="blocked"){
+   // One unscheduled active super admin must remain available across the entire future interval.
+   const protectedRole=await client.query(`SELECT public.fn_is_last_active_super_admin($1) AS last_active, EXISTS(SELECT 1 FROM public.app_user_role_assignments WHERE user_id=$1 AND role_code='platform_super_admin' AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at>now())) AS is_super,
+   EXISTS(SELECT 1 FROM public.app_users u JOIN public.app_user_role_assignments r ON r.user_id=u.id WHERE u.id<>$1 AND r.role_code='platform_super_admin' AND r.revoked_at IS NULL AND r.expires_at IS NULL AND (u.status='active' OR (u.status='blocked' AND u.block_ends_at<=now()))) AS other_available`,[id.data]);
+   if(protectedRole.rows[0].last_active || (protectedRole.rows[0].is_super && !protectedRole.rows[0].other_available)){await client.query("ROLLBACK");res.status(409).json({error:"LAST_SUPER_ADMIN_PROTECTED"});return;}
+  }
+  const starts=v.status==='blocked' ? (v.mode==='custom'?v.startsAt:new Date().toISOString()):null;
+  const ends=v.status==='blocked' && v.mode==='custom'?v.endsAt:null;
+  await client.query(`UPDATE public.app_users SET status=$2,block_starts_at=$3,block_ends_at=$4,
+   blocked_at=CASE WHEN $2='blocked' THEN now() ELSE NULL END,blocked_by=CASE WHEN $2='blocked' THEN $5::uuid ELSE NULL END,
+   block_reason=CASE WHEN $2='blocked' THEN 'administrative_governance' ELSE NULL END,
+   authorization_revision=authorization_revision+1,revision=revision+1,updated_at=now() WHERE id=$1`,[id.data,v.status,starts,ends,req.adminActor.userId]);
+  await client.query(`INSERT INTO public.app_audit_events(request_id,actor_id,actor_role,action,target_entity,target_id,payload_before,payload_after,client_ip_hash,command_id)
+   VALUES($1,$2,$3,'account.block_changed','app_users',$4,$5,$6,$7,$8)`,[req.requestId,req.adminActor.userId,req.adminActor.role,id.data,JSON.stringify({status:target.rows[0].status,startsAt:target.rows[0].block_starts_at,endsAt:target.rows[0].block_ends_at}),JSON.stringify({status:v.status,startsAt:starts,endsAt:ends}),req.clientIpHash, v.commandId]);
+  await client.query("COMMIT");res.json({status:"updated"});
+ }catch{await client.query("ROLLBACK");res.status(503).json({error:"UNAVAILABLE"});}finally{client.release();}
+});

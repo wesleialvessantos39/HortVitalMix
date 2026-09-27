@@ -1,3 +1,4 @@
+import { blockMessages } from "../../../shared/accountBlock";
 import { useState, type FormEvent } from "react";
 import { KeyRound, Leaf, ShoppingBag, Sprout, Plus } from "lucide-react";
 import { PasswordInput } from "../../components/forms/PasswordInput";
@@ -37,7 +38,7 @@ export function PublicLoginPage({ role, onNavigate, onSessionAdopt }: {
         ROLE_NOT_ALLOWED_FOR_PORTAL: "Esta conta não possui o perfil selecionado. Confira o tipo de acesso.",
         ACCOUNT_UNAVAILABLE: "Esta conta está indisponível. Entre em contato com o suporte.",
       };
-      setError(messages[e.message] ?? (e.status === 429 ? "Aguarde alguns instantes antes de tentar novamente." : "Não foi possível entrar agora. Confira sua conexão e tente novamente."));
+      setError(blockMessages[e.message] ?? messages[e.message] ?? (e.status === 429 ? "Aguarde alguns instantes antes de tentar novamente." : "Não foi possível entrar agora. Confira sua conexão e tente novamente."));
     } finally { setBusy(false); }
   }
   return <section className="admin-login-page public-login-page">
@@ -58,7 +59,7 @@ export function PublicLoginPage({ role, onNavigate, onSessionAdopt }: {
           <div className="admin-login-icon"><KeyRound /></div>
           <h2>Entrar como {label}</h2>
           <p className="admin-muted">Use o e-mail confirmado e a senha do seu perfil de {label.toLowerCase()}.</p>
-          {error && <div className="admin-alert admin-alert--error" role="alert">{error}</div>}
+          {error && <div className="admin-alert admin-alert--error" role="alert">{error}{Object.values(blockMessages).includes(error) && <span> Dúvidas, entre em contato com o suporte <a href="mailto:hortivitalmix@gmail.com">hortivitalmix@gmail.com</a>.</span>}</div>}
           {notice && <div className="admin-alert" role="status">{notice}</div>}
           <label>E-mail<input name="email" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required /></label>
           <PasswordInput value={password} onChange={setPassword}/>

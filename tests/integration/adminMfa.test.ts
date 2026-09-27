@@ -29,7 +29,7 @@ describe("administrative password login — user policy 2026-09-25",()=>{
  });
  it("requires initial confirmation",async()=>{confirmed=false;expect(await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_super_admin")).toMatchObject({status:"email_confirmation_required"});expect(m.sendOtp).not.toHaveBeenCalled();});
  it("rejects an incorrect password",async()=>{m.signIn.mockResolvedValue({data:{},error:{message:"invalid"}});expect(await AdminGovernanceService.login("test@example.invalid","wrong","ip","r","platform_super_admin")).toEqual({status:"invalid_credentials"});});
- it("rejects a suspended account",async()=>{status="suspended";expect(await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_super_admin")).toEqual({status:"account_blocked"});});
+ it("rejects a suspended account",async()=>{status="suspended";expect(await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_super_admin")).toEqual({status:"account_blocked",error:"ACCOUNT_UNAVAILABLE"});});
  it("does not grant super access using an administrator credential",async()=>{role=assigned="platform_admin";expect(await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_super_admin")).toEqual({status:"no_admin_role"});});
  it("still enforces rate limits",async()=>{vi.mocked((AdminGovernanceService as any).rateLimit).mockResolvedValue({limited:true,retryAfterSeconds:60});expect(await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_super_admin")).toMatchObject({status:"rate_limited"});expect(m.signIn).not.toHaveBeenCalled();});
 });

@@ -1,3 +1,4 @@
+import { blockMessages } from "../../../shared/accountBlock";
 import { useEffect, useState } from "react";
 import { KeyRound, Leaf, ShieldCheck } from "lucide-react";
 import { api, type ApiFailure } from "../../lib/api";
@@ -102,11 +103,11 @@ export function AdminLoginPage({
       setError("Não foi possível concluir o acesso administrativo.");
     } catch (caught) {
       const failure = caught as ApiFailure;
-      setError(failure.status === 429
+      setError(blockMessages[failure.message] ?? (failure.status === 429
         ? "Muitas tentativas. Aguarde alguns minutos e tente novamente."
         : [401,403,409].includes(failure.status ?? 0)
           ? "Dados inválidos ou cadastro não autorizado."
-          : "Não foi possível entrar agora. Tente novamente em alguns instantes.");
+          : "Não foi possível entrar agora. Tente novamente em alguns instantes."));
     } finally {
       setBusy(false);
     }
@@ -157,7 +158,7 @@ export function AdminLoginPage({
                   Saiba mais
                 </button>
               </p>
-              {error && <div className="admin-alert admin-alert--error">{error}</div>}
+              {error && <div className="admin-alert admin-alert--error">{error}{Object.values(blockMessages).includes(error) && <span> Dúvidas, entre em contato com o suporte <a href="mailto:hortivitalmix@gmail.com">hortivitalmix@gmail.com</a>.</span>}</div>}
               <label>E-mail
                 <input type="email" autoComplete="username" value={email} onChange={(e)=>setEmail(e.target.value)} required />
               </label>

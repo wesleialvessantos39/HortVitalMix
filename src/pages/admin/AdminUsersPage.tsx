@@ -7,6 +7,7 @@ import type { AdminVerifySessionResponse } from "../../../shared/contracts/admin
 type UserRow = {
   id: string;
   status: string;
+  stored_status?:string; block_starts_at?:string; block_ends_at?:string;
   full_name: string;
   email_normalized: string;
   role_code: "platform_admin" | "platform_super_admin" | null;
@@ -26,6 +27,8 @@ export function AdminUsersPage({
   const [users, setUsers] = useState<UserRow[]>([]);
   const [busy, setBusy] = useState<string | null>(null),
     [error, setError] = useState("");
+  const [selected,setSelected]=useState<UserRow|null>(null);
+  const [mode,setMode]=useState("indefinite"),[startsAt,setStartsAt]=useState(""),[endsAt,setEndsAt]=useState("");
   const isSuper = access.role === "platform_super_admin";
 
   const [refreshing, setRefreshing] = useState(false);
@@ -49,16 +52,17 @@ export function AdminUsersPage({
     void load();
   }, []);
 
-  async function changeStatus(user: UserRow) {
+  async function changeStatus(user: UserRow, unblock=false) {
     if (!isSuper) return;
     setBusy(user.id);
     setError("");
-    const status = user.status === "active" ? "blocked" : "active";
+    const status = unblock ? "active" : "blocked";
     try {
       await api("/v1/admin/users/" + encodeURIComponent(user.id) + "/status", {
         method: "PATCH",
-        body: JSON.stringify({ status, commandId: cryptoRandomUUID() }),
+        body: JSON.stringify({ status, commandId: cryptoRandomUUID(), ...(unblock?{}:{mode,...(mode==="custom"?{startsAt:new Date(startsAt).toISOString(),endsAt:new Date(endsAt).toISOString()}:{})}) }),
       });
+      setSelected(null);
       await load();
     } catch (err) {
       const e = err as { status?: number; message?: string };
@@ -108,6 +112,12 @@ export function AdminUsersPage({
         </div>
       )}
       {error && <div className="admin-alert admin-alert--error">{error}</div>}
+      {selected && <form className="admin-card" onSubmit={e=>{e.preventDefault();void changeStatus(selected);}}>
+       <h2>Bloquear acesso de {selected.full_name}</h2>
+       <label>Tipo de bloqueio<select value={mode} onChange={e=>setMode(e.target.value)}><option value="indefinite">Prazo indeterminado</option><option value="custom">Bloqueio personalizado</option></select></label>
+       {mode==="custom" && <><p>Datas e horários no fuso deste aparelho ({Intl.DateTimeFormat().resolvedOptions().timeZone}). Desbloqueio automático ao término.</p><label>Início<input type="datetime-local" required value={startsAt} onChange={e=>setStartsAt(e.target.value)}/></label><label>Término<input type="datetime-local" required min={startsAt} value={endsAt} onChange={e=>setEndsAt(e.target.value)}/></label></>}
+       <button className="admin-primary" disabled={!!busy}>Confirmar bloqueio</button><button type="button" className="admin-secondary" disabled={!!busy} onClick={()=>setSelected(null)}>Cancelar</button>
+      </form>}
       <section className="admin-card admin-card--table">
         {refreshing && users.length === 0 ? (
           <p className="admin-empty" role="status">
@@ -163,21 +173,18 @@ export function AdminUsersPage({
                             ? "E-mail pendente"
                             : "Ativo"}
                       </span>
+                      {u.stored_status==="blocked" && u.block_ends_at && Date.parse(u.block_ends_at)>Date.now() && <small className="admin-table-sub">{u.block_starts_at && new Date(u.block_starts_at).toLocaleString("pt-BR")} até {new Date(u.block_ends_at).toLocaleString("pt-BR")}</small>}
                     </td>
                     {isSuper && (
                       <td>
-                        {u.role_code ? (
                           <button
                             className="admin-table-action"
                             disabled={busy === u.id}
-                            onClick={() => void changeStatus(u)}
+                            onClick={() => { if(u.status==="blocked" || (u.stored_status==="blocked" && u.block_starts_at && Date.parse(u.block_starts_at)>Date.now())) void changeStatus(u,true); else {setSelected(u);setMode("indefinite");setStartsAt("");setEndsAt("");} }}
                           >
                             <UserCog size={15} />
-                            {u.status === "active" ? "Bloquear" : "Reativar"}
+                            {u.status === "blocked" ? "Desbloquear" : u.stored_status==="blocked" && u.block_starts_at && Date.parse(u.block_starts_at)>Date.now() ? "Cancelar bloqueio agendado" : "Bloquear"}
                           </button>
-                        ) : (
-                          "—"
-                        )}
                       </td>
                     )}
                   </tr>

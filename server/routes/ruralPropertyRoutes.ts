@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import {
+  SaveRuralDraftSchema,
   SaveWizardStepSchema,
   SubmitPropertySchema,
 } from "../../shared/contracts/ruralProperty.ts";
@@ -211,3 +212,16 @@ ruralPropertyRouter.post(
     }
   },
 );
+
+ruralPropertyRouter.post("/producer/properties/wizard/draft",originProtection,async(req,res)=>{
+ const actor=requireProducer(req,res);if(!actor)return;
+ const input=SaveRuralDraftSchema.safeParse(req.body);if(!input.success){res.status(400).json({error:"VALIDATION_ERROR"});return;}
+ try{res.json(await RuralPropertyService.saveDraft(actor.userId,actor.role,input.data,req.requestId,req.clientIpHash));}catch(e){sendError(res,e);}
+});
+ruralPropertyRouter.delete("/producer/properties/:id",originProtection,async(req,res)=>{
+ const actor=requireProducer(req,res);if(!actor)return;const id=parsePropertyId(req,res);if(!id)return;
+ if(!requireRecentAuth(req,res,actor.userId))return;
+ const input=z.object({expectedRevision:z.number().int().positive(),commandId:z.uuid()}).strict().safeParse(req.body);
+ if(!input.success){res.status(400).json({error:"VALIDATION_ERROR"});return;}
+ try{await RuralPropertyService.deleteDraft(actor.userId,id,input.data.expectedRevision,input.data.commandId,req.requestId,req.clientIpHash);res.status(204).end();}catch(e){sendError(res,e);}
+});

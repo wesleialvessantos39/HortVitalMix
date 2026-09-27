@@ -1,3 +1,4 @@
+import { effectiveAccountStatus, accountBlockCode } from "../../shared/accountBlock.ts";
 import type { NextFunction, Request, Response } from "express";
 import { createSupabasePublicClient, supabaseAdmin } from "../supabase/client.ts";
 import { dbPool } from "../db/pool.ts";
@@ -92,14 +93,14 @@ export async function adminSessionMiddleware(
       supabaseAdmin.from("app_user_role_assignments")
         .select("role_code,expires_at,revoked_at").eq("user_id", userData.user.id)
         .in("role_code", ["platform_admin", "platform_super_admin"]).is("revoked_at", null),
-      supabaseAdmin.from("app_users").select("status").eq("id", userData.user.id).maybeSingle(),
+      supabaseAdmin.from("app_users").select("status,block_starts_at,block_ends_at").eq("id", userData.user.id).maybeSingle(),
     ]);
     if (account.error) {
       res.status(503).json({ error: AdminErrorCode.UNAVAILABLE, requestId: req.requestId });
       return;
     }
-    if (!account.data || account.data.status !== "active") {
-      res.status(403).json({ error: AdminErrorCode.FORBIDDEN, requestId: req.requestId });
+    if (!account.data || effectiveAccountStatus(account.data) !== "active") {
+      res.status(403).json({ error: account.data ? accountBlockCode(account.data) : AdminErrorCode.FORBIDDEN, requestId: req.requestId });
       return;
     }
     if (!principal.error && principal.data) {
@@ -130,7 +131,7 @@ export async function adminSessionMiddleware(
       }>(
         `SELECT admin_user_id,portal_role
            FROM public.app_admin_principals ap
-           JOIN public.app_users u ON u.id=ap.admin_user_id AND u.status='active'
+           JOIN public.app_users u ON u.id=ap.admin_user_id AND public.effective_account_status(u.status,u.block_starts_at,u.block_ends_at)='active'
           WHERE admin_user_id=$1
           LIMIT 1`,
         [userData.user.id],

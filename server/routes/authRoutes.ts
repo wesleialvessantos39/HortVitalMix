@@ -249,7 +249,7 @@ async function handlePublicLoginRequest(
     if (access.status !== "active") {
       if (supabaseAdmin && data.access_token)
         await supabaseAdmin.auth.admin.signOut(data.access_token, "local").catch(() => undefined);
-      res.status(403).json({ error: "ACCOUNT_UNAVAILABLE" });
+      res.status(403).json({ error: access.blockCode ?? "ACCOUNT_UNAVAILABLE" });
       return;
     }
     if (!access.roles.includes(portalRole)) {
@@ -334,7 +334,7 @@ authRouter.post("/refresh", async (req, res, next) => {
     }
     if (access.status !== "active") {
       clear(res);
-      res.status(403).json({ error: "ACCOUNT_UNAVAILABLE" });
+      res.status(403).json({ error: access.blockCode ?? "ACCOUNT_UNAVAILABLE" });
       return;
     }
 
@@ -497,7 +497,7 @@ authRouter.get("/session", async (req, res, next) => {
       return;
     }
     if (access.status !== "active") {
-      res.status(403).json({ error: "ACCOUNT_UNAVAILABLE" });
+      res.status(403).json({ error: access.blockCode ?? "ACCOUNT_UNAVAILABLE" });
       return;
     }
 
