@@ -28,6 +28,11 @@ Banco:
 
 Publicação:
 - main-only, Hobby, sem GitHub Actions, sem plano pago, sem chave Gemini no chat.
+- código funcional publicado no commit `99b0034341c512c746be9c0de4fea2daa866c73a`;
+- Vercel Production deployment `6720127558` concluiu com `success`; o bundle público já contém Excluir, a rota `/file` e o timeout da extração;
+- schema permanece **35** e o banco continua conectado;
+- `app_releases` ainda está na tag `t09-t10-documents-20260928`, então `/api/ready` responde `RELEASE_MISMATCH` até a release corrente ser sincronizada com o SHA de Production. A tela de documentos não depende desse endpoint;
+- os dois PDFs conferidos não foram apagados por esta publicação.
 
 ---
 
