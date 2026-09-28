@@ -21,6 +21,7 @@ function chain(data: unknown) {
  const query: any = {};
  for (const method of ["select", "eq", "in", "is", "or"]) query[method] = vi.fn(() => query);
  query.maybeSingle = vi.fn(async () => ({ data, error: null }));
+ query.single = vi.fn(async () => ({ data, error: null }));
  query.limit = vi.fn(async () => ({ data, error: null }));
  query.then = (resolve: any) => Promise.resolve({ data, error: null }).then(resolve);
  return query;
@@ -52,17 +53,17 @@ describe("authentication request performance without authorization bypass", () =
   await adminSessionMiddleware({headers:{cookie:"hvm_access=token"}} as Request,res as unknown as Response,next);
   expect(res.status).toHaveBeenCalledWith(403); expect(next).not.toHaveBeenCalled();
  });
- it.each(["consumer", "producer"] as const)("registers %s with one identity lookup and still requires confirmation",async role=>{
-  mocks.from.mockReturnValue(chain([]));
+ it.each(["consumer", "producer"] as const)("registers %s with bounded parallel identity checks and still requires confirmation",async role=>{
+  mocks.from.mockImplementation(table=>chain(table==="app_users"?{status:"active"}:null));
   mocks.createUser.mockResolvedValue({data:{user:{id:"new-user"}},error:null});
   mocks.rpc.mockResolvedValue({data:{},error:null});
   const result=await register({fullName:"Test Person",cpf:"12345678909",email:"test@example.invalid",password:"unused-test-password",phone:"+5569999999999"} as any,role,"test-request");
-  expect(mocks.from).toHaveBeenCalledTimes(1);
+  expect(mocks.from.mock.calls.map(([table])=>table)).toEqual(["app_people","app_people","app_users"]);
   expect(mocks.createUser).toHaveBeenCalledWith(expect.objectContaining({email_confirm:false}));
   expect(result.confirmationRequired).toBe(true); expect(mocks.rpc).toHaveBeenCalledOnce();
  });
  it("does not create an account when CPF and email belong to different people",async()=>{
-  mocks.from.mockReturnValue(chain([{user_id:"one"},{user_id:"two"}]));
+  mocks.from.mockReturnValueOnce(chain({user_id:"one"})).mockReturnValueOnce(chain({user_id:"two"}));
   await expect(register({cpf:"12345678909",email:"test@example.invalid"} as any,"consumer","request")).rejects.toThrow("REGISTRATION_IDENTITY_CONFLICT");
   expect(mocks.createUser).not.toHaveBeenCalled();
  });

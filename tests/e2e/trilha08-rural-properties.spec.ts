@@ -1,8 +1,9 @@
+import type { RuralPropertyView } from "../../shared/contracts/ruralProperty";
 import { expect, test } from "@playwright/test";
 
 const propertyId = "22222222-2222-4222-8222-222222222222";
 
-function fullProperty(overrides: Record<string, any> = {}) {
+function fullProperty(overrides: Partial<RuralPropertyView> = {}): RuralPropertyView {
   return {
     id: propertyId,
     propertyName: "Chácara Boa Colheita",
@@ -352,7 +353,7 @@ test("09 recarregar preserva imóvel e alterações locais ainda não sincroniza
   await page.getByLabel("Área cultivada ativa (ha)").fill("3");
   await page.getByRole("button", { name: /Salvar e continuar/ }).click();
   await expect(page.getByRole("heading", { name: "Segurança hídrica" })).toBeVisible();
-  expect(mocked.property?.draftData.totalAreaHectares).toBe("8");
+  expect(mocked.property?.draftData?.totalAreaHectares).toBe("8");
 });
 
 test("10 autosave salva também a edição feita enquanto a resposta estava pendente", async ({ page }) => {

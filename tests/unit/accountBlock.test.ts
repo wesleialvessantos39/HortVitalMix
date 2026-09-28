@@ -13,3 +13,9 @@ it('keeps indefinite and legacy blocks blocked and preserves unrelated statuses'
  expect(accountBlockCode({status:'blocked'})).toBe('ACCOUNT_BLOCKED_INDEFINITE');
  expect(effectiveAccountStatus({status:'suspended',block_ends_at:start},Date.parse(end))).toBe('suspended');
 });
+
+it('preserves administrative deletion and pending review even after an old block expires',()=>{
+ for(const status of ['deleted','pending'])expect(effectiveAccountStatus({status,block_ends_at:start},Date.parse(end))).toBe(status);
+ expect(accountBlockCode({status:'deleted'})).toBe('ACCOUNT_DELETED');
+ expect(accountBlockCode({status:'pending'})).toBe('ACCOUNT_REVIEW_PENDING');
+});

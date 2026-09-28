@@ -45,7 +45,7 @@ export function isAllowedRequestOrigin(req: Request) {
   const origin = requestOrigin(req);
 
   // Verifica se a origem pertence explicitamente aos ambientes do Google AI Studio
-  if (origin) {
+  if (origin && runtime.appEnv !== "production") {
     try {
       const parsedOrigin = new URL(origin);
       if (
@@ -67,7 +67,7 @@ export function isAllowedRequestOrigin(req: Request) {
   if (!origin) {
     // Alguns proxies do Google Studio removem Origin, mas preservam
     // Sec-Fetch-Site. Aceitamos somente navegação same-origin.
-    return fetchSite === "same-origin" || runtime.appEnv === "development";
+    return fetchSite === "same-origin";
   }
 
   if (runtime.origins.includes(origin)) return true;
@@ -85,21 +85,8 @@ export function isAllowedRequestOrigin(req: Request) {
     if (loopback(parsed.hostname) && requestHostname && loopback(requestHostname))
       return parsed.protocol === "http:" || parsed.protocol === "https:";
 
-    // No desenvolvimento local e ambiente Google AI Studio:
-    // o servidor roda em loopback atrás do proxy HTTPS da plataforma.
-    // Qualquer requisição local não-cross-site é permitida.
-    if (runtime.appEnv === "development" && requestHostname && loopback(requestHostname)) {
-      return true;
-    }
-
-    // Vercel deployment: suporta domínios canônicos e de preview *.vercel.app
-    if (
-      parsed.protocol === "https:" &&
-      (parsed.hostname.endsWith(".vercel.app") || parsed.hostname === "hortivitalmix.com.br")
-    ) {
-      return true;
-    }
-
+    // Origem de preview só é válida quando é a própria origem desta publicação
+    // ou foi explicitamente autorizada; outros projetos *.vercel.app não são confiáveis.
     if (!requestHost || parsed.host !== requestHost) return false;
 
     const forwardedProto = firstHeader(req.headers["x-forwarded-proto"]);

@@ -1,3 +1,5 @@
+import type { PoolClient } from "pg";
+import { reportFailure } from "../config/reportFailure.ts";
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import { originProtection } from "../security/originProtection.ts";
@@ -21,7 +23,11 @@ import { safeRequestOrigin } from "../security/origin.ts";
 import { issueRecentAuthProof, RECENT_AUTH_WINDOW_MS } from "../security/recentAuth.ts";
 
 import { adminRuralPropertyRouter } from "./adminRuralPropertyRoutes.ts";
+import { adminAccountReviewRouter } from "./adminAccountReviewRoutes.ts";
 export const adminGovernanceRouter = Router();
+adminGovernanceRouter.use((req,res,next)=>{
+ if(req.path.startsWith("/registration-reviews") || /^\/users\/[^/]+\/delete$/.test(req.path)) adminAccountReviewRouter(req,res,next); else next();
+});
 adminGovernanceRouter.use((req,res,next) => {
   if (req.path === "/rural-properties" || req.path.startsWith("/rural-properties/")) adminRuralPropertyRouter(req,res,next);
   else next();
@@ -403,8 +409,8 @@ adminGovernanceRouter.get(
          FROM public.app_people p
          JOIN public.app_users u ON u.id=p.user_id
          LEFT JOIN public.app_user_role_assignments r ON r.user_id=p.user_id
-        WHERE ($1::text <> '' AND p.cpf_normalized=$1)
-           OR ($2::text <> '' AND p.email_normalized=$2)
+        WHERE p.archived_at IS NULL AND (($1::text <> '' AND p.cpf_normalized=$1)
+           OR ($2::text <> '' AND p.email_normalized=$2))
         GROUP BY p.id,p.user_id,p.full_name,p.cpf_normalized,p.email_normalized,u.status
         LIMIT 1`,
       [rawCpf, rawEmail],
@@ -517,14 +523,16 @@ adminGovernanceRouter.patch("/users/:userId/status",originProtection,adminSessio
  if(!dbPool || !req.adminActor){res.status(503).json({error:"UNAVAILABLE"});return;}
  const parsed=StatusChangeSchema.safeParse(req.body), id=z.string().uuid().safeParse(req.params.userId);
  if(!parsed.success || !id.success){res.status(422).json({error:"VALIDATION_FAILED"});return;}
- const client=await dbPool.connect();
+ let client:PoolClient|undefined;
  try{
+  client=await dbPool.connect();
   await client.query("BEGIN");
   await client.query("SELECT pg_advisory_xact_lock(hashtext('hvm-account-blocks'))");
   const replay=await client.query("SELECT 1 FROM public.app_audit_events WHERE actor_id=$1 AND command_id=$2 AND action='account.block_changed'",[req.adminActor.userId,parsed.data.commandId]);
   if(replay.rowCount){await client.query("COMMIT");res.json({status:"updated"});return;}
   const target=await client.query("SELECT * FROM public.app_users WHERE id=$1 FOR UPDATE",[id.data]);
   if(!target.rowCount){await client.query("ROLLBACK");res.status(404).json({error:"USER_NOT_FOUND"});return;}
+  if(!["active","blocked"].includes(target.rows[0].status)){await client.query("ROLLBACK");res.status(409).json({error:"ACCOUNT_REQUIRES_REVIEW"});return;}
   const v=parsed.data;
   if(v.status==="blocked"){
    // One unscheduled active super admin must remain available across the entire future interval.
@@ -534,12 +542,12 @@ adminGovernanceRouter.patch("/users/:userId/status",originProtection,adminSessio
   }
   const starts=v.status==='blocked' ? (v.mode==='custom'?v.startsAt:new Date().toISOString()):null;
   const ends=v.status==='blocked' && v.mode==='custom'?v.endsAt:null;
-  await client.query(`UPDATE public.app_users SET status=$2,block_starts_at=$3,block_ends_at=$4,
-   blocked_at=CASE WHEN $2='blocked' THEN now() ELSE NULL END,blocked_by=CASE WHEN $2='blocked' THEN $5::uuid ELSE NULL END,
-   block_reason=CASE WHEN $2='blocked' THEN 'administrative_governance' ELSE NULL END,
+  await client.query(`UPDATE public.app_users SET status=$2::varchar,block_starts_at=$3::timestamptz,block_ends_at=$4::timestamptz,
+   blocked_at=CASE WHEN $2::varchar='blocked' THEN now() ELSE NULL END,blocked_by=CASE WHEN $2::varchar='blocked' THEN $5::uuid ELSE NULL END,
+   block_reason=CASE WHEN $2::varchar='blocked' THEN 'administrative_governance' ELSE NULL END,
    authorization_revision=authorization_revision+1,revision=revision+1,updated_at=now() WHERE id=$1`,[id.data,v.status,starts,ends,req.adminActor.userId]);
   await client.query(`INSERT INTO public.app_audit_events(request_id,actor_id,actor_role,action,target_entity,target_id,payload_before,payload_after,client_ip_hash,command_id)
    VALUES($1,$2,$3,'account.block_changed','app_users',$4,$5,$6,$7,$8)`,[req.requestId,req.adminActor.userId,req.adminActor.role,id.data,JSON.stringify({status:target.rows[0].status,startsAt:target.rows[0].block_starts_at,endsAt:target.rows[0].block_ends_at}),JSON.stringify({status:v.status,startsAt:starts,endsAt:ends}),req.clientIpHash, v.commandId]);
   await client.query("COMMIT");res.json({status:"updated"});
- }catch{await client.query("ROLLBACK");res.status(503).json({error:"UNAVAILABLE"});}finally{client.release();}
+ }catch(error){if(client)await client.query("ROLLBACK").catch(()=>undefined);reportFailure({category:"account_block_update_failed",requestId:req.requestId,detail:(error as {code?:string}).code??"unknown"});res.status(503).json({error:"UNAVAILABLE"});}finally{client?.release();}
 });

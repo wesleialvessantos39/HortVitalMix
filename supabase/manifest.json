@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 32,
+  "schemaVersion": 33,
   "migrations": [
     {
       "version": "20260919030126",
@@ -165,7 +165,12 @@
       "version": "20260927143315",
       "name": "access_blocks_rural_lifecycle",
       "file": "20260927143315_access_blocks_rural_lifecycle.sql"
+    },
+    {
+      "version": "20260927202711",
+      "name": "account_governance_review",
+      "file": "20260927202711_account_governance_review.sql"
     }
   ],
-  "migrationHistoryHash": "7f6db57329a8f39ed9b4fbf681438811ce80c45a39f1f4f6ae6a8cad6253c422"
+  "migrationHistoryHash": "c1a27afdd6f4da2d718ca451474dfca7b84017ef7708d14419bd2d4d986b4c3d"
 }

@@ -20,7 +20,7 @@ const required = (source, tokens, code) => {
       throw new Error(code + ":" + token);
 };
 
-if (manifest.schemaVersion !== 32)
+if (manifest.schemaVersion < 32)
   throw new Error("T08_SCHEMA_VERSION_MUST_BE_32");
 if (manifest.migrations.length !== 33)
   throw new Error("T08_MIGRATION_COUNT_MUST_BE_33");

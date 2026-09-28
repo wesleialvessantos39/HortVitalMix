@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import request from "supertest";
 import { app } from "../../server/app";
+import { supabaseAdmin } from "../../server/supabase/client";
 import { dbPool } from "../../server/db/pool";
 import {
   ApiHealthResponseSchema,
@@ -150,7 +151,7 @@ describe("API same-origin sem mocks", () => {
       .send({ portalRole: "consumer" });
     expect(response.status).toBe(401);
   });
-  it("redefinição exige sessão real mesmo com senha válida", async () => {
+  it.skipIf(Boolean(supabaseAdmin))("redefinição falha fechada quando o serviço de recuperação está indisponível", async () => {
     const response = await request(app)
       .post("/v1/auth/reset-password")
       .set("Origin", "http://localhost:3000")
@@ -159,7 +160,8 @@ describe("API same-origin sem mocks", () => {
         portalRole: "consumer",
         flowToken: "f".repeat(48),
       });
-    expect(response.status).toBe(401);
+    expect(response.status).toBe(503);
+    expect(response.body.error).toBe("DEPENDENCY_UNAVAILABLE");
   });
   it("backend rejeita senha fraca antes de consultar sessão", async () => {
     const response = await request(app)

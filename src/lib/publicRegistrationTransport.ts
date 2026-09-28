@@ -4,6 +4,7 @@ type PublicRole = "consumer" | "producer";
 
 export type PublicRegistrationResult = {
   userId?: string;
+  reviewRequired?: boolean;
   confirmationRequired: boolean;
   confirmationDispatchAccepted: boolean;
   confirmationDispatchDeferred?: boolean;

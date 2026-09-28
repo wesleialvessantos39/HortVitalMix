@@ -268,7 +268,7 @@ Deno.serve(async (req) => {
       .from("app_people")
       .select("id,user_id,cpf_normalized,email_normalized")
       .or(
-        `cpf_normalized.eq.${data.cpf},email_normalized.eq.${JSON.stringify(
+        `and(cpf_normalized.eq.${data.cpf},archived_at.is.null),email_normalized.eq.${JSON.stringify(
           data.email,
         )}`,
       )
@@ -342,6 +342,14 @@ Deno.serve(async (req) => {
       if (verified.data.user.id !== existing.user_id)
         return safeFailure(409, "IDENTITY_CONFLICT", requestId, origin);
 
+      const account = await admin.from("app_users").select("status").eq("id",existing.user_id).single();
+      if(account.error) return safeFailure(503,"DATABASE_UNAVAILABLE",requestId,origin);
+      if(account.data.status === "deleted") {
+        const requested = await admin.rpc("request_account_reactivation", {p_user_id:existing.user_id,p_role:role,p_property_name:data.propertyName??null,p_activity_type:data.activityType??null});
+        if(requested.error) return safeFailure(409,"REACTIVATION_NOT_ALLOWED",requestId,origin);
+        return json(201,{userId:existing.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role,requestId},origin);
+      }
+      if(account.data.status === "pending") return json(201,{userId:existing.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role,requestId},origin);
       const added = await admin.rpc("add_public_role_to_existing_identity", {
         p_user_id: existing.user_id,
         p_cpf_normalized: data.cpf,
@@ -453,10 +461,12 @@ Deno.serve(async (req) => {
     logFailure(requestId, "public_registration_confirmation_transport");
   }
 
+  const accountState = await admin.from("app_users").select("status").eq("id",userId).single();
   return json(
     201,
     {
       userId,
+      reviewRequired: accountState.data?.status === "pending",
       confirmationRequired: true,
       confirmationDispatchAccepted,
       confirmationDispatchDeferred: !confirmationDispatchAccepted,

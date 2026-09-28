@@ -457,6 +457,10 @@ export function Account({
 
         const targetRole = mode;
         onSessionAdopt(null);
+        if (result.reviewRequired) {
+          navigate(loginPathForRole(targetRole)+"?review=1"+(result.confirmationRequired?"&confirm=1":""));
+          return;
+        }
         if (result.confirmationRequired) {
           try { sessionStorage.setItem("hvm:login-email:"+targetRole,String(form.email ?? "")); } catch {}
           navigate(`/confirmar-contato?portal=${targetRole}&pending=1`);

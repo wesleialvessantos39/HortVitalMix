@@ -80,6 +80,7 @@ async function registerThroughEdge(
   }
 
   return {
+    reviewRequired: Boolean(body.reviewRequired),
     userId: typeof body.userId === "string" ? body.userId : undefined,
     confirmationRequired: Boolean(body.confirmationRequired),
     confirmationDispatchAccepted: Boolean(
@@ -298,7 +299,7 @@ async function findExistingPerson(
 
   // Consulta CPF e e-mail em paralelo no banco de dados
   const [cpfResult, emailResult] = await Promise.all([
-    admin.from("app_people").select("id,user_id,cpf_normalized,email_normalized").eq("cpf_normalized", data.cpf).maybeSingle(),
+    admin.from("app_people").select("id,user_id,cpf_normalized,email_normalized").eq("cpf_normalized", data.cpf).is("archived_at", null).maybeSingle(),
     admin.from("app_people").select("id,user_id,cpf_normalized,email_normalized").eq("email_normalized", data.email).maybeSingle(),
   ]);
 
@@ -371,6 +372,14 @@ async function addRoleToExistingIdentity(
     if (verified.data.user.id !== person.user_id)
       throw registrationError("REGISTRATION_IDENTITY_CONFLICT", 409);
 
+    const account = await supabaseAdmin.from("app_users").select("status").eq("id",person.user_id).single();
+    if(account.error) throw registrationError("REGISTRATION_DATABASE_UNAVAILABLE",503);
+    if(account.data.status === "deleted") {
+      const requested = await supabaseAdmin.rpc("request_account_reactivation", {p_user_id:person.user_id,p_role:role,p_property_name:data.propertyName??null,p_activity_type:data.activityType??null});
+      if(requested.error) throw registrationError("REGISTRATION_DATA_REJECTED",409);
+      return {userId:person.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role};
+    }
+    if(account.data.status === "pending") return {userId:person.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role};
     const added = await supabaseAdmin.rpc(
       "add_public_role_to_existing_identity",
       {
@@ -555,8 +564,10 @@ export async function register(
   }
 
 
+  const accountState = await supabaseAdmin.from("app_users").select("status").eq("id",userId!).single();
   return {
     userId,
+    reviewRequired: accountState.data?.status === "pending",
     confirmationRequired: true,
     confirmationDispatchAccepted: false,
     confirmationDispatchDeferred: true,

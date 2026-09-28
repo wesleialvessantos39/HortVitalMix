@@ -1012,7 +1012,7 @@ export class AdminGovernanceService {
             AND (
               lower(email)=$1
               OR ($2::text IS NOT NULL AND target_person_id IN (
-                SELECT id FROM public.app_people WHERE cpf_normalized=$2
+                SELECT id FROM public.app_people WHERE archived_at IS NULL AND cpf_normalized=$2
               ))
             )
           LIMIT 1`,
@@ -1057,7 +1057,7 @@ export class AdminGovernanceService {
           `SELECT p.id,p.user_id,p.email_normalized,u.status
              FROM public.app_people p
              JOIN public.app_users u ON u.id=p.user_id
-            WHERE p.cpf_normalized=$1
+            WHERE p.archived_at IS NULL AND p.cpf_normalized=$1
             LIMIT 1`,
           [input.targetCpf],
         );
@@ -1113,7 +1113,7 @@ export class AdminGovernanceService {
         targetPersonId = existing.id;
       } else {
         const publicEmail = await client.query(
-          `SELECT 1 FROM public.app_people WHERE email_normalized=$1 LIMIT 1`,
+          `SELECT 1 FROM public.app_people WHERE archived_at IS NULL AND email_normalized=$1 LIMIT 1`,
           [input.email],
         );
         if (publicEmail.rowCount) {
@@ -1507,7 +1507,7 @@ export class AdminGovernanceService {
 
         const duplicate = await client.query(
           `SELECT 1 FROM public.app_people
-            WHERE cpf_normalized=$1 OR email_normalized=$2
+            WHERE archived_at IS NULL AND (cpf_normalized=$1 OR email_normalized=$2)
             LIMIT 1`,
           [input.cpf, invite.email],
         );
