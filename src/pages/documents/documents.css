@@ -104,6 +104,10 @@
 .document-comparison > div {
   min-width: 0;
 }
+.document-comparison a {
+  display: inline-block;
+  margin: 0 0.8rem 0.6rem 0;
+}
 .document-comparison iframe {
   width: 100%;
   height: 650px;
@@ -111,6 +115,7 @@
   border-radius: 10px;
   display: block;
   margin: 1rem 0;
+  background: #f4f7f5;
 }
 .document-comparison img {
   max-width: 100%;
