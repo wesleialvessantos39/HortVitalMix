@@ -7,6 +7,7 @@ import {
 } from "../../../shared/contracts/documents";
 import type { ExtractionView } from "../../../shared/contracts/aiExtraction";
 import "./documents.css";
+import { DocumentPreview } from "./DocumentPreview";
 const statusLabels = {
   quarantine: "Aguardando conferência do arquivo",
   clean: "Arquivo conferido",
@@ -14,8 +15,10 @@ const statusLabels = {
   archived: "Arquivado",
 };
 const errors: Record<string, string> = {
+  DOCUMENT_UNREADABLE:
+    "Não encontrei texto neste PDF. Envie o recibo do SICAR ou uma foto nítida da página inteira.",
   AI_NOT_CONFIGURED:
-    "A leitura automática ainda não está configurada. Seus documentos estão preservados para conferência humana.",
+    "A foto ainda não pôde ser lida neste ambiente. Envie o PDF baixado do SICAR, que o sistema lê e preenche sozinho.",
   AI_RATE_LIMIT:
     "O limite temporário de leitura foi atingido. Aguarde antes de tentar novamente.",
   AI_TIMEOUT:
@@ -47,7 +50,7 @@ const blankForm = {
   propertyRegisteredName: "",
   holderName: "",
   holderCpfNormalized: "",
-  municipality: "Ariquemes",
+  municipality: "",
   totalAreaHectares: "",
   legalReserveHectares: "",
   appHectares: "",
@@ -87,7 +90,7 @@ function formFromFields(fields: Record<string, unknown> | null) {
     propertyRegisteredName: textOrEmpty(fields.propertyRegisteredName),
     holderName: textOrEmpty(fields.holderName),
     holderCpfNormalized: textOrEmpty(fields.holderCpfNormalized),
-    municipality: textOrEmpty(fields.municipality) || "Ariquemes",
+    municipality: textOrEmpty(fields.municipality),
     totalAreaHectares: textOrEmpty(fields.totalAreaHectares),
     legalReserveHectares: textOrEmpty(fields.legalReserveHectares),
     appHectares: textOrEmpty(fields.appHectares),
@@ -125,7 +128,8 @@ export function DocumentsPanel({
     [ai, setAi] = useState<boolean | null>(null),
     [job, setJob] = useState(""),
     [previewKind, setPreviewKind] = useState<"pdf" | "image" | "">(""),
-    [form, setForm] = useState(blankForm);
+    [form, setForm] = useState(blankForm),
+    [reading, setReading] = useState(false);
   const uploadAttempt = useRef<{
       fingerprint: string;
       commandId: string;
@@ -203,10 +207,51 @@ export function DocumentsPanel({
       requestAnimationFrame(() =>
         comparison.current?.scrollIntoView({ block: "start" }),
       );
+      if (
+        !admin &&
+        !meta?.extraction &&
+        ["car_sicar", "ccir_incra"].includes(d.document_type)
+      )
+        void readDocument(d, seq);
     } catch (e) {
       showError(e);
     } finally {
       setBusy(false);
+    }
+  }
+  async function readDocument(d: DocumentView, seq: number) {
+    setReading(true);
+    setNotice("Lendo o documento e preenchendo o cadastro…");
+    try {
+      const result = await api<{
+        extraction?: ExtractionView;
+        propertyUpdated?: boolean;
+        areaApplied?: boolean;
+      }>(`${base}/${d.id}/extraction`, {
+        method: "POST",
+        timeoutMs: 55000,
+        body: JSON.stringify({ commandId: crypto.randomUUID() }),
+      });
+      if (seq !== generation.current) return;
+      if (result.extraction) {
+        setExtraction(result.extraction);
+        const fields = fieldsFromExtraction(result.extraction);
+        if (fields) setForm(formFromFields(fields));
+        setJob("completed");
+      }
+      setNotice(
+        result.propertyUpdated
+          ? result.areaApplied
+            ? "O documento foi lido e o cadastro do imóvel foi preenchido. A análise humana continua obrigatória."
+            : "O documento foi lido. A área total não substituiu o cadastro porque ficou menor que a área cultivada."
+          : result.extraction
+            ? "O documento foi lido. Confira os dados ao lado do arquivo."
+            : "Não foi possível ler este arquivo.",
+      );
+    } catch (e) {
+      if (seq === generation.current) showError(e);
+    } finally {
+      if (seq === generation.current) setReading(false);
     }
   }
   async function upload(file: File) {
@@ -275,13 +320,18 @@ export function DocumentsPanel({
           body: JSON.stringify({ commandId: crypto.randomUUID() }),
         },
       );
-      await load();
+      const rows = await load();
       uploadAttempt.current = null;
-      setNotice(
-        confirmed.status === "clean"
-          ? "Documento recebido e integridade conferida."
-          : "O arquivo não passou na conferência. Envie uma cópia válida.",
-      );
+      const created = rows.find((row) => row.id === signed.documentId);
+      if (created && confirmed.status === "clean") {
+        setNotice("Documento recebido. A leitura começa agora.");
+        void open(created);
+      } else
+        setNotice(
+          confirmed.status === "clean"
+            ? "Documento recebido e integridade conferida."
+            : "O arquivo não passou na conferência. Envie uma cópia válida.",
+        );
     } catch (e) {
       showError(e);
     } finally {
@@ -393,9 +443,9 @@ export function DocumentsPanel({
       <header>
         <h2>Documentos do imóvel</h2>
         <p>
-          CAR, CCIR e comprovantes em acesso privado. Arquivo conferido não
-          significa aprovação do imóvel. Toque em Visualizar e conferir para
-          ver o arquivo e informar os dados — a leitura automática é opcional.
+          CAR, CCIR e comprovantes em acesso privado. Envie o PDF ou a foto da
+          página inteira. O arquivo aparece na tela e o sistema preenche o
+          cadastro. Arquivo conferido não significa aprovação do imóvel.
         </p>
       </header>
       {onNavigate && (
@@ -454,8 +504,8 @@ export function DocumentsPanel({
             </label>
           </div>
           <small>
-            De 1 KB a 15 MB. Fotografe todas as informações com nitidez. Até 20
-            documentos por imóvel.
+            De 1 KB a 15 MB. O produtor só envia o arquivo. Até 20 documentos
+            por imóvel.
           </small>
         </fieldset>
       )}
@@ -501,7 +551,7 @@ export function DocumentsPanel({
                       void open(d);
                     }}
                   >
-                    Visualizar e conferir
+                    Ver documento
                   </button>
                 )}
                 {!admin && d.status === "quarantine" && (
@@ -549,21 +599,51 @@ export function DocumentsPanel({
             </button>
           </div>
           <div className="document-data">
-            <h3>Dados do documento</h3>
+            <h3>Dados lidos</h3>
             {notice && (
               <p role="alert" className="account-notice">
                 {notice}
               </p>
             )}
+            {reading && (
+              <p role="status">Lendo o documento e preenchendo o cadastro…</p>
+            )}
             {!admin &&
             ["car_sicar", "ccir_incra"].includes(selected.document_type) ? (
               <>
                 <p>
-                  Copie os números do arquivo. Não é preciso leitura automática.
-                  Ao salvar, o cadastro do imóvel é corrigido. O envio para
-                  análise leva o cadastro e este documento juntos, só para uma
-                  pessoa conferir e aprovar.
+                  O produtor só envia o arquivo. O sistema lê o PDF ou a foto e
+                  preenche o cadastro. A aprovação continua sendo de uma pessoa.
                 </p>
+                <dl>
+                  {Object.entries({
+                    CAR: form.carNumber,
+                    "Código INCRA": form.ccirNumber,
+                    Imóvel: form.propertyRegisteredName,
+                    Titular: form.holderName,
+                    CPF: form.holderCpfNormalized,
+                    Município: form.municipality,
+                    "Área total (ha)": form.totalAreaHectares,
+                    "Reserva legal (ha)": form.legalReserveHectares,
+                    "APP (ha)": form.appHectares,
+                    "Área consolidada (ha)": form.consolidatedRuralAreaHectares,
+                    "Módulos fiscais": form.fiscalModules,
+                  }).map(([label, value]) => (
+                    <div key={label}>
+                      <dt>{label}</dt>
+                      <dd>{value || "Não encontrado no arquivo"}</dd>
+                    </div>
+                  ))}
+                </dl>
+                {extraction && extraction.discrepancies.length > 0 && (
+                  <ul>
+                    {extraction.discrepancies.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                )}
+                <details>
+                  <summary>Corrigir um dado lido errado</summary>
                 <form
                   className="document-form"
                   onSubmit={(e) => {
@@ -701,33 +781,9 @@ export function DocumentsPanel({
                     />
                   </label>
                   <button className="document-save" type="submit" disabled={busy}>
-                    Salvar dados e corrigir o cadastro
+                    Salvar correção
                   </button>
                 </form>
-                {extraction && extraction.discrepancies.length > 0 && (
-                  <ul>
-                    {extraction.discrepancies.map((v) => (
-                      <li key={v}>{v}</li>
-                    ))}
-                  </ul>
-                )}
-                <details>
-                  <summary>Tentar leitura automática (opcional)</summary>
-                  <p>
-                    {job === "processing"
-                      ? "Leitura em andamento. Atualize a visualização em alguns instantes."
-                      : ai === false
-                        ? "A leitura automática não está configurada. O formulário acima já basta."
-                        : "Se preferir, a leitura tenta preencher o formulário. Confira tudo antes de salvar."}
-                  </p>
-                  <button
-                    type="button"
-                    className="secondary"
-                    disabled={busy || ai === false}
-                    onClick={() => void action(selected, "extraction")}
-                  >
-                    Tentar leitura automática
-                  </button>
                 </details>
               </>
             ) : admin ? (
@@ -766,9 +822,9 @@ export function DocumentsPanel({
               </p>
             )}
             <p className="document-disclaimer">
-              Nem o formulário nem a leitura automática consultam SICAR ou
-              INCRA. Não comprovam titularidade, regularidade ambiental ou
-              ausência de sobreposições. A aprovação é somente humana.
+              A leitura não consulta SICAR nem INCRA e não comprova
+              titularidade, regularidade ou ausência de sobreposição. A
+              aprovação é somente humana.
             </p>
           </div>
           <div className="document-original">
@@ -781,32 +837,12 @@ export function DocumentsPanel({
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Abrir documento em outra aba
+                  Abrir em tela cheia
                 </a>
-                <a href={url} download={selected.file_name}>
-                  Baixar original
-                </a>
-                {previewKind === "image" ||
-                selected.mime_type.startsWith("image/") ? (
-                  <img
-                    alt="Documento original enviado"
-                    referrerPolicy="no-referrer"
-                    src={url}
-                  />
-                ) : (
-                  <iframe
-                    title="Documento original"
-                    referrerPolicy="no-referrer"
-                    src={url}
-                  />
-                )}
-                <p className="document-phone-hint">
-                  No celular, toque em Abrir documento em outra aba. O PDF abre
-                  em tela cheia para você copiar os números no formulário.
-                </p>
+                <DocumentPreview url={url} mime={selected.mime_type} />
               </>
             ) : (
-              <p>Visualização indisponível ou expirada.</p>
+              <p>Visualização indisponível.</p>
             )}
             <button
               type="button"
@@ -814,7 +850,7 @@ export function DocumentsPanel({
               disabled={busy}
               onClick={() => void open(selected)}
             >
-              Renovar visualização
+              Atualizar leitura
             </button>
           </div>
         </section>

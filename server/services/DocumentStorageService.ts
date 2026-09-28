@@ -46,6 +46,48 @@ export async function transaction<T>(run: (c: PoolClient) => Promise<T>) {
     c.release();
   }
 }
+export async function applyExtractedProperty(
+  c: Pick<PoolClient, "query">,
+  propertyId: string,
+  input: {
+    propertyRegisteredName: string | null;
+    municipality: string | null;
+    carNumber: string | null;
+    totalAreaHectares: number | null;
+  },
+) {
+  const property = await c.query(
+    "SELECT status,cultivated_area_hectares FROM public.app_properties WHERE id=$1 FOR UPDATE",
+    [propertyId],
+  );
+  const status = String(property.rows[0]?.status ?? "");
+  const locked = !["draft", "completed", "rejected", "submitted"].includes(
+    status,
+  );
+  const name = input.propertyRegisteredName?.trim() || "";
+  const city = input.municipality?.trim() || "";
+  const nameOk = name.length >= 2 ? name.slice(0, 128) : null;
+  const cityOk = city.length >= 2 ? city.slice(0, 100) : null;
+  const cultivated =
+    property.rows[0]?.cultivated_area_hectares == null
+      ? null
+      : Number(property.rows[0].cultivated_area_hectares);
+  const area =
+    input.totalAreaHectares != null && input.totalAreaHectares > 0
+      ? input.totalAreaHectares
+      : null;
+  const areaApplied =
+    !locked && area != null && (cultivated == null || cultivated <= area);
+  const propertyUpdated =
+    !locked && Boolean(nameOk || cityOk || input.carNumber || areaApplied);
+  if (propertyUpdated) {
+    await c.query(
+      `UPDATE public.app_properties SET property_name=COALESCE($2, property_name), municipality=COALESCE($3, municipality), registration_number=COALESCE($4, registration_number), total_area_hectares=CASE WHEN $5 THEN $6::numeric ELSE total_area_hectares END, revision=revision+1, updated_at=now() WHERE id=$1`,
+      [propertyId, nameOk, cityOk, input.carNumber, areaApplied, area ?? 0],
+    );
+  }
+  return { propertyUpdated, areaApplied, propertyStatus: status };
+}
 export async function audit(
   c: PoolClient,
   a: DocumentActor,
@@ -369,43 +411,23 @@ export const DocumentStorageService = {
         "INSERT INTO public.app_document_reviews(extraction_id,user_id,decision,note,command_id) VALUES($1,$2,'confirmed',$3,$4)",
         [extraction.id, a.userId, declaredNote, input.commandId],
       );
-      const property = await c.query(
-        "SELECT status,cultivated_area_hectares FROM public.app_properties WHERE id=$1 FOR UPDATE",
-        [doc.property_id],
-      );
-      const status = String(property.rows[0]?.status ?? "");
-      const cultivated =
-        property.rows[0]?.cultivated_area_hectares == null
-          ? null
-          : Number(property.rows[0].cultivated_area_hectares);
-      const locked = !["draft", "completed", "rejected", "submitted"].includes(
-        status,
-      );
-      const areaApplied = !locked && (cultivated == null || cultivated <= area);
-      if (!locked) {
-        await c.query(
-          `UPDATE public.app_properties SET property_name=$2, municipality=$3, registration_number=COALESCE($4, registration_number), total_area_hectares=CASE WHEN $5 THEN $6::numeric ELSE total_area_hectares END, revision=revision+1, updated_at=now() WHERE id=$1`,
-          [
-            doc.property_id,
-            input.propertyRegisteredName.slice(0, 128),
-            input.municipality.slice(0, 100),
-            payload.carNumber,
-            areaApplied,
-            area,
-          ],
-        );
-      }
+      const applied = await applyExtractedProperty(c, doc.property_id, {
+        propertyRegisteredName: input.propertyRegisteredName,
+        municipality: input.municipality,
+        carNumber: payload.carNumber,
+        totalAreaHectares: area,
+      });
       const result = {
         extraction,
-        propertyUpdated: !locked,
-        areaApplied,
-        propertyStatus: status,
+        propertyUpdated: applied.propertyUpdated,
+        areaApplied: applied.areaApplied,
+        propertyStatus: applied.propertyStatus,
         discrepancies: check.issues,
       };
       await audit(c, a, "document.declared", id, input.commandId, {
         propertyUpdated: result.propertyUpdated,
-        areaApplied,
-        propertyStatus: status,
+        areaApplied: applied.areaApplied,
+        propertyStatus: applied.propertyStatus,
         engine: extraction.extraction_engine,
       });
       return result;

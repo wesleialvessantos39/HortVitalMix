@@ -80,6 +80,11 @@ async function mock(page: import("@playwright/test").Page, enabled = true) {
       review = req.postDataJSON();
       return json({ status: "saved" });
     }
+    if (path.endsWith("/file"))
+      return route.fulfill({
+        contentType: "application/pdf",
+        body: "%PDF-1.7\n%%EOF",
+      });
     if (path.endsWith("/extraction")) {
       if (req.method() === "POST")
         extraction = {
@@ -108,6 +113,8 @@ async function mock(page: import("@playwright/test").Page, enabled = true) {
         extraction: extraction ? { ...extraction, review } : null,
         ai: { enabled },
         job: null,
+        propertyUpdated: req.method() === "POST",
+        areaApplied: req.method() === "POST",
       });
     }
     if (path.startsWith("/v1/")) return json({});
@@ -121,18 +128,14 @@ for (const width of [320, 390, 768, 1440])
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto("/produtor/documentos?propertyId=" + propertyId);
-    await page.getByRole("button", { name: "Visualizar e conferir" }).click();
+    await page.getByRole("button", { name: "Ver documento" }).click();
+    await expect(page.getByRole("heading", { name: "Dados lidos" })).toBeVisible();
+    await expect(page.getByText("Imóvel de teste")).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "Dados do documento" }),
+      page.getByText("cadastro do imóvel foi preenchido", { exact: false }),
     ).toBeVisible();
-    await page.getByLabel("Nome do imóvel no documento").fill("Imóvel de teste");
-    await page.getByLabel("Município").fill("Ariquemes");
-    await page.getByLabel("Área total (ha)").fill("12");
-    await page
-      .getByRole("button", { name: "Salvar dados e corrigir o cadastro" })
-      .click();
     await expect(
-      page.getByText("O cadastro do imóvel foi corrigido", { exact: false }),
+      page.getByRole("link", { name: "Abrir em tela cheia" }),
     ).toBeVisible();
     expect(
       await page.evaluate(
@@ -157,23 +160,17 @@ test("envio direto, hash e confirmação", async ({ page }) => {
       buffer: bytes,
     });
   await expect(
-    page.getByText("Documento recebido e integridade conferida."),
+    page.getByText("cadastro do imóvel foi preenchido", { exact: false }),
   ).toBeVisible();
 });
 test("IA não configurada mantém documento visualizável", async ({ page }) => {
   await mock(page, false);
   await page.goto("/produtor/documentos?propertyId=" + propertyId);
-  await page.getByRole("button", { name: "Visualizar e conferir" }).click();
+  await page.getByRole("button", { name: "Ver documento" }).click();
   await expect(
-    page.getByRole("button", { name: "Salvar dados e corrigir o cadastro" }),
-  ).toBeEnabled();
-  await page.getByText("Tentar leitura automática (opcional)").click();
-  await expect(
-    page.getByRole("button", { name: "Tentar leitura automática" }),
-  ).toBeDisabled();
-  await expect(
-    page.getByRole("link", { name: "Abrir documento em outra aba" }),
+    page.getByRole("link", { name: "Abrir em tela cheia" }),
   ).toBeVisible();
+  await expect(page.getByText("Imóvel de teste")).toBeVisible();
 });
 test("exclusão confirma e remove da lista ativa", async ({ page }) => {
   await mock(page);
@@ -185,6 +182,6 @@ test("exclusão confirma e remove da lista ativa", async ({ page }) => {
   ).toBeVisible();
   await expect(page.getByText(doc.file_name)).toHaveCount(0);
   await expect(
-    page.getByRole("button", { name: "Visualizar e conferir" }),
+    page.getByRole("button", { name: "Ver documento" }),
   ).toHaveCount(0);
 });

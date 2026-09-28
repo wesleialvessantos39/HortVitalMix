@@ -8,6 +8,8 @@ import {
 import { ExtractionSchema } from "../../shared/contracts/aiExtraction";
 import { validateExtraction } from "../../server/services/CarValidationEngine";
 import { extractWithGemini } from "../../server/services/GeminiDocumentProcessor";
+import { parseRuralDocumentText } from "../../shared/documents/parseRuralDocument";
+import { extractPdfDocument } from "../../server/services/PdfTextExtractor";
 const id = "11111111-1111-4111-8111-111111111111";
 const input = {
   propertyId: id,
@@ -242,5 +244,53 @@ describe("Conferência assistida, nunca decisão automática", () => {
       extractWithGemini(Buffer.from("pdf"), "application/pdf", "car_sicar"),
     ).rejects.toThrow("AI_NOT_CONFIGURED");
     expect(f).not.toHaveBeenCalled();
+  });
+});
+describe("leitura local do PDF", () => {
+  const sample = `
+Número do CAR: RO-1100262-E37BCF0AB8FA4AC3B96572A57914FB03
+Nome do imóvel: Sítio Boa Esperança
+Município: Ariquemes
+CPF: 529.982.247-25
+Área total do imóvel: 48,35 ha
+Reserva legal: 9,67 ha
+Área de preservação permanente: 2,10 ha
+Área consolidada: 30 ha
+Módulos fiscais: 0,60
+`;
+  it("preenche CAR, nome, município e área sem inventar o restante", () => {
+    const parsed = parseRuralDocumentText(sample, "car_sicar");
+    expect(parsed?.carNumber).toBe(
+      "RO-1100262-E37BCF0AB8FA4AC3B96572A57914FB03",
+    );
+    expect(parsed?.propertyRegisteredName).toBe("Sítio Boa Esperança");
+    expect(parsed?.municipality).toBe("Ariquemes");
+    expect(parsed?.totalAreaHectares).toBe(48.35);
+    expect(parsed?.legalReserveHectares).toBe(9.67);
+    expect(parsed?.holderCpfNormalized).toBe("52998224725");
+    expect(parsed?.fiscalModules).toBe(0.6);
+  });
+  it("lê o texto de um PDF simples", async () => {
+    const src = `%PDF-1.4
+1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj
+2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj
+3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 400 200]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>endobj
+4 0 obj<</Length 188>>stream
+BT /F1 12 Tf 20 120 Td (Nome do imovel: Sitio Boa Vista) Tj ET
+BT /F1 12 Tf 20 90 Td (Municipio: Ariquemes) Tj ET
+BT /F1 12 Tf 20 60 Td (Area total do imovel: 12,50 ha) Tj ET
+BT /F1 12 Tf 20 30 Td (RO-1100262-E37BCF0AB8FA4AC3B96572A57914FB03) Tj ET
+endstream
+endobj
+5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj
+trailer<</Size 6/Root 1 0 R>>
+%%EOF`;
+    const parsed = await extractPdfDocument(Buffer.from(src), "car_sicar");
+    expect(parsed?.propertyRegisteredName).toBe("Sitio Boa Vista");
+    expect(parsed?.municipality).toBe("Ariquemes");
+    expect(parsed?.totalAreaHectares).toBe(12.5);
+    expect(parsed?.carNumber).toBe(
+      "RO-1100262-E37BCF0AB8FA4AC3B96572A57914FB03",
+    );
   });
 });

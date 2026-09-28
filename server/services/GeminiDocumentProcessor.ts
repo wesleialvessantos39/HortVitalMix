@@ -12,9 +12,11 @@ import {
   getDocument,
   checkedBytes,
   audit,
+  applyExtractedProperty,
   type DocumentActor,
 } from "./DocumentStorageService.ts";
 import { inspectDocument } from "../security/magicBytes.ts";
+import { extractPdfDocument } from "./PdfTextExtractor.ts";
 export function geminiConfiguration() {
   const key = process.env.GEMINI_API_KEY,
     model = process.env.GEMINI_MODEL;
@@ -139,7 +141,11 @@ export const GeminiDocumentProcessor = {
       `SELECT payload_jsonb,extraction_engine FROM public.app_document_extractions WHERE producer_id=$1 AND file_hash_sha256=$2 AND payload_jsonb->>'documentType'=$3 ORDER BY created_at DESC LIMIT 1`,
       [doc.producer_id, doc.file_hash_sha256, doc.document_type],
     );
-    if (!cached.rows[0] && !geminiConfiguration().enabled)
+    if (
+      !cached.rows[0] &&
+      doc.mime_type !== "application/pdf" &&
+      !geminiConfiguration().enabled
+    )
       throw new DocumentError("AI_NOT_CONFIGURED", 503);
     // Lease transacional evita chamadas duplicadas e pode ser retomado após interrupção serverless.
     const replay = await transaction(async (c) => {
@@ -177,9 +183,35 @@ export const GeminiDocumentProcessor = {
       const bytes = await checkedBytes(doc);
       if (!inspectDocument(bytes, doc).clean)
         throw new DocumentError("DOCUMENT_INTEGRITY_FAILED", 422);
-      const parsed: ExtractionPayload = cached.rows[0]
-        ? ExtractionSchema.parse(cached.rows[0].payload_jsonb)
-        : await extractWithGemini(bytes, doc.mime_type, doc.document_type);
+      let engine = String(
+        cached.rows[0]?.extraction_engine ?? process.env.GEMINI_MODEL ?? "pdf_text",
+      );
+      let parsed: ExtractionPayload;
+      if (cached.rows[0])
+        parsed = ExtractionSchema.parse(cached.rows[0].payload_jsonb);
+      else {
+        const local =
+          doc.mime_type === "application/pdf"
+            ? await extractPdfDocument(bytes, doc.document_type)
+            : null;
+        if (local) {
+          parsed = local;
+          engine = "pdf_text";
+        } else if (geminiConfiguration().enabled) {
+          parsed = await extractWithGemini(
+            bytes,
+            doc.mime_type,
+            doc.document_type,
+          );
+          engine = process.env.GEMINI_MODEL ?? "gemini";
+        } else
+          throw new DocumentError(
+            doc.mime_type === "application/pdf"
+              ? "DOCUMENT_UNREADABLE"
+              : "AI_NOT_CONFIGURED",
+            doc.mime_type === "application/pdf" ? 422 : 503,
+          );
+      }
       const check = validateExtraction(parsed, {
         documentType: doc.document_type,
         cpf: doc.cpf_normalized,
@@ -212,7 +244,7 @@ export const GeminiDocumentProcessor = {
             id,
             doc.property_id,
             doc.producer_id,
-            cached.rows[0]?.extraction_engine ?? process.env.GEMINI_MODEL,
+            cached.rows[0]?.extraction_engine ?? engine,
             JSON.stringify(parsed),
             parsed.confidenceScore,
             parsed.rawText,
@@ -241,19 +273,36 @@ export const GeminiDocumentProcessor = {
           await audit(c, a, "document.extracted", id, commandId, {
             cached: !!cached.rows[0],
             discrepancy: check.issues.length > 0,
+            engine,
           });
-        } else
-          extraction = (
-            await c.query(
-              "SELECT * FROM public.app_document_extractions WHERE document_id=$1",
-              [id],
-            )
-          ).rows[0];
+          const applied = await applyExtractedProperty(c, doc.property_id, {
+            propertyRegisteredName: parsed.propertyRegisteredName,
+            municipality: parsed.municipality,
+            carNumber: parsed.carNumber,
+            totalAreaHectares: parsed.totalAreaHectares,
+          });
+          await c.query(
+            "UPDATE public.app_document_jobs SET status='completed',updated_at=now() WHERE document_id=$1 AND lease_id=$2",
+            [id, lease],
+          );
+          return { extraction, ...applied };
+        }
+        extraction = (
+          await c.query(
+            "SELECT * FROM public.app_document_extractions WHERE document_id=$1",
+            [id],
+          )
+        ).rows[0];
         await c.query(
           "UPDATE public.app_document_jobs SET status='completed',updated_at=now() WHERE document_id=$1 AND lease_id=$2",
           [id, lease],
         );
-        return { extraction };
+        return {
+          extraction,
+          propertyUpdated: false,
+          areaApplied: false,
+          propertyStatus: "",
+        };
       });
     } catch (e) {
       await pool().query(

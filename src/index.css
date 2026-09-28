@@ -2353,8 +2353,10 @@ dialog p {
   flex: 0 0 auto;
 }
 
+.rural-page-heading > div,
 .rural-wizard-heading > div {
   flex: 1;
+  min-width: 0;
 }
 
 .rural-step-progress {

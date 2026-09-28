@@ -1,5 +1,31 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-28 — O arquivo aparece na tela e o cadastro é preenchido sozinho
+
+Status: **correção na `main`; schema lógico 35; sem migration nova. A T11 não foi aberta.**
+
+Evidência do proprietário:
+- no celular não havia tela do PDF: o arquivo ficava numa caixa escondida ou só num link;
+- o produtor não tem tempo nem familiaridade para copiar CAR, área e município na mão;
+- a tela de documentos não se comportava igual no celular e no computador;
+- em Meus imóveis rurais não havia botão de voltar.
+
+Correções:
+- o PDF é desenhado na própria página, no celular e no computador, ao lado dos dados lidos. A foto aparece inteira. Continua existindo **Abrir em tela cheia**;
+- ao enviar um CAR ou CCIR, ou ao tocar em **Ver documento**, o sistema lê o arquivo e preenche o cadastro. O produtor não copia os números;
+- PDF com texto (recibo do SICAR) é lido no servidor, sem chave de IA, motor `pdf_text`. Nome, município, CAR, área, reserva, APP e módulos vão para o imóvel quando o status permite;
+- foto, ou PDF sem texto, usa a leitura Gemini se `GEMINI_API_KEY` e `GEMINI_MODEL` estiverem no backend. Sem essa chave, a foto continua visível e o sistema pede o PDF do SICAR;
+- no computador o arquivo fica à esquerda e os dados à direita; no celular fica uma coluna só, com botões na largura da tela e folga acima da barra inferior;
+- **Meus imóveis rurais** ganhou **Voltar para a conta**;
+- correção manual ficou escondida em “Corrigir um dado lido errado”. A aprovação do imóvel continua humana. Os PDFs não foram apagados.
+
+Banco:
+- nenhuma migration; schema **35**;
+- a primeira leitura grava a extração imutável e atualiza `app_properties` (nome, município, CAR e área, se a área não ficar menor que a cultivada). O CPF da pessoa não muda;
+- `app_releases` segue na tag antiga até sincronizar o SHA de Production depois que o deployment estiver READY. `/api/ready` pode responder `RELEASE_MISMATCH`. A tela não depende disso.
+
+---
+
 ## 2026-09-28 — Conferência mobile e dados do documento sem leitura automática
 
 Status: **correção na `main`; schema lógico 35 preservado; sem migration nova**.

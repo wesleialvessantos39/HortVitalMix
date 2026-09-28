@@ -244,6 +244,13 @@ function PropertyList({
   return (
     <section className="rural-properties-page">
       <header className="rural-page-heading">
+        <button
+          className="rural-back-button"
+          aria-label="Voltar para a conta"
+          onClick={() => onNavigate("/conta")}
+        >
+          <ArrowLeft />
+        </button>
         <div>
           <span className="eyebrow">Ambiente do produtor</span>
           <h1>Meus imóveis rurais</h1>
