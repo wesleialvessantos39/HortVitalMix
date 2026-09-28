@@ -1,5 +1,36 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-28 — Conferência mobile e dados do documento sem leitura automática
+
+Status: **correção na `main`; schema lógico 35 preservado; sem migration nova**.
+
+Evidência do proprietário, na tela `Documentos do imóvel` no celular:
+- o nome do PDF quebrava no meio da extensão (`.p` / `df`);
+- `Visualizar e conferir` e `Excluir` ficavam atrás da barra inferior, então a tela de visualização não abria;
+- a leitura automática não pode ser obrigatória para usar o arquivo;
+- os dados do documento precisam corrigir o cadastro do imóvel;
+- ao enviar para análise, o cadastro deve ir junto com a documentação já preenchida, só para uma pessoa verificar e aprovar.
+
+Correções:
+- no celular os botões do documento ficam no topo do cartão, acima do nome, e a extensão `.pdf` não quebra;
+- `Visualizar e conferir` abre a conferência em tela cheia, com `Fechar`, por cima da barra inferior;
+- o PDF do celular abre em **Abrir documento em outra aba**; o formulário fica na mesma tela;
+- o produtor informa CAR, código INCRA, nome do imóvel, titular, CPF, município, área total e áreas opcionais e toca em **Salvar dados e corrigir o cadastro**;
+- **Tentar leitura automática** ficou opcional e continua desabilitada quando não há chave do Gemini;
+- `POST /v1/producer/documents/:id/declare` grava, na primeira vez, extração imutável com motor `producer_manual` e, em toda gravação, uma conferência confirmada com os números atuais;
+- o cadastro do imóvel recebe nome, município, número do CAR e área total, se o status for `draft`, `completed`, `rejected` ou `submitted` e a área não ficar menor que a área cultivada já informada;
+- o CPF da pessoa não é alterado; imóvel `verified` ou `suspended` não é reescrito;
+- **Enviar para análise** exige CAR ou CCIR com arquivo conferido e dados salvos (`PROPERTY_DOCUMENTS_REQUIRED`, `PROPERTY_DOCUMENT_DATA_REQUIRED`);
+- os PDFs conferidos não foram apagados.
+
+Banco e publicação:
+- nenhuma migration; schema **35** e o histórico de migrations preservados;
+- código funcional no commit `d1fc0668f59f91aedcce2b37aec06b4e801a1432`;
+- `app_releases` continua na tag anterior até ser sincronizado com o SHA do deployment de Production que ficar `READY`. Enquanto isso `/api/ready` pode responder `RELEASE_MISMATCH`. A tela de documentos não depende desse endpoint;
+- main-only, Hobby, sem GitHub Actions, sem plano pago, sem chave Gemini no chat.
+
+---
+
 ## 2026-09-28 — Exclusão, visualização e extração dos documentos do imóvel
 
 Status: **correção na `main`; schema lógico 35 preservado; sem migration nova**.
