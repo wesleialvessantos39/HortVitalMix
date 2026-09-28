@@ -14,32 +14,32 @@
   },
   "functions": {
     "api/[...path].ts": {
-      "maxDuration": 30,
+      "maxDuration": 60,
       "memory": 512,
       "includeFiles": "supabase/manifest.json"
     },
     "api/index.ts": {
-      "maxDuration": 30,
+      "maxDuration": 60,
       "memory": 512,
       "includeFiles": "supabase/manifest.json"
     },
     "api/v1/config.ts": {
-      "maxDuration": 30,
+      "maxDuration": 60,
       "memory": 512,
       "includeFiles": "supabase/manifest.json"
     },
     "api/v1/auth/[action].ts": {
-      "maxDuration": 30,
+      "maxDuration": 60,
       "memory": 512,
       "includeFiles": "supabase/manifest.json"
     },
     "api/v1/admin/bootstrap/index.ts": {
-      "maxDuration": 30,
+      "maxDuration": 60,
       "memory": 512,
       "includeFiles": "supabase/manifest.json"
     },
     "api/v1/admin/bootstrap/status.ts": {
-      "maxDuration": 30,
+      "maxDuration": 60,
       "memory": 512,
       "includeFiles": "supabase/manifest.json"
     }
@@ -336,11 +336,11 @@
         },
         {
           "key": "Permissions-Policy",
-          "value": "camera=(), microphone=(), geolocation=(self)"
+          "value": "camera=(self), microphone=(), geolocation=(self)"
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://tile.openstreetmap.org; connect-src 'self' https://*.supabase.co https://viacep.com.br; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://xipbsazvymkqqfmfegwu.supabase.co https://tile.openstreetmap.org; connect-src 'self' https://*.supabase.co https://viacep.com.br; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; frame-src 'self' https://xipbsazvymkqqfmfegwu.supabase.co; object-src 'none'"
         }
       ]
     }

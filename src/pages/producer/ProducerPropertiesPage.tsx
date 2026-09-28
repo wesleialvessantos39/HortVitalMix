@@ -229,7 +229,7 @@ function PropertyList({
     if(!confirm("Excluir este rascunho? Esta ação não pode ser desfeita."))return;
     setBusyId(property.id);setListNotice("");
     try{await api("/v1/producer/properties/"+property.id,{method:"DELETE",body:JSON.stringify({expectedRevision:property.revision,commandId:commandId()})});localStorage.removeItem(localKey(session.userId,property.id));await load();}
-    catch(e){setListNotice((e as ApiFailure).message==="RECENT_AUTH_REQUIRED"?"Entre novamente para confirmar a exclusão. Seu rascunho está salvo.":"Não foi possível excluir. Somente rascunhos nunca concluídos podem ser excluídos.");}finally{setBusyId(null);}
+    catch(e){setListNotice((e as ApiFailure).message==="PROPERTY_HAS_DOCUMENTS"?"Este rascunho possui documentos com histórico de custódia e não pode ser excluído.":(e as ApiFailure).message==="RECENT_AUTH_REQUIRED"?"Entre novamente para confirmar a exclusão. Seu rascunho está salvo.":"Não foi possível excluir. Somente rascunhos nunca concluídos podem ser excluídos.");}finally{setBusyId(null);}
   }
   async function submitCompleted(property:RuralPropertySummary){
     setBusyId(property.id);setListNotice("");
@@ -334,6 +334,7 @@ function PropertyList({
               )}
               {property.status==="draft" && !property.completedAt && <button className="secondary" disabled={busyId===property.id} onClick={()=>void deleteDraft(property)}>Excluir rascunho</button>}
               {property.status==="completed" && <button className="primary" disabled={busyId===property.id} onClick={()=>void submitCompleted(property)}>Enviar para análise</button>}
+              <button className="secondary" onClick={()=>onNavigate("/produtor/documentos?propertyId="+property.id)}>Documentos do imóvel</button>
               {property.completedAt && <small>Já concluído: não pode ser excluído. Edições exigem nova análise.</small>}
             </article>
           ))}

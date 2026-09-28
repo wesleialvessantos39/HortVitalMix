@@ -11,6 +11,7 @@ import { adminGovernanceRouter } from "./routes/adminGovernanceRoutes.ts";
 import { profilePrivacyRouter } from "./routes/profilePrivacyRoutes.ts";
 import { ruralPropertyRouter } from "./routes/ruralPropertyRoutes.ts";
 import { clientIpHashMiddleware, requestIdMiddleware } from "./middleware/contextEnrichers.ts";
+import { documentRouter, adminDocumentRouter } from "./routes/documentRoutes.ts";
 export const app = express();
 app.disable("x-powered-by");
 
@@ -79,6 +80,10 @@ app.use("/_hvm_api/v1", profilePrivacyRouter);
 app.use("/v1", ruralPropertyRouter);
 app.use("/api/v1", ruralPropertyRouter);
 app.use("/_hvm_api/v1", ruralPropertyRouter);
+for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
+  app.use(prefix + "/producer/documents", documentRouter);
+  app.use(prefix + "/admin/documents", adminDocumentRouter);
+}
 app.use("/v1/admin", adminGovernanceRouter);
 app.use("/api/v1/admin", adminGovernanceRouter);
 app.use("/_hvm_api/v1/admin", adminGovernanceRouter);

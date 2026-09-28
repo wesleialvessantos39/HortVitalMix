@@ -3460,3 +3460,35 @@ Solicitação: corrigir telas de Administrador/Super administrador, falha ao blo
 - Teste SQL real transacional em `tests/sql/account-governance-rollback.sql` aprovado: CPF repetido, nome coincidente, bloqueio de papéis pendentes, pedido idempotente, unicidade vigente, normalização e desbloqueio por prazo. Fixtures aleatórias sem Auth/e-mails reais, inteiramente revertidas por ROLLBACK; nenhuma conta real bloqueada ou excluída.
 - Publicação main-only identificada pela tag `account-governance-20260928`. SHA final, Vercel READY e confirmação de `/api/ready` devem corresponder ao registro final de `app_releases`, atualizado após a publicação.
 - Limites preservados: estes testes não equivalem a Safari em iPhone físico. Validação com caixa de e-mail real e alteração do prazo hospedado de expiração Auth continuam dependentes do acesso operacional já registrado acima; não foram declaradas concluídas nesta entrega.
+
+## 2026-09-28 — T09 e T10: custódia documental e conferência assistida
+
+Base: manual v11, volumes 3 (módulo 09) e 4 (módulo 10), confrontado com o estado real da main. A T09 estava parcial: migration aplicada, contratos sem hash/commandId e ausência de rotas/telas. Manifesto e constante de schema ainda estavam em 33. O último deploy consultado estava ERROR; não foi considerado uma publicação válida.
+
+### Entrega de código e banco
+
+- T09 integrada a Produtor → Meus imóveis → Documentos do imóvel e Administração → Imóveis → Documentos e extrações. PDF/PNG/JPEG de 1 KB a 15 MB, câmera, envio direto com URL assinada sem sobrescrita, hash SHA-256 obrigatório, quarentena, conferência no servidor, retomada de confirmação, arquivamento e auditoria. Reserva idempotente por commandId; 20 documentos ativos/imóvel e 150 MB reservados/produtor, contando arquivos arquivados que continuam armazenados.
+- Inspeção confere assinatura completa PNG, marcadores PDF/JPEG, tamanho, hash e recusa indicadores de conteúdo PDF ativo. Não é um antivírus e não comprova ausência de malware. Downloads exigem clean, proprietário ou setor document_verification/superadministrador; TTL fixo de 900s, com auditoria. Links já emitidos podem continuar válidos até expirar.
+- RLS ENABLE/FORCE nas seis tabelas; revogados privilégios herdados de escrita/TRUNCATE/REFERENCES/TRIGGER. Removida emissão direta pelo cliente para impedir TTL arbitrário. Imóvel/produtor têm vínculo composto validado. Extrações, scans, validações e conferências são imutáveis. Jobs são internos, sem grants a anon/authenticated; o aviso informativo de tabela interna sem policy é intencional, fail-closed.
+- T10: processador Gemini server-side com JSON Schema obrigatório e validação Zod, CAR RO e INCRA/CCIR de 13 dígitos, titular/CPF, área com tolerância de 5%, confiança por campo numérico, texto bruto, valores ausentes como null, e divergências explícitas. Nunca assume ausência de sobreposições nem consulta oficial SICAR/INCRA; não decide regularidade ou aprovação do imóvel.
+- Cache por SHA-256 restrito ao produtor; repetição no mesmo documento reutiliza extração. Lease no banco controla concorrência e recuperação após interrupção; até três retentativas transitórias com backoff limitado. Erros e processing ficam em app_document_jobs; somente resultados completos entram na evidência imutável. Arquivamento concorrente bloqueia persistência da extração.
+- Conferência lado a lado responsiva, abertura do original, renovação de link, confirmação do produtor e registro de divergência com justificativa. Administração pode ler a mesma evidência no painel existente. Não foi implementada a T11 completa nem ampliada autorização de decisão.
+- Rascunho com documentos de custódia não pode mais ser excluído, preservando as evidências. Mensagem específica na interface.
+- Vercel mantém main-only, região pdx1 e build enxuto; funções com teto de 60s acomodam leitura e retentativas. CSP permite visualizador apenas no Supabase canônico; câmera somente same-origin. Nenhum GitHub Action foi criado/disparado nem plano pago habilitado.
+
+### Supabase e verificação
+
+Migration aditiva canônica `20260928110512_trilha09_10_document_pipeline.sql`, física `20260928111654`, aplicada com sucesso. T09 anterior `20260928060300` corresponde à física `20260928060434`. Manifesto e aliases reconciliados: schema lógico 35, 36 migrations. O hash exato está em supabase/manifest.json.
+
+- TypeScript completo e build local aprovados; verificações de migrations e segredos no bundle aprovadas.
+- 48 testes T09/T10 de contratos, assinatura/hash, área/CPF/CAR/CCIR, provedor simulado, rotas e serviços aprovados.
+- 24 testes T08 e 24 testes T07 aprovados.
+- 7 testes de navegador aprovados: 320/390/768/1440 px, envio/confirmar, extração/conferência, arquivamento e indisponibilidade explícita de IA. API/identidade/arquivo de teste simulados; não equivalem a upload autenticado real de produção.
+- `tests/sql/document-pipeline-rollback.sql` executado no Supabase: leitura pelo dono, bloqueio cruzado, extração imutável e grants restritos. Fixtures aleatórias sem Auth/e-mail, rollback integral, zero documentos após o teste.
+- Advisor mantém avisos anteriores de helpers SECURITY DEFINER e proteção de senha; novo aviso informativo de jobs internos sem policy não representa grant público.
+
+### Pendência operacional da T10 — não declarar concluída
+
+O código exige `GEMINI_API_KEY` e `GEMINI_MODEL` exclusivamente no backend. Não foi fornecida chave nesta sessão nem confirmado um modelo/cota gratuita na conta Google. O conector Vercel disponível não gerencia variáveis de ambiente; o painel de configurações redirecionou para login. Não foi feita chamada Gemini real nem habilitado faturamento. Sem configuração, a interface informa indisponibilidade e mantém o original para conferência humana; não fabrica extrações. A ativação e prova com documento controlado pelo proprietário dependem da configuração segura dessas variáveis e redeploy. Não transmitir chave pelo chat.
+
+A publicação do commit e o status Vercel devem ser conferidos pelo SHA exato em `app_releases` e `/api/ready`; este registro não antecipa READY. Homologação com sessão real e Safari físico continua separada dos testes simulados acima.

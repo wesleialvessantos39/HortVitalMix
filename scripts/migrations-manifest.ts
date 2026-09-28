@@ -41,6 +41,8 @@ export function assertManifestHash() {
 }
 
 const remoteVersionAliases: Readonly<Record<string, string>> = {
+  "20260928060434": "20260928060300",
+  "20260928111654": "20260928110512",
   "20260927203404": "20260927202711",
   "20260927144553": "20260927143315",
   // A migration de hardening T05 foi aplicada em produção com timestamp gerado

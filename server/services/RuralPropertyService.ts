@@ -300,6 +300,7 @@ export class RuralPropertyService {
       if(!replay){
         const row=await lockProperty(client,producerId,propertyId);assertRevision(row,expectedRevision);
         if(row.status!=="draft" || row.completed_at)throw new RuralPropertyError("COMPLETED_PROPERTY_DELETE_FORBIDDEN",409);
+        if ((await client.query("SELECT 1 FROM public.app_documents WHERE property_id=$1 LIMIT 1",[propertyId])).rows.length) throw new RuralPropertyError("PROPERTY_HAS_DOCUMENTS",409,"Este imóvel possui documentos com histórico de custódia e não pode ser excluído.");
         await audit(client,{userId,role:"producer",requestId,ipHash,commandId,action:"rural_property.draft_deleted",targetId:propertyId,before:summaryMetadata(row)});
         await client.query("DELETE FROM public.app_properties WHERE id=$1 AND producer_id=$2",[propertyId,producerId]);
       }

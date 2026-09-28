@@ -34,6 +34,7 @@ import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 import { useSession } from "./hooks/useSession";
 import { PublicLoginPage } from "./pages/auth/PublicLoginPage";
 import { ProducerPropertiesPage } from "./pages/producer/ProducerPropertiesPage";
+import { DocumentsPanel } from "./pages/documents/DocumentsPanel";
 const fallback = {
   platformName: "HortiVitalMix",
   slogan: "Tudo fresco. Tudo da sua região.",
@@ -109,6 +110,7 @@ export default function App() {
   }, [shellSession, guestAccessRoute, administrativeSession]);
   const isAccountDataRoute = path === "/conta" || path.startsWith("/conta/");
   const isProducerPropertyRoute =
+    path.startsWith("/produtor/documentos") ||
     path === "/produtor/propriedades" ||
     path === "/produtor/propriedades/novo";
   const publicPortalSession =
@@ -345,6 +347,8 @@ export default function App() {
           />
         ) : path === "/cadastro" ? (
           <ChoosePortalPage onNavigate={go} />
+        ) : path.startsWith("/produtor/documentos") && shellSession?.activeRole === "producer" ? (
+          <DocumentsPanel propertyId={new URLSearchParams(location.search).get("propertyId") ?? ""} initialDocumentId={path.split("/")[3]} onNavigate={go} />
         ) : isProducerPropertyRoute && shellSession?.activeRole === "producer" ? (
           <ProducerPropertiesPage
             key={shellSession.userId + ":" + path}

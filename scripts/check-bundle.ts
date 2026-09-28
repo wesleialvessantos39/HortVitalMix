@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 const patterns = [
   /SUPABASE_SERVICE_ROLE_KEY/,
+  /GEMINI_API_KEY/,
   /SUPABASE_DB_URL/,
   /SUPABASE_JWT_SECRET/,
   /postgres(?:ql)?:\/\//,
@@ -18,6 +19,7 @@ for (const file of readdirSync("dist/assets")) {
     "SUPABASE_DB_URL",
     "SUPABASE_JWT_SECRET",
     "APP_IP_PEPPER",
+    "GEMINI_API_KEY",
   ]) {
     const value = process.env[name];
     if (value && text.includes(value))

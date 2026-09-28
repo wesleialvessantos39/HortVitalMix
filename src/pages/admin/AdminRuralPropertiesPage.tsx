@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
+import { DocumentsPanel } from "../documents/DocumentsPanel";
 type Property = {
   id: string;
   revision: number;
@@ -24,6 +25,7 @@ export function AdminRuralPropertiesPage() {
     [loading, setLoading] = useState(true),
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState("");
+  const [documentProperty, setDocumentProperty] = useState<string | null>(null);
   const [reasons, setReasons] = useState<Record<string, string>>({});
   async function load() {
     setLoading(true);
@@ -150,6 +152,17 @@ export function AdminRuralPropertiesPage() {
                 <dd>{p.access_directions || "—"}</dd>
               </div>
             </dl>
+            <button
+              className="admin-secondary"
+              onClick={() =>
+                setDocumentProperty(documentProperty === p.id ? null : p.id)
+              }
+            >
+              Documentos e extrações
+            </button>
+            {documentProperty === p.id && (
+              <DocumentsPanel propertyId={p.id} admin />
+            )}
             {p.status === "submitted" && (
               <>
                 <label>
