@@ -9,10 +9,12 @@ import {
   ArrowLeft,
   CheckCircle2,
   ChevronRight,
+  FileText,
   MapPinned,
   RefreshCw,
   Save,
   Sprout,
+  Trash2,
   WifiOff,
 } from "lucide-react";
 import { api, type ApiFailure } from "../../lib/api";
@@ -312,42 +314,93 @@ function PropertyList({
           {properties.map((property) => (
             <article className="rural-property-card" key={property.id}>
               <div className="rural-property-card-top">
-                <MapPinned />
+                <div className="rural-property-badge-wrap">
+                  <span className="rural-property-icon" aria-hidden="true">
+                    <MapPinned size={20} />
+                  </span>
+                  <div>
+                    <h2>{property.propertyName || "Imóvel sem nome — rascunho"}</h2>
+                    <p className="rural-property-location">
+                      {property.lineVicinal} · {property.municipality}/{property.state}
+                    </p>
+                  </div>
+                </div>
                 <span className={"rural-status-badge is-" + property.status}>
                   {statusLabel(property.status)}
                 </span>
               </div>
-              <h2>{property.propertyName || "Imóvel sem nome — rascunho"}</h2>
-              <p>
-                {property.lineVicinal} · {property.municipality}/{property.state}
-              </p>
-              <div className="rural-progress-line" aria-label={`Etapa ${property.wizardCurrentStep} de 5`}>
-                <span style={{ width: `${property.wizardCurrentStep * 20}%` }} />
+
+              <div className="rural-property-progress-section">
+                <div className="rural-progress-header">
+                  <small>Etapa {property.wizardCurrentStep} de 5</small>
+                </div>
+                <div className="rural-progress-line" aria-label={`Etapa ${property.wizardCurrentStep} de 5`}>
+                  <span style={{ width: `${property.wizardCurrentStep * 20}%` }} />
+                </div>
               </div>
-              <small>Etapa {property.wizardCurrentStep} de 5</small>
-              {property.status !== "suspended" ? (
-                <button
-                  className="secondary"
-                  onClick={() =>
-                    onNavigate(
-                      "/produtor/propriedades/novo?id=" +
-                        encodeURIComponent(property.id),
-                    )
-                  }
-                >
-                  {property.status==="draft" ? "Continuar cadastro" : "Editar cadastro"}
-                  <ChevronRight />
-                </button>
-              ) : (
-                <p className="rural-readonly-note">
-                  Cadastro suspenso para edição.
-                </p>
+
+              <div className="rural-property-card-actions">
+                {property.status === "completed" && (
+                  <button
+                    className="primary rural-submit-btn"
+                    disabled={busyId === property.id}
+                    onClick={() => void submitCompleted(property)}
+                  >
+                    Enviar para análise
+                  </button>
+                )}
+
+                {property.status !== "suspended" ? (
+                  <button
+                    className={property.status === "completed" ? "secondary" : "primary"}
+                    onClick={() =>
+                      onNavigate(
+                        "/produtor/propriedades/novo?id=" +
+                          encodeURIComponent(property.id),
+                      )
+                    }
+                  >
+                    {property.status === "draft" ? "Continuar cadastro" : "Editar cadastro"}
+                    <ChevronRight size={18} />
+                  </button>
+                ) : (
+                  <p className="rural-readonly-note">
+                    Cadastro suspenso para edição.
+                  </p>
+                )}
+
+                <div className="rural-property-subactions">
+                  <button
+                    className="secondary rural-docs-btn"
+                    onClick={() => onNavigate("/produtor/documentos?propertyId=" + property.id)}
+                  >
+                    <FileText size={16} />
+                    Documentos do imóvel
+                  </button>
+
+                  {property.status === "draft" && !property.completedAt && (
+                    <button
+                      className="secondary rural-delete-btn"
+                      disabled={busyId === property.id}
+                      onClick={() => void deleteDraft(property)}
+                    >
+                      <Trash2 size={16} />
+                      Excluir rascunho
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {property.status === "completed" && (
+                <small className="rural-helper-note">
+                  O envio leva o cadastro e os documentos já com os dados preenchidos, só para verificação e aprovação.
+                </small>
               )}
-              {property.status==="draft" && !property.completedAt && <button className="secondary" disabled={busyId===property.id} onClick={()=>void deleteDraft(property)}>Excluir rascunho</button>}
-              {property.status==="completed" && <button className="primary" disabled={busyId===property.id} onClick={()=>void submitCompleted(property)}>Enviar para análise</button>}
-              <button className="secondary" onClick={()=>onNavigate("/produtor/documentos?propertyId="+property.id)}>Documentos do imóvel</button>
-              {property.status==="completed" && <small>O envio leva o cadastro e os documentos já com os dados preenchidos, só para verificação e aprovação.</small>}
-              {property.completedAt && <small>Já concluído: não pode ser excluído. Edições exigem nova análise.</small>}
+              {property.completedAt && (
+                <small className="rural-helper-note">
+                  Já concluído: não pode ser excluído. Edições exigem nova análise.
+                </small>
+              )}
             </article>
           ))}
         </div>
