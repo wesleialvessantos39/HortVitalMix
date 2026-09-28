@@ -1,5 +1,36 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-28 — Exclusão, visualização e extração dos documentos do imóvel
+
+Status: **correção na `main`; schema lógico 35 preservado; sem migration nova**.
+
+Evidência do proprietário, na tela `Documentos do imóvel` em produção:
+- dois PDFs `RO-1100262-E37BCF0AB8FA4AC3B96572A57914FB03.pdf`, 728 KB, status Arquivo conferido;
+- não havia Excluir — só Arquivar, e o documento continuava na lista;
+- no celular a pré-visualização ficava numa caixa cinza. O iframe usava a URL assinada do Storage, que o Chrome Android não desenha;
+- `Visualizar e conferir` juntava download e leitura no mesmo `Promise.all`, então uma falha impedia a outra;
+- a extração usava 8s no Gemini e 20s no cliente, pouco para um PDF de ~728 KB.
+
+Correções:
+- botão **Excluir** pede confirmação, grava `status='archived'` com auditoria `document.archived` e tira o documento da lista do produtor na hora;
+- administrador continua vendo o acervo, inclusive arquivados;
+- GET `/:id/file` entrega o binário na mesma origem, `Content-Disposition: inline`, sem URL assinada e sem store;
+- no celular a caixa cinza some; o botão **Abrir documento em outra aba** abre o PDF em tela cheia;
+- a leitura automática não depende mais da pré-visualização. Se a consulta da extração falhar, o botão **Extrair dados do documento** continua disponível;
+- timeout do Gemini sobe para 25s; o POST de extração no cliente usa 55s, dentro do teto de 60s da Function;
+- extração continua exigindo `GEMINI_API_KEY` e `GEMINI_MODEL` no backend.
+
+Banco:
+- nenhuma migration; schema **35** e o histórico de migrations preservados;
+- `app_documents.status` já aceitava `archived`; a exclusão operacional não apaga o arquivo, o scan nem a extração;
+- a cota de 20 ativos por imóvel já ignorava arquivados; os bytes do produtor continuam contando o que está armazenado;
+- os dois PDFs conferidos **não foram apagados por esta publicação**. Depois do deployment, Excluir em cada um os tira da lista e mantém o histórico.
+
+Publicação:
+- main-only, Hobby, sem GitHub Actions, sem plano pago, sem chave Gemini no chat.
+
+---
+
 ## 2026-09-20 — Contorno controlado do HTTP 403 do Google AI Studio
 
 Status: **hotfix implementado em branch; promoção e validação Vercel pendentes nesta entrada**.

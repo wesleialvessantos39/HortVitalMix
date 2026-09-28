@@ -66,7 +66,7 @@ async function mock(page: import("@playwright/test").Page, enabled = true) {
       return json({ status: "clean" });
     }
     if (path.endsWith("/archive")) {
-      documents = [{ ...doc, status: "archived" }];
+      documents = [];
       return json({ status: "archived" });
     }
     if (path.endsWith("/review")) {
@@ -167,12 +167,15 @@ test("IA não configurada mantém documento visualizável", async ({ page }) => 
     page.getByRole("link", { name: "Abrir documento em outra aba" }),
   ).toBeVisible();
 });
-test("arquivamento confirmado remove visualização ativa", async ({ page }) => {
+test("exclusão confirma e remove da lista ativa", async ({ page }) => {
   await mock(page);
   await page.goto("/produtor/documentos?propertyId=" + propertyId);
   page.on("dialog", (d) => d.accept());
-  await page.getByRole("button", { name: "Arquivar", exact: true }).click();
-  await expect(page.getByText("Arquivado", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Excluir", exact: true }).click();
+  await expect(
+    page.getByText("Documento excluído da conferência.", { exact: false }),
+  ).toBeVisible();
+  await expect(page.getByText(doc.file_name)).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: "Visualizar e conferir" }),
   ).toHaveCount(0);

@@ -104,6 +104,25 @@
 .document-comparison > div {
   min-width: 0;
 }
+.document-comparison a {
+  display: inline-block;
+  margin: 0 0.8rem 0.6rem 0;
+}
+.document-comparison a.document-open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  background: #1b4d2e;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+.document-phone-hint {
+  display: none;
+}
 .document-comparison iframe {
   width: 100%;
   height: 650px;
@@ -111,6 +130,7 @@
   border-radius: 10px;
   display: block;
   margin: 1rem 0;
+  background: #f4f7f5;
 }
 .document-comparison img {
   max-width: 100%;
@@ -150,7 +170,15 @@
     grid-template-columns: minmax(0, 1fr);
   }
   .document-comparison iframe {
-    height: 420px;
+    display: none;
+  }
+  .document-phone-hint {
+    display: block;
+  }
+  .document-comparison a.document-open {
+    display: flex;
+    width: 100%;
+    margin: 0.4rem 0 0.8rem;
   }
   .document-actions {
     width: 100%;

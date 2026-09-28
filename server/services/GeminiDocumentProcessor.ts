@@ -41,7 +41,7 @@ export async function extractWithGemini(
             "Content-Type": "application/json",
             "x-goog-api-key": key,
           },
-          signal: AbortSignal.timeout(8000),
+          signal: AbortSignal.timeout(25000),
           body: JSON.stringify({
             contents: [
               {

@@ -90,8 +90,8 @@ export const DocumentStorageService = {
     );
     if (!p.rows.length) throw new DocumentError("PROPERTY_NOT_FOUND", 404);
     const r = await pool().query(
-      `SELECT id,property_id,document_type,file_name,file_size_bytes,mime_type,status,created_at FROM public.app_documents WHERE property_id=$1 ORDER BY created_at DESC LIMIT 100`,
-      [propertyId],
+      `SELECT id,property_id,document_type,file_name,file_size_bytes,mime_type,status,created_at FROM public.app_documents WHERE property_id=$1 AND ($2::boolean OR status<>'archived') ORDER BY created_at DESC LIMIT 100`,
+      [propertyId, a.auditor],
     );
     return r.rows;
   },
@@ -220,8 +220,31 @@ export const DocumentStorageService = {
         signedUrl: data.signedUrl,
         expiresInSeconds: 900,
         mimeType: doc.mime_type,
+        fileName: doc.file_name,
       };
     });
+  },
+  async file(a: DocumentActor, id: string) {
+    const doc = await getDocument(a, id);
+    if (doc.status !== "clean")
+      throw new DocumentError("DOCUMENT_NOT_AVAILABLE");
+    const bytes = await checkedBytes(doc);
+    await pool().query(
+      `INSERT INTO public.app_audit_events(request_id,actor_id,actor_role,action,target_entity,target_id,payload_after,client_ip_hash) VALUES($1,$2,$3,'document.previewed','app_documents',$4,$5,$6)`,
+      [
+        a.requestId,
+        a.userId,
+        a.role,
+        id,
+        JSON.stringify({ mime: doc.mime_type, bytes: bytes.length }),
+        a.ipHash,
+      ],
+    );
+    return {
+      bytes,
+      mimeType: String(doc.mime_type),
+      fileName: String(doc.file_name || "documento"),
+    };
   },
   async archive(a: DocumentActor, id: string, commandId: string) {
     return transaction(async (c) => {

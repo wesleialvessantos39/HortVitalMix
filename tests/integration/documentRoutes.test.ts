@@ -79,6 +79,18 @@ it("não revela documento de outro proprietário", async () => {
     (await request(app()).get("/producer/" + id + "/download")).status,
   ).toBe(404);
 });
+it("entrega o arquivo autenticado na origem", async () => {
+  vi.spyOn(DocumentStorageService, "file").mockResolvedValue({
+    bytes: Buffer.from("%PDF-1.7"),
+    mimeType: "application/pdf",
+    fileName: "car.pdf",
+  });
+  const r = await request(app()).get("/producer/" + id + "/file");
+  expect(r.status).toBe(200);
+  expect(r.headers["content-type"]).toMatch(/pdf/);
+  expect(r.headers["content-disposition"]).toMatch(/inline/);
+  expect(r.body.toString()).toContain("%PDF");
+});
 it("não libera quarentena", async () => {
   vi.spyOn(DocumentStorageService, "download").mockRejectedValue(
     new DocumentError("DOCUMENT_NOT_AVAILABLE"),

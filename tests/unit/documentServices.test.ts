@@ -53,6 +53,45 @@ it.each(["quarantine", "rejected", "archived"])(
     expect(mocks.query).toHaveBeenCalledWith("ROLLBACK");
   },
 );
+it("producer list hides archived documents and auditor still sees them", async () => {
+  mocks.query.mockResolvedValueOnce({ rows: [{ id: "prop" }] });
+  mocks.query.mockResolvedValueOnce({ rows: [] });
+  await DocumentStorageService.list(a, "prop");
+  expect(mocks.query.mock.calls[1][0]).toContain("status<>'archived'");
+  expect(mocks.query.mock.calls[1][1]).toEqual(["prop", false]);
+  mocks.query.mockResolvedValueOnce({ rows: [{ id: "prop" }] });
+  mocks.query.mockResolvedValueOnce({ rows: [] });
+  await DocumentStorageService.list({ ...a, auditor: true }, "prop");
+  expect(mocks.query.mock.calls[3][1]).toEqual(["prop", true]);
+});
+it("clean file is returned inline and audited", async () => {
+  const bytes = Buffer.from("%PDF-1.7");
+  mocks.query.mockImplementation(async (sql) => ({
+    rows: sql.includes("SELECT d.*")
+      ? [
+          {
+            status: "clean",
+            storage_path: "properties/p/d.pdf",
+            mime_type: "application/pdf",
+            file_name: "car.pdf",
+          },
+        ]
+      : [],
+  }));
+  mocks.download.mockResolvedValue({
+    data: { size: bytes.length, arrayBuffer: async () => bytes },
+    error: null,
+  });
+  const file = await DocumentStorageService.file(a, "doc");
+  expect(file.mimeType).toBe("application/pdf");
+  expect(Buffer.from(file.bytes).equals(bytes)).toBe(true);
+  expect(
+    mocks.query.mock.calls.some(([sql]) =>
+      String(sql).includes("document.previewed"),
+    ),
+  ).toBe(true);
+  expect(mocks.sign).not.toHaveBeenCalled();
+});
 it("clean download audited with fixed 900 second TTL", async () => {
   mocks.query.mockImplementation(async (sql) => ({
     rows: sql.includes("SELECT d.*")

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { api } from "../../lib/api";
+import { api, apiBase } from "../../lib/api";
 import {
   documentLabels,
   type DocumentView,
@@ -34,6 +34,8 @@ const errors: Record<string, string> = {
     "O envio não foi concluído. Selecione o arquivo novamente.",
   AI_PROVIDER_UNAVAILABLE:
     "O serviço de leitura está temporariamente indisponível.",
+  REQUEST_TIMEOUT:
+    "A leitura demorou mais que o permitido. Tente novamente em alguns instantes.",
 };
 export function DocumentsPanel({
   propertyId,
@@ -57,7 +59,8 @@ export function DocumentsPanel({
     [extraction, setExtraction] = useState<ExtractionView | null>(null),
     [ai, setAi] = useState<boolean | null>(null),
     [note, setNote] = useState(""),
-    [job, setJob] = useState("");
+    [job, setJob] = useState(""),
+    [previewKind, setPreviewKind] = useState<"pdf" | "image" | "">("");
   const uploadAttempt = useRef<{
       fingerprint: string;
       commandId: string;
@@ -70,7 +73,9 @@ export function DocumentsPanel({
       const r = await api<{ documents: DocumentView[] }>(
         `${base}?propertyId=${encodeURIComponent(propertyId)}`,
       );
-      setDocs(r.documents);
+      setDocs(
+        admin ? r.documents : r.documents.filter((d) => d.status !== "archived"),
+      );
       return r.documents;
     } catch (e) {
       showError(e);
@@ -95,40 +100,38 @@ export function DocumentsPanel({
       generation.current++;
     };
   }, [propertyId, base]);
-  useEffect(() => {
-    if (!url) return;
-    const timer = setTimeout(() => {
-      setUrl("");
-      setNotice(
-        "O link de visualização expirou. Clique em Renovar visualização.",
-      );
-    }, 890000);
-    return () => clearTimeout(timer);
-  }, [url]);
+  function fileHref(id: string) {
+    return `${apiBase()}${base}/${id}/file`;
+  }
   async function open(d: DocumentView) {
     const seq = ++generation.current;
     setBusy(true);
     setNotice("");
     setSelected(d);
-    setUrl("");
+    setUrl(d.status === "clean" ? fileHref(d.id) : "");
+    setPreviewKind(
+      d.mime_type === "application/pdf"
+        ? "pdf"
+        : d.mime_type.startsWith("image/")
+          ? "image"
+          : "",
+    );
     setExtraction(null);
     setAi(null);
     setNote("");
     setJob("");
     try {
-      const [link, r] = await Promise.all([
-        api<{ signedUrl: string }>(`${base}/${d.id}/download`),
-        api<{
-          extraction: ExtractionView | null;
-          ai: { enabled: boolean };
-          job: { status: string; error_code?: string } | null;
-        }>(`${base}/${d.id}/extraction`),
-      ]);
+      const meta = await api<{
+        extraction: ExtractionView | null;
+        ai: { enabled: boolean };
+        job: { status: string; error_code?: string } | null;
+      }>(`${base}/${d.id}/extraction`).catch(() => null);
       if (seq !== generation.current) return;
-      setUrl(link.signedUrl);
-      setExtraction(r.extraction);
-      setAi(r.ai.enabled);
-      setJob(r.job?.status ?? "");
+      if (meta) {
+        setExtraction(meta.extraction);
+        setAi(meta.ai.enabled);
+        setJob(meta.job?.status ?? "");
+      }
     } catch (e) {
       showError(e);
     } finally {
@@ -226,6 +229,7 @@ export function DocumentsPanel({
         {
           method: "POST",
           body: JSON.stringify({ commandId: crypto.randomUUID() }),
+          timeoutMs: kind === "extraction" ? 55000 : 20000,
         },
       );
       if (result.extraction) {
@@ -235,12 +239,13 @@ export function DocumentsPanel({
       if (kind === "archive") {
         setSelected(null);
         setUrl("");
+        setDocs((rows) => rows.filter((row) => row.id !== d.id));
       }
       await load();
       if (kind !== "extraction")
         setNotice(
           kind === "archive"
-            ? "Documento arquivado."
+            ? "Documento excluído da conferência. O histórico permanece no banco."
             : "Conferência concluída.",
         );
     } catch (e) {
@@ -401,13 +406,13 @@ export function DocumentsPanel({
                     onClick={() => {
                       if (
                         window.confirm(
-                          "Arquivar este documento? Ele sairá da conferência ativa, mantendo o histórico.",
+                          "Excluir este documento da conferência? Ele sai da lista ativa e o histórico permanece no banco.",
                         )
                       )
                         void action(d, "archive");
                     }}
                   >
-                    Arquivar
+                    Excluir
                   </button>
                 )}
               </div>
@@ -421,22 +426,36 @@ export function DocumentsPanel({
             <h3>Documento original</h3>
             {url ? (
               <>
-                <a href={url} target="_blank" rel="noopener noreferrer">
+                <a
+                  className="document-open"
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   Abrir documento em outra aba
                 </a>
-                {selected.mime_type === "application/pdf" ? (
-                  <iframe
-                    title="Documento original"
-                    referrerPolicy="no-referrer"
-                    src={url}
-                  />
-                ) : (
+                <a href={url} download={selected.file_name}>
+                  Baixar original
+                </a>
+                {previewKind === "image" ||
+                selected.mime_type.startsWith("image/") ? (
                   <img
                     alt="Documento original enviado"
                     referrerPolicy="no-referrer"
                     src={url}
                   />
+                ) : (
+                  <iframe
+                    title="Documento original"
+                    referrerPolicy="no-referrer"
+                    src={url}
+                  />
                 )}
+                <p className="document-phone-hint">
+                  No celular, toque em Abrir documento em outra aba. O PDF abre
+                  em tela cheia. A extração dos dados não depende dessa
+                  pré-visualização.
+                </p>
               </>
             ) : (
               <p>Visualização indisponível ou expirada.</p>
@@ -552,7 +571,7 @@ export function DocumentsPanel({
                     selected.document_type,
                   ) && (
                     <button
-                      disabled={busy || ai !== true}
+                      disabled={busy || ai === false}
                       onClick={() => void action(selected, "extraction")}
                     >
                       Extrair dados do documento

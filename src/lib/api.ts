@@ -117,12 +117,21 @@ async function doFetch(
   }
 }
 
+export function apiBase() {
+  return apiBases()[0];
+}
+
 export async function api<T>(
   path: string,
-  options: RequestInit = {},
+  options: RequestInit & { timeoutMs?: number } = {},
   retried = false,
 ): Promise<T> {
-  const first = await fetchApiPath(path, options, "same-origin");
+  const { timeoutMs, ...init } = options;
+  const requestInit: RequestInit = {
+    ...init,
+    signal: init.signal ?? AbortSignal.timeout(timeoutMs ?? 20000),
+  };
+  const first = await fetchApiPath(path, requestInit, "same-origin");
   let response = first.response;
   const base = first.base;
 

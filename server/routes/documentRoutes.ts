@@ -85,6 +85,35 @@ function router(auditor = false) {
       DocumentStorageService.download(a, z.uuid().parse(req.params.id)),
     ),
   );
+  r.get("/:id/file", async (req, res) => {
+    try {
+      const a = actor(req, auditor);
+      const file = await DocumentStorageService.file(
+        a,
+        z.uuid().parse(req.params.id),
+      );
+      const safeName = String(file.fileName)
+        .replace(/[\r\n"]/g, "")
+        .slice(0, 180);
+      res.status(200);
+      res.setHeader("Content-Type", file.mimeType);
+      res.setHeader("Content-Length", String(file.bytes.length));
+      res.setHeader("Content-Disposition", `inline; filename="${safeName}"`);
+      res.setHeader("Cache-Control", "private, no-store");
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      res.end(file.bytes);
+    } catch (e) {
+      const error =
+        e instanceof DocumentError
+          ? e
+          : e instanceof z.ZodError
+            ? new DocumentError("VALIDATION_ERROR", 422)
+            : new DocumentError("UNAVAILABLE", 503);
+      res
+        .status(error.status)
+        .json({ error: error.code, requestId: req.requestId });
+    }
+  });
   r.get(
     "/:id/extraction",
     handle((req, a) =>
