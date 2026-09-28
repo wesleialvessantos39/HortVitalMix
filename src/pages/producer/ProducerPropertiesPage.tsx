@@ -120,6 +120,10 @@ function messageForFailure(error: unknown) {
     return "Este imóvel foi alterado em outra sessão. Recarregue os dados antes de continuar.";
   if (failure.message === "PROPERTY_INCOMPLETE")
     return "Complete as etapas anteriores antes de enviar o imóvel.";
+  if (failure.message === "PROPERTY_DOCUMENTS_REQUIRED")
+    return "Envie o CAR ou o CCIR do imóvel antes de mandar para análise.";
+  if (failure.message === "PROPERTY_DOCUMENT_DATA_REQUIRED")
+    return "Abra Documentos do imóvel, confira o PDF e salve os dados do documento. A análise só recebe o cadastro junto com esses dados.";
   if (failure.message === "WASHING_FACILITY_REQUIRED")
     return "Legumes picados exigem uma instalação adequada para lavagem e higienização.";
   return "Não foi possível salvar agora. Seus dados continuam preservados neste aparelho.";
@@ -335,6 +339,7 @@ function PropertyList({
               {property.status==="draft" && !property.completedAt && <button className="secondary" disabled={busyId===property.id} onClick={()=>void deleteDraft(property)}>Excluir rascunho</button>}
               {property.status==="completed" && <button className="primary" disabled={busyId===property.id} onClick={()=>void submitCompleted(property)}>Enviar para análise</button>}
               <button className="secondary" onClick={()=>onNavigate("/produtor/documentos?propertyId="+property.id)}>Documentos do imóvel</button>
+              {property.status==="completed" && <small>O envio leva o cadastro e os documentos já com os dados preenchidos, só para verificação e aprovação.</small>}
               {property.completedAt && <small>Já concluído: não pode ser excluído. Edições exigem nova análise.</small>}
             </article>
           ))}

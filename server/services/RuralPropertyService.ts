@@ -640,6 +640,22 @@ export class RuralPropertyService {
       assertRevision(current, input.expectedRevision);
       if(current.draft_data)throw new RuralPropertyError("PROPERTY_INCOMPLETE",422);
       await assertComplete(client, current);
+      const documents = await client.query<{ id: string; extraction_id: string | null }>(
+        `SELECT d.id, e.id AS extraction_id FROM public.app_documents d LEFT JOIN public.app_document_extractions e ON e.document_id=d.id WHERE d.property_id=$1 AND d.status='clean' AND d.document_type IN ('car_sicar','ccir_incra')`,
+        [propertyId],
+      );
+      if (!documents.rows.length)
+        throw new RuralPropertyError(
+          "PROPERTY_DOCUMENTS_REQUIRED",
+          422,
+          "Envie o CAR ou o CCIR conferido antes da análise.",
+        );
+      if (!documents.rows.some((row) => row.extraction_id))
+        throw new RuralPropertyError(
+          "PROPERTY_DOCUMENT_DATA_REQUIRED",
+          422,
+          "Informe os dados do documento antes de enviar para análise.",
+        );
 
       const row = await transitionToSubmitted(
         client,
@@ -657,6 +673,10 @@ export class RuralPropertyService {
         after: {
           ...summaryMetadata(row),
           commitmentAccepted: input.agroecologicalCommitment,
+          documents: documents.rows.map((row) => ({
+            id: row.id,
+            declared: Boolean(row.extraction_id),
+          })),
         },
         ipHash,
         commandId: input.commandId,

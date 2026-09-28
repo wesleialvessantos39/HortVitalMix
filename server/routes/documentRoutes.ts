@@ -4,6 +4,7 @@ import {
   CommandSchema,
   RequestUploadUrlSchema,
   ReviewExtractionSchema,
+  ManualDocumentDataSchema,
 } from "../../shared/contracts/documents.ts";
 import {
   DocumentStorageService,
@@ -167,6 +168,16 @@ function router(auditor = false) {
           a,
           z.uuid().parse(req.params.id),
           ReviewExtractionSchema.parse(req.body),
+        ),
+      ),
+    );
+    r.post(
+      "/:id/declare",
+      handle((req, a) =>
+        DocumentStorageService.declare(
+          a,
+          z.uuid().parse(req.params.id),
+          ManualDocumentDataSchema.parse(req.body),
         ),
       ),
     );

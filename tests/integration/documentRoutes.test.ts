@@ -130,6 +130,56 @@ it("admin não ganha endpoint de extração mutacional", async () =>
         .send({ commandId: id })
     ).status,
   ).toBe(404));
+it("produtor declara os dados do documento", async () => {
+  const f = vi.spyOn(DocumentStorageService, "declare").mockResolvedValue({
+    propertyUpdated: true,
+    areaApplied: true,
+    propertyStatus: "completed",
+    discrepancies: [],
+  } as never);
+  const r = await request(app())
+    .post("/producer/" + id + "/declare")
+    .set("Sec-Fetch-Site", "same-origin")
+    .send({
+      commandId: id,
+      propertyRegisteredName: "Sítio Boa Vista",
+      municipality: "Ariquemes",
+      totalAreaHectares: 12.5,
+    });
+  expect(r.status).toBe(200);
+  expect(r.body.propertyUpdated).toBe(true);
+  expect(f).toHaveBeenCalledOnce();
+});
+it("declaração sem nome é rejeitada", async () => {
+  const f = vi.spyOn(DocumentStorageService, "declare");
+  expect(
+    (
+      await request(app())
+        .post("/producer/" + id + "/declare")
+        .set("Sec-Fetch-Site", "same-origin")
+        .send({ commandId: id })
+    ).status,
+  ).toBe(422);
+  expect(f).not.toHaveBeenCalled();
+});
+it("admin não declara dados no lugar do produtor", async () => {
+  const f = vi.spyOn(DocumentStorageService, "declare");
+  expect(
+    (
+      await request(app())
+        .post("/admin/" + id + "/declare")
+        .set("Sec-Fetch-Site", "same-origin")
+        .set("x-test-sector", "document_verification")
+        .send({
+          commandId: id,
+          propertyRegisteredName: "Sítio",
+          municipality: "Ariquemes",
+          totalAreaHectares: 10,
+        })
+    ).status,
+  ).toBe(404);
+  expect(f).not.toHaveBeenCalled();
+});
 it("contrato exige commandId", async () => {
   const f = vi.spyOn(GeminiDocumentProcessor, "process");
   expect(

@@ -3,7 +3,12 @@ import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
 import { supabaseAdmin } from "../supabase/client.ts";
 import { inspectDocument } from "../security/magicBytes.ts";
-import type { RequestUploadUrl } from "../../shared/contracts/documents.ts";
+import type { RequestUploadUrl, ManualDocumentData } from "../../shared/contracts/documents.ts";
+import {
+  ExtractionSchema,
+  type ExtractionPayload,
+} from "../../shared/contracts/aiExtraction.ts";
+import { validateExtraction } from "./CarValidationEngine.ts";
 export class DocumentError extends Error {
   constructor(
     public code: string,
@@ -257,6 +262,153 @@ export const DocumentStorageService = {
       );
       await audit(c, a, "document.archived", id, commandId);
       return { status: "archived" };
+    });
+  },
+  async declare(a: DocumentActor, id: string, input: ManualDocumentData) {
+    if (a.auditor) throw new DocumentError("FORBIDDEN", 403);
+    return transaction(async (c) => {
+      const replay = await c.query(
+        `SELECT payload_after FROM public.app_audit_events WHERE command_id=$1 AND actor_id=$2 AND action='document.declared'`,
+        [input.commandId, a.userId],
+      );
+      if (replay.rows[0]?.payload_after) return replay.rows[0].payload_after;
+      const doc = await getDocument(a, id, c, true);
+      if (doc.status !== "clean")
+        throw new DocumentError("DOCUMENT_NOT_AVAILABLE");
+      if (!["car_sicar", "ccir_incra"].includes(doc.document_type))
+        throw new DocumentError("EXTRACTION_TYPE_UNSUPPORTED", 422);
+      const area = Math.round(input.totalAreaHectares * 10000) / 10000;
+      const payload: ExtractionPayload = ExtractionSchema.parse({
+        documentType: doc.document_type,
+        carNumber: input.carNumber
+          ? input.carNumber.toUpperCase().replace(/\s+/g, "").slice(0, 64)
+          : null,
+        ccirNumber: input.ccirNumber
+          ? input.ccirNumber.replace(/\D/g, "").slice(0, 64)
+          : null,
+        sicarProtocol: null,
+        propertyRegisteredName: input.propertyRegisteredName,
+        holderName: input.holderName || null,
+        holderCpfNormalized: input.holderCpfNormalized || null,
+        municipality: input.municipality,
+        totalAreaHectares: area,
+        legalReserveHectares: input.legalReserveHectares ?? null,
+        appHectares: input.appHectares ?? null,
+        consolidatedRuralAreaHectares:
+          input.consolidatedRuralAreaHectares ?? null,
+        fiscalModules: input.fiscalModules ?? null,
+        hasEmbargoOrInfractionDetected: null,
+        confidenceScore: 1,
+        fieldConfidence: {
+          totalAreaHectares: 1,
+          legalReserveHectares: 1,
+          appHectares: 1,
+          consolidatedRuralAreaHectares: 1,
+          fiscalModules: 1,
+        },
+        rawText: "Declarado pelo produtor a partir do documento original, sem leitura automática.",
+      });
+      const check = validateExtraction(payload, {
+        documentType: doc.document_type,
+        cpf: doc.cpf_normalized,
+        area,
+      });
+      let extraction = (
+        await c.query(
+          "SELECT * FROM public.app_document_extractions WHERE document_id=$1",
+          [id],
+        )
+      ).rows[0];
+      if (!extraction) {
+        extraction = (
+          await c.query(
+            `INSERT INTO public.app_document_extractions(document_id,property_id,producer_id,extraction_engine,payload_jsonb,confidence_score,raw_text,status,file_hash_sha256,discrepancies,area_difference_percent) VALUES($1,$2,$3,'producer_manual',$4,1,$5,$6,$7,$8,$9) RETURNING *`,
+            [
+              id,
+              doc.property_id,
+              doc.producer_id,
+              JSON.stringify(payload),
+              payload.rawText,
+              check.status,
+              doc.file_hash_sha256,
+              JSON.stringify(check.issues),
+              check.areaDifferencePercent,
+            ],
+          )
+        ).rows[0];
+        await c.query(
+          `INSERT INTO public.app_car_validations(extraction_id,property_id,car_number,ccir_number,total_area_ha,legal_reserve_ha,app_area_ha,fiscal_modules,validation_status) VALUES($1,$2,$3,$4,$5,$6,$7,$8,'manual_check_required')`,
+          [
+            extraction.id,
+            doc.property_id,
+            payload.carNumber?.slice(0, 64) ?? null,
+            payload.ccirNumber?.slice(0, 64) ?? null,
+            payload.totalAreaHectares,
+            payload.legalReserveHectares,
+            payload.appHectares,
+            payload.fiscalModules,
+          ],
+        );
+      }
+      const declaredNote =
+        "Dados informados pelo produtor, sem leitura automática.\n" +
+        JSON.stringify({
+          carNumber: payload.carNumber,
+          ccirNumber: payload.ccirNumber,
+          propertyRegisteredName: payload.propertyRegisteredName,
+          holderName: payload.holderName,
+          holderCpfNormalized: payload.holderCpfNormalized,
+          municipality: payload.municipality,
+          totalAreaHectares: payload.totalAreaHectares,
+          legalReserveHectares: payload.legalReserveHectares,
+          appHectares: payload.appHectares,
+          consolidatedRuralAreaHectares: payload.consolidatedRuralAreaHectares,
+          fiscalModules: payload.fiscalModules,
+        });
+      await c.query(
+        "INSERT INTO public.app_document_reviews(extraction_id,user_id,decision,note,command_id) VALUES($1,$2,'confirmed',$3,$4)",
+        [extraction.id, a.userId, declaredNote, input.commandId],
+      );
+      const property = await c.query(
+        "SELECT status,cultivated_area_hectares FROM public.app_properties WHERE id=$1 FOR UPDATE",
+        [doc.property_id],
+      );
+      const status = String(property.rows[0]?.status ?? "");
+      const cultivated =
+        property.rows[0]?.cultivated_area_hectares == null
+          ? null
+          : Number(property.rows[0].cultivated_area_hectares);
+      const locked = !["draft", "completed", "rejected", "submitted"].includes(
+        status,
+      );
+      const areaApplied = !locked && (cultivated == null || cultivated <= area);
+      if (!locked) {
+        await c.query(
+          `UPDATE public.app_properties SET property_name=$2, municipality=$3, registration_number=COALESCE($4, registration_number), total_area_hectares=CASE WHEN $5 THEN $6::numeric ELSE total_area_hectares END, revision=revision+1, updated_at=now() WHERE id=$1`,
+          [
+            doc.property_id,
+            input.propertyRegisteredName.slice(0, 128),
+            input.municipality.slice(0, 100),
+            payload.carNumber,
+            areaApplied,
+            area,
+          ],
+        );
+      }
+      const result = {
+        extraction,
+        propertyUpdated: !locked,
+        areaApplied,
+        propertyStatus: status,
+        discrepancies: check.issues,
+      };
+      await audit(c, a, "document.declared", id, input.commandId, {
+        propertyUpdated: result.propertyUpdated,
+        areaApplied,
+        propertyStatus: status,
+        engine: extraction.extraction_engine,
+      });
+      return result;
     });
   },
 };

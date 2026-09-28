@@ -35,6 +35,29 @@ export const ReviewExtractionSchema = CommandSchema.extend({
 })
   .strict()
   .refine((v) => v.decision !== "disputed" || v.note.length >= 5);
+const optionalArea = z.number().min(0).max(999999).nullable().optional();
+export const ManualDocumentDataSchema = z
+  .object({
+    commandId: z.uuid(),
+    carNumber: z.string().trim().max(64).nullable().optional(),
+    ccirNumber: z.string().trim().max(64).nullable().optional(),
+    propertyRegisteredName: z.string().trim().min(2).max(128),
+    holderName: z.string().trim().max(255).nullable().optional(),
+    holderCpfNormalized: z
+      .string()
+      .trim()
+      .regex(/^\d{11}$/)
+      .nullable()
+      .optional(),
+    municipality: z.string().trim().min(2).max(100),
+    totalAreaHectares: z.number().positive().max(999999),
+    legalReserveHectares: optionalArea,
+    appHectares: optionalArea,
+    consolidatedRuralAreaHectares: optionalArea,
+    fiscalModules: optionalArea,
+  })
+  .strict();
+export type ManualDocumentData = z.infer<typeof ManualDocumentDataSchema>;
 export type RequestUploadUrl = z.infer<typeof RequestUploadUrlSchema>;
 export type DocumentView = {
   id: string;

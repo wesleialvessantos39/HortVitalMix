@@ -36,7 +36,72 @@ const errors: Record<string, string> = {
     "O serviço de leitura está temporariamente indisponível.",
   REQUEST_TIMEOUT:
     "A leitura demorou mais que o permitido. Tente novamente em alguns instantes.",
+  EXTRACTION_TYPE_UNSUPPORTED:
+    "Este tipo de documento não corrige o cadastro. Use CAR ou CCIR.",
+  PROPERTY_NOT_EDITABLE:
+    "O cadastro deste imóvel não pode ser alterado agora.",
 };
+const blankForm = {
+  carNumber: "",
+  ccirNumber: "",
+  propertyRegisteredName: "",
+  holderName: "",
+  holderCpfNormalized: "",
+  municipality: "Ariquemes",
+  totalAreaHectares: "",
+  legalReserveHectares: "",
+  appHectares: "",
+  consolidatedRuralAreaHectares: "",
+  fiscalModules: "",
+};
+function textOrEmpty(value: unknown) {
+  return value == null || value === "" ? "" : String(value);
+}
+function fieldsFromExtraction(extraction: ExtractionView | null) {
+  const note = extraction?.review?.note ?? "";
+  const split = note.indexOf("\n");
+  if (
+    note.startsWith(
+      "Dados informados pelo produtor, sem leitura automática.",
+    ) &&
+    split > 0
+  ) {
+    try {
+      const parsed = JSON.parse(note.slice(split + 1)) as Record<
+        string,
+        unknown
+      >;
+      if (parsed && typeof parsed.propertyRegisteredName === "string")
+        return parsed;
+    } catch {
+      /* a primeira leitura continua disponível */
+    }
+  }
+  return extraction?.payload_jsonb ?? null;
+}
+function formFromFields(fields: Record<string, unknown> | null) {
+  if (!fields) return { ...blankForm };
+  return {
+    carNumber: textOrEmpty(fields.carNumber),
+    ccirNumber: textOrEmpty(fields.ccirNumber),
+    propertyRegisteredName: textOrEmpty(fields.propertyRegisteredName),
+    holderName: textOrEmpty(fields.holderName),
+    holderCpfNormalized: textOrEmpty(fields.holderCpfNormalized),
+    municipality: textOrEmpty(fields.municipality) || "Ariquemes",
+    totalAreaHectares: textOrEmpty(fields.totalAreaHectares),
+    legalReserveHectares: textOrEmpty(fields.legalReserveHectares),
+    appHectares: textOrEmpty(fields.appHectares),
+    consolidatedRuralAreaHectares: textOrEmpty(
+      fields.consolidatedRuralAreaHectares,
+    ),
+    fiscalModules: textOrEmpty(fields.fiscalModules),
+  };
+}
+function fileTitle(name: string) {
+  const dot = name.lastIndexOf(".");
+  if (dot <= 0) return { base: name, ext: "" };
+  return { base: name.slice(0, dot), ext: name.slice(dot) };
+}
 export function DocumentsPanel({
   propertyId,
   admin = false,
@@ -58,15 +123,16 @@ export function DocumentsPanel({
     [url, setUrl] = useState(""),
     [extraction, setExtraction] = useState<ExtractionView | null>(null),
     [ai, setAi] = useState<boolean | null>(null),
-    [note, setNote] = useState(""),
     [job, setJob] = useState(""),
-    [previewKind, setPreviewKind] = useState<"pdf" | "image" | "">("");
+    [previewKind, setPreviewKind] = useState<"pdf" | "image" | "">(""),
+    [form, setForm] = useState(blankForm);
   const uploadAttempt = useRef<{
       fingerprint: string;
       commandId: string;
       documentId?: string;
     } | null>(null),
-    generation = useRef(0);
+    generation = useRef(0),
+    comparison = useRef<HTMLElement | null>(null);
   async function load() {
     setLoading(true);
     try {
@@ -118,8 +184,8 @@ export function DocumentsPanel({
     );
     setExtraction(null);
     setAi(null);
-    setNote("");
     setJob("");
+    if (!selected || selected.id !== d.id) setForm(blankForm);
     try {
       const meta = await api<{
         extraction: ExtractionView | null;
@@ -131,7 +197,12 @@ export function DocumentsPanel({
         setExtraction(meta.extraction);
         setAi(meta.ai.enabled);
         setJob(meta.job?.status ?? "");
+        const fields = fieldsFromExtraction(meta.extraction);
+        if (fields) setForm(formFromFields(fields));
       }
+      requestAnimationFrame(() =>
+        comparison.current?.scrollIntoView({ block: "start" }),
+      );
     } catch (e) {
       showError(e);
     } finally {
@@ -235,6 +306,7 @@ export function DocumentsPanel({
       if (result.extraction) {
         setExtraction(result.extraction);
         setJob("completed");
+        setForm(formFromFields(fieldsFromExtraction(result.extraction)));
       }
       if (kind === "archive") {
         setSelected(null);
@@ -254,24 +326,61 @@ export function DocumentsPanel({
       setBusy(false);
     }
   }
-  async function review(decision: "confirmed" | "disputed") {
+  function optionalArea(value: string) {
+    const text = value.trim().replace(",", ".");
+    if (!text) return null;
+    const number = Number(text);
+    return Number.isFinite(number) ? number : null;
+  }
+  async function declareData() {
     if (!selected) return;
+    const area = Number(form.totalAreaHectares.trim().replace(",", "."));
+    const cpf = form.holderCpfNormalized.replace(/\D/g, "");
+    if (
+      form.propertyRegisteredName.trim().length < 2 ||
+      form.municipality.trim().length < 2 ||
+      !(area > 0)
+    ) {
+      setNotice("Informe o nome do imóvel, o município e a área total.");
+      return;
+    }
+    if (cpf && cpf.length !== 11) {
+      setNotice("O CPF do titular precisa ter 11 dígitos ou ficar em branco.");
+      return;
+    }
     setBusy(true);
     setNotice("");
     try {
-      await api(`${base}/${selected.id}/review`, {
+      const result = await api<{
+        propertyUpdated: boolean;
+        areaApplied: boolean;
+      }>(`${base}/${selected.id}/declare`, {
         method: "POST",
+        timeoutMs: 20000,
         body: JSON.stringify({
-          decision,
-          note,
           commandId: crypto.randomUUID(),
+          carNumber: form.carNumber.trim() || null,
+          ccirNumber: form.ccirNumber.trim() || null,
+          propertyRegisteredName: form.propertyRegisteredName.trim(),
+          holderName: form.holderName.trim() || null,
+          holderCpfNormalized: cpf || null,
+          municipality: form.municipality.trim(),
+          totalAreaHectares: area,
+          legalReserveHectares: optionalArea(form.legalReserveHectares),
+          appHectares: optionalArea(form.appHectares),
+          consolidatedRuralAreaHectares: optionalArea(
+            form.consolidatedRuralAreaHectares,
+          ),
+          fiscalModules: optionalArea(form.fiscalModules),
         }),
       });
       await open(selected);
       setNotice(
-        decision === "confirmed"
-          ? "Sua conferência foi registrada. A decisão administrativa permanece separada."
-          : "Divergência registrada para análise administrativa.",
+        !result.propertyUpdated
+          ? "Dados salvos no documento. Este cadastro já foi aprovado ou está suspenso e não foi alterado."
+          : result.areaApplied
+            ? "Dados salvos. O cadastro do imóvel foi corrigido com o documento e segue para a análise junto com o arquivo."
+            : "Dados salvos. A área total não substituiu o cadastro porque ficou menor que a área cultivada já informada.",
       );
     } catch (e) {
       showError(e);
@@ -285,7 +394,8 @@ export function DocumentsPanel({
         <h2>Documentos do imóvel</h2>
         <p>
           CAR, CCIR e comprovantes em acesso privado. Arquivo conferido não
-          significa aprovação do imóvel.
+          significa aprovação do imóvel. Toque em Visualizar e conferir para
+          ver o arquivo e informar os dados — a leitura automática é opcional.
         </p>
       </header>
       {onNavigate && (
@@ -349,7 +459,7 @@ export function DocumentsPanel({
           </small>
         </fieldset>
       )}
-      {notice && (
+      {notice && !selected && (
         <p role="alert" className="account-notice">
           {notice}
         </p>
@@ -364,7 +474,10 @@ export function DocumentsPanel({
           {docs.map((d) => (
             <li key={d.id}>
               <div>
-                <strong>{d.file_name}</strong>
+                <strong>
+                  {fileTitle(d.file_name).base}
+                  <span className="file-ext">{fileTitle(d.file_name).ext}</span>
+                </strong>
                 <small>
                   {documentLabels[d.document_type]} ·{" "}
                   {(Number(d.file_size_bytes) / 1024).toFixed(0)} KB
@@ -421,8 +534,244 @@ export function DocumentsPanel({
         </ul>
       )}
       {selected && (
-        <section className="document-comparison">
-          <div>
+        <section className="document-comparison" ref={comparison}>
+          <div className="document-sheet-bar">
+            <h3>Documento e cadastro</h3>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => {
+                setSelected(null);
+                setUrl("");
+              }}
+            >
+              Fechar
+            </button>
+          </div>
+          <div className="document-data">
+            <h3>Dados do documento</h3>
+            {notice && (
+              <p role="alert" className="account-notice">
+                {notice}
+              </p>
+            )}
+            {!admin &&
+            ["car_sicar", "ccir_incra"].includes(selected.document_type) ? (
+              <>
+                <p>
+                  Copie os números do arquivo. Não é preciso leitura automática.
+                  Ao salvar, o cadastro do imóvel é corrigido. O envio para
+                  análise leva o cadastro e este documento juntos, só para uma
+                  pessoa conferir e aprovar.
+                </p>
+                <form
+                  className="document-form"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void declareData();
+                  }}
+                >
+                  <label>
+                    Número do CAR
+                    <input
+                      value={form.carNumber}
+                      autoComplete="off"
+                      onChange={(e) =>
+                        setForm({ ...form, carNumber: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Código INCRA / CCIR
+                    <input
+                      value={form.ccirNumber}
+                      autoComplete="off"
+                      inputMode="numeric"
+                      onChange={(e) =>
+                        setForm({ ...form, ccirNumber: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Nome do imóvel no documento
+                    <input
+                      required
+                      minLength={2}
+                      maxLength={128}
+                      value={form.propertyRegisteredName}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          propertyRegisteredName: e.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Titular
+                    <input
+                      maxLength={255}
+                      value={form.holderName}
+                      onChange={(e) =>
+                        setForm({ ...form, holderName: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    CPF do titular
+                    <input
+                      inputMode="numeric"
+                      autoComplete="off"
+                      value={form.holderCpfNormalized}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          holderCpfNormalized: e.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Município
+                    <input
+                      required
+                      minLength={2}
+                      maxLength={100}
+                      value={form.municipality}
+                      onChange={(e) =>
+                        setForm({ ...form, municipality: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Área total (ha)
+                    <input
+                      required
+                      inputMode="decimal"
+                      value={form.totalAreaHectares}
+                      onChange={(e) =>
+                        setForm({ ...form, totalAreaHectares: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Reserva legal (ha)
+                    <input
+                      inputMode="decimal"
+                      value={form.legalReserveHectares}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          legalReserveHectares: e.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    APP (ha)
+                    <input
+                      inputMode="decimal"
+                      value={form.appHectares}
+                      onChange={(e) =>
+                        setForm({ ...form, appHectares: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Área consolidada (ha)
+                    <input
+                      inputMode="decimal"
+                      value={form.consolidatedRuralAreaHectares}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          consolidatedRuralAreaHectares: e.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Módulos fiscais
+                    <input
+                      inputMode="decimal"
+                      value={form.fiscalModules}
+                      onChange={(e) =>
+                        setForm({ ...form, fiscalModules: e.target.value })
+                      }
+                    />
+                  </label>
+                  <button className="document-save" type="submit" disabled={busy}>
+                    Salvar dados e corrigir o cadastro
+                  </button>
+                </form>
+                {extraction && extraction.discrepancies.length > 0 && (
+                  <ul>
+                    {extraction.discrepancies.map((v) => (
+                      <li key={v}>{v}</li>
+                    ))}
+                  </ul>
+                )}
+                <details>
+                  <summary>Tentar leitura automática (opcional)</summary>
+                  <p>
+                    {job === "processing"
+                      ? "Leitura em andamento. Atualize a visualização em alguns instantes."
+                      : ai === false
+                        ? "A leitura automática não está configurada. O formulário acima já basta."
+                        : "Se preferir, a leitura tenta preencher o formulário. Confira tudo antes de salvar."}
+                  </p>
+                  <button
+                    type="button"
+                    className="secondary"
+                    disabled={busy || ai === false}
+                    onClick={() => void action(selected, "extraction")}
+                  >
+                    Tentar leitura automática
+                  </button>
+                </details>
+              </>
+            ) : admin ? (
+              <>
+                <p>Conferência humana. Estes dados não aprovam o imóvel.</p>
+                <dl>
+                  {Object.entries({
+                    CAR: fieldsFromExtraction(extraction)?.carNumber,
+                    "Código INCRA": fieldsFromExtraction(extraction)?.ccirNumber,
+                    Imóvel:
+                      fieldsFromExtraction(extraction)?.propertyRegisteredName,
+                    Titular: fieldsFromExtraction(extraction)?.holderName,
+                    CPF: fieldsFromExtraction(extraction)?.holderCpfNormalized,
+                    Município: fieldsFromExtraction(extraction)?.municipality,
+                    "Área total (ha)":
+                      fieldsFromExtraction(extraction)?.totalAreaHectares,
+                  }).map(([k, v]) => (
+                    <div key={k}>
+                      <dt>{k}</dt>
+                      <dd>{textOrEmpty(v) || "Não informado"}</dd>
+                    </div>
+                  ))}
+                </dl>
+                {extraction && (
+                  <ul>
+                    {extraction.discrepancies.map((v) => (
+                      <li key={v}>{v}</li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            ) : (
+              <p>
+                Este tipo fica anexado ao imóvel, mas não altera o cadastro.
+                Use CAR ou CCIR para corrigir os dados.
+              </p>
+            )}
+            <p className="document-disclaimer">
+              Nem o formulário nem a leitura automática consultam SICAR ou
+              INCRA. Não comprovam titularidade, regularidade ambiental ou
+              ausência de sobreposições. A aprovação é somente humana.
+            </p>
+          </div>
+          <div className="document-original">
             <h3>Documento original</h3>
             {url ? (
               <>
@@ -453,137 +802,20 @@ export function DocumentsPanel({
                 )}
                 <p className="document-phone-hint">
                   No celular, toque em Abrir documento em outra aba. O PDF abre
-                  em tela cheia. A extração dos dados não depende dessa
-                  pré-visualização.
+                  em tela cheia para você copiar os números no formulário.
                 </p>
               </>
             ) : (
               <p>Visualização indisponível ou expirada.</p>
             )}
             <button
+              type="button"
               className="secondary"
               disabled={busy}
               onClick={() => void open(selected)}
             >
               Renovar visualização
             </button>
-          </div>
-          <div>
-            <h3>Conferência dos dados</h3>
-            {extraction ? (
-              <>
-                <p>
-                  {extraction.status === "flagged_discrepancy"
-                    ? "Há dados que precisam de conferência."
-                    : "Leitura concluída. Confira os dados com o original."}
-                </p>
-                <dl>
-                  {Object.entries({
-                    CAR: extraction.payload_jsonb.carNumber,
-                    "Código INCRA": extraction.payload_jsonb.ccirNumber,
-                    Imóvel: extraction.payload_jsonb.propertyRegisteredName,
-                    Titular: extraction.payload_jsonb.holderName,
-                    CPF: extraction.payload_jsonb.holderCpfNormalized,
-                    Município: extraction.payload_jsonb.municipality,
-                    "Área total (ha)":
-                      extraction.payload_jsonb.totalAreaHectares,
-                    "Reserva legal (ha)":
-                      extraction.payload_jsonb.legalReserveHectares,
-                    "APP (ha)": extraction.payload_jsonb.appHectares,
-                    "Área consolidada (ha)":
-                      extraction.payload_jsonb.consolidatedRuralAreaHectares,
-                    "Módulos fiscais": extraction.payload_jsonb.fiscalModules,
-                    "Diferença de área (%)": extraction.area_difference_percent,
-                    "Confiança geral (%)": Math.round(
-                      extraction.payload_jsonb.confidenceScore * 100,
-                    ),
-                  }).map(([k, v]) => (
-                    <div key={k}>
-                      <dt>{k}</dt>
-                      <dd>{v ?? "Não identificado"}</dd>
-                    </div>
-                  ))}
-                </dl>
-                <ul>
-                  {extraction.discrepancies.map((v) => (
-                    <li key={v}>{v}</li>
-                  ))}
-                </ul>
-                <details>
-                  <summary>Texto extraído e confiança por campo</summary>
-                  <pre>{extraction.payload_jsonb.rawText}</pre>
-                  <pre>
-                    {JSON.stringify(
-                      extraction.payload_jsonb.fieldConfidence,
-                      null,
-                      2,
-                    )}
-                  </pre>
-                </details>
-                {extraction.review && (
-                  <p>
-                    Última conferência:{" "}
-                    {extraction.review.decision === "confirmed"
-                      ? "confirmada pelo produtor"
-                      : "divergência sinalizada"}
-                    . {extraction.review.note}
-                  </p>
-                )}
-                {!admin && (
-                  <>
-                    <label>
-                      Observação para conferência
-                      <textarea
-                        maxLength={2000}
-                        value={note}
-                        onChange={(e) => setNote(e.target.value)}
-                      />
-                    </label>
-                    <div className="document-actions">
-                      <button
-                        disabled={busy}
-                        onClick={() => void review("confirmed")}
-                      >
-                        Confirmar dados
-                      </button>
-                      <button
-                        className="secondary"
-                        disabled={busy || note.trim().length < 5}
-                        onClick={() => void review("disputed")}
-                      >
-                        Há divergência nos números
-                      </button>
-                    </div>
-                  </>
-                )}
-              </>
-            ) : (
-              <>
-                <p>
-                  {job === "processing"
-                    ? "Leitura em andamento. Atualize a visualização em alguns instantes."
-                    : ai === false
-                      ? "Leitura automática ainda não configurada. Documento disponível para conferência humana."
-                      : "A leitura automática auxilia a conferência de CAR e CCIR."}
-                </p>
-                {!admin &&
-                  ["car_sicar", "ccir_incra"].includes(
-                    selected.document_type,
-                  ) && (
-                    <button
-                      disabled={busy || ai === false}
-                      onClick={() => void action(selected, "extraction")}
-                    >
-                      Extrair dados do documento
-                    </button>
-                  )}
-              </>
-            )}
-            <p className="document-disclaimer">
-              A leitura não consulta SICAR/INCRA nem comprova titularidade,
-              regularidade ambiental ou ausência de sobreposições. A decisão
-              cabe à análise humana.
-            </p>
           </div>
         </section>
       )}

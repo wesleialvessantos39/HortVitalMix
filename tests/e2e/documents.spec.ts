@@ -69,6 +69,13 @@ async function mock(page: import("@playwright/test").Page, enabled = true) {
       documents = [];
       return json({ status: "archived" });
     }
+    if (path.endsWith("/declare") && req.method() === "POST")
+      return json({
+        propertyUpdated: true,
+        areaApplied: true,
+        propertyStatus: "completed",
+        discrepancies: [],
+      });
     if (path.endsWith("/review")) {
       review = req.postDataJSON();
       return json({ status: "saved" });
@@ -115,20 +122,17 @@ for (const width of [320, 390, 768, 1440])
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto("/produtor/documentos?propertyId=" + propertyId);
     await page.getByRole("button", { name: "Visualizar e conferir" }).click();
-    await page
-      .getByRole("button", { name: "Extrair dados do documento" })
-      .click();
     await expect(
-      page.getByText("Área total difere mais de 5% da declaração"),
+      page.getByRole("heading", { name: "Dados do documento" }),
     ).toBeVisible();
+    await page.getByLabel("Nome do imóvel no documento").fill("Imóvel de teste");
+    await page.getByLabel("Município").fill("Ariquemes");
+    await page.getByLabel("Área total (ha)").fill("12");
     await page
-      .getByLabel("Observação para conferência")
-      .fill("Área informada diverge do meu documento.");
-    await page
-      .getByRole("button", { name: "Há divergência nos números" })
+      .getByRole("button", { name: "Salvar dados e corrigir o cadastro" })
       .click();
     await expect(
-      page.getByText("Divergência registrada para análise administrativa."),
+      page.getByText("O cadastro do imóvel foi corrigido", { exact: false }),
     ).toBeVisible();
     expect(
       await page.evaluate(
@@ -161,7 +165,11 @@ test("IA não configurada mantém documento visualizável", async ({ page }) => 
   await page.goto("/produtor/documentos?propertyId=" + propertyId);
   await page.getByRole("button", { name: "Visualizar e conferir" }).click();
   await expect(
-    page.getByRole("button", { name: "Extrair dados do documento" }),
+    page.getByRole("button", { name: "Salvar dados e corrigir o cadastro" }),
+  ).toBeEnabled();
+  await page.getByText("Tentar leitura automática (opcional)").click();
+  await expect(
+    page.getByRole("button", { name: "Tentar leitura automática" }),
   ).toBeDisabled();
   await expect(
     page.getByRole("link", { name: "Abrir documento em outra aba" }),
