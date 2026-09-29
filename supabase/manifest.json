@@ -190,7 +190,12 @@
       "version": "20260929133000",
       "name": "trilha11_enqueue_on_submit",
       "file": "20260929133000_trilha11_enqueue_on_submit.sql"
+    },
+    {
+      "version": "20260929200000",
+      "name": "trilha11_queue_reopen_and_adjustments",
+      "file": "20260929200000_trilha11_queue_reopen_and_adjustments.sql"
     }
   ],
-  "migrationHistoryHash": "72cabbb2aaa4ccd6f101e7cd60128d994096cfcd365c73420ef8099fcbcaf05f"
+  "migrationHistoryHash": "665785b52d7fe7f8cb9edc6de0fa82fff59f4b5561f97cdbe73328aa2567960e"
 }
