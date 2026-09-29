@@ -3661,3 +3661,30 @@ Migration aditiva canônica `20260928110512_trilha09_10_document_pipeline.sql`, 
 O código exige `GEMINI_API_KEY` e `GEMINI_MODEL` exclusivamente no backend. Não foi fornecida chave nesta sessão nem confirmado um modelo/cota gratuita na conta Google. O conector Vercel disponível não gerencia variáveis de ambiente; o painel de configurações redirecionou para login. Não foi feita chamada Gemini real nem habilitado faturamento. Sem configuração, a interface informa indisponibilidade e mantém o original para conferência humana; não fabrica extrações. A ativação e prova com documento controlado pelo proprietário dependem da configuração segura dessas variáveis e redeploy. Não transmitir chave pelo chat.
 
 A publicação do commit e o status Vercel devem ser conferidos pelo SHA exato em `app_releases` e `/api/ready`; este registro não antecipa READY. Homologação com sessão real e Safari físico continua separada dos testes simulados acima.
+
+
+## 2026-09-29 — RESPONSIVIDADE DA AUDITORIA + LOGIN ADMINISTRATIVO ENTRE DISPOSITIVOS
+
+### Escopo executado
+- Corrigida a tela `Fila de auditoria humana` para usar uma única largura fluida no mobile e no desktop.
+- O botão `Atualizar`, a faixa de abas e o card/lista da fila passam a respeitar o mesmo container.
+- As abas `Pendentes / Em análise / Decididos` dividem igualmente a largura disponível e não dependem de largura fixa.
+- O comparador triplo fica empilhado em telas abaixo de 1024 px e passa a três colunas a partir de 1024 px, preservando `min-width: 0` e evitando overflow horizontal.
+- O iframe/imagem de documento, campos, ações e textos longos passam a respeitar a largura do card.
+- Mantido o `meta viewport` já existente em `index.html`.
+
+### Correção de login administrativo em outro dispositivo
+- Diagnóstico de produção: existe atualmente uma única identidade administrativa canônica ativa, com papel `platform_super_admin`, e o e-mail administrativo/auth está confirmado.
+- A falha `Dados inválidos ou cadastro não autorizado` podia ocorrer em um dispositivo novo quando a pessoa abria a entrada `Administrador` (`platform_admin`) embora a identidade canônica única estivesse registrada como `Super administrador`.
+- O login agora tenta primeiro o portal escolhido. Se não existir principal naquele papel, consulta o mesmo e-mail sem filtro de portal e, somente quando houver uma única identidade administrativa não ambígua, autentica a senha e usa o papel canônico armazenado no banco.
+- O papel retornado continua sendo o papel real do banco. Não há promoção de `platform_admin` para `platform_super_admin`; se houver mais de uma identidade administrativa para o mesmo e-mail, o fluxo permanece fail-closed.
+- A sessão continua sendo emitida por cookies HTTP-only e, portanto, pode ser criada normalmente em qualquer dispositivo mediante e-mail e senha válidos.
+
+### Regressões adicionadas
+- Teste de integração cobre login em dispositivo novo quando a opção de portal escolhida não corresponde ao único papel administrativo canônico.
+- Teste E2E da auditoria cobre largura uniforme no mobile, ausência de overflow e comparador em 1 coluna no mobile / 3 colunas no desktop.
+
+### Banco e release
+- Nenhuma migração ou DDL foi necessária.
+- Schema lógico permanece em `36`.
+- Após publicação READY no Vercel, `app_releases` deve apontar para o SHA exato desta correção, mantendo o mesmo `migration_history_hash` da T11.

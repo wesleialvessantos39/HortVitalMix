@@ -113,6 +113,27 @@ async function mock(page: Page, role: string) {
           },
         ],
       });
+    if (path === "/v1/admin/verification-queue")
+      return json({
+        requests: [
+          {
+            id,
+            status: "pending",
+            property_name: "Propriedade rural com nome extenso",
+            municipality: "Ariquemes",
+            line_vicinal: "Linha C-65",
+            total_area_hectares: "12",
+            cultivated_area_hectares: "5",
+            latitude_sede: "-9.9",
+            longitude_sede: "-63.0",
+            producer_name: fullName,
+            draft_data: null,
+            perimeter: null,
+            documents: [],
+            extraction: null,
+          },
+        ],
+      });
     if (path === "/v1/admin/rural-properties")
       return json({
         properties: [
@@ -214,6 +235,34 @@ for (const role of ["platform_admin", "platform_super_admin"])
       }
       expect(errors).toEqual([]);
     });
+test("audit queue keeps one mobile width and a three-column comparator on desktop", async ({ page }) => {
+  await mock(page, "platform_super_admin");
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/admin/imoveis");
+    await expect(page.getByRole("heading", { name: "Fila de auditoria humana" })).toBeVisible();
+    const geometry = await page.evaluate(() => {
+      const refresh = document.querySelector(".verification-refresh")?.getBoundingClientRect();
+      const tabs = document.querySelector(".verification-tabs")?.getBoundingClientRect();
+      const list = document.querySelector(".verification-list")?.getBoundingClientRect();
+      return refresh && tabs && list
+        ? { refresh: refresh.width, tabs: tabs.width, list: list.width }
+        : null;
+    });
+    expect(geometry).not.toBeNull();
+    if (width === 390) {
+      expect(Math.abs(geometry!.refresh - geometry!.tabs)).toBeLessThanOrEqual(1);
+      expect(Math.abs(geometry!.tabs - geometry!.list)).toBeLessThanOrEqual(1);
+    }
+    await page.locator(".verification-item").first().click();
+    const columns = await page.locator(".verification-triple").evaluate((element) =>
+      getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length,
+    );
+    expect(columns).toBe(width >= 1024 ? 3 : 1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+});
+
 test("super administrator confirms block, deletion and registration review", async ({
   page,
 }) => {

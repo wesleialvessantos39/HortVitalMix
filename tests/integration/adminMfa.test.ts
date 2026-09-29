@@ -27,6 +27,24 @@ describe("administrative password login — user policy 2026-09-25",()=>{
   expect(result).toMatchObject({status:"session_created",role:portal,sectors:portal==="platform_admin"?["operations"]:[]});
   expect(m.sendOtp).not.toHaveBeenCalled();expect(m.signIn).toHaveBeenCalledOnce();
  });
+ it("accepts the real unique administrative role from a fresh device even when the other portal entry was selected",async()=>{
+  role=assigned="platform_super_admin";
+  let principalLookups=0;
+  m.from.mockImplementation(table=>{
+   if(table==="app_admin_principals"){
+    const q:any={};
+    for(const op of ["select","eq","in","is"])q[op]=()=>q;
+    q.limit=async()=>({data:principalLookups++===0?[]:[{admin_user_id:"u",portal_role:"platform_super_admin",email_verified_at:"2026-09-01",auth_email:"test@example.invalid"}],error:null});
+    return q;
+   }
+   return query(({
+    app_users:{status},app_user_role_assignments:[{role_code:assigned,expires_at:null}],
+    app_admin_sector_members:[{sector_code:"operations",expires_at:null}],
+   } as any)[table]);
+  });
+  expect(await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_admin")).toMatchObject({status:"session_created",role:"platform_super_admin",sectors:[]});
+  expect(m.signIn).toHaveBeenCalledOnce();
+ });
  it("requires initial confirmation",async()=>{confirmed=false;expect(await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_super_admin")).toMatchObject({status:"email_confirmation_required"});expect(m.sendOtp).not.toHaveBeenCalled();});
  it("rejects an incorrect password",async()=>{m.signIn.mockResolvedValue({data:{},error:{message:"invalid"}});expect(await AdminGovernanceService.login("test@example.invalid","wrong","ip","r","platform_super_admin")).toEqual({status:"invalid_credentials"});});
  it("rejects a suspended account",async()=>{status="suspended";expect(await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_super_admin")).toEqual({status:"account_blocked",error:"ACCOUNT_UNAVAILABLE"});});

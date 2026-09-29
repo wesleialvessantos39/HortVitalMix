@@ -79,7 +79,7 @@ export function VerificationQueuePage() {
     <section className="admin-page verification-queue">
       <header className="admin-page-header">
         <div><h1>Fila de auditoria humana</h1><p>Comparador triplo. A aprovação é exclusiva do analista.</p></div>
-        <button className="admin-secondary" disabled={loading} onClick={() => void load()}>Atualizar</button>
+        <button className="admin-secondary verification-refresh" disabled={loading} onClick={() => void load()}>Atualizar</button>
       </header>
       {notice && <p className="admin-alert" role="status">{notice}</p>}
       <div className="verification-tabs" role="tablist">
