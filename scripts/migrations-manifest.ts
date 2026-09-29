@@ -41,6 +41,10 @@ export function assertManifestHash() {
 }
 
 const remoteVersionAliases: Readonly<Record<string, string>> = {
+  // T11 aplicada/reconciliada em produção com timestamps físicos do Supabase.
+  "20260929213043": "20260929120000",
+  "20260929213048": "20260929133000",
+  "20260929213052": "20260929200000",
   "20260928060434": "20260928060300",
   "20260928111654": "20260928110512",
   "20260927203404": "20260927202711",

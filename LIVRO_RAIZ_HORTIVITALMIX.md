@@ -3688,3 +3688,58 @@ A publicação do commit e o status Vercel devem ser conferidos pelo SHA exato e
 - Nenhuma migração ou DDL foi necessária.
 - Schema lógico permanece em `36`.
 - Após publicação READY no Vercel, `app_releases` deve apontar para o SHA exato desta correção, mantendo o mesmo `migration_history_hash` da T11.
+
+
+## 2026-09-29 — AUDITORIA DE CONSISTÊNCIA T11: LOGIN MULTIDISPOSITIVO, FILA, PARECER, DOCUMENTOS E REENVIO
+
+### Resultado da auditoria
+- A conferência foi feita contra a `main` real, o deploy de produção e o Supabase de produção, não apenas contra a interface.
+- O código já continha as correções funcionais da T11 no SHA `ecb9ef2b1f8b24208ba595c16ef8efe05954584c`, porém foi encontrado **drift operacional no Supabase**: as migrations T11 ainda não constavam no histórico físico e o `CHECK` de `app_verification_requests.status` não aceitava `adjustments_required`. Com isso, **Devolver para correção** podia falhar mesmo com a tela e o backend preparados.
+- O drift foi corrigido no Supabase antes desta atualização documental. A restrição de status em produção agora aceita `pending`, `claimed`, `in_review`, `approved`, `rejected`, `adjustments_required` e `escalated`.
+- As migrations canônicas continuam sendo `20260929120000_trilha11_verification_queue.sql`, `20260929133000_trilha11_enqueue_on_submit.sql` e `20260929200000_trilha11_queue_reopen_and_adjustments.sql`. Em produção, foram reconciliadas com versões físicas `20260929213043`, `20260929213048` e `20260929213052`; os aliases de histórico foram registrados no verificador de migrations.
+- Schema lógico permanece em `36`. O hash canônico das migrations permanece `665785b52d7fe7f8cb9edc6de0fa82fff59f4b5561f97cdbe73328aa2567960e`.
+
+### Login de Administrador e Super administrador em qualquer dispositivo
+- O login administrativo continua validando e-mail, senha, conta ativa, papel e setores no backend.
+- Um aparelho novo não depende de possuir a sessão/cookie do aparelho anterior. O endpoint administrativo entrega a sessão do login atual e a interface guarda a sessão administrativa do próprio navegador, usando `Authorization: Bearer` nas chamadas administrativas.
+- Se o access token expirar, o refresh token administrativo do navegador é usado para renovar a sessão e repetir a chamada; o backend também continua emitindo cookies HTTP-only.
+- Quando o usuário seleciona a entrada Administrador ou Super administrador e existe uma única identidade administrativa canônica para aquele e-mail, o sistema usa o papel real armazenado no banco. Isso não promove privilégios e permanece fail-closed se houver ambiguidade.
+- A produção registra tentativas administrativas bem-sucedidas após essas correções. A senha específica do operador não é conhecida nem armazenada no projeto; portanto a validação final de uma credencial pessoal continua sendo feita pelo próprio login real, nunca pela exposição da senha em documentação ou teste.
+
+### Fila de auditoria totalmente em português
+- A interface não exibe mais os termos de implementação `Capturar`, `pending`, `rejected`, `Trust level` ou `Motor: producer_manual`.
+- Os equivalentes visíveis são, conforme o caso: **Colocar em análise**, **Pendente**, **Em análise**, **Aprovado**, **Recusado**, **Ajustes solicitados**, **Devolver para correção** e **Parecer técnico para o produtor**.
+- O nível de confiança continua existindo somente como dado técnico interno da decisão, sem campo `Trust level` exposto ao operador nessa tela.
+- O nome interno do motor de extração não é apresentado no comparador de auditoria.
+
+### Fluxo Pendentes → Em análise → Decididos e sincronização com o produtor
+- `Colocar em análise` muda a solicitação aberta de `pending` para `in_review` em transação, com trava de concorrência e auditoria.
+- A decisão humana grava parecer, checklist e decisão; o pedido passa para **Decididos** quando aprovado, recusado ou devolvido para correção.
+- O produtor recebe a situação derivada da mesma fila: **Pendente**, **Em análise**, **Devolvido para correção**, **Aprovado** ou **Recusado**. Não existe um status paralelo digitado manualmente na tela do produtor.
+- Pedidos antigos capturados ficam protegidos contra dupla captura; claims abandonados podem voltar a Pendente pelo mecanismo de liberação de claim vencido.
+
+### Devolução para correção e parecer obrigatório
+- **Devolver para correção** usa a decisão `adjustments_required`.
+- O parecer técnico tem mínimo de 10 caracteres e deve explicar o motivo e o que precisa ser corrigido.
+- Na área do produtor, o cadastro exibe **Parecer técnico — o que corrigir** com o texto informado pelo Administrador/Super administrador e oferece **Corrigir cadastro**.
+- Quando o mesmo imóvel já possui decisão anterior e é reenviado, o produtor continua vendo o parecer anterior enquanto a nova análise está Pendente.
+- A decisão anterior não é apagada: permanece no histórico do imóvel para auditoria administrativa.
+
+### Visualização de até 10 documentos
+- A fila agrega os documentos ativos do mesmo imóvel e limita a apresentação a **10 documentos**, preservando a ordem de envio.
+- Se houver mais de um documento, aparece **Selecionar documento**. O analista escolhe qual arquivo quer visualizar.
+- O documento selecionado é carregado com a sessão administrativa atual e pode ser visualizado no próprio comparador ou aberto em outra aba.
+- PDFs e imagens usam o mesmo fluxo protegido; documentos arquivados não entram na lista ativa.
+
+### Identificação e reenvio do mesmo imóvel
+- A identidade do imóvel é vinculada ao produtor. Havendo CAR/registro, o sistema normaliza máscara, espaços, caixa e caracteres e usa esse registro como chave principal.
+- Sem registro utilizável, a comparação usa produtor + nome normalizado + município + linha vicinal.
+- Imóveis de produtores diferentes nunca são mesclados pela regra de identidade.
+- Ao reenviar o mesmo imóvel após decisão anterior, a fila aberta volta para **Pendentes**, limpa o claim anterior e preserva as decisões históricas.
+- Se versões antigas do mesmo imóvel tiverem gerado solicitações separadas, a camada de serviço agrupa a identidade, consolida documentos/histórico e evita apresentar o mesmo imóvel como dois casos simultâneos.
+- Em produção foi verificado um caso com decisão anterior preservada e nova análise aberta para o mesmo imóvel, confirmando a coexistência de histórico e reanálise.
+
+### Estado de produção e sincronização
+- O deploy que introduziu as correções funcionais T11 está READY no Vercel no SHA `ecb9ef2b1f8b24208ba595c16ef8efe05954584c`.
+- Esta auditoria também corrige a documentação e o mapeamento de versões físicas das migrations. Após o commit desta seção, o Vercel e `app_releases` devem apontar para o novo SHA exato.
+- Não foi executado teste com a senha pessoal do operador e nenhuma senha deve ser fornecida ao projeto, ao Livro Raiz ou ao chat.
