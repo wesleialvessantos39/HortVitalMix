@@ -12,6 +12,7 @@ import { profilePrivacyRouter } from "./routes/profilePrivacyRoutes.ts";
 import { ruralPropertyRouter } from "./routes/ruralPropertyRoutes.ts";
 import { clientIpHashMiddleware, requestIdMiddleware } from "./middleware/contextEnrichers.ts";
 import { documentRouter, adminDocumentRouter } from "./routes/documentRoutes.ts";
+import { adminVerificationRouter } from "./routes/adminVerificationRoutes.ts";
 export const app = express();
 app.disable("x-powered-by");
 
@@ -61,7 +62,6 @@ app.use((req, _res, next) => {
     return;
   }
   if (req.body && typeof req.body === "object") {
-    // Prevent express.json from trying to re-read an already consumed stream in serverless environments (Vercel)
     (req as unknown as { _body?: boolean })._body = true;
   }
   next();
@@ -84,6 +84,9 @@ for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
   app.use(prefix + "/producer/documents", documentRouter);
   app.use(prefix + "/admin/documents", adminDocumentRouter);
 }
+app.use("/v1/admin", adminVerificationRouter);
+app.use("/api/v1/admin", adminVerificationRouter);
+app.use("/_hvm_api/v1/admin", adminVerificationRouter);
 app.use("/v1/admin", adminGovernanceRouter);
 app.use("/api/v1/admin", adminGovernanceRouter);
 app.use("/_hvm_api/v1/admin", adminGovernanceRouter);
