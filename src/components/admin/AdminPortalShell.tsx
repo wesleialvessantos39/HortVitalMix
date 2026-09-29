@@ -23,10 +23,9 @@ const items = [
   ["/admin/painel", "Painel", LayoutDashboard],
   ["/admin/governanca", "Governança", ShieldCheck],
   ["/admin/usuarios", "Usuários", UsersRound],
-  ["/admin/imoveis", "Imóveis rurais", Leaf],
-  ["/admin/documentos/fila", "Fila de auditoria", ShieldCheck],
+  ["/admin/documentos/fila", "Auditoria", ShieldCheck],
   ["/admin/configuracao", "Configuração", Settings],
-  ["/admin/conta", "Minha conta e privacidade", UserRound],
+  ["/admin/conta", "Conta", UserRound],
 ] as const;
 
 export function AdminPortalShell({
@@ -38,7 +37,7 @@ export function AdminPortalShell({
 }: Props) {
   const visible = items.filter(([to]) => {
     if (access.role === "platform_super_admin") return true;
-    return to !== "/admin/configuracao" && ((to !== "/admin/imoveis" && to !== "/admin/documentos/fila") || access.sectors.includes("document_verification"));
+    return to !== "/admin/configuracao" && (to !== "/admin/documentos/fila" || access.sectors.includes("document_verification"));
   });
 
   const [leaving, setLeaving] = useState(false);
@@ -104,7 +103,7 @@ export function AdminPortalShell({
               aria-label={label}
               onClick={() => onNavigate(to)}
             >
-              <Icon size={19} /><span>{to === "/admin/conta" ? "Minha conta" : label}</span>
+              <Icon size={19} /><span>{label}</span>
             </button>
           ))}
         </nav>
