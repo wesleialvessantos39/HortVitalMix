@@ -1,7 +1,3 @@
-/* ==========================================================================
-   HortiVitalMix — Documentos do Imóvel (Expansive, Professional SaaS Layout)
-   ========================================================================== */
-
 .documents-panel {
   box-sizing: border-box;
   width: min(880px, 100%);
@@ -45,72 +41,7 @@
   background: #fff;
   min-inline-size: 0;
 }
-
-.documents-title-wrap .eyebrow {
-  display: inline-block;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #2e7d32;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 4px;
-}
-
-.documents-panel-header h2 {
-  margin: 0 0 6px;
-  font-size: 1.65rem;
-  font-weight: 800;
-  color: #143d24;
-  letter-spacing: -0.02em;
-  line-height: 1.25;
-}
-
-.documents-panel-header p {
-  margin: 0;
-  color: #55695e;
-  font-size: 0.92rem;
-  line-height: 1.5;
-  max-width: 780px;
-}
-
-.rural-back-link {
-  flex-shrink: 0;
-  min-height: 44px;
-}
-
-.documents-busy-banner {
-  background: #fdf6ea;
-  border: 1px solid #fedfa8;
-  color: #8f5300;
-  border-radius: 12px;
-  padding: 10px 16px;
-  font-weight: 600;
-  font-size: 0.88rem;
-  margin: 0 0 16px;
-}
-
-/* --------------------------------------------------------------------------
-   Upload Fieldset / Card
-   -------------------------------------------------------------------------- */
-.document-upload-fieldset {
-  border: 1px solid #dce9df;
-  border-radius: 18px;
-  padding: 20px 24px;
-  margin: 0 0 28px;
-  background: #ffffff;
-  box-shadow: 0 4px 18px rgba(20, 61, 36, 0.04);
-  min-width: 0;
-  box-sizing: border-box;
-}
-
-.document-upload-fieldset legend {
-  font-weight: 750;
-  font-size: 1.05rem;
-  color: #143d24;
-  padding: 0 10px;
-}
-
-.document-upload-body {
+.documents-panel label {
   display: grid;
   gap: 6px;
   min-width: 0;
@@ -126,17 +57,7 @@
   border-radius: 10px;
   background: #fff;
   font: inherit;
-  font-size: 0.92rem;
-  color: #1a3324;
-  cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
 }
-
-.document-type-picker select:focus {
-  outline: 3px solid rgba(46, 125, 50, 0.14);
-  border-color: #2e7d32;
-}
-
 .document-actions {
   display: flex;
   flex-wrap: wrap;
@@ -157,7 +78,6 @@
   overflow-wrap: normal;
   word-break: normal;
 }
-
 .document-upload {
   position: relative;
   display: inline-flex;
@@ -174,11 +94,9 @@
   height: 100%;
   opacity: 0;
   cursor: pointer;
-  z-index: 2;
 }
-
 .document-upload:focus-within {
-  outline: 3px solid rgba(46, 125, 50, 0.3);
+  outline: 2px solid #247642;
   outline-offset: 2px;
 }
 .documents-panel fieldset small { display: block; margin-top: 8px; }
@@ -329,46 +247,13 @@
   gap: 8px;
   margin-top: 8px;
 }
-
-.document-form label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 0.84rem;
-  font-weight: 650;
-  color: #233a2b;
-}
-
-.document-form input {
-  width: 100%;
-  min-height: 44px;
-  padding: 8px 12px;
-  border: 1px solid #cbd9ce;
-  border-radius: 10px;
-  background: #ffffff;
-  font: inherit;
-  font-size: 0.9rem;
-  color: #1a3324;
-  box-sizing: border-box;
-}
-
-.document-form input:focus {
-  outline: 3px solid rgba(46, 125, 50, 0.14);
-  border-color: #2e7d32;
-}
-
 .document-save {
   grid-column: 1 / -1;
   min-height: 44px;
   background: #1b4d2e;
-  color: #ffffff;
+  color: #fff;
   border: 0;
-  border-radius: 12px;
-  font-weight: 750;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: background 0.15s ease;
-  margin-top: 6px;
+  font-weight: 700;
 }
 .documents-panel button:disabled { opacity: 0.55; cursor: wait; }
 .account-notice { margin: 8px 0; }

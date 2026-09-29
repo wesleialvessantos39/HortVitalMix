@@ -1,18 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  AlertTriangle,
-  ArrowLeft,
-  Camera,
-  CheckCircle2,
-  ExternalLink,
-  FileCheck,
-  FileText,
-  RefreshCw,
-  ShieldCheck,
-  Trash2,
-  UploadCloud,
-  X,
-} from "lucide-react";
 import { api, apiBase } from "../../lib/api";
 import {
   documentLabels,
@@ -512,211 +498,137 @@ export function DocumentsPanel({
                 setType(e.target.value as keyof typeof documentLabels)
               }
             >
-              <ArrowLeft size={20} />
-            </button>
-          )}
-          <div className="documents-title-wrap">
-            <span className="eyebrow">Ambiente do produtor · Custódia Digital</span>
-            <h2>Documentos do imóvel</h2>
-            <p>
-              CAR, CCIR e comprovantes em acesso privado. Envie o PDF ou a foto da
-              página inteira. O arquivo aparece na tela e o sistema preenche o
-              cadastro. Arquivo conferido não significa aprovação do imóvel.
-            </p>
+              {Object.entries(documentLabels).map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="document-actions">
+            <label className="document-upload">
+              Selecionar PDF ou imagem
+              <input
+                aria-label="Selecionar PDF ou imagem"
+                type="file"
+                accept="application/pdf,image/png,image/jpeg"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (f) void upload(f);
+                }}
+              />
+            </label>
+            <label className="document-upload">
+              Tirar foto do documento
+              <input
+                aria-label="Tirar foto do documento"
+                type="file"
+                accept="image/jpeg,image/png"
+                capture="environment"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (f) void upload(f);
+                }}
+              />
+            </label>
           </div>
-        </div>
-
-        {onNavigate && (
-          <button
-            className="secondary rural-back-link"
-            onClick={() => onNavigate("/produtor/propriedades")}
-          >
-            Voltar aos imóveis
-          </button>
-        )}
-      </header>
-
+          <small>
+            De 1 KB a 15 MB. O produtor só envia o arquivo. Até 20 documentos
+            por imóvel.
+          </small>
+        </fieldset>
+      )}
       {notice && !selected && (
         <p role="alert" className="account-notice">
           {notice}
         </p>
       )}
-
-      {busy && <p role="status" className="documents-busy-banner">Processando… Mantenha esta tela aberta.</p>}
-
-      {!admin && (
-        <fieldset disabled={busy} className="document-upload-fieldset">
-          <legend>Enviar documento</legend>
-          <div className="document-upload-body">
-            <label className="document-type-picker">
-              <span>Tipo de documento</span>
-              <select
-                value={type}
-                onChange={(e) =>
-                  setType(e.target.value as keyof typeof documentLabels)
-                }
-              >
-                {Object.entries(documentLabels).map(([k, v]) => (
-                  <option key={k} value={k}>
-                    {v}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="document-actions">
-              <label className="document-upload">
-                <UploadCloud size={18} />
-                <span>Selecionar PDF ou imagem</span>
-                <input
-                  aria-label="Selecionar PDF ou imagem"
-                  type="file"
-                  accept="application/pdf,image/png,image/jpeg"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    e.target.value = "";
-                    if (f) void upload(f);
-                  }}
-                />
-              </label>
-              <label className="document-upload document-upload-camera">
-                <Camera size={18} />
-                <span>Tirar foto do documento</span>
-                <input
-                  aria-label="Tirar foto do documento"
-                  type="file"
-                  accept="image/jpeg,image/png"
-                  capture="environment"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    e.target.value = "";
-                    if (f) void upload(f);
-                  }}
-                />
-              </label>
-            </div>
-          </div>
-          <small>
-            De 1 KB a 15 MB. O produtor só envia o arquivo. Até 20 documentos por imóvel.
-          </small>
-        </fieldset>
-      )}
-
+      {busy && <p role="status">Processando… Mantenha esta tela aberta.</p>}
       {loading ? (
-        <div className="document-state-card" role="status">
-          <RefreshCw className="animate-spin" size={24} />
-          <p>Carregando documentos…</p>
-        </div>
+        <p role="status">Carregando documentos…</p>
       ) : docs.length === 0 ? (
-        <div className="document-state-card document-empty-state">
-          <FileText size={32} />
-          <div>
-            <p>Nenhum documento enviado para este imóvel.</p>
-            <small>Envie o recibo do SICAR ou CCIR para leitura automatizada do imóvel rural.</small>
-          </div>
-        </div>
+        <p>Nenhum documento enviado para este imóvel.</p>
       ) : (
-        <div className="document-list-container">
-          <div className="document-list-header">
-            <h3>Documentos arquivados e em custódia</h3>
-            <span className="document-list-count">
-              {docs.length} {docs.length === 1 ? "arquivo" : "arquivos"}
-            </span>
-          </div>
-          <ul className="document-list">
-            {docs.map((d) => (
-              <li key={d.id} className="document-list-item">
-                <div className="document-item-left">
-                  <div className="document-item-icon" aria-hidden="true">
-                    <FileText size={20} />
-                  </div>
-                  <div className="document-item-info">
-                    <strong>
-                      {fileTitle(d.file_name).base}
-                      <span className="file-ext">{fileTitle(d.file_name).ext}</span>
-                    </strong>
-                    <small>
-                      {documentLabels[d.document_type]} ·{" "}
-                      {(Number(d.file_size_bytes) / 1024).toFixed(0)} KB
-                    </small>
-                    <span className={"document-status " + d.status}>
-                      {statusLabels[d.status]}
-                    </span>
-                  </div>
-                </div>
-                <div className="document-actions">
-                  {d.status === "clean" && (
-                    <button
-                      className="secondary document-open-btn"
-                      disabled={busy}
-                      onClick={() => {
-                        if (onNavigate)
-                          history.replaceState(
-                            {},
-                            "",
-                            `/produtor/documentos/${d.id}/extracao?propertyId=${propertyId}`,
-                          );
-                        void open(d);
-                      }}
-                    >
-                      Ver documento
-                    </button>
-                  )}
-                  {!admin && d.status === "quarantine" && (
-                    <button
-                      className="primary document-verify-btn"
-                      disabled={busy}
-                      onClick={() => void action(d, "confirm")}
-                    >
-                      Conferir envio
-                    </button>
-                  )}
-                  {!admin && d.status !== "archived" && (
-                    <button
-                      className="secondary document-delete-btn"
-                      disabled={busy}
-                      onClick={() => {
-                        if (
-                          window.confirm(
-                            "Excluir este documento da conferência? Ele sai da lista ativa e o histórico permanece no banco.",
-                          )
+        <ul className="document-list">
+          {docs.map((d) => (
+            <li key={d.id}>
+              <div>
+                <strong>
+                  {fileTitle(d.file_name).base}
+                  <span className="file-ext">{fileTitle(d.file_name).ext}</span>
+                </strong>
+                <small>
+                  {documentLabels[d.document_type]} ·{" "}
+                  {(Number(d.file_size_bytes) / 1024).toFixed(0)} KB
+                </small>
+                <span className={"document-status " + d.status}>
+                  {statusLabels[d.status]}
+                </span>
+              </div>
+              <div className="document-actions">
+                {d.status === "clean" && (
+                  <button
+                    className="secondary"
+                    disabled={busy}
+                    onClick={() => {
+                      if (onNavigate)
+                        history.replaceState(
+                          {},
+                          "",
+                          `/produtor/documentos/${d.id}/extracao?propertyId=${propertyId}`,
+                        );
+                      void open(d);
+                    }}
+                  >
+                    Ver documento
+                  </button>
+                )}
+                {!admin && d.status === "quarantine" && (
+                  <button
+                    disabled={busy}
+                    onClick={() => void action(d, "confirm")}
+                  >
+                    Conferir envio
+                  </button>
+                )}
+                {!admin && d.status !== "archived" && (
+                  <button
+                    className="secondary"
+                    disabled={busy}
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          "Excluir este documento da conferência? Ele sai da lista ativa e o histórico permanece no banco.",
                         )
-                          void action(d, "archive");
-                      }}
-                    >
-                      <Trash2 size={15} />
-                      Excluir
-                    </button>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
+                      )
+                        void action(d, "archive");
+                    }}
+                  >
+                    Excluir
+                  </button>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
       )}
-
       {selected && (
         <section className="document-comparison" ref={comparison}>
           <div className="document-sheet-bar">
-            <div className="document-sheet-title-group">
-              <span className="document-sheet-tag">Conferência ativa</span>
-              <h3>Documento e cadastro</h3>
-              <span className="document-active-filename">{selected.file_name}</span>
-            </div>
-            <div className="document-sheet-actions">
-              <button
-                type="button"
-                className="secondary document-close-btn"
-                onClick={() => {
-                  setSelected(null);
-                  setUrl("");
-                }}
-              >
-                <X size={16} />
-                Fechar
-              </button>
-            </div>
+            <h3>Documento e cadastro</h3>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => {
+                setSelected(null);
+                setUrl("");
+              }}
+            >
+              Fechar
+            </button>
           </div>
-
           <div className="document-data">
             <h3>Dados lidos</h3>
             {notice && (
@@ -725,10 +637,7 @@ export function DocumentsPanel({
               </p>
             )}
             {reading && (
-              <p role="status" className="document-reading-indicator">
-                <RefreshCw className="animate-spin" size={16} />
-                Lendo o documento e preenchendo o cadastro…
-              </p>
+              <p role="status">Lendo o documento e preenchendo o cadastro…</p>
             )}
             {!admin &&
             ["car_sicar", "ccir_incra"].includes(selected.document_type) ? (
@@ -758,152 +667,152 @@ export function DocumentsPanel({
                 </dl>
                 <details>
                   <summary>Corrigir um dado lido errado</summary>
-                  <form
-                    className="document-form"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      void declareData();
-                    }}
-                  >
-                    <label>
-                      <span>Número do CAR</span>
-                      <input
-                        value={form.carNumber}
-                        autoComplete="off"
-                        onChange={(e) =>
-                          setForm({ ...form, carNumber: e.target.value })
-                        }
-                      />
-                    </label>
-                    <label>
-                      <span>Código INCRA / CCIR</span>
-                      <input
-                        value={form.ccirNumber}
-                        autoComplete="off"
-                        inputMode="numeric"
-                        onChange={(e) =>
-                          setForm({ ...form, ccirNumber: e.target.value })
-                        }
-                      />
-                    </label>
-                    <label>
-                      <span>Nome do imóvel no documento</span>
-                      <input
-                        required
-                        minLength={2}
-                        maxLength={128}
-                        value={form.propertyRegisteredName}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            propertyRegisteredName: e.target.value,
-                          })
-                        }
-                      />
-                    </label>
-                    <label>
-                      <span>Titular</span>
-                      <input
-                        maxLength={255}
-                        value={form.holderName}
-                        onChange={(e) =>
-                          setForm({ ...form, holderName: e.target.value })
-                        }
-                      />
-                    </label>
-                    <label>
-                      <span>CPF do titular</span>
-                      <input
-                        inputMode="numeric"
-                        autoComplete="off"
-                        value={form.holderCpfNormalized}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            holderCpfNormalized: e.target.value,
-                          })
-                        }
-                      />
-                    </label>
-                    <label>
-                      <span>Município</span>
-                      <input
-                        required
-                        minLength={2}
-                        maxLength={100}
-                        value={form.municipality}
-                        onChange={(e) =>
-                          setForm({ ...form, municipality: e.target.value })
-                        }
-                      />
-                    </label>
-                    <label>
-                      <span>Área total (ha)</span>
-                      <input
-                        required
-                        inputMode="decimal"
-                        value={form.totalAreaHectares}
-                        onChange={(e) =>
-                          setForm({ ...form, totalAreaHectares: e.target.value })
-                        }
-                      />
-                    </label>
-                    <label>
-                      <span>Reserva legal (ha)</span>
-                      <input
-                        inputMode="decimal"
-                        value={form.legalReserveHectares}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            legalReserveHectares: e.target.value,
-                          })
-                        }
-                      />
-                    </label>
-                    <label>
-                      <span>APP (ha)</span>
-                      <input
-                        inputMode="decimal"
-                        value={form.appHectares}
-                        onChange={(e) =>
-                          setForm({ ...form, appHectares: e.target.value })
-                        }
-                      />
-                    </label>
-                    <label>
-                      <span>Área consolidada (ha)</span>
-                      <input
-                        inputMode="decimal"
-                        value={form.consolidatedRuralAreaHectares}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            consolidatedRuralAreaHectares: e.target.value,
-                          })
-                        }
-                      />
-                    </label>
-                    <label>
-                      <span>Módulos fiscais</span>
-                      <input
-                        inputMode="decimal"
-                        value={form.fiscalModules}
-                        onChange={(e) =>
-                          setForm({ ...form, fiscalModules: e.target.value })
-                        }
-                      />
-                    </label>
-                    <button className="document-save" type="submit" disabled={busy}>
-                      Salvar correção
-                    </button>
-                  </form>
+                <form
+                  className="document-form"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void declareData();
+                  }}
+                >
+                  <label>
+                    Número do CAR
+                    <input
+                      value={form.carNumber}
+                      autoComplete="off"
+                      onChange={(e) =>
+                        setForm({ ...form, carNumber: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Código INCRA / CCIR
+                    <input
+                      value={form.ccirNumber}
+                      autoComplete="off"
+                      inputMode="numeric"
+                      onChange={(e) =>
+                        setForm({ ...form, ccirNumber: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Nome do imóvel no documento
+                    <input
+                      required
+                      minLength={2}
+                      maxLength={128}
+                      value={form.propertyRegisteredName}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          propertyRegisteredName: e.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Titular
+                    <input
+                      maxLength={255}
+                      value={form.holderName}
+                      onChange={(e) =>
+                        setForm({ ...form, holderName: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    CPF do titular
+                    <input
+                      inputMode="numeric"
+                      autoComplete="off"
+                      value={form.holderCpfNormalized}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          holderCpfNormalized: e.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Município
+                    <input
+                      required
+                      minLength={2}
+                      maxLength={100}
+                      value={form.municipality}
+                      onChange={(e) =>
+                        setForm({ ...form, municipality: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Área total (ha)
+                    <input
+                      required
+                      inputMode="decimal"
+                      value={form.totalAreaHectares}
+                      onChange={(e) =>
+                        setForm({ ...form, totalAreaHectares: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Reserva legal (ha)
+                    <input
+                      inputMode="decimal"
+                      value={form.legalReserveHectares}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          legalReserveHectares: e.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    APP (ha)
+                    <input
+                      inputMode="decimal"
+                      value={form.appHectares}
+                      onChange={(e) =>
+                        setForm({ ...form, appHectares: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Área consolidada (ha)
+                    <input
+                      inputMode="decimal"
+                      value={form.consolidatedRuralAreaHectares}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          consolidatedRuralAreaHectares: e.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Módulos fiscais
+                    <input
+                      inputMode="decimal"
+                      value={form.fiscalModules}
+                      onChange={(e) =>
+                        setForm({ ...form, fiscalModules: e.target.value })
+                      }
+                    />
+                  </label>
+                  <button className="document-save" type="submit" disabled={busy}>
+                    Salvar correção
+                  </button>
+                </form>
                 </details>
               </>
             ) : admin ? (
               <>
-                <p className="document-data-lead">Conferência humana. Estes dados não aprovam o imóvel.</p>
-                <dl className="document-data-grid">
+                <p>Conferência humana. Estes dados não aprovam o imóvel.</p>
+                <dl>
                   {Object.entries({
                     CAR: fieldsFromExtraction(extraction)?.carNumber,
                     "Código INCRA": fieldsFromExtraction(extraction)?.ccirNumber,
@@ -915,14 +824,14 @@ export function DocumentsPanel({
                     "Área total (ha)":
                       fieldsFromExtraction(extraction)?.totalAreaHectares,
                   }).map(([k, v]) => (
-                    <div key={k} className="document-data-field">
+                    <div key={k}>
                       <dt>{k}</dt>
                       <dd>{textOrEmpty(v) || "Não informado"}</dd>
                     </div>
                   ))}
                 </dl>
                 {extraction && (
-                  <ul className="document-discrepancies-list">
+                  <ul>
                     {extraction.discrepancies.map((v) => (
                       <li key={v}>{v}</li>
                     ))}
@@ -930,7 +839,7 @@ export function DocumentsPanel({
                 )}
               </>
             ) : (
-              <p className="document-data-lead">
+              <p>
                 Este tipo fica anexado ao imóvel, mas não altera o cadastro.
                 Use CAR ou CCIR para corrigir os dados.
               </p>
@@ -939,27 +848,15 @@ export function DocumentsPanel({
               A leitura usa o texto do PDF. Não consulta o SICAR e não aprova o imóvel.
             </p>
           </div>
-
           <div className="document-original">
-            <div className="document-original-header">
-              <h3>Documento original</h3>
-              <div className="document-original-actions">
-                {url && (
-                  <a
-                    className="document-open"
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <ExternalLink size={15} />
-                    Abrir em tela cheia
-                  </a>
-                )}
-                <button
-                  type="button"
-                  className="secondary document-refresh-btn"
-                  disabled={busy}
-                  onClick={() => void open(selected)}
+            <h3>Documento original</h3>
+            {url ? (
+              <>
+                <a
+                  className="document-open"
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
                   Abrir em tela cheia
                 </a>
@@ -975,9 +872,7 @@ export function DocumentsPanel({
                 />
               </>
             ) : (
-              <div className="document-preview-placeholder">
-                <p>Visualização indisponível.</p>
-              </div>
+              <p>Visualização indisponível.</p>
             )}
             <button
               type="button"

@@ -100,7 +100,6 @@ export function DocumentPreview({
         if (!cancel) setFailed(true);
       }
     })();
-
     return () => {
       cancel = true;
       doc.current?.destroy?.();
@@ -143,8 +142,6 @@ export function DocumentPreview({
         <img alt="Documento enviado" src={url} />
       </div>
     );
-  }
-
   return (
     <div className="document-view">
       <div className="document-viewer">
