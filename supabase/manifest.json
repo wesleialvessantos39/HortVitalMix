@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 35,
+  "schemaVersion": 36,
   "migrations": [
     {
       "version": "20260919030126",
@@ -180,7 +180,12 @@
       "version": "20260928110512",
       "name": "trilha09_10_document_pipeline",
       "file": "20260928110512_trilha09_10_document_pipeline.sql"
+    },
+    {
+      "version": "20260929120000",
+      "name": "trilha11_verification_queue",
+      "file": "20260929120000_trilha11_verification_queue.sql"
     }
   ],
-  "migrationHistoryHash": "646ad922250057cd078bc59f4131a7e9b9a1a1afd14aa7fc569df885d8292bee"
+  "migrationHistoryHash": "428de127283d9730c24e27a61f1560cbcfb7c5eb495b74b4f24835fd099f07ea"
 }
