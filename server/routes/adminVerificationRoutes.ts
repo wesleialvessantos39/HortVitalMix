@@ -16,8 +16,10 @@ import {
 } from "../services/VerificationQueueService.ts";
 
 export const adminVerificationRouter = Router();
-adminVerificationRouter.use(adminSessionMiddleware);
-adminVerificationRouter.use((req, res, next) => {
+
+// Middleware somente na fila. Não aplicar em /v1/admin/* — isso quebrava o login.
+adminVerificationRouter.use("/verification-queue", adminSessionMiddleware);
+adminVerificationRouter.use("/verification-queue", (req, res, next) => {
   if (
     !req.adminActor?.isSuperAdmin &&
     !req.adminActor?.sectors.includes("document_verification")
