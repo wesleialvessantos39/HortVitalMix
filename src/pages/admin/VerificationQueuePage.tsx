@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api";
 import { isEstimatedPerimeter } from "../../../shared/rural/estimatePropertyPerimeter";
+import "./verificationQueue.css";
 
 type Tab = "pending" | "in_review" | "decided";
 type QueueRow = {
