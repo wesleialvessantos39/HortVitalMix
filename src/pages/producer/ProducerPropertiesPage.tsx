@@ -29,6 +29,10 @@ import {
   type RuralPropertyView,
 } from "../../../shared/contracts/ruralProperty";
 import { OsmPinMap } from "../account/OsmPinMap";
+import {
+  estimatePropertyPerimeter,
+  isEstimatedPerimeter,
+} from "../../../shared/rural/estimatePropertyPerimeter";
 
 type Props = {
   path: string;
@@ -88,12 +92,40 @@ const blankDraft: Draft = {
 };
 
 const steps = [
-  ["Identificação e acesso", "Localize sua propriedade e descreva como chegar."],
-  ["Dimensões", "Informe as áreas e, se desejar, o perímetro em GeoJSON."],
-  ["Segurança hídrica", "Registre a fonte de água e o sistema de irrigação."],
-  ["Culturas e processamento", "Descreva a atividade principal e a estrutura de lavagem."],
-  ["Revisão e submissão", "Revise os dados e confirme o compromisso para enviar."],
+  ["Identificação e acesso", "Localize a propriedade. O nome e o CPF já são os da sua conta.", "Identificação"],
+  ["Dimensões", "A área vem do documento. O sistema monta a ficha e o contorno a partir da sede.", "Dimensões"],
+  ["Segurança hídrica", "O CAR não traz a água. Escolha a fonte e a irrigação do imóvel.", "Água"],
+  ["Culturas e processamento", "O CAR não traz a produção. Escolha a atividade principal.", "Atividade"],
+  ["Revisão e submissão", "Confira a ficha e envie para análise humana.", "Revisão"],
 ] as const;
+
+function formatHa(value: string) {
+  const number = Number(value.trim().replace(",", "."));
+  if (!value.trim() || !Number.isFinite(number)) return "Não informada";
+  return `${number.toLocaleString("pt-BR", { maximumFractionDigits: 4 })} ha`;
+}
+
+function formatMeters(meters: number) {
+  return `${Math.round(meters).toLocaleString("pt-BR")} m`;
+}
+
+function PerimeterSketch({ sideMeters }: { sideMeters: number }) {
+  const label = formatMeters(sideMeters);
+  return (
+    <figure className="rural-perimeter-sketch">
+      <svg viewBox="0 0 220 168" role="img" aria-label={`Contorno de ${label} de lado, centrado na sede`}>
+        <rect x="48" y="28" width="124" height="112" rx="3" fill="#e8f5e9" stroke="#1b4d2e" strokeWidth="2" />
+        <circle cx="110" cy="84" r="5" fill="#1b4d2e" />
+        <text x="110" y="18" textAnchor="middle" fontSize="12" fill="#143d24" fontFamily="Inter, sans-serif">
+          {label}
+        </text>
+        <text x="110" y="158" textAnchor="middle" fontSize="11" fill="#52645a" fontFamily="Inter, sans-serif">
+          sede no centro
+        </text>
+      </svg>
+    </figure>
+  );
+}
 
 function named(value: string, labels: Record<string, string>) {
   if (!value) return "Não informado";
@@ -308,7 +340,7 @@ function PropertyList({
 
   return (
     <section className="rural-properties-page">
-      <header className="rural-page-heading">
+      <header className="account-detail-top rural-page-heading">
         <button
           className="rural-back-button"
           aria-label="Voltar para a conta"
@@ -317,21 +349,21 @@ function PropertyList({
           <ArrowLeft />
         </button>
         <div>
-          <span className="eyebrow">Ambiente do produtor</span>
+          <span className="eyebrow">Imóveis rurais</span>
           <h1>Meus imóveis rurais</h1>
-          <p>
-            Cadastre cada propriedade produtiva separadamente. Seus endereços
-            pessoais continuam em Minha conta.
-          </p>
         </div>
-        <button
-          className="primary rural-primary-action"
-          onClick={() => onNavigate("/produtor/propriedades/novo")}
-        >
-          <Sprout />
-          Novo imóvel rural
-        </button>
       </header>
+      <p className="rural-page-lead">
+        Cadastre cada propriedade produtiva separadamente. Seus endereços
+        pessoais continuam em Minha conta.
+      </p>
+      <button
+        className="primary rural-primary-action"
+        onClick={() => onNavigate("/produtor/propriedades/novo")}
+      >
+        <Sprout />
+        Novo imóvel rural
+      </button>
 
       {listNotice && <p className="account-notice" role="alert">{listNotice}</p>}
       {state === "loading" && (
@@ -628,6 +660,28 @@ function RuralPropertyWizard({
 
   useEffect(() => {
     if (!hydrated.current) return;
+    const hectares = Number(draft.totalAreaHectares.trim().replace(",", "."));
+    const estimate =
+      draft.latitudeSede != null && draft.longitudeSede != null && hectares > 0
+        ? estimatePropertyPerimeter(draft.latitudeSede, draft.longitudeSede, hectares)
+        : null;
+    const raw = draft.polygonGeojson.trim();
+    let nextJson = raw;
+    if (estimate && (!raw || isEstimatedPerimeter(raw) || parseBoundary(raw) === null))
+      nextJson = estimate.json;
+    else if (raw && parseBoundary(raw) === null) nextJson = "";
+    if (nextJson === raw) return;
+    try {
+      if (raw && JSON.stringify(JSON.parse(raw)) === nextJson) return;
+    } catch {}
+    dirty.current = true;
+    setDraft((current) =>
+      current.polygonGeojson.trim() === raw ? { ...current, polygonGeojson: nextJson } : current,
+    );
+  }, [draft.latitudeSede, draft.longitudeSede, draft.totalAreaHectares, draft.polygonGeojson]);
+
+  useEffect(() => {
+    if (!hydrated.current) return;
     persistLocal(draft, false);
   }, [draft]);
 
@@ -806,6 +860,16 @@ function RuralPropertyWizard({
     onNavigate("/produtor/propriedades");
   }
 
+  const areaHectares = Number(draft.totalAreaHectares.trim().replace(",", "."));
+  const estimatedPerimeter =
+    draft.latitudeSede != null && draft.longitudeSede != null && areaHectares > 0
+      ? estimatePropertyPerimeter(draft.latitudeSede, draft.longitudeSede, areaHectares)
+      : null;
+  const storedPerimeter = draft.polygonGeojson.trim();
+  const showingEstimate =
+    estimatedPerimeter != null &&
+    (!storedPerimeter || isEstimatedPerimeter(storedPerimeter));
+
   if (state === "loading") {
     return (
       <section className="rural-wizard-page" aria-busy="true">
@@ -833,7 +897,7 @@ function RuralPropertyWizard({
 
   return (
     <section className="rural-wizard-page">
-      <header className="rural-wizard-heading">
+      <header className="account-detail-top rural-wizard-heading">
         <button
           className="rural-back-button"
           aria-label="Voltar aos imóveis"
@@ -842,21 +906,23 @@ function RuralPropertyWizard({
           <ArrowLeft />
         </button>
         <div>
-          <span className="eyebrow">Cadastro de imóvel rural</span>
+          <span className="eyebrow">Cadastro do imóvel</span>
           <h1>{draft.propertyName || "Novo imóvel rural"}</h1>
-          <p>Etapa {step} de 5 · {stepMeta[0]}</p>
-          <p className="rural-account-line">
-            Produtor da conta: {session.fullName || "cadastrado"}
-            {accountCpf ? ` · CPF ${accountCpf}` : ""}. Estes dados não são pedidos de novo.
-          </p>
         </div>
+      </header>
+      <p className="rural-account-line">
+        Produtor da conta: {session.fullName || "cadastrado"}
+        {accountCpf ? ` · CPF ${accountCpf}` : ""}. Estes dados não são pedidos de novo.
+      </p>
+      <div className="rural-wizard-tools">
+        <p>Etapa {step} de 5</p>
         <button className="secondary" disabled={saving.current} onClick={() => void continueLater()}>
           Continuar mais tarde
         </button>
-      </header>
+      </div>
 
-      <div className="rural-step-progress" aria-label={`Progresso: etapa ${step} de 5`}>
-        {steps.map(([title], index) => (
+      <nav className="rural-step-progress account-section-nav" aria-label={`Progresso: etapa ${step} de 5`}>
+        {steps.map(([title, , pill], index) => (
           <button
             type="button"
             disabled={saving.current}
@@ -864,19 +930,19 @@ function RuralPropertyWizard({
             aria-label={`Etapa ${index+1}: ${title}${buildStepData(index+1).success ? ", completa" : ", pendente"}`}
             key={title}
             className={
-              "rural-step-dot " +
-              (buildStepData(index+1).success
-                ? "is-complete"
-                : index + 1 === step
-                  ? "is-current"
+              "rural-step-dot" +
+              (index + 1 === step
+                ? " active is-current"
+                : buildStepData(index + 1).success
+                  ? " is-complete"
                   : "")
             }
           >
             <span>{buildStepData(index+1).success ? "✓" : index + 1}</span>
-            <small>{title}{!buildStepData(index+1).success ? " · Pendente" : ""}</small>
+            <small>{pill}</small>
           </button>
         ))}
-      </div>
+      </nav>
 
       <p className="account-notice">Etapas pendentes: {[1,2,3,4].filter(n=>!buildStepData(n).success).join(", ") || "nenhuma"}. Toque em uma etapa para continuar o preenchimento.</p>
 
@@ -904,8 +970,8 @@ function RuralPropertyWizard({
       )}
 
       {reauth && <div className="rural-state-card" role="alert"><label>Confirme sua senha para salvar<input type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}/></label><button className="secondary" onClick={()=>void confirmPassword()}>Confirmar senha</button></div>}
-      <div className="rural-wizard-card" inert={step===5 && saveState==="saving" ? true : undefined}>
-        <div className="rural-step-copy">
+      <div className="account-panel rural-wizard-card" inert={step===5 && saveState==="saving" ? true : undefined}>
+        <div className="account-section-intro rural-step-copy">
           <span>Passo {step}</span>
           <h2>{stepMeta[0]}</h2>
           <p>{stepMeta[1]}</p>
@@ -1025,18 +1091,55 @@ function RuralPropertyWizard({
                 onChange={(event) => patch({ cultivatedAreaHectares: event.target.value })}
               />
             </label>
-            <label className="rural-wide-field">
-              Perímetro GeoJSON <small>opcional</small>
-              <textarea
-                className="rural-geojson-input"
-                value={draft.polygonGeojson}
-                onChange={(event) => patch({ polygonGeojson: event.target.value })}
-                placeholder={'{"type":"Polygon","coordinates":[[[-63.04,-9.91],[-63.03,-9.91],[-63.03,-9.92],[-63.04,-9.91]]]}'}
-              />
-              <small>
-                Formato Polygon. Longitude vem antes da latitude e o anel deve ser fechado.
-              </small>
-            </label>
+            {areaHectares > 0 &&
+              Number(draft.cultivatedAreaHectares.replace(",", ".")) > areaHectares && (
+              <p className="field-error rural-wide-field" role="alert">
+                A área cultivada não pode ser maior que a área total.
+              </p>
+            )}
+            <article className="rural-dimension-sheet rural-wide-field" aria-label="Ficha de dimensões">
+              <div className="rural-dimension-head">
+                <span className="rural-property-icon" aria-hidden="true">
+                  <MapPinned size={20} />
+                </span>
+                <div>
+                  <strong>Ficha de dimensões</strong>
+                  <p>Gerada com a área e o ponto da sede. O produtor não desenha mapa nem cola código.</p>
+                </div>
+              </div>
+              <dl>
+                <div><dt>Área total</dt><dd>{formatHa(draft.totalAreaHectares)}</dd></div>
+                <div><dt>Área cultivada</dt><dd>{formatHa(draft.cultivatedAreaHectares)}</dd></div>
+                <div>
+                  <dt>Sede</dt>
+                  <dd>
+                    {draft.latitudeSede != null && draft.longitudeSede != null
+                      ? `${draft.latitudeSede.toFixed(5)}, ${draft.longitudeSede.toFixed(5)}`
+                      : "Ainda não marcada"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Contorno</dt>
+                  <dd>
+                    {showingEstimate && estimatedPerimeter
+                      ? `Quadrado de ${formatMeters(estimatedPerimeter.sideMeters)} de lado · volta de ${formatMeters(estimatedPerimeter.perimeterMeters)}`
+                      : storedPerimeter && parseBoundary(storedPerimeter)
+                        ? "Perímetro já registrado neste cadastro"
+                        : "Informe a área e a sede para o sistema desenhar"}
+                  </dd>
+                </div>
+              </dl>
+              {showingEstimate && estimatedPerimeter ? (
+                <PerimeterSketch sideMeters={estimatedPerimeter.sideMeters} />
+              ) : draft.latitudeSede == null || draft.longitudeSede == null ? (
+                <button type="button" className="secondary" onClick={() => patch({ step: 1 })}>
+                  Marcar a sede no mapa
+                </button>
+              ) : null}
+              <p className="rural-readonly-note">
+                O contorno é a área total em volta da sede, para a ficha do cadastro. O polígono oficial continua no PDF do CAR.
+              </p>
+            </article>
           </div>
         )}
 
@@ -1128,6 +1231,16 @@ function RuralPropertyWizard({
               <div><dt>Sede</dt><dd>{draft.latitudeSede != null && draft.longitudeSede != null ? `${draft.latitudeSede.toFixed(5)}, ${draft.longitudeSede.toFixed(5)}` : "Não marcada no mapa"}</dd></div>
               <div><dt>Área total</dt><dd>{draft.totalAreaHectares || "Não informada"} ha</dd></div>
               <div><dt>Área cultivada</dt><dd>{draft.cultivatedAreaHectares || "Não informada"} ha</dd></div>
+              <div>
+                <dt>Contorno</dt>
+                <dd>
+                  {showingEstimate && estimatedPerimeter
+                    ? `Quadrado de ${formatMeters(estimatedPerimeter.sideMeters)}`
+                    : storedPerimeter && parseBoundary(storedPerimeter)
+                      ? "Registrado no cadastro"
+                      : "Não gerado"}
+                </dd>
+              </div>
               <div><dt>Acesso</dt><dd>{[draft.lineVicinal, draft.ruralZoneSector].filter(Boolean).join(" · ") || "Não informado"}</dd></div>
               <div><dt>Fonte de água</dt><dd>{waterLabel(draft.waterSource)}</dd></div>
               <div><dt>Irrigação</dt><dd>{irrigationLabel(draft.irrigationSystem)}</dd></div>

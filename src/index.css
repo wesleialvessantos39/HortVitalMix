@@ -2182,9 +2182,9 @@ dialog p {
 .producer-route-layout {
   display: block !important;
   width: 100% !important;
-  max-width: 1440px !important;
+  max-width: 980px !important;
   margin: 0 auto !important;
-  padding: 24px 32px !important;
+  padding: 8px 16px 28px !important;
   min-height: calc(100vh - 170px);
   box-sizing: border-box;
 }
@@ -2206,18 +2206,14 @@ dialog p {
 .rural-properties-page,
 .rural-wizard-page {
   width: 100%;
-  max-width: 1440px;
-  margin: 0 auto 48px;
+  max-width: 100%;
+  margin: 0 auto 28px;
   box-sizing: border-box;
 }
 
 .rural-page-heading,
 .rural-wizard-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
-  margin: 8px 0 24px;
+  margin: 0 0 8px;
 }
 
 .rural-page-heading h1,
@@ -2256,8 +2252,8 @@ dialog p {
 
 .rural-properties-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 20px;
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
 .rural-property-card {
@@ -2514,12 +2510,12 @@ dialog p {
 }
 
 .rural-back-button {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: 1px solid #d8e6db;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
   background: #fff;
-  color: #143d24;
+  color: var(--dark);
   display: grid;
   place-items: center;
   flex: 0 0 auto;
@@ -2735,11 +2731,7 @@ dialog p {
 
 @media (max-width: 1024px) {
   .rural-properties-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .rural-step-dot small {
-    display: none;
+    grid-template-columns: 1fr;
   }
 }
 
@@ -2810,7 +2802,7 @@ dialog p {
 @media (max-width: 360px) {
   .rural-properties-page,
   .rural-wizard-page {
-    width: calc(100% - 16px);
+    width: 100%;
   }
 
   .rural-wizard-card {
@@ -2870,5 +2862,95 @@ textarea { min-width: 0; }
   dialog { max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y: auto; }
 }
 .rural-step-dot { border: 0; background: transparent; text-align: left; cursor: pointer; }
-.rural-step-dot:not(.is-complete) > span { outline: 2px solid #bc8e36; }
+.rural-step-dot > span { display: none; }
+.rural-step-dot small {
+  display: inline;
+  overflow: visible;
+  text-overflow: unset;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.rural-page-lead {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.rural-primary-action { margin: 0 0 16px; }
+.rural-wizard-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 2px 0 12px;
+}
+.rural-wizard-tools p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+.rural-dimension-sheet {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fbfcfb;
+}
+.rural-dimension-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+.rural-dimension-head div { min-width: 0; }
+.rural-dimension-head strong {
+  display: block;
+  color: var(--dark);
+  font-size: 16px;
+}
+.rural-dimension-head p,
+.rural-dimension-sheet .rural-readonly-note {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.rural-dimension-sheet dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0;
+}
+.rural-dimension-sheet dl > div { min-width: 0; }
+.rural-dimension-sheet dt {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--dark);
+}
+.rural-dimension-sheet dd {
+  margin: 6px 0 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #f4f6f4;
+  color: var(--dark);
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: break-word;
+}
+.rural-perimeter-sketch { margin: 0; }
+.rural-perimeter-sketch svg {
+  display: block;
+  width: min(220px, 100%);
+  height: auto;
+}
+.rural-wizard-card .account-section-intro h2 { font-size: 18px; }
+@media (max-width: 768px) {
+  .rural-primary-action,
+  .rural-wizard-tools .secondary { width: 100%; }
+  .rural-wizard-tools { align-items: stretch; flex-direction: column; }
+  .rural-dimension-sheet dl { grid-template-columns: 1fr; }
+}
 .admin-card textarea { display:block; width:100%; min-height:80px; margin:12px 0; font:inherit; }

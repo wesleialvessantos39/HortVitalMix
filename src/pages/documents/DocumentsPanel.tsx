@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, FileText } from "lucide-react";
 import { api, apiBase } from "../../lib/api";
 import {
   documentLabels,
@@ -494,26 +495,31 @@ export function DocumentsPanel({
   }
   return (
     <section className="documents-panel">
-      <header className="documents-head">
-        <div>
-          <h2>Documentos do imóvel</h2>
-          <p>
-            Envie o PDF do CAR ou do CCIR. O sistema lê o texto do arquivo e preenche o cadastro.
-          </p>
-        </div>
+      <header className="account-detail-top documents-head">
         {onNavigate && (
           <button
-            className="secondary"
+            className="rural-back-button"
             type="button"
+            aria-label="Voltar aos imóveis"
             onClick={() => onNavigate("/produtor/propriedades")}
           >
-            Voltar
+            <ArrowLeft />
           </button>
         )}
+        <div>
+          <span className="eyebrow">Imóvel rural</span>
+          <h1>Documentos do imóvel</h1>
+        </div>
       </header>
+      <p className="rural-page-lead">
+        Envie o PDF do CAR ou do CCIR. O sistema lê o texto do arquivo e preenche o cadastro.
+      </p>
       {!admin && (
-        <fieldset disabled={busy}>
-          <legend>Enviar documento</legend>
+        <fieldset className="account-panel" disabled={busy}>
+          <div className="account-section-intro">
+            <h2>Enviar documento</h2>
+            <p>PDF do SICAR, ou uma foto só para anexar. A leitura do cadastro usa o texto do PDF.</p>
+          </div>
           <label>
             Tipo de documento
             <select
@@ -578,6 +584,9 @@ export function DocumentsPanel({
         <ul className="document-list">
           {docs.map((d) => (
             <li key={d.id}>
+              <span className="document-card-icon" aria-hidden="true">
+                <FileText />
+              </span>
               <div>
                 <strong>{documentLabels[d.document_type]}</strong>
                 <small className="document-file-name">
@@ -638,9 +647,12 @@ export function DocumentsPanel({
         </ul>
       )}
       {selected && (
-        <section className="document-comparison" ref={comparison}>
+        <section className="document-comparison account-panel" ref={comparison}>
           <div className="document-sheet-bar">
-            <h3>Documento e cadastro</h3>
+            <div>
+              <span className="eyebrow">Leitura do arquivo</span>
+              <h2>Ver documento</h2>
+            </div>
             <button
               type="button"
               className="secondary"

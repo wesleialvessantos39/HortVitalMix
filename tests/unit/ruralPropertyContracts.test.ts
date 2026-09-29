@@ -9,6 +9,10 @@ import {
   Step5ReviewSchema,
   SubmitPropertySchema,
 } from "../../shared/contracts/ruralProperty";
+import {
+  estimatePropertyPerimeter,
+  isEstimatedPerimeter,
+} from "../../shared/rural/estimatePropertyPerimeter";
 
 const polygon = {
   type: "Polygon" as const,
@@ -176,5 +180,20 @@ describe("T08 contratos de imóvel rural", () => {
         producerId: crypto.randomUUID(),
       }).success,
     ).toBe(false);
+  });
+
+  it("17 desenha a ficha de perímetro com quadrado fechado na sede", () => {
+    const result = estimatePropertyPerimeter(-9.533644, -62.437444, 32.1826);
+    expect(result).not.toBeNull();
+    expect(GeoJsonPolygonSchema.safeParse(result!.polygon).success).toBe(true);
+    expect(isEstimatedPerimeter(result!.json)).toBe(true);
+    expect(result!.sideMeters).toBeCloseTo(Math.sqrt(32.1826 * 10000), 3);
+    const ring = result!.polygon.coordinates[0]!;
+    const lats = ring.map((point) => point[1]);
+    const lngs = ring.map((point) => point[0]);
+    expect((Math.max(...lats) + Math.min(...lats)) / 2).toBeCloseTo(-9.533644, 4);
+    expect((Math.max(...lngs) + Math.min(...lngs)) / 2).toBeCloseTo(-62.437444, 4);
+    expect(estimatePropertyPerimeter(0, 0, 10)).toBeNull();
+    expect(isEstimatedPerimeter(JSON.stringify(polygon))).toBe(false);
   });
 });

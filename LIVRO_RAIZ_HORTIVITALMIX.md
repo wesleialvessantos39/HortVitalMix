@@ -1,5 +1,29 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-29 — As telas do imóvel seguem a conta e Dimensões gera a ficha
+
+Status: **correção na `main`; schema lógico 35; sem migration nova. A T11 não foi aberta.**
+
+Evidência do proprietário:
+- Meus imóveis, Novo imóvel, Continuar cadastro, Documentos do imóvel e Ver documento não tinham a organização de Perfil e Endereços: cartão branco, voltar, abas em pílula e campos empilhados;
+- a etapa Dimensões pedia para colar um perímetro em GeoJSON. Isso não é um documento que o produtor consiga usar.
+
+Correções:
+- as cinco telas usam o mesmo desenho da conta: voltar, título, texto curto, painel branco, campos com rótulo e caixa, botões que não quebram a palavra;
+- as etapas do cadastro viram pílulas (Identificação, Dimensões, Água, Atividade, Revisão), no mesmo formato de Perfil e Endereços;
+- Dimensões deixou de mostrar código. Com a área total e o ponto da sede, o sistema desenha um quadrado equivalente, centrado na sede, e grava esse contorno no perímetro que o cadastro já tinha. A tela mostra a ficha: área total, área cultivada, sede e o lado em metros;
+- se a sede ainda não estiver marcada, a ficha pede para voltar ao mapa. Água e atividade continuam manuais, porque o CAR não traz isso. Nome e CPF continuam os da conta;
+- a leitura do PDF segue sem IA. Os arquivos não foram apagados e o CPF da pessoa não muda.
+
+Banco:
+- nenhuma migration; schema **35**;
+- o contorno entra no rascunho (`draft_data.polygonGeojson`) e, ao concluir a etapa, na tabela de perímetro que já existia (`app_property_boundaries.polygon_geojson`);
+- `app_releases` segue na tag antiga até sincronizar o SHA de Production. `/api/ready` pode responder `RELEASE_MISMATCH`. A tela não depende disso.
+
+Para ver a ficha num imóvel já lido: abrir de novo **Ver documento** (grava a sede) e depois **Continuar cadastro**, etapa Dimensões.
+
+---
+
 ## 2026-09-29 — O PDF preenche as etapas e a tela de conflito deixa de espremer o texto
 
 Status: **correção na `main`; schema lógico 35; sem migration nova. A T11 não foi aberta.**
