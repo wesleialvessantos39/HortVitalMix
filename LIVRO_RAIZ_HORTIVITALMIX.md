@@ -1,5 +1,28 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-28 — O PDF abre na tela e o cadastro é preenchido sem IA
+
+Status: **correção na `main`; schema lógico 35; sem migration nova. A T11 não foi aberta.**
+
+Evidência do proprietário:
+- o PDF não abria e os campos continuavam vazios;
+- a tela de documentos estava grande demais e sem o mesmo encaixe das outras telas, no celular e no computador;
+- o produtor não deve digitar o CAR, o município nem a área;
+- a leitura não pode depender de IA.
+
+Correções:
+- o PDF é desenhado na própria página, uma página por vez, numa caixa de 260px. O texto do arquivo é lido no navegador, sem Gemini e sem chamada de IA;
+- nome, município, CAR e área encontrados no texto preenchem o cadastro pelo caminho já existente de gravação do documento. O CPF da pessoa não muda;
+- no computador o arquivo fica à esquerda e os dados à direita, numa coluna de no máximo 880px, no mesmo espírito dos cartões de Meus imóveis. No celular fica uma coluna só: o PDF primeiro, os dados depois, botões na largura da tela;
+- foto não tem texto selecionável, então continua anexada e o sistema pede o PDF baixado do SICAR. Não há leitura por IA;
+- correção manual segue escondida. A aprovação do imóvel continua humana. Os PDFs não foram apagados.
+
+Banco:
+- nenhuma migration; schema **35**;
+- `app_releases` segue na tag antiga até sincronizar o SHA de Production depois que o deployment estiver READY. `/api/ready` pode responder `RELEASE_MISMATCH`. A tela não depende disso.
+
+---
+
 ## 2026-09-28 — O arquivo aparece na tela e o cadastro é preenchido sozinho
 
 Status: **correção na `main`; schema lógico 35; sem migration nova. A T11 não foi aberta.**

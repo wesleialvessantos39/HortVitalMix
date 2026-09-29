@@ -25,7 +25,7 @@ function cut(value: string | null, max: number) {
     .replace(/[|;].*$/, "")
     .trim();
   if (clean.length < 2) return null;
-  return clean.slice(0, max);
+  return clean.replace(/\/[A-Za-z]{2}$/, "").slice(0, max);
 }
 export function parseRuralDocumentText(
   text: string,
@@ -61,7 +61,7 @@ export function parseRuralDocumentText(
     255,
   );
   const municipality = cut(
-    afterLabel(source, /munic[ií]pio\s*[:\-–]?\s*([^\n]{2,80})/i),
+    afterLabel(source, /munic[ií]pio(?:\s*\/\s*uf)?\s*[:\-–]?\s*([^\n]{2,80})/i),
     100,
   );
   const totalSource =

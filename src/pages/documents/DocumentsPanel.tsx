@@ -22,6 +22,7 @@ import {
 import type { ExtractionView } from "../../../shared/contracts/aiExtraction";
 import "./documents.css";
 import { DocumentPreview } from "./DocumentPreview";
+import { parseRuralDocumentText } from "../../../shared/documents/parseRuralDocument";
 const statusLabels = {
   quarantine: "Aguardando conferência do arquivo",
   clean: "Arquivo conferido",
@@ -96,22 +97,22 @@ function fieldsFromExtraction(extraction: ExtractionView | null) {
   }
   return extraction?.payload_jsonb ?? null;
 }
-function formFromFields(fields: Record<string, unknown> | null) {
-  if (!fields) return { ...blankForm };
+function formFromFields(fields: object | null) {
+  const source = (fields ?? {}) as Record<string, unknown>;
   return {
-    carNumber: textOrEmpty(fields.carNumber),
-    ccirNumber: textOrEmpty(fields.ccirNumber),
-    propertyRegisteredName: textOrEmpty(fields.propertyRegisteredName),
-    holderName: textOrEmpty(fields.holderName),
-    holderCpfNormalized: textOrEmpty(fields.holderCpfNormalized),
-    municipality: textOrEmpty(fields.municipality),
-    totalAreaHectares: textOrEmpty(fields.totalAreaHectares),
-    legalReserveHectares: textOrEmpty(fields.legalReserveHectares),
-    appHectares: textOrEmpty(fields.appHectares),
+    carNumber: textOrEmpty(source.carNumber),
+    ccirNumber: textOrEmpty(source.ccirNumber),
+    propertyRegisteredName: textOrEmpty(source.propertyRegisteredName),
+    holderName: textOrEmpty(source.holderName),
+    holderCpfNormalized: textOrEmpty(source.holderCpfNormalized),
+    municipality: textOrEmpty(source.municipality),
+    totalAreaHectares: textOrEmpty(source.totalAreaHectares),
+    legalReserveHectares: textOrEmpty(source.legalReserveHectares),
+    appHectares: textOrEmpty(source.appHectares),
     consolidatedRuralAreaHectares: textOrEmpty(
-      fields.consolidatedRuralAreaHectares,
+      source.consolidatedRuralAreaHectares,
     ),
-    fiscalModules: textOrEmpty(fields.fiscalModules),
+    fiscalModules: textOrEmpty(source.fiscalModules),
   };
 }
 function fileTitle(name: string) {
@@ -143,14 +144,17 @@ export function DocumentsPanel({
     [job, setJob] = useState(""),
     [previewKind, setPreviewKind] = useState<"pdf" | "image" | "">(""),
     [form, setForm] = useState(blankForm),
-    [reading, setReading] = useState(false);
+    [reading, setReading] = useState(false),
+    [previewTick, setPreviewTick] = useState(0);
   const uploadAttempt = useRef<{
       fingerprint: string;
       commandId: string;
       documentId?: string;
     } | null>(null),
     generation = useRef(0),
-    comparison = useRef<HTMLElement | null>(null);
+    comparison = useRef<HTMLElement | null>(null),
+    readingDoc = useRef<DocumentView | null>(null),
+    appliedLocal = useRef(false);
   async function load() {
     setLoading(true);
     try {
@@ -203,6 +207,8 @@ export function DocumentsPanel({
     setExtraction(null);
     setAi(null);
     setJob("");
+    readingDoc.current = d;
+    appliedLocal.current = false;
     if (!selected || selected.id !== d.id) setForm(blankForm);
     try {
       const meta = await api<{
@@ -216,56 +222,80 @@ export function DocumentsPanel({
         setAi(meta.ai.enabled);
         setJob(meta.job?.status ?? "");
         const fields = fieldsFromExtraction(meta.extraction);
-        if (fields) setForm(formFromFields(fields));
+        if (fields && !appliedLocal.current) setForm(formFromFields(fields));
       }
       requestAnimationFrame(() =>
-        comparison.current?.scrollIntoView({ block: "start" }),
+        comparison.current?.scrollIntoView({ block: "nearest" }),
       );
-      if (
-        !admin &&
-        !meta?.extraction &&
-        ["car_sicar", "ccir_incra"].includes(d.document_type)
-      )
-        void readDocument(d, seq);
+      if (d.mime_type.startsWith("image/"))
+        setNotice(
+          "A foto fica anexada. Para preencher o cadastro, envie o PDF baixado do SICAR.",
+        );
     } catch (e) {
       showError(e);
     } finally {
       setBusy(false);
     }
   }
-  async function readDocument(d: DocumentView, seq: number) {
+  async function applyRead(d: DocumentView, text: string) {
+    if (!["car_sicar", "ccir_incra"].includes(d.document_type)) return;
+    appliedLocal.current = true;
+    if (text.trim().length < 8) {
+      setNotice(
+        "O PDF abriu, mas este arquivo não tem texto. Envie o PDF baixado do SICAR, não uma foto.",
+      );
+      return;
+    }
+    const parsed = parseRuralDocumentText(
+      text,
+      d.document_type as "car_sicar" | "ccir_incra",
+    );
+    if (
+      !parsed?.propertyRegisteredName ||
+      !parsed.municipality ||
+      !parsed.totalAreaHectares
+    ) {
+      if (parsed) setForm(formFromFields(parsed));
+      setNotice(
+        "O PDF abriu. Não achei nome, município e área neste arquivo para preencher o cadastro.",
+      );
+      return;
+    }
+    setForm(formFromFields(parsed));
     setReading(true);
-    setNotice("Lendo o documento e preenchendo o cadastro…");
     try {
       const result = await api<{
-        extraction?: ExtractionView;
-        propertyUpdated?: boolean;
-        areaApplied?: boolean;
-      }>(`${base}/${d.id}/extraction`, {
+        propertyUpdated: boolean;
+        areaApplied: boolean;
+      }>(`${base}/${d.id}/declare`, {
         method: "POST",
-        timeoutMs: 55000,
-        body: JSON.stringify({ commandId: crypto.randomUUID() }),
+        timeoutMs: 20000,
+        body: JSON.stringify({
+          commandId: crypto.randomUUID(),
+          carNumber: parsed.carNumber,
+          ccirNumber: parsed.ccirNumber,
+          propertyRegisteredName: parsed.propertyRegisteredName,
+          holderName: parsed.holderName,
+          holderCpfNormalized: parsed.holderCpfNormalized,
+          municipality: parsed.municipality,
+          totalAreaHectares: parsed.totalAreaHectares,
+          legalReserveHectares: parsed.legalReserveHectares,
+          appHectares: parsed.appHectares,
+          consolidatedRuralAreaHectares: parsed.consolidatedRuralAreaHectares,
+          fiscalModules: parsed.fiscalModules,
+        }),
       });
-      if (seq !== generation.current) return;
-      if (result.extraction) {
-        setExtraction(result.extraction);
-        const fields = fieldsFromExtraction(result.extraction);
-        if (fields) setForm(formFromFields(fields));
-        setJob("completed");
-      }
       setNotice(
-        result.propertyUpdated
-          ? result.areaApplied
-            ? "O documento foi lido e o cadastro do imóvel foi preenchido. A análise humana continua obrigatória."
-            : "O documento foi lido. A área total não substituiu o cadastro porque ficou menor que a área cultivada."
-          : result.extraction
-            ? "O documento foi lido. Confira os dados ao lado do arquivo."
-            : "Não foi possível ler este arquivo.",
+        !result.propertyUpdated
+          ? "O PDF foi lido. Este cadastro já foi aprovado ou está suspenso e não foi alterado."
+          : result.areaApplied
+            ? "O PDF foi lido e o cadastro do imóvel foi preenchido."
+            : "O PDF foi lido. A área total não substituiu a área cultivada já informada.",
       );
     } catch (e) {
-      if (seq === generation.current) showError(e);
+      showError(e);
     } finally {
-      if (seq === generation.current) setReading(false);
+      setReading(false);
     }
   }
   async function upload(file: File) {
@@ -454,13 +484,33 @@ export function DocumentsPanel({
   }
   return (
     <section className="documents-panel">
-      <header className="documents-panel-header">
-        <div className="documents-header-main">
-          {onNavigate && (
-            <button
-              className="rural-back-button"
-              aria-label="Voltar para a lista de imóveis"
-              onClick={() => onNavigate("/produtor/propriedades")}
+      <header className="documents-head">
+        <div>
+          <h2>Documentos do imóvel</h2>
+          <p>
+            Envie o PDF do CAR ou do CCIR. O sistema lê o texto do arquivo e preenche o cadastro.
+          </p>
+        </div>
+        {onNavigate && (
+          <button
+            className="secondary"
+            type="button"
+            onClick={() => onNavigate("/produtor/propriedades")}
+          >
+            Voltar
+          </button>
+        )}
+      </header>
+      {!admin && (
+        <fieldset disabled={busy}>
+          <legend>Enviar documento</legend>
+          <label>
+            Tipo de documento
+            <select
+              value={type}
+              onChange={(e) =>
+                setType(e.target.value as keyof typeof documentLabels)
+              }
             >
               <ArrowLeft size={20} />
             </button>
@@ -683,43 +733,30 @@ export function DocumentsPanel({
             {!admin &&
             ["car_sicar", "ccir_incra"].includes(selected.document_type) ? (
               <>
-                <p className="document-data-lead">
-                  O produtor só envia o arquivo. O sistema lê o PDF ou a foto e
-                  preenche o cadastro. A aprovação continua sendo de uma pessoa.
-                </p>
-                <dl className="document-data-grid">
+                <p>O texto do PDF preenche estes dados. Você não precisa digitar.</p>
+                <dl>
                   {Object.entries({
                     CAR: form.carNumber,
-                    "Código INCRA": form.ccirNumber,
+                    INCRA: form.ccirNumber,
                     Imóvel: form.propertyRegisteredName,
                     Titular: form.holderName,
                     CPF: form.holderCpfNormalized,
                     Município: form.municipality,
-                    "Área total (ha)": form.totalAreaHectares,
-                    "Reserva legal (ha)": form.legalReserveHectares,
+                    "Área (ha)": form.totalAreaHectares,
+                    "Reserva (ha)": form.legalReserveHectares,
                     "APP (ha)": form.appHectares,
-                    "Área consolidada (ha)": form.consolidatedRuralAreaHectares,
-                    "Módulos fiscais": form.fiscalModules,
-                  }).map(([label, value]) => (
-                    <div key={label} className="document-data-field">
+                    "Consolidada (ha)": form.consolidatedRuralAreaHectares,
+                    "Módulos": form.fiscalModules,
+                  })
+                    .filter(([, value]) => String(value || "").trim())
+                    .map(([label, value]) => (
+                    <div key={label}>
                       <dt>{label}</dt>
-                      <dd>{value || "Não encontrado no arquivo"}</dd>
+                      <dd>{value}</dd>
                     </div>
                   ))}
                 </dl>
-                {extraction && extraction.discrepancies.length > 0 && (
-                  <div className="document-discrepancies-box">
-                    <span className="document-discrepancies-title">
-                      <AlertTriangle size={16} /> Divergências detectadas
-                    </span>
-                    <ul>
-                      {extraction.discrepancies.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                <details className="document-correction-details">
+                <details>
                   <summary>Corrigir um dado lido errado</summary>
                   <form
                     className="document-form"
@@ -899,9 +936,7 @@ export function DocumentsPanel({
               </p>
             )}
             <p className="document-disclaimer">
-              A leitura não consulta SICAR nem INCRA e não comprova
-              titularidade, regularidade ou ausência de sobreposição. A
-              aprovação é somente humana.
+              A leitura usa o texto do PDF. Não consulta o SICAR e não aprova o imóvel.
             </p>
           </div>
 
@@ -926,21 +961,36 @@ export function DocumentsPanel({
                   disabled={busy}
                   onClick={() => void open(selected)}
                 >
-                  <RefreshCw size={14} />
-                  Atualizar leitura
-                </button>
-              </div>
-            </div>
-
-            {url ? (
-              <div className="document-preview-frame">
-                <DocumentPreview url={url} mime={selected.mime_type} />
-              </div>
+                  Abrir em tela cheia
+                </a>
+                <DocumentPreview
+                  key={`${url}:${previewTick}`}
+                  url={url}
+                  mime={selected.mime_type}
+                  onText={(text) => {
+                    const current = readingDoc.current;
+                    if (current && !current.mime_type.startsWith("image/"))
+                      void applyRead(current, text);
+                  }}
+                />
+              </>
             ) : (
               <div className="document-preview-placeholder">
                 <p>Visualização indisponível.</p>
               </div>
             )}
+            <button
+              type="button"
+              className="secondary"
+              disabled={busy}
+              onClick={() => {
+                appliedLocal.current = false;
+                setNotice("");
+                setPreviewTick((value) => value + 1);
+              }}
+            >
+              Atualizar leitura
+            </button>
           </div>
         </section>
       )}
