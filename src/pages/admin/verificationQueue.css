@@ -23,7 +23,6 @@
 .verification-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .verification-queue textarea,.verification-queue select{width:100%;max-width:100%;box-sizing:border-box}
 .verification-queue textarea{border:1px solid #cfdad1;border-radius:12px;padding:10px;font:inherit;min-height:110px}
-
 @media(max-width:1023px){
  .verification-triple{grid-template-columns:minmax(0,1fr)}
 }
@@ -41,3 +40,8 @@
 @media(min-width:768px){
  .verification-refresh{width:auto}
 }
+.verification-history{margin-top:16px;display:grid;gap:10px}
+.verification-history h3{margin:0;font-size:13px}
+.verification-history article{border:1px solid var(--admin-line);border-radius:10px;padding:10px;background:#f7faf7}
+.verification-history small{display:block;color:var(--admin-muted);margin:2px 0 6px}
+.verification-history p{margin:0;white-space:pre-wrap}
