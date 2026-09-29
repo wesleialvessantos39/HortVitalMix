@@ -7,6 +7,7 @@ export const VerificationRequestStatusSchema = z.enum([
   "in_review",
   "approved",
   "rejected",
+  "adjustments_required",
   "escalated",
 ]);
 
