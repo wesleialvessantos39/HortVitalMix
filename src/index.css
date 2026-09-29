@@ -2450,10 +2450,11 @@ dialog p {
   border: 1px solid #dce9df;
   background: #fff;
   border-radius: 18px;
-  padding: 22px;
+  padding: 16px;
   display: flex;
-  align-items: center;
-  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
 }
 
 .rural-state-card > svg,
@@ -2466,10 +2467,32 @@ dialog p {
 .rural-state-card h2,
 .rural-state-card p {
   margin: 0;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.rural-state-card h2 {
+  font-size: 1.15rem;
+  line-height: 1.3;
 }
 
 .rural-state-card div {
-  flex: 1;
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.rural-state-card button,
+.rural-state-card .secondary {
+  flex: 1 1 180px;
+  white-space: normal;
+  text-align: center;
+}
+
+.rural-account-line {
+  margin: 6px 0 0;
+  color: #3e5c49;
+  font-size: 0.88rem;
+  line-height: 1.4;
 }
 
 .rural-card-skeleton span {
@@ -2721,7 +2744,15 @@ dialog p {
 }
 
 @media (max-width: 768px) {
-  .rural-properties-page,
+  .rural-state-card,
+  .rural-connectivity-notice {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .rural-state-card button,
+  .rural-state-card .secondary {
+    width: 100%;
+  }
   .rural-wizard-page {
     width: 100%;
     max-width: 100%;
@@ -2758,7 +2789,7 @@ dialog p {
   }
 
   .rural-wizard-actions {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 
   .rural-save-indicator {

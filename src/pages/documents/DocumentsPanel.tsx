@@ -8,7 +8,7 @@ import {
 import type { ExtractionView } from "../../../shared/contracts/aiExtraction";
 import "./documents.css";
 import { DocumentPreview } from "./DocumentPreview";
-import { parseRuralDocumentText } from "../../../shared/documents/parseRuralDocument";
+import { parseRuralDocumentText, parseRuralLocation } from "../../../shared/documents/parseRuralDocument";
 const statusLabels = {
   quarantine: "Aguardando conferência do arquivo",
   clean: "Arquivo conferido",
@@ -131,7 +131,10 @@ export function DocumentsPanel({
     [previewKind, setPreviewKind] = useState<"pdf" | "image" | "">(""),
     [form, setForm] = useState(blankForm),
     [reading, setReading] = useState(false),
-    [previewTick, setPreviewTick] = useState(0);
+    [previewTick, setPreviewTick] = useState(0),
+    [accountName, setAccountName] = useState(""),
+    [accountCpf, setAccountCpf] = useState(""),
+    [place, setPlace] = useState("");
   const uploadAttempt = useRef<{
       fingerprint: string;
       commandId: string;
@@ -165,6 +168,19 @@ export function DocumentsPanel({
         "Não foi possível concluir. Verifique sua conexão e tente novamente.",
     );
   }
+  useEffect(() => {
+    let cancelled = false;
+    void api<{ fullName?: string; cpfMasked?: string }>("/v1/account/profile")
+      .then((profile) => {
+        if (cancelled) return;
+        if (profile.fullName) setAccountName(profile.fullName);
+        if (profile.cpfMasked) setAccountCpf(profile.cpfMasked);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   useEffect(() => {
     void load().then((rows) => {
       const d = rows.find((d) => d.id === initialDocumentId);
@@ -236,6 +252,12 @@ export function DocumentsPanel({
       text,
       d.document_type as "car_sicar" | "ccir_incra",
     );
+    const location = parseRuralLocation(text);
+    setPlace(
+      location.latitudeSede != null && location.longitudeSede != null
+        ? `${location.latitudeSede.toFixed(5)}, ${location.longitudeSede.toFixed(5)}`
+        : "",
+    );
     if (
       !parsed?.propertyRegisteredName ||
       !parsed.municipality ||
@@ -261,21 +283,23 @@ export function DocumentsPanel({
           carNumber: parsed.carNumber,
           ccirNumber: parsed.ccirNumber,
           propertyRegisteredName: parsed.propertyRegisteredName,
-          holderName: parsed.holderName,
-          holderCpfNormalized: parsed.holderCpfNormalized,
+          holderName: null,
+          holderCpfNormalized: null,
           municipality: parsed.municipality,
           totalAreaHectares: parsed.totalAreaHectares,
           legalReserveHectares: parsed.legalReserveHectares,
           appHectares: parsed.appHectares,
           consolidatedRuralAreaHectares: parsed.consolidatedRuralAreaHectares,
           fiscalModules: parsed.fiscalModules,
+          latitudeSede: location.latitudeSede,
+          longitudeSede: location.longitudeSede,
         }),
       });
       setNotice(
         !result.propertyUpdated
           ? "O PDF foi lido. Este cadastro já foi aprovado ou está suspenso e não foi alterado."
           : result.areaApplied
-            ? "O PDF foi lido e o cadastro do imóvel foi preenchido."
+            ? "O PDF foi lido e o cadastro do imóvel foi preenchido. Município, área e o ponto no mapa também. Nome e CPF do produtor continuam os da sua conta."
             : "O PDF foi lido. A área total não substituiu a área cultivada já informada.",
       );
     } catch (e) {
@@ -555,12 +579,11 @@ export function DocumentsPanel({
           {docs.map((d) => (
             <li key={d.id}>
               <div>
-                <strong>
+                <strong>{documentLabels[d.document_type]}</strong>
+                <small className="document-file-name">
                   {fileTitle(d.file_name).base}
                   <span className="file-ext">{fileTitle(d.file_name).ext}</span>
-                </strong>
-                <small>
-                  {documentLabels[d.document_type]} ·{" "}
+                  {" · "}
                   {(Number(d.file_size_bytes) / 1024).toFixed(0)} KB
                 </small>
                 <span className={"document-status " + d.status}>
@@ -642,19 +665,21 @@ export function DocumentsPanel({
             {!admin &&
             ["car_sicar", "ccir_incra"].includes(selected.document_type) ? (
               <>
-                <p>O texto do PDF preenche estes dados. Você não precisa digitar.</p>
+                <p>
+                  {accountName
+                    ? `Produtor da conta: ${accountName}${accountCpf ? ` · CPF ${accountCpf}` : ""}. O documento não cria outro nome nem outro CPF.`
+                    : "O nome e o CPF usados são os da sua conta. O documento não cria outro cadastro de pessoa."}
+                </p>
                 <dl>
                   {Object.entries({
                     CAR: form.carNumber,
-                    INCRA: form.ccirNumber,
                     Imóvel: form.propertyRegisteredName,
-                    Titular: form.holderName,
-                    CPF: form.holderCpfNormalized,
-                    Município: form.municipality,
+                    Município: form.municipality ? `${form.municipality} — RO` : "",
+                    "Ponto no mapa": place,
                     "Área (ha)": form.totalAreaHectares,
+                    "Cultivada (ha)": form.consolidatedRuralAreaHectares,
                     "Reserva (ha)": form.legalReserveHectares,
                     "APP (ha)": form.appHectares,
-                    "Consolidada (ha)": form.consolidatedRuralAreaHectares,
                     "Módulos": form.fiscalModules,
                   })
                     .filter(([, value]) => String(value || "").trim())

@@ -157,13 +157,21 @@ async function loadActivity(client: PoolClient, propertyId: string) {
   };
 }
 
+function shownPropertyName(row: Record<string, any>) {
+  const draftName =
+    typeof row.draft_data?.propertyName === "string"
+      ? row.draft_data.propertyName.trim()
+      : "";
+  if (draftName && !/^im[oó]vel sem nome/i.test(draftName)) return draftName;
+  return String(row.property_name ?? draftName ?? "");
+}
 async function mapProperty(
   client: PoolClient,
   row: Record<string, any>,
 ): Promise<RuralPropertyView> {
   return {
     id: row.id,
-    propertyName: row.draft_data?.propertyName ?? row.property_name ?? "",
+    propertyName: shownPropertyName(row),
     completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
     draftData: row.draft_data,
     registrationNumber: row.registration_number,
@@ -323,7 +331,7 @@ export class RuralPropertyService {
       );
       return result.rows.map((row) => ({
         id: row.id,
-        propertyName: row.draft_data?.propertyName ?? row.property_name ?? "",
+        propertyName: shownPropertyName(row),
     completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
     draftData: row.draft_data,
         lineVicinal: row.line_vicinal,

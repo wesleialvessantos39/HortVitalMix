@@ -322,7 +322,7 @@ export default function App() {
             </button>
           </div>
         </div>
-        {search}
+        {!isProducerPropertyRoute && search}
       </header>
       <main id="conteudo" className={isAdminRoute || publicLoginRole ? "layout admin-route-layout" : isProducerPropertyRoute ? "layout producer-route-layout" : "layout"}>
         {(sessionLoading && (guestAccessRoute || isAccountDataRoute || isProducerPropertyRoute || path === "/minha-conta")) || (shellSession && guestAccessRoute) ? <p role="status" className="account-notice">Carregando sua conta…</p> : publicLoginRole ? (

@@ -95,6 +95,44 @@ const steps = [
   ["Revisão e submissão", "Revise os dados e confirme o compromisso para enviar."],
 ] as const;
 
+function named(value: string, labels: Record<string, string>) {
+  if (!value) return "Não informado";
+  return labels[value] ?? "Não informado";
+}
+function waterLabel(value: string) {
+  return named(value, {
+    poco_artesiano: "Poço artesiano",
+    nascente_propria: "Nascente própria",
+    rio_corrego: "Rio ou córrego",
+    rede_tratada: "Rede tratada",
+  });
+}
+function irrigationLabel(value: string) {
+  return named(value, {
+    gotejamento: "Gotejamento",
+    microaspersao: "Microaspersão",
+    aspersao_convencional: "Aspersão convencional",
+    nenhum: "Nenhum",
+  });
+}
+function activityLabel(value: string) {
+  return named(value, {
+    hortalicas_folhosas: "Hortaliças folhosas",
+    legumes_picados: "Legumes picados",
+    frutas_tropicais: "Frutas tropicais",
+    ervas_temperos: "Ervas e temperos",
+    misto: "Produção mista",
+  });
+}
+function systemLabel(value: string) {
+  return named(value, {
+    organico_certificado: "Orgânico certificado",
+    agroecologico_declarado: "Agroecológico declarado",
+    hidroponia: "Hidroponia",
+    convencional_transicao: "Convencional em transição",
+  });
+}
+
 function commandId() {
   return crypto.randomUUID();
 }
@@ -154,7 +192,7 @@ function draftFromProperty(property: RuralPropertyView): Draft {
     property.boundaries.find((item) => item.boundaryType === "perimeter") ??
     property.boundaries[0];
 
-  return {
+  const base: Draft = {
     step: Math.min(5, Math.max(1, property.wizardCurrentStep)),
     propertyName: property.propertyName,
     registrationNumber: property.registrationNumber ?? "",
@@ -182,9 +220,34 @@ function draftFromProperty(property: RuralPropertyView): Draft {
     productionSystem: property.activity?.productionSystem ?? "",
     hasWashingFacility: property.activity?.hasWashingFacility ?? true,
     agroecologicalCommitment: property.status !== "draft",
-    ...(property.draftData ?? {}),
-    propertyId: property.id, revision: property.revision,
+    propertyId: property.id,
+    revision: property.revision,
   };
+  const extra = property.draftData;
+  if (!extra || typeof extra !== "object") return base;
+  for (const [key, value] of Object.entries(extra)) {
+    if (!(key in base) || key === "propertyId" || key === "revision") continue;
+    if (typeof value === "string") {
+      if (!value.trim()) continue;
+      if (key === "propertyName" && /^im[oó]vel sem nome/i.test(value)) continue;
+      if (
+        key === "municipality" &&
+        value.trim() === "Ariquemes" &&
+        base.municipality &&
+        base.municipality !== "Ariquemes"
+      )
+        continue;
+      (base as Record<string, unknown>)[key] = value;
+    } else if (value != null) {
+      (base as Record<string, unknown>)[key] = value;
+    }
+  }
+  return base;
+}
+
+function preferText(server: string, local: string) {
+  const next = server.trim();
+  return next || local.trim();
 }
 
 export function ProducerPropertiesPage({
@@ -429,6 +492,7 @@ function RuralPropertyWizard({
   const [online, setOnline] = useState(
     typeof navigator === "undefined" ? true : navigator.onLine,
   );
+  const [accountCpf, setAccountCpf] = useState("");
   const hydrated = useRef(false);
   const saving = useRef(false);
   const dirty = useRef(false);
@@ -476,6 +540,18 @@ function RuralPropertyWizard({
 
   useEffect(() => {
     let cancelled = false;
+    void api<{ fullName?: string; cpfMasked?: string }>("/v1/account/profile")
+      .then((profile) => {
+        if (!cancelled && profile.cpfMasked) setAccountCpf(profile.cpfMasked);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
 
     async function hydrate() {
       if (requestedId) {
@@ -490,12 +566,36 @@ function RuralPropertyWizard({
             const raw = localStorage.getItem(localKey(session.userId, requestedId));
             const stored = raw ? JSON.parse(raw) as Draft : null;
             if (stored?.propertyId === requestedId && stored.step >= 1 && stored.step <= 5) {
-              next = { ...next, ...stored };
-              conflict = stored.revision !== result.property.revision;
-              dirty.current = true;
-              setNotice(conflict
-                ? "Há um rascunho local e uma versão diferente no servidor. Copie suas alterações antes de recarregar."
-                : "Rascunho local recuperado.");
+              const server = next;
+              next = {
+                ...server,
+                step: stored.step,
+                lineVicinal: stored.lineVicinal.trim() ? stored.lineVicinal : server.lineVicinal,
+                ruralZoneSector: stored.ruralZoneSector.trim() ? stored.ruralZoneSector : server.ruralZoneSector,
+                accessDirections: stored.accessDirections.trim() ? stored.accessDirections : server.accessDirections,
+                polygonGeojson: stored.polygonGeojson.trim() ? stored.polygonGeojson : server.polygonGeojson,
+                waterSource: stored.waterSource || server.waterSource,
+                irrigationSystem: stored.irrigationSystem || server.irrigationSystem,
+                activityCategory: stored.activityCategory || server.activityCategory,
+                productionSystem: stored.productionSystem || server.productionSystem,
+                hasWashingFacility: stored.hasWashingFacility,
+                propertyName: preferText(server.propertyName, stored.propertyName),
+                municipality: preferText(server.municipality, stored.municipality),
+                registrationNumber: preferText(server.registrationNumber, stored.registrationNumber),
+                totalAreaHectares: preferText(server.totalAreaHectares, stored.totalAreaHectares),
+                cultivatedAreaHectares: preferText(server.cultivatedAreaHectares, stored.cultivatedAreaHectares),
+                latitudeSede: server.latitudeSede ?? stored.latitudeSede,
+                longitudeSede: server.longitudeSede ?? stored.longitudeSede,
+                state: "RO",
+                revision: server.revision,
+                propertyId: server.propertyId,
+              };
+              dirty.current = stored.revision === result.property.revision;
+              setNotice(
+                stored.revision === result.property.revision
+                  ? "Rascunho local recuperado."
+                  : "O documento atualizou nome, município, área e o ponto no mapa. Confira as etapas. Nome e CPF continuam os da sua conta.",
+              );
             }
           } catch {}
           setDraft(next);
@@ -745,6 +845,10 @@ function RuralPropertyWizard({
           <span className="eyebrow">Cadastro de imóvel rural</span>
           <h1>{draft.propertyName || "Novo imóvel rural"}</h1>
           <p>Etapa {step} de 5 · {stepMeta[0]}</p>
+          <p className="rural-account-line">
+            Produtor da conta: {session.fullName || "cadastrado"}
+            {accountCpf ? ` · CPF ${accountCpf}` : ""}. Estes dados não são pedidos de novo.
+          </p>
         </div>
         <button className="secondary" disabled={saving.current} onClick={() => void continueLater()}>
           Continuar mais tarde
@@ -787,14 +891,14 @@ function RuralPropertyWizard({
         <div className="rural-state-card rural-conflict-state" role="alert">
           <AlertTriangle />
           <div>
-            <h2>O imóvel mudou em outra sessão</h2>
-            <p>Copie suas alterações antes de descartar o rascunho local e abrir a versão do servidor.</p>
+            <h2>O cadastro foi atualizado</h2>
+            <p>Os dados do documento já estão nas etapas. Continue o preenchimento. O que o CAR não traz, como água e atividade, continua com você.</p>
           </div>
           <button className="secondary" onClick={() => {
             try { localStorage.removeItem(localKey(session.userId, draft.propertyId)); } catch {}
             onNavigate("/produtor/propriedades");
           }}>
-            Descartar rascunho local e voltar à lista
+            Descartar rascunho deste aparelho
           </button>
         </div>
       )}
@@ -1017,16 +1121,20 @@ function RuralPropertyWizard({
         {step === 5 && (
           <div className="rural-review">
             <dl>
-              <div><dt>Imóvel</dt><dd>{draft.propertyName}</dd></div>
-              <div><dt>Acesso</dt><dd>{draft.lineVicinal} · {draft.ruralZoneSector}</dd></div>
-              <div><dt>Município</dt><dd>{draft.municipality}/RO</dd></div>
-              <div><dt>Área total</dt><dd>{draft.totalAreaHectares || "—"} ha</dd></div>
-              <div><dt>Área cultivada</dt><dd>{draft.cultivatedAreaHectares || "—"} ha</dd></div>
-              <div><dt>Fonte de água</dt><dd>{draft.waterSource || "—"}</dd></div>
-              <div><dt>Irrigação</dt><dd>{draft.irrigationSystem || "—"}</dd></div>
-              <div><dt>Atividade</dt><dd>{draft.activityCategory || "—"}</dd></div>
-              <div><dt>Sistema</dt><dd>{draft.productionSystem || "—"}</dd></div>
+              <div><dt>Produtor</dt><dd>{session.fullName || "Conta já cadastrada"}{accountCpf ? ` · ${accountCpf}` : ""}</dd></div>
+              <div><dt>Imóvel</dt><dd>{draft.propertyName || "Não informado"}</dd></div>
+              <div><dt>CAR / inscrição</dt><dd>{draft.registrationNumber || "Não informado"}</dd></div>
+              <div><dt>Município</dt><dd>{draft.municipality || "Não informado"}/RO</dd></div>
+              <div><dt>Sede</dt><dd>{draft.latitudeSede != null && draft.longitudeSede != null ? `${draft.latitudeSede.toFixed(5)}, ${draft.longitudeSede.toFixed(5)}` : "Não marcada no mapa"}</dd></div>
+              <div><dt>Área total</dt><dd>{draft.totalAreaHectares || "Não informada"} ha</dd></div>
+              <div><dt>Área cultivada</dt><dd>{draft.cultivatedAreaHectares || "Não informada"} ha</dd></div>
+              <div><dt>Acesso</dt><dd>{[draft.lineVicinal, draft.ruralZoneSector].filter(Boolean).join(" · ") || "Não informado"}</dd></div>
+              <div><dt>Fonte de água</dt><dd>{waterLabel(draft.waterSource)}</dd></div>
+              <div><dt>Irrigação</dt><dd>{irrigationLabel(draft.irrigationSystem)}</dd></div>
+              <div><dt>Atividade</dt><dd>{activityLabel(draft.activityCategory)}</dd></div>
+              <div><dt>Sistema</dt><dd>{systemLabel(draft.productionSystem)}</dd></div>
             </dl>
+            <p className="rural-readonly-note">Água, atividade e sistema não vêm do PDF do CAR. Se estiverem em branco, volte nas etapas 3 e 4 e escolha.</p>
             <label className="account-toggle rural-commitment">
               <input
                 type="checkbox"

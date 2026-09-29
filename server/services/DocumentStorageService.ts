@@ -54,10 +54,13 @@ export async function applyExtractedProperty(
     municipality: string | null;
     carNumber: string | null;
     totalAreaHectares: number | null;
+    latitudeSede?: number | null;
+    longitudeSede?: number | null;
+    cultivatedAreaHectares?: number | null;
   },
 ) {
   const property = await c.query(
-    "SELECT status,cultivated_area_hectares FROM public.app_properties WHERE id=$1 FOR UPDATE",
+    "SELECT status,cultivated_area_hectares,total_area_hectares,draft_data FROM public.app_properties WHERE id=$1 FOR UPDATE",
     [propertyId],
   );
   const status = String(property.rows[0]?.status ?? "");
@@ -72,21 +75,86 @@ export async function applyExtractedProperty(
     property.rows[0]?.cultivated_area_hectares == null
       ? null
       : Number(property.rows[0].cultivated_area_hectares);
+  const currentTotal =
+    property.rows[0]?.total_area_hectares == null
+      ? null
+      : Number(property.rows[0].total_area_hectares);
   const area =
     input.totalAreaHectares != null && input.totalAreaHectares > 0
       ? input.totalAreaHectares
       : null;
   const areaApplied =
     !locked && area != null && (cultivated == null || cultivated <= area);
+  const lat = input.latitudeSede;
+  const lng = input.longitudeSede;
+  const locationApplied =
+    !locked &&
+    lat != null &&
+    lng != null &&
+    lat >= -14 &&
+    lat <= -7 &&
+    lng >= -67 &&
+    lng <= -59;
+  const nextTotal = areaApplied && area != null ? area : currentTotal;
+  const cultivatedCandidate = input.cultivatedAreaHectares;
+  const cultivatedApplied =
+    !locked &&
+    cultivated == null &&
+    cultivatedCandidate != null &&
+    cultivatedCandidate >= 0 &&
+    nextTotal != null &&
+    cultivatedCandidate <= nextTotal;
   const propertyUpdated =
-    !locked && Boolean(nameOk || cityOk || input.carNumber || areaApplied);
+    !locked &&
+    Boolean(
+      nameOk ||
+        cityOk ||
+        input.carNumber ||
+        areaApplied ||
+        locationApplied ||
+        cultivatedApplied,
+    );
   if (propertyUpdated) {
+    const draft = property.rows[0]?.draft_data;
+    let nextDraft: Record<string, unknown> | null = null;
+    if (draft && typeof draft === "object" && !Array.isArray(draft)) {
+      nextDraft = { ...(draft as Record<string, unknown>) };
+      if (nameOk) nextDraft.propertyName = nameOk;
+      if (cityOk) nextDraft.municipality = cityOk;
+      if (input.carNumber) nextDraft.registrationNumber = input.carNumber.slice(0, 64);
+      if (areaApplied && area != null) nextDraft.totalAreaHectares = String(area);
+      if (locationApplied) {
+        nextDraft.latitudeSede = lat;
+        nextDraft.longitudeSede = lng;
+        nextDraft.state = "RO";
+      }
+      if (cultivatedApplied && cultivatedCandidate != null)
+        nextDraft.cultivatedAreaHectares = String(cultivatedCandidate);
+    }
     await c.query(
-      `UPDATE public.app_properties SET property_name=COALESCE($2, property_name), municipality=COALESCE($3, municipality), registration_number=COALESCE($4, registration_number), total_area_hectares=CASE WHEN $5 THEN $6::numeric ELSE total_area_hectares END, revision=revision+1, updated_at=now() WHERE id=$1`,
-      [propertyId, nameOk, cityOk, input.carNumber, areaApplied, area ?? 0],
+      `UPDATE public.app_properties SET property_name=COALESCE($2, property_name), municipality=COALESCE($3, municipality), registration_number=COALESCE($4, registration_number), total_area_hectares=CASE WHEN $5 THEN $6::numeric ELSE total_area_hectares END, latitude_sede=CASE WHEN $7 THEN $8::numeric ELSE latitude_sede END, longitude_sede=CASE WHEN $7 THEN $9::numeric ELSE longitude_sede END, cultivated_area_hectares=CASE WHEN $10 THEN $11::numeric ELSE cultivated_area_hectares END, draft_data=CASE WHEN $12::jsonb IS NULL THEN draft_data ELSE $12::jsonb END, revision=revision+1, updated_at=now() WHERE id=$1`,
+      [
+        propertyId,
+        nameOk,
+        cityOk,
+        input.carNumber,
+        areaApplied,
+        area ?? 0,
+        locationApplied,
+        lat ?? 0,
+        lng ?? 0,
+        cultivatedApplied,
+        cultivatedCandidate ?? 0,
+        nextDraft ? JSON.stringify(nextDraft) : null,
+      ],
     );
   }
-  return { propertyUpdated, areaApplied, propertyStatus: status };
+  return {
+    propertyUpdated,
+    areaApplied,
+    locationApplied,
+    propertyStatus: status,
+  };
 }
 export async function audit(
   c: PoolClient,
@@ -416,6 +484,9 @@ export const DocumentStorageService = {
         municipality: input.municipality,
         carNumber: payload.carNumber,
         totalAreaHectares: area,
+        latitudeSede: input.latitudeSede ?? null,
+        longitudeSede: input.longitudeSede ?? null,
+        cultivatedAreaHectares: input.consolidatedRuralAreaHectares ?? null,
       });
       const result = {
         extraction,

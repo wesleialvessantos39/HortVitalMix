@@ -1,5 +1,34 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-29 — O PDF preenche as etapas e a tela de conflito deixa de espremer o texto
+
+Status: **correção na `main`; schema lógico 35; sem migration nova. A T11 não foi aberta.**
+
+Evidência do proprietário, no celular, depois que o recibo do CAR passou a abrir:
+- a lista ainda dizia “Imóvel sem nome”, embora o PDF tivesse “PA MARIA MENDES - LOTE 028”, Rio Crespo e 32,1826 ha;
+- o titular aparecia como “ou”, porque o texto legal “proprietário ou possuidor” foi lido como nome;
+- latitude e longitude do recibo não iam para o mapa da etapa 1;
+- a área consolidada não entrava na área cultivada;
+- nome e CPF do produtor precisam ser os do cadastro da conta, não um cadastro novo;
+- o aviso “O imóvel mudou em outra sessão” quebrava uma palavra por linha e o botão ficava no meio do texto;
+- a busca da loja ocupava a tela do produtor.
+
+Correções:
+- o texto do PDF, sem IA, grava no imóvel e também no rascunho das etapas: nome, município, CAR, área total, área cultivada quando ainda estava vazia (a consolidada do CAR) e o ponto da sede, se a coordenada cair em Rondônia;
+- “proprietário ou …” deixa de virar nome. Nome e CPF exibidos são os da conta (`/v1/account/profile`). A pessoa não é recriada e o CPF da conta não muda;
+- ao abrir o cadastro, o rascunho deste aparelho não esconde mais o que o documento gravou. Água, atividade e sistema continuam manuais, porque o CAR não traz isso;
+- o aviso de atualização fica em coluna no celular, com frase inteira. A busca some nas telas do produtor;
+- o cartão do arquivo mostra “CAR / SICAR” e o nome do arquivo embaixo.
+
+Banco:
+- nenhuma migration; schema **35**;
+- usa colunas que já existiam: `property_name`, `municipality`, `registration_number`, `total_area_hectares`, `cultivated_area_hectares`, `latitude_sede`, `longitude_sede` e `draft_data`;
+- `app_releases` segue na tag antiga até sincronizar o SHA de Production. `/api/ready` pode responder `RELEASE_MISMATCH`. A tela não depende disso.
+
+Para o imóvel que já foi lido antes desta correção: abrir de novo **Ver documento** grava o ponto no mapa e o nome nas etapas.
+
+---
+
 ## 2026-09-28 — O PDF abre na tela e o cadastro é preenchido sem IA
 
 Status: **correção na `main`; schema lógico 35; sem migration nova. A T11 não foi aberta.**

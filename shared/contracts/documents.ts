@@ -55,6 +55,8 @@ export const ManualDocumentDataSchema = z
     appHectares: optionalArea,
     consolidatedRuralAreaHectares: optionalArea,
     fiscalModules: optionalArea,
+    latitudeSede: z.number().min(-14).max(-7).nullable().optional(),
+    longitudeSede: z.number().min(-67).max(-59).nullable().optional(),
   })
   .strict();
 export type ManualDocumentData = z.infer<typeof ManualDocumentDataSchema>;

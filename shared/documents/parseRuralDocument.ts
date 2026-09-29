@@ -18,6 +18,60 @@ function afterLabel(text: string, label: RegExp) {
   if (!match) return null;
   return match[1].replace(/\s+/g, " ").trim();
 }
+function realPersonName(value: string | null) {
+  const clean = cut(value, 255);
+  if (!clean) return null;
+  if (/^(ou|e|de|da|do|o|a|os|as|rural|possuidor|possuidora|detentor|detentora)$/i.test(clean))
+    return null;
+  if (clean.split(/\s+/).length === 1 && clean.length < 5) return null;
+  return clean;
+}
+function roundCoord(value: number) {
+  return Math.round(value * 1e6) / 1e6;
+}
+function readCoordinate(source: string, kind: "lat" | "lng") {
+  const label = kind === "lat" ? "lat(?:itude)?" : "long(?:itude)?";
+  const dms = source.match(
+    new RegExp(
+      label +
+        "\\s*[:\\-–]?\\s*(\\d{1,3})\\s*[°º]\\s*(\\d{1,2})\\s*['’′]\\s*(\\d{1,2}(?:[.,]\\d+)?)\\s*[\\\"”″]?\\s*([A-Za-zÀ-ú]+)?",
+      "i",
+    ),
+  );
+  if (dms) {
+    const deg = Number(dms[1]);
+    const min = Number(dms[2]);
+    const sec = Number(dms[3].replace(",", "."));
+    if (min < 60 && sec < 60 && deg <= 180) {
+      const hemi = dms[4] ?? "";
+      const negative =
+        kind === "lat" ? /s|sul/i.test(hemi) || !hemi : /o|w|oeste/i.test(hemi) || !hemi;
+      const absolute = deg + min / 60 + sec / 3600;
+      return roundCoord(negative ? -absolute : absolute);
+    }
+  }
+  const decimal = source.match(
+    new RegExp(label + "\\s*[:\\-–]?\\s*(-?\\d{1,3}[.,]\\d+)", "i"),
+  );
+  if (!decimal) return null;
+  const value = Number(decimal[1].replace(",", "."));
+  return Number.isFinite(value) ? roundCoord(value) : null;
+}
+export function parseRuralLocation(text: string) {
+  const source = text.replace(/\u0000/g, " ");
+  const latitudeSede = readCoordinate(source, "lat");
+  const longitudeSede = readCoordinate(source, "lng");
+  if (
+    latitudeSede == null ||
+    longitudeSede == null ||
+    latitudeSede < -14 ||
+    latitudeSede > -7 ||
+    longitudeSede < -67 ||
+    longitudeSede > -59
+  )
+    return { latitudeSede: null, longitudeSede: null };
+  return { latitudeSede, longitudeSede };
+}
 function cut(value: string | null, max: number) {
   if (!value) return null;
   const clean = value
@@ -56,9 +110,11 @@ export function parseRuralDocumentText(
     ),
     128,
   );
-  const holderName = cut(
-    afterLabel(source, /(?:titular|propriet[aá]rio|nome\s+do\s+detentor)\s*[:\-–]?\s*([^\n]{2,160})/i),
-    255,
+  const holderName = realPersonName(
+    afterLabel(
+      source,
+      /(?:^|\n)\s*(?:titular|propriet[aá]rio|nome\s+do\s+detentor)\s*[:\-–]\s*([^\n]{2,160})/i,
+    ),
   );
   const municipality = cut(
     afterLabel(source, /munic[ií]pio(?:\s*\/\s*uf)?\s*[:\-–]?\s*([^\n]{2,80})/i),

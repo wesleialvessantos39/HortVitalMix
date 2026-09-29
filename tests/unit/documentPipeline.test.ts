@@ -8,7 +8,7 @@ import {
 import { ExtractionSchema } from "../../shared/contracts/aiExtraction";
 import { validateExtraction } from "../../server/services/CarValidationEngine";
 import { extractWithGemini } from "../../server/services/GeminiDocumentProcessor";
-import { parseRuralDocumentText } from "../../shared/documents/parseRuralDocument";
+import { parseRuralDocumentText, parseRuralLocation } from "../../shared/documents/parseRuralDocument";
 import { extractPdfDocument } from "../../server/services/PdfTextExtractor";
 const id = "11111111-1111-4111-8111-111111111111";
 const input = {
@@ -269,6 +269,30 @@ Módulos fiscais: 0,60
     expect(parsed?.legalReserveHectares).toBe(9.67);
     expect(parsed?.holderCpfNormalized).toBe("52998224725");
     expect(parsed?.fiscalModules).toBe(0.6);
+    expect(parsed?.holderName).toBeNull();
+  });
+  it("lê o recibo do CAR com coordenadas e ignora o titular ou", () => {
+    const text = `
+Nome do Imóvel Rural: PA MARIA MENDES - LOTE 028
+Município: Rio Crespo
+UF: Rondônia
+Área Total (ha) do Imóvel Rural: 32,1826
+Área consolidada: 26,5836
+Módulos fiscais: 0,5364
+Latitude: 09°32'01.12" S
+Longitude: 62°26'14.8" O
+Registro no CAR: RO-1100262-E37BCF0AB8FA4AC3B96572A57914FB03
+O proprietário ou possuidor rural declara.
+`;
+    const parsed = parseRuralDocumentText(text, "car_sicar");
+    const place = parseRuralLocation(text);
+    expect(parsed?.propertyRegisteredName).toBe("PA MARIA MENDES - LOTE 028");
+    expect(parsed?.municipality).toBe("Rio Crespo");
+    expect(parsed?.holderName).toBeNull();
+    expect(parsed?.totalAreaHectares).toBe(32.1826);
+    expect(parsed?.consolidatedRuralAreaHectares).toBe(26.5836);
+    expect(place.latitudeSede).toBeCloseTo(-9.533644, 4);
+    expect(place.longitudeSede).toBeCloseTo(-62.437444, 4);
   });
   it("lê o texto de um PDF simples", async () => {
     const src = `%PDF-1.4
