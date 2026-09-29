@@ -262,23 +262,11 @@
   border: 0;
   font-weight: 700;
 }
-.document-continue {
-  width: 100%;
-  min-height: 46px !important;
-  margin: 8px 0 10px;
-  border: 0 !important;
-  background: #1b4d2e !important;
-  color: #fff !important;
-  font-weight: 750 !important;
-}
 .documents-panel button:disabled { opacity: 0.55; cursor: wait; }
 .account-notice { margin: 8px 0; }
 
 @media (max-width: 800px) {
-  .documents-panel {
-    width: 100%;
-    margin-bottom: calc(92px + env(safe-area-inset-bottom));
-  }
+  .documents-panel { width: 100%; }
   .documents-head { flex-wrap: wrap; }
   .document-comparison,
   .document-form,

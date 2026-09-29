@@ -286,31 +286,21 @@ export function DocumentsPanel({
           holderName: null,
           holderCpfNormalized: null,
           municipality: parsed.municipality,
-          lineVicinal: parsed.lineVicinal ?? null,
-          ruralZoneSector: parsed.ruralZoneSector ?? null,
-          accessDirections: parsed.accessDirections ?? null,
           totalAreaHectares: parsed.totalAreaHectares,
-          cultivatedAreaHectares:
-            parsed.cultivatedAreaHectares ??
-            parsed.consolidatedRuralAreaHectares ??
-            null,
           legalReserveHectares: parsed.legalReserveHectares,
           appHectares: parsed.appHectares,
           consolidatedRuralAreaHectares: parsed.consolidatedRuralAreaHectares,
           fiscalModules: parsed.fiscalModules,
-          waterSource: parsed.waterSource ?? null,
-          irrigationSystem: parsed.irrigationSystem ?? null,
-          activityCategory: parsed.activityCategory ?? null,
-          productionSystem: parsed.productionSystem ?? null,
-          hasWashingFacility: parsed.hasWashingFacility ?? null,
-          latitudeSede: parsed.latitudeSede ?? location.latitudeSede,
-          longitudeSede: parsed.longitudeSede ?? location.longitudeSede,
+          latitudeSede: location.latitudeSede,
+          longitudeSede: location.longitudeSede,
         }),
       });
       setNotice(
         !result.propertyUpdated
-          ? "Documento lido. Não encontrei nenhum campo novo para alterar neste cadastro, ou ele está bloqueado para edição."
-          : "Documento lido. Os campos encontrados foram atualizados no cadastro. Agora complete somente o que o arquivo não informa.",
+          ? "O PDF foi lido. Este cadastro já foi aprovado ou está suspenso e não foi alterado."
+          : result.areaApplied
+            ? "O PDF foi lido e o cadastro do imóvel foi preenchido. Município, área e o ponto no mapa também. Nome e CPF do produtor continuam os da sua conta."
+            : "O PDF foi lido. A área total não substituiu a área cultivada já informada.",
       );
     } catch (e) {
       showError(e);
@@ -508,7 +498,7 @@ export function DocumentsPanel({
         <div>
           <h2>Documentos do imóvel</h2>
           <p>
-            Envie CAR ou CCIR. O sistema preenche o que encontrar e você só completa o que faltar.
+            Envie o PDF do CAR ou do CCIR. O sistema lê o texto do arquivo e preenche o cadastro.
           </p>
         </div>
         {onNavigate && (
@@ -879,22 +869,8 @@ export function DocumentsPanel({
                 Use CAR ou CCIR para corrigir os dados.
               </p>
             )}
-            {!admin && onNavigate && (
-              <button
-                type="button"
-                className="document-continue"
-                onClick={() =>
-                  onNavigate(
-                    "/produtor/propriedades/novo?id=" +
-                      encodeURIComponent(propertyId),
-                  )
-                }
-              >
-                Continuar cadastro
-              </button>
-            )}
             <p className="document-disclaimer">
-              A leitura usa o conteúdo do arquivo. Não consulta o SICAR e não aprova o imóvel.
+              A leitura usa o texto do PDF. Não consulta o SICAR e não aprova o imóvel.
             </p>
           </div>
           <div className="document-original">
