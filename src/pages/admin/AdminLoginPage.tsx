@@ -4,6 +4,7 @@ import { KeyRound, Leaf, ShieldCheck } from "lucide-react";
 import { api, type ApiFailure } from "../../lib/api";
 import { getBootstrapStatus } from "../../lib/adminBootstrapTransport";
 import { primeAdminAccess } from "../../lib/adminAccessHandoff";
+import { saveAdminSession } from "../../lib/adminSessionStore";
 import { PasswordInput } from "../../components/forms/PasswordInput";
 
 type Props = {
@@ -12,7 +13,7 @@ type Props = {
 };
 
 type LoginResponse =
-  | { status: "session_created"; role: string; sectors: string[] }
+  | { status: "session_created"; role: string; sectors: string[]; accessToken?: string; refreshToken?: string; expiresIn?: number }
   | { status: "email_confirmation_required"; maskedDestination: string }
   | { status: string; retryAfterSeconds?: number };
 
@@ -78,6 +79,13 @@ export function AdminLoginPage({
           ...(intendedRole ? { portalRole: intendedRole } : {}),
         }),
       });
+      if (result.status === "session_created" && "accessToken" in result && result.accessToken && result.refreshToken) {
+        saveAdminSession({
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+          expiresIn: result.expiresIn ?? 3600,
+        });
+      }
       if (result.status === "session_created") {
         window.dispatchEvent(new Event("hvm:session-changed"));
         // A sessão administrativa é validada pelo AdminAccessGate. Não use o

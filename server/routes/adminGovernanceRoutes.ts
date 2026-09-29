@@ -62,7 +62,7 @@ function setAdminSession(
     maxAge: 30 * 86400 * 1000,
   });
   if (data.userId) res.cookie("hvm_reauth", issueRecentAuthProof(data.userId, data.accessToken), {
-    ...opts, sameSite: "strict", maxAge: RECENT_AUTH_WINDOW_MS,
+    ...opts, sameSite: "lax", maxAge: RECENT_AUTH_WINDOW_MS,
   });
 }
 
@@ -190,6 +190,9 @@ adminGovernanceRouter.post(
         status: result.status,
         role: result.role,
         sectors: result.sectors,
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        expiresIn: result.expiresIn,
       });
       return;
     }

@@ -74,20 +74,30 @@ export function isAllowedRequestOrigin(req: Request) {
 
   try {
     const parsed = new URL(origin);
-    const requestHost =
-      firstHeader(req.headers["x-forwarded-host"]) ??
-      firstHeader(req.headers.host);
-    const requestHostname = hostnameFromHost(requestHost);
+    const hostCandidates = [
+      firstHeader(req.headers["x-forwarded-host"]),
+      firstHeader(req.headers.host),
+    ].filter((value): value is string => Boolean(value));
 
     // Google Studio pode servir http://localhost:3000 por um proxy HTTPS
     // e injetar x-forwarded-proto=https. Se navegador e Host são loopback,
     // continua sendo same-origin local e não deve ser bloqueado.
-    if (loopback(parsed.hostname) && requestHostname && loopback(requestHostname))
+    if (
+      loopback(parsed.hostname) &&
+      hostCandidates.some((candidate) => {
+        const hostname = hostnameFromHost(candidate);
+        return Boolean(hostname && loopback(hostname));
+      })
+    )
       return parsed.protocol === "http:" || parsed.protocol === "https:";
 
-    // Origem de preview só é válida quando é a própria origem desta publicação
-    // ou foi explicitamente autorizada; outros projetos *.vercel.app não são confiáveis.
-    if (!requestHost || parsed.host !== requestHost) return false;
+    // www e o host canônico são o mesmo site. O login vale em qualquer aparelho.
+    const sameSite = hostCandidates.some((candidate) => {
+      const hostname = hostnameFromHost(candidate);
+      if (!hostname) return false;
+      return hostname.replace(/^www\./, "") === parsed.hostname.replace(/^www\./, "");
+    });
+    if (!sameSite) return false;
 
     const forwardedProto = firstHeader(req.headers["x-forwarded-proto"]);
     if (forwardedProto && parsed.protocol !== forwardedProto + ":") return false;

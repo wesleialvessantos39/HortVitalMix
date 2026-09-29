@@ -184,6 +184,19 @@ function statusLabel(status: RuralPropertySummary["status"]) {
   }[status];
 }
 
+function situationLabel(property: RuralPropertySummary) {
+  if (property.queueStatus === "pending") return "Pendente";
+  if (property.queueStatus === "claimed" || property.queueStatus === "in_review")
+    return "Em análise";
+  if (property.reviewDecision === "adjustments_required")
+    return "Devolvido para correção";
+  if (property.reviewDecision === "approved" || property.status === "verified")
+    return "Aprovado";
+  if (property.reviewDecision === "rejected" || property.status === "rejected")
+    return "Recusado";
+  return statusLabel(property.status);
+}
+
 function messageForFailure(error: unknown) {
   const failure = error as ApiFailure;
   if (failure.message === "RECENT_AUTH_REQUIRED")
@@ -309,8 +322,8 @@ function PropertyList({
   const [busyId,setBusyId]=useState<string|null>(null);
   const [properties, setProperties] = useState<RuralPropertySummary[]>([]);
 
-  async function load() {
-    setState("loading");
+  async function load(background = false) {
+    if (!background) setState("loading");
     try {
       const result = await api<{ properties: RuralPropertySummary[] }>(
         "/v1/producer/properties",
@@ -318,12 +331,23 @@ function PropertyList({
       setProperties(result.properties);
       setState(result.properties.length ? "ready" : "empty");
     } catch {
-      setState("error");
+      if (!background) setState("error");
     }
   }
 
   useEffect(() => {
     void load();
+    const timer = window.setInterval(() => void load(true), 12000);
+    const refresh = () => {
+      if (document.visibilityState === "visible") void load(true);
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
   }, [session.userId]);
 
   async function deleteDraft(property:RuralPropertySummary){
@@ -421,7 +445,7 @@ function PropertyList({
                   </div>
                 </div>
                 <span className={"rural-status-badge is-" + property.status}>
-                  {statusLabel(property.status)}
+                  {situationLabel(property)}
                 </span>
               </div>
 
@@ -455,7 +479,11 @@ function PropertyList({
                       )
                     }
                   >
-                    {property.status === "draft" ? "Continuar cadastro" : "Editar cadastro"}
+                    {property.reviewDecision === "adjustments_required" || property.status === "rejected"
+                      ? "Corrigir cadastro"
+                      : property.status === "draft"
+                        ? "Continuar cadastro"
+                        : "Editar cadastro"}
                     <ChevronRight size={18} />
                   </button>
                 ) : (
@@ -485,6 +513,20 @@ function PropertyList({
                   )}
                 </div>
               </div>
+
+              {property.reviewOpinion &&
+                (property.reviewDecision === "adjustments_required" ||
+                  property.reviewDecision === "rejected" ||
+                  property.queueStatus === "pending") && (
+                <div className="rural-review-note">
+                  <strong>
+                    {property.queueStatus === "pending"
+                      ? "Este imóvel já passou por análise. Parecer anterior"
+                      : "Parecer técnico — o que corrigir"}
+                  </strong>
+                  <p>{property.reviewOpinion}</p>
+                </div>
+              )}
 
               {property.status === "completed" && (
                 <small className="rural-helper-note">

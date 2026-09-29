@@ -33,7 +33,7 @@ app.use((req, res, next) => {
       "Access-Control-Allow-Origin": origin,
       "Access-Control-Allow-Credentials": "true",
       "Access-Control-Allow-Methods": "GET,HEAD,POST,PATCH,OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, X-Requested-With",
+      "Access-Control-Allow-Headers": "Content-Type, X-Requested-With, Authorization, X-HVM-Request",
       Vary: "Origin",
     });
     if (req.method === "OPTIONS") {

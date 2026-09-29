@@ -2,7 +2,6 @@ import { Router, type Request } from "express";
 import { z } from "zod";
 import {
   adminSessionMiddleware,
-  requireRecentAuth,
 } from "../middleware/adminSession.ts";
 import { originProtection } from "../security/originProtection.ts";
 import {
@@ -73,7 +72,6 @@ adminVerificationRouter.get("/verification-queue/:id", async (req, res) => {
 adminVerificationRouter.post(
   "/verification-queue/:id/claim",
   originProtection,
-  requireRecentAuth,
   async (req, res) => {
     const id = z.uuid().safeParse(req.params.id);
     const input = ClaimVerificationRequestSchema.safeParse(req.body);
@@ -104,7 +102,6 @@ adminVerificationRouter.post(
 adminVerificationRouter.post(
   "/verification-queue/:id/decide",
   originProtection,
-  requireRecentAuth,
   async (req, res) => {
     const id = z.uuid().safeParse(req.params.id);
     const input = DecideVerificationRequestSchema.safeParse(req.body);

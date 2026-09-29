@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import type { AdminVerifySessionResponse } from "../../../shared/contracts/adminGovernance";
+import { clearAdminSession } from "../../lib/adminSessionStore";
 import { api } from "../../lib/api";
 
 type Props = {
@@ -48,6 +49,7 @@ export function AdminPortalShell({
     setLogoutError("");
     try {
       await api("/v1/auth/logout", { method: "POST", body: "{}" });
+      clearAdminSession();
       window.dispatchEvent(new Event("hvm:session-cleared"));
       onNavigate("/admin/entrar");
     } catch {

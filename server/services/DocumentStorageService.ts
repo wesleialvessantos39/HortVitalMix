@@ -341,7 +341,9 @@ export const DocumentStorageService = {
   },
   async file(a: DocumentActor, id: string) {
     const doc = await getDocument(a, id);
-    if (doc.status !== "clean")
+    if (!a.auditor && doc.status !== "clean")
+      throw new DocumentError("DOCUMENT_NOT_AVAILABLE");
+    if (a.auditor && doc.status === "archived")
       throw new DocumentError("DOCUMENT_NOT_AVAILABLE");
     const bytes = await checkedBytes(doc);
     await pool().query(

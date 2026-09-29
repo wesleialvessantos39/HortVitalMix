@@ -2441,6 +2441,26 @@ dialog p {
   line-height: 1.4;
 }
 
+.rural-review-note {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fff7e8;
+  border: 1px solid #efd3a0;
+  color: #5c4518;
+}
+
+.rural-review-note strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.rural-review-note p {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.45;
+}
+
 .rural-state-card,
 .rural-connectivity-notice {
   border: 1px solid #dce9df;

@@ -274,7 +274,11 @@ export type RuralPropertySummary = Pick<
   | "wizardCurrentStep"
   | "revision"
   | "updatedAt"
->;
+> & {
+  queueStatus?: string | null;
+  reviewDecision?: string | null;
+  reviewOpinion?: string | null;
+};
 
 // Partial input remains draft-only. Completion still uses the strict step schemas.
 export const RuralDraftDataSchema=z.object({

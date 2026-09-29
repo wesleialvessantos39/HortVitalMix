@@ -7,6 +7,7 @@ import type {
   SaveWizardStepInput,
   SubmitPropertyInput,
 } from "../../shared/contracts/ruralProperty.ts";
+import { propertyIdentityKey } from "../../shared/rural/propertyIdentity.ts";
 
 export class RuralPropertyError extends Error {
   constructor(
@@ -60,6 +61,128 @@ async function lockProperty(
   if (!result.rows[0])
     throw new RuralPropertyError("PROPERTY_NOT_FOUND", 404);
   return result.rows[0];
+}
+
+async function matchingProperties(
+  client: PoolClient,
+  producerId: string,
+  candidate: Record<string, any>,
+  exceptId?: string,
+) {
+  const key = propertyIdentityKey({
+    producerId,
+    registrationNumber: candidate.registration_number ?? candidate.registrationNumber,
+    propertyName: candidate.property_name ?? candidate.propertyName,
+    municipality: candidate.municipality,
+    lineVicinal: candidate.line_vicinal ?? candidate.lineVicinal,
+  });
+  if (!key) return [];
+  const rows = await client.query<Record<string, any>>(
+    `SELECT id, created_at, status, registration_number, property_name, municipality, line_vicinal, producer_id
+       FROM public.app_properties WHERE producer_id=$1`,
+    [producerId],
+  );
+  return rows.rows
+    .filter(
+      (row) =>
+        row.id !== exceptId &&
+        propertyIdentityKey({
+          producerId,
+          registrationNumber: row.registration_number,
+          propertyName: row.property_name,
+          municipality: row.municipality,
+          lineVicinal: row.line_vicinal,
+        }) === key,
+    )
+    .sort(
+      (a, b) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
+}
+
+async function reopenPropertyVerification(
+  client: PoolClient,
+  propertyId: string,
+  producerId: string,
+) {
+  const siblings = await matchingProperties(
+    client,
+    producerId,
+    (
+      await client.query("SELECT * FROM public.app_properties WHERE id=$1", [propertyId])
+    ).rows[0] ?? {},
+    propertyId,
+  );
+  for (const sibling of siblings) {
+    await client.query(
+      `DELETE FROM public.app_verification_requests r
+        WHERE r.property_id=$1
+          AND r.status IN ('pending','claimed','in_review')
+          AND NOT EXISTS (SELECT 1 FROM public.app_verification_decisions d WHERE d.request_id=r.id)`,
+      [sibling.id],
+    );
+  }
+  const siblingHasHistory = siblings.length
+    ? (
+        await client.query(
+          `SELECT 1 FROM public.app_verification_requests r
+            WHERE r.property_id = ANY($1::uuid[])
+              AND EXISTS (SELECT 1 FROM public.app_verification_decisions d WHERE d.request_id=r.id)
+            LIMIT 1`,
+          [siblings.map((row) => row.id)],
+        )
+      ).rows.length > 0
+    : false;
+  if (siblingHasHistory) {
+    await client.query(
+      `DELETE FROM public.app_verification_requests r
+        WHERE r.property_id=$1
+          AND r.status IN ('pending','claimed','in_review')
+          AND NOT EXISTS (SELECT 1 FROM public.app_verification_decisions d WHERE d.request_id=r.id)`,
+      [propertyId],
+    );
+  }
+  for (const sibling of siblings) {
+    await client.query(
+      `UPDATE public.app_verification_requests SET property_id=$1, updated_at=clock_timestamp() WHERE property_id=$2`,
+      [propertyId, sibling.id],
+    );
+  }
+  await client.query(
+    `DELETE FROM public.app_verification_requests r
+      WHERE r.property_id=$1
+        AND r.status IN ('pending','claimed','in_review')
+        AND NOT EXISTS (SELECT 1 FROM public.app_verification_decisions d WHERE d.request_id=r.id)
+        AND EXISTS (
+          SELECT 1 FROM public.app_verification_requests older
+           WHERE older.property_id=r.property_id AND older.id<>r.id
+        )`,
+    [propertyId],
+  );
+  const reopened = await client.query(
+    `UPDATE public.app_verification_requests
+        SET status='pending', claimed_by=NULL, claimed_at=NULL, updated_at=clock_timestamp()
+      WHERE id = (
+        SELECT id FROM public.app_verification_requests
+         WHERE property_id=$1
+         ORDER BY created_at ASC
+         LIMIT 1
+      )
+      AND status IN ('approved','rejected','adjustments_required','escalated')
+      RETURNING id`,
+    [propertyId],
+  );
+  if (!reopened.rows.length) {
+    await client.query(
+      `INSERT INTO public.app_verification_requests(property_id, producer_id, status, priority)
+       SELECT $1,$2,'pending',0
+        WHERE NOT EXISTS (
+          SELECT 1 FROM public.app_verification_requests
+           WHERE property_id=$1 AND status IN ('pending','claimed','in_review')
+        )`,
+      [propertyId, producerId],
+    );
+  }
 }
 
 async function replayTarget(
@@ -320,24 +443,69 @@ export class RuralPropertyService {
     try {
       const producerId = await resolveProducer(client, userId);
       const result = await client.query<Record<string, any>>(
-        [
-          "SELECT id,property_name,line_vicinal,municipality,state,status,",
-          "wizard_current_step,revision,updated_at,completed_at,draft_data",
-          "FROM public.app_properties",
-          "WHERE producer_id=$1",
-          "ORDER BY updated_at DESC,id ASC",
-        ].join(" "),
+        `SELECT p.id,p.property_name,p.line_vicinal,p.municipality,p.state,p.status,
+                p.wizard_current_step,p.revision,p.updated_at,p.completed_at,p.draft_data,
+                p.registration_number,p.producer_id,
+                vr.status AS queue_status,
+                vd.decision AS review_decision,
+                vd.technical_opinion AS review_opinion
+           FROM public.app_properties p
+           LEFT JOIN LATERAL (
+             SELECT id,status FROM public.app_verification_requests
+              WHERE property_id=p.id ORDER BY updated_at DESC LIMIT 1
+           ) vr ON true
+           LEFT JOIN LATERAL (
+             SELECT decision,technical_opinion FROM public.app_verification_decisions
+              WHERE request_id=vr.id ORDER BY decided_at DESC LIMIT 1
+           ) vd ON true
+          WHERE p.producer_id=$1
+          ORDER BY p.updated_at DESC,p.id ASC`,
         [producerId],
       );
-      return result.rows.map((row) => ({
+      const groups = new Map<string, Record<string, any>[]>();
+      for (const row of result.rows) {
+        const key =
+          propertyIdentityKey({
+            producerId,
+            registrationNumber: row.registration_number,
+            propertyName: row.property_name,
+            municipality: row.municipality,
+            lineVicinal: row.line_vicinal,
+          }) ?? row.id;
+        const bucket = groups.get(key) ?? [];
+        bucket.push(row);
+        groups.set(key, bucket);
+      }
+      const visible = [...groups.values()].map((bucket) => {
+        const open = bucket.find((row) =>
+          ["pending", "claimed", "in_review"].includes(row.queue_status),
+        );
+        const primary = open ?? bucket[0];
+        const previous = [...bucket].reverse().find((row) => row.review_opinion);
+        return {
+          row: primary,
+          previousOpinion:
+            open && previous && previous.id !== primary.id
+              ? previous.review_opinion
+              : null,
+          previousDecision:
+            open && previous && previous.id !== primary.id
+              ? previous.review_decision
+              : null,
+        };
+      });
+      return visible.map(({ row, previousOpinion, previousDecision }) => ({
         id: row.id,
         propertyName: shownPropertyName(row),
-    completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
-    draftData: row.draft_data,
+        completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
+        draftData: row.draft_data,
         lineVicinal: row.line_vicinal,
         municipality: row.municipality,
         state: row.state,
         status: row.status,
+        queueStatus: row.queue_status ?? null,
+        reviewDecision: row.review_decision ?? previousDecision ?? null,
+        reviewOpinion: row.review_opinion ?? previousOpinion ?? null,
         wizardCurrentStep: row.wizard_current_step,
         revision: row.revision,
         updatedAt: new Date(row.updated_at).toISOString(),
@@ -401,6 +569,20 @@ export class RuralPropertyService {
       let propertyId = input.propertyId;
       let before: Record<string, any> | null = null;
       let row: Record<string, any>;
+      let reusingIdentity = false;
+      if (input.step === 1 && !propertyId) {
+        const data = input.stepData;
+        const matches = await matchingProperties(client, producerId, {
+          registration_number: data.registrationNumber,
+          property_name: data.propertyName,
+          municipality: data.municipality,
+          line_vicinal: data.lineVicinal,
+        });
+        if (matches[0]) {
+          propertyId = matches[0].id;
+          reusingIdentity = true;
+        }
+      }
 
       if (input.step === 1 && !propertyId) {
         const data = input.stepData;
@@ -435,7 +617,7 @@ export class RuralPropertyService {
         const current = await lockProperty(client, producerId, propertyId);
         before = current;
         assertEditable(current);
-        assertRevision(current, input.expectedRevision);
+        if (!reusingIdentity) assertRevision(current, input.expectedRevision);
         if(input.step<5 && current.status!=="draft") {
           await client.query("UPDATE public.app_properties SET status='draft' WHERE id=$1 AND producer_id=$2",[propertyId,producerId]);
         }
@@ -556,6 +738,8 @@ export class RuralPropertyService {
           if(current.draft_data)throw new RuralPropertyError("PROPERTY_INCOMPLETE",422);
           await assertComplete(client, current);
           row = await transitionToSubmitted(client, producerId, current, input.completeOnly);
+          if (!input.completeOnly)
+            await reopenPropertyVerification(client, propertyId!, producerId);
         }
       }
 
@@ -670,6 +854,7 @@ export class RuralPropertyService {
         producerId,
         current,
       );
+      await reopenPropertyVerification(client, propertyId, producerId);
 
       await audit(client, {
         requestId,

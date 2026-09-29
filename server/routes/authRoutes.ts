@@ -293,7 +293,11 @@ authRouter.post("/admin-login", (_req, res) => {
 
 authRouter.post("/refresh", async (req, res, next) => {
   try {
-    const refresh = cookie(req, "hvm_refresh");
+    const bodyToken =
+      req.body && typeof req.body === "object" && typeof req.body.refreshToken === "string"
+        ? req.body.refreshToken
+        : "";
+    const refresh = cookie(req, "hvm_refresh") || bodyToken;
     if (!refresh) {
       res.status(401).json({ error: "SESSION_REQUIRED" });
       return;
@@ -353,6 +357,9 @@ authRouter.post("/refresh", async (req, res, next) => {
       roles: access.roles,
       activeRole: requestedRole,
       portalKind: portalKindForRole(requestedRole),
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+      expiresIn: data.expires_in,
     });
   } catch (error) {
     next(error);

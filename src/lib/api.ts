@@ -1,3 +1,10 @@
+import {
+  clearAdminSession,
+  readAdminAccessToken,
+  readAdminRefreshToken,
+  saveAdminSession,
+} from "./adminSessionStore";
+
 let refreshing: Promise<boolean> | null = null;
 
 export type ApiFailure = Error & {
@@ -96,6 +103,7 @@ async function doFetch(
   options: RequestInit,
   credentials: RequestCredentials,
 ) {
+  const adminToken = url.includes("/admin/") ? readAdminAccessToken() : "";
   try {
     return await fetch(url, {
       ...options,
@@ -103,6 +111,7 @@ async function doFetch(
       headers: {
         "Content-Type": "application/json",
         "X-HVM-Request": "1",
+        ...(adminToken ? { Authorization: "Bearer " + adminToken } : {}),
         ...options.headers,
       },
       signal: options.signal ?? AbortSignal.timeout(20000),
@@ -134,6 +143,45 @@ export async function api<T>(
   const first = await fetchApiPath(path, requestInit, "same-origin");
   let response = first.response;
   const base = first.base;
+
+  if (response.status === 401 && !retried && path.startsWith("/v1/admin")) {
+    const refreshToken = readAdminRefreshToken();
+    if (refreshToken) {
+      refreshing ??= fetch(base + "/v1/auth/refresh", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", "X-HVM-Request": "1" },
+        body: JSON.stringify({ refreshToken }),
+        signal: AbortSignal.timeout(10000),
+      })
+        .then(async (refreshed) => {
+          if (!refreshed.ok) {
+            clearAdminSession();
+            return false;
+          }
+          const body = (await refreshed.json()) as {
+            accessToken?: string;
+            refreshToken?: string;
+            expiresIn?: number;
+          };
+          if (!body.accessToken || !body.refreshToken) {
+            clearAdminSession();
+            return false;
+          }
+          saveAdminSession({
+            accessToken: body.accessToken,
+            refreshToken: body.refreshToken,
+            expiresIn: body.expiresIn ?? 3600,
+          });
+          return true;
+        })
+        .catch(() => false)
+        .finally(() => {
+          refreshing = null;
+        });
+      if (await refreshing) return api<T>(path, options, true);
+    }
+  }
 
   if (response.status === 401 && !retried && path === "/v1/auth/session") {
     const sessionFailure = await response
