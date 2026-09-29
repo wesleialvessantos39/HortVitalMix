@@ -4,16 +4,44 @@ import { isEstimatedPerimeter } from "../../../shared/rural/estimatePropertyPeri
 import "./verificationQueue.css";
 
 type Tab = "pending" | "in_review" | "decided";
+type QueueDoc = { id: string; documentType: string; fileName: string; mimeType: string; status?: string };
+type HistoryItem = { decision: string; technicalOpinion: string; decidedAt: string };
 type QueueRow = {
   id: string; status: string; property_name: string; municipality: string; line_vicinal: string;
   total_area_hectares: string | number | null; cultivated_area_hectares: string | number | null;
   latitude_sede: string | number | null; longitude_sede: string | number | null; producer_name: string;
   draft_data: { polygonGeojson?: unknown } | null; perimeter: { polygon_geojson?: unknown } | null;
-  documents: Array<{ id: string; documentType: string; fileName: string; mimeType: string }> | null;
-  extraction: { extraction_engine?: string; payload_jsonb?: Record<string, unknown> } | null;
+  documents: QueueDoc[] | null;
+  extraction: { payload_jsonb?: Record<string, unknown> } | null;
+  last_decision?: { decision?: string; technical_opinion?: string } | null;
+  decision_history?: HistoryItem[] | null;
 };
 
 const fileUrl = (id: string) => "/api/v1/admin/documents/" + id + "/file";
+
+const statusLabel: Record<string, string> = {
+  pending: "Pendente",
+  claimed: "Em análise",
+  in_review: "Em análise",
+  approved: "Aprovado",
+  rejected: "Recusado",
+  adjustments_required: "Ajustes solicitados",
+  escalated: "Escalado",
+};
+
+const decisionLabel: Record<string, string> = {
+  approved: "Aprovado",
+  rejected: "Recusado",
+  adjustments_required: "Ajustes solicitados",
+};
+
+const documentTypeLabel: Record<string, string> = {
+  car_sicar: "CAR / SICAR",
+  ccir_incra: "CCIR / INCRA",
+  water_report: "Laudo de água",
+  land_title: "Título ou posse",
+  other: "Documento",
+};
 
 export function VerificationQueuePage() {
   const [tab, setTab] = useState<Tab>("pending");
@@ -21,6 +49,7 @@ export function VerificationQueuePage() {
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
   const [active, setActive] = useState<QueueRow | null>(null);
+  const [selectedDocId, setSelectedDocId] = useState("");
   const [opinion, setOpinion] = useState("");
   const [trust, setTrust] = useState(3);
   const [checks, setChecks] = useState({ environmental: false, land: false, water: false });
@@ -31,10 +60,17 @@ export function VerificationQueuePage() {
     try {
       const r = await api<{ requests: QueueRow[] }>("/v1/admin/verification-queue?tab=" + next);
       setRows(r.requests);
+      setActive((current) => current ? r.requests.find((item) => item.id === current.id) ?? null : null);
     } catch { setNotice("Não foi possível carregar a fila de auditoria."); }
     finally { setLoading(false); }
   }
   useEffect(() => { void load(tab); }, [tab]);
+
+  useEffect(() => {
+    const docs = active?.documents ?? [];
+    if (!docs.length) { setSelectedDocId(""); return; }
+    if (!docs.some((doc) => doc.id === selectedDocId)) setSelectedDocId(docs[0].id);
+  }, [active, selectedDocId]);
 
   const estimated = useMemo(() => {
     if (!active) return false;
@@ -44,15 +80,17 @@ export function VerificationQueuePage() {
   }, [active]);
 
   const ready = checks.environmental && checks.land && checks.water && opinion.trim().length >= 10;
+  const selectedDoc = (active?.documents ?? []).find((doc) => doc.id === selectedDocId) ?? null;
 
   async function claim(row: QueueRow) {
     setBusy(row.id); setNotice("");
     try {
       await api("/v1/admin/verification-queue/" + row.id + "/claim", { method: "POST", body: JSON.stringify({ commandId: crypto.randomUUID() }) });
-      setTab("in_review"); setActive(row);
+      setTab("in_review");
+      setActive({ ...row, status: "in_review" });
     } catch (e) {
       const err = e as { status?: number };
-      setNotice(err.status === 403 ? "Sem permissão no setor de verificação documental." : err.status === 409 ? "Este chamado já foi capturado." : "Não foi possível capturar o chamado.");
+      setNotice(err.status === 403 ? "Sem permissão no setor de verificação documental." : err.status === 409 ? "Este chamado já foi capturado." : "Não foi possível enviar para análise.");
     } finally { setBusy(""); }
   }
 
@@ -67,14 +105,15 @@ export function VerificationQueuePage() {
           checklistEnvironmentalOk: checks.environmental, checklistLandTenureOk: checks.land, checklistWaterQualityOk: checks.water,
         }),
       });
-      setNotice(decision === "approved" ? "Imóvel homologado pelo analista humano." : decision === "rejected" ? "Imóvel recusado." : "Imóvel devolvido para ajustes.");
+      setNotice(decision === "approved" ? "Imóvel homologado. O produtor já vê o status Verificado." : decision === "rejected" ? "Imóvel recusado. O parecer foi enviado ao produtor." : "Pedido de ajustes enviado ao produtor com o parecer técnico.");
       setActive(null); setOpinion(""); setChecks({ environmental: false, land: false, water: false }); setTab("decided"); await load("decided");
     } catch (e) {
-      setNotice((e as { status?: number }).status === 422 ? "Aprovação exige checklist completo e parecer." : "Não foi possível registrar a decisão.");
+      setNotice((e as { status?: number }).status === 422 ? "Aprovação exige checklist completo e parecer." : (e as { status?: number }).status === 409 ? "Abra o chamado em análise antes de decidir." : "Não foi possível registrar a decisão.");
     } finally { setBusy(""); }
   }
 
   const payload = active?.extraction?.payload_jsonb ?? {};
+  const history = active?.decision_history ?? [];
   return (
     <section className="admin-page verification-queue">
       <header className="admin-page-header">
@@ -94,8 +133,8 @@ export function VerificationQueuePage() {
               <button key={row.id} className={"verification-item" + (active?.id === row.id ? " is-active" : "")} onClick={() => setActive(row)}>
                 <strong>{row.property_name}</strong>
                 <span>{row.municipality} · {row.line_vicinal}</span>
-                <small>{row.producer_name} · {row.status}</small>
-                {tab === "pending" && <span className="admin-table-action" onClick={(event) => { event.stopPropagation(); void claim(row); }}>{busy === row.id ? "Capturando…" : "Capturar"}</span>}
+                <small>{row.producer_name} · {statusLabel[row.status] ?? row.status}</small>
+                {tab === "pending" && <span className="admin-table-action" onClick={(event) => { event.stopPropagation(); void claim(row); }}>{busy === row.id ? "Enviando…" : "Enviar para análise"}</span>}
               </button>
             ))}
           </aside>
@@ -110,23 +149,44 @@ export function VerificationQueuePage() {
                   <div><dt>Área total</dt><dd>{active.total_area_hectares} ha</dd></div>
                   <div><dt>Área cultivada</dt><dd>{active.cultivated_area_hectares} ha</dd></div>
                   <div><dt>Sede GPS</dt><dd>{active.latitude_sede}, {active.longitude_sede}</dd></div>
+                  <div><dt>Situação</dt><dd>{statusLabel[active.status] ?? active.status}</dd></div>
                 </dl>
-                {estimated && <p className="admin-badge admin-badge--pending">Contorno Geodésico Estimado</p>}
-              </article>
-              <article className="admin-card">
-                <h2>2. Documento original</h2>
-                {(active.documents ?? []).map((doc) => (
-                  <div key={doc.id} className="verification-file">
-                    <p>{doc.documentType} · {doc.fileName}</p>
-                    {doc.mimeType === "application/pdf" ? <iframe title={doc.fileName} src={fileUrl(doc.id)} className="verification-frame" /> : <img alt="" src={fileUrl(doc.id)} className="verification-frame" />}
-                    <a className="admin-secondary compact" href={fileUrl(doc.id)} target="_blank" rel="noreferrer">Abrir documento em outra aba</a>
+                {estimated && <p className="admin-badge admin-badge--pending">Contorno geodésico estimado</p>}
+                {history.length > 0 && (
+                  <div className="verification-history">
+                    <h3>Histórico deste imóvel</h3>
+                    {history.map((item, index) => (
+                      <article key={item.decidedAt + index}>
+                        <strong>{decisionLabel[item.decision] ?? item.decision}</strong>
+                        <small>{new Date(item.decidedAt).toLocaleString("pt-BR")}</small>
+                        <p>{item.technicalOpinion}</p>
+                      </article>
+                    ))}
                   </div>
-                ))}
-                {!active.documents?.length && <p className="admin-muted">Sem arquivo conferido.</p>}
+                )}
               </article>
               <article className="admin-card">
-                <h2>3. Evidência e checklist</h2>
-                <p className="admin-muted">Motor: {active.extraction?.extraction_engine ?? "sem extração"}</p>
+                <h2>2. Documentos enviados</h2>
+                {(active.documents ?? []).length > 1 && (
+                  <label>Documento para visualizar
+                    <select value={selectedDocId} onChange={(event) => setSelectedDocId(event.target.value)}>
+                      {(active.documents ?? []).map((doc, index) => (
+                        <option key={doc.id} value={doc.id}>{index + 1}. {documentTypeLabel[doc.documentType] ?? "Documento"} — {doc.fileName}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                {selectedDoc ? (
+                  <div className="verification-file">
+                    <p>{documentTypeLabel[selectedDoc.documentType] ?? "Documento"} · {selectedDoc.fileName}</p>
+                    {selectedDoc.mimeType === "application/pdf" ? <iframe title={selectedDoc.fileName} src={fileUrl(selectedDoc.id)} className="verification-frame" /> : <img alt="" src={fileUrl(selectedDoc.id)} className="verification-frame" />}
+                    <a className="admin-secondary compact" href={fileUrl(selectedDoc.id)} target="_blank" rel="noreferrer">Abrir em outra aba</a>
+                  </div>
+                ) : <p className="admin-muted">Nenhum documento enviado com este cadastro.</p>}
+                {(active.documents ?? []).length > 1 && <p className="admin-muted">{active.documents!.length} documentos neste imóvel.</p>}
+              </article>
+              <article className="admin-card">
+                <h2>3. Conferência e parecer</h2>
                 <dl className="verification-dl">
                   <div><dt>CAR / registro</dt><dd>{String(payload.carNumber ?? payload.car_number ?? "—")}</dd></div>
                   <div><dt>Área no recibo</dt><dd>{String(payload.totalAreaHectares ?? payload.total_area_hectares ?? "—")}</dd></div>
@@ -135,8 +195,8 @@ export function VerificationQueuePage() {
                 <label className="verification-check"><input type="checkbox" checked={checks.environmental} onChange={(e) => setChecks((c) => ({ ...c, environmental: e.target.checked }))} /> CAR regular sem sobreposições</label>
                 <label className="verification-check"><input type="checkbox" checked={checks.land} onChange={(e) => setChecks((c) => ({ ...c, land: e.target.checked }))} /> Posse ou CCIR regular</label>
                 <label className="verification-check"><input type="checkbox" checked={checks.water} onChange={(e) => setChecks((c) => ({ ...c, water: e.target.checked }))} /> Laudo de água potável / irrigação</label>
-                <label>Parecer técnico<textarea value={opinion} onChange={(e) => setOpinion(e.target.value)} minLength={10} rows={5} /></label>
-                <label>Trust level<select value={trust} onChange={(e) => setTrust(Number(e.target.value))}>{[1,2,3,4,5].map((n) => <option key={n} value={n}>{n}</option>)}</select></label>
+                <label>Parecer técnico para o produtor<textarea value={opinion} onChange={(e) => setOpinion(e.target.value)} minLength={10} rows={5} placeholder="Descreva o que precisa ser corrigido. Este texto aparece para o produtor." /></label>
+                <label>Nível de confiança do produtor<select value={trust} onChange={(e) => setTrust(Number(e.target.value))}>{[1,2,3,4,5].map((n) => <option key={n} value={n}>{n}</option>)}</select></label>
                 <div className="verification-actions">
                   <button className="admin-primary" disabled={!ready || Boolean(busy)} onClick={() => void decide("approved")}>Aprovar imóvel</button>
                   <button className="admin-secondary" disabled={opinion.trim().length < 10 || Boolean(busy)} onClick={() => void decide("adjustments_required")}>Pedir ajustes</button>
