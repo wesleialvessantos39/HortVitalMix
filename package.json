@@ -20,6 +20,7 @@
     "security:check": "node --import tsx scripts/security-check.ts",
     "preflight": "node --import tsx scripts/preflight.ts",
     "verify": "npm run typecheck && npm test",
+    "check": "npm run verify",
     "verify:free": "npm run migrations:verify && npm run typecheck && npm run security:check && npm run test:unit && npm run build",
     "verify:foundation": "node --import tsx scripts/verify-foundation.ts",
     "release:current": "node --import tsx scripts/release-current.ts",

@@ -1,5 +1,20 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-29 — Auditoria automática continuada
+
+Status: **correção local concluída; sem alterações no Supabase, Vercel ou scripts de aplicação por decisão do proprietário.**
+
+- O comando de auditoria solicitado (`npm run check`) não existia no manifesto e retornava `Missing script: check`.
+- Foi criado o alias seguro `npm run check`, apontando para `npm run verify` (`typecheck` + suíte completa de testes).
+- A verificação de migrações local confirmou schema lógico **36** e hash `665785b52d7fe7f8cb9edc6de0fa82fff59f4b5561f97cdbe73328aa2567960e`.
+- A suíte unitária confirmou **30 arquivos e 241 testes aprovados**; a checagem de segurança confirmou ausência de segredos server-side no cliente.
+- Nenhuma migration, dado, configuração do Supabase ou deployment da Vercel foi alterado nesta etapa, porque o proprietário optou por não aplicar integrações, variáveis ou scripts.
+- O repositório continua na `main`; a sincronização Git deve registrar esta correção no próximo ciclo autorizado.
+- A auditoria encontrou e corrigiu uma falha de isolamento entre portais administrativos: uma credencial `platform_admin` não pode mais criar sessão quando o portal solicitado é `platform_super_admin`.
+- Validação pós-correção: `tests/integration/adminMfa.test.ts` passou com **8/8 testes** e `npm run typecheck` passou.
+
+---
+
 ## 2026-09-29 — As telas do imóvel seguem a conta e Dimensões gera a ficha
 
 Status: **correção na `main`; schema lógico 35; sem migration nova. A T11 não foi aberta.**

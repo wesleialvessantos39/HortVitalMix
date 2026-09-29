@@ -731,10 +731,19 @@ export class AdminGovernanceService {
     const [scopedResolution, limited] = await Promise.all([
       adminPrincipalFor(normalized, portalRole), this.rateLimit(normalized, ipHash),
     ]);
-    let resolved = scopedResolution;
-    if (
-      portalRole &&
-      !resolved.unavailable &&
+  let resolved = scopedResolution;
+  if (
+    portalRole &&
+    resolved.principal &&
+    resolved.principal.portal_role !== portalRole
+  ) {
+    await this.recordAttempt(normalized, ipHash, "failure");
+    return { status: "no_admin_role" };
+  }
+  if (
+    portalRole &&
+    !resolved.unavailable &&
+
       !resolved.ambiguous &&
       !resolved.principal
     ) {
