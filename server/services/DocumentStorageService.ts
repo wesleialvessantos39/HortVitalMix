@@ -52,107 +52,181 @@ export async function applyExtractedProperty(
   input: {
     propertyRegisteredName: string | null;
     municipality: string | null;
-    carNumber: string | null;
+    registrationNumber?: string | null;
     totalAreaHectares: number | null;
     latitudeSede?: number | null;
     longitudeSede?: number | null;
+    lineVicinal?: string | null;
+    ruralZoneSector?: string | null;
+    accessDirections?: string | null;
     cultivatedAreaHectares?: number | null;
+    waterSource?: string | null;
+    irrigationSystem?: string | null;
+    activityCategory?: string | null;
+    productionSystem?: string | null;
+    hasWashingFacility?: boolean | null;
   },
 ) {
   const property = await c.query(
-    "SELECT status,cultivated_area_hectares,total_area_hectares,draft_data FROM public.app_properties WHERE id=$1 FOR UPDATE",
+    `SELECT status,property_name,municipality,registration_number,total_area_hectares,cultivated_area_hectares,
+            latitude_sede,longitude_sede,line_vicinal,rural_zone_sector,access_directions,water_source,irrigation_system,draft_data
+       FROM public.app_properties WHERE id=$1 FOR UPDATE`,
     [propertyId],
   );
-  const status = String(property.rows[0]?.status ?? "");
-  const locked = !["draft", "completed", "rejected", "submitted"].includes(
-    status,
-  );
-  const name = input.propertyRegisteredName?.trim() || "";
-  const city = input.municipality?.trim() || "";
-  const nameOk = name.length >= 2 ? name.slice(0, 128) : null;
-  const cityOk = city.length >= 2 ? city.slice(0, 100) : null;
-  const cultivated =
-    property.rows[0]?.cultivated_area_hectares == null
-      ? null
-      : Number(property.rows[0].cultivated_area_hectares);
-  const currentTotal =
-    property.rows[0]?.total_area_hectares == null
-      ? null
-      : Number(property.rows[0].total_area_hectares);
+  const row = property.rows[0] ?? {};
+  const status = String(row.status ?? "");
+  const locked = !["draft", "completed", "rejected", "submitted"].includes(status);
+  const clean = (value: string | null | undefined, max: number, min = 2) => {
+    const text = value?.trim() ?? "";
+    return text.length >= min ? text.slice(0, max) : null;
+  };
+  const sameNumber = (left: unknown, right: number | null) =>
+    right != null && left != null && Number(left) === right;
+
+  const nameOk = clean(input.propertyRegisteredName, 128);
+  const cityOk = clean(input.municipality, 100);
+  const registrationOk = clean(input.registrationNumber, 64, 1);
+  const lineOk = clean(input.lineVicinal, 64);
+  const zoneOk = clean(input.ruralZoneSector, 64);
+  const accessOk = clean(input.accessDirections, 500, 1);
+  const waterOk = ["poco_artesiano", "nascente_propria", "rio_corrego", "rede_tratada"].includes(input.waterSource ?? "")
+    ? input.waterSource!
+    : null;
+  const irrigationOk = ["gotejamento", "microaspersao", "aspersao_convencional", "nenhum"].includes(input.irrigationSystem ?? "")
+    ? input.irrigationSystem!
+    : null;
+  const activityOk = ["hortalicas_folhosas", "legumes_picados", "frutas_tropicais", "ervas_temperos", "misto"].includes(input.activityCategory ?? "")
+    ? input.activityCategory!
+    : null;
+  const systemOk = ["organico_certificado", "agroecologico_declarado", "hidroponia", "convencional_transicao"].includes(input.productionSystem ?? "")
+    ? input.productionSystem!
+    : null;
+
+  const currentTotal = row.total_area_hectares == null ? null : Number(row.total_area_hectares);
+  const currentCultivated = row.cultivated_area_hectares == null ? null : Number(row.cultivated_area_hectares);
   const area =
-    input.totalAreaHectares != null && input.totalAreaHectares > 0
+    input.totalAreaHectares != null && Number.isFinite(input.totalAreaHectares) && input.totalAreaHectares > 0
       ? input.totalAreaHectares
       : null;
-  const areaApplied =
-    !locked && area != null && (cultivated == null || cultivated <= area);
-  const lat = input.latitudeSede;
-  const lng = input.longitudeSede;
-  const locationApplied =
-    !locked &&
-    lat != null &&
-    lng != null &&
-    lat >= -14 &&
-    lat <= -7 &&
-    lng >= -67 &&
-    lng <= -59;
-  const nextTotal = areaApplied && area != null ? area : currentTotal;
-  const cultivatedCandidate = input.cultivatedAreaHectares;
+  const cultivatedCandidate =
+    input.cultivatedAreaHectares != null && Number.isFinite(input.cultivatedAreaHectares) && input.cultivatedAreaHectares >= 0
+      ? input.cultivatedAreaHectares
+      : null;
+  const areaCompatible =
+    area != null &&
+    ((cultivatedCandidate != null && cultivatedCandidate <= area) ||
+      currentCultivated == null ||
+      currentCultivated <= area);
+  const areaApplied = !locked && areaCompatible && !sameNumber(row.total_area_hectares, area);
+  const nextTotal = areaCompatible ? area : currentTotal;
   const cultivatedApplied =
     !locked &&
-    cultivated == null &&
     cultivatedCandidate != null &&
-    cultivatedCandidate >= 0 &&
     nextTotal != null &&
-    cultivatedCandidate <= nextTotal;
-  const propertyUpdated =
+    cultivatedCandidate <= nextTotal &&
+    !sameNumber(row.cultivated_area_hectares, cultivatedCandidate);
+
+  const lat = input.latitudeSede;
+  const lng = input.longitudeSede;
+  const locationValid =
+    lat != null && lng != null && lat >= -14 && lat <= -7 && lng >= -67 && lng <= -59;
+  const locationApplied =
     !locked &&
-    Boolean(
-      nameOk ||
-        cityOk ||
-        input.carNumber ||
-        areaApplied ||
-        locationApplied ||
-        cultivatedApplied,
-    );
-  if (propertyUpdated) {
-    const draft = property.rows[0]?.draft_data;
-    let nextDraft: Record<string, unknown> | null = null;
-    if (draft && typeof draft === "object" && !Array.isArray(draft)) {
-      nextDraft = { ...(draft as Record<string, unknown>) };
-      if (nameOk) nextDraft.propertyName = nameOk;
-      if (cityOk) nextDraft.municipality = cityOk;
-      if (input.carNumber) nextDraft.registrationNumber = input.carNumber.slice(0, 64);
-      if (areaApplied && area != null) nextDraft.totalAreaHectares = String(area);
-      if (locationApplied) {
-        nextDraft.latitudeSede = lat;
-        nextDraft.longitudeSede = lng;
-        nextDraft.state = "RO";
-      }
-      if (cultivatedApplied && cultivatedCandidate != null)
-        nextDraft.cultivatedAreaHectares = String(cultivatedCandidate);
-    }
-    await c.query(
-      `UPDATE public.app_properties SET property_name=COALESCE($2, property_name), municipality=COALESCE($3, municipality), registration_number=COALESCE($4, registration_number), total_area_hectares=CASE WHEN $5 THEN $6::numeric ELSE total_area_hectares END, latitude_sede=CASE WHEN $7 THEN $8::numeric ELSE latitude_sede END, longitude_sede=CASE WHEN $7 THEN $9::numeric ELSE longitude_sede END, cultivated_area_hectares=CASE WHEN $10 THEN $11::numeric ELSE cultivated_area_hectares END, draft_data=CASE WHEN $12::jsonb IS NULL THEN draft_data ELSE $12::jsonb END, revision=revision+1, updated_at=now() WHERE id=$1`,
-      [
-        propertyId,
-        nameOk,
-        cityOk,
-        input.carNumber,
-        areaApplied,
-        area ?? 0,
-        locationApplied,
-        lat ?? 0,
-        lng ?? 0,
-        cultivatedApplied,
-        cultivatedCandidate ?? 0,
-        nextDraft ? JSON.stringify(nextDraft) : null,
-      ],
-    );
+    locationValid &&
+    (!sameNumber(row.latitude_sede, lat) || !sameNumber(row.longitude_sede, lng));
+
+  const directChanges: Array<[string, unknown]> = [];
+  if (!locked && nameOk && nameOk !== String(row.property_name ?? "")) directChanges.push(["property_name", nameOk]);
+  if (!locked && cityOk && cityOk !== String(row.municipality ?? "")) directChanges.push(["municipality", cityOk]);
+  if (!locked && registrationOk && registrationOk !== String(row.registration_number ?? "")) directChanges.push(["registration_number", registrationOk]);
+  if (!locked && lineOk && lineOk !== String(row.line_vicinal ?? "")) directChanges.push(["line_vicinal", lineOk]);
+  if (!locked && zoneOk && zoneOk !== String(row.rural_zone_sector ?? "")) directChanges.push(["rural_zone_sector", zoneOk]);
+  if (!locked && accessOk && accessOk !== String(row.access_directions ?? "")) directChanges.push(["access_directions", accessOk]);
+  if (!locked && waterOk && waterOk !== String(row.water_source ?? "")) directChanges.push(["water_source", waterOk]);
+  if (!locked && irrigationOk && irrigationOk !== String(row.irrigation_system ?? "")) directChanges.push(["irrigation_system", irrigationOk]);
+  if (areaApplied && area != null) directChanges.push(["total_area_hectares", area]);
+  if (cultivatedApplied && cultivatedCandidate != null) directChanges.push(["cultivated_area_hectares", cultivatedCandidate]);
+  if (locationApplied) {
+    directChanges.push(["latitude_sede", lat]);
+    directChanges.push(["longitude_sede", lng]);
   }
+
+  const currentDraft =
+    row.draft_data && typeof row.draft_data === "object" && !Array.isArray(row.draft_data)
+      ? (row.draft_data as Record<string, unknown>)
+      : {};
+  const nextDraft: Record<string, unknown> = { ...currentDraft };
+  let draftChanged = false;
+  const draftValue = (key: string, value: unknown) => {
+    if (locked || value == null || value === "") return;
+    if (nextDraft[key] !== value) {
+      nextDraft[key] = value;
+      draftChanged = true;
+    }
+  };
+  draftValue("propertyName", nameOk);
+  draftValue("municipality", cityOk);
+  draftValue("registrationNumber", registrationOk);
+  draftValue("lineVicinal", lineOk);
+  draftValue("ruralZoneSector", zoneOk);
+  draftValue("accessDirections", accessOk);
+  if (areaCompatible && area != null) draftValue("totalAreaHectares", String(area));
+  if (cultivatedCandidate != null && nextTotal != null && cultivatedCandidate <= nextTotal)
+    draftValue("cultivatedAreaHectares", String(cultivatedCandidate));
+  if (locationValid) {
+    draftValue("latitudeSede", lat);
+    draftValue("longitudeSede", lng);
+    draftValue("state", "RO");
+  }
+  draftValue("waterSource", waterOk);
+  draftValue("irrigationSystem", irrigationOk);
+  draftValue("activityCategory", activityOk);
+  draftValue("productionSystem", systemOk);
+  if (typeof input.hasWashingFacility === "boolean") draftValue("hasWashingFacility", input.hasWashingFacility);
+
+  const propertyUpdated = !locked && (directChanges.length > 0 || draftChanged);
+  if (propertyUpdated) {
+    const values: unknown[] = [propertyId];
+    const sets = directChanges.map(([column, value]) => {
+      values.push(value);
+      return `${column}=$${values.length}`;
+    });
+    if (draftChanged) {
+      values.push(JSON.stringify(nextDraft));
+      sets.push(`draft_data=$${values.length}::jsonb`);
+    }
+    sets.push("updated_at=now()");
+    await c.query(`UPDATE public.app_properties SET ${sets.join(",")} WHERE id=$1`, values);
+  }
+
+  let activityApplied = false;
+  const washing = input.hasWashingFacility;
+  const activityComplete =
+    !locked &&
+    activityOk != null &&
+    systemOk != null &&
+    typeof washing === "boolean" &&
+    !(activityOk === "legumes_picados" && washing === false);
+  if (activityComplete) {
+    await c.query(
+      `INSERT INTO public.app_rural_activities(property_id,activity_category,production_system,has_washing_facility)
+       VALUES($1,$2,$3,$4)
+       ON CONFLICT(property_id) DO UPDATE
+       SET activity_category=EXCLUDED.activity_category,
+           production_system=EXCLUDED.production_system,
+           has_washing_facility=EXCLUDED.has_washing_facility,
+           updated_at=now()`,
+      [propertyId, activityOk, systemOk, washing],
+    );
+    activityApplied = true;
+  }
+
   return {
     propertyUpdated,
     areaApplied,
+    cultivatedApplied,
     locationApplied,
+    activityApplied,
     propertyStatus: status,
   };
 }
@@ -401,12 +475,24 @@ export const DocumentStorageService = {
         holderName: input.holderName || null,
         holderCpfNormalized: input.holderCpfNormalized || null,
         municipality: input.municipality,
+        state: "RO",
+        latitudeSede: input.latitudeSede ?? null,
+        longitudeSede: input.longitudeSede ?? null,
+        lineVicinal: input.lineVicinal ?? null,
+        ruralZoneSector: input.ruralZoneSector ?? null,
+        accessDirections: input.accessDirections ?? null,
         totalAreaHectares: area,
+        cultivatedAreaHectares: input.cultivatedAreaHectares ?? null,
         legalReserveHectares: input.legalReserveHectares ?? null,
         appHectares: input.appHectares ?? null,
         consolidatedRuralAreaHectares:
           input.consolidatedRuralAreaHectares ?? null,
         fiscalModules: input.fiscalModules ?? null,
+        waterSource: input.waterSource ?? null,
+        irrigationSystem: input.irrigationSystem ?? null,
+        activityCategory: input.activityCategory ?? null,
+        productionSystem: input.productionSystem ?? null,
+        hasWashingFacility: input.hasWashingFacility ?? null,
         hasEmbargoOrInfractionDetected: null,
         confidenceScore: 1,
         fieldConfidence: {
@@ -469,11 +555,22 @@ export const DocumentStorageService = {
           holderName: payload.holderName,
           holderCpfNormalized: payload.holderCpfNormalized,
           municipality: payload.municipality,
+          lineVicinal: payload.lineVicinal,
+          ruralZoneSector: payload.ruralZoneSector,
+          accessDirections: payload.accessDirections,
           totalAreaHectares: payload.totalAreaHectares,
+          cultivatedAreaHectares: payload.cultivatedAreaHectares,
           legalReserveHectares: payload.legalReserveHectares,
           appHectares: payload.appHectares,
           consolidatedRuralAreaHectares: payload.consolidatedRuralAreaHectares,
           fiscalModules: payload.fiscalModules,
+          latitudeSede: payload.latitudeSede,
+          longitudeSede: payload.longitudeSede,
+          waterSource: payload.waterSource,
+          irrigationSystem: payload.irrigationSystem,
+          activityCategory: payload.activityCategory,
+          productionSystem: payload.productionSystem,
+          hasWashingFacility: payload.hasWashingFacility,
         });
       await c.query(
         "INSERT INTO public.app_document_reviews(extraction_id,user_id,decision,note,command_id) VALUES($1,$2,'confirmed',$3,$4)",
@@ -482,11 +579,22 @@ export const DocumentStorageService = {
       const applied = await applyExtractedProperty(c, doc.property_id, {
         propertyRegisteredName: input.propertyRegisteredName,
         municipality: input.municipality,
-        carNumber: payload.carNumber,
+        registrationNumber: payload.carNumber ?? payload.ccirNumber,
         totalAreaHectares: area,
         latitudeSede: input.latitudeSede ?? null,
         longitudeSede: input.longitudeSede ?? null,
-        cultivatedAreaHectares: input.consolidatedRuralAreaHectares ?? null,
+        lineVicinal: input.lineVicinal ?? null,
+        ruralZoneSector: input.ruralZoneSector ?? null,
+        accessDirections: input.accessDirections ?? null,
+        cultivatedAreaHectares:
+          input.cultivatedAreaHectares ??
+          input.consolidatedRuralAreaHectares ??
+          null,
+        waterSource: input.waterSource ?? null,
+        irrigationSystem: input.irrigationSystem ?? null,
+        activityCategory: input.activityCategory ?? null,
+        productionSystem: input.productionSystem ?? null,
+        hasWashingFacility: input.hasWashingFacility ?? null,
       });
       const result = {
         extraction,

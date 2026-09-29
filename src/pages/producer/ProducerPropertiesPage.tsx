@@ -92,7 +92,7 @@ const steps = [
   ["Dimensões", "Informe as áreas e, se desejar, o perímetro em GeoJSON."],
   ["Segurança hídrica", "Registre a fonte de água e o sistema de irrigação."],
   ["Culturas e processamento", "Descreva a atividade principal e a estrutura de lavagem."],
-  ["Revisão e submissão", "Revise os dados e confirme o compromisso para enviar."],
+  ["Revisão e envio", "Confira os dados. Salve para continuar depois ou envie quando estiver pronto."],
 ] as const;
 
 function named(value: string, labels: Record<string, string>) {
@@ -320,8 +320,8 @@ function PropertyList({
           <span className="eyebrow">Ambiente do produtor</span>
           <h1>Meus imóveis rurais</h1>
           <p>
-            Cadastre cada propriedade produtiva separadamente. Seus endereços
-            pessoais continuam em Minha conta.
+            Cadastre uma propriedade por vez. Você pode parar e continuar depois.
+            Seus endereços pessoais continuam em Minha conta.
           </p>
         </div>
         <button
@@ -1168,13 +1168,13 @@ function RuralPropertyWizard({
               <><WifiOff /> Rascunho salvo localmente</>
             ) : null}
           </div>
-          {step===5 && <button className="secondary" disabled={saving.current || state!=="ready"} onClick={()=>void submitAll(true)}>Concluir e salvar</button>}
+          {step===5 && <button className="secondary" disabled={saving.current || state!=="ready"} onClick={()=>void submitAll(true)}>Salvar sem enviar</button>}
           <button
             className="primary"
             disabled={saving.current || state === "conflict"}
             onClick={() => void next()}
           >
-            {step === 5 ? "Revisar e enviar" : "Salvar e continuar"}
+            {step === 5 ? "Enviar para análise" : "Salvar e continuar"}
             <ChevronRight />
           </button>
         </footer>

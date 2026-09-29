@@ -1,5 +1,52 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-29 — CORREÇÃO DE USABILIDADE MOBILE E PREENCHIMENTO INTEGRAL PELO DOCUMENTO
+
+Status: **correção integrada à `main`; schema lógico 35 preservado; sem migration nova; T11 não aberta.**
+
+### Evidência analisada
+Foram revisadas as telas reais enviadas pelo proprietário no celular: lista de imóveis, envio de CAR/CCIR, visualização do PDF, dados lidos, aviso de atualização de sessão e etapa 5. As capturas mostravam excesso de altura, ações concorrentes, texto espremido, barra de busca da loja dentro do fluxo do produtor e leitura incompleta do documento.
+
+A publicação imediatamente anterior já havia corrigido a busca nas rotas do produtor, o aviso que quebrava uma palavra por linha, o nome do imóvel, município, coordenadas e a primeira leitura da área consolidada. Esta revisão confere o código atual e corrige o que ainda permanecia tecnicamente incompleto.
+
+### Regra funcional consolidada
+- CAR/CCIR é fonte de preenchimento, não de aprovação.
+- O sistema copia **todo campo suportado que estiver realmente escrito no arquivo**, sem inventar valor para completar etapa.
+- O nome e o CPF da pessoa continuam sendo os da conta do produtor; documento não cria outra pessoa.
+- A área cultivada/utilizada deixa de ser protegida por um valor antigo: se o documento trouxer uma área atualizada compatível com a área total, ela substitui a anterior.
+- Se o documento trouxer área total nova e área utilizada/consolidada nova, as duas são avaliadas em conjunto; um valor antigo maior não impede a atualização correta do par novo.
+- A área consolidada do CAR continua sendo usada como área cultivada/utilizada quando não houver um campo explícito de área cultivada/utilizada.
+- O rascunho das cinco etapas é atualizado mesmo quando `draft_data` ainda não existia.
+- A etapa 5 **nunca é confirmada automaticamente**: o compromisso agroecológico continua sendo uma ação consciente do produtor.
+
+### Campos que agora percorrem o pipeline do arquivo
+Quando existirem no PDF/extração, podem preencher:
+1. **Identificação e acesso:** nome do imóvel, CAR/CCIR, município/RO, latitude, longitude, linha/vicinal, gleba/setor e orientação de acesso.
+2. **Dimensões:** área total e área cultivada/utilizada; a área consolidada pode alimentar a utilizada quando aplicável.
+3. **Segurança hídrica:** fonte de água e sistema de irrigação, somente se escritos no documento.
+4. **Culturas e processamento:** atividade, sistema de produção e estrutura de lavagem, somente se escritos no documento.
+5. **Revisão e envio:** mostra o conjunto preenchido, mas a confirmação final permanece manual.
+
+O caminho de leitura local do PDF e o caminho de extração assistida por Gemini passam a enviar o mesmo conjunto de campos para a mesma rotina de aplicação. Assim, o comportamento não muda conforme o motor de leitura disponível.
+
+### Interface do produtor
+- texto do fluxo encurtado;
+- `Revisão e submissão` passa a `Revisão e envio`;
+- no final, as ações são `Salvar sem enviar` e `Enviar para análise`;
+- ações secundárias do cartão passam para uma coluna no celular;
+- títulos e cartões ganham escala/padding apropriados para telas estreitas;
+- tela de documentos recebe espaço seguro acima da navegação inferior;
+- a conferência do documento ganha um botão principal `Continuar cadastro`;
+- a mensagem após leitura orienta completar apenas o que o arquivo não informa.
+
+### Banco e sincronização
+- **sem DDL e sem migration nova**: continuam sendo usadas as tabelas/colunas existentes do schema 35;
+- a rotina de aplicação atualiza `app_properties`, `draft_data` e, quando os três dados completos existirem, `app_rural_activities`;
+- depois do deployment Vercel READY do SHA desta correção, `public.app_releases` deve ser sincronizada para o mesmo SHA, schema 35 e hash canônico das migrations;
+- Supabase deve ser verificado após a publicação, sem criar coluna fictícia para dado já representado no modelo atual.
+
+---
+
 ## 2026-09-29 — O PDF preenche as etapas e a tela de conflito deixa de espremer o texto
 
 Status: **correção na `main`; schema lógico 35; sem migration nova. A T11 não foi aberta.**

@@ -2744,6 +2744,14 @@ dialog p {
 }
 
 @media (max-width: 768px) {
+  .rural-property-subactions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+  .rural-property-subactions > button {
+    width: 100%;
+  }
   .rural-state-card,
   .rural-connectivity-notice {
     flex-direction: column;
@@ -2786,6 +2794,16 @@ dialog p {
   .rural-wizard-card {
     padding: 18px;
     border-radius: 18px;
+  }
+
+  .rural-page-heading h1,
+  .rural-wizard-heading h1 {
+    font-size: clamp(1.65rem, 8vw, 2.15rem);
+    line-height: 1.08;
+  }
+
+  .rural-property-card {
+    padding: 16px;
   }
 
   .rural-wizard-actions {

@@ -81,6 +81,57 @@ function cut(value: string | null, max: number) {
   if (clean.length < 2) return null;
   return clean.replace(/\/[A-Za-z]{2}$/, "").slice(0, max);
 }
+
+function labeled(source: string, pattern: RegExp, max = 255) {
+  return cut(afterLabel(source, pattern), max);
+}
+function normalizeChoice(value: string | null) {
+  return (value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+function readWaterSource(source: string) {
+  const value = normalizeChoice(labeled(source, /(?:fonte\s+de\s+[aá]gua|abastecimento\s+de\s+[aá]gua|capta[cç][aã]o\s+de\s+[aá]gua)\s*[:\-–]\s*([^\n]{2,100})/i, 100));
+  if (!value) return null;
+  if (/poco/.test(value)) return "poco_artesiano" as const;
+  if (/nascente/.test(value)) return "nascente_propria" as const;
+  if (/rio|corrego/.test(value)) return "rio_corrego" as const;
+  if (/rede|tratad/.test(value)) return "rede_tratada" as const;
+  return null;
+}
+function readIrrigationSystem(source: string) {
+  const value = normalizeChoice(labeled(source, /(?:sistema\s+de\s+irriga[cç][aã]o|irriga[cç][aã]o)\s*[:\-–]\s*([^\n]{2,100})/i, 100));
+  if (!value) return null;
+  if (/gotej/.test(value)) return "gotejamento" as const;
+  if (/microaspers/.test(value)) return "microaspersao" as const;
+  if (/aspers/.test(value)) return "aspersao_convencional" as const;
+  if (/nenhum|nao possui|sem irriga/.test(value)) return "nenhum" as const;
+  return null;
+}
+function readActivity(source: string) {
+  const value = normalizeChoice(labeled(source, /(?:atividade\s+principal|atividade\s+rural|cultura\s+principal)\s*[:\-–]\s*([^\n]{2,120})/i, 120));
+  if (!value) return null;
+  if (/folhos|alface|couve|rucula/.test(value)) return "hortalicas_folhosas" as const;
+  if (/legume.*picad|processad/.test(value)) return "legumes_picados" as const;
+  if (/fruta.*tropical|banana|mamao|abacaxi/.test(value)) return "frutas_tropicais" as const;
+  if (/erva|tempero|cebolinha|coentro/.test(value)) return "ervas_temperos" as const;
+  if (/misto|diversific/.test(value)) return "misto" as const;
+  return null;
+}
+function readProductionSystem(source: string) {
+  const value = normalizeChoice(labeled(source, /(?:sistema\s+de\s+produ[cç][aã]o|manejo\s+produtivo)\s*[:\-–]\s*([^\n]{2,120})/i, 120));
+  if (!value) return null;
+  if (/organico.*cert/.test(value)) return "organico_certificado" as const;
+  if (/agroecolog/.test(value)) return "agroecologico_declarado" as const;
+  if (/hidropon/.test(value)) return "hidroponia" as const;
+  if (/convencional|transi[cç][aã]o/.test(value)) return "convencional_transicao" as const;
+  return null;
+}
+function readWashingFacility(source: string) {
+  const value = normalizeChoice(labeled(source, /(?:instala[cç][aã]o\s+de\s+lavagem|estrutura\s+de\s+lavagem|lavagem\s+e\s+higieniza[cç][aã]o)\s*[:\-–]\s*([^\n]{1,40})/i, 40));
+  if (!value) return null;
+  if (/^(sim|possui|existe|adequada)/.test(value)) return true;
+  if (/^(nao|sem|inexistente)/.test(value)) return false;
+  return null;
+}
 export function parseRuralDocumentText(
   text: string,
   documentType: "car_sicar" | "ccir_incra",
@@ -150,6 +201,23 @@ export function parseRuralDocumentText(
     afterLabel(source, /m[oó]dulos?\s+fiscais?\s*[:\-–]?\s*([^\n]{1,40})/i) ??
       "",
   );
+  const cultivatedAreaHectares = hectares(
+    afterLabel(source, /[aá]rea\s+(?:cultivada|utilizada|produtiva)(?:\s+ativa)?\s*[:\-–]?\s*([^\n]{1,40})/i) ?? "",
+  );
+  const location = parseRuralLocation(source);
+  const state =
+    /(?:^|\n)\s*UF\s*[:\-–]?\s*(?:RO|Rond[oô]nia)\b/i.test(source) ||
+    /(?:^|\n)\s*Estado\s*[:\-–]?\s*Rond[oô]nia\b/i.test(source)
+      ? ("RO" as const)
+      : null;
+  const lineVicinal = labeled(source, /(?:linha\s+vicinal|linha|travess[aã]o|vicinal)\s*[:\-–]\s*([^\n]{2,80})/i, 64);
+  const ruralZoneSector = labeled(source, /(?:setor\s+rural|gleba)\s*[:\-–]\s*([^\n]{2,80})/i, 64);
+  const accessDirections = labeled(source, /(?:orienta[cç][oõ]es?\s+de\s+acesso|acesso\s+ao\s+im[oó]vel|acesso)\s*[:\-–]\s*([^\n]{2,520})/i, 500);
+  const waterSource = readWaterSource(source);
+  const irrigationSystem = readIrrigationSystem(source);
+  const activityCategory = readActivity(source);
+  const productionSystem = readProductionSystem(source);
+  const hasWashingFacility = readWashingFacility(source);
   const useful =
     documentType === "ccir_incra"
       ? Boolean(ccirNumber || (propertyRegisteredName && totalAreaHectares))
@@ -167,11 +235,23 @@ export function parseRuralDocumentText(
         ? holderCpfNormalized
         : null,
     municipality,
+    state,
+    latitudeSede: location.latitudeSede,
+    longitudeSede: location.longitudeSede,
+    lineVicinal,
+    ruralZoneSector,
+    accessDirections,
     totalAreaHectares,
+    cultivatedAreaHectares,
     legalReserveHectares,
     appHectares,
     consolidatedRuralAreaHectares,
     fiscalModules,
+    waterSource,
+    irrigationSystem,
+    activityCategory,
+    productionSystem,
+    hasWashingFacility,
     hasEmbargoOrInfractionDetected: null,
     confidenceScore: 0.86,
     fieldConfidence: {
