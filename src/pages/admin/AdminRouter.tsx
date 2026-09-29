@@ -1,5 +1,4 @@
 import "./admin.css";
-import { AdminRuralPropertiesPage } from "./AdminRuralPropertiesPage";
 import { VerificationQueuePage } from "./VerificationQueuePage";
 import { AdminAccessGate } from "../../components/admin/AdminAccessGate";
 import { AdminPortalShell } from "../../components/admin/AdminPortalShell";
@@ -49,7 +48,7 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
  return <AdminAccessGate
   onNavigate={onNavigate}
   requiredRole={superOnly ? "platform_super_admin" : undefined}
-  requiredSector={path==="/admin/imoveis" || path==="/admin/documentos/fila" ? "document_verification" : undefined}
+  requiredSector={path==="/admin/imoveis" || path.startsWith("/admin/documentos/fila") ? "document_verification" : undefined}
  >
   {access=><AdminPortalShell
     access={access}
@@ -61,8 +60,7 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
       ? <AdminAccountPage path={path} access={access} onNavigate={onNavigate}/>
       : path==="/admin/governanca"
       ? <AdminGovernancePage onNavigate={onNavigate} access={access}/>
-      : path==="/admin/imoveis" ? <AdminRuralPropertiesPage/>
-      : path==="/admin/documentos/fila" ? <VerificationQueuePage/>
+      : path==="/admin/imoveis" || path.startsWith("/admin/documentos/fila") ? <VerificationQueuePage/>
       : path==="/admin/usuarios"
         ? <AdminUsersPage access={access}/>
         : path==="/admin/configuracao" && access.role==="platform_super_admin"
