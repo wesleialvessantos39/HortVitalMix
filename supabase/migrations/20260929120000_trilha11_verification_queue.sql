@@ -80,10 +80,8 @@ CREATE POLICY verification_requests_producer_read
     EXISTS (
       SELECT 1
       FROM public.app_producer_profiles pp
-      JOIN public.app_people pe ON pe.id = pp.person_id
-      JOIN public.app_users u ON u.person_id = pe.id
       WHERE pp.id = producer_id
-        AND u.id = auth.uid()
+        AND pp.person_id = public.current_person_id()
     )
   );
 
@@ -112,10 +110,8 @@ CREATE POLICY verification_decisions_producer_final_read
       SELECT 1
       FROM public.app_verification_requests r
       JOIN public.app_producer_profiles pp ON pp.id = r.producer_id
-      JOIN public.app_people pe ON pe.id = pp.person_id
-      JOIN public.app_users u ON u.person_id = pe.id
       WHERE r.id = request_id
-        AND u.id = auth.uid()
+        AND pp.person_id = public.current_person_id()
         AND r.status IN ('approved', 'rejected')
     )
   );
