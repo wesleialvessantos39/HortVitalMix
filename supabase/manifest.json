@@ -185,7 +185,12 @@
       "version": "20260929120000",
       "name": "trilha11_verification_queue",
       "file": "20260929120000_trilha11_verification_queue.sql"
+    },
+    {
+      "version": "20260929133000",
+      "name": "trilha11_enqueue_on_submit",
+      "file": "20260929133000_trilha11_enqueue_on_submit.sql"
     }
   ],
-  "migrationHistoryHash": "93c9aaceb63764deadd109c308ccbef1d3fa15db00bdf9b8417e838e21f8fc92"
+  "migrationHistoryHash": "72cabbb2aaa4ccd6f101e7cd60128d994096cfcd365c73420ef8099fcbcaf05f"
 }
