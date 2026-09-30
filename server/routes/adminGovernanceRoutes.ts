@@ -211,6 +211,14 @@ adminGovernanceRouter.post(
       res.status(429).json(result);
       return;
     }
+    if (result.status === "portal_required") {
+      res.status(422).json(result);
+      return;
+    }
+    if (result.status === "wrong_portal_super" || result.status === "wrong_portal_admin") {
+      res.status(403).json(result);
+      return;
+    }
     res
       .status(result.status === "unavailable" ? 503 : 401)
       .json(result);

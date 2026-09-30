@@ -27,7 +27,7 @@ describe("administrative password login — user policy 2026-09-25",()=>{
   expect(result).toMatchObject({status:"session_created",role:portal,sectors:portal==="platform_admin"?["operations"]:[]});
   expect(m.sendOtp).not.toHaveBeenCalled();expect(m.signIn).toHaveBeenCalledOnce();
  });
- it("accepts the real unique administrative role from a fresh device even when the other portal entry was selected",async()=>{
+ it("does not open the administrator portal with the super administrator password",async()=>{
   role=assigned="platform_super_admin";
   let principalLookups=0;
   m.from.mockImplementation(table=>{
@@ -42,12 +42,12 @@ describe("administrative password login — user policy 2026-09-25",()=>{
     app_admin_sector_members:[{sector_code:"operations",expires_at:null}],
    } as any)[table]);
   });
-  expect(await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_admin")).toMatchObject({status:"session_created",role:"platform_super_admin",sectors:[]});
+  expect(await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_admin")).toEqual({status:"wrong_portal_super"});
   expect(m.signIn).toHaveBeenCalledOnce();
  });
  it("requires initial confirmation",async()=>{confirmed=false;expect(await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_super_admin")).toMatchObject({status:"email_confirmation_required"});expect(m.sendOtp).not.toHaveBeenCalled();});
  it("rejects an incorrect password",async()=>{m.signIn.mockResolvedValue({data:{},error:{message:"invalid"}});expect(await AdminGovernanceService.login("test@example.invalid","wrong","ip","r","platform_super_admin")).toEqual({status:"invalid_credentials"});});
  it("rejects a suspended account",async()=>{status="suspended";expect(await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_super_admin")).toEqual({status:"account_blocked",error:"ACCOUNT_UNAVAILABLE"});});
- it("does not grant super access using an administrator credential",async()=>{role=assigned="platform_admin";expect(await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_super_admin")).toEqual({status:"no_admin_role"});});
+ it("does not grant super access using an administrator credential",async()=>{role=assigned="platform_admin";expect(await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_super_admin")).toEqual({status:"wrong_portal_admin"});});
  it("still enforces rate limits",async()=>{vi.mocked((AdminGovernanceService as any).rateLimit).mockResolvedValue({limited:true,retryAfterSeconds:60});expect(await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_super_admin")).toMatchObject({status:"rate_limited"});expect(m.signIn).not.toHaveBeenCalled();});
 });

@@ -1,5 +1,30 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-30 — Super administrador não entra como administrador, e imóvel aprovado só se vê
+
+Status: **correção na `main`; schema lógico 37; migration `20260930013000_approved_property_withdraw.sql` no repositório. A fila da T11 permanece.** Esta sessão não executou o SQL no Supabase: não há credencial de banco aqui e o conector da Vercel deste time responde 403. Sem esse SQL, o produtor já não consegue editar o imóvel aprovado, mas o botão de excluir a aprovação só grava quando a migration estiver aplicada.
+
+Evidência do proprietário:
+- a senha do Super administrador abria o cadastro de Administrador;
+- imóvel aceito ainda podia ser editado. O produtor pode excluir, mas precisa ser avisado de que perde a aprovação e terá de cadastrar outro imóvel e obter nova aprovação.
+
+Correções:
+- Administrador e Super administrador continuam portais separados. A senha de um não cria sessão no outro, nem num aparelho novo;
+- sair de um aparelho não encerra a sessão dos outros. Troca de senha continua derrubando todas;
+- imóvel aprovado abre só para visualização. O rascunho não é mais salvo por cima;
+- excluir a propriedade aprovada pede confirmação com o texto de perda da aprovação de produtor. O PDF não é apagado: o status passa a retirado e, se não houver outro imóvel aprovado, a aprovação de produtor volta ao início;
+- a fila Pendentes / Em análise / Decididos da T11 não foi desfeita. A leitura do PDF segue sem IA. O CPF da pessoa não muda.
+
+Banco:
+- migration `20260930013000_approved_property_withdraw.sql`: status `withdrawn` e o imóvel aprovado deixa de voltar para rascunho;
+- schema lógico **37**, hash `3c6ab93c4be001b8c7d1f293254c236fdc00217dc77df464aa1a6e43249a5859`;
+- o arquivo está no Git. **Não foi aplicado neste turno** no Postgres do Supabase;
+- `app_releases` segue na tag antiga até sincronizar o SHA de Production. `/api/ready` pode responder `RELEASE_MISMATCH`. A tela não depende disso.
+
+Para ver: atualizar a página. Entre em Administrador e em Super administrador cada um com a própria senha. Imóvel aprovado: Visualizar cadastro, sem edição.
+
+---
+
 ## 2026-09-29 — As telas do imóvel seguem a conta e Dimensões gera a ficha
 
 Status: **correção na `main`; schema lógico 35; sem migration nova. A T11 não foi aberta.**

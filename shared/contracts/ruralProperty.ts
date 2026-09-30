@@ -8,6 +8,7 @@ export const PropertyStatusSchema = z.enum([
   "verified",
   "rejected",
   "suspended",
+  "withdrawn",
 ]);
 
 export const BoundaryTypeSchema = z.enum([

@@ -64,7 +64,7 @@ export function AdminPortalShell({
           <span className="admin-brand-mark"><Leaf /></span>
           <span>
             <strong>Horti<span>Vital</span>Mix</strong>
-            <small>Administração</small>
+            <small>{access.role === "platform_super_admin" ? "Super administrador" : "Administrador"}</small>
           </span>
         </button>
         <nav className="admin-sidebar-nav" aria-label="Administração">

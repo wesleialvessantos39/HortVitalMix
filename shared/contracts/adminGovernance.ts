@@ -109,6 +109,9 @@ export const AdminLoginResultSchema = z.discriminatedUnion("status", [
   z.object({ status: z.literal("invalid_credentials") }),
   z.object({ status: z.literal("account_blocked"), error:z.string().optional() }),
   z.object({ status: z.literal("no_admin_role") }),
+  z.object({ status: z.literal("portal_required") }),
+  z.object({ status: z.literal("wrong_portal_super") }),
+  z.object({ status: z.literal("wrong_portal_admin") }),
   z.object({
     status: z.literal("rate_limited"),
     retryAfterSeconds: z.number().int().positive(),

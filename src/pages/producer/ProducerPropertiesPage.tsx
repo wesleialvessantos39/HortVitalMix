@@ -181,7 +181,12 @@ function statusLabel(status: RuralPropertySummary["status"]) {
     verified: "Verificado",
     rejected: "Revisão necessária",
     suspended: "Suspenso",
+    withdrawn: "Excluído",
   }[status];
+}
+
+function isApproved(property: RuralPropertySummary) {
+  return property.status === "verified" || property.reviewDecision === "approved";
 }
 
 function situationLabel(property: RuralPropertySummary) {
@@ -201,6 +206,10 @@ function messageForFailure(error: unknown) {
   const failure = error as ApiFailure;
   if (failure.message === "RECENT_AUTH_REQUIRED")
     return "Confirme sua senha abaixo para continuar. Seu rascunho está preservado.";
+  if (failure.message === "PROPERTY_NOT_EDITABLE")
+    return "Este imóvel está aprovado. Você pode apenas visualizar.";
+  if (failure.message === "PROPERTY_STATUS_CONFLICT")
+    return "A exclusão da aprovação ainda não foi aplicada no banco. O imóvel continua só para visualização.";
   if (failure.message === "PROPERTY_REVISION_CONFLICT" || failure.status === 409)
     return "Este imóvel foi alterado em outra sessão. Recarregue os dados antes de continuar.";
   if (failure.message === "PROPERTY_INCOMPLETE")
@@ -356,7 +365,24 @@ function PropertyList({
     try{await api("/v1/producer/properties/"+property.id,{method:"DELETE",body:JSON.stringify({expectedRevision:property.revision,commandId:commandId()})});localStorage.removeItem(localKey(session.userId,property.id));await load();}
     catch(e){setListNotice((e as ApiFailure).message==="PROPERTY_HAS_DOCUMENTS"?"Este rascunho possui documentos com histórico de custódia e não pode ser excluído.":(e as ApiFailure).message==="RECENT_AUTH_REQUIRED"?"Entre novamente para confirmar a exclusão. Seu rascunho está salvo.":"Não foi possível excluir. Somente rascunhos nunca concluídos podem ser excluídos.");}finally{setBusyId(null);}
   }
-  async function submitCompleted(property:RuralPropertySummary){
+  async function withdrawApproved(property: RuralPropertySummary) {
+    if (!confirm("Se você excluir esta propriedade, perde a aprovação de produtor. Será preciso cadastrar uma nova propriedade e passar por uma nova aprovação.")) return;
+    setBusyId(property.id);
+    setListNotice("");
+    try {
+      await api("/v1/producer/properties/" + property.id + "/withdraw", {
+        method: "POST",
+        body: JSON.stringify({ expectedRevision: property.revision, commandId: commandId() }),
+      });
+      localStorage.removeItem(localKey(session.userId, property.id));
+      await load();
+    } catch (e) {
+      setListNotice(messageForFailure(e));
+    } finally {
+      setBusyId(null);
+    }
+  }
+  async function submitCompleted(property: RuralPropertySummary) {
     setBusyId(property.id);setListNotice("");
     try{await api("/v1/producer/properties/"+property.id+"/submit",{method:"POST",body:JSON.stringify({expectedRevision:property.revision,commandId:commandId(),agroecologicalCommitment:true})});await load();}
     catch(e){setListNotice(messageForFailure(e));}finally{setBusyId(null);}
@@ -469,7 +495,20 @@ function PropertyList({
                   </button>
                 )}
 
-                {property.status !== "suspended" ? (
+                {isApproved(property) ? (
+                  <button
+                    className="primary"
+                    onClick={() =>
+                      onNavigate(
+                        "/produtor/propriedades/novo?id=" +
+                          encodeURIComponent(property.id),
+                      )
+                    }
+                  >
+                    Visualizar cadastro
+                    <ChevronRight size={18} />
+                  </button>
+                ) : property.status !== "suspended" ? (
                   <button
                     className={property.status === "completed" ? "secondary" : "primary"}
                     onClick={() =>
@@ -511,6 +550,16 @@ function PropertyList({
                       Excluir rascunho
                     </button>
                   )}
+                  {isApproved(property) && (
+                    <button
+                      className="secondary rural-delete-btn"
+                      disabled={busyId === property.id}
+                      onClick={() => void withdrawApproved(property)}
+                    >
+                      <Trash2 size={16} />
+                      Excluir propriedade
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -533,7 +582,7 @@ function PropertyList({
                   O envio leva o cadastro e os documentos já com os dados preenchidos, só para verificação e aprovação.
                 </small>
               )}
-              {property.completedAt && (
+              {property.completedAt && !isApproved(property) && (
                 <small className="rural-helper-note">
                   Já concluído: não pode ser excluído. Edições exigem nova análise.
                 </small>
@@ -572,6 +621,9 @@ function RuralPropertyWizard({
   const dirty = useRef(false);
   const editVersion = useRef(0);
   const pendingSave = useRef<{ payload: Record<string, unknown>; version: number } | null>(null);
+  const viewOnlyRef = useRef(false);
+  const [viewOnly, setViewOnly] = useState(false);
+  viewOnlyRef.current = viewOnly;
 
   const step = draft.step;
   const stepMeta = steps[step - 1];
@@ -634,6 +686,17 @@ function RuralPropertyWizard({
             "/v1/producer/properties/" + encodeURIComponent(requestedId),
           );
           if (cancelled) return;
+          const locked = result.property.status === "verified";
+          viewOnlyRef.current = locked;
+          setViewOnly(locked);
+          if (locked) {
+            setDraft(draftFromProperty(result.property));
+            dirty.current = false;
+            setNotice("Este imóvel está aprovado. Você pode ver as etapas, mas não alterar os dados.");
+            setState("ready");
+            hydrated.current = true;
+            return;
+          }
           let next = draftFromProperty(result.property);
           let conflict = false;
           try {
@@ -701,7 +764,7 @@ function RuralPropertyWizard({
   }, [requestedId, session.userId]);
 
   useEffect(() => {
-    if (!hydrated.current) return;
+    if (!hydrated.current || viewOnlyRef.current) return;
     const hectares = Number(draft.totalAreaHectares.trim().replace(",", "."));
     const estimate =
       draft.latitudeSede != null && draft.longitudeSede != null && hectares > 0
@@ -723,7 +786,7 @@ function RuralPropertyWizard({
   }, [draft.latitudeSede, draft.longitudeSede, draft.totalAreaHectares, draft.polygonGeojson]);
 
   useEffect(() => {
-    if (!hydrated.current) return;
+    if (!hydrated.current || viewOnlyRef.current) return;
     persistLocal(draft, false);
   }, [draft]);
 
@@ -804,6 +867,7 @@ function RuralPropertyWizard({
   if(!pendingLoaded.current){pendingLoaded.current=true;try{const stored=JSON.parse(localStorage.getItem(pendingKey)||"null");if(stored?.payload?.commandId)pendingDraft.current={payload:stored.payload,version:-1};}catch{}}
 
   async function saveStep(_targetStep:number, automatic=false){
+    if (viewOnlyRef.current) return false;
     if(saving.current || state!=="ready")return false;
     if(!online){persistLocal();return false;}
     saving.current=true;setSaveState("saving");
@@ -827,6 +891,7 @@ function RuralPropertyWizard({
   useEffect(() => {
     if (
       !hydrated.current ||
+      viewOnlyRef.current ||
       !dirty.current ||
       state !== "ready" ||
       saveState === "saving" || saveState === "error"
@@ -878,6 +943,11 @@ function RuralPropertyWizard({
   }
 
   async function next() {
+    if (viewOnlyRef.current) {
+      if (step === 5) { onNavigate("/produtor/propriedades"); return; }
+      setDraft((current) => ({ ...current, step: Math.min(5, current.step + 1) }));
+      return;
+    }
     if (step===5) {await submitAll();return;}
     if (saving.current) return;
     const valid=buildStepData(step).success;
@@ -896,6 +966,7 @@ function RuralPropertyWizard({
   }
 
   async function continueLater() {
+    if (viewOnlyRef.current) { onNavigate("/produtor/propriedades"); return; }
     persistLocal();
     const saved=await saveStep(step, true);
     if(!saved){setNotice("O rascunho permanece neste aparelho. Tente salvar novamente antes de sair.");return;}
@@ -959,7 +1030,7 @@ function RuralPropertyWizard({
       <div className="rural-wizard-tools">
         <p>Etapa {step} de 5</p>
         <button className="secondary" disabled={saving.current} onClick={() => void continueLater()}>
-          Continuar mais tarde
+          {viewOnly ? "Voltar aos imóveis" : "Continuar mais tarde"}
         </button>
       </div>
 
@@ -968,7 +1039,7 @@ function RuralPropertyWizard({
           <button
             type="button"
             disabled={saving.current}
-            onClick={()=>patch({step:index+1})}
+            onClick={() => viewOnly ? setDraft((current) => ({ ...current, step: index + 1 })) : patch({ step: index + 1 })}
             aria-label={`Etapa ${index+1}: ${title}${buildStepData(index+1).success ? ", completa" : ", pendente"}`}
             key={title}
             className={
@@ -1019,6 +1090,7 @@ function RuralPropertyWizard({
           <p>{stepMeta[1]}</p>
         </div>
 
+        <div inert={viewOnly ? true : undefined}>
         {step === 1 && (
           <div className="rural-form-grid">
             <label>
@@ -1093,12 +1165,13 @@ function RuralPropertyWizard({
                 pinnedHelp="Arraste o marcador ou toque em outro ponto para ajustar a sede."
                 initialCenter={{ latitude: -9.9132, longitude: -63.0408 }}
                 initialZoom={11}
-                onChange={(coordinates) =>
+                onChange={(coordinates) => {
+                  if (viewOnly) return;
                   patch({
                     latitudeSede: coordinates.latitude,
                     longitudeSede: coordinates.longitude,
-                  })
-                }
+                  });
+                }}
               />
               {draft.latitudeSede !== null && draft.longitudeSede !== null && (
                 <small>
@@ -1306,11 +1379,12 @@ function RuralPropertyWizard({
           </div>
         )}
 
+        </div>
         <footer className="rural-wizard-actions">
           <button
             className="secondary"
             disabled={step === 1 || saving.current}
-            onClick={() => patch({ step: Math.max(1, step - 1) })}
+            onClick={() => viewOnly ? setDraft((current) => ({ ...current, step: Math.max(1, current.step - 1) })) : patch({ step: Math.max(1, step - 1) })}
           >
             Voltar
           </button>
@@ -1323,13 +1397,13 @@ function RuralPropertyWizard({
               <><WifiOff /> Rascunho salvo localmente</>
             ) : null}
           </div>
-          {step===5 && <button className="secondary" disabled={saving.current || state!=="ready"} onClick={()=>void submitAll(true)}>Concluir e salvar</button>}
+          {step===5 && !viewOnly && <button className="secondary" disabled={saving.current || state!=="ready"} onClick={()=>void submitAll(true)}>Concluir e salvar</button>}
           <button
             className="primary"
             disabled={saving.current || state === "conflict"}
             onClick={() => void next()}
           >
-            {step === 5 ? "Revisar e enviar" : "Salvar e continuar"}
+            {viewOnly ? (step === 5 ? "Voltar aos imóveis" : "Ver próxima etapa") : step === 5 ? "Revisar e enviar" : "Salvar e continuar"}
             <ChevronRight />
           </button>
         </footer>

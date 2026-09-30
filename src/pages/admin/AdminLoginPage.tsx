@@ -25,6 +25,7 @@ export function AdminLoginPage({
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [errorCode, setErrorCode] = useState("");
   const [showHelp, setShowHelp] = useState(false);
   const [bootstrapOpen, setBootstrapOpen] = useState(false);
 
@@ -70,6 +71,13 @@ export function AdminLoginPage({
     e.preventDefault();
     setBusy(true);
     setError("");
+    setErrorCode("");
+    if (!intendedRole) {
+      setError("Escolha Administrador ou Super administrador. As senhas não se misturam.");
+      setErrorCode("portal_required");
+      setBusy(false);
+      return;
+    }
     try {
       const result = await api<LoginResponse>("/v1/admin/auth/login", {
         method: "POST",
@@ -87,6 +95,18 @@ export function AdminLoginPage({
         });
       }
       if (result.status === "session_created") {
+        const role = "role" in result ? result.role : "";
+        if (role !== intendedRole) {
+          await api("/v1/auth/logout", { method: "POST", body: "{}" }).catch(() => undefined);
+          window.dispatchEvent(new Event("hvm:session-cleared"));
+          setErrorCode(role === "platform_super_admin" ? "wrong_portal_super" : "wrong_portal_admin");
+          setError(
+            role === "platform_super_admin"
+              ? "A senha do Super administrador não abre o cadastro de Administrador. Cada acesso tem a sua senha e a sua hierarquia."
+              : "A senha de Administrador não abre o acesso de Super administrador.",
+          );
+          return;
+        }
         window.dispatchEvent(new Event("hvm:session-changed"));
         // A sessão administrativa é validada pelo AdminAccessGate. Não use o
         // endpoint público /v1/auth/session aqui: credenciais administrativas
@@ -111,6 +131,22 @@ export function AdminLoginPage({
       setError("Não foi possível concluir o acesso administrativo.");
     } catch (caught) {
       const failure = caught as ApiFailure;
+      if (failure.message === "wrong_portal_super") {
+        setErrorCode("wrong_portal_super");
+        setError("Esta senha é do Super administrador. O cadastro de Administrador é outro e só libera os setores atribuídos. Entre como Super administrador.");
+        return;
+      }
+      if (failure.message === "wrong_portal_admin") {
+        setErrorCode("wrong_portal_admin");
+        setError("Esta senha é do Administrador. Ela não abre o acesso de Super administrador.");
+        return;
+      }
+      if (failure.message === "portal_required") {
+        setErrorCode("portal_required");
+        setError("Escolha Administrador ou Super administrador. As senhas não se misturam.");
+        return;
+      }
+      setErrorCode("");
       setError(blockMessages[failure.message] ?? (failure.status === 429
         ? "Muitas tentativas. Aguarde alguns minutos e tente novamente."
         : [401,403,409].includes(failure.status ?? 0)
@@ -153,6 +189,15 @@ export function AdminLoginPage({
           <p>{roleCopy}</p>
         </div>
         <div className="admin-login-card">
+            {!intendedRole ? (
+              <>
+                <div className="admin-login-icon"><KeyRound /></div>
+                <h2>Escolha o acesso</h2>
+                <p className="admin-muted">Administrador e Super administrador são cadastros separados. A senha de um não abre o outro.</p>
+                <button type="button" className="admin-primary" onClick={() => onNavigate("/entrar/administrador")}>Entrar como Administrador</button>
+                <button type="button" className="admin-secondary" onClick={() => onNavigate("/entrar/super-administrador")}>Entrar como Super administrador</button>
+              </>
+            ) : (
             <form onSubmit={submitLogin}>
               <div className="admin-login-icon"><KeyRound /></div>
               <h2>
@@ -167,6 +212,12 @@ export function AdminLoginPage({
                 </button>
               </p>
               {error && <div className="admin-alert admin-alert--error">{error}{Object.values(blockMessages).includes(error) && <span> Dúvidas, entre em contato com o suporte <a href="mailto:hortivitalmix@gmail.com">hortivitalmix@gmail.com</a>.</span>}</div>}
+              {errorCode === "wrong_portal_super" && (
+                <button type="button" className="admin-secondary" onClick={() => onNavigate("/entrar/super-administrador")}>Ir para Super administrador</button>
+              )}
+              {errorCode === "wrong_portal_admin" && (
+                <button type="button" className="admin-secondary" onClick={() => onNavigate("/entrar/administrador")}>Ir para Administrador</button>
+              )}
               <label>E-mail
                 <input type="email" autoComplete="username" value={email} onChange={(e)=>setEmail(e.target.value)} required />
               </label>
@@ -230,6 +281,7 @@ export function AdminLoginPage({
                 </button>
               )}
             </form>
+            )}
 
         </div>
       </div>

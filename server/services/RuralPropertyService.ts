@@ -324,7 +324,8 @@ async function mapProperty(
 }
 
 function assertEditable(row: Record<string,any>) {
- if(row.status==="suspended")throw new RuralPropertyError("PROPERTY_NOT_EDITABLE",409);
+ if (row.status === "suspended" || row.status === "verified" || row.status === "withdrawn")
+  throw new RuralPropertyError("PROPERTY_NOT_EDITABLE",409,"Este imóvel aprovado só pode ser visualizado.");
 }
 
 function assertRevision(row: Record<string, any>, expected?: number) {
@@ -458,7 +459,7 @@ export class RuralPropertyService {
              SELECT decision,technical_opinion FROM public.app_verification_decisions
               WHERE request_id=vr.id ORDER BY decided_at DESC LIMIT 1
            ) vd ON true
-          WHERE p.producer_id=$1
+          WHERE p.producer_id=$1 AND p.status<>'withdrawn'
           ORDER BY p.updated_at DESC,p.id ASC`,
         [producerId],
       );
@@ -882,6 +883,42 @@ export class RuralPropertyService {
       try {
         await client.query("ROLLBACK");
       } catch {}
+      mapDbError(error);
+    } finally {
+      client.release();
+    }
+  }
+
+  static async withdrawApproved(userId: string, propertyId: string, expectedRevision: number, commandId: string, requestId: string, ipHash: string) {
+    const client = await requirePool().connect();
+    try {
+      await client.query("BEGIN");
+      const producerId = await resolveProducer(client, userId, true);
+      const replay = await replayTarget(client, commandId, userId, "rural_property.withdrawn");
+      if (!replay) {
+        const row = await lockProperty(client, producerId, propertyId);
+        assertRevision(row, expectedRevision);
+        if (row.status !== "verified")
+          throw new RuralPropertyError("PROPERTY_NOT_EDITABLE", 409, "Só uma propriedade aprovada pode ser excluída por este caminho.");
+        await client.query(
+          "UPDATE public.app_properties SET status='withdrawn' WHERE id=$1 AND producer_id=$2",
+          [propertyId, producerId],
+        );
+        await client.query(
+          `UPDATE public.app_producer_profiles
+              SET verification_status='declared'
+            WHERE id=$1
+              AND NOT EXISTS (
+                SELECT 1 FROM public.app_properties
+                 WHERE producer_id=$1 AND status='verified' AND id<>$2
+              )`,
+          [producerId, propertyId],
+        );
+        await audit(client, { userId, role: "producer", requestId, ipHash, commandId, action: "rural_property.withdrawn", targetId: propertyId, before: summaryMetadata(row), after: { status: "withdrawn" } });
+      }
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
       mapDbError(error);
     } finally {
       client.release();

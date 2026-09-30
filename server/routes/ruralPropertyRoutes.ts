@@ -225,3 +225,10 @@ ruralPropertyRouter.delete("/producer/properties/:id",originProtection,async(req
  if(!input.success){res.status(400).json({error:"VALIDATION_ERROR"});return;}
  try{await RuralPropertyService.deleteDraft(actor.userId,id,input.data.expectedRevision,input.data.commandId,req.requestId,req.clientIpHash);res.status(204).end();}catch(e){sendError(res,e);}
 });
+ruralPropertyRouter.post("/producer/properties/:id/withdraw",originProtection,async(req,res)=>{
+ const actor=requireProducer(req,res);if(!actor)return;const id=parsePropertyId(req,res);if(!id)return;
+ if(!requireRecentAuth(req,res,actor.userId))return;
+ const input=z.object({expectedRevision:z.number().int().positive(),commandId:z.uuid()}).strict().safeParse(req.body);
+ if(!input.success){res.status(400).json({error:"VALIDATION_ERROR"});return;}
+ try{await RuralPropertyService.withdrawApproved(actor.userId,id,input.data.expectedRevision,input.data.commandId,req.requestId,req.clientIpHash);res.status(204).end();}catch(e){sendError(res,e);}
+});

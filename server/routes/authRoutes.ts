@@ -535,7 +535,7 @@ authRouter.post("/logout", async (req, res, next) => {
         return;
       }
 
-      const { error } = await supabaseAdmin.auth.admin.signOut(token, "global");
+      const { error } = await supabaseAdmin.auth.admin.signOut(token, "local");
       if (error && error.status !== 401 && error.status !== 403) {
         res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
         return;
