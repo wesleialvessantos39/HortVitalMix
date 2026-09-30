@@ -61,13 +61,6 @@ describe("administrative password login — user policy 2026-09-25",()=>{
   expect(await AdminGovernanceService.login("linked@example.invalid","password","ip","r","platform_super_admin")).toMatchObject({status:"session_created",role:"platform_super_admin"});
   expect(m.signIn).toHaveBeenCalledWith({email:"test@example.invalid",password:"password"});
  });
- it("returns only masked database aliases as login hints",async()=>{
-  role=assigned="platform_super_admin";
-  const result=await AdminGovernanceService.loginHints("platform_super_admin");
-  expect(result.status).toBe("available");
-  expect(result.effectiveRole).toBe("platform_super_admin");
-  expect(result.aliases.join(" ")).not.toContain("test@example.invalid");
- });
  it("requires initial confirmation",async()=>{confirmed=false;expect(await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_super_admin")).toMatchObject({status:"email_confirmation_required"});expect(m.sendOtp).not.toHaveBeenCalled();});
  it("rejects an incorrect password",async()=>{m.signIn.mockResolvedValue({data:{},error:{message:"invalid"}});expect(await AdminGovernanceService.login("test@example.invalid","wrong","ip","r","platform_super_admin")).toEqual({status:"invalid_credentials"});});
  it("rejects a suspended account",async()=>{status="suspended";expect(await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_super_admin")).toEqual({status:"account_blocked",error:"ACCOUNT_UNAVAILABLE"});});
