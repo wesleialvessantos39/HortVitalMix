@@ -168,18 +168,6 @@ adminGovernanceRouter.post(
   },
 );
 
-adminGovernanceRouter.get("/auth/login-hints", async (req, res) => {
-  const parsed = z
-    .enum(["platform_admin", "platform_super_admin"])
-    .safeParse(req.query.portalRole);
-  if (!parsed.success) {
-    res.status(422).json({ status: "validation_failed" });
-    return;
-  }
-  const result = await AdminGovernanceService.loginHints(parsed.data);
-  res.status(result.status === "available" ? 200 : 503).json(result);
-});
-
 adminGovernanceRouter.post(
   "/auth/login",
   originProtection,
