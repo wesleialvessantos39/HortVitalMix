@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 37,
+  "schemaVersion": 38,
   "migrations": [
     {
       "version": "20260919030126",
@@ -200,7 +200,12 @@
       "version": "20260930013000",
       "name": "approved_property_withdraw",
       "file": "20260930013000_approved_property_withdraw.sql"
+    },
+    {
+      "version": "20260930172000",
+      "name": "admin_login_resolver_verification_archive",
+      "file": "20260930172000_admin_login_resolver_verification_archive.sql"
     }
   ],
-  "migrationHistoryHash": "3c6ab93c4be001b8c7d1f293254c236fdc00217dc77df464aa1a6e43249a5859"
+  "migrationHistoryHash": "5d78521f50aaeaa7c46537b226641a928bbf407821801e22ebc1383250ce2005"
 }

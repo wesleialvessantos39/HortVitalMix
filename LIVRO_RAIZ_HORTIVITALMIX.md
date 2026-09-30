@@ -3791,3 +3791,45 @@ A publicação do commit e o status Vercel devem ser conferidos pelo SHA exato e
 - O deploy que introduziu as correções funcionais T11 está READY no Vercel no SHA `ecb9ef2b1f8b24208ba595c16ef8efe05954584c`.
 - Esta auditoria também corrige a documentação e o mapeamento de versões físicas das migrations. Após o commit desta seção, o Vercel e `app_releases` devem apontar para o novo SHA exato.
 - Não foi executado teste com a senha pessoal do operador e nenhuma senha deve ser fornecida ao projeto, ao Livro Raiz ou ao chat.
+
+
+## 2026-09-30 — CORREÇÃO PROFUNDA: LOGIN ADMIN MULTIDISPOSITIVO + ARQUIVO DE IMÓVEIS APROVADOS
+
+### Diagnóstico real do login
+- A investigação foi feita no banco de produção, no histórico de autenticação do HortiVitalMix, nos logs do Supabase Auth e no código atual da `main`.
+- O principal de Super administrador está ativo, confirmado, possui senha no Supabase Auth, papel ativo e vínculo correto entre `app_admin_principals`, `auth.users` e `app_user_role_assignments`.
+- Os acessos bem-sucedidos das últimas 24 horas usaram o identificador administrativo canônico. As tentativas que exibiam **Dados inválidos ou cadastro não autorizado** usavam outro identificador e, por isso, parte delas nem chegava ao endpoint `/token` do Supabase Auth.
+- Foi confirmado que um dos identificadores alternativos usados nas falhas corresponde ao e-mail da pessoa canônica vinculada ao mesmo Super administrador. O banco tinha essa informação, mas o backend consultava apenas `app_admin_principals.admin_email`.
+
+### Correção estrutural do login
+- Foi criada no Supabase a view server-side `app_admin_login_resolver`.
+- A view é a fonte canônica dos identificadores administrativos aceitos e une, para o mesmo principal, o e-mail administrativo e o e-mail da pessoa canônica vinculada.
+- O frontend não possui e-mail administrativo hardcoded. O backend não decide qual endereço é válido por regra local: consulta a view do Supabase e recebe `admin_user_id`, `portal_role`, `auth_email` e confirmação.
+- A senha continua sendo verificada exclusivamente pelo Supabase Auth contra `auth_email`. Aceitar um alias de e-mail não cria outro usuário, não copia senha e não promove papel.
+- Se a mesma pessoa tiver no futuro Administrador e Super administrador, `portal_role` continua desambiguando as identidades. Sem desambiguação o fluxo permanece fail-closed.
+- O texto da tela de login passa a orientar que é possível usar o e-mail administrativo ou o e-mail da conta vinculada ao perfil administrativo.
+
+### Arquivo de imóveis aprovados
+- A fila de auditoria passa a ter quatro áreas: **Pendentes**, **Em análise**, **Decididos** e **Arquivados**.
+- **Arquivados** é alimentado pelo banco por `app_verification_requests.archived_at` e contém somente a aprovação vigente do imóvel.
+- Imóvel aprovado é exibido no Arquivo em modo somente leitura. Dados do imóvel, documentos, decisão, data, parecer e checklist continuam visíveis; não há botões para aprovar, recusar ou devolver.
+- **Decididos** fica reservado às decisões que ainda exigem histórico operacional, como recusado, ajustes solicitados ou escalado, desde que não tenham sido substituídas por uma aprovação vigente.
+
+### Mesmo imóvel recusado e depois aprovado
+- Foram adicionados `superseded_at` e `superseded_by_request_id` em `app_verification_requests`.
+- Quando uma solicitação do imóvel é aprovada, decisões anteriores do mesmo imóvel deixam de existir como itens independentes da fila e ficam somente no histórico, vinculadas à aprovação atual.
+- Isso evita a repetição visual do mesmo imóvel como **recusado** e **aprovado** ao mesmo tempo.
+- O histórico técnico não é apagado: o parecer anterior permanece auditável dentro do imóvel aprovado.
+- A camada de serviço também compara a identidade normalizada do imóvel por produtor/CAR ou registro e, na falta de registro, por nome + município + linha vicinal, para abranger versões anteriores do mesmo cadastro.
+
+### Correção de drift do banco
+- Foi encontrado novo drift: a migration canônica `20260930013000_approved_property_withdraw.sql` já existia no GitHub, mas ainda não constava no histórico físico do Supabase.
+- Ela foi aplicada em produção como versão física `20260930172140`.
+- A nova migration `20260930172000_admin_login_resolver_verification_archive.sql` foi aplicada como versão física `20260930172239`.
+- O estado existente foi reconciliado: o imóvel atualmente aprovado ficou `verified`, a solicitação aprovada recebeu `archived_at` e a decisão anterior repetida foi marcada como substituída, sem perder o histórico.
+- Schema lógico passa a `38`.
+- Hash canônico das migrations: `5d78521f50aaeaa7c46537b226641a928bbf407821801e22ebc1383250ce2005`.
+
+### Regra de sincronização
+- GitHub `main`, Vercel produção, Supabase migrations e `app_releases` devem apontar para o mesmo ciclo de entrega.
+- Nenhuma senha pessoal é gravada no Livro Raiz, frontend, backend ou banco de domínio. Credenciais continuam sob responsabilidade do Supabase Auth.

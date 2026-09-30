@@ -45,3 +45,10 @@
 .verification-history article{border:1px solid var(--admin-line);border-radius:10px;padding:10px;background:#f7faf7}
 .verification-history small{display:block;color:var(--admin-muted);margin:2px 0 6px}
 .verification-history p{margin:0;white-space:pre-wrap}
+
+.verification-archive-badge{display:inline-flex;align-items:center;width:max-content;max-width:100%;padding:7px 10px;border-radius:999px;border:1px solid var(--admin-line);font-weight:800;margin:0 0 12px}
+.verification-readonly{margin:12px 0 0;padding:12px;border:1px solid var(--admin-line);border-radius:12px;background:#f7faf7;line-height:1.45}
+@media(max-width:767px){
+ .verification-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}
+ .verification-tabs button{width:100%;text-overflow:clip}
+}

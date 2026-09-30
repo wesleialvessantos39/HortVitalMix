@@ -56,30 +56,71 @@ async function adminPrincipalFor(
 }> {
   const normalized = email.trim().toLowerCase();
 
+  const finish = (input: AdminPrincipalRow[]) => {
+    const unique = [
+      ...new Map(
+        input.map((row) => [
+          row.admin_user_id + ":" + row.portal_role,
+          row,
+        ]),
+      ).values(),
+    ];
+    if (!portalRole && unique.length > 1)
+      return { principal: null, unavailable: false, ambiguous: true };
+    return {
+      principal: unique[0] ?? null,
+      unavailable: false,
+      ambiguous: false,
+    };
+  };
+
+  // Fonte canônica: view do Supabase que une o e-mail administrativo ao
+  // e-mail da pessoa canônica vinculada. A senha continua sendo validada
+  // somente na identidade Auth do principal administrativo.
   if (supabaseAdmin) {
-    let query = supabaseAdmin
+    let resolver = supabaseAdmin
+      .from("app_admin_login_resolver")
+      .select("admin_user_id,email_verified_at,portal_role,auth_email")
+      .eq("login_email", normalized);
+    if (portalRole) resolver = resolver.eq("portal_role", portalRole);
+
+    const resolved = await resolver.limit(3);
+    if (!resolved.error && (resolved.data?.length ?? 0) > 0)
+      return finish((resolved.data ?? []) as AdminPrincipalRow[]);
+
+    // Compatibilidade de implantação: se a view ainda não estiver disponível
+    // durante um rollout, o e-mail administrativo original continua válido.
+    let legacy = supabaseAdmin
       .from("app_admin_principals")
       .select("admin_user_id,email_verified_at,portal_role,auth_email")
       .eq("admin_email", normalized);
-    if (portalRole) query = query.eq("portal_role", portalRole);
-
-    const { data, error } = await query.limit(2);
-    if (!error) {
-      const rows = (data ?? []) as AdminPrincipalRow[];
-      if (!portalRole && rows.length > 1)
-        return { principal: null, unavailable: false, ambiguous: true };
-      return {
-        principal: rows[0] ?? null,
-        unavailable: false,
-        ambiguous: false,
-      };
-    }
+    if (portalRole) legacy = legacy.eq("portal_role", portalRole);
+    const legacyResult = await legacy.limit(2);
+    if (!legacyResult.error)
+      return finish((legacyResult.data ?? []) as AdminPrincipalRow[]);
   }
 
-  // Vercel pode estar com a chave server-side do Supabase indisponível,
-  // mas com o Postgres configurado. Não transformar isso em HTTP 503 se a
-  // mesma fonte canônica puder ser consultada diretamente no banco.
   if (dbPool) {
+    try {
+      const params: unknown[] = [normalized];
+      let roleSql = "";
+      if (portalRole) {
+        params.push(portalRole);
+        roleSql = " AND portal_role=$2";
+      }
+      const result = await dbPool.query<AdminPrincipalRow>(
+        `SELECT DISTINCT admin_user_id,email_verified_at,portal_role,auth_email
+           FROM public.app_admin_login_resolver
+          WHERE login_email=$1${roleSql}
+          ORDER BY admin_user_id
+          LIMIT 3`,
+        params,
+      );
+      if (result.rows.length) return finish(result.rows);
+    } catch {
+      // Fallback legado abaixo.
+    }
+
     try {
       const params: unknown[] = [normalized];
       let roleSql = "";
@@ -95,13 +136,7 @@ async function adminPrincipalFor(
           LIMIT 2`,
         params,
       );
-      if (!portalRole && result.rows.length > 1)
-        return { principal: null, unavailable: false, ambiguous: true };
-      return {
-        principal: result.rows[0] ?? null,
-        unavailable: false,
-        ambiguous: false,
-      };
+      return finish(result.rows);
     } catch {
       return { principal: null, unavailable: true, ambiguous: false };
     }

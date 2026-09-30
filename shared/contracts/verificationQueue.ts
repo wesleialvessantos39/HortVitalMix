@@ -19,7 +19,7 @@ export const VerificationDecisionSchema = z.enum([
 
 export const VerificationFilterSchema = z
   .object({
-    tab: z.enum(["pending", "in_review", "decided"]).default("pending"),
+    tab: z.enum(["pending", "in_review", "decided", "archived"]).default("pending"),
   })
   .strict();
 

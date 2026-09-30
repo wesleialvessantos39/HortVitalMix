@@ -18,7 +18,8 @@ async function mock(page: Page, role: string) {
   let status = "active";
   let reviews = true;
   await page.route("**/*", async (route) => {
-    const path = new URL(route.request().url()).pathname.replace(
+    const requestUrl = new URL(route.request().url());
+    const path = requestUrl.pathname.replace(
       /^\/(api|_hvm_api)/,
       "",
     );
@@ -113,12 +114,14 @@ async function mock(page: Page, role: string) {
           },
         ],
       });
-    if (path === "/v1/admin/verification-queue")
+    if (path === "/v1/admin/verification-queue") {
+      const archived = requestUrl.searchParams.get("tab") === "archived";
       return json({
         requests: [
           {
             id,
-            status: "pending",
+            status: archived ? "approved" : "pending",
+            archived_at: archived ? "2026-09-30T12:00:00Z" : null,
             property_name: "Propriedade rural com nome extenso",
             municipality: "Ariquemes",
             line_vicinal: "Linha C-65",
@@ -131,9 +134,18 @@ async function mock(page: Page, role: string) {
             perimeter: null,
             documents: [],
             extraction: null,
+            last_decision: archived ? {
+              decision: "approved",
+              technical_opinion: "Documentação conferida e imóvel aprovado.",
+              decided_at: "2026-09-30T12:00:00Z",
+              checklist_environmental_ok: true,
+              checklist_land_tenure_ok: true,
+              checklist_water_quality_ok: true,
+            } : null,
           },
         ],
       });
+    }
     if (path === "/v1/admin/rural-properties")
       return json({
         properties: [
@@ -261,6 +273,17 @@ test("audit queue keeps one mobile width and a three-column comparator on deskto
     expect(columns).toBe(width >= 1024 ? 3 : 1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
+});
+
+test("approved property moves to Arquivados as read-only", async ({ page }) => {
+  await mock(page, "platform_super_admin");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/admin/imoveis");
+  await page.getByRole("tab", { name: "Arquivados" }).click();
+  await page.locator(".verification-item").first().click();
+  await expect(page.getByText("Aprovado · somente leitura")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Aprovar imóvel" })).toHaveCount(0);
+  await expect(page.getByText("Este imóvel foi aprovado e está arquivado apenas para consulta.")).toBeVisible();
 });
 
 test("super administrator confirms block, deletion and registration review", async ({

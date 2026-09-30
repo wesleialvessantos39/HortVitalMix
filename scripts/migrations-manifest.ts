@@ -41,6 +41,10 @@ export function assertManifestHash() {
 }
 
 const remoteVersionAliases: Readonly<Record<string, string>> = {
+  // T12: retirada de imóvel aprovado aplicada em produção com timestamp físico Supabase.
+  "20260930172140": "20260930013000",
+  // T12: aliases de login administrativo + arquivo da auditoria.
+  "20260930172239": "20260930172000",
   // T11 aplicada/reconciliada em produção com timestamps físicos do Supabase.
   "20260929213043": "20260929120000",
   "20260929213048": "20260929133000",

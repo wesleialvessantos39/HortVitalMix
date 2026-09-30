@@ -10,6 +10,7 @@ const commandId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 describe("T11 contratos da fila de verificação", () => {
   it("aceita filtro de abas", () => {
     expect(VerificationFilterSchema.parse({ tab: "pending" }).tab).toBe("pending");
+    expect(VerificationFilterSchema.parse({ tab: "archived" }).tab).toBe("archived");
     expect(VerificationFilterSchema.parse({}).tab).toBe("pending");
   });
 

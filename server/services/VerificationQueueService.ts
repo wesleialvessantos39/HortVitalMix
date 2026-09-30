@@ -13,6 +13,7 @@ export class VerificationQueueError extends Error {
 }
 
 type AdminActor = { userId: string; role: string; isSuperAdmin: boolean; sectors: string[] };
+type QueueTab = "pending" | "in_review" | "decided" | "archived";
 
 function requirePool() {
   if (!dbPool) throw new VerificationQueueError("UNAVAILABLE", 503);
@@ -39,7 +40,7 @@ export async function enqueueVerificationRequest(client: PoolClient, propertyId:
 
 const LIST_SQL = `
 SELECT r.id, r.property_id, r.producer_id, r.status, r.priority, r.claimed_by, r.claimed_at,
-       r.created_at, r.updated_at, p.property_name, p.municipality, p.line_vicinal,
+       r.created_at, r.updated_at, r.archived_at, r.superseded_at, r.superseded_by_request_id, p.property_name, p.municipality, p.line_vicinal,
        p.total_area_hectares, p.cultivated_area_hectares, p.latitude_sede, p.longitude_sede,
        p.status AS property_status, p.revision, p.draft_data, p.registration_number,
        pe.full_name AS producer_name,
@@ -77,7 +78,7 @@ function asList(value: unknown) {
   return [];
 }
 
-function collapseQueue(rows: Array<Record<string, any>>, tab: "pending" | "in_review" | "decided") {
+function collapseQueue(rows: Array<Record<string, any>>, tab: QueueTab) {
   const groups = new Map<string, Array<Record<string, any>>>();
   for (const row of rows) {
     const key =
@@ -92,38 +93,103 @@ function collapseQueue(rows: Array<Record<string, any>>, tab: "pending" | "in_re
     bucket.push(row);
     groups.set(key, bucket);
   }
+
   const visible: Array<Record<string, any>> = [];
   for (const bucket of groups.values()) {
-    const open = bucket.filter((row) =>
+    const current = bucket.filter((row) => !row.superseded_at);
+    const open = current.filter((row) =>
       ["pending", "claimed", "in_review"].includes(row.status),
     );
-    const wanted =
-      tab === "pending"
-        ? bucket.filter((row) => row.status === "pending")
-        : tab === "in_review"
-          ? bucket.filter((row) => ["claimed", "in_review"].includes(row.status))
-          : open.length
-            ? []
-            : bucket.filter((row) =>
-                ["approved", "rejected", "adjustments_required", "escalated"].includes(row.status),
-              );
+    const approved = current.filter(
+      (row) => row.status === "approved" && row.archived_at,
+    );
+
+    let wanted: Array<Record<string, any>> = [];
+    if (tab === "pending")
+      wanted = current.filter((row) => row.status === "pending");
+    else if (tab === "in_review")
+      wanted = current.filter((row) =>
+        ["claimed", "in_review"].includes(row.status),
+      );
+    else if (tab === "archived")
+      wanted = approved;
+    else if (!open.length && !approved.length)
+      wanted = current.filter((row) =>
+        ["rejected", "adjustments_required", "escalated"].includes(row.status),
+      );
+
     if (!wanted.length) continue;
-    const primary = wanted[0];
-    const documents = [];
+    const primary = [...wanted].sort(
+      (a, b) =>
+        new Date(b.updated_at ?? b.created_at).getTime() -
+        new Date(a.updated_at ?? a.created_at).getTime(),
+    )[0];
+
+    const documents: Array<Record<string, any>> = [];
     const seen = new Set<string>();
     for (const row of bucket) {
       for (const doc of asList(row.documents)) {
-        if (!doc?.id || seen.has(doc.id) || documents.length >= 10) continue;
-        seen.add(doc.id);
+        if (!doc?.id || seen.has(String(doc.id)) || documents.length >= 10)
+          continue;
+        seen.add(String(doc.id));
         documents.push(doc);
       }
     }
+
     const history = bucket
       .flatMap((row) => asList(row.decision_history))
-      .sort((a, b) => String(a.decidedAt).localeCompare(String(b.decidedAt)));
+      .sort((a, b) =>
+        String(a.decidedAt).localeCompare(String(b.decidedAt)),
+      );
+
     visible.push({ ...primary, documents, decision_history: history });
   }
   return visible;
+}
+
+async function matchingIdentityPropertyIds(
+  client: PoolClient,
+  producerId: string,
+  propertyId: string,
+) {
+  const target = await client.query<Record<string, any>>(
+    `SELECT id,registration_number,property_name,municipality,line_vicinal
+       FROM public.app_properties
+      WHERE id=$1 AND producer_id=$2
+      LIMIT 1`,
+    [propertyId, producerId],
+  );
+  const base = target.rows[0];
+  if (!base) return [propertyId];
+
+  const key = propertyIdentityKey({
+    producerId,
+    registrationNumber: base.registration_number,
+    propertyName: base.property_name,
+    municipality: base.municipality,
+    lineVicinal: base.line_vicinal,
+  });
+  if (!key) return [propertyId];
+
+  const all = await client.query<Record<string, any>>(
+    `SELECT id,registration_number,property_name,municipality,line_vicinal
+       FROM public.app_properties
+      WHERE producer_id=$1`,
+    [producerId],
+  );
+  const ids = all.rows
+    .filter(
+      (row) =>
+        propertyIdentityKey({
+          producerId,
+          registrationNumber: row.registration_number,
+          propertyName: row.property_name,
+          municipality: row.municipality,
+          lineVicinal: row.line_vicinal,
+        }) === key,
+    )
+    .map((row) => String(row.id));
+  return ids.length ? ids : [propertyId];
 }
 
 export class VerificationQueueService {
@@ -138,18 +204,28 @@ export class VerificationQueueService {
     );
   }
 
-  static async list(actor: AdminActor, tab: "pending" | "in_review" | "decided") {
+  static async list(actor: AdminActor, tab: QueueTab) {
     assertAuditor(actor);
     const client = await requirePool().connect();
     try {
       await this.releaseStaleClaims(client);
-      const filter = tab === "pending" ? "r.status = 'pending'" : tab === "in_review" ? "r.status IN ('claimed', 'in_review')" : "r.status IN ('approved', 'rejected', 'adjustments_required', 'escalated')";
+      const filter =
+        tab === "pending"
+          ? "r.status = 'pending' AND r.superseded_at IS NULL"
+          : tab === "in_review"
+            ? "r.status IN ('claimed', 'in_review') AND r.superseded_at IS NULL"
+            : tab === "archived"
+              ? "r.status = 'approved' AND r.archived_at IS NOT NULL AND r.superseded_at IS NULL"
+              : "r.status IN ('rejected', 'adjustments_required', 'escalated') AND r.superseded_at IS NULL";
       const producers = await client.query(
         `SELECT DISTINCT producer_id FROM public.app_verification_requests r WHERE ${filter}`,
       );
       const ids = producers.rows.map((row) => row.producer_id);
       const result = ids.length
-        ? await client.query(`${LIST_SQL} WHERE r.producer_id = ANY($1::uuid[]) ORDER BY r.created_at ASC`, [ids])
+        ? await client.query(
+            `${LIST_SQL} WHERE r.producer_id = ANY($1::uuid[]) ORDER BY r.created_at ASC`,
+            [ids],
+          )
         : { rows: [] };
       return { requests: collapseQueue(result.rows, tab) };
     } finally {
@@ -235,6 +311,24 @@ export class VerificationQueueService {
         [requestId, actor.userId, input.decision, input.technicalOpinion, input.assignedTrustLevel, input.checklistEnvironmentalOk, input.checklistLandTenureOk, input.checklistWaterQualityOk],
       );
       await client.query(`UPDATE public.app_verification_requests SET status = $2, updated_at = clock_timestamp() WHERE id = $1`, [requestId, requestStatus]);
+      if (input.decision === "approved") {
+        const identityIds = await matchingIdentityPropertyIds(
+          client,
+          String(row.producer_id),
+          String(row.property_id),
+        );
+        await client.query(
+          `UPDATE public.app_verification_requests
+              SET superseded_at=COALESCE(superseded_at,clock_timestamp()),
+                  superseded_by_request_id=$1,
+                  updated_at=clock_timestamp()
+            WHERE property_id = ANY($2::uuid[])
+              AND id<>$1
+              AND superseded_at IS NULL
+              AND status IN ('approved','rejected','adjustments_required','escalated')`,
+          [requestId, identityIds],
+        );
+      }
       await client.query(`UPDATE public.app_properties SET status = $2, updated_at = clock_timestamp(), revision = revision + 1 WHERE id = $1`, [row.property_id, propertyStatus]);
       if (input.decision === "approved") {
         await client.query(`UPDATE public.app_producer_profiles SET verification_status = 'verified', trust_level = GREATEST(trust_level, $2), updated_at = clock_timestamp() WHERE id = $1`, [row.producer_id, input.assignedTrustLevel]);

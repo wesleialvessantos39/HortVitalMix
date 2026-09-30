@@ -4,7 +4,7 @@ import { readAdminAccessToken } from "../../lib/adminSessionStore";
 import { isEstimatedPerimeter } from "../../../shared/rural/estimatePropertyPerimeter";
 import "./verificationQueue.css";
 
-type Tab = "pending" | "in_review" | "decided";
+type Tab = "pending" | "in_review" | "decided" | "archived";
 type QueueDoc = { id: string; documentType: string; fileName: string; mimeType: string; status?: string };
 type HistoryItem = { decision: string; technicalOpinion: string; decidedAt: string };
 type QueueRow = {
@@ -14,7 +14,9 @@ type QueueRow = {
   draft_data: { polygonGeojson?: unknown } | null; perimeter: { polygon_geojson?: unknown } | null;
   documents: QueueDoc[] | null;
   extraction: { payload_jsonb?: Record<string, unknown> } | null;
-  last_decision?: { decision?: string; technical_opinion?: string } | null;
+  last_decision?: { decision?: string; technical_opinion?: string; decided_at?: string; checklist_environmental_ok?: boolean; checklist_land_tenure_ok?: boolean; checklist_water_quality_ok?: boolean } | null;
+  archived_at?: string | null;
+  superseded_at?: string | null;
   decision_history?: HistoryItem[] | null;
 };
 
@@ -147,8 +149,9 @@ export function VerificationQueuePage() {
           checklistEnvironmentalOk: checks.environmental, checklistLandTenureOk: checks.land, checklistWaterQualityOk: checks.water,
         }),
       });
-      setNotice(decision === "approved" ? "Imóvel aprovado. O produtor já vê a situação Aprovado." : decision === "rejected" ? "Imóvel recusado. O parecer técnico foi enviado ao produtor, informando o que precisa ser corrigido." : "Imóvel devolvido para correção. Ele foi para Decididos e o produtor vê o parecer técnico com o que corrigir.");
-      setActive(null); setOpinion(""); setChecks({ environmental: false, land: false, water: false }); setTab("decided"); await load("decided");
+      const nextTab: Tab = decision === "approved" ? "archived" : "decided";
+      setNotice(decision === "approved" ? "Imóvel aprovado e arquivado em modo somente leitura. O produtor já vê a situação Aprovado." : decision === "rejected" ? "Imóvel recusado. O parecer técnico foi enviado ao produtor, informando o que precisa ser corrigido." : "Imóvel devolvido para correção. Ele foi para Decididos e o produtor vê o parecer técnico com o que corrigir.");
+      setActive(null); setOpinion(""); setChecks({ environmental: false, land: false, water: false }); setTab(nextTab); await load(nextTab);
     } catch (e) {
       setNotice((e as { status?: number }).status === 422 ? "Aprovação exige checklist completo e parecer." : (e as { status?: number }).status === 409 ? "Abra o chamado em análise antes de decidir." : "Não foi possível registrar a decisão.");
     } finally { setBusy(""); }
@@ -159,12 +162,12 @@ export function VerificationQueuePage() {
   return (
     <section className="admin-page verification-queue">
       <header className="admin-page-header">
-        <div><h1>Fila de auditoria humana</h1><p>Comparador triplo. A aprovação é exclusiva do analista.</p></div>
+        <div><h1>Fila de auditoria humana</h1><p>Pendências, análises, decisões e imóveis aprovados arquivados.</p></div>
         <button className="admin-secondary verification-refresh" disabled={loading} onClick={() => void load()}>Atualizar</button>
       </header>
       {notice && <p className="admin-alert" role="status">{notice}</p>}
       <div className="verification-tabs" role="tablist">
-        {([["pending", "Pendentes"], ["in_review", "Em análise"], ["decided", "Decididos"]] as const).map(([id, label]) => (
+        {([["pending", "Pendentes"], ["in_review", "Em análise"], ["decided", "Decididos"], ["archived", "Arquivados"]] as const).map(([id, label]) => (
           <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? "is-active" : ""} onClick={() => { setTab(id); setActive(null); }}>{label}</button>
         ))}
       </div>
@@ -175,7 +178,7 @@ export function VerificationQueuePage() {
               <button key={row.id} className={"verification-item" + (active?.id === row.id ? " is-active" : "")} onClick={() => setActive(row)}>
                 <strong>{row.property_name}</strong>
                 <span>{row.municipality} · {row.line_vicinal}</span>
-                <small>{row.producer_name} · {statusLabel[row.status] ?? row.status}</small>
+                <small>{row.producer_name} · {tab === "archived" ? "Arquivado — aprovado" : statusLabel[row.status] ?? row.status}</small>
                 {tab === "pending" && <span className="admin-table-action" onClick={(event) => { event.stopPropagation(); void claim(row); }}>{busy === row.id ? "Enviando…" : "Colocar em análise"}</span>}
               </button>
             ))}
@@ -230,22 +233,57 @@ export function VerificationQueuePage() {
                 {documents.length > 0 && <p className="admin-muted">{documents.length} documento{documents.length > 1 ? "s" : ""} neste imóvel.</p>}
               </article>
               <article className="admin-card">
-                <h2>3. Conferência e parecer</h2>
-                <dl className="verification-dl">
-                  <div><dt>CAR / registro</dt><dd>{String(payload.carNumber ?? payload.car_number ?? "—")}</dd></div>
-                  <div><dt>Área no recibo</dt><dd>{String(payload.totalAreaHectares ?? payload.total_area_hectares ?? "—")}</dd></div>
-                  <div><dt>Titular no documento</dt><dd>{String(payload.holderName ?? payload.holder_name ?? "—")}</dd></div>
-                </dl>
-                <label className="verification-check"><input type="checkbox" checked={checks.environmental} onChange={(e) => setChecks((c) => ({ ...c, environmental: e.target.checked }))} /> CAR regular sem sobreposições</label>
-                <label className="verification-check"><input type="checkbox" checked={checks.land} onChange={(e) => setChecks((c) => ({ ...c, land: e.target.checked }))} /> Posse ou CCIR regular</label>
-                <label className="verification-check"><input type="checkbox" checked={checks.water} onChange={(e) => setChecks((c) => ({ ...c, water: e.target.checked }))} /> Laudo de água potável / irrigação</label>
-                <label>Parecer técnico para o produtor<textarea value={opinion} onChange={(e) => setOpinion(e.target.value)} minLength={10} rows={5} placeholder="Escreva o motivo e o que o produtor precisa corrigir. Este texto aparece no cadastro dele." /></label>
-                <div className="verification-actions">
-                  {active.status === "pending" && <button className="admin-primary" disabled={Boolean(busy)} onClick={() => void claim(active)}>{busy === active.id ? "Enviando…" : "Colocar em análise"}</button>}
-                  <button className="admin-primary" disabled={!ready || Boolean(busy)} onClick={() => void decide("approved")}>Aprovar imóvel</button>
-                  <button className="admin-secondary" disabled={opinion.trim().length < 10 || Boolean(busy)} onClick={() => void decide("adjustments_required")}>Devolver para correção</button>
-                  <button className="admin-secondary" disabled={opinion.trim().length < 10 || Boolean(busy)} onClick={() => void decide("rejected")}>Recusar</button>
-                </div>
+                {tab === "archived" ? (
+                  <>
+                    <h2>3. Resultado arquivado</h2>
+                    <p className="verification-archive-badge">Aprovado · somente leitura</p>
+                    <dl className="verification-dl">
+                      <div><dt>Situação</dt><dd>Arquivado — aprovado</dd></div>
+                      <div><dt>Decidido em</dt><dd>{active.last_decision?.decided_at ? new Date(active.last_decision.decided_at).toLocaleString("pt-BR") : "—"}</dd></div>
+                      <div><dt>Parecer técnico</dt><dd>{active.last_decision?.technical_opinion ?? "—"}</dd></div>
+                      <div><dt>Checklist ambiental</dt><dd>{active.last_decision?.checklist_environmental_ok ? "Conferido" : "—"}</dd></div>
+                      <div><dt>Checklist fundiário</dt><dd>{active.last_decision?.checklist_land_tenure_ok ? "Conferido" : "—"}</dd></div>
+                      <div><dt>Checklist hídrico</dt><dd>{active.last_decision?.checklist_water_quality_ok ? "Conferido" : "—"}</dd></div>
+                    </dl>
+                    <p className="verification-readonly">Este imóvel foi aprovado e está arquivado apenas para consulta. Nenhuma decisão ou dado pode ser alterado por esta tela.</p>
+                  </>
+                ) : tab === "decided" ? (
+                  <>
+                    <h2>3. Resultado da análise</h2>
+                    <dl className="verification-dl">
+                      <div><dt>Decisão</dt><dd>{decisionLabel[active.last_decision?.decision ?? active.status] ?? statusLabel[active.status] ?? active.status}</dd></div>
+                      <div><dt>Decidido em</dt><dd>{active.last_decision?.decided_at ? new Date(active.last_decision.decided_at).toLocaleString("pt-BR") : "—"}</dd></div>
+                      <div><dt>Parecer técnico</dt><dd>{active.last_decision?.technical_opinion ?? "—"}</dd></div>
+                    </dl>
+                    <p className="verification-readonly">Decisão concluída. O parecer continua disponível ao produtor e no histórico do imóvel.</p>
+                  </>
+                ) : active.status === "pending" ? (
+                  <>
+                    <h2>3. Iniciar análise</h2>
+                    <p className="admin-muted">Coloque o imóvel em análise para habilitar checklist, parecer e decisão.</p>
+                    <div className="verification-actions">
+                      <button className="admin-primary" disabled={Boolean(busy)} onClick={() => void claim(active)}>{busy === active.id ? "Enviando…" : "Colocar em análise"}</button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h2>3. Conferência e parecer</h2>
+                    <dl className="verification-dl">
+                      <div><dt>CAR / registro</dt><dd>{String(payload.carNumber ?? payload.car_number ?? "—")}</dd></div>
+                      <div><dt>Área no recibo</dt><dd>{String(payload.totalAreaHectares ?? payload.total_area_hectares ?? "—")}</dd></div>
+                      <div><dt>Titular no documento</dt><dd>{String(payload.holderName ?? payload.holder_name ?? "—")}</dd></div>
+                    </dl>
+                    <label className="verification-check"><input type="checkbox" checked={checks.environmental} onChange={(e) => setChecks((c) => ({ ...c, environmental: e.target.checked }))} /> CAR regular sem sobreposições</label>
+                    <label className="verification-check"><input type="checkbox" checked={checks.land} onChange={(e) => setChecks((c) => ({ ...c, land: e.target.checked }))} /> Posse ou CCIR regular</label>
+                    <label className="verification-check"><input type="checkbox" checked={checks.water} onChange={(e) => setChecks((c) => ({ ...c, water: e.target.checked }))} /> Laudo de água potável / irrigação</label>
+                    <label>Parecer técnico para o produtor<textarea value={opinion} onChange={(e) => setOpinion(e.target.value)} minLength={10} rows={5} placeholder="Escreva o motivo e o que o produtor precisa corrigir. Este texto aparece no cadastro dele." /></label>
+                    <div className="verification-actions">
+                      <button className="admin-primary" disabled={!ready || Boolean(busy)} onClick={() => void decide("approved")}>Aprovar imóvel</button>
+                      <button className="admin-secondary" disabled={opinion.trim().length < 10 || Boolean(busy)} onClick={() => void decide("adjustments_required")}>Devolver para correção</button>
+                      <button className="admin-secondary" disabled={opinion.trim().length < 10 || Boolean(busy)} onClick={() => void decide("rejected")}>Recusar</button>
+                    </div>
+                  </>
+                )}
               </article>
             </div>
           ) : <p className="admin-muted">Selecione um chamado para abrir o comparador triplo.</p>}

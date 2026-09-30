@@ -39,7 +39,7 @@ export function AdminLoginPage({
     intendedRole === "platform_admin"
       ? "Acesso reservado a administradores setoriais convidados. O escopo liberado depende dos setores atribuídos à conta."
       : intendedRole === "platform_super_admin"
-        ? "Use seu e-mail confirmado e a senha do Super administrador."
+        ? "Use o e-mail administrativo ou o e-mail da conta vinculada ao seu perfil e a senha do Super administrador."
         : "Entre com o e-mail confirmado e a senha do seu perfil administrativo.";
 
   useEffect(() => {
@@ -149,7 +149,7 @@ export function AdminLoginPage({
       setError(blockMessages[failure.message] ?? (failure.status === 429
         ? "Muitas tentativas. Aguarde alguns minutos e tente novamente."
         : [401,403,409].includes(failure.status ?? 0)
-          ? "Dados inválidos ou cadastro não autorizado."
+          ? "Não foi possível autenticar. Use o e-mail administrativo ou o e-mail da conta vinculada ao seu perfil administrativo e confira a senha."
           : "Não foi possível entrar agora. Tente novamente em alguns instantes."));
     } finally {
       setBusy(false);
