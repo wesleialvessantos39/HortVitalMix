@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 39,
+  "schemaVersion": 40,
   "migrations": [
     {
       "version": "20260919030126",
@@ -210,7 +210,12 @@
       "version": "20260930173900",
       "name": "verification_queue_archive_hardening",
       "file": "20260930173900_verification_queue_archive_hardening.sql"
+    },
+    {
+      "version": "20260930184100",
+      "name": "property_review_state_sync",
+      "file": "20260930184100_property_review_state_sync.sql"
     }
   ],
-  "migrationHistoryHash": "0b7a95a8c4b6355ace3aa6d38e4787111154c2e2f9bb6c5857357350c1c4f268"
+  "migrationHistoryHash": "d7cb39ab1b3edd045c7dfce8dd982f82ea8639ba29209fb67acfb5537ee5d2bf"
 }

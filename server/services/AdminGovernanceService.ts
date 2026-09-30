@@ -27,6 +27,26 @@ const RATE_MAX_FAILURES = 10;
 const ZERO_HASH = "0".repeat(64);
 const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
 
+const normalizeAdminLoginEmail = (value: string) =>
+  value
+    .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "")
+    .replace(/^mailto:/i, "")
+    .trim()
+    .toLowerCase();
+
+const adminMailboxKey = (value: string) => {
+  const normalized = normalizeAdminLoginEmail(value);
+  const at = normalized.lastIndexOf("@");
+  if (at <= 0) return normalized;
+  let local = normalized.slice(0, at);
+  let domain = normalized.slice(at + 1);
+  if (domain === "googlemail.com") domain = "gmail.com";
+  if (domain === "gmail.com") {
+    local = local.split("+")[0].replace(/\./g, "");
+  }
+  return local + "@" + domain;
+};
+
 // Política canônica do bootstrap: o e-mail autorizado é representado somente
 // por seu SHA-256 no código server-side. Isso elimina divergências entre
 // Google Studio e Vercel sem expor o endereço em texto puro no repositório.
@@ -54,7 +74,7 @@ async function adminPrincipalFor(
   unavailable: boolean;
   ambiguous: boolean;
 }> {
-  const normalized = email.trim().toLowerCase();
+  const normalized = normalizeAdminLoginEmail(email);
 
   const finish = (input: AdminPrincipalRow[]) => {
     const unique = [
@@ -87,6 +107,20 @@ async function adminPrincipalFor(
     const resolved = await resolver.limit(3);
     if (!resolved.error && (resolved.data?.length ?? 0) > 0)
       return finish((resolved.data ?? []) as AdminPrincipalRow[]);
+
+    let candidates = supabaseAdmin
+      .from("app_admin_login_resolver")
+      .select("login_email,admin_user_id,email_verified_at,portal_role,auth_email");
+    if (portalRole) candidates = candidates.eq("portal_role", portalRole);
+    const candidateRows = await candidates.limit(50);
+    if (!candidateRows.error) {
+      const key = adminMailboxKey(normalized);
+      const matches = (candidateRows.data ?? []).filter(
+        (row) => adminMailboxKey(String(row.login_email ?? "")) === key,
+      );
+      if (matches.length)
+        return finish(matches as unknown as AdminPrincipalRow[]);
+    }
 
     // Compatibilidade de implantação: se a view ainda não estiver disponível
     // durante um rollout, o e-mail administrativo original continua válido.
@@ -755,6 +789,84 @@ export class AdminGovernanceService {
     return { status: "unavailable" };
   }
 
+  static async loginHints(portalRole: AdminRole): Promise<{
+    status: "available" | "unavailable";
+    requestedRole: AdminRole;
+    effectiveRole: AdminRole | null;
+    aliases: string[];
+  }> {
+    type HintRow = {
+      login_email: string;
+      admin_user_id: string;
+      portal_role: AdminRole;
+    };
+
+    let rows: HintRow[] = [];
+    if (supabaseAdmin) {
+      const result = await supabaseAdmin
+        .from("app_admin_login_resolver")
+        .select("login_email,admin_user_id,portal_role")
+        .limit(50);
+      if (!result.error) rows = (result.data ?? []) as HintRow[];
+    }
+    if (!rows.length && dbPool) {
+      try {
+        rows = (
+          await dbPool.query<HintRow>(
+            `SELECT login_email,admin_user_id,portal_role
+               FROM public.app_admin_login_resolver
+              ORDER BY portal_role,login_email
+              LIMIT 50`,
+          )
+        ).rows;
+      } catch {}
+    }
+    if (!rows.length)
+      return {
+        status: "unavailable",
+        requestedRole: portalRole,
+        effectiveRole: null,
+        aliases: [],
+      };
+
+    let selected = rows.filter((row) => row.portal_role === portalRole);
+    let effectiveRole: AdminRole | null = portalRole;
+    if (!selected.length) {
+      const principals = [
+        ...new Map(
+          rows.map((row) => [
+            row.admin_user_id + ":" + row.portal_role,
+            row,
+          ]),
+        ).values(),
+      ];
+      if (principals.length === 1) {
+        effectiveRole = principals[0].portal_role;
+        selected = rows.filter(
+          (row) =>
+            row.admin_user_id === principals[0].admin_user_id &&
+            row.portal_role === principals[0].portal_role,
+        );
+      } else {
+        effectiveRole = null;
+      }
+    }
+
+    return {
+      status: "available",
+      requestedRole: portalRole,
+      effectiveRole,
+      aliases: [
+        ...new Set(
+          selected
+            .map((row) => normalizeAdminLoginEmail(row.login_email))
+            .filter(Boolean)
+            .map(maskEmail),
+        ),
+      ],
+    };
+  }
+
   static async login(
     email: string,
     password: string,
@@ -762,7 +874,7 @@ export class AdminGovernanceService {
     requestId: string,
     portalRole?: AdminRole,
   ): Promise<AdminLoginResult> {
-    const normalized = email.trim().toLowerCase();
+    const normalized = normalizeAdminLoginEmail(email);
     if (!portalRole) return { status: "portal_required" };
     const [scoped, limited] = await Promise.all([
       adminPrincipalFor(normalized, portalRole), this.rateLimit(normalized, ipHash),

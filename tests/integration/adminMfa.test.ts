@@ -15,6 +15,7 @@ beforeEach(()=>{
  m.signOut.mockResolvedValue({error:null});
  m.signIn.mockResolvedValue({data:{user:{id:"u",email_confirmed_at:"2026-09-01"},session:{access_token:"access",refresh_token:"refresh",expires_in:3600}},error:null});
  m.from.mockImplementation(table=>query(({
+ app_admin_login_resolver:[{login_email:"test@example.invalid",admin_user_id:"u",portal_role:role,email_verified_at:confirmed?"2026-09-01":null,auth_email:"test@example.invalid"}],
  app_admin_principals:[{admin_user_id:"u",portal_role:role,email_verified_at:confirmed?"2026-09-01":null,auth_email:"test@example.invalid"}],
  app_users:{status},app_user_role_assignments:[{role_code:assigned,expires_at:null}],
  app_admin_sector_members:[{sector_code:"operations",expires_at:null}],
@@ -50,7 +51,7 @@ describe("administrative password login — user policy 2026-09-25",()=>{
  it("accepts the linked canonical-person e-mail alias resolved by the database",async()=>{
   role=assigned="platform_super_admin";
   m.from.mockImplementation(table=>{
-   if(table==="app_admin_login_resolver") return query([{admin_user_id:"u",portal_role:"platform_super_admin",email_verified_at:"2026-09-01",auth_email:"test@example.invalid"}]);
+   if(table==="app_admin_login_resolver") return query([{login_email:"linked@example.invalid",admin_user_id:"u",portal_role:"platform_super_admin",email_verified_at:"2026-09-01",auth_email:"test@example.invalid"}]);
    return query(({
     app_admin_principals:[{admin_user_id:"u",portal_role:role,email_verified_at:"2026-09-01",auth_email:"test@example.invalid"}],
     app_users:{status},app_user_role_assignments:[{role_code:assigned,expires_at:null}],
@@ -59,6 +60,13 @@ describe("administrative password login — user policy 2026-09-25",()=>{
   });
   expect(await AdminGovernanceService.login("linked@example.invalid","password","ip","r","platform_super_admin")).toMatchObject({status:"session_created",role:"platform_super_admin"});
   expect(m.signIn).toHaveBeenCalledWith({email:"test@example.invalid",password:"password"});
+ });
+ it("returns only masked database aliases as login hints",async()=>{
+  role=assigned="platform_super_admin";
+  const result=await AdminGovernanceService.loginHints("platform_super_admin");
+  expect(result.status).toBe("available");
+  expect(result.effectiveRole).toBe("platform_super_admin");
+  expect(result.aliases.join(" ")).not.toContain("test@example.invalid");
  });
  it("requires initial confirmation",async()=>{confirmed=false;expect(await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_super_admin")).toMatchObject({status:"email_confirmation_required"});expect(m.sendOtp).not.toHaveBeenCalled();});
  it("rejects an incorrect password",async()=>{m.signIn.mockResolvedValue({data:{},error:{message:"invalid"}});expect(await AdminGovernanceService.login("test@example.invalid","wrong","ip","r","platform_super_admin")).toEqual({status:"invalid_credentials"});});

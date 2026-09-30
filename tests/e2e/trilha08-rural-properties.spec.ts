@@ -42,6 +42,8 @@ function summary(property: ReturnType<typeof fullProperty>) {
     wizardCurrentStep: property.wizardCurrentStep,
     revision: property.revision,
     updatedAt: property.updatedAt,
+    queueStatus: property.queueStatus ?? null,
+    reviewDecision: property.reviewDecision ?? null,
   };
 }
 
@@ -232,6 +234,21 @@ test("02 lista rascunho com estado e progresso", async ({ page }) => {
   await expect(page.getByText("Chácara Boa Colheita")).toBeVisible();
   await expect(page.getByText("Rascunho", {exact:true})).toBeVisible();
   await expect(page.getByText("Etapa 3 de 5")).toBeVisible();
+});
+
+test("02b imóvel verificado nunca aparece como devolvido por decisão antiga", async ({ page }) => {
+  await mockT08(
+    page,
+    fullProperty({
+      status: "verified",
+      queueStatus: "approved",
+      reviewDecision: "adjustments_required",
+      wizardCurrentStep: 5,
+    }),
+  );
+  await page.goto("/produtor/propriedades");
+  await expect(page.getByText("Aprovado", { exact: true })).toBeVisible();
+  await expect(page.getByText("Devolvido para correção", { exact: true })).toHaveCount(0);
 });
 
 test("03 novo imóvel abre wizard de cinco etapas e mapa em Ariquemes", async ({ page }) => {

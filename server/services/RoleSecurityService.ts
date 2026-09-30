@@ -24,22 +24,27 @@ export async function findActiveIdentityForRole(
   email: string,
   role: PortalRole,
 ) {
-  const normalized = email.trim().toLowerCase();
+  const normalized = email
+    .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "")
+    .replace(/^mailto:/i, "")
+    .trim()
+    .toLowerCase();
 
   if (supabaseAdmin) {
     let userId: string | null = null;
     let identityEmail = normalized;
 
     if (isAdministrativeRole(role)) {
-      const { data: principal, error } = await supabaseAdmin
-        .from("app_admin_principals")
-        .select("admin_user_id,admin_email,auth_email,portal_role")
-        .eq("admin_email", normalized)
+      const { data: principals, error } = await supabaseAdmin
+        .from("app_admin_login_resolver")
+        .select("admin_user_id,auth_email,portal_role")
+        .eq("login_email", normalized)
         .eq("portal_role", role)
-        .maybeSingle();
+        .limit(2);
       if (error) return null;
+      const principal = principals?.[0] ?? null;
       userId = principal?.admin_user_id ?? null;
-      identityEmail = principal?.auth_email ?? principal?.admin_email ?? normalized;
+      identityEmail = principal?.auth_email ?? normalized;
     } else {
       const { data: person, error } = await supabaseAdmin
         .from("app_people")
@@ -78,12 +83,12 @@ export async function findActiveIdentityForRole(
   if (!dbPool) return null;
   if (isAdministrativeRole(role)) {
     const result = await dbPool.query<{ user_id: string; email_normalized: string }>(
-      `SELECT u.id AS user_id, COALESCE(ap.auth_email,ap.admin_email) AS email_normalized
+      `SELECT u.id AS user_id, COALESCE(lr.auth_email,lr.login_email) AS email_normalized
          FROM public.app_users u
-         JOIN public.app_admin_principals ap ON ap.admin_user_id=u.id
+         JOIN public.app_admin_login_resolver lr ON lr.admin_user_id=u.id
          JOIN public.app_user_role_assignments r ON r.user_id=u.id
-        WHERE ap.admin_email=$1
-          AND ap.portal_role=$2
+        WHERE lr.login_email=$1
+          AND lr.portal_role=$2
           AND u.status='active'
           AND r.role_code=$2
           AND r.revoked_at IS NULL

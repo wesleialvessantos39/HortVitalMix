@@ -3845,3 +3845,33 @@ A publicação do commit e o status Vercel devem ser conferidos pelo SHA exato e
 - Schema lógico final deste ciclo: `39`.
 - Hash canônico final das migrations: `0b7a95a8c4b6355ace3aa6d38e4787111154c2e2f9bb6c5857357350c1c4f268`.
 - Permanecem avisos gerais/preexistentes do projeto nos advisors (por exemplo proteção de senha vazada desabilitada e otimizações de políticas/índices não relacionadas a esta correção); eles não foram mascarados como resolvidos nesta entrega.
+
+
+## 2026-09-30 — SINCRONIZAÇÃO DEFINITIVA DO ESTADO DO IMÓVEL + LOGIN ADMIN EM NOVO DISPOSITIVO
+
+### Estado do imóvel: uma única verdade no Supabase
+- Foi confirmado o erro que permitia o produtor ver **Devolvido para correção** mesmo existindo uma aprovação: o backend selecionava a solicitação pelo `updated_at`, e a decisão antiga superseded havia recebido atualização posterior durante a reconciliação.
+- Foi criada a view server-side `app_property_current_verification`. O frontend não escolhe mais qual decisão é atual; o backend recebe do Supabase o estado canônico do imóvel e da auditoria.
+- Para imóvel `verified`, a decisão atual é obrigatoriamente a aprovação não superseded. Uma decisão antiga de ajustes/recusa nunca mais pode sobrescrever visualmente **Aprovado**.
+- Para imóvel enviado novamente após correção, o banco cria uma **nova solicitação** `pending`; nunca reabre uma linha que já possui decisão. A decisão anterior permanece somente no histórico.
+- Ao retirar/suspender um imóvel aprovado, a aprovação deixa de ser corrente no arquivo administrativo e permanece somente como histórico.
+- A tela do produtor também aplica precedência defensiva: `verified` mostra **Aprovado** antes de qualquer parecer antigo.
+
+### Reconciliação do imóvel existente
+- O log de auditoria mostrou uma retirada explícita pelo papel `producer` às **2026-09-30 18:24:12 UTC**, quando o imóvel estava `verified`.
+- Essa ação não foi revertida silenciosamente. O registro atual é `withdrawn`; portanto uma aprovação anterior não pode continuar aparecendo como aprovação corrente no Super administrador.
+- As solicitações antigas aprovada e recusada desse imóvel ficaram marcadas como históricas/superseded. Não há mais estado corrente contraditório.
+
+### Login em outro dispositivo
+- Os logs de produção mostraram autenticações administrativas completas e bem-sucedidas pelo Vercel às **18:21:07 UTC** e **18:25:13 UTC**, chegando ao Supabase Auth `/token` com HTTP 200.
+- Também houve uma tentativa recusada às **18:20:35 UTC** cujo identificador não corresponde a nenhum e-mail/identidade persistido no banco. Ela foi recusada antes do Supabase Auth, como esperado.
+- O login passa a normalizar caracteres invisíveis/`mailto:` e variantes equivalentes de Gmail (pontos e `+tag`) somente quando correspondem a um alias já persistido no Supabase.
+- A tela administrativa consulta o banco e mostra apenas versões **mascaradas** dos identificadores reconhecidos, evitando guardar e-mail administrativo no frontend.
+- A recuperação de senha administrativa passa a usar a mesma fonte `app_admin_login_resolver`, inclusive para o e-mail da pessoa vinculada.
+- A senha continua sendo validada exclusivamente pelo Supabase Auth. Senha de Produtor/Consumidor não é automaticamente tratada como senha administrativa.
+
+### Banco e versionamento
+- Migration canônica: `20260930184100_property_review_state_sync.sql`.
+- Versão física aplicada no Supabase: `20260930184151`.
+- Schema lógico: `40`.
+- Hash canônico das migrations: `d7cb39ab1b3edd045c7dfce8dd982f82ea8639ba29209fb67acfb5537ee5d2bf`.

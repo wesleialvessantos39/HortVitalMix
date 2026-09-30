@@ -96,12 +96,20 @@ function collapseQueue(rows: Array<Record<string, any>>, tab: QueueTab) {
 
   const visible: Array<Record<string, any>> = [];
   for (const bucket of groups.values()) {
-    const current = bucket.filter((row) => !row.superseded_at);
+    const current = bucket.filter(
+      (row) =>
+        !row.superseded_at &&
+        row.property_status !== "withdrawn" &&
+        row.property_status !== "suspended",
+    );
     const open = current.filter((row) =>
       ["pending", "claimed", "in_review"].includes(row.status),
     );
     const approved = current.filter(
-      (row) => row.status === "approved" && row.archived_at,
+      (row) =>
+        row.status === "approved" &&
+        row.archived_at &&
+        row.property_status === "verified",
     );
 
     let wanted: Array<Record<string, any>> = [];
@@ -211,14 +219,17 @@ export class VerificationQueueService {
       await this.releaseStaleClaims(client);
       const filter =
         tab === "pending"
-          ? "r.status = 'pending' AND r.superseded_at IS NULL"
+          ? "r.status = 'pending' AND r.superseded_at IS NULL AND p.status NOT IN ('withdrawn','suspended')"
           : tab === "in_review"
-            ? "r.status IN ('claimed', 'in_review') AND r.superseded_at IS NULL"
+            ? "r.status IN ('claimed', 'in_review') AND r.superseded_at IS NULL AND p.status NOT IN ('withdrawn','suspended')"
             : tab === "archived"
-              ? "r.status = 'approved' AND r.archived_at IS NOT NULL AND r.superseded_at IS NULL"
-              : "r.status IN ('rejected', 'adjustments_required', 'escalated') AND r.superseded_at IS NULL";
+              ? "r.status = 'approved' AND r.archived_at IS NOT NULL AND r.superseded_at IS NULL AND p.status = 'verified'"
+              : "r.status IN ('rejected', 'adjustments_required', 'escalated') AND r.superseded_at IS NULL AND p.status NOT IN ('verified','withdrawn','suspended')";
       const producers = await client.query(
-        `SELECT DISTINCT producer_id FROM public.app_verification_requests r WHERE ${filter}`,
+        `SELECT DISTINCT r.producer_id
+           FROM public.app_verification_requests r
+           JOIN public.app_properties p ON p.id=r.property_id
+          WHERE ${filter}`,
       );
       const ids = producers.rows.map((row) => row.producer_id);
       const result = ids.length

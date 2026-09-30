@@ -106,84 +106,63 @@ async function reopenPropertyVerification(
   propertyId: string,
   producerId: string,
 ) {
-  const siblings = await matchingProperties(
-    client,
-    producerId,
-    (
-      await client.query("SELECT * FROM public.app_properties WHERE id=$1", [propertyId])
-    ).rows[0] ?? {},
-    propertyId,
-  );
+  const base = (
+    await client.query("SELECT * FROM public.app_properties WHERE id=$1", [propertyId])
+  ).rows[0] ?? {};
+  const siblings = await matchingProperties(client, producerId, base, propertyId);
+
   for (const sibling of siblings) {
     await client.query(
-      `DELETE FROM public.app_verification_requests r
-        WHERE r.property_id=$1
-          AND r.status IN ('pending','claimed','in_review')
-          AND NOT EXISTS (SELECT 1 FROM public.app_verification_decisions d WHERE d.request_id=r.id)`,
-      [sibling.id],
-    );
-  }
-  const siblingHasHistory = siblings.length
-    ? (
-        await client.query(
-          `SELECT 1 FROM public.app_verification_requests r
-            WHERE r.property_id = ANY($1::uuid[])
-              AND EXISTS (SELECT 1 FROM public.app_verification_decisions d WHERE d.request_id=r.id)
-            LIMIT 1`,
-          [siblings.map((row) => row.id)],
-        )
-      ).rows.length > 0
-    : false;
-  if (siblingHasHistory) {
-    await client.query(
-      `DELETE FROM public.app_verification_requests r
-        WHERE r.property_id=$1
-          AND r.status IN ('pending','claimed','in_review')
-          AND NOT EXISTS (SELECT 1 FROM public.app_verification_decisions d WHERE d.request_id=r.id)`,
-      [propertyId],
-    );
-  }
-  for (const sibling of siblings) {
-    await client.query(
-      `UPDATE public.app_verification_requests SET property_id=$1, updated_at=clock_timestamp() WHERE property_id=$2`,
+      `UPDATE public.app_verification_requests
+          SET property_id=$1, updated_at=clock_timestamp()
+        WHERE property_id=$2`,
       [propertyId, sibling.id],
     );
   }
-  await client.query(
-    `DELETE FROM public.app_verification_requests r
-      WHERE r.property_id=$1
-        AND r.status IN ('pending','claimed','in_review')
-        AND NOT EXISTS (SELECT 1 FROM public.app_verification_decisions d WHERE d.request_id=r.id)
-        AND EXISTS (
-          SELECT 1 FROM public.app_verification_requests older
-           WHERE older.property_id=r.property_id AND older.id<>r.id
-        )`,
+
+  const open = await client.query<{ id: string }>(
+    `SELECT id
+       FROM public.app_verification_requests
+      WHERE property_id=$1
+        AND superseded_at IS NULL
+        AND status IN ('pending','claimed','in_review')
+      ORDER BY created_at DESC,id DESC`,
     [propertyId],
   );
-  const reopened = await client.query(
-    `UPDATE public.app_verification_requests
-        SET status='pending', claimed_by=NULL, claimed_at=NULL, updated_at=clock_timestamp()
-      WHERE id = (
-        SELECT id FROM public.app_verification_requests
-         WHERE property_id=$1
-         ORDER BY created_at ASC
-         LIMIT 1
-      )
-      AND status IN ('approved','rejected','adjustments_required','escalated')
-      RETURNING id`,
-    [propertyId],
-  );
-  if (!reopened.rows.length) {
+  const keepOpenId = open.rows[0]?.id ?? null;
+  if (open.rows.length > 1) {
     await client.query(
-      `INSERT INTO public.app_verification_requests(property_id, producer_id, status, priority)
-       SELECT $1,$2,'pending',0
-        WHERE NOT EXISTS (
-          SELECT 1 FROM public.app_verification_requests
-           WHERE property_id=$1 AND status IN ('pending','claimed','in_review')
-        )`,
-      [propertyId, producerId],
+      `DELETE FROM public.app_verification_requests r
+        WHERE r.property_id=$1
+          AND r.id = ANY($2::uuid[])
+          AND NOT EXISTS (
+            SELECT 1 FROM public.app_verification_decisions d
+             WHERE d.request_id=r.id
+          )`,
+      [propertyId, open.rows.slice(1).map((row) => row.id)],
     );
   }
+
+  if (keepOpenId) return;
+
+  const inserted = await client.query<{ id: string }>(
+    `INSERT INTO public.app_verification_requests(property_id,producer_id,status,priority)
+     VALUES($1,$2,'pending',0)
+     RETURNING id`,
+    [propertyId, producerId],
+  );
+  const newRequestId = inserted.rows[0].id;
+  await client.query(
+    `UPDATE public.app_verification_requests
+        SET superseded_at=COALESCE(superseded_at,clock_timestamp()),
+            superseded_by_request_id=$2,
+            updated_at=clock_timestamp()
+      WHERE property_id=$1
+        AND id<>$2
+        AND superseded_at IS NULL
+        AND status IN ('approved','rejected','adjustments_required','escalated')`,
+    [propertyId, newRequestId],
+  );
 }
 
 async function replayTarget(
@@ -294,17 +273,9 @@ async function latestReview(client: PoolClient, propertyId: string) {
     queue_status: string | null;
     review_decision: string | null;
   }>(
-    `SELECT vr.status AS queue_status, vd.decision AS review_decision
-       FROM public.app_verification_requests vr
-       LEFT JOIN LATERAL (
-         SELECT decision
-           FROM public.app_verification_decisions
-          WHERE request_id = vr.id
-          ORDER BY decided_at DESC
-          LIMIT 1
-       ) vd ON true
-      WHERE vr.property_id = $1
-      ORDER BY vr.updated_at DESC
+    `SELECT queue_status,review_decision
+       FROM public.app_property_current_verification
+      WHERE property_id=$1
       LIMIT 1`,
     [propertyId],
   );
@@ -478,22 +449,19 @@ export class RuralPropertyService {
         `SELECT p.id,p.property_name,p.line_vicinal,p.municipality,p.state,p.status,
                 p.wizard_current_step,p.revision,p.updated_at,p.completed_at,p.draft_data,
                 p.registration_number,p.producer_id,
-                vr.status AS queue_status,
-                vd.decision AS review_decision,
-                vd.technical_opinion AS review_opinion
+                cv.queue_status,
+                cv.review_decision,
+                cv.review_opinion,
+                cv.previous_review_decision,
+                cv.previous_review_opinion
            FROM public.app_properties p
-           LEFT JOIN LATERAL (
-             SELECT id,status FROM public.app_verification_requests
-              WHERE property_id=p.id ORDER BY updated_at DESC LIMIT 1
-           ) vr ON true
-           LEFT JOIN LATERAL (
-             SELECT decision,technical_opinion FROM public.app_verification_decisions
-              WHERE request_id=vr.id ORDER BY decided_at DESC LIMIT 1
-           ) vd ON true
+           LEFT JOIN public.app_property_current_verification cv
+             ON cv.property_id=p.id
           WHERE p.producer_id=$1 AND p.status<>'withdrawn'
           ORDER BY p.updated_at DESC,p.id ASC`,
         [producerId],
       );
+
       const groups = new Map<string, Record<string, any>[]>();
       for (const row of result.rows) {
         const key =
@@ -508,25 +476,16 @@ export class RuralPropertyService {
         bucket.push(row);
         groups.set(key, bucket);
       }
+
       const visible = [...groups.values()].map((bucket) => {
+        const verified = bucket.find((row) => row.status === "verified");
         const open = bucket.find((row) =>
           ["pending", "claimed", "in_review"].includes(row.queue_status),
         );
-        const primary = open ?? bucket[0];
-        const previous = [...bucket].reverse().find((row) => row.review_opinion);
-        return {
-          row: primary,
-          previousOpinion:
-            open && previous && previous.id !== primary.id
-              ? previous.review_opinion
-              : null,
-          previousDecision:
-            open && previous && previous.id !== primary.id
-              ? previous.review_decision
-              : null,
-        };
+        return verified ?? open ?? bucket[0];
       });
-      return visible.map(({ row, previousOpinion, previousDecision }) => ({
+
+      return visible.map((row) => ({
         id: row.id,
         propertyName: shownPropertyName(row),
         completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
@@ -536,8 +495,10 @@ export class RuralPropertyService {
         state: row.state,
         status: row.status,
         queueStatus: row.queue_status ?? null,
-        reviewDecision: row.review_decision ?? previousDecision ?? null,
-        reviewOpinion: row.review_opinion ?? previousOpinion ?? null,
+        reviewDecision:
+          row.review_decision ?? row.previous_review_decision ?? null,
+        reviewOpinion:
+          row.review_opinion ?? row.previous_review_opinion ?? null,
         wizardCurrentStep: row.wizard_current_step,
         revision: row.revision,
         updatedAt: new Date(row.updated_at).toISOString(),
@@ -934,6 +895,16 @@ export class RuralPropertyService {
         await client.query(
           "UPDATE public.app_properties SET status='withdrawn' WHERE id=$1 AND producer_id=$2",
           [propertyId, producerId],
+        );
+        await client.query(
+          `UPDATE public.app_verification_requests
+              SET superseded_at=COALESCE(superseded_at,clock_timestamp()),
+                  superseded_by_request_id=NULL,
+                  updated_at=clock_timestamp()
+            WHERE property_id=$1
+              AND status='approved'
+              AND superseded_at IS NULL`,
+          [propertyId],
         );
         await client.query(
           `UPDATE public.app_producer_profiles

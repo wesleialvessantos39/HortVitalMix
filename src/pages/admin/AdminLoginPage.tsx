@@ -28,6 +28,10 @@ export function AdminLoginPage({
   const [errorCode, setErrorCode] = useState("");
   const [showHelp, setShowHelp] = useState(false);
   const [bootstrapOpen, setBootstrapOpen] = useState(false);
+  const [loginHints, setLoginHints] = useState<{
+    aliases: string[];
+    effectiveRole: "platform_admin" | "platform_super_admin" | null;
+  } | null>(null);
 
   const roleTitle =
     intendedRole === "platform_admin"
@@ -54,6 +58,30 @@ export function AdminLoginPage({
       })
       .catch(() => {
         if (!cancelled) setBootstrapOpen(false);
+      });
+    return () => { cancelled = true; };
+  }, [intendedRole]);
+
+  useEffect(() => {
+    if (!intendedRole) {
+      setLoginHints(null);
+      return;
+    }
+    let cancelled = false;
+    api<{
+      status: string;
+      aliases: string[];
+      effectiveRole: "platform_admin" | "platform_super_admin" | null;
+    }>("/v1/admin/auth/login-hints?portalRole=" + encodeURIComponent(intendedRole))
+      .then((result) => {
+        if (!cancelled)
+          setLoginHints({
+            aliases: result.aliases ?? [],
+            effectiveRole: result.effectiveRole ?? null,
+          });
+      })
+      .catch(() => {
+        if (!cancelled) setLoginHints(null);
       });
     return () => { cancelled = true; };
   }, [intendedRole]);
@@ -149,7 +177,9 @@ export function AdminLoginPage({
       setError(blockMessages[failure.message] ?? (failure.status === 429
         ? "Muitas tentativas. Aguarde alguns minutos e tente novamente."
         : [401,403,409].includes(failure.status ?? 0)
-          ? "Não foi possível autenticar. Use o e-mail administrativo ou o e-mail da conta vinculada ao seu perfil administrativo e confira a senha."
+          ? (loginHints?.aliases?.length
+              ? "Não foi possível autenticar com esses dados. Confira o e-mail reconhecido pelo Supabase mostrado acima e use a senha administrativa, não a senha de Produtor ou Consumidor."
+              : "Não foi possível autenticar. Confira o e-mail e a senha do perfil administrativo.")
           : "Não foi possível entrar agora. Tente novamente em alguns instantes."));
     } finally {
       setBusy(false);
@@ -210,6 +240,15 @@ export function AdminLoginPage({
                   Saiba mais
                 </button>
               </p>
+              {loginHints?.aliases?.length ? (
+                <div className="admin-alert" role="note">
+                  <strong>Credencial reconhecida no Supabase:</strong>{" "}
+                  {loginHints.aliases.join(" ou ")}.
+                  {loginHints.effectiveRole && loginHints.effectiveRole !== intendedRole
+                    ? " Neste banco, essas credenciais pertencem ao Super administrador e o acesso continuará com esse papel."
+                    : " Use a senha administrativa dessa conta; ela pode ser diferente da senha de Produtor ou Consumidor."}
+                </div>
+              ) : null}
               {error && <div className="admin-alert admin-alert--error">{error}{Object.values(blockMessages).includes(error) && <span> Dúvidas, entre em contato com o suporte <a href="mailto:hortivitalmix@gmail.com">hortivitalmix@gmail.com</a>.</span>}</div>}
               {errorCode === "wrong_portal_super" && (
                 <button type="button" className="admin-secondary" onClick={() => onNavigate("/entrar/super-administrador")}>Ir para Super administrador</button>

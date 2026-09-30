@@ -192,13 +192,19 @@ function isApproved(property: RuralPropertySummary) {
 }
 
 function situationLabel(property: RuralPropertySummary) {
+  if (property.status === "withdrawn") return "Excluído";
+  if (property.status === "suspended") return "Suspenso";
+  if (
+    property.status === "verified" ||
+    property.queueStatus === "approved" ||
+    property.reviewDecision === "approved"
+  )
+    return "Aprovado";
   if (property.queueStatus === "pending") return "Pendente";
   if (property.queueStatus === "claimed" || property.queueStatus === "in_review")
     return "Em análise";
   if (property.reviewDecision === "adjustments_required")
     return "Devolvido para correção";
-  if (property.reviewDecision === "approved" || property.status === "verified")
-    return "Aprovado";
   if (property.reviewDecision === "rejected" || property.status === "rejected")
     return "Recusado";
   return statusLabel(property.status);

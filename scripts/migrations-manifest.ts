@@ -41,6 +41,8 @@ export function assertManifestHash() {
 }
 
 const remoteVersionAliases: Readonly<Record<string, string>> = {
+  // Sincronização canônica imóvel/auditoria aplicada com timestamp físico Supabase.
+  "20260930184151": "20260930184100",
   // T12: hardening final da fila/arquivo aplicado com timestamp físico Supabase.
   "20260930173943": "20260930173900",
   // T12: retirada de imóvel aprovado aplicada em produção com timestamp físico Supabase.
