@@ -7,7 +7,6 @@ for (const role of ['platform_admin','platform_super_admin']) {
    if(!path.includes('/v1/'))return route.continue();
    let body:unknown={},status=200;
    if(path.endsWith('/account/profile'))body={fullName:'Weslei Alves Santos'};
-   else if(path.endsWith('/admin/auth/login-hints'))body={status:'available',requestedRole:role,effectiveRole:role,aliases:['fi***@example.invalid']};
    else if(path.endsWith('/admin/auth/login'))body={status:'session_created',role,sectors:[]};
    else if(path.endsWith('/admin/auth/verify-session')){verificationCalls++;body={authorized:true,role,sectors:[],requiresReauth:false};}
    else if(path.endsWith('/auth/session')){status=401;body={error:'SESSION_REQUIRED'};}
