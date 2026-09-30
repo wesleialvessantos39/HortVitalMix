@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 38,
+  "schemaVersion": 39,
   "migrations": [
     {
       "version": "20260919030126",
@@ -205,7 +205,12 @@
       "version": "20260930172000",
       "name": "admin_login_resolver_verification_archive",
       "file": "20260930172000_admin_login_resolver_verification_archive.sql"
+    },
+    {
+      "version": "20260930173900",
+      "name": "verification_queue_archive_hardening",
+      "file": "20260930173900_verification_queue_archive_hardening.sql"
     }
   ],
-  "migrationHistoryHash": "5d78521f50aaeaa7c46537b226641a928bbf407821801e22ebc1383250ce2005"
+  "migrationHistoryHash": "0b7a95a8c4b6355ace3aa6d38e4787111154c2e2f9bb6c5857357350c1c4f268"
 }

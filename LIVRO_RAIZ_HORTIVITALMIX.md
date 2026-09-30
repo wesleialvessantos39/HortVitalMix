@@ -3833,3 +3833,15 @@ A publicação do commit e o status Vercel devem ser conferidos pelo SHA exato e
 ### Regra de sincronização
 - GitHub `main`, Vercel produção, Supabase migrations e `app_releases` devem apontar para o mesmo ciclo de entrega.
 - Nenhuma senha pessoal é gravada no Livro Raiz, frontend, backend ou banco de domínio. Credenciais continuam sob responsabilidade do Supabase Auth.
+
+
+## 2026-09-30 — HARDENING FINAL DA FILA APÓS ADVISOR DO SUPABASE
+
+- Após aplicar o arquivo e a resolução de login, os advisors de segurança/performance foram executados.
+- Foi identificado que `enqueue_verification_on_submit()`, apesar de ser uma função interna de trigger, ainda tinha `EXECUTE` herdado para `anon` e `authenticated`. Esse acesso direto foi revogado; somente `service_role` mantém execução explícita. O trigger do banco continua funcionando normalmente.
+- A FK `superseded_by_request_id` recebeu índice próprio para evitar scans desnecessários na manutenção do histórico/substituição.
+- Migration canônica: `20260930173900_verification_queue_archive_hardening.sql`.
+- Versão física Supabase: `20260930173943`.
+- Schema lógico final deste ciclo: `39`.
+- Hash canônico final das migrations: `0b7a95a8c4b6355ace3aa6d38e4787111154c2e2f9bb6c5857357350c1c4f268`.
+- Permanecem avisos gerais/preexistentes do projeto nos advisors (por exemplo proteção de senha vazada desabilitada e otimizações de políticas/índices não relacionadas a esta correção); eles não foram mascarados como resolvidos nesta entrega.

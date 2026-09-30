@@ -41,6 +41,8 @@ export function assertManifestHash() {
 }
 
 const remoteVersionAliases: Readonly<Record<string, string>> = {
+  // T12: hardening final da fila/arquivo aplicado com timestamp físico Supabase.
+  "20260930173943": "20260930173900",
   // T12: retirada de imóvel aprovado aplicada em produção com timestamp físico Supabase.
   "20260930172140": "20260930013000",
   // T12: aliases de login administrativo + arquivo da auditoria.
