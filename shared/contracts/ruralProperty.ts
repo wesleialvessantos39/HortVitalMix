@@ -261,6 +261,8 @@ export type RuralPropertyView = {
   updatedAt: string;
   boundaries: PropertyBoundaryView[];
   activity: RuralActivityView | null;
+  queueStatus?: string | null;
+  reviewDecision?: string | null;
 };
 
 export type RuralPropertySummary = Pick<
@@ -280,6 +282,23 @@ export type RuralPropertySummary = Pick<
   reviewDecision?: string | null;
   reviewOpinion?: string | null;
 };
+
+export function propertyIsViewOnly(input: {
+  status: string;
+  queueStatus?: string | null;
+  reviewDecision?: string | null;
+}) {
+  if (
+    input.status === "verified" ||
+    input.status === "withdrawn" ||
+    input.status === "suspended"
+  )
+    return true;
+  const queue = input.queueStatus ?? null;
+  if (queue === "pending" || queue === "claimed" || queue === "in_review")
+    return false;
+  return input.reviewDecision === "approved" || queue === "approved";
+}
 
 // Partial input remains draft-only. Completion still uses the strict step schemas.
 export const RuralDraftDataSchema=z.object({

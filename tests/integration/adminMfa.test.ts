@@ -27,7 +27,7 @@ describe("administrative password login — user policy 2026-09-25",()=>{
   expect(result).toMatchObject({status:"session_created",role:portal,sectors:portal==="platform_admin"?["operations"]:[]});
   expect(m.sendOtp).not.toHaveBeenCalled();expect(m.signIn).toHaveBeenCalledOnce();
  });
- it("does not open the administrator portal with the super administrator password",async()=>{
+ it("lets the only super administrator enter from the administrator door without becoming an administrator",async()=>{
   role=assigned="platform_super_admin";
   let principalLookups=0;
   m.from.mockImplementation(table=>{
@@ -42,7 +42,9 @@ describe("administrative password login — user policy 2026-09-25",()=>{
     app_admin_sector_members:[{sector_code:"operations",expires_at:null}],
    } as any)[table]);
   });
-  expect(await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_admin")).toEqual({status:"wrong_portal_super"});
+  const result=await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_admin");
+  expect(result).toMatchObject({status:"session_created",role:"platform_super_admin"});
+  expect(result).not.toMatchObject({role:"platform_admin"});
   expect(m.signIn).toHaveBeenCalledOnce();
  });
  it("requires initial confirmation",async()=>{confirmed=false;expect(await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_super_admin")).toMatchObject({status:"email_confirmation_required"});expect(m.sendOtp).not.toHaveBeenCalled();});

@@ -27,6 +27,7 @@ import {
   Step4ActivitySchema,
   type RuralPropertySummary,
   type RuralPropertyView,
+  propertyIsViewOnly,
 } from "../../../shared/contracts/ruralProperty";
 import { OsmPinMap } from "../account/OsmPinMap";
 import {
@@ -186,7 +187,8 @@ function statusLabel(status: RuralPropertySummary["status"]) {
 }
 
 function isApproved(property: RuralPropertySummary) {
-  return property.status === "verified" || property.reviewDecision === "approved";
+  if (property.status === "suspended" || property.status === "withdrawn") return false;
+  return propertyIsViewOnly(property);
 }
 
 function situationLabel(property: RuralPropertySummary) {
@@ -636,6 +638,7 @@ function RuralPropertyWizard({
   }
 
   function persistLocal(next = draft, announce = true) {
+    if (viewOnlyRef.current) return;
     try {
       localStorage.setItem(
         localKey(session.userId, next.propertyId),
@@ -686,13 +689,16 @@ function RuralPropertyWizard({
             "/v1/producer/properties/" + encodeURIComponent(requestedId),
           );
           if (cancelled) return;
-          const locked = result.property.status === "verified";
+          const locked = propertyIsViewOnly(result.property);
           viewOnlyRef.current = locked;
           setViewOnly(locked);
           if (locked) {
+            try { localStorage.removeItem(`hvm:rural-pending:${session.userId}:${requestedId}`); } catch {}
             setDraft(draftFromProperty(result.property));
             dirty.current = false;
-            setNotice("Este imóvel está aprovado. Você pode ver as etapas, mas não alterar os dados.");
+            setNotice(result.property.status === "suspended"
+              ? "Este imóvel está suspenso. Você pode ver as etapas, mas não alterar os dados."
+              : "Este imóvel está aprovado. A visualização não salva nada: ao entrar e sair, o cadastro continua igual.");
             setState("ready");
             hydrated.current = true;
             return;
@@ -1090,7 +1096,7 @@ function RuralPropertyWizard({
           <p>{stepMeta[1]}</p>
         </div>
 
-        <div inert={viewOnly ? true : undefined}>
+        <fieldset className="rural-lock" disabled={viewOnly} inert={viewOnly ? true : undefined}>
         {step === 1 && (
           <div className="rural-form-grid">
             <label>
@@ -1379,7 +1385,7 @@ function RuralPropertyWizard({
           </div>
         )}
 
-        </div>
+        </fieldset>
         <footer className="rural-wizard-actions">
           <button
             className="secondary"
@@ -1389,7 +1395,7 @@ function RuralPropertyWizard({
             Voltar
           </button>
           <div className={"rural-save-indicator is-" + saveState} aria-live="polite">
-            {saveState === "saving" ? (
+            {viewOnly ? null : saveState === "saving" ? (
               <><Save /> Salvando…</>
             ) : saveState === "saved" ? (
               <><CheckCircle2 /> Rascunho salvo</>
@@ -1397,8 +1403,9 @@ function RuralPropertyWizard({
               <><WifiOff /> Rascunho salvo localmente</>
             ) : null}
           </div>
-          {step===5 && !viewOnly && <button className="secondary" disabled={saving.current || state!=="ready"} onClick={()=>void submitAll(true)}>Concluir e salvar</button>}
+          {step===5 && !viewOnly && <button type="button" className="secondary" disabled={saving.current || state!=="ready"} onClick={()=>void submitAll(true)}>Concluir e salvar</button>}
           <button
+            type="button"
             className="primary"
             disabled={saving.current || state === "conflict"}
             onClick={() => void next()}

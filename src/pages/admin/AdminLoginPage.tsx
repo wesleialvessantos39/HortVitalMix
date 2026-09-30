@@ -96,15 +96,10 @@ export function AdminLoginPage({
       }
       if (result.status === "session_created") {
         const role = "role" in result ? result.role : "";
-        if (role !== intendedRole) {
+        if (role !== "platform_admin" && role !== "platform_super_admin") {
           await api("/v1/auth/logout", { method: "POST", body: "{}" }).catch(() => undefined);
           window.dispatchEvent(new Event("hvm:session-cleared"));
-          setErrorCode(role === "platform_super_admin" ? "wrong_portal_super" : "wrong_portal_admin");
-          setError(
-            role === "platform_super_admin"
-              ? "A senha do Super administrador não abre o cadastro de Administrador. Cada acesso tem a sua senha e a sua hierarquia."
-              : "A senha de Administrador não abre o acesso de Super administrador.",
-          );
+          setError("Não foi possível concluir o acesso administrativo.");
           return;
         }
         window.dispatchEvent(new Event("hvm:session-changed"));
@@ -144,6 +139,10 @@ export function AdminLoginPage({
       if (failure.message === "portal_required") {
         setErrorCode("portal_required");
         setError("Escolha Administrador ou Super administrador. As senhas não se misturam.");
+        return;
+      }
+      if (failure.message === "no_admin_role") {
+        setError("Esta conta não está liberada nesse cadastro. Use a entrada Super administrador com o mesmo e-mail e a mesma senha.");
         return;
       }
       setErrorCode("");

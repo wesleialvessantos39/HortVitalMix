@@ -1,5 +1,28 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-09-30 — Imóvel aprovado não grava, administrador entra, aceite LGPD no cadastro
+
+Status: **correção na `main`; schema lógico continua 37. Nenhuma migration nova. A fila da T11 permanece.** A migration `20260930013000_approved_property_withdraw.sql` segue só no Git: esta sessão não tem credencial de banco e o conector da Vercel deste time responde 403. O aceite da LGPD usa a tabela `app_consent_records`, que já existia. `app_releases` não foi alterado.
+
+Evidência do proprietário:
+- no imóvel já aprovado o botão Salvar e o salvamento automático ainda apareciam; entrar e sair não pode mudar o cadastro;
+- entrar como Administrador respondia «Dados inválidos ou cadastro não autorizado»;
+- produtor e consumidor precisam aceitar a LGPD no cadastro, e «Saiba mais» tem de mostrar o que estão aceitando.
+
+Correções:
+- imóvel aprovado (status verificado, ou decisão de aprovação já fechada) abre só para ver. Não há botão Salvar, nem gravação automática, nem rascunho local. O servidor recusa a escrita. Entrar e sair deixa o imóvel igual. Excluir a aprovação continua com o aviso de perda da aprovação. O PDF não é apagado;
+- a produção tem uma única identidade administrativa, de Super administrador. A porta Administrador, quando não existe outro principal, entra com esse papel real. Não vira administrador setorial e não promove privilégio. Se existirem os dois cadastros, a senha de um continua sem abrir o outro;
+- no cadastro de produtor e de consumidor o aceite dos dados pessoais é obrigatório. «Saiba mais» mostra nome, CPF, e-mail, celular, senha, e no produtor o imóvel e a atividade, para que servem, o que não autoriza e os direitos da LGPD. Depois que a conta é criada, a API grava o aceite em `app_consent_records` (`lgpd_cadastro`, versão `lgpd-cadastro-2026-09-30`). A Edge de cadastro não foi republicada; o campo não vai no corpo que ela já valida, para não quebrar o cadastro.
+
+Banco:
+- schema lógico **37**, hash `3c6ab93c4be001b8c7d1f293254c236fdc00217dc77df464aa1a6e43249a5859`;
+- a migration de exclusão da aprovação **não foi aplicada** neste turno;
+- o aceite LGPD não exige SQL novo. Se o serviço não alcançar o Supabase, o cadastro segue e o livro não afirma que a linha foi gravada na hora.
+
+Para ver: atualizar a página sem cache. Administrador entra com o e-mail e a senha do Super administrador e o painel identifica Super administrador. Imóvel aprovado: Visualizar, sem Salvar. Cadastro novo: o termo é obrigatório.
+
+---
+
 ## 2026-09-30 — Super administrador não entra como administrador, e imóvel aprovado só se vê
 
 Status: **correção na `main`; schema lógico 37; migration `20260930013000_approved_property_withdraw.sql` no repositório. A fila da T11 permanece.** Esta sessão não executou o SQL no Supabase: não há credencial de banco aqui e o conector da Vercel deste time responde 403. Sem esse SQL, o produtor já não consegue editar o imóvel aprovado, mas o botão de excluir a aprovação só grava quando a migration estiver aplicada.

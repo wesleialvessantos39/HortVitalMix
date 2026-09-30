@@ -2,8 +2,10 @@ import {
   createSupabasePublicClient,
   supabaseAdmin,
 } from "../supabase/client.ts";
+import { dbPool } from "../db/pool.ts";
 import { reportFailure } from "../config/reportFailure.ts";
 import type { Registration } from "../../shared/contracts/auth.ts";
+import { LGPD_CADASTRO_POLICY_VERSION } from "../../shared/lgpdCadastro.ts";
 
 type RegistrationFailure = Error & { status?: number };
 type ChainState = "complete" | "incomplete" | "unknown";
@@ -426,6 +428,74 @@ async function addRoleToExistingIdentity(
     };
   } finally {
     await client.auth.signOut({ scope: "local" }).catch(() => undefined);
+  }
+}
+
+export async function recordLgpdCadastroAcceptance(input: {
+  userId: string;
+  email: string;
+  ipHash: string;
+  userAgent: string;
+}) {
+  const email = input.email.trim().toLowerCase();
+  const ipHash = /^[0-9a-f]{64}$/.test(input.ipHash) ? input.ipHash : "0".repeat(64);
+  const userAgent = (input.userAgent || "unknown").slice(0, 255) || "unknown";
+
+  if (supabaseAdmin) {
+    const person = await supabaseAdmin
+      .from("app_people")
+      .select("id,email_normalized")
+      .eq("user_id", input.userId)
+      .is("archived_at", null)
+      .maybeSingle();
+    if (person.error) return { status: "unavailable" as const };
+    if (!person.data || person.data.email_normalized !== email)
+      return { status: "ignored" as const };
+    const existing = await supabaseAdmin
+      .from("app_consent_records")
+      .select("id")
+      .eq("person_id", person.data.id)
+      .eq("consent_type", "lgpd_cadastro")
+      .eq("policy_version", LGPD_CADASTRO_POLICY_VERSION)
+      .eq("is_granted", true)
+      .limit(1);
+    if (existing.error) return { status: "unavailable" as const };
+    if (existing.data?.length) return { status: "already_recorded" as const };
+    const inserted = await supabaseAdmin.from("app_consent_records").insert({
+      person_id: person.data.id,
+      consent_type: "lgpd_cadastro",
+      is_granted: true,
+      policy_version: LGPD_CADASTRO_POLICY_VERSION,
+      ip_hash: ipHash,
+      user_agent: userAgent,
+    });
+    if (inserted.error) return { status: "unavailable" as const };
+    return { status: "recorded" as const };
+  }
+
+  if (!dbPool) return { status: "unavailable" as const };
+  try {
+    const person = await dbPool.query<{ id: string }>(
+      `SELECT id FROM public.app_people
+        WHERE user_id=$1 AND email_normalized=$2 AND archived_at IS NULL
+        LIMIT 1`,
+      [input.userId, email],
+    );
+    if (!person.rows[0]) return { status: "ignored" as const };
+    await dbPool.query(
+      `INSERT INTO public.app_consent_records
+         (person_id,consent_type,is_granted,policy_version,ip_hash,user_agent)
+       SELECT $1,'lgpd_cadastro',true,$2,$3,$4
+        WHERE NOT EXISTS (
+          SELECT 1 FROM public.app_consent_records
+           WHERE person_id=$1 AND consent_type='lgpd_cadastro'
+             AND policy_version=$2 AND is_granted=true
+        )`,
+      [person.rows[0].id, LGPD_CADASTRO_POLICY_VERSION, ipHash, userAgent],
+    );
+    return { status: "recorded" as const };
+  } catch {
+    return { status: "unavailable" as const };
   }
 }
 

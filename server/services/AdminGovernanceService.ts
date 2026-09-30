@@ -729,35 +729,32 @@ export class AdminGovernanceService {
   ): Promise<AdminLoginResult> {
     const normalized = email.trim().toLowerCase();
     if (!portalRole) return { status: "portal_required" };
-    const [resolved, limited] = await Promise.all([
+    const [scoped, limited] = await Promise.all([
       adminPrincipalFor(normalized, portalRole), this.rateLimit(normalized, ipHash),
     ]);
-    if (resolved.unavailable) return { status: "unavailable" };
+    if (scoped.unavailable) return { status: "unavailable" };
     if (limited.limited)
       return {
         status: "rate_limited",
         retryAfterSeconds: limited.retryAfterSeconds,
       };
 
-    if (resolved.ambiguous || !resolved.principal) {
-      const otherRole = portalRole === "platform_admin" ? "platform_super_admin" : "platform_admin";
-      const other = await adminPrincipalFor(normalized, otherRole);
-      if (other.principal && !other.ambiguous) {
-        const probe = createSupabasePublicClient();
-        const probed = probe
-          ? await probe.auth.signInWithPassword({
-              email: other.principal.auth_email || normalized,
-              password,
-            })
-          : null;
-        if (probed && !probed.error && probed.data.session) {
-          await probe!.auth.signOut({ scope: "local" }).catch(() => undefined);
-          await supabaseAdmin?.auth?.admin?.signOut(probed.data.session.access_token, "local").catch(() => undefined);
-          return {
-            status: otherRole === "platform_super_admin" ? "wrong_portal_super" : "wrong_portal_admin",
-          };
-        }
+    // Produção tem uma identidade administrativa. Recusar a porta
+    // "Administrador" mostrava "Dados inválidos" mesmo com a senha certa.
+    // Se essa porta não tem principal, entra com o papel real do banco.
+    // Não promove administrador a super, nem abre o cadastro setorial com a senha do super quando os dois existem.
+    let resolved = scoped;
+    let canonicalPortal = false;
+    if (!resolved.ambiguous && !resolved.principal) {
+      const unique = await adminPrincipalFor(normalized);
+      if (unique.unavailable) return { status: "unavailable" };
+      if (!unique.ambiguous && unique.principal) {
+        resolved = unique;
+        canonicalPortal = unique.principal.portal_role !== portalRole;
       }
+    }
+
+    if (resolved.ambiguous || !resolved.principal) {
       await this.recordAttempt(normalized, ipHash, "failure");
       return { status: "invalid_credentials" };
     }
@@ -790,13 +787,17 @@ export class AdminGovernanceService {
     }
 
     const role = await activeAdminRole(signed.data.user.id);
-    if (!role || role.role_code !== principal.portal_role || role.role_code !== portalRole) {
+    if (!role || role.role_code !== principal.portal_role) {
       await client.auth.signOut({ scope: "local" }).catch(() => undefined);
       await supabaseAdmin?.auth?.admin?.signOut(signed.data.session.access_token, "local").catch(() => undefined);
       await this.recordAttempt(normalized, ipHash, "failure");
-      if (role && role.role_code !== portalRole)
-        return { status: role.role_code === "platform_super_admin" ? "wrong_portal_super" : "wrong_portal_admin" };
       return { status: "no_admin_role" };
+    }
+    if (!canonicalPortal && role.role_code !== portalRole) {
+      await client.auth.signOut({ scope: "local" }).catch(() => undefined);
+      await supabaseAdmin?.auth?.admin?.signOut(signed.data.session.access_token, "local").catch(() => undefined);
+      await this.recordAttempt(normalized, ipHash, "failure");
+      return { status: role.role_code === "platform_super_admin" ? "wrong_portal_super" : "wrong_portal_admin" };
     }
     if (role.status !== "active") {
       await client.auth.signOut({ scope: "local" }).catch(() => undefined);

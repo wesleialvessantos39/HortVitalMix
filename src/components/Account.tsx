@@ -4,6 +4,10 @@ import { useEffect, useState, type FormEvent } from "react";
 import { ChevronRight, Crown, Plus, ShieldCheck, ShoppingBag, Sprout, UserRound, MapPin, SlidersHorizontal } from "lucide-react";
 import { api } from "../lib/api";
 import { registerPublicAccount } from "../lib/publicRegistrationTransport";
+import {
+  LGPD_CADASTRO_POLICY_VERSION,
+  lgpdCadastroTerm,
+} from "../../shared/lgpdCadastro";
 import { getBootstrapStatus } from "../lib/adminBootstrapTransport";
 import { CPFInput } from "./forms/CPFInput";
 import { PhoneInput } from "./forms/PhoneInput";
@@ -237,6 +241,7 @@ export function Account({
   const [securityChallengeId, setSecurityChallengeId] = useState<string | null>(null);
   const [securityNonce, setSecurityNonce] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [lgpdOpen, setLgpdOpen] = useState(false);
   const [adminBootstrapStatus, setAdminBootstrapStatus] =
     useState<AdminBootstrapStatus>("idle");
 
@@ -248,6 +253,7 @@ export function Account({
     setSecurityChallengeId(null);
     setSecurityNonce("");
     setFieldErrors({});
+    setLgpdOpen(false);
     const params = new URLSearchParams(location.search);
     if (params.get("registered") === "1")
       setNotice("Cadastro realizado. A confirmação de e-mail está sendo enviada.");
@@ -379,6 +385,8 @@ export function Account({
 
     let publicRegistrationPayload: Record<string, unknown> | null = null;
     if (mode === "consumer" || mode === "producer") {
+      const acceptedLgpd = form.lgpdAccepted === "on";
+      delete form.lgpdAccepted;
       const parsed = (
         mode === "producer" ? RegisterProducerSchema : RegisterConsumerSchema
       ).safeParse(form);
@@ -395,6 +403,9 @@ export function Account({
             );
         }
       }
+
+      if (!acceptedLgpd)
+        errors.lgpdAccepted = "Aceite o termo de dados pessoais para criar o cadastro.";
 
       if (String(confirmation ?? "") === "")
         errors.confirmPassword = requiredMessages.confirmPassword;
@@ -454,6 +465,16 @@ export function Account({
           mode,
           publicRegistrationPayload ?? (form as Record<string, unknown>),
         );
+        if (result.userId) {
+          await api("/v1/auth/lgpd-acceptance", {
+            method: "POST",
+            body: JSON.stringify({
+              email: String(form.email ?? ""),
+              userId: result.userId,
+              policyVersion: LGPD_CADASTRO_POLICY_VERSION,
+            }),
+          }).catch(() => undefined);
+        }
 
         const targetRole = mode;
         onSessionAdopt(null);
@@ -1354,6 +1375,49 @@ export function Account({
               )}
             </label>
           </>
+        )}
+
+        {(mode === "consumer" || mode === "producer") && (
+          <div className="lgpd-accept">
+            <label>
+              <input
+                name="lgpdAccepted"
+                type="checkbox"
+                aria-invalid={Boolean(fieldErrors.lgpdAccepted)}
+                onChange={() => clearFieldError("lgpdAccepted")}
+              />
+              <span>Li e aceito o tratamento dos meus dados pessoais para criar esta conta.</span>
+            </label>
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => setLgpdOpen((open) => !open)}
+            >
+              Saiba mais
+            </button>
+            {fieldErrors.lgpdAccepted && (
+              <small className="field-error" role="alert">
+                {fieldErrors.lgpdAccepted}
+              </small>
+            )}
+            {lgpdOpen && (
+              <div className="lgpd-term" role="region" aria-label={lgpdCadastroTerm.title}>
+                <h2>{lgpdCadastroTerm.title}</h2>
+                <p>{lgpdCadastroTerm.intro}</p>
+                {lgpdCadastroTerm.sections.map((section) => (
+                  <div key={section.heading}>
+                    <strong>{section.heading}</strong>
+                    <ul>
+                      {section.items.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+                <p>{lgpdCadastroTerm.contact}</p>
+              </div>
+            )}
+          </div>
         )}
 
         {notice && (

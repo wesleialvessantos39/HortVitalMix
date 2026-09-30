@@ -13,13 +13,14 @@ import {
   SessionImportSchema,
   type PortalRole,
 } from "../../shared/contracts/auth.ts";
+import { LgpdCadastroAcceptanceSchema } from "../../shared/lgpdCadastro.ts";
 import { runtime } from "../config/runtime.ts";
 import {
   createSupabasePublicClient,
   supabaseAdmin,
   supabasePublic,
 } from "../supabase/client.ts";
-import { register } from "../services/AuthService.ts";
+import { register, recordLgpdCadastroAcceptance } from "../services/AuthService.ts";
 import { dbPool } from "../db/pool.ts";
 import { resolveIdentityAccess } from "../services/IdentityAccessService.ts";
 import { classifyDbError, reportFailure } from "../config/reportFailure.ts";
@@ -1011,6 +1012,25 @@ authRouter.post("/change-password", async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+});
+
+authRouter.post("/lgpd-acceptance", async (req, res) => {
+  const parsed = LgpdCadastroAcceptanceSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(422).json({ error: "VALIDATION_ERROR", requestId: res.locals.requestId });
+    return;
+  }
+  const result = await recordLgpdCadastroAcceptance({
+    userId: parsed.data.userId,
+    email: parsed.data.email,
+    ipHash: req.clientIpHash || "",
+    userAgent: String(req.headers["user-agent"] ?? "unknown"),
+  });
+  if (result.status === "unavailable") {
+    res.status(503).json({ error: "DATABASE_UNAVAILABLE", requestId: res.locals.requestId });
+    return;
+  }
+  res.status(204).end();
 });
 
 for (const role of ["consumer", "producer"] as const)

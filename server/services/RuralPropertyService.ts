@@ -1,11 +1,12 @@
 import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
 import { redactPII } from "../security/redactPII.ts";
-import type {
-  SaveRuralDraftInput,
-  RuralPropertyView,
-  SaveWizardStepInput,
-  SubmitPropertyInput,
+import {
+  propertyIsViewOnly,
+  type SaveRuralDraftInput,
+  type RuralPropertyView,
+  type SaveWizardStepInput,
+  type SubmitPropertyInput,
 } from "../../shared/contracts/ruralProperty.ts";
 import { propertyIdentityKey } from "../../shared/rural/propertyIdentity.ts";
 
@@ -288,10 +289,33 @@ function shownPropertyName(row: Record<string, any>) {
   if (draftName && !/^im[oó]vel sem nome/i.test(draftName)) return draftName;
   return String(row.property_name ?? draftName ?? "");
 }
+async function latestReview(client: PoolClient, propertyId: string) {
+  const result = await client.query<{
+    queue_status: string | null;
+    review_decision: string | null;
+  }>(
+    `SELECT vr.status AS queue_status, vd.decision AS review_decision
+       FROM public.app_verification_requests vr
+       LEFT JOIN LATERAL (
+         SELECT decision
+           FROM public.app_verification_decisions
+          WHERE request_id = vr.id
+          ORDER BY decided_at DESC
+          LIMIT 1
+       ) vd ON true
+      WHERE vr.property_id = $1
+      ORDER BY vr.updated_at DESC
+      LIMIT 1`,
+    [propertyId],
+  );
+  return result.rows[0] ?? { queue_status: null, review_decision: null };
+}
+
 async function mapProperty(
   client: PoolClient,
   row: Record<string, any>,
 ): Promise<RuralPropertyView> {
+  const review = await latestReview(client, row.id);
   return {
     id: row.id,
     propertyName: shownPropertyName(row),
@@ -314,6 +338,8 @@ async function mapProperty(
     waterSource: row.water_source,
     irrigationSystem: row.irrigation_system,
     status: row.status,
+    queueStatus: review.queue_status,
+    reviewDecision: review.review_decision,
     wizardCurrentStep: row.wizard_current_step,
     revision: row.revision,
     createdAt: new Date(row.created_at).toISOString(),
@@ -323,9 +349,14 @@ async function mapProperty(
   };
 }
 
-function assertEditable(row: Record<string,any>) {
- if (row.status === "suspended" || row.status === "verified" || row.status === "withdrawn")
-  throw new RuralPropertyError("PROPERTY_NOT_EDITABLE",409,"Este imóvel aprovado só pode ser visualizado.");
+async function assertEditable(client: PoolClient, row: Record<string, any>) {
+  const review = await latestReview(client, row.id);
+  if (propertyIsViewOnly({
+    status: row.status,
+    queueStatus: review.queue_status,
+    reviewDecision: review.review_decision,
+  }))
+    throw new RuralPropertyError("PROPERTY_NOT_EDITABLE", 409, "Este imóvel aprovado só pode ser visualizado.");
 }
 
 function assertRevision(row: Record<string, any>, expected?: number) {
@@ -413,7 +444,7 @@ export class RuralPropertyService {
       if(replay){row=(await client.query("SELECT * FROM public.app_properties WHERE id=$1 AND producer_id=$2",[replay,producerId])).rows[0];}
       else {
         if(input.propertyId){
-          const current=await lockProperty(client,producerId,input.propertyId);assertEditable(current);assertRevision(current,input.expectedRevision);
+          const current=await lockProperty(client,producerId,input.propertyId);await assertEditable(client,current);assertRevision(current,input.expectedRevision);
           row=(await client.query("UPDATE public.app_properties SET draft_data=$3::jsonb,status='draft',wizard_current_step=$4 WHERE id=$1 AND producer_id=$2 RETURNING *",[input.propertyId,producerId,JSON.stringify(input.draft),input.draft.step])).rows[0];
         }else{
           row=(await client.query("INSERT INTO public.app_properties(producer_id,draft_data,wizard_current_step) VALUES($1,$2::jsonb,$3) RETURNING *",[producerId,JSON.stringify(input.draft),input.draft.step])).rows[0];
@@ -617,7 +648,7 @@ export class RuralPropertyService {
 
         const current = await lockProperty(client, producerId, propertyId);
         before = current;
-        assertEditable(current);
+        await assertEditable(client, current);
         if (!reusingIdentity) assertRevision(current, input.expectedRevision);
         if(input.step<5 && current.status!=="draft") {
           await client.query("UPDATE public.app_properties SET status='draft' WHERE id=$1 AND producer_id=$2",[propertyId,producerId]);
@@ -829,7 +860,7 @@ export class RuralPropertyService {
         return { status: "submitted" as const, property };
       }
 
-      assertEditable(current);
+      await assertEditable(client, current);
       assertRevision(current, input.expectedRevision);
       if(current.draft_data)throw new RuralPropertyError("PROPERTY_INCOMPLETE",422);
       await assertComplete(client, current);
