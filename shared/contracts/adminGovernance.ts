@@ -29,6 +29,7 @@ export const AdminSectorCodeSchema = z.enum([
   "document_verification",
   "catalog_moderation",
   "finance_ops",
+  "location_management",
 ]);
 export type AdminSectorCode = z.infer<typeof AdminSectorCodeSchema>;
 
