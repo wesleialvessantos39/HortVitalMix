@@ -60,6 +60,9 @@ function registration(overrides: Record<string, unknown> = {}) {
     password: `Hvm!${marker}Aa9#`,
     propertyName: `Sítio ${marker.slice(0, 8)}`,
     activityType: "misto",
+    // Trava de cobertura: o cadastro público só conclui em município ativo.
+    municipality: "Ariquemes",
+    state: "RO",
     ...overrides,
   };
 }
