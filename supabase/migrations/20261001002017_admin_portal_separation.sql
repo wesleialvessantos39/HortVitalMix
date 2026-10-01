@@ -18,5 +18,5 @@ FROM public.app_admin_principals ap;
 REVOKE ALL ON public.app_admin_login_resolver FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public.app_admin_login_resolver TO service_role;
 
-COMMENT ON public.app_admin_login_resolver IS
+COMMENT ON VIEW public.app_admin_login_resolver IS
   'Fonte canônica server-side dos identificadores de login administrativo. Expõe somente o e-mail administrativo declarado em app_admin_principals: o e-mail da pessoa vinculada não autoriza acesso administrativo.';
