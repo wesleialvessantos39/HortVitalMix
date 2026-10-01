@@ -88,4 +88,28 @@ describe("Trilha 05 — regressões de selagem v11", () => {
     expect(manifest.schemaVersion).toBeGreaterThanOrEqual(25);
     expect(FOUNDATION_SCHEMA_VERSION).toBe(manifest.schemaVersion);
   });
+
+  it("mantém as portas administrativas separadas do cadastro público", () => {
+    const resolver = readFileSync(
+      "supabase/migrations/20261001002017_admin_portal_separation.sql",
+      "utf8",
+    );
+    expect(resolver).not.toContain("linked_person_email");
+    expect(resolver).not.toContain("app_people");
+    expect(resolver).toContain("app_admin_principals");
+
+    const service = readFileSync(
+      "server/services/AdminGovernanceService.ts",
+      "utf8",
+    );
+    expect(service).not.toContain("canonicalPortal");
+    expect(service).not.toContain("loginHints");
+    expect(service).toContain("wrong_portal_super");
+
+    const routes = readFileSync(
+      "server/routes/adminGovernanceRoutes.ts",
+      "utf8",
+    );
+    expect(routes).toContain("result.role !== parsed.data.portalRole");
+  });
 });
