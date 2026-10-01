@@ -215,7 +215,12 @@
       "version": "20260930184100",
       "name": "property_review_state_sync",
       "file": "20260930184100_property_review_state_sync.sql"
+    },
+    {
+      "version": "20261001002017",
+      "name": "admin_portal_separation",
+      "file": "20261001002017_admin_portal_separation.sql"
     }
   ],
-  "migrationHistoryHash": "d7cb39ab1b3edd045c7dfce8dd982f82ea8639ba29209fb67acfb5537ee5d2bf"
+  "migrationHistoryHash": "cd3c9d1ae33569b6759ca11db99cd53fe286c22dae7d7ba93b543a4a90425555"
 }

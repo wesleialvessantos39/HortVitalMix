@@ -29,7 +29,7 @@ const sha256 = (value: string) => createHash("sha256").update(value).digest("hex
 
 const normalizeAdminLoginEmail = (value: string) =>
   value
-    .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "")
+    .replace(/[​-‍⁠﻿]/g, "")
     .replace(/^mailto:/i, "")
     .trim()
     .toLowerCase();
@@ -202,7 +202,7 @@ function roleScopedInviteAuthEmail(
 
 const normalizeBootstrapAdminEmail = (value: string | undefined) => {
   let normalized = (value ?? "")
-    .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "")
+    .replace(/[​-‍⁠﻿]/g, "")
     .trim();
 
   const assignment =
@@ -222,7 +222,7 @@ const normalizeBootstrapAdminEmail = (value: string | undefined) => {
   normalized = normalized.replace(/[;,]+$/, "").trim();
 
   return normalized
-    .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "")
+    .replace(/[​-‍⁠﻿]/g, "")
     .trim()
     .toLowerCase();
 };
@@ -789,84 +789,6 @@ export class AdminGovernanceService {
     return { status: "unavailable" };
   }
 
-  static async loginHints(portalRole: AdminRole): Promise<{
-    status: "available" | "unavailable";
-    requestedRole: AdminRole;
-    effectiveRole: AdminRole | null;
-    aliases: string[];
-  }> {
-    type HintRow = {
-      login_email: string;
-      admin_user_id: string;
-      portal_role: AdminRole;
-    };
-
-    let rows: HintRow[] = [];
-    if (supabaseAdmin) {
-      const result = await supabaseAdmin
-        .from("app_admin_login_resolver")
-        .select("login_email,admin_user_id,portal_role")
-        .limit(50);
-      if (!result.error) rows = (result.data ?? []) as HintRow[];
-    }
-    if (!rows.length && dbPool) {
-      try {
-        rows = (
-          await dbPool.query<HintRow>(
-            `SELECT login_email,admin_user_id,portal_role
-               FROM public.app_admin_login_resolver
-              ORDER BY portal_role,login_email
-              LIMIT 50`,
-          )
-        ).rows;
-      } catch {}
-    }
-    if (!rows.length)
-      return {
-        status: "unavailable",
-        requestedRole: portalRole,
-        effectiveRole: null,
-        aliases: [],
-      };
-
-    let selected = rows.filter((row) => row.portal_role === portalRole);
-    let effectiveRole: AdminRole | null = portalRole;
-    if (!selected.length) {
-      const principals = [
-        ...new Map(
-          rows.map((row) => [
-            row.admin_user_id + ":" + row.portal_role,
-            row,
-          ]),
-        ).values(),
-      ];
-      if (principals.length === 1) {
-        effectiveRole = principals[0].portal_role;
-        selected = rows.filter(
-          (row) =>
-            row.admin_user_id === principals[0].admin_user_id &&
-            row.portal_role === principals[0].portal_role,
-        );
-      } else {
-        effectiveRole = null;
-      }
-    }
-
-    return {
-      status: "available",
-      requestedRole: portalRole,
-      effectiveRole,
-      aliases: [
-        ...new Set(
-          selected
-            .map((row) => normalizeAdminLoginEmail(row.login_email))
-            .filter(Boolean)
-            .map(maskEmail),
-        ),
-      ],
-    };
-  }
-
   static async login(
     email: string,
     password: string,
@@ -886,18 +808,22 @@ export class AdminGovernanceService {
         retryAfterSeconds: limited.retryAfterSeconds,
       };
 
-    // Produção tem uma identidade administrativa. Recusar a porta
-    // "Administrador" mostrava "Dados inválidos" mesmo com a senha certa.
-    // Se essa porta não tem principal, entra com o papel real do banco.
-    // Não promove administrador a super, nem abre o cadastro setorial com a senha do super quando os dois existem.
-    let resolved = scoped;
-    let canonicalPortal = false;
+    // Portas separadas: Administrador e Super administrador não se cruzam.
+    // Quando o e-mail existe somente na outra porta, o acesso é recusado com o
+    // motivo explícito — nunca promovido ao papel que está no banco. Também não
+    // abre a porta setorial com a senha do Super administrador.
+    const resolved = scoped;
     if (!resolved.ambiguous && !resolved.principal) {
       const unique = await adminPrincipalFor(normalized);
       if (unique.unavailable) return { status: "unavailable" };
       if (!unique.ambiguous && unique.principal) {
-        resolved = unique;
-        canonicalPortal = unique.principal.portal_role !== portalRole;
+        await this.recordAttempt(normalized, ipHash, "failure");
+        return {
+          status:
+            unique.principal.portal_role === "platform_super_admin"
+              ? "wrong_portal_super"
+              : "wrong_portal_admin",
+        };
       }
     }
 
@@ -940,7 +866,7 @@ export class AdminGovernanceService {
       await this.recordAttempt(normalized, ipHash, "failure");
       return { status: "no_admin_role" };
     }
-    if (!canonicalPortal && role.role_code !== portalRole) {
+    if (role.role_code !== portalRole) {
       await client.auth.signOut({ scope: "local" }).catch(() => undefined);
       await supabaseAdmin?.auth?.admin?.signOut(signed.data.session.access_token, "local").catch(() => undefined);
       await this.recordAttempt(normalized, ipHash, "failure");
