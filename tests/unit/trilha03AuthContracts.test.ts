@@ -7,6 +7,8 @@ const base = {
   email: "Pessoa.Teste@EXAMPLE.com",
   phone: "(69) 99999-8888",
   password: "SenhaForte#2026",
+  municipality: "Ariquemes",
+  state: "RO",
 };
 
 describe("Trilha 03 — contratos de identidade", () => {
