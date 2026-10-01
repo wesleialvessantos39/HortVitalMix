@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 40,
+  "schemaVersion": 41,
   "migrations": [
     {
       "version": "20260919030126",
@@ -220,7 +220,12 @@
       "version": "20261001002017",
       "name": "admin_portal_separation",
       "file": "20261001002017_admin_portal_separation.sql"
+    },
+    {
+      "version": "20261001032320",
+      "name": "advisor_performance_hardening",
+      "file": "20261001032320_advisor_performance_hardening.sql"
     }
   ],
-  "migrationHistoryHash": "cd3c9d1ae33569b6759ca11db99cd53fe286c22dae7d7ba93b543a4a90425555"
+  "migrationHistoryHash": "3a7fac0abe74efef0f3e118aeaf5d36fa89ea8c5cc1909ed9f554f7a03e243eb"
 }
