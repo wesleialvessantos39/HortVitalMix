@@ -7,7 +7,10 @@ import { dbPool } from "../../server/db/pool";
 import { runtime } from "../../server/config/runtime";
 import { supabaseAdmin } from "../../server/supabase/client";
 import { app } from "../../server/app";
-import { GlobalConfigPublicSchema } from "../../shared/contracts/foundation";
+import {
+  GlobalConfigPublicSchema,
+  FOUNDATION_SCHEMA_VERSION,
+} from "../../shared/contracts/foundation";
 
 const PRODUCTION_PROJECT_REF = "xipbsazvymkqqfmfegwu";
 const enabled =
@@ -322,7 +325,7 @@ describe.skipIf(!enabled)("Supabase real e JWTs reais", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.databaseConnected).toBe(true);
-    expect(response.body.schemaVersion).toBe(14);
+    expect(response.body.schemaVersion).toBe(FOUNDATION_SCHEMA_VERSION);
     expect(response.body.releaseTag).toBe(release.rows[0].release_tag);
   });
 
