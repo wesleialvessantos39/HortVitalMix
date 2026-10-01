@@ -1,6 +1,10 @@
 import { PROVIDER_OTP_PATTERN } from "../securityCodes.ts";
 import { z } from "zod";
 import { formatBrazilMobile, formatCpf, normalizeBrazilMobile, onlyDigits } from "../utils/normalization.ts";
+import {
+  LocalityStateSchema,
+  MunicipalityNameSchema,
+} from "./locality.ts";
 
 export { formatBrazilMobile, formatCpf, normalizeBrazilMobile } from "../utils/normalization.ts";
 
@@ -76,6 +80,10 @@ const base = {
   email,
   password: StrongPasswordSchema,
   phone,
+  // Trava de cobertura por localidade (item 2): o cadastro público só conclui
+  // em município cadastrado e ATIVO pelo Super administrador.
+  municipality: MunicipalityNameSchema,
+  state: LocalityStateSchema.default("RO"),
 };
 
 export const RegisterConsumerSchema = z.object(base).strict();
@@ -171,4 +179,3 @@ export type Registration = z.infer<typeof RegisterConsumerSchema> &
       "propertyName" | "activityType"
     >
   >;
-
