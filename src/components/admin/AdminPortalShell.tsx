@@ -5,6 +5,8 @@ import {
   Settings,
   LogOut,
   Leaf,
+  MapPin,
+  Ban,
   UserRound,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
@@ -25,6 +27,8 @@ const items = [
   ["/admin/governanca", "Governança", ShieldCheck],
   ["/admin/usuarios", "Usuários", UsersRound],
   ["/admin/documentos/fila", "Auditoria", ShieldCheck],
+  ["/admin/localidades", "Localidades", MapPin],
+  ["/admin/bloqueios", "Bloqueios", Ban],
   ["/admin/configuracao", "Configuração", Settings],
   ["/admin/conta", "Conta", UserRound],
 ] as const;
@@ -38,7 +42,12 @@ export function AdminPortalShell({
 }: Props) {
   const visible = items.filter(([to]) => {
     if (access.role === "platform_super_admin") return true;
-    return to !== "/admin/configuracao" && (to !== "/admin/documentos/fila" || access.sectors.includes("document_verification"));
+    if (to === "/admin/configuracao") return false;
+    if (to === "/admin/documentos/fila")
+      return access.sectors.includes("document_verification");
+    if (to === "/admin/localidades" || to === "/admin/bloqueios")
+      return access.sectors.includes("location_management");
+    return true;
   });
 
   const [leaving, setLeaving] = useState(false);
