@@ -185,6 +185,19 @@ adminGovernanceRouter.post(
       parsed.data.portalRole,
     );
     if (result.status === "session_created") {
+      // Fronteira dura das portas: nenhuma sessão é emitida quando o papel
+      // autenticado não é o papel da porta usada. Administrador não entra por
+      // Super administrador e Super administrador não entra por Administrador.
+      if (result.role !== parsed.data.portalRole) {
+        res.status(403).json({
+          status:
+            result.role === "platform_super_admin"
+              ? "wrong_portal_super"
+              : "wrong_portal_admin",
+          requestId: req.requestId,
+        });
+        return;
+      }
       setAdminSession(res, result);
       res.status(200).json({
         status: result.status,
