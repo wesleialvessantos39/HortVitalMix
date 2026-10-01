@@ -94,10 +94,9 @@ async function adminPrincipalFor(
     };
   };
 
-  // Fonte canônica: view do Supabase que expõe somente o e-mail administrativo
-  // declarado. O e-mail da pessoa vinculada nunca autoriza acesso
-  // administrativo; a senha continua sendo validada apenas na identidade Auth
-  // do principal administrativo.
+  // Fonte canônica: view do Supabase que une o e-mail administrativo ao
+  // e-mail da pessoa canônica vinculada. A senha continua sendo validada
+  // somente na identidade Auth do principal administrativo.
   if (supabaseAdmin) {
     let resolver = supabaseAdmin
       .from("app_admin_login_resolver")
