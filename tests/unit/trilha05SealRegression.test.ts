@@ -33,7 +33,15 @@ describe("Trilha 05 — regressões de selagem v11", () => {
     expect(account).not.toContain("Falha não identificada no cadastro:");
     expect(account).not.toContain("Código de atendimento:");
     expect(bootstrap).toContain("Cadastro não autorizado.");
-    expect(adminLogin).toContain("Dados inválidos ou cadastro não autorizado.");
+    // A mensagem genérica de credencial administrativa continua obrigatória, mas
+    // passou a vir de shared/accountBlock + fallback local depois da separação das
+    // portas de acesso (T11). O texto literal abaixo é a única resposta para
+    // credencial inválida — nenhum código interno pode vazar para a tela.
+    expect(adminLogin).toContain(
+      "Não foi possível autenticar. Confira o e-mail e a senha do perfil administrativo.",
+    );
+    expect(adminLogin).not.toContain("invalid_credentials");
+    expect(adminLogin).not.toContain("ADMIN_GOVERNANCE_LOGIN_REQUIRED");
     expect(app).toContain('path === "/acesso/administracao"');
     expect(router).toContain('path==="/acesso/administracao"');
   });
