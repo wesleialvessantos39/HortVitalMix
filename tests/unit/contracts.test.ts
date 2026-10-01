@@ -39,6 +39,8 @@ describe("contratos e limites de confiança", () => {
       password: "Senha-Segura-2026!",
       propertyName: "Sítio de Teste",
       activityType: "misto",
+      municipality: "Ariquemes",
+      state: "RO",
     });
 
     expect(data.cpf).toBe("52998224725");
