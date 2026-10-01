@@ -99,7 +99,7 @@ describe("Trilha 05 — bootstrap administrativo",()=>{
   // O intervalo de caracteres de largura zero pode estar escrito como escape
   // textual ou com os proprios caracteres: as duas formas limpam o mesmo
   // conjunto, entao a evidencia aceita ambas.
-  const zeroWidthEscaped = service.includes("\​-\‍\⁠\﻿");
+  const zeroWidthEscaped = service.includes("\\u200B-\\u200D\\u2060\\uFEFF");
   const zeroWidthLiteral = /[​-‍⁠﻿]/.test(service);
   expect(zeroWidthEscaped || zeroWidthLiteral).toBe(true);
   expect(service).toContain("normalized.startsWith");
