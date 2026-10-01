@@ -9,6 +9,11 @@ import {
   lgpdCadastroTerm,
 } from "../../shared/lgpdCadastro";
 import { getBootstrapStatus } from "../lib/adminBootstrapTransport";
+import { useLocality } from "../hooks/useLocality";
+import {
+  LOCALITY_DISABLED_MESSAGE,
+  LOCALITY_NOT_COVERED_MESSAGE,
+} from "../../shared/contracts/locality";
 import { CPFInput } from "./forms/CPFInput";
 import { PhoneInput } from "./forms/PhoneInput";
 import { PasswordStrengthMeter } from "./forms/PasswordStrengthMeter";
@@ -102,6 +107,7 @@ const requiredMessages: Record<string, string> = {
   confirmPassword: "Confirme sua senha.",
   propertyName: "Informe o nome de seu imóvel.",
   activityType: "Selecione a atividade principal.",
+  municipality: "Informe o município do seu endereço de entrega.",
 };
 
 function friendlyFieldMessage(
@@ -122,6 +128,9 @@ function friendlyFieldMessage(
   if (field === "propertyName")
     return "Informe o nome de seu imóvel com pelo menos 2 caracteres.";
   if (field === "activityType") return "Selecione a atividade principal.";
+  if (field === "municipality")
+    return "Selecione um município atendido pela plataforma.";
+  if (field === "state") return "Informe a UF do município.";
   return message;
 }
 
@@ -244,6 +253,19 @@ export function Account({
   const [lgpdOpen, setLgpdOpen] = useState(false);
   const [adminBootstrapStatus, setAdminBootstrapStatus] =
     useState<AdminBootstrapStatus>("idle");
+  // Localidade do cadastro: o município é obrigatório e precisa estar ATIVO.
+  const locality = useLocality();
+  const [registrationMunicipality, setRegistrationMunicipality] = useState("");
+
+  useEffect(() => {
+    if (registrationMunicipality) return;
+    const stored = locality.selected?.name;
+    if (stored) setRegistrationMunicipality(stored);
+  }, [locality.selected?.name, registrationMunicipality]);
+
+  const registrationState =
+    locality.municipalities.find((row) => row.name === registrationMunicipality)
+      ?.state ?? "RO";
 
   useEffect(() => {
     setMode(modeFromPath(path));
@@ -277,9 +299,11 @@ export function Account({
         if (!cancelled) setAdminBootstrapStatus(result.status);
       })
       .catch(() => {
-        // Se ambos os transportes falharem, mantemos a descoberta visível.
-        // A autorização real continua protegida no POST server-side/Edge.
-        if (!cancelled) setAdminBootstrapStatus("open");
+        // Item 7 do proprietário: o bloco de configuração inicial só aparece
+        // quando o estado REAL do banco diz que não existe Super administrador
+        // ativo. Sem resposta confiável do servidor nada é exibido — a
+        // autorização continua protegida no POST server-side/Edge.
+        if (!cancelled) setAdminBootstrapStatus("idle");
       });
 
     return () => {
@@ -601,7 +625,11 @@ export function Account({
       }
 
       setNotice(
-        code === "INVALID_CREDENTIALS"
+        code === "LOCALITY_DISABLED"
+          ? LOCALITY_DISABLED_MESSAGE
+          : code === "LOCALITY_NOT_COVERED"
+            ? LOCALITY_NOT_COVERED_MESSAGE
+            : code === "INVALID_CREDENTIALS"
           ? "E-mail ou senha inválidos."
           : code === "EMAIL_CONFIRMATION_REQUIRED"
             ? "Confirme seu e-mail antes de entrar. Se necessário, reenvie a confirmação."
@@ -1145,52 +1173,30 @@ export function Account({
           </button>
         </div>
 
-        <div
-          className={
-            "admin-bootstrap-discovery " +
-            (adminBootstrapStatus === "open"
-              ? "is-open"
-              : adminBootstrapStatus === "closed"
-                ? "is-closed"
-                : "")
-          }
-          aria-live="polite"
-        >
-          <span className="admin-bootstrap-discovery-icon" aria-hidden="true">
-            <ShieldCheck />
-          </span>
-          <div>
-            <strong>
-              {adminBootstrapStatus === "loading"
-                ? "Verificando a configuração administrativa…"
-                : adminBootstrapStatus === "open"
-                  ? "Primeiro Super administrador ainda não configurado"
-                  : adminBootstrapStatus === "closed"
-                    ? "Configuração inicial concluída"
-                    : "Configuração inicial protegida"}
-            </strong>
-            <span>
-              {adminBootstrapStatus === "open"
-                ? "Antes de usar o painel, conclua o bootstrap único com o e-mail autorizado no servidor."
-                : adminBootstrapStatus === "closed"
-                  ? "Use uma das opções acima. Novos administradores entram somente por convite."
-                  : adminBootstrapStatus === "loading"
-                    ? "Verificando disponibilidade do acesso."
-                    : "O bootstrap não está disponível agora. Os acessos existentes continuam preservados."}
+        {adminBootstrapStatus === "open" && (
+          <div
+            className="admin-bootstrap-discovery is-open"
+            aria-live="polite"
+          >
+            <span className="admin-bootstrap-discovery-icon" aria-hidden="true">
+              <ShieldCheck />
             </span>
-          </div>
-          {adminBootstrapStatus !== "closed" && (
+            <div>
+              <strong>Primeiro Super administrador ainda não configurado</strong>
+              <span>
+                Antes de usar o painel, conclua o bootstrap único com o e-mail
+                autorizado no servidor.
+              </span>
+            </div>
             <button
               type="button"
               className="access-discovery-action"
               onClick={() => navigate("/admin/bootstrap")}
             >
-              {adminBootstrapStatus === "open"
-                ? "Configurar primeiro Super administrador"
-                : "Verificar configuração inicial"}
+              Configurar primeiro Super administrador
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </section>
     );
 
@@ -1274,6 +1280,58 @@ export function Account({
               <CPFInput error={fieldErrors.cpf} />
               <PhoneInput error={fieldErrors.phone} />
             </div>
+            <label>
+              Município
+              <>
+                {locality.municipalities.length ? (
+                  <select
+                    name="municipality"
+                    required
+                    value={registrationMunicipality}
+                    aria-invalid={Boolean(fieldErrors.municipality)}
+                    onChange={(event) => {
+                      setRegistrationMunicipality(event.target.value);
+                      clearFieldError("municipality");
+                    }}
+                  >
+                    <option value="">Selecione o município</option>
+                    {locality.municipalities.map((row) => (
+                      <option key={row.id} value={row.name}>
+                        {row.name} – {row.state}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    name="municipality"
+                    required
+                    minLength={3}
+                    maxLength={100}
+                    placeholder="Ex.: Ariquemes"
+                    value={registrationMunicipality}
+                    aria-invalid={Boolean(fieldErrors.municipality)}
+                    onChange={(event) => {
+                      setRegistrationMunicipality(event.target.value);
+                      clearFieldError("municipality");
+                    }}
+                  />
+                )}
+                <input
+                  type="hidden"
+                  name="state"
+                  value={registrationState}
+                />
+              </>
+              <small className="field-hint">
+                Atendemos apenas os municípios ativos da nossa região. Sem
+                cobertura, o cadastro não é concluído.
+              </small>
+              {fieldErrors.municipality && (
+                <small className="field-error" role="alert">
+                  {fieldErrors.municipality}
+                </small>
+              )}
+            </label>
           </>
         )}
 

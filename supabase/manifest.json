@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 41,
+  "schemaVersion": 42,
   "migrations": [
     {
       "version": "20260919030126",
@@ -225,7 +225,17 @@
       "version": "20261001032320",
       "name": "advisor_performance_hardening",
       "file": "20261001032320_advisor_performance_hardening.sql"
+    },
+    {
+      "version": "20261001154144",
+      "name": "locality_coverage_foundation",
+      "file": "20261001154144_locality_coverage_foundation.sql"
+    },
+    {
+      "version": "20261001154343",
+      "name": "registration_locality_enforcement",
+      "file": "20261001154343_registration_locality_enforcement.sql"
     }
   ],
-  "migrationHistoryHash": "3a7fac0abe74efef0f3e118aeaf5d36fa89ea8c5cc1909ed9f554f7a03e243eb"
+  "migrationHistoryHash": "221bb7fcf60f2bbef291f3319345f41a4aa3598998d88029b5c288323b31481d"
 }

@@ -48,6 +48,10 @@ function asFailure(
 function shouldUseExpressFallback(error: unknown) {
   const failure = error as ApiFailure;
   const status = failure.status ?? 0;
+  // Trava de cobertura: o bloqueio por localidade é uma resposta definitiva do
+  // servidor. Repetir no Express só duplicaria a tentativa de cadastro.
+  if (failure.message === "LOCALITY_DISABLED" || failure.message === "LOCALITY_NOT_COVERED")
+    return false;
   if ([401, 403, 404, 405, 500, 502, 503, 504].includes(status)) return true;
 
   return new Set([

@@ -9,6 +9,10 @@ import type {
   UpdateAddressAdvancedInput,
 } from "../../shared/contracts/addressAdvanced.ts";
 import { GeocodingHelper } from "./GeocodingHelper.ts";
+import {
+  LOCALITY_DISABLED_MESSAGE,
+  LOCALITY_NOT_COVERED_MESSAGE,
+} from "../../shared/contracts/locality.ts";
 
 export class AddressManagementError extends Error {
   constructor(
@@ -151,6 +155,43 @@ export function addressDeletionMode(openOrderCount: number): "soft" | "hard" {
   return openOrderCount > 0 ? "soft" : "hard";
 }
 
+/**
+ * Trava de cobertura no endereço de entrega do consumidor (item 2).
+ *
+ * O endereço de entrega precisa estar em município cadastrado e ATIVO pelo
+ * Super administrador. Falha-fechado: fora do catálogo ou desativado bloqueia
+ * a gravação do endereço.
+ */
+async function assertAddressLocality(
+  client: PoolClient,
+  state: string,
+  city: string,
+) {
+  const resolved = await client.query<{ coverage: string }>(
+    [
+      "SELECT CASE WHEN m.is_active THEN 'active' ELSE 'inactive' END AS coverage",
+      "  FROM public.app_municipalities m",
+      " WHERE m.state = upper($1)",
+      "   AND m.name_normalized = public.fn_locality_normalize($2)",
+      " LIMIT 1",
+    ].join(" "),
+    [state, city],
+  );
+  const coverage = resolved.rows[0]?.coverage;
+  if (coverage === "active") return;
+  if (coverage === "inactive")
+    throw new AddressManagementError(
+      "LOCALITY_DISABLED",
+      403,
+      LOCALITY_DISABLED_MESSAGE,
+    );
+  throw new AddressManagementError(
+    "LOCALITY_NOT_COVERED",
+    422,
+    LOCALITY_NOT_COVERED_MESSAGE,
+  );
+}
+
 async function countOpenOrders(client: PoolClient, addressId: string) {
   const relation = await client.query<{ relation: string | null }>(
     "SELECT to_regclass('public.app_orders')::text AS relation",
@@ -230,6 +271,8 @@ export class AddressManagementService {
           422,
           "Limite de 10 endereços atingido. Remova um.",
         );
+
+      await assertAddressLocality(client, input.state, input.city);
 
       const makeDefault =
         Number(activeCount.rows[0]?.count ?? 0) === 0 || input.isDefault;
@@ -382,6 +425,12 @@ export class AddressManagementService {
           currentRevision: current.revision,
         };
       }
+
+      await assertAddressLocality(
+        client,
+        input.state ?? current.state,
+        input.city ?? current.city,
+      );
 
       const updated = await client.query<Record<string, any>>(
         [

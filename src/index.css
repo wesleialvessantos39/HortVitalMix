@@ -499,6 +499,50 @@ dialog::backdrop {
   font-size: 19px;
   margin: 0;
 }
+.locality-picker p {
+  margin: 14px 0 12px;
+}
+.locality-blocked {
+  color: #8a3b12;
+  background: #fef6e7;
+  border: 1px solid #f2d9a8;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 600;
+}
+.locality-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  max-height: 46vh;
+  overflow-y: auto;
+}
+.locality-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--dark);
+  font-size: 14px;
+  text-align: left;
+}
+.locality-option span {
+  flex: 1;
+}
+.locality-option.is-selected {
+  border-color: var(--primary);
+  background: #eef8f1;
+  font-weight: 700;
+}
+.locality-picker .text-button {
+  margin-bottom: 4px;
+}
 dialog p {
   font-size: 14px;
   margin: 16px 0 22px;
@@ -780,16 +824,6 @@ dialog p {
   clip: rect(0 0 0 0) !important;
   white-space: nowrap !important;
   border: 0 !important;
-}
-
-.admin-home-entry {
-  color: var(--primary);
-  background: #eef8f1;
-  border: 1px solid #d7eadc;
-}
-
-.admin-home-entry:hover {
-  background: #e2f3e7;
 }
 
 .access-selector {
@@ -1478,10 +1512,6 @@ dialog p {
     font-size: 11px;
   }
 
-  .mobile-header .admin-home-entry {
-    background: #eef8f1;
-    border: 1px solid #d7eadc;
-  }
   .about {
     padding: 22px;
   }

@@ -1096,7 +1096,11 @@ for (const role of ["consumer", "producer"] as const)
         (classifyDbError(error) === "conflict" ? 409 : 503);
 
       const publicCode =
-        message === "REGISTRATION_IDENTITY_CONFLICT"
+        message === "REGISTRATION_LOCALITY_DISABLED"
+          ? "LOCALITY_DISABLED"
+          : message === "REGISTRATION_LOCALITY_NOT_COVERED"
+            ? "LOCALITY_NOT_COVERED"
+            : message === "REGISTRATION_IDENTITY_CONFLICT"
           ? "IDENTITY_CONFLICT"
           : message === "REGISTRATION_ROLE_ALREADY_ASSIGNED"
             ? "ROLE_ALREADY_ASSIGNED"
@@ -1129,9 +1133,11 @@ for (const role of ["consumer", "producer"] as const)
         requestId: res.locals.requestId,
         detail: publicCode,
       });
+      const publicMessage = (error as { publicMessage?: string }).publicMessage;
       res.status(status).json({
         error: publicCode,
         requestId: res.locals.requestId,
+        ...(publicMessage ? { message: publicMessage } : {}),
       });
     }
   });

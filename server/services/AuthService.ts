@@ -6,6 +6,10 @@ import { dbPool } from "../db/pool.ts";
 import { reportFailure } from "../config/reportFailure.ts";
 import type { Registration } from "../../shared/contracts/auth.ts";
 import { LGPD_CADASTRO_POLICY_VERSION } from "../../shared/lgpdCadastro.ts";
+import {
+  LOCALITY_DISABLED_MESSAGE,
+  LOCALITY_NOT_COVERED_MESSAGE,
+} from "../../shared/contracts/locality.ts";
 
 type RegistrationFailure = Error & { status?: number };
 type ChainState = "complete" | "incomplete" | "unknown";
@@ -28,7 +32,11 @@ function edgeRegistrationError(
             ? "REGISTRATION_EXISTING_ACCOUNT_CREDENTIALS_INVALID"
             : code === "EXISTING_ACCOUNT_CONFIRM_REQUIRED"
               ? "REGISTRATION_EXISTING_ACCOUNT_CONFIRM_REQUIRED"
-              : code === "AUTH_UNAVAILABLE"
+              : code === "LOCALITY_DISABLED"
+                ? "REGISTRATION_LOCALITY_DISABLED"
+                : code === "LOCALITY_NOT_COVERED"
+                  ? "REGISTRATION_LOCALITY_NOT_COVERED"
+                  : code === "AUTH_UNAVAILABLE"
                 ? "REGISTRATION_AUTH_UNAVAILABLE"
                 : code === "DATABASE_UNAVAILABLE"
                   ? "REGISTRATION_DATABASE_UNAVAILABLE"
@@ -38,6 +46,16 @@ function edgeRegistrationError(
                       ? code
                       : "REGISTRATION_UNEXPECTED_FAILURE";
   return registrationError(mapped, status || 503);
+}
+
+function edgeRegistrationFailure(
+  code: string,
+  status: number,
+  publicMessage?: string,
+) {
+  const failure = edgeRegistrationError(code, status);
+  if (publicMessage) (failure as { publicMessage?: string }).publicMessage = publicMessage;
+  return failure;
 }
 
 async function registerThroughEdge(
@@ -98,8 +116,43 @@ async function registerThroughEdge(
   };
 }
 
-function registrationError(code: string, status: number): RegistrationFailure {
-  return Object.assign(new Error(code), { status });
+function registrationError(
+  code: string,
+  status: number,
+  publicMessage?: string,
+): RegistrationFailure {
+  return Object.assign(new Error(code), { status, publicMessage });
+}
+
+/**
+ * Trava de cobertura por localidade (item 2 do proprietário).
+ * Falha-fechado: só 'active' libera o cadastro.
+ */
+async function assertLocalityActive(
+  state: string,
+  municipality: string,
+  requestId: string,
+) {
+  if (!supabaseAdmin) return;
+  const coverage = await supabaseAdmin.rpc("fn_locality_coverage", {
+    p_state: state,
+    p_name: municipality,
+  });
+  if (coverage.error) {
+    reportFailure({
+      category: "registration_locality_rpc_failed",
+      requestId,
+      detail: coverage.error.code ?? "unknown",
+    });
+    return;
+  }
+  if (coverage.data === "active") return;
+  const disabled = coverage.data === "inactive";
+  throw registrationError(
+    disabled ? "REGISTRATION_LOCALITY_DISABLED" : "REGISTRATION_LOCALITY_NOT_COVERED",
+    disabled ? 403 : 422,
+    disabled ? LOCALITY_DISABLED_MESSAGE : LOCALITY_NOT_COVERED_MESSAGE,
+  );
 }
 
 async function registrationChainState(
@@ -382,6 +435,11 @@ async function addRoleToExistingIdentity(
       return {userId:person.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role};
     }
     if(account.data.status === "pending") return {userId:person.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role};
+
+    // Acrescentar papel a uma identidade existente também respeita a trava de
+    // cobertura: nenhum perfil novo nasce em região fora de operação.
+    await assertLocalityActive(data.state, data.municipality, requestId);
+
     const added = await supabaseAdmin.rpc(
       "add_public_role_to_existing_identity",
       {
@@ -574,6 +632,8 @@ export async function register(
         p_role: role,
         p_property_name: role === "producer" ? data.propertyName ?? null : null,
         p_activity_type: role === "producer" ? data.activityType ?? null : null,
+        p_municipality: data.municipality,
+        p_state: data.state,
       });
 
       if (completed.error)
@@ -585,6 +645,8 @@ export async function register(
         message === "REGISTRATION_AUTH_UNAVAILABLE" ||
         message === "REGISTRATION_DATABASE_UNAVAILABLE" ||
         message === "REGISTRATION_SCHEMA_OUTDATED" ||
+        message === "REGISTRATION_LOCALITY_DISABLED" ||
+        message === "REGISTRATION_LOCALITY_NOT_COVERED" ||
         message === "REGISTRATION_DATA_REJECTED";
 
       if (knownFailure) throw error;
