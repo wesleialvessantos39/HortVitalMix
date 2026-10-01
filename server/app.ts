@@ -98,6 +98,9 @@ app.use("/_hvm_api/v1/admin", adminGovernanceRouter);
 app.use("/v1/admin", adminConfigRouter);
 app.use("/api/v1/admin", adminConfigRouter);
 app.use("/_hvm_api/v1/admin", adminConfigRouter);
+app.use("/v1/admin", adminLocalityRouter);
+app.use("/api/v1/admin", adminLocalityRouter);
+app.use("/_hvm_api/v1/admin", adminLocalityRouter);
 app.use((_req, res) => {
   res.status(404).json({ error: "NOT_FOUND", requestId: res.locals.requestId });
 });

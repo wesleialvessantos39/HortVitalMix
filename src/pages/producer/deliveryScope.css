@@ -1,0 +1,325 @@
+/*
+ * Escopo de entrega do produtor (item 3 do proprietário).
+ * Segue a linguagem das telas de conta: cartões brancos, raio 16px, borda --line
+ * e verde --leaf para o estado selecionado. Ponto de quebra em 767px, o mesmo
+ * usado por accountPrivacy.css e admin.css.
+ */
+
+.delivery-scope-page {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+  width: 100%;
+}
+
+.delivery-scope-page > header {
+  display: grid;
+  gap: 6px;
+}
+
+.delivery-scope-page > header .eyebrow {
+  margin-bottom: 4px;
+}
+
+.delivery-scope-page h1 {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.15;
+  letter-spacing: -0.4px;
+  color: var(--dark);
+}
+
+.delivery-scope-page > header p {
+  margin: 0;
+  max-width: 640px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* Estado de carregamento e erro antes do formulário existir. */
+.delivery-scope-page > [role="status"] {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* Formulário                                                          */
+/* ------------------------------------------------------------------ */
+
+.delivery-scope-form {
+  display: grid;
+  gap: 12px;
+}
+
+.delivery-scope-option {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.delivery-scope-option:hover {
+  border-color: #c8dccf;
+}
+
+.delivery-scope-option.is-selected {
+  border-color: var(--leaf);
+  background: var(--light);
+  box-shadow: 0 0 0 1px var(--leaf) inset;
+}
+
+.delivery-scope-option input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  /* index.css aplica min-height:44px a input em telas de toque; sem este reset
+     o controle personalizado vira uma barra vertical no celular. */
+  min-height: 0;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  background: white;
+  border: 2px solid #c3d1c6;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.delivery-scope-option input[type="radio"]::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--leaf);
+  transform: scale(0);
+  transition: transform 0.15s ease;
+}
+
+.delivery-scope-option input[type="radio"]:checked {
+  border-color: var(--leaf);
+}
+
+.delivery-scope-option input[type="radio"]:checked::after {
+  transform: scale(1);
+}
+
+.delivery-scope-option > span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.delivery-scope-option strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.delivery-scope-option small {
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.delivery-scope-option > svg {
+  flex: none;
+  justify-self: end;
+  color: var(--leaf);
+}
+
+/* Foco visível por teclado: os controles são appearance:none, então o
+   contorno padrão do navegador não aparece sozinho. */
+.delivery-scope-option input[type="radio"]:focus-visible,
+.delivery-scope-municipalities input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--leaf);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Seleção de municípios (modo personalizado)                          */
+/* ------------------------------------------------------------------ */
+
+.delivery-scope-municipalities {
+  display: grid;
+  gap: 10px;
+  margin: 2px 0 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.delivery-scope-municipalities legend {
+  padding: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--leaf);
+}
+
+.delivery-scope-municipalities ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.delivery-scope-municipalities li {
+  min-width: 0;
+}
+
+.delivery-scope-municipalities label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 13px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: 12px;
+  color: var(--dark);
+  cursor: pointer;
+}
+
+.delivery-scope-municipalities label:has(input:checked) {
+  border-color: var(--leaf);
+  background: var(--light);
+}
+
+.delivery-scope-municipalities label svg {
+  flex: none;
+  color: var(--leaf);
+}
+
+.delivery-scope-municipalities label span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delivery-scope-municipalities input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  position: relative;
+  width: 17px;
+  height: 17px;
+  /* index.css aplica min-height:44px a input em telas de toque; sem este reset
+     o quadrado personalizado vira uma barra vertical no celular. */
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  background: white;
+  border: 2px solid #c3d1c6;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+/* Marca de seleção desenhada em CSS: com appearance:none o navegador não
+   desenha o check, então o quadrado cheio ficava sem sinal de escolha. */
+.delivery-scope-municipalities input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  height: 7px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: translate(-50%, -62%) rotate(45deg) scale(0);
+  transform-origin: center;
+  transition: transform 0.15s ease;
+}
+
+.delivery-scope-municipalities input[type="checkbox"]:checked {
+  background: var(--leaf);
+  border-color: var(--leaf);
+}
+
+.delivery-scope-municipalities input[type="checkbox"]:checked::after {
+  transform: translate(-50%, -62%) rotate(45deg) scale(1);
+}
+
+/* ------------------------------------------------------------------ */
+/* Avisos e ação principal                                             */
+/* ------------------------------------------------------------------ */
+
+.delivery-scope-form .account-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.delivery-scope-form > button.primary {
+  justify-self: start;
+  min-width: 220px;
+  margin-top: 4px;
+}
+
+.delivery-scope-page .account-sheet {
+  border: 1px solid var(--line);
+  box-shadow: 0 1px 2px #143d2405;
+}
+
+/* ------------------------------------------------------------------ */
+/* Mobile                                                              */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 767px) {
+  .delivery-scope-page {
+    gap: 14px;
+  }
+
+  .delivery-scope-page h1 {
+    font-size: 23px;
+  }
+
+  .delivery-scope-page > header p {
+    font-size: 12px;
+  }
+
+  .delivery-scope-option {
+    gap: 11px;
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .delivery-scope-option strong {
+    font-size: 12.5px;
+  }
+
+  .delivery-scope-municipalities ul {
+    grid-template-columns: 1fr;
+  }
+
+  /* Alvo de toque confortável no celular (>=44px) sem esticar o controle. */
+  .delivery-scope-municipalities label {
+    min-height: 46px;
+    padding: 11px 14px;
+  }
+
+  .delivery-scope-municipalities input[type="checkbox"] {
+    width: 19px;
+    height: 19px;
+  }
+
+  .delivery-scope-form > button.primary {
+    justify-self: stretch;
+    width: 100%;
+    min-width: 0;
+  }
+}

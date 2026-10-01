@@ -67,7 +67,7 @@
     "verify:t08:evidence": "node scripts/verify-trilha08-evidence.mjs",
     "verify:t08:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t08:unit && npm run verify:t08:evidence && vite build && node --import tsx scripts/check-bundle.ts && npm run test:t08:e2e",
     "test:t09t10": "vitest run tests/unit/documentPipeline.test.ts tests/integration/documentRoutes.test.ts tests/unit/documentServices.test.ts",
-    "test:t12:unit": "vitest run tests/unit/localityContracts.test.ts tests/unit/accessScope.test.ts",
+    "test:t12:unit": "vitest run tests/unit/localityContracts.test.ts tests/unit/accessScope.test.ts tests/integration/adminLocalityRoutes.test.ts",
     "verify:t12:evidence": "node scripts/verify-locality-evidence.mjs",
     "verify:t12:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t12:unit && npm run verify:t12:evidence && vite build && node --import tsx scripts/check-bundle.ts"
   },
