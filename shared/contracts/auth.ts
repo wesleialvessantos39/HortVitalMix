@@ -179,3 +179,4 @@ export type Registration = z.infer<typeof RegisterConsumerSchema> &
       "propertyName" | "activityType"
     >
   >;
+
