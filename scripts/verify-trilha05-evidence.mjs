@@ -7,6 +7,8 @@ const adminPrincipalMigration = read("supabase/migrations/20260924023000_trilha0
 const adminEmailVerificationMigration = read("supabase/migrations/20260924114500_trilha05_admin_email_verification.sql");
 const recoverySessionMigration = read("supabase/migrations/20260924125000_auth_recovery_session_revoke.sql");
 const roleScopedCredentialsMigration = read("supabase/migrations/20260924165427_admin_role_scoped_credentials.sql");
+const localityMigration = read("supabase/migrations/20261001154144_locality_coverage_foundation.sql");
+const localityEnforcement = read("supabase/migrations/20261001154343_registration_locality_enforcement.sql");
 const service = read("server/services/AdminGovernanceService.ts");
 const routes = read("server/routes/adminGovernanceRoutes.ts");
 const middleware = read("server/middleware/adminSession.ts");
@@ -50,11 +52,15 @@ const checks = {
     migration.includes(`CREATE TABLE public.${name}`),
   ),
   forcedRls: (migration.match(/FORCE ROW LEVEL SECURITY/g) ?? []).length === 6,
-  canonicalSectors: [
-    "document_verification",
-    "catalog_moderation",
-    "finance_ops",
-  ].every((code) => migration.includes(code)),
+  canonicalSectors:
+    [
+      "document_verification",
+      "catalog_moderation",
+      "finance_ops",
+    ].every((code) => migration.includes(code)) &&
+    // Setor novo do item 5: gestão de localidades liberada pelo Super.
+    localityMigration.includes("location_management") &&
+    localityMigration.includes("app_admin_sectors"),
   bootstrapGuard:
     bootstrapRpc.includes("pg_advisory_xact_lock") &&
     bootstrapRpc.includes("fn_finalize_first_super_admin") &&
@@ -95,7 +101,7 @@ const checks = {
     read("src/pages/admin/AdminGovernancePage.tsx").includes("CPF já cadastrado (opcional)") &&
     read("src/pages/admin/AdminUsersPage.tsx").includes("Perfis vinculados") &&
     router.includes('const superOnly = path==="/admin/configuracao"') &&
-    read("src/components/admin/AdminPortalShell.tsx").includes('return to !== "/admin/configuracao"') &&
+    read("src/components/admin/AdminPortalShell.tsx").includes('if (to === "/admin/configuracao") return false;') &&
     adminPrincipalMigration.includes("CREATE TABLE public.app_admin_principals") &&
     adminPrincipalMigration.includes("linkedExistingPerson"),
   persistentRateLimit:
@@ -157,7 +163,11 @@ const checks = {
   adminScreenDiscovery:
     account.includes("admin-bootstrap-discovery") &&
     account.includes('navigate("/admin/bootstrap")') &&
-    account.includes("Verificar configuração inicial") &&
+    // Item 7: o bloco de configuração inicial só existe quando o estado real do
+    // banco diz que não há Super administrador ativo.
+    account.includes('adminBootstrapStatus === "open" &&') &&
+    !account.includes("Verificar configuração inicial") &&
+    !account.includes("Configuração inicial concluída") &&
     router.includes("intendedRole={intendedRole}") &&
     router.includes('path==="/acesso/administracao"') &&
     router.includes('path==="/acesso/super-administracao"') &&
