@@ -9,6 +9,10 @@ import {
   type SubmitPropertyInput,
 } from "../../shared/contracts/ruralProperty.ts";
 import { propertyIdentityKey } from "../../shared/rural/propertyIdentity.ts";
+import {
+  LOCALITY_DISABLED_MESSAGE,
+  LOCALITY_NOT_COVERED_MESSAGE,
+} from "../../shared/contracts/locality.ts";
 
 export class RuralPropertyError extends Error {
   constructor(
@@ -339,6 +343,49 @@ function assertRevision(row: Record<string, any>, expected?: number) {
     );
 }
 
+/**
+ * Trava de cobertura e de publicação parcial por localidade.
+ *
+ * O imóvel é o que define a região de operação do produtor — pode morar em um
+ * município e ter o imóvel em outro; o que vale é o município do imóvel.
+ * Falha-fechado: município fora do catálogo, desativado, ou bloqueio parcial
+ * de publicação impedem a criação/edição do imóvel naquela localidade.
+ */
+async function assertPropertyLocality(
+  client: PoolClient,
+  userId: string,
+  state: string,
+  municipality: string,
+) {
+  const resolved = await client.query<{ id: string; coverage: string }>(
+    [
+      "SELECT m.id,",
+      "       CASE WHEN m.is_active THEN 'active' ELSE 'inactive' END AS coverage",
+      "  FROM public.app_municipalities m",
+      " WHERE m.state = upper($1)",
+      "   AND m.name_normalized = public.fn_locality_normalize($2)",
+      " LIMIT 1",
+    ].join(" "),
+    [state, municipality],
+  );
+  const row = resolved.rows[0];
+  if (!row) throw new RuralPropertyError("LOCALITY_NOT_COVERED", 422, LOCALITY_NOT_COVERED_MESSAGE);
+  if (row.coverage !== "active")
+    throw new RuralPropertyError("LOCALITY_DISABLED", 403, LOCALITY_DISABLED_MESSAGE);
+
+  const blocked = await client.query<{ blocked: boolean }>(
+    "SELECT public.fn_is_publish_blocked($1::uuid,$2::uuid) AS blocked",
+    [userId, row.id],
+  );
+  if (blocked.rows[0]?.blocked)
+    throw new RuralPropertyError(
+      "PUBLISHING_BLOCKED",
+      403,
+      "A publicação nesta localidade está suspensa pela administração da plataforma.",
+    );
+  return row.id;
+}
+
 async function assertComplete(client: PoolClient, row: Record<string, any>) {
   if (
     !row.property_name || !row.line_vicinal || !row.rural_zone_sector || row.latitude_sede === null || row.longitude_sede === null ||
@@ -563,6 +610,15 @@ export class RuralPropertyService {
       let before: Record<string, any> | null = null;
       let row: Record<string, any>;
       let reusingIdentity = false;
+      if (input.step === 1) {
+        // Trava de localidade no passo que declara o município do imóvel.
+        await assertPropertyLocality(
+          client,
+          userId,
+          input.stepData.state,
+          input.stepData.municipality,
+        );
+      }
       if (input.step === 1 && !propertyId) {
         const data = input.stepData;
         const matches = await matchingProperties(client, producerId, {
@@ -824,6 +880,14 @@ export class RuralPropertyService {
       await assertEditable(client, current);
       assertRevision(current, input.expectedRevision);
       if(current.draft_data)throw new RuralPropertyError("PROPERTY_INCOMPLETE",422);
+      // Cobertura e bloqueio parcial revalidados no momento do envio: a região
+      // pode ter sido desativada entre o rascunho e a submissão.
+      await assertPropertyLocality(
+        client,
+        userId,
+        current.state,
+        current.municipality,
+      );
       await assertComplete(client, current);
       const documents = await client.query<{ id: string; extraction_id: string | null }>(
         `SELECT d.id, e.id AS extraction_id FROM public.app_documents d LEFT JOIN public.app_document_extractions e ON e.document_id=d.id WHERE d.property_id=$1 AND d.status='clean' AND d.document_type IN ('car_sicar','ccir_incra')`,

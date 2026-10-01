@@ -45,12 +45,28 @@ const phone = z
   .transform(normalizePhone)
   .refine((value) => /^\+55[1-9]\d9\d{8}$/.test(value), "Celular inválido");
 
+// Trava de cobertura por localidade: o município declarado precisa existir no
+// catálogo do Super administrador e estar ATIVO (validado na função de domínio).
+const municipality = z
+  .string()
+  .trim()
+  .min(3, "Informe o nome do município")
+  .max(100);
+const state = z
+  .string()
+  .trim()
+  .length(2, "Use a sigla da UF com 2 letras")
+  .transform((value) => value.toUpperCase())
+  .default("RO");
+
 const base = {
   fullName: z.string().trim().min(3).max(255),
   cpf,
   email,
   password: StrongPasswordSchema,
   phone,
+  municipality,
+  state,
 };
 
 const ConsumerSchema = z.object(base).strict();
@@ -141,13 +157,72 @@ function logFailure(requestId: string, category: string, detail?: string) {
   );
 }
 
+// Mensagens literais da trava de cobertura por localidade.
+const LOCALITY_DISABLED_MESSAGE =
+  "essa região está desativada, dúvidas entre em contato conosco hortivitalmix@gmail.com";
+const LOCALITY_NOT_COVERED_MESSAGE =
+  "O sistema ainda não possui cobertura na sua localidade. Em breve estaremos por lá.";
+
+/**
+ * Trava de cobertura. Falha-fechado: qualquer resposta que não seja
+ * explicitamente 'active' interrompe o cadastro naquela localidade.
+ */
+function localityBlocked(
+  coverage: unknown,
+  requestId: string,
+  origin: string | null,
+) {
+  const disabled = coverage === "inactive";
+  return json(
+    disabled ? 403 : 422,
+    {
+      error: disabled ? "LOCALITY_DISABLED" : "LOCALITY_NOT_COVERED",
+      message: disabled ? LOCALITY_DISABLED_MESSAGE : LOCALITY_NOT_COVERED_MESSAGE,
+      requestId,
+    },
+    origin,
+  );
+}
+
+async function assertLocalityActive(
+  admin: ReturnType<typeof createClient>,
+  state: string,
+  municipality: string,
+  requestId: string,
+  origin: string | null,
+) {
+  const coverage = await admin.rpc("fn_locality_coverage", {
+    p_state: state,
+    p_name: municipality,
+  });
+  if (coverage.error) {
+    logFailure(
+      requestId,
+      "public_registration_locality_rpc_failed",
+      coverage.error.code ?? "unknown",
+    );
+    return safeFailure(503, "DATABASE_UNAVAILABLE", requestId, origin);
+  }
+  if (coverage.data !== "active")
+    return localityBlocked(coverage.data, requestId, origin);
+  return null;
+}
+
 function mapRpcError(
   error: { code?: string | null; message?: string | null },
   requestId: string,
   origin: string | null,
 ) {
   const code = error.code ?? "unknown";
+  const message = String(error.message ?? "");
   logFailure(requestId, "public_registration_rpc_failed", code);
+
+  if (code === "HVMLC" || message.includes("REGISTRATION_LOCALITY_"))
+    return localityBlocked(
+      message.includes("REGISTRATION_LOCALITY_DISABLED") ? "inactive" : "unknown",
+      requestId,
+      origin,
+    );
 
   if (
     code === "23505" &&
@@ -350,6 +425,16 @@ Deno.serve(async (req) => {
         return json(201,{userId:existing.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role,requestId},origin);
       }
       if(account.data.status === "pending") return json(201,{userId:existing.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role,requestId},origin);
+
+      const blocked = await assertLocalityActive(
+        admin,
+        data.state,
+        data.municipality,
+        requestId,
+        origin,
+      );
+      if (blocked) return blocked;
+
       const added = await admin.rpc("add_public_role_to_existing_identity", {
         p_user_id: existing.user_id,
         p_cpf_normalized: data.cpf,
@@ -436,6 +521,10 @@ Deno.serve(async (req) => {
     p_role: role,
     p_property_name: role === "producer" ? data.propertyName ?? null : null,
     p_activity_type: role === "producer" ? data.activityType ?? null : null,
+    // Localidade declarada: a função de domínio revalida a cobertura e grava o
+    // município da pessoa. Sem estes parâmetros o cadastro perderia a região.
+    p_municipality: data.municipality,
+    p_state: data.state ?? "RO",
   });
 
   if (completed.error) {
