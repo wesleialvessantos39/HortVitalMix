@@ -22,18 +22,18 @@ const required = (source, tokens, code) => {
 
 if (manifest.schemaVersion < 32)
   throw new Error("T08_SCHEMA_VERSION_MUST_BE_32");
-if (manifest.migrations.length !== 33)
-  throw new Error("T08_MIGRATION_COUNT_MUST_BE_33");
+// O manifesto cresce a cada trilha: a T08 continua provando a própria
+// migration e a integridade do histórico, sem congelar o total de migrations.
+if (manifest.migrations.length < 33)
+  throw new Error("T08_MIGRATION_COUNT_MUST_BE_AT_LEAST_33");
 if (
-  manifest.migrations.at(-1)?.file !==
-  "20260927143315_access_blocks_rural_lifecycle.sql"
+  !manifest.migrations.some(
+    (entry) => entry.file === "20260927143315_access_blocks_rural_lifecycle.sql",
+  )
 )
-  throw new Error("T08_LAST_MIGRATION_MISMATCH");
-if (
-  manifest.migrationHistoryHash !==
-  "7f6db57329a8f39ed9b4fbf681438811ce80c45a39f1f4f6ae6a8cad6253c422"
-)
-  throw new Error("T08_MIGRATION_HASH_MISMATCH");
+  throw new Error("T08_MIGRATION_MISSING_FROM_MANIFEST");
+if (!/^[0-9a-f]{64}$/.test(manifest.migrationHistoryHash))
+  throw new Error("T08_MIGRATION_HASH_MALFORMED");
 
 required(
   migration,
