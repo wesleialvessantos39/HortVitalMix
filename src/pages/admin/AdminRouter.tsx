@@ -11,6 +11,8 @@ import { AdminDashboardPage } from "./AdminDashboardPage";
 import { AdminUsersPage } from "./AdminUsersPage";
 import { AdminEmailConfirmationPage } from "./AdminEmailConfirmationPage";
 import { AdminAccountPage } from "./AdminAccountPage";
+import { AdminLocalitiesPage } from "./locality/AdminLocalitiesPage";
+import { AdminAccessBlocksPage } from "./AdminAccessBlocksPage";
 
 type Props={
  path:string;
@@ -45,10 +47,21 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
   return <AdminAcceptInvitePage onNavigate={onNavigate}/>;
 
  const superOnly = path==="/admin/configuracao";
+ const localityRoute =
+  path==="/admin/localidades" ||
+  path==="/admin/bloqueios" ||
+  path.startsWith("/admin/localidades/") ||
+  path.startsWith("/admin/bloqueios/");
  return <AdminAccessGate
   onNavigate={onNavigate}
   requiredRole={superOnly ? "platform_super_admin" : undefined}
-  requiredSector={path==="/admin/imoveis" || path.startsWith("/admin/documentos/fila") ? "document_verification" : undefined}
+  requiredSector={
+   path==="/admin/imoveis" || path.startsWith("/admin/documentos/fila")
+    ? "document_verification"
+    : localityRoute
+      ? "location_management"
+      : undefined
+  }
  >
   {access=><AdminPortalShell
     access={access}
@@ -63,6 +76,10 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
       : path==="/admin/imoveis" || path.startsWith("/admin/documentos/fila") ? <VerificationQueuePage/>
       : path==="/admin/usuarios"
         ? <AdminUsersPage access={access}/>
+        : path==="/admin/localidades" || path.startsWith("/admin/localidades/")
+          ? <AdminLocalitiesPage access={access} onNavigate={onNavigate}/>
+          : path==="/admin/bloqueios" || path.startsWith("/admin/bloqueios/")
+            ? <AdminAccessBlocksPage access={access} onNavigate={onNavigate}/>
         : path==="/admin/configuracao" && access.role==="platform_super_admin"
           ? <AdminConfiguracaoPage onNavigate={onNavigate}/>
           : <AdminDashboardPage access={access} onNavigate={onNavigate}/>}
