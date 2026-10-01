@@ -28,7 +28,7 @@ describe("administrative password login — user policy 2026-09-25",()=>{
   expect(result).toMatchObject({status:"session_created",role:portal,sectors:portal==="platform_admin"?["operations"]:[]});
   expect(m.sendOtp).not.toHaveBeenCalled();expect(m.signIn).toHaveBeenCalledOnce();
  });
- it("lets the only super administrator enter from the administrator door without becoming an administrator",async()=>{
+ it("refuses the super administrator credential on the administrator door",async()=>{
   role=assigned="platform_super_admin";
   let principalLookups=0;
   m.from.mockImplementation(table=>{
@@ -44,22 +44,22 @@ describe("administrative password login — user policy 2026-09-25",()=>{
    } as any)[table]);
   });
   const result=await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_admin");
-  expect(result).toMatchObject({status:"session_created",role:"platform_super_admin"});
-  expect(result).not.toMatchObject({role:"platform_admin"});
-  expect(m.signIn).toHaveBeenCalledOnce();
+  expect(result).toEqual({status:"wrong_portal_super"});
+  expect(result).not.toMatchObject({status:"session_created"});
+  expect(m.signIn).not.toHaveBeenCalled();
  });
- it("accepts the linked canonical-person e-mail alias resolved by the database",async()=>{
+ it("does not resolve the linked canonical-person e-mail as an administrative login",async()=>{
   role=assigned="platform_super_admin";
   m.from.mockImplementation(table=>{
-   if(table==="app_admin_login_resolver") return query([{login_email:"linked@example.invalid",admin_user_id:"u",portal_role:"platform_super_admin",email_verified_at:"2026-09-01",auth_email:"test@example.invalid"}]);
+   if(table==="app_admin_login_resolver") return query([]);
    return query(({
-    app_admin_principals:[{admin_user_id:"u",portal_role:role,email_verified_at:"2026-09-01",auth_email:"test@example.invalid"}],
+    app_admin_principals:[],
     app_users:{status},app_user_role_assignments:[{role_code:assigned,expires_at:null}],
     app_admin_sector_members:[{sector_code:"operations",expires_at:null}],
    } as any)[table]);
   });
-  expect(await AdminGovernanceService.login("linked@example.invalid","password","ip","r","platform_super_admin")).toMatchObject({status:"session_created",role:"platform_super_admin"});
-  expect(m.signIn).toHaveBeenCalledWith({email:"test@example.invalid",password:"password"});
+  expect(await AdminGovernanceService.login("linked@example.invalid","password","ip","r","platform_super_admin")).toEqual({status:"invalid_credentials"});
+  expect(m.signIn).not.toHaveBeenCalled();
  });
  it("requires initial confirmation",async()=>{confirmed=false;expect(await AdminGovernanceService.login("test@example.invalid","password","ip","r","platform_super_admin")).toMatchObject({status:"email_confirmation_required"});expect(m.sendOtp).not.toHaveBeenCalled();});
  it("rejects an incorrect password",async()=>{m.signIn.mockResolvedValue({data:{},error:{message:"invalid"}});expect(await AdminGovernanceService.login("test@example.invalid","wrong","ip","r","platform_super_admin")).toEqual({status:"invalid_credentials"});});
