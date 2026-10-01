@@ -163,7 +163,10 @@ const checks = {
     router.includes('path==="/acesso/super-administracao"') &&
     read("src/pages/admin/AdminLoginPage.tsx").includes("intendedRole"),
   friendlyAdminErrors:
-    read("src/pages/admin/AdminLoginPage.tsx").includes("Dados inválidos ou cadastro não autorizado.") &&
+    read("src/pages/admin/AdminLoginPage.tsx").includes(
+      "Não foi possível autenticar. Confira o e-mail e a senha do perfil administrativo.",
+    ) &&
+    !read("src/pages/admin/AdminLoginPage.tsx").includes("invalid_credentials") &&
     bootstrapPageDoesNotExposeTechnicalDetails(),
   adminSecurityUx:
     read("src/pages/admin/AdminLoginPage.tsx").includes("<PasswordInput") &&
@@ -176,7 +179,7 @@ const checks = {
   adminServerlessAuth:
     service.includes('.from("app_admin_auth_attempts")') &&
     service.includes('.from("app_admin_mfa_challenges")') &&
-    read("server/services/RoleSecurityService.ts").includes("app_admin_principals") &&
+    read("server/services/IdentityAccessService.ts").includes("app_admin_principals") &&
     read("server/services/IdentityAccessService.ts").includes("resolveViaDataApi") &&
     legacyAuth.includes('"fn_revoke_auth_sessions"') &&
     recoverySessionMigration.includes("DELETE FROM auth.sessions") &&
