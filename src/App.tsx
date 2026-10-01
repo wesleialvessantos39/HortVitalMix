@@ -23,7 +23,9 @@ import {
   GlobalConfigPublicSchema,
   type GlobalConfigPublic,
 } from "../shared/contracts/foundation";
+import { localityBlockedMessage } from "../shared/contracts/locality";
 import { api } from "./lib/api";
+import { useLocality } from "./hooks/useLocality";
 import { Account } from "./components/Account";
 import { AccountHub } from "./pages/account/AccountHub";
 import { AdminRouter } from "./pages/admin/AdminRouter";
@@ -34,6 +36,7 @@ import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 import { useSession } from "./hooks/useSession";
 import { PublicLoginPage } from "./pages/auth/PublicLoginPage";
 import { ProducerPropertiesPage } from "./pages/producer/ProducerPropertiesPage";
+import { DeliveryScopePage } from "./pages/producer/DeliveryScopePage";
 import { DocumentsPanel } from "./pages/documents/DocumentsPanel";
 const fallback = {
   platformName: "HortiVitalMix",
@@ -91,7 +94,15 @@ export default function App() {
     adoptSession,
     refresh: refreshSession,
   } = useSession();
+  // Item 4: a região da vitrine é escolhida pelo visitante e não depende do
+  // login — vale igual para visitante, consumidor, produtor, Administrador e
+  // Super administrador.
+  const locality = useLocality();
   const display = config ?? fallback;
+  const localityBlocked =
+    locality.coverage !== null && locality.coverage !== "active";
+  const deliveryHeadline = deliveryLabel ?? locality.label;
+  const openLocality = () => setModal("Localização");
   const isAdminRoute =
     path.startsWith("/admin/") ||
     path === "/entrar/administrador" ||
@@ -113,6 +124,7 @@ export default function App() {
     path.startsWith("/produtor/documentos") ||
     path === "/produtor/propriedades" ||
     path === "/produtor/propriedades/novo";
+  const isProducerScopeRoute = path === "/produtor/entrega";
   const publicPortalSession =
     Boolean(shellSession) &&
     (shellSession?.portalKind === "public" ||
@@ -252,10 +264,17 @@ export default function App() {
           <div className="header-actions">
             <button
               className="location-pill"
-              onClick={() => publicPortalSession ? go("/conta/enderecos") : setModal("Localização")}
+              aria-haspopup="dialog"
+              onClick={openLocality}
             >
               <MapPin size={16} />
-              <span>{deliveryLabel ? "Entrega para: " + deliveryLabel : "Selecionar localização"}</span>
+              <span>
+                {deliveryLabel
+                  ? "Entrega para: " + deliveryLabel
+                  : locality.label
+                    ? "Localização: " + locality.label
+                    : "Selecionar localização"}
+              </span>
             </button>
             <button
               className="icon"
@@ -324,7 +343,7 @@ export default function App() {
         </div>
         {!isProducerPropertyRoute && search}
       </header>
-      <main id="conteudo" className={isAdminRoute || publicLoginRole ? "layout admin-route-layout" : isProducerPropertyRoute ? "layout producer-route-layout" : "layout"}>
+      <main id="conteudo" className={isAdminRoute || publicLoginRole ? "layout admin-route-layout" : isProducerPropertyRoute || isProducerScopeRoute ? "layout producer-route-layout" : "layout"}>
         {(sessionLoading && (guestAccessRoute || isAccountDataRoute || isProducerPropertyRoute || path === "/minha-conta")) || (shellSession && guestAccessRoute) ? <p role="status" className="account-notice">Carregando sua conta…</p> : publicLoginRole ? (
           <PublicLoginPage key={publicLoginRole} role={publicLoginRole} onNavigate={go} onSessionAdopt={adoptSession}/>
         ) : isAdminRoute ? (
@@ -356,7 +375,9 @@ export default function App() {
             session={shellSession}
             onNavigate={go}
           />
-        ) : isProducerPropertyRoute ? (
+        ) : isProducerScopeRoute && shellSession?.activeRole === "producer" ? (
+          <DeliveryScopePage session={shellSession} onNavigate={go} />
+        ) : isProducerPropertyRoute || isProducerScopeRoute ? (
           <Account
             path="/minha-conta"
             onNavigate={go}
@@ -388,11 +409,12 @@ export default function App() {
               <div className="card delivery">
                 <MapPin />
                 <div>
-                  <small>Entrega para</small>
-                  <strong>{deliveryLabel ?? "Selecionar localização"}</strong>
+                  <small>{deliveryLabel ? "Entrega para" : "Localização"}</small>
+                  <strong>{deliveryHeadline ?? "Selecionar localização"}</strong>
                   <button
                     className="text-button"
-                    onClick={() => publicPortalSession ? go("/conta/enderecos") : setModal("Localização")}
+                    aria-haspopup="dialog"
+                    onClick={openLocality}
                   >
                     Alterar localização
                   </button>
@@ -497,9 +519,14 @@ export default function App() {
                             : "Produtores próximos de você"}
                       </h2>
                       <p>
-                        {path === "/" || path === "/produtores"
-                          ? "Compre direto de quem planta com carinho na sua cidade"
-                          : "Frescor e praticidade para o seu dia."}
+                        {localityBlocked && locality.coverage
+                          ? localityBlockedMessage(locality.coverage)
+                          : (path === "/" || path === "/produtores") &&
+                              locality.label
+                            ? `Compre direto de quem planta com carinho em ${locality.label}`
+                            : path === "/" || path === "/produtores"
+                              ? "Compre direto de quem planta com carinho na sua cidade"
+                              : "Frescor e praticidade para o seu dia."}
                       </p>
                     </div>
                     {path === "/" && (
@@ -585,13 +612,74 @@ export default function App() {
             <X />
           </button>
         </div>
-        <p>
-          {modal === "Localização"
-            ? `Nossa região de referência é ${display.defaultMunicipality} – ${display.defaultState}. A seleção de endereço ainda não está disponível.`
-            : modal === "Carrinho"
+        {modal === "Localização" ? (
+          <div className="locality-picker">
+            {localityBlocked && locality.coverage ? (
+              <p role="alert" className="locality-blocked">
+                {localityBlockedMessage(locality.coverage)}
+              </p>
+            ) : (
+              <p>
+                Escolha a região que você quer ver. A troca funciona com ou sem
+                login e vale para consumidores, produtores e administradores.
+              </p>
+            )}
+            {locality.unavailable ? (
+              <p role="alert" className="locality-blocked">
+                Não foi possível carregar as localidades agora. Tente novamente
+                em instantes.
+              </p>
+            ) : locality.municipalities.length === 0 ? (
+              <p>
+                {locality.loading
+                  ? "Carregando localidades…"
+                  : "Nenhuma localidade está ativa no momento."}
+              </p>
+            ) : (
+              <ul className="locality-list">
+                {locality.municipalities.map((municipality) => {
+                  const chosen =
+                    locality.selected?.municipalityId === municipality.id;
+                  return (
+                    <li key={municipality.id}>
+                      <button
+                        type="button"
+                        className={
+                          chosen
+                            ? "locality-option is-selected"
+                            : "locality-option"
+                        }
+                        aria-pressed={chosen}
+                        onClick={() => locality.select(municipality)}
+                      >
+                        <MapPin size={16} />
+                        <span>
+                          {municipality.name} – {municipality.state}
+                        </span>
+                        {chosen && <Check size={16} />}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            {locality.selected && (
+              <button
+                type="button"
+                className="text-button"
+                onClick={() => locality.select(null)}
+              >
+                Ver todas as regiões
+              </button>
+            )}
+          </div>
+        ) : (
+          <p>
+            {modal === "Carrinho"
               ? "As compras ainda não estão disponíveis."
               : "A consulta de notificações ainda não está disponível."}
-        </p>
+          </p>
+        )}
         <button className="primary" onClick={() => setModal(null)}>
           Entendi
         </button>
