@@ -1,5 +1,29 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-10-02 — Exclusão segura de rascunho documental e estabilidade responsiva
+
+Antes: o produtor não conseguia excluir rascunho com qualquer documento porque o serviço bloqueava a operação para preservar custódia; o progresso visual usava cinco colunas para seis etapas, e a fila/administração não tinha um filtro para rascunhos excluídos.
+
+Depois:
+- `server/services/RuralPropertyService.ts`: permite excluir somente rascunhos nunca concluídos, marca `deleted_at`, limpa dados editáveis e vínculos de limites/atividade, arquiva documentos, invalida jobs e retira solicitações abertas da fila na mesma transação. Rejeita imóvel excluído em leituras/escritas futuras.
+- `server/services/DocumentStorageService.ts`: impede listar, obter, enviar ou processar documentos de imóvel removido; extrações/revisões imutáveis permanecem como evidência de custódia.
+- `server/services/VerificationQueueService.ts`, `server/routes/adminRuralPropertyRoutes.ts` e a migration: excluem imóveis removidos da fila (incluindo arquivados do superadministrador), listas administrativas e políticas RLS de leitura.
+- `src/pages/producer/ProducerPropertiesPage.tsx` e `src/index.css`: apagam também o cache local do rascunho e exibem as seis etapas em grade de seis colunas no desktop e três colunas em telas menores.
+- `supabase/migrations/20261002222200_draft_property_soft_delete.sql` e `supabase/manifest.json`: adicionam o tombstone e índice de imóveis ativos, mantendo as relações de custódia imutáveis.
+- `shared/contracts/foundation.ts`: alinha o readiness ao schema lógico 44 para que a aplicação não anuncie um banco fora da versão esperada.
+- `tests/integration/ruralLifecycle.test.ts`, `tests/integration/adminRuralReview.test.ts`, `tests/integration/verificationQueueDeletedDraft.test.ts` e `tests/e2e/trilha08-rural-properties.spec.ts`: cobrem exclusão documental, bloqueio de status não-draft, filtros admin/superadmin, desaparecimento na lista do produtor e ausência de overflow em 320/360/768/1024/1440 px.
+
+Como validar manualmente: com um rascunho que tenha CAR/CCIR enviado, abra **Imóveis rurais → Excluir rascunho**; confirme que a lista fica vazia e que não é possível reabrir o link do rascunho. Na área administrativa, confira que o imóvel removido não aparece em pendentes/decididos/arquivados. Navegue as seis etapas em 360 px, 768 px e 1440 px e confirme que os controles permanecem dentro da viewport.
+
+Validação automatizada concluída nesta sessão:
+- `npm run typecheck` passou.
+- `npm run migrations:verify` passou: schema 44; hash `cf2df6904bfbc9b4365bab61730c6e318748528ecfb864153f393edcc05a3c4e`.
+- `npm run security:check` passou; cliente sem referências a segredos server-side.
+- Vitest direcionado para lifecycle, filtros admin/superadmin, rotas T08/documentos e contratos: **60 testes passaram em 6 arquivos**.
+- Playwright `tests/e2e/trilha08-rural-properties.spec.ts`: **18 testes passaram**, incluindo exclusão de rascunho com documento e ausência de overflow nas seis etapas em 320/360/768/1024/1440 px.
+- `npm run build` passou por todas as verificações configuradas, testes do build e bundle. Vite reportou somente o aviso não bloqueante já configurado para chunks acima de 500 kB.
+- Não foi conectada uma base Supabase remota; a migration precisa ser aplicada pela janela de release aprovada antes do deploy. `npm ci` reportou quatro advisories em dependências existentes; nenhuma dependência foi adicionada ou atualizada.
+
 ## 2026-10-02 — Localidades de Rondônia, cadastro produtor e imóvel em seis etapas
 
 Status: **implementação preparada no branch; schema lógico 43; migration ainda não aplicada ao Supabase. Nenhum deploy ou homologação real foi executado.**

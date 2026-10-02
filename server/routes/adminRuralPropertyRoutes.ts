@@ -30,7 +30,7 @@ adminRuralPropertyRouter.get("/rural-properties", async (_req, res) => {
   (SELECT to_jsonb(a) FROM public.app_rural_activities a WHERE a.property_id=p.id) AS activity
   FROM public.app_properties p JOIN public.app_producer_profiles pp ON pp.id=p.producer_id
   JOIN public.app_people pe ON pe.id=pp.person_id
-  WHERE p.status NOT IN ('draft','completed') ORDER BY (p.status='submitted') DESC,p.updated_at DESC LIMIT 200`);
+  WHERE p.deleted_at IS NULL AND p.status NOT IN ('draft','completed') ORDER BY (p.status='submitted') DESC,p.updated_at DESC LIMIT 200`);
     res.json({ properties: result.rows });
   } catch {
     res.status(503).json({ error: "UNAVAILABLE" });

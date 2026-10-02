@@ -60,7 +60,7 @@ export async function applyExtractedProperty(
   },
 ) {
   const property = await c.query(
-    "SELECT status,cultivated_area_hectares,total_area_hectares,draft_data FROM public.app_properties WHERE id=$1 FOR UPDATE",
+    "SELECT status,cultivated_area_hectares,total_area_hectares,draft_data FROM public.app_properties WHERE id=$1 AND deleted_at IS NULL FOR UPDATE",
     [propertyId],
   );
   const status = String(property.rows[0]?.status ?? "");
@@ -185,7 +185,7 @@ export async function getDocument(
   lock = false,
 ) {
   const r = await c.query(
-    `SELECT d.*,p.total_area_hectares,p.status AS property_status,pe.cpf_normalized FROM public.app_documents d JOIN public.app_properties p ON p.id=d.property_id JOIN public.app_producer_profiles pp ON pp.id=d.producer_id JOIN public.app_people pe ON pe.id=pp.person_id WHERE d.id=$1 AND ($2::boolean OR pe.user_id=$3) ${lock ? "FOR UPDATE OF d" : ""}`,
+    `SELECT d.*,p.total_area_hectares,p.status AS property_status,pe.cpf_normalized FROM public.app_documents d JOIN public.app_properties p ON p.id=d.property_id JOIN public.app_producer_profiles pp ON pp.id=d.producer_id JOIN public.app_people pe ON pe.id=pp.person_id WHERE d.id=$1 AND d.status<>'archived' AND p.deleted_at IS NULL AND ($2::boolean OR pe.user_id=$3) ${lock ? "FOR UPDATE OF d" : ""}`,
     [id, a.auditor, a.userId],
   );
   if (!r.rows[0]) throw new DocumentError("DOCUMENT_NOT_FOUND", 404);
@@ -200,7 +200,7 @@ export async function checkedBytes(doc: Record<string, any>) {
 export const DocumentStorageService = {
   async list(a: DocumentActor, propertyId: string) {
     const p = await pool().query(
-      `SELECT p.id FROM public.app_properties p JOIN public.app_producer_profiles pp ON pp.id=p.producer_id JOIN public.app_people pe ON pe.id=pp.person_id WHERE p.id=$1 AND ($2::boolean OR pe.user_id=$3)`,
+      `SELECT p.id FROM public.app_properties p JOIN public.app_producer_profiles pp ON pp.id=p.producer_id JOIN public.app_people pe ON pe.id=pp.person_id WHERE p.id=$1 AND p.deleted_at IS NULL AND ($2::boolean OR pe.user_id=$3)`,
       [propertyId, a.auditor, a.userId],
     );
     if (!p.rows.length) throw new DocumentError("PROPERTY_NOT_FOUND", 404);
@@ -215,7 +215,7 @@ export const DocumentStorageService = {
     const doc = await transaction(async (c) => {
       await c.query("SELECT pg_advisory_xact_lock(hashtext($1))", [a.userId]);
       const p = await c.query(
-        `SELECT p.id,p.producer_id,p.status FROM public.app_properties p JOIN public.app_producer_profiles pp ON pp.id=p.producer_id JOIN public.app_people pe ON pe.id=pp.person_id WHERE p.id=$1 AND pe.user_id=$2`,
+        `SELECT p.id,p.producer_id,p.status FROM public.app_properties p JOIN public.app_producer_profiles pp ON pp.id=p.producer_id JOIN public.app_people pe ON pe.id=pp.person_id WHERE p.id=$1 AND p.deleted_at IS NULL AND pe.user_id=$2`,
         [input.propertyId, a.userId],
       );
       if (!p.rows[0]) throw new DocumentError("PROPERTY_NOT_FOUND", 404);

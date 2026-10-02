@@ -386,8 +386,8 @@ function PropertyList({
   async function deleteDraft(property:RuralPropertySummary){
     if(!confirm("Excluir este rascunho? Esta ação não pode ser desfeita."))return;
     setBusyId(property.id);setListNotice("");
-    try{await api("/v1/producer/properties/"+property.id,{method:"DELETE",body:JSON.stringify({expectedRevision:property.revision,commandId:commandId()})});localStorage.removeItem(localKey(session.userId,property.id));await load();}
-    catch(e){setListNotice((e as ApiFailure).message==="PROPERTY_HAS_DOCUMENTS"?"Este rascunho possui documentos com histórico de custódia e não pode ser excluído.":(e as ApiFailure).message==="RECENT_AUTH_REQUIRED"?"Entre novamente para confirmar a exclusão. Seu rascunho está salvo.":"Não foi possível excluir. Somente rascunhos nunca concluídos podem ser excluídos.");}finally{setBusyId(null);}
+    try{await api("/v1/producer/properties/"+property.id,{method:"DELETE",body:JSON.stringify({expectedRevision:property.revision,commandId:commandId()})});localStorage.removeItem(localKey(session.userId,property.id));localStorage.removeItem(`hvm:rural-pending:${session.userId}:${property.id}`);await load();}
+    catch(e){setListNotice((e as ApiFailure).message==="RECENT_AUTH_REQUIRED"?"Entre novamente para confirmar a exclusão. Seu rascunho está salvo.":"Não foi possível excluir. Somente rascunhos nunca concluídos podem ser excluídos.");}finally{setBusyId(null);}
   }
   async function withdrawApproved(property: RuralPropertySummary) {
     if (!confirm("Se você excluir esta propriedade, perde a aprovação de produtor. Será preciso cadastrar uma nova propriedade e passar por uma nova aprovação.")) return;

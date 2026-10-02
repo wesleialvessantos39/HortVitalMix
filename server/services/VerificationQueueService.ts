@@ -42,7 +42,7 @@ const LIST_SQL = `
 SELECT r.id, r.property_id, r.producer_id, r.status, r.priority, r.claimed_by, r.claimed_at,
        r.created_at, r.updated_at, r.archived_at, r.superseded_at, r.superseded_by_request_id, p.property_name, p.municipality, p.line_vicinal,
        p.total_area_hectares, p.cultivated_area_hectares, p.latitude_sede, p.longitude_sede,
-       p.status AS property_status, p.revision, p.draft_data, p.registration_number,
+       p.status AS property_status, p.deleted_at, p.revision, p.draft_data, p.registration_number,
        pe.full_name AS producer_name,
        (SELECT to_jsonb(b) FROM public.app_property_boundaries b
          WHERE b.property_id = p.id AND b.boundary_type = 'perimeter'
@@ -99,6 +99,7 @@ function collapseQueue(rows: Array<Record<string, any>>, tab: QueueTab) {
     const current = bucket.filter(
       (row) =>
         !row.superseded_at &&
+        !row.deleted_at &&
         row.property_status !== "withdrawn" &&
         row.property_status !== "suspended",
     );
@@ -206,6 +207,7 @@ export class VerificationQueueService {
       `UPDATE public.app_verification_requests
           SET status = 'pending', claimed_by = NULL, claimed_at = NULL, updated_at = clock_timestamp()
         WHERE status IN ('claimed', 'in_review') AND claimed_at IS NOT NULL
+          AND superseded_at IS NULL
           AND claimed_at < clock_timestamp() - ($1 || ' hours')::interval
           AND NOT EXISTS (SELECT 1 FROM public.app_verification_decisions d WHERE d.request_id = app_verification_requests.id)`,
       [String(STALE_CLAIM_HOURS)],
@@ -219,12 +221,12 @@ export class VerificationQueueService {
       await this.releaseStaleClaims(client);
       const filter =
         tab === "pending"
-          ? "r.status = 'pending' AND r.superseded_at IS NULL AND p.status NOT IN ('withdrawn','suspended')"
+          ? "r.status = 'pending' AND r.superseded_at IS NULL AND p.deleted_at IS NULL AND p.status NOT IN ('withdrawn','suspended')"
           : tab === "in_review"
-            ? "r.status IN ('claimed', 'in_review') AND r.superseded_at IS NULL AND p.status NOT IN ('withdrawn','suspended')"
+            ? "r.status IN ('claimed', 'in_review') AND r.superseded_at IS NULL AND p.deleted_at IS NULL AND p.status NOT IN ('withdrawn','suspended')"
             : tab === "archived"
-              ? "r.status = 'approved' AND r.archived_at IS NOT NULL AND r.superseded_at IS NULL AND p.status = 'verified'"
-              : "r.status IN ('rejected', 'adjustments_required', 'escalated') AND r.superseded_at IS NULL AND p.status NOT IN ('verified','withdrawn','suspended')";
+              ? "r.status = 'approved' AND r.archived_at IS NOT NULL AND r.superseded_at IS NULL AND p.deleted_at IS NULL AND p.status = 'verified'"
+              : "r.status IN ('rejected', 'adjustments_required', 'escalated') AND r.superseded_at IS NULL AND p.deleted_at IS NULL AND p.status NOT IN ('verified','withdrawn','suspended')";
       const producers = await client.query(
         `SELECT DISTINCT r.producer_id
            FROM public.app_verification_requests r
@@ -234,7 +236,7 @@ export class VerificationQueueService {
       const ids = producers.rows.map((row) => row.producer_id);
       const result = ids.length
         ? await client.query(
-            `${LIST_SQL} WHERE r.producer_id = ANY($1::uuid[]) ORDER BY r.created_at ASC`,
+            `${LIST_SQL} WHERE r.producer_id = ANY($1::uuid[]) AND p.deleted_at IS NULL ORDER BY r.created_at ASC`,
             [ids],
           )
         : { rows: [] };
@@ -246,7 +248,7 @@ export class VerificationQueueService {
 
   static async getOne(actor: AdminActor, requestId: string) {
     assertAuditor(actor);
-    const result = await requirePool().query(`${LIST_SQL} WHERE r.id = $1`, [requestId]);
+    const result = await requirePool().query(`${LIST_SQL} WHERE r.id = $1 AND p.deleted_at IS NULL`, [requestId]);
     if (!result.rows[0]) throw new VerificationQueueError("NOT_FOUND", 404);
     return { request: result.rows[0] };
   }
