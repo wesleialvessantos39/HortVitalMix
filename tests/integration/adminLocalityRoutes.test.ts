@@ -51,4 +51,14 @@ describe("adminLocalityRouter está montado nos três prefixos", () => {
     expect(res.status).not.toBe(401);
     expect(res.body.error).not.toBe("UNAUTHORIZED");
   });
+
+  it("criação municipal exige sessão e autorização administrativa antes da reautenticação", async () => {
+    const res = await request(app)
+      .post("/v1/admin/localities")
+      .set("sec-fetch-site", "same-origin")
+      .send({});
+
+    expect(res.status).toBe(401);
+    expect(res.body.message).toBe("Token de sessão administrativa ausente.");
+  });
 });

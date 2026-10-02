@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { RO_MUNICIPALITIES } from "../../shared/localities/roMunicipalities";
 const id = "22222222-2222-4222-8222-222222222222";
 const fullName =
   "Pessoa com nome extenso para validar a apresentação administrativa";
@@ -57,6 +58,8 @@ async function mock(page: Page, role: string) {
         updatedAt: "2026-09-27T00:00:00Z",
         updatedBy: null,
       });
+    if (path === "/v1/admin/localities")
+      return json({ municipalities: [], activeMunicipalityIds: [] });
     if (path === "/v1/admin/users")
       return json({
         users: [
@@ -187,6 +190,21 @@ async function mock(page: Page, role: string) {
   });
   return commands;
 }
+test("super administrator sees all 52 official municipality names", async ({
+  page,
+}) => {
+  await mock(page, "platform_super_admin");
+  await page.goto("/admin/localidades");
+
+  const select = page.getByLabel("Nome do município");
+  await expect(select).toBeVisible();
+  await expect(select.locator("option")).toHaveCount(RO_MUNICIPALITIES.length + 1);
+  expect(await select.locator("option").allTextContents()).toEqual([
+    "Escolha o município",
+    ...RO_MUNICIPALITIES.map(({ name }) => name),
+  ]);
+});
+
 for (const role of ["platform_admin", "platform_super_admin"])
   for (const width of [320, 390, 768, 1024, 1440])
     test(`${role}: populated administrative screens at ${width}px`, async ({
