@@ -1,5 +1,17 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-10-02 — Correção do cadastro de municípios e do wizard responsivo
+
+Status: **correções preparadas no PR #64 para `main`; sem migration ou dependência nova. A migration anterior de exclusão de rascunhos segue pendente de aplicação remota.**
+
+- O POST de criação municipal não executava a guarda de sessão administrativa: `requireRecentAuth` era chamado sem `req.adminActor` e sempre rejeitava a requisição. Agora o endpoint usa as mesmas guardas de sessão e setor das demais operações, além de autenticação recente. O seletor mostra município e IBGE juntos, preenche o código ao selecionar e informa duplicidade, validação, autorização ou indisponibilidade com mensagens específicas. Restrições únicas e validação canônica do serviço continuam como proteção contra duplicidade.
+- As regras compartilhadas de `.account-panel` eram carregadas após parte do CSS do wizard e substituíam a apresentação de rótulos e campos. O estilo específico do wizard agora preserva colunas, labels e controles, e a navegação mostra número e nome das seis etapas: seis colunas em telas largas e grade 3 × 2 em mobile. Documentos, identificação e revisão permanecem no fluxo; os testes verificam controles operáveis e ausência de overflow em 360px e 1440px.
+- Esta correção é compatível com o schema 44 existente: não altera dados nem exige SQL. Não há implantação remota: o check `Vercel Preview Comments` concluiu com sucesso, o check `Supabase Preview` foi ignorado, e nenhum desses resultados comprova publicação em produção. Nenhum acesso a Supabase ou Vercel foi usado nesta correção.
+
+Validação local desta correção:
+- `npm run build`, `npm run typecheck:app`, `npm run security:check`, `npm run migrations:verify`, `npm run test:t12:unit` e os testes unitários/integração T08 direcionados passaram. O build incluiu verificação de bundle sem segredos.
+- Os 19 E2E de `tests/e2e/trilha08-rural-properties.spec.ts` passaram, assim como o cenário de cadastro municipal com seleção, código IBGE e duplicidade. Na execução combinada de 33 testes das duas suítes, 31 passaram; dois testes existentes de telas administrativas pararam ao tentar gravar screenshots em `/workspace/scratch/55678aa2ddfb`, diretório ausente no ambiente. O CodeQL encontrou zero alertas.
+
 ## 2026-10-02 — Responsividade do Novo imóvel e exclusão de rascunho com documentos
 
 Status: **correção preparada no PR para `main`; schema lógico 44 no manifesto. A migration não foi aplicada remotamente e nenhum deploy foi executado nesta sessão.**
