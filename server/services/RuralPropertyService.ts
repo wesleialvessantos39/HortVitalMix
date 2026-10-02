@@ -60,7 +60,7 @@ async function lockProperty(
     [propertyId],
   );
   const result = await client.query<Record<string, any>>(
-    "SELECT * FROM public.app_properties WHERE id=$1 AND producer_id=$2 FOR UPDATE",
+    "SELECT * FROM public.app_properties WHERE id=$1 AND producer_id=$2 AND deleted_at IS NULL FOR UPDATE",
     [propertyId, producerId],
   );
   if (!result.rows[0])
@@ -84,7 +84,7 @@ async function matchingProperties(
   if (!key) return [];
   const rows = await client.query<Record<string, any>>(
     `SELECT id, created_at, status, registration_number, property_name, municipality, line_vicinal, producer_id
-       FROM public.app_properties WHERE producer_id=$1`,
+       FROM public.app_properties WHERE producer_id=$1 AND deleted_at IS NULL`,
     [producerId],
   );
   return rows.rows
@@ -111,7 +111,7 @@ async function reopenPropertyVerification(
   producerId: string,
 ) {
   const base = (
-    await client.query("SELECT * FROM public.app_properties WHERE id=$1", [propertyId])
+    await client.query("SELECT * FROM public.app_properties WHERE id=$1 AND deleted_at IS NULL", [propertyId])
   ).rows[0] ?? {};
   const siblings = await matchingProperties(client, producerId, base, propertyId);
 
@@ -518,7 +518,7 @@ export class RuralPropertyService {
       await client.query("BEGIN");const producerId=await resolveProducer(client,userId,true);
       const replay=await replayTarget(client,input.commandId,userId,"rural_property.draft_saved");
       let row:Record<string,any>;
-      if(replay){row=(await client.query("SELECT * FROM public.app_properties WHERE id=$1 AND producer_id=$2",[replay,producerId])).rows[0];}
+      if(replay){row=(await client.query("SELECT * FROM public.app_properties WHERE id=$1 AND producer_id=$2 AND deleted_at IS NULL",[replay,producerId])).rows[0];}
       else {
         if(input.propertyId){
           const current=await lockProperty(client,producerId,input.propertyId);await assertEditable(client,current);assertRevision(current,input.expectedRevision);
@@ -535,14 +535,53 @@ export class RuralPropertyService {
   static async deleteDraft(userId:string,propertyId:string,expectedRevision:number,commandId:string,requestId:string,ipHash:string){
     const client=await requirePool().connect();
     try{
-      await client.query("BEGIN");const producerId=await resolveProducer(client,userId,true);
+      await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [userId]);
+      const producerId=await resolveProducer(client,userId,true);
       const replay=await replayTarget(client,commandId,userId,"rural_property.draft_deleted");
       if(!replay){
         const row=await lockProperty(client,producerId,propertyId);assertRevision(row,expectedRevision);
         if(row.status!=="draft" || row.completed_at)throw new RuralPropertyError("COMPLETED_PROPERTY_DELETE_FORBIDDEN",409);
-        if ((await client.query("SELECT 1 FROM public.app_documents WHERE property_id=$1 LIMIT 1",[propertyId])).rows.length) throw new RuralPropertyError("PROPERTY_HAS_DOCUMENTS",409,"Este imóvel possui documentos com histórico de custódia e não pode ser excluído.");
+        await client.query(
+          "SELECT id FROM public.app_documents WHERE property_id=$1 FOR UPDATE",
+          [propertyId],
+        );
         await audit(client,{userId,role:"producer",requestId,ipHash,commandId,action:"rural_property.draft_deleted",targetId:propertyId,before:summaryMetadata(row)});
-        await client.query("DELETE FROM public.app_properties WHERE id=$1 AND producer_id=$2",[propertyId,producerId]);
+        await client.query(
+          "UPDATE public.app_documents SET status='archived',updated_at=clock_timestamp() WHERE property_id=$1 AND status<>'archived'",
+          [propertyId],
+        );
+        await client.query(
+          `UPDATE public.app_document_jobs
+              SET status='failed',lease_id=gen_random_uuid(),
+                  error_code='PROPERTY_DRAFT_DELETED',
+                  lease_until=clock_timestamp(),updated_at=clock_timestamp()
+            WHERE document_id IN (
+              SELECT id FROM public.app_documents WHERE property_id=$1
+            ) AND status='processing'`,
+          [propertyId],
+        );
+        await client.query(
+          "DELETE FROM public.app_property_boundaries WHERE property_id=$1",
+          [propertyId],
+        );
+        await client.query(
+          "DELETE FROM public.app_rural_activities WHERE property_id=$1",
+          [propertyId],
+        );
+        await client.query(
+          `UPDATE public.app_verification_requests
+              SET superseded_at=clock_timestamp(),superseded_by_request_id=NULL,
+                  claimed_by=NULL,claimed_at=NULL,updated_at=clock_timestamp()
+            WHERE property_id=$1 AND superseded_at IS NULL`,
+          [propertyId],
+        );
+        await client.query(
+          `UPDATE public.app_properties
+              SET deleted_at=clock_timestamp(),draft_data=NULL
+            WHERE id=$1 AND producer_id=$2 AND deleted_at IS NULL`,
+          [propertyId,producerId],
+        );
       }
       await client.query("COMMIT");
     }catch(e){await client.query("ROLLBACK");mapDbError(e);}finally{client.release();}
@@ -564,6 +603,7 @@ export class RuralPropertyService {
            LEFT JOIN public.app_property_current_verification cv
              ON cv.property_id=p.id
           WHERE p.producer_id=$1 AND p.status<>'withdrawn'
+            AND p.deleted_at IS NULL
           ORDER BY p.updated_at DESC,p.id ASC`,
         [producerId],
       );
@@ -622,7 +662,7 @@ export class RuralPropertyService {
         `SELECT a.activity_category
            FROM public.app_rural_activities a
            JOIN public.app_properties p ON p.id=a.property_id
-          WHERE p.producer_id=$1
+          WHERE p.producer_id=$1 AND p.deleted_at IS NULL
           ORDER BY p.created_at ASC,p.id ASC
           LIMIT 1`,
         [producerId],
@@ -638,7 +678,7 @@ export class RuralPropertyService {
     try {
       const producerId = await resolveProducer(client, userId);
       const result = await client.query<Record<string, any>>(
-        "SELECT * FROM public.app_properties WHERE id=$1 AND producer_id=$2",
+        "SELECT * FROM public.app_properties WHERE id=$1 AND producer_id=$2 AND deleted_at IS NULL",
         [propertyId, producerId],
       );
       if (!result.rows[0])
@@ -670,7 +710,7 @@ export class RuralPropertyService {
 
       if (replayId) {
         const replay = await client.query<Record<string, any>>(
-          "SELECT * FROM public.app_properties WHERE id=$1 AND producer_id=$2",
+          "SELECT * FROM public.app_properties WHERE id=$1 AND producer_id=$2 AND deleted_at IS NULL",
           [replayId, producerId],
         );
         if (!replay.rows[0])
@@ -844,6 +884,7 @@ export class RuralPropertyService {
                  FROM public.app_rural_activities a
                  JOIN public.app_properties p ON p.id=a.property_id
                 WHERE p.producer_id=$1
+                  AND p.deleted_at IS NULL
                   AND p.id<>$2
                 ORDER BY p.created_at ASC,p.id ASC
                 LIMIT 1`,
@@ -960,7 +1001,7 @@ export class RuralPropertyService {
       );
       if (replayId) {
         const replay = await client.query<Record<string, any>>(
-          "SELECT * FROM public.app_properties WHERE id=$1 AND producer_id=$2",
+          "SELECT * FROM public.app_properties WHERE id=$1 AND producer_id=$2 AND deleted_at IS NULL",
           [replayId, producerId],
         );
         if (!replay.rows[0])

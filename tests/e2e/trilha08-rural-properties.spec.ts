@@ -53,6 +53,7 @@ async function mockT08(
   withDocument = false,
 ) {
   let current = initial ? structuredClone(initial) : null;
+  let deleted = false;
 
   await page.route("**/*", async (route) => {
     const request = route.request();
@@ -114,7 +115,12 @@ async function mockT08(
       return json({ activityCategory: "hortalicas_folhosas" });
 
     if (path === "/v1/producer/properties" && method === "GET")
-      return json({ properties: current ? [summary(current)] : [] });
+      return json({ properties: current && !deleted ? [summary(current)] : [] });
+
+    if (path === "/v1/producer/properties/" + propertyId && method === "DELETE") {
+      deleted = true;
+      return json({ status: "deleted" });
+    }
 
     if (path === "/v1/producer/documents" && method === "GET")
       return json({
@@ -310,6 +316,16 @@ test("02 lista rascunho com estado e progresso", async ({ page }) => {
   await expect(page.getByText("Etapa 3 de 6")).toBeVisible();
 });
 
+test("02c exclui rascunho com documento e remove-o da lista do produtor", async ({ page }) => {
+  await mockT08(page, fullProperty(), true);
+  page.on("dialog", (dialog) => dialog.accept());
+  await page.goto("/produtor/propriedades");
+  await expect(page.getByText("Chácara Boa Colheita")).toBeVisible();
+  await page.getByRole("button", { name: "Excluir rascunho" }).click();
+  await expect(page.getByText("Nenhum imóvel rural cadastrado")).toBeVisible();
+  await expect(page.getByText("Chácara Boa Colheita")).toHaveCount(0);
+});
+
 test("02b imóvel verificado nunca aparece como devolvido por decisão antiga", async ({ page }) => {
   await mockT08(
     page,
@@ -443,7 +459,7 @@ test("07 queda de conexão mantém rascunho local e informa o produtor", async (
   ).toBe(true);
 });
 
-test("08 layout não cria overflow nos cinco breakpoints oficiais", async ({ page }) => {
+test("08 seis etapas não criam overflow nos breakpoints oficiais", async ({ page }) => {
   await mockT08(page, fullProperty({ wizardCurrentStep: 3 }));
   for (const viewport of [
     { width: 320, height: 720 },
@@ -454,13 +470,24 @@ test("08 layout não cria overflow nos cinco breakpoints oficiais", async ({ pag
   ]) {
     await page.setViewportSize(viewport);
     await page.goto("/produtor/propriedades/novo?id=" + propertyId);
-    await expect(page.getByRole("heading", { name: "Dimensões" })).toBeVisible();
-    expect(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth <= window.innerWidth,
-      ),
-      "overflow em " + viewport.width + "px",
-    ).toBe(true);
+    await expect(page.locator(".rural-step-dot")).toHaveCount(6);
+    for (const [index, heading] of [
+      "Documentos do imóvel",
+      "Identificação e acesso",
+      "Dimensões",
+      "Segurança hídrica",
+      "Culturas e processamento",
+      "Revisão e submissão",
+    ].entries()) {
+      await page.locator(".rural-step-dot").nth(index).click();
+      await expect(page.getByRole("heading", { name: heading }).first()).toBeVisible();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+        `overflow em ${viewport.width}px na etapa ${index + 1}`,
+      ).toBe(true);
+    }
     await page.screenshot({ path: `/tmp/t08-layout-${viewport.width}.png`, fullPage: true });
   }
 });

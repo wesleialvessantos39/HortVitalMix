@@ -69,14 +69,12 @@ it("requires the document verification sector for a sector admin", async () => {
   expect(mocks.query).not.toHaveBeenCalled();
 });
 it("lets assigned administrators read the review queue", async () => {
-  expect(
-    (
-      await request(app)
-        .get("/rural-properties")
-        .set("x-role", "platform_admin")
-        .set("x-sector", "document_verification")
-    ).status,
-  ).toBe(200);
+  const response = await request(app)
+    .get("/rural-properties")
+    .set("x-role", "platform_admin")
+    .set("x-sector", "document_verification");
+  expect(response.status).toBe(200);
+  expect(mocks.query.mock.calls[0][0]).toContain("p.deleted_at IS NULL");
 });
 it("requires recent authentication for a decision", async () => {
   expect(
