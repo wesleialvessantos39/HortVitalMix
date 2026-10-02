@@ -249,8 +249,8 @@ export type RuralPropertyView = {
   lineVicinal: string;
   municipality: string;
   state: "RO";
-  latitudeSede: number;
-  longitudeSede: number;
+  latitudeSede: number | null;
+  longitudeSede: number | null;
   accessDirections: string | null;
   waterSource: z.infer<typeof WaterSourceSchema> | null;
   irrigationSystem: z.infer<typeof IrrigationSystemSchema> | null;

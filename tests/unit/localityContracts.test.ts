@@ -81,9 +81,13 @@ describe("localidade — gestão do Super administrador", () => {
       ibgeCode: "1100130",
       name: "Machadinho D'Oeste",
     });
+    expect(
+      findRoMunicipality({ name: "  sao miguel DO guapore  " })?.ibgeCode,
+    ).toBe("1100320");
     expect(findRoMunicipality({ ibgeCode: "1100130" })?.name).toBe(
       "Machadinho D'Oeste",
     );
+    expect(findRoMunicipality({ name: " " })).toBeUndefined();
     expect(findRoMunicipality({ name: "Manaus", ibgeCode: "1302603" })).toBe(
       undefined,
     );

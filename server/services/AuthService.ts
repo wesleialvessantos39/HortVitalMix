@@ -430,7 +430,7 @@ async function addRoleToExistingIdentity(
     const account = await supabaseAdmin.from("app_users").select("status").eq("id",person.user_id).single();
     if(account.error) throw registrationError("REGISTRATION_DATABASE_UNAVAILABLE",503);
     if(account.data.status === "deleted") {
-      const requested = await supabaseAdmin.rpc("request_account_reactivation", {p_user_id:person.user_id,p_role:role,p_property_name:null,p_activity_type:null});
+      const requested = await supabaseAdmin.rpc("request_account_reactivation", {p_user_id:person.user_id,p_role:role});
       if(requested.error) throw registrationError("REGISTRATION_DATA_REJECTED",409);
       return {userId:person.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role};
     }
@@ -447,8 +447,6 @@ async function addRoleToExistingIdentity(
         p_cpf_normalized: data.cpf,
         p_email_normalized: data.email,
         p_role: role,
-        p_property_name: null,
-        p_activity_type: null,
       },
     );
 
@@ -628,8 +626,6 @@ export async function register(
         p_email_normalized: data.email,
         p_phone_e164: data.phone,
         p_role: role,
-        p_property_name: null,
-        p_activity_type: null,
         p_municipality: data.municipality,
         p_state: data.state,
       });

@@ -405,7 +405,7 @@ Deno.serve(async (req) => {
       const account = await admin.from("app_users").select("status").eq("id",existing.user_id).single();
       if(account.error) return safeFailure(503,"DATABASE_UNAVAILABLE",requestId,origin);
       if(account.data.status === "deleted") {
-        const requested = await admin.rpc("request_account_reactivation", {p_user_id:existing.user_id,p_role:role,p_property_name:null,p_activity_type:null});
+        const requested = await admin.rpc("request_account_reactivation", {p_user_id:existing.user_id,p_role:role});
         if(requested.error) return safeFailure(409,"REACTIVATION_NOT_ALLOWED",requestId,origin);
         return json(201,{userId:existing.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role,requestId},origin);
       }
@@ -425,8 +425,6 @@ Deno.serve(async (req) => {
         p_cpf_normalized: data.cpf,
         p_email_normalized: data.email,
         p_role: role,
-        p_property_name: null,
-        p_activity_type: null,
       });
 
       if (added.error)
@@ -504,8 +502,6 @@ Deno.serve(async (req) => {
     p_email_normalized: data.email,
     p_phone_e164: data.phone,
     p_role: role,
-    p_property_name: null,
-    p_activity_type: null,
     // Localidade declarada: a função de domínio revalida a cobertura e grava o
     // município da pessoa. Sem estes parâmetros o cadastro perderia a região.
     p_municipality: data.municipality,

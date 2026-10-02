@@ -450,14 +450,9 @@ function PropertyList({
                   : "Inicie um imóvel; a etapa 1 orienta o envio do CAR ou CCIR."}
               </li>
             </ol>
-            <button
-              type="button"
-              className="primary"
-              onClick={() => onNavigate("/produtor/propriedades/novo")}
-            >
-              Novo imóvel rural
-              <ChevronRight size={18} />
-            </button>
+            <p className="rural-onboarding-action">
+              Use o botão <strong>Novo imóvel rural</strong> logo acima para iniciar.
+            </p>
           </section>
         )}
       <button
@@ -818,6 +813,12 @@ function RuralPropertyWizard({
             const stored = raw ? JSON.parse(raw) as Draft : null;
             if (stored?.propertyId === requestedId && stored.step >= 1 && stored.step <= 6) {
               const server = next;
+              const localRevisionIsCurrent =
+                stored.revision === result.property.revision;
+              const preferDraftText = (serverValue: string, localValue: string) =>
+                localRevisionIsCurrent
+                  ? preferText(localValue, serverValue)
+                  : preferText(serverValue, localValue);
               next = {
                 ...server,
                 wizardVersion: 6,
@@ -833,20 +834,24 @@ function RuralPropertyWizard({
                 activityCategory: stored.activityCategory || server.activityCategory,
                 productionSystem: stored.productionSystem || server.productionSystem,
                 hasWashingFacility: stored.hasWashingFacility,
-                propertyName: preferText(server.propertyName, stored.propertyName),
-                municipality: preferText(server.municipality, stored.municipality),
-                registrationNumber: preferText(server.registrationNumber, stored.registrationNumber),
-                totalAreaHectares: preferText(server.totalAreaHectares, stored.totalAreaHectares),
-                cultivatedAreaHectares: preferText(server.cultivatedAreaHectares, stored.cultivatedAreaHectares),
-                latitudeSede: server.latitudeSede ?? stored.latitudeSede,
-                longitudeSede: server.longitudeSede ?? stored.longitudeSede,
+                propertyName: preferDraftText(server.propertyName, stored.propertyName),
+                municipality: preferDraftText(server.municipality, stored.municipality),
+                registrationNumber: preferDraftText(server.registrationNumber, stored.registrationNumber),
+                totalAreaHectares: preferDraftText(server.totalAreaHectares, stored.totalAreaHectares),
+                cultivatedAreaHectares: preferDraftText(server.cultivatedAreaHectares, stored.cultivatedAreaHectares),
+                latitudeSede: localRevisionIsCurrent
+                  ? stored.latitudeSede ?? server.latitudeSede
+                  : server.latitudeSede ?? stored.latitudeSede,
+                longitudeSede: localRevisionIsCurrent
+                  ? stored.longitudeSede ?? server.longitudeSede
+                  : server.longitudeSede ?? stored.longitudeSede,
                 state: "RO",
                 revision: server.revision,
                 propertyId: server.propertyId,
               };
-              dirty.current = stored.revision === result.property.revision;
+              dirty.current = localRevisionIsCurrent;
               setNotice(
-                stored.revision === result.property.revision
+                localRevisionIsCurrent
                   ? "Rascunho local recuperado."
                   : "O documento atualizou nome, município, área e o ponto no mapa. Confira as etapas. Nome e CPF continuam os da sua conta.",
               );

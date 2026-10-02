@@ -234,10 +234,8 @@ export function AdminLocalitiesPage({ access, onNavigate }: Props) {
         <form className="admin-form-grid" onSubmit={create}>
           <label>
             Nome do município
-            <input
-              list="ro-municipality-catalog"
+            <select
               required
-              placeholder="Escolha o município"
               value={name}
               onChange={(event) => {
                 const value = event.currentTarget.value;
@@ -247,14 +245,14 @@ export function AdminLocalitiesPage({ access, onNavigate }: Props) {
                 setName(municipality?.name ?? value);
                 setIbgeCode(municipality?.ibgeCode ?? "");
               }}
-            />
-            <datalist id="ro-municipality-catalog">
+            >
+              <option value="">Escolha o município</option>
               {RO_MUNICIPALITIES.map((municipality) => (
                 <option key={municipality.ibgeCode} value={municipality.name}>
                   {municipality.ibgeCode}
                 </option>
               ))}
-            </datalist>
+            </select>
             {name.trim() && (
               <small className="admin-table-sub">
                 UF: Rondônia (RO)

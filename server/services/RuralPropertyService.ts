@@ -303,12 +303,12 @@ async function mapProperty(
       row.cultivated_area_hectares === null
         ? null
         : Number(row.cultivated_area_hectares),
-    ruralZoneSector: row.rural_zone_sector,
-    lineVicinal: row.line_vicinal,
-    municipality: row.municipality,
+    ruralZoneSector: row.rural_zone_sector ?? "",
+    lineVicinal: row.line_vicinal ?? "",
+    municipality: row.municipality ?? "",
     state: row.state,
-    latitudeSede: row.latitude_sede === null ? null as unknown as number : Number(row.latitude_sede),
-    longitudeSede: row.longitude_sede === null ? null as unknown as number : Number(row.longitude_sede),
+    latitudeSede: row.latitude_sede === null ? null : Number(row.latitude_sede),
+    longitudeSede: row.longitude_sede === null ? null : Number(row.longitude_sede),
     accessDirections: row.access_directions,
     waterSource: row.water_source,
     irrigationSystem: row.irrigation_system,
@@ -412,15 +412,40 @@ async function assertComplete(client: PoolClient, row: Record<string, any>) {
     throw new RuralPropertyError("WASHING_FACILITY_REQUIRED", 422);
 }
 
+type RequiredPropertyDocument = {
+  extraction_id: string | null;
+  extraction_status: string | null;
+  property_name: string | null;
+  municipality: string | null;
+  total_area: string | null;
+};
+
+export function hasRequiredDocumentExtraction(
+  documents: readonly RequiredPropertyDocument[],
+) {
+  return documents.some(
+    (document) =>
+      document.extraction_id &&
+      ["completed", "flagged_discrepancy"].includes(
+        document.extraction_status ?? "",
+      ) &&
+      Boolean(document.property_name?.trim()) &&
+      Boolean(document.municipality?.trim()) &&
+      Number(document.total_area) > 0,
+  );
+}
+
+export function selectPropertyActivityCategory<T extends string>(
+  explicit: T | undefined,
+  inherited: T | undefined,
+): T | undefined {
+  return explicit ?? inherited;
+}
+
 async function assertRequiredPropertyDocument(client: PoolClient, propertyId: string) {
-  const documents = await client.query<{
-    id: string;
-    extraction_id: string | null;
-    extraction_status: string | null;
-    property_name: string | null;
-    municipality: string | null;
-    total_area: string | null;
-  }>(
+  const documents = await client.query<
+    RequiredPropertyDocument & { id: string }
+  >(
     `SELECT d.id, e.id AS extraction_id, e.status AS extraction_status,
             e.payload_jsonb->>'propertyRegisteredName' AS property_name,
             e.payload_jsonb->>'municipality' AS municipality,
@@ -437,18 +462,7 @@ async function assertRequiredPropertyDocument(client: PoolClient, propertyId: st
       422,
       "Envie o CAR ou o CCIR conferido antes da análise.",
     );
-  if (
-    !documents.rows.some(
-      (row) =>
-        row.extraction_id &&
-        ["completed", "flagged_discrepancy"].includes(
-          row.extraction_status ?? "",
-        ) &&
-        Boolean(row.property_name?.trim()) &&
-        Boolean(row.municipality?.trim()) &&
-        Number(row.total_area) > 0,
-    )
-  )
+  if (!hasRequiredDocumentExtraction(documents.rows))
     throw new RuralPropertyError(
       "PROPERTY_DOCUMENT_DATA_REQUIRED",
       422,
@@ -582,8 +596,8 @@ export class RuralPropertyService {
         propertyName: shownPropertyName(row),
         completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
         draftData: row.draft_data,
-        lineVicinal: row.line_vicinal,
-        municipality: row.municipality,
+        lineVicinal: row.line_vicinal ?? "",
+        municipality: row.municipality ?? "",
         state: row.state,
         status: row.status,
         queueStatus: row.queue_status ?? null,
@@ -821,8 +835,11 @@ export class RuralPropertyService {
         } else if (input.step === 5) {
           const data = input.stepData;
           let activityCategory = data.activityCategory;
+          let inheritedCategory: typeof data.activityCategory;
           if (!activityCategory) {
-            const inherited = await client.query<{ activity_category: string }>(
+            const inherited = await client.query<{
+              activity_category: NonNullable<typeof data.activityCategory>;
+            }>(
               `SELECT a.activity_category
                  FROM public.app_rural_activities a
                  JOIN public.app_properties p ON p.id=a.property_id
@@ -832,10 +849,12 @@ export class RuralPropertyService {
                 LIMIT 1`,
               [producerId, propertyId],
             );
-            activityCategory = inherited.rows[0]?.activity_category as
-              | typeof activityCategory
-              | undefined;
+            inheritedCategory = inherited.rows[0]?.activity_category;
           }
+          activityCategory = selectPropertyActivityCategory(
+            activityCategory,
+            inheritedCategory,
+          );
           if (!activityCategory)
             throw new RuralPropertyError("PROPERTY_ACTIVITY_REQUIRED", 422);
           await client.query(
@@ -1000,7 +1019,7 @@ export class RuralPropertyService {
         after: {
           ...summaryMetadata(row),
           commitmentAccepted: input.agroecologicalCommitment,
-          documents: documents.rows.map((row) => ({
+          documents: documents.map((row) => ({
             id: row.id,
             declared: Boolean(row.extraction_id),
           })),

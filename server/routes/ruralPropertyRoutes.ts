@@ -231,6 +231,7 @@ ruralPropertyRouter.post(
 
 ruralPropertyRouter.post("/producer/properties/wizard/draft",originProtection,async(req,res)=>{
  const actor=requireProducer(req,res);if(!actor)return;
+ if(!requireRecentAuth(req,res,actor.userId))return;
  const input=SaveRuralDraftSchema.safeParse(req.body);if(!input.success){res.status(400).json({error:"VALIDATION_ERROR"});return;}
  try{res.json(await RuralPropertyService.saveDraft(actor.userId,actor.role,input.data,req.requestId,req.clientIpHash));}catch(e){sendError(res,e);}
 });

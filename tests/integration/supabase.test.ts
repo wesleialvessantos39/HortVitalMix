@@ -11,6 +11,7 @@ import {
   GlobalConfigPublicSchema,
   FOUNDATION_SCHEMA_VERSION,
 } from "../../shared/contracts/foundation";
+import { RO_MUNICIPALITIES } from "../../shared/localities/roMunicipalities";
 
 const PRODUCTION_PROJECT_REF = "xipbsazvymkqqfmfegwu";
 const enabled =
@@ -109,6 +110,99 @@ describe.skipIf(!enabled)("Supabase real e JWTs reais", () => {
     } finally {
       await c.query("ROLLBACK").catch(() => undefined);
       c.release();
+    }
+  });
+
+  it("permite rascunho documental vazio sem enfraquecer a submissão completa", async () => {
+    assertIsolatedDevelopment();
+    const columns = await dbPool!.query<{
+      attname: string;
+      attnotnull: boolean;
+      column_default: string | null;
+    }>(
+      `SELECT a.attname,a.attnotnull,pg_get_expr(d.adbin,d.adrelid) AS column_default
+         FROM pg_attribute a
+         LEFT JOIN pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum
+        WHERE a.attrelid='public.app_properties'::regclass
+          AND a.attname=ANY($1::text[]) AND NOT a.attisdropped`,
+      [[
+        "property_name",
+        "rural_zone_sector",
+        "line_vicinal",
+        "municipality",
+        "latitude_sede",
+        "longitude_sede",
+      ]],
+    );
+    expect(columns.rows).toHaveLength(6);
+    expect(columns.rows.every((column) => !column.attnotnull)).toBe(true);
+    expect(
+      columns.rows.find((column) => column.attname === "municipality")
+        ?.column_default,
+    ).toBeNull();
+
+    const check = await dbPool!.query<{ definition: string }>(
+      `SELECT pg_get_constraintdef(oid) AS definition
+         FROM pg_constraint
+        WHERE conrelid='public.app_properties'::regclass
+          AND conname='ck_app_properties_submission_complete'`,
+    );
+    expect(check.rows[0]?.definition).toMatch(/status.*draft/i);
+    expect(check.rows[0]?.definition).toContain("property_name IS NOT NULL");
+    expect(check.rows[0]?.definition).toContain("latitude_sede IS NOT NULL");
+  });
+
+  it("impede corridas de cadastro por código IBGE e nome normalizado", async () => {
+    assertIsolatedDevelopment();
+    const marker = randomUUID().replace(/-/g, "").slice(0, 10);
+    const codes: string[] = [];
+    while (codes.length < 3) {
+      const candidate = String(randomInt(1_000_000, 9_999_999));
+      if (codes.includes(candidate)) continue;
+      const existing = await dbPool!.query(
+        "SELECT 1 FROM public.app_municipalities WHERE ibge_code=$1",
+        [candidate],
+      );
+      if (!existing.rows.length) codes.push(candidate);
+    }
+    const [duplicateCode, nameRaceCodeA, nameRaceCodeB] = codes;
+    const nameCodeA = `Concorrência ${marker}-A`;
+    const nameCodeB = `Concorrência ${marker}-B`;
+    const codeRace = await Promise.allSettled([
+      dbPool!.query(
+        "INSERT INTO public.app_municipalities(ibge_code,name,state) VALUES($1,$2,'RO')",
+        [duplicateCode, nameCodeA],
+      ),
+      dbPool!.query(
+        "INSERT INTO public.app_municipalities(ibge_code,name,state) VALUES($1,$2,'RO')",
+        [duplicateCode, nameCodeB],
+      ),
+    ]);
+    const nameRace = await Promise.allSettled([
+      dbPool!.query(
+        "INSERT INTO public.app_municipalities(ibge_code,name,state) VALUES($1,$2,'RO')",
+        [nameRaceCodeA, `Concorrência   ${marker}`],
+      ),
+      dbPool!.query(
+        "INSERT INTO public.app_municipalities(ibge_code,name,state) VALUES($1,$2,'RO')",
+        [nameRaceCodeB, `  CONCORRENCIA ${marker}  `],
+      ),
+    ]);
+    try {
+      expect(codeRace.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+      expect(
+        codeRace.filter((result) => result.status === "rejected").map((result) => result.reason.code),
+      ).toEqual(["23505"]);
+      expect(nameRace.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+      expect(
+        nameRace.filter((result) => result.status === "rejected").map((result) => result.reason.code),
+      ).toEqual(["23505"]);
+      expect(RO_MUNICIPALITIES).toHaveLength(52);
+    } finally {
+      await dbPool!.query(
+        "DELETE FROM public.app_municipalities WHERE ibge_code=ANY($1::varchar[])",
+        [[duplicateCode, nameRaceCodeA, nameRaceCodeB]],
+      );
     }
   });
 

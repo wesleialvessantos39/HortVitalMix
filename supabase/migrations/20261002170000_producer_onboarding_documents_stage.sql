@@ -138,7 +138,16 @@ GRANT EXECUTE ON FUNCTION public.add_public_role_to_existing_identity(
 
 -- Step 1 is now the property's document. Existing wizard values shift forward,
 -- preserving their relative progress, while submitted/completed records remain at 6.
+-- Identity and coordinates are nullable only for the document-first draft; the
+-- completeness constraint below keeps them mandatory for every non-draft status.
 ALTER TABLE public.app_properties
+  ALTER COLUMN property_name DROP NOT NULL,
+  ALTER COLUMN rural_zone_sector DROP NOT NULL,
+  ALTER COLUMN line_vicinal DROP NOT NULL,
+  ALTER COLUMN municipality DROP NOT NULL,
+  ALTER COLUMN municipality DROP DEFAULT,
+  ALTER COLUMN latitude_sede DROP NOT NULL,
+  ALTER COLUMN longitude_sede DROP NOT NULL,
   DROP CONSTRAINT app_properties_wizard_current_step_check,
   ADD CONSTRAINT app_properties_wizard_current_step_check
     CHECK (wizard_current_step BETWEEN 1 AND 6);

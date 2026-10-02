@@ -117,7 +117,7 @@ describe("T08 rotas de imóveis rurais", () => {
     const response = await mutationHeaders(
       request(makeApp()).post("/v1/producer/properties/wizard/save-step"),
     ).send({
-      step: 1,
+      step: 2,
       stepData: {
         propertyName: "Chácara Boa Colheita",
         lineVicinal: "Linha C-65",
@@ -133,31 +133,41 @@ describe("T08 rotas de imóveis rurais", () => {
     expect(response.body.error).toBe("RECENT_AUTH_REQUIRED");
   });
 
-  it("06 cria o rascunho no passo 1 sem aceitar producerId do cliente", async () => {
+  it("06 cria rascunho vazio na etapa de documentos sem aceitar producerId do cliente", async () => {
     const save = vi
-      .spyOn(RuralPropertyService, "saveWizardStep")
+      .spyOn(RuralPropertyService, "saveDraft")
       .mockResolvedValue({
-        status: "step_saved",
         property,
-        nextStep: 2,
       } as any);
     const response = await mutationHeaders(
-      request(makeApp()).post("/v1/producer/properties/wizard/save-step"),
+      request(makeApp()).post("/v1/producer/properties/wizard/draft"),
     ).send({
-      step: 1,
-      stepData: {
-        propertyName: "Chácara Boa Colheita",
-        lineVicinal: "Linha C-65",
-        ruralZoneSector: "Gleba Jamari",
-        municipality: "Ariquemes",
-        state: "RO",
-        latitudeSede: -9.9132,
-        longitudeSede: -63.0408,
-      },
       commandId: crypto.randomUUID(),
+      draft: {
+        step: 1,
+        propertyName: "",
+        registrationNumber: "",
+        lineVicinal: "",
+        ruralZoneSector: "",
+        municipality: "",
+        state: "RO",
+        latitudeSede: null,
+        longitudeSede: null,
+        accessDirections: "",
+        totalAreaHectares: "",
+        cultivatedAreaHectares: "",
+        polygonGeojson: "",
+        waterSource: "",
+        irrigationSystem: "",
+        activityCategory: "",
+        productionSystem: "",
+        hasWashingFacility: true,
+        agroecologicalCommitment: false,
+      },
     });
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     expect(save.mock.calls[0]?.[1]).toBe("producer");
+    expect(save.mock.calls[0]?.[2].draft.step).toBe(1);
     expect(save.mock.calls[0]?.[2]).not.toHaveProperty("producerId");
   });
 
@@ -174,7 +184,7 @@ describe("T08 rotas de imóveis rurais", () => {
     ).send({
       propertyId,
       expectedRevision: 4,
-      step: 3,
+      step: 4,
       stepData: {
         waterSource: "poco_artesiano",
         irrigationSystem: "gotejamento",

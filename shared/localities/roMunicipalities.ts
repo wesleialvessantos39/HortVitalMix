@@ -3,6 +3,8 @@ export type RoMunicipality = {
   name: string;
 };
 
+// Fonte: https://servicodados.ibge.gov.br/api/v1/localidades/estados/11/municipios
+// Snapshot oficial do IBGE (UF 11), versionado para operação sem dependência externa.
 export const RO_MUNICIPALITIES: readonly RoMunicipality[] = [
   { ibgeCode: "1100015", name: "Alta Floresta D'Oeste" },
   { ibgeCode: "1100023", name: "Ariquemes" },

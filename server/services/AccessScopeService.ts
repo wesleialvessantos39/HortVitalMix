@@ -96,7 +96,10 @@ export function producerIsApproved(verificationStatus: string | null | undefined
   return verificationStatus === "verified";
 }
 
-async function assertProducerApproved(client: PoolClient, producerId: string) {
+export async function assertProducerApproved(
+  client: PoolClient,
+  producerId: string,
+) {
   const result = await client.query<{ verification_status: string }>(
     "SELECT verification_status FROM public.app_producer_profiles WHERE id=$1",
     [producerId],
