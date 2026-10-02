@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const LGPD_CADASTRO_POLICY_VERSION = "lgpd-cadastro-2026-09-30";
+export const LGPD_CADASTRO_POLICY_VERSION = "lgpd-cadastro-2026-10-02";
 
 export const LgpdCadastroAcceptanceSchema = z
   .object({
@@ -22,7 +22,7 @@ export const lgpdCadastroTerm = {
         "CPF, só para identificar a pessoa da conta. Este aceite não muda o CPF.",
         "E-mail e celular, para contato e para confirmar o cadastro.",
         "Senha, guardada pelo serviço de acesso. Ela não fica escrita neste termo.",
-        "No cadastro de produtor, também o nome do imóvel e a atividade principal informados aqui.",
+        "No cadastro de produtor, os dados necessários para criar e manter o perfil de produtor.",
       ],
     },
     {
@@ -30,7 +30,7 @@ export const lgpdCadastroTerm = {
       items: [
         "Criar a conta e saber quem está entrando.",
         "Enviar a confirmação e os avisos do próprio cadastro.",
-        "No produtor, ligar a conta ao imóvel declarado.",
+        "No produtor, permitir cadastrar e acompanhar a análise do imóvel rural.",
       ],
     },
     {
@@ -52,5 +52,5 @@ export const lgpdCadastroTerm = {
     },
   ],
   contact:
-    "Pedidos sobre estes dados: hortivitalmix@gmail.com. Versão do termo: lgpd-cadastro-2026-09-30.",
+    "Pedidos sobre estes dados: hortivitalmix@gmail.com. Versão do termo: lgpd-cadastro-2026-10-02.",
 } as const;

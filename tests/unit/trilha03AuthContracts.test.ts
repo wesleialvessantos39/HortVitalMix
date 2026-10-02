@@ -26,9 +26,15 @@ describe("Trilha 03 — contratos de identidade", () => {
   it("rejeita injeção de papel administrativo", () => {
     expect(RegisterConsumerSchema.safeParse({ ...base, roleCode: "platform_admin" }).success).toBe(false);
   });
-  it("produtor exige campos próprios", () => {
-    expect(RegisterProducerSchema.safeParse({ ...base, propertyName: "Sítio Esperança", activityType: "misto" }).success).toBe(true);
-    expect(RegisterProducerSchema.safeParse(base).success).toBe(false);
+  it("cadastro de produtor não pede nem aceita dados do imóvel", () => {
+    expect(RegisterProducerSchema.safeParse(base).success).toBe(true);
+    expect(
+      RegisterProducerSchema.safeParse({
+        ...base,
+        propertyName: "Sítio Esperança",
+        activityType: "misto",
+      }).success,
+    ).toBe(false);
   });
   it("login exige papel explícito", () => {
     expect(LoginSchema.safeParse({ email: base.email, password: base.password, portalRole: "consumer" }).success).toBe(true);

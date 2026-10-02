@@ -37,8 +37,6 @@ describe("contratos e limites de confiança", () => {
       email: " TEST@EXAMPLE.COM ",
       phone: "(69) 99999-9999",
       password: "Senha-Segura-2026!",
-      propertyName: "Sítio de Teste",
-      activityType: "misto",
       municipality: "Ariquemes",
       state: "RO",
     });
@@ -46,7 +44,14 @@ describe("contratos e limites de confiança", () => {
     expect(data.cpf).toBe("52998224725");
     expect(data.email).toBe("test@example.com");
     expect(data.phone).toBe("+5569999999999");
-    expect(data.propertyName).toBe("Sítio de Teste");
+    expect(RegisterProducerSchema.safeParse(data).success).toBe(true);
+    expect(
+      RegisterProducerSchema.safeParse({
+        ...data,
+        propertyName: "Sítio de Teste",
+        activityType: "misto",
+      }).success,
+    ).toBe(false);
   });
 
   it("aplica máscaras brasileiras de CPF e celular", () => {
@@ -303,4 +308,3 @@ describe("contratos e limites de confiança", () => {
     error.mockRestore();
   });
 });
-

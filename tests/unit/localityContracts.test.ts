@@ -13,6 +13,10 @@ import {
   UpdateProducerDeliveryScopeSchema,
   localityBlockedMessage,
 } from "../../shared/contracts/locality";
+import {
+  findRoMunicipality,
+  RO_MUNICIPALITIES,
+} from "../../shared/localities/roMunicipalities";
 
 const commandId = "3f1c8cbc-4a2c-4f0e-9c6c-2f3cb0a3a9d1";
 
@@ -69,6 +73,43 @@ describe("localidade — gestão do Super administrador", () => {
         commandId,
       }).success,
     ).toBe(true);
+  });
+
+  it("resolve os 52 municípios de Rondônia por nome ou código IBGE", () => {
+    expect(RO_MUNICIPALITIES).toHaveLength(52);
+    expect(findRoMunicipality({ name: "  machadinho d'oeste " })).toEqual({
+      ibgeCode: "1100130",
+      name: "Machadinho D'Oeste",
+    });
+    expect(
+      findRoMunicipality({ name: "  sao miguel DO guapore  " })?.ibgeCode,
+    ).toBe("1100320");
+    expect(findRoMunicipality({ ibgeCode: "1100130" })?.name).toBe(
+      "Machadinho D'Oeste",
+    );
+    expect(findRoMunicipality({ name: " " })).toBeUndefined();
+    expect(findRoMunicipality({ name: "Manaus", ibgeCode: "1302603" })).toBe(
+      undefined,
+    );
+  });
+
+  it("não aceita nome e código IBGE que não correspondem a RO", () => {
+    expect(
+      CreateMunicipalitySchema.safeParse({
+        ibgeCode: "1100023",
+        name: "Porto Velho",
+        state: "RO",
+        commandId,
+      }).success,
+    ).toBe(false);
+    expect(
+      CreateMunicipalitySchema.safeParse({
+        ibgeCode: "1100205",
+        name: "Porto Velho",
+        state: "AM",
+        commandId,
+      }).success,
+    ).toBe(false);
   });
 
   it("07 atualização exige revisão e ao menos uma alteração", () => {

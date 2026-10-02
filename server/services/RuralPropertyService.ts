@@ -303,12 +303,12 @@ async function mapProperty(
       row.cultivated_area_hectares === null
         ? null
         : Number(row.cultivated_area_hectares),
-    ruralZoneSector: row.rural_zone_sector,
-    lineVicinal: row.line_vicinal,
-    municipality: row.municipality,
+    ruralZoneSector: row.rural_zone_sector ?? "",
+    lineVicinal: row.line_vicinal ?? "",
+    municipality: row.municipality ?? "",
     state: row.state,
-    latitudeSede: row.latitude_sede === null ? null as unknown as number : Number(row.latitude_sede),
-    longitudeSede: row.longitude_sede === null ? null as unknown as number : Number(row.longitude_sede),
+    latitudeSede: row.latitude_sede === null ? null : Number(row.latitude_sede),
+    longitudeSede: row.longitude_sede === null ? null : Number(row.longitude_sede),
     accessDirections: row.access_directions,
     waterSource: row.water_source,
     irrigationSystem: row.irrigation_system,
@@ -412,6 +412,65 @@ async function assertComplete(client: PoolClient, row: Record<string, any>) {
     throw new RuralPropertyError("WASHING_FACILITY_REQUIRED", 422);
 }
 
+type RequiredPropertyDocument = {
+  extraction_id: string | null;
+  extraction_status: string | null;
+  property_name: string | null;
+  municipality: string | null;
+  total_area: string | null;
+};
+
+export function hasRequiredDocumentExtraction(
+  documents: readonly RequiredPropertyDocument[],
+) {
+  return documents.some(
+    (document) =>
+      document.extraction_id &&
+      ["completed", "flagged_discrepancy"].includes(
+        document.extraction_status ?? "",
+      ) &&
+      Boolean(document.property_name?.trim()) &&
+      Boolean(document.municipality?.trim()) &&
+      Number(document.total_area) > 0,
+  );
+}
+
+export function selectPropertyActivityCategory<T extends string>(
+  explicit: T | undefined,
+  inherited: T | undefined,
+): T | undefined {
+  return explicit ?? inherited;
+}
+
+async function assertRequiredPropertyDocument(client: PoolClient, propertyId: string) {
+  const documents = await client.query<
+    RequiredPropertyDocument & { id: string }
+  >(
+    `SELECT d.id, e.id AS extraction_id, e.status AS extraction_status,
+            e.payload_jsonb->>'propertyRegisteredName' AS property_name,
+            e.payload_jsonb->>'municipality' AS municipality,
+            e.payload_jsonb->>'totalAreaHectares' AS total_area
+       FROM public.app_documents d
+       LEFT JOIN public.app_document_extractions e ON e.document_id=d.id
+      WHERE d.property_id=$1 AND d.status='clean'
+        AND d.document_type IN ('car_sicar','ccir_incra')`,
+    [propertyId],
+  );
+  if (!documents.rows.length)
+    throw new RuralPropertyError(
+      "PROPERTY_DOCUMENTS_REQUIRED",
+      422,
+      "Envie o CAR ou o CCIR conferido antes da análise.",
+    );
+  if (!hasRequiredDocumentExtraction(documents.rows))
+    throw new RuralPropertyError(
+      "PROPERTY_DOCUMENT_DATA_REQUIRED",
+      422,
+      "Informe e salve os dados documentais antes da análise.",
+    );
+  return documents.rows;
+}
+
 async function transitionToSubmitted(
   client: PoolClient,
   producerId: string,
@@ -428,7 +487,7 @@ async function transitionToSubmitted(
   const updated = await client.query<Record<string, any>>(
     [
       "UPDATE public.app_properties",
-      "SET wizard_current_step=5,status=$3,draft_data=NULL,completed_at=COALESCE(completed_at,now())",
+      "SET wizard_current_step=6,status=$3,draft_data=NULL,completed_at=COALESCE(completed_at,now())",
       "WHERE id=$1 AND producer_id=$2 RETURNING *",
     ].join(" "),
     [current.id, producerId, completeOnly ? "completed" : "submitted"],
@@ -537,8 +596,8 @@ export class RuralPropertyService {
         propertyName: shownPropertyName(row),
         completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
         draftData: row.draft_data,
-        lineVicinal: row.line_vicinal,
-        municipality: row.municipality,
+        lineVicinal: row.line_vicinal ?? "",
+        municipality: row.municipality ?? "",
         state: row.state,
         status: row.status,
         queueStatus: row.queue_status ?? null,
@@ -550,6 +609,25 @@ export class RuralPropertyService {
         revision: row.revision,
         updatedAt: new Date(row.updated_at).toISOString(),
       }));
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getDefaultActivity(userId: string) {
+    const client = await requirePool().connect();
+    try {
+      const producerId = await resolveProducer(client, userId);
+      const result = await client.query<{ activity_category: string }>(
+        `SELECT a.activity_category
+           FROM public.app_rural_activities a
+           JOIN public.app_properties p ON p.id=a.property_id
+          WHERE p.producer_id=$1
+          ORDER BY p.created_at ASC,p.id ASC
+          LIMIT 1`,
+        [producerId],
+      );
+      return { activityCategory: result.rows[0]?.activity_category ?? null };
     } finally {
       client.release();
     }
@@ -602,7 +680,7 @@ export class RuralPropertyService {
         return {
           status: "idempotent_replay" as const,
           property,
-          nextStep: Math.min(5, input.step + 1),
+          nextStep: Math.min(6, input.step + 1),
         };
       }
 
@@ -610,7 +688,8 @@ export class RuralPropertyService {
       let before: Record<string, any> | null = null;
       let row: Record<string, any>;
       let reusingIdentity = false;
-      if (input.step === 1) {
+      let submittedDocuments: Array<{ id: string; extraction_id: string | null }> | null = null;
+      if (input.step === 2) {
         // Trava de localidade no passo que declara o município do imóvel.
         await assertPropertyLocality(
           client,
@@ -619,7 +698,7 @@ export class RuralPropertyService {
           input.stepData.municipality,
         );
       }
-      if (input.step === 1 && !propertyId) {
+      if (input.step === 2 && !propertyId) {
         const data = input.stepData;
         const matches = await matchingProperties(client, producerId, {
           registration_number: data.registrationNumber,
@@ -633,7 +712,7 @@ export class RuralPropertyService {
         }
       }
 
-      if (input.step === 1 && !propertyId) {
+      if (input.step === 2 && !propertyId) {
         const data = input.stepData;
         const inserted = await client.query<Record<string, any>>(
           [
@@ -641,7 +720,7 @@ export class RuralPropertyService {
             "(producer_id,property_name,registration_number,rural_zone_sector,",
             "line_vicinal,municipality,state,latitude_sede,longitude_sede,",
             "access_directions,wizard_current_step)",
-            "VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,1)",
+            "VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,2)",
             "RETURNING *",
           ].join(" "),
           [
@@ -667,11 +746,11 @@ export class RuralPropertyService {
         before = current;
         await assertEditable(client, current);
         if (!reusingIdentity) assertRevision(current, input.expectedRevision);
-        if(input.step<5 && current.status!=="draft") {
+        if(input.step<6 && current.status!=="draft") {
           await client.query("UPDATE public.app_properties SET status='draft' WHERE id=$1 AND producer_id=$2",[propertyId,producerId]);
         }
 
-        if (input.step === 1) {
+        if (input.step === 2) {
           const data = input.stepData;
           row = (
             await client.query<Record<string, any>>(
@@ -680,7 +759,7 @@ export class RuralPropertyService {
                 "draft_data=NULL,property_name=$1,registration_number=$2,rural_zone_sector=$3,",
                 "line_vicinal=$4,municipality=$5,state=$6,latitude_sede=$7,",
                 "longitude_sede=$8,access_directions=$9,",
-                "wizard_current_step=GREATEST(wizard_current_step,1)",
+                "wizard_current_step=GREATEST(wizard_current_step,2)",
                 "WHERE id=$10 AND producer_id=$11 RETURNING *",
               ].join(" "),
               [
@@ -698,7 +777,7 @@ export class RuralPropertyService {
               ],
             )
           ).rows[0];
-        } else if (input.step === 2) {
+        } else if (input.step === 3) {
           const data = input.stepData;
           await client.query(
             "DELETE FROM public.app_property_boundaries WHERE property_id=$1",
@@ -724,7 +803,7 @@ export class RuralPropertyService {
               [
                 "UPDATE public.app_properties SET",
                 "total_area_hectares=$1,cultivated_area_hectares=$2,",
-                "wizard_current_step=GREATEST(wizard_current_step,2)",
+                "wizard_current_step=GREATEST(wizard_current_step,3)",
                 "WHERE id=$3 AND producer_id=$4 RETURNING *",
               ].join(" "),
               [
@@ -735,14 +814,14 @@ export class RuralPropertyService {
               ],
             )
           ).rows[0];
-        } else if (input.step === 3) {
+        } else if (input.step === 4) {
           const data = input.stepData;
           row = (
             await client.query<Record<string, any>>(
               [
                 "UPDATE public.app_properties SET",
                 "water_source=$1,irrigation_system=$2,",
-                "wizard_current_step=GREATEST(wizard_current_step,3)",
+                "wizard_current_step=GREATEST(wizard_current_step,4)",
                 "WHERE id=$3 AND producer_id=$4 RETURNING *",
               ].join(" "),
               [
@@ -753,8 +832,31 @@ export class RuralPropertyService {
               ],
             )
           ).rows[0];
-        } else if (input.step === 4) {
+        } else if (input.step === 5) {
           const data = input.stepData;
+          let activityCategory = data.activityCategory;
+          let inheritedCategory: typeof data.activityCategory;
+          if (!activityCategory) {
+            const inherited = await client.query<{
+              activity_category: NonNullable<typeof data.activityCategory>;
+            }>(
+              `SELECT a.activity_category
+                 FROM public.app_rural_activities a
+                 JOIN public.app_properties p ON p.id=a.property_id
+                WHERE p.producer_id=$1
+                  AND p.id<>$2
+                ORDER BY p.created_at ASC,p.id ASC
+                LIMIT 1`,
+              [producerId, propertyId],
+            );
+            inheritedCategory = inherited.rows[0]?.activity_category;
+          }
+          activityCategory = selectPropertyActivityCategory(
+            activityCategory,
+            inheritedCategory,
+          );
+          if (!activityCategory)
+            throw new RuralPropertyError("PROPERTY_ACTIVITY_REQUIRED", 422);
           await client.query(
             [
               "INSERT INTO public.app_rural_activities",
@@ -768,7 +870,7 @@ export class RuralPropertyService {
             ].join(" "),
             [
               propertyId,
-              data.activityCategory,
+              activityCategory,
               data.productionSystem,
               data.hasWashingFacility,
             ],
@@ -777,7 +879,7 @@ export class RuralPropertyService {
             await client.query<Record<string, any>>(
               [
                 "UPDATE public.app_properties SET",
-                "wizard_current_step=GREATEST(wizard_current_step,4)",
+                "wizard_current_step=GREATEST(wizard_current_step,5)",
                 "WHERE id=$1 AND producer_id=$2 RETURNING *",
               ].join(" "),
               [propertyId, producerId],
@@ -786,6 +888,11 @@ export class RuralPropertyService {
         } else {
           if(current.draft_data)throw new RuralPropertyError("PROPERTY_INCOMPLETE",422);
           await assertComplete(client, current);
+          if (!input.completeOnly)
+            submittedDocuments = await assertRequiredPropertyDocument(
+              client,
+              current.id,
+            );
           row = await transitionToSubmitted(client, producerId, current, input.completeOnly);
           if (!input.completeOnly)
             await reopenPropertyVerification(client, propertyId!, producerId);
@@ -803,9 +910,13 @@ export class RuralPropertyService {
           ...summaryMetadata(row),
           savedStep: input.step,
           commitmentAccepted:
-            input.step === 5
+            input.step === 6
               ? input.stepData.agroecologicalCommitment
               : undefined,
+          documents: submittedDocuments?.map((document) => ({
+            id: document.id,
+            declared: Boolean(document.extraction_id),
+          })),
         },
         ipHash,
         commandId: input.commandId,
@@ -814,9 +925,9 @@ export class RuralPropertyService {
       const property = await mapProperty(client, row);
       await client.query("COMMIT");
       return {
-        status: input.step === 5 ? (input.completeOnly ? "completed" as const : "submitted" as const) : ("step_saved" as const),
+        status: input.step === 6 ? (input.completeOnly ? "completed" as const : "submitted" as const) : ("step_saved" as const),
         property,
-        nextStep: Math.min(5, input.step + 1),
+        nextStep: Math.min(6, input.step + 1),
       };
     } catch (error) {
       try {
@@ -889,22 +1000,7 @@ export class RuralPropertyService {
         current.municipality,
       );
       await assertComplete(client, current);
-      const documents = await client.query<{ id: string; extraction_id: string | null }>(
-        `SELECT d.id, e.id AS extraction_id FROM public.app_documents d LEFT JOIN public.app_document_extractions e ON e.document_id=d.id WHERE d.property_id=$1 AND d.status='clean' AND d.document_type IN ('car_sicar','ccir_incra')`,
-        [propertyId],
-      );
-      if (!documents.rows.length)
-        throw new RuralPropertyError(
-          "PROPERTY_DOCUMENTS_REQUIRED",
-          422,
-          "Envie o CAR ou o CCIR conferido antes da análise.",
-        );
-      if (!documents.rows.some((row) => row.extraction_id))
-        throw new RuralPropertyError(
-          "PROPERTY_DOCUMENT_DATA_REQUIRED",
-          422,
-          "Informe os dados do documento antes de enviar para análise.",
-        );
+      const documents = await assertRequiredPropertyDocument(client, propertyId);
 
       const row = await transitionToSubmitted(
         client,
@@ -923,7 +1019,7 @@ export class RuralPropertyService {
         after: {
           ...summaryMetadata(row),
           commitmentAccepted: input.agroecologicalCommitment,
-          documents: documents.rows.map((row) => ({
+          documents: documents.map((row) => ({
             id: row.id,
             declared: Boolean(row.extraction_id),
           })),

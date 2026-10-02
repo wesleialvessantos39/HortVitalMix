@@ -31,6 +31,10 @@ import {
 } from "../../../shared/contracts/ruralProperty";
 import { OsmPinMap } from "../account/OsmPinMap";
 import {
+  DocumentsPanel,
+  type PropertyDocumentSummary,
+} from "../documents/DocumentsPanel";
+import {
   estimatePropertyPerimeter,
   isEstimatedPerimeter,
 } from "../../../shared/rural/estimatePropertyPerimeter";
@@ -47,6 +51,7 @@ type SaveState = "idle" | "saving" | "saved" | "local" | "error";
 type Draft = {
   propertyId: string | null;
   revision: number | null;
+  wizardVersion?: 6;
   step: number;
   propertyName: string;
   registrationNumber: string;
@@ -71,12 +76,13 @@ type Draft = {
 const blankDraft: Draft = {
   propertyId: null,
   revision: null,
+  wizardVersion: 6,
   step: 1,
   propertyName: "",
   registrationNumber: "",
   lineVicinal: "",
   ruralZoneSector: "",
-  municipality: "Ariquemes",
+  municipality: "",
   state: "RO",
   latitudeSede: null,
   longitudeSede: null,
@@ -93,11 +99,12 @@ const blankDraft: Draft = {
 };
 
 const steps = [
-  ["Identificação e acesso", "Localize a propriedade. O nome e o CPF já são os da sua conta.", "Identificação"],
-  ["Dimensões", "A área vem do documento. O sistema monta a ficha e o contorno a partir da sede.", "Dimensões"],
-  ["Segurança hídrica", "O CAR não traz a água. Escolha a fonte e a irrigação do imóvel.", "Água"],
-  ["Culturas e processamento", "O CAR não traz a produção. Escolha a atividade principal.", "Atividade"],
-  ["Revisão e submissão", "Confira a ficha e envie para análise humana.", "Revisão"],
+  ["Documentos do imóvel", "Anexe e confira o CAR ou o CCIR do imóvel.", "Documentos"],
+  ["Identificação e acesso", "Localize a propriedade", "Identificação"],
+  ["Dimensões", "A área vem do documento", "Dimensões"],
+  ["Segurança hídrica", "Escolha a fonte e a irrigação do imóvel", "Água"],
+  ["Culturas e processamento", "Escolha a atividade principal", "Atividade"],
+  ["Revisão e submissão", "Confira a ficha e envie para análise", "Revisão"],
 ] as const;
 
 function formatHa(value: string) {
@@ -225,10 +232,18 @@ function messageForFailure(error: unknown) {
   if (failure.message === "PROPERTY_DOCUMENTS_REQUIRED")
     return "Envie o CAR ou o CCIR do imóvel antes de mandar para análise.";
   if (failure.message === "PROPERTY_DOCUMENT_DATA_REQUIRED")
-    return "Abra Documentos do imóvel, confira o PDF e salve os dados do documento. A análise só recebe o cadastro junto com esses dados.";
+    return "Volte à etapa 1, abra o CAR ou CCIR e salve os dados documentais conferidos.";
   if (failure.message === "WASHING_FACILITY_REQUIRED")
     return "Legumes picados exigem uma instalação adequada para lavagem e higienização.";
-  return "Não foi possível salvar agora. Seus dados continuam preservados neste aparelho.";
+  if (failure.message === "PROPERTY_ACTIVITY_REQUIRED")
+    return "Escolha a atividade principal do imóvel antes de continuar.";
+  if (failure.message === "PRODUCER_NOT_APPROVED")
+    return "A loja e a publicação de produtos ficam disponíveis depois da aprovação do imóvel.";
+  if (failure.status === 0)
+    return "Sem conexão com o servidor. O rascunho desta etapa foi mantido neste aparelho.";
+  if (failure.status && failure.status >= 500)
+    return "O serviço de cadastro está temporariamente indisponível. O rascunho desta etapa foi mantido neste aparelho.";
+  return `A etapa não foi aceita pelo servidor (${failure.message || "erro desconhecido"}). Confira os dados e tente novamente; o rascunho local foi mantido.`;
 }
 
 function parseBoundary(raw: string) {
@@ -255,7 +270,8 @@ function draftFromProperty(property: RuralPropertyView): Draft {
     property.boundaries[0];
 
   const base: Draft = {
-    step: Math.min(5, Math.max(1, property.wizardCurrentStep)),
+    wizardVersion: 6,
+    step: Math.min(6, Math.max(1, property.wizardCurrentStep)),
     propertyName: property.propertyName,
     registrationNumber: property.registrationNumber ?? "",
     lineVicinal: property.lineVicinal,
@@ -415,6 +431,30 @@ function PropertyList({
         Cadastre cada propriedade produtiva separadamente. Seus endereços
         pessoais continuam em Minha conta.
       </p>
+      {(state === "ready" || state === "empty") &&
+        !properties.some(isApproved) && (
+          <section className="rural-onboarding-guide" aria-labelledby="rural-onboarding-title">
+            <h2 id="rural-onboarding-title">
+              {properties.some((property) =>
+                ["submitted", "verified"].includes(property.status) ||
+                ["pending", "claimed", "in_review"].includes(property.queueStatus ?? ""),
+              )
+                ? "Seu imóvel está aguardando aprovação"
+                : "Seu perfil ainda não está aprovado"}
+            </h2>
+            <ol>
+              <li>Você está em <strong>Imóveis rurais</strong>, onde cada propriedade é cadastrada separadamente.</li>
+              <li>
+                {properties.some((property) => property.status === "draft")
+                  ? "Continue o rascunho existente ou inicie outro imóvel."
+                  : "Inicie um imóvel; a etapa 1 orienta o envio do CAR ou CCIR."}
+              </li>
+            </ol>
+            <p className="rural-onboarding-action">
+              Use o botão <strong>Novo imóvel rural</strong> logo acima para iniciar.
+            </p>
+          </section>
+        )}
       <button
         className="primary rural-primary-action"
         onClick={() => onNavigate("/produtor/propriedades/novo")}
@@ -485,10 +525,10 @@ function PropertyList({
 
               <div className="rural-property-progress-section">
                 <div className="rural-progress-header">
-                  <small>Etapa {property.wizardCurrentStep} de 5</small>
+                  <small>Etapa {property.wizardCurrentStep} de 6</small>
                 </div>
-                <div className="rural-progress-line" aria-label={`Etapa ${property.wizardCurrentStep} de 5`}>
-                  <span style={{ width: `${property.wizardCurrentStep * 20}%` }} />
+                <div className="rural-progress-line" aria-label={`Etapa ${property.wizardCurrentStep} de 6`}>
+                  <span style={{ width: `${(property.wizardCurrentStep / 6) * 100}%` }} />
                 </div>
               </div>
 
@@ -542,7 +582,7 @@ function PropertyList({
                 <div className="rural-property-subactions">
                   <button
                     className="secondary rural-docs-btn"
-                    onClick={() => onNavigate("/produtor/documentos?propertyId=" + property.id)}
+                    onClick={() => onNavigate("/produtor/propriedades/novo?id=" + property.id + "&step=1")}
                   >
                     <FileText size={16} />
                     Documentos do imóvel
@@ -612,6 +652,11 @@ function RuralPropertyWizard({
       ? null
       : new URLSearchParams(location.search).get("id"),
   );
+  const [requestedStep] = useState(() => {
+    if (typeof location === "undefined") return null;
+    const value = Number(new URLSearchParams(location.search).get("step"));
+    return Number.isInteger(value) && value >= 1 && value <= 6 ? value : null;
+  });
   const [draft, setDraft] = useState<Draft>(blankDraft);
   const [state, setState] = useState<PageState>(
     requestedId ? "loading" : "ready",
@@ -624,12 +669,16 @@ function RuralPropertyWizard({
     typeof navigator === "undefined" ? true : navigator.onLine,
   );
   const [accountCpf, setAccountCpf] = useState("");
+  const [documents, setDocuments] = useState<PropertyDocumentSummary[]>([]);
+  const [documentsReady, setDocumentsReady] = useState(false);
   const hydrated = useRef(false);
   const saving = useRef(false);
   const dirty = useRef(false);
   const editVersion = useRef(0);
   const pendingSave = useRef<{ payload: Record<string, unknown>; version: number } | null>(null);
   const viewOnlyRef = useRef(false);
+  const activityTouched = useRef(false);
+  const activityDefaultRequested = useRef(false);
   const [viewOnly, setViewOnly] = useState(false);
   viewOnlyRef.current = viewOnly;
 
@@ -637,6 +686,8 @@ function RuralPropertyWizard({
   const stepMeta = steps[step - 1];
 
   function patch(values: Partial<Draft>) {
+    if (Object.prototype.hasOwnProperty.call(values, "activityCategory"))
+      activityTouched.current = true;
     dirty.current = true;
     editVersion.current += 1;
     setSaveState((current) => current === "error" ? "idle" : current);
@@ -652,6 +703,47 @@ function RuralPropertyWizard({
       );
       if (announce) setSaveState("local");
     } catch {}
+  }
+
+  function updateDocumentReadiness(result: {
+    documents: PropertyDocumentSummary[];
+    requiredReady: boolean;
+  }) {
+    setDocuments(result.documents);
+    setDocumentsReady(result.requiredReady);
+    const extracted = result.documents.find(
+      (document) =>
+        document.status === "clean" &&
+        document.dataSaved &&
+        (document.extractionStatus === "completed" ||
+          document.extractionStatus === "flagged_discrepancy"),
+    )?.extractedData;
+    if (!extracted) return;
+    setDraft((current) => {
+      const next = {
+        ...current,
+        propertyName: preferText(current.propertyName, extracted.propertyRegisteredName),
+        registrationNumber: preferText(
+          current.registrationNumber,
+          extracted.carNumber || extracted.ccirNumber,
+        ),
+        municipality: preferText(current.municipality, extracted.municipality),
+        totalAreaHectares: preferText(
+          current.totalAreaHectares,
+          extracted.totalAreaHectares,
+        ),
+      };
+      if (
+        next.propertyName === current.propertyName &&
+        next.registrationNumber === current.registrationNumber &&
+        next.municipality === current.municipality &&
+        next.totalAreaHectares === current.totalAreaHectares
+      )
+        return current;
+      dirty.current = true;
+      editVersion.current += 1;
+      return next;
+    });
   }
 
   useEffect(() => {
@@ -700,7 +792,12 @@ function RuralPropertyWizard({
           setViewOnly(locked);
           if (locked) {
             try { localStorage.removeItem(`hvm:rural-pending:${session.userId}:${requestedId}`); } catch {}
-            setDraft(draftFromProperty(result.property));
+            const lockedDraft = draftFromProperty(result.property);
+            setDraft(
+              requestedStep
+                ? { ...lockedDraft, step: requestedStep }
+                : lockedDraft,
+            );
             dirty.current = false;
             setNotice(result.property.status === "suspended"
               ? "Este imóvel está suspenso. Você pode ver as etapas, mas não alterar os dados."
@@ -714,11 +811,20 @@ function RuralPropertyWizard({
           try {
             const raw = localStorage.getItem(localKey(session.userId, requestedId));
             const stored = raw ? JSON.parse(raw) as Draft : null;
-            if (stored?.propertyId === requestedId && stored.step >= 1 && stored.step <= 5) {
+            if (stored?.propertyId === requestedId && stored.step >= 1 && stored.step <= 6) {
               const server = next;
+              const localRevisionIsCurrent =
+                stored.revision === result.property.revision;
+              const preferDraftText = (serverValue: string, localValue: string) =>
+                localRevisionIsCurrent
+                  ? preferText(localValue, serverValue)
+                  : preferText(serverValue, localValue);
               next = {
                 ...server,
-                step: stored.step,
+                wizardVersion: 6,
+                step: stored.wizardVersion === 6
+                  ? stored.step
+                  : Math.min(6, stored.step + 1),
                 lineVicinal: stored.lineVicinal.trim() ? stored.lineVicinal : server.lineVicinal,
                 ruralZoneSector: stored.ruralZoneSector.trim() ? stored.ruralZoneSector : server.ruralZoneSector,
                 accessDirections: stored.accessDirections.trim() ? stored.accessDirections : server.accessDirections,
@@ -728,25 +834,30 @@ function RuralPropertyWizard({
                 activityCategory: stored.activityCategory || server.activityCategory,
                 productionSystem: stored.productionSystem || server.productionSystem,
                 hasWashingFacility: stored.hasWashingFacility,
-                propertyName: preferText(server.propertyName, stored.propertyName),
-                municipality: preferText(server.municipality, stored.municipality),
-                registrationNumber: preferText(server.registrationNumber, stored.registrationNumber),
-                totalAreaHectares: preferText(server.totalAreaHectares, stored.totalAreaHectares),
-                cultivatedAreaHectares: preferText(server.cultivatedAreaHectares, stored.cultivatedAreaHectares),
-                latitudeSede: server.latitudeSede ?? stored.latitudeSede,
-                longitudeSede: server.longitudeSede ?? stored.longitudeSede,
+                propertyName: preferDraftText(server.propertyName, stored.propertyName),
+                municipality: preferDraftText(server.municipality, stored.municipality),
+                registrationNumber: preferDraftText(server.registrationNumber, stored.registrationNumber),
+                totalAreaHectares: preferDraftText(server.totalAreaHectares, stored.totalAreaHectares),
+                cultivatedAreaHectares: preferDraftText(server.cultivatedAreaHectares, stored.cultivatedAreaHectares),
+                latitudeSede: localRevisionIsCurrent
+                  ? stored.latitudeSede ?? server.latitudeSede
+                  : server.latitudeSede ?? stored.latitudeSede,
+                longitudeSede: localRevisionIsCurrent
+                  ? stored.longitudeSede ?? server.longitudeSede
+                  : server.longitudeSede ?? stored.longitudeSede,
                 state: "RO",
                 revision: server.revision,
                 propertyId: server.propertyId,
               };
-              dirty.current = stored.revision === result.property.revision;
+              dirty.current = localRevisionIsCurrent;
               setNotice(
-                stored.revision === result.property.revision
+                localRevisionIsCurrent
                   ? "Rascunho local recuperado."
                   : "O documento atualizou nome, município, área e o ponto no mapa. Confira as etapas. Nome e CPF continuam os da sua conta.",
               );
             }
           } catch {}
+          if (requestedStep) next.step = requestedStep;
           setDraft(next);
           setState(conflict ? "conflict" : "ready");
           hydrated.current = true;
@@ -761,7 +872,17 @@ function RuralPropertyWizard({
         const stored = localStorage.getItem(localKey(session.userId, null));
         if (stored) {
           const parsed = JSON.parse(stored) as Draft;
-          setDraft({ ...blankDraft, ...parsed, propertyId: null, revision: null });
+          setDraft({
+            ...blankDraft,
+            ...parsed,
+            wizardVersion: 6,
+            step:
+              parsed.wizardVersion === 6
+                ? parsed.step
+                : Math.min(6, parsed.step + 1),
+            propertyId: null,
+            revision: null,
+          });
           dirty.current = true;
           setNotice("Rascunho local recuperado.");
         }
@@ -773,7 +894,35 @@ function RuralPropertyWizard({
     return () => {
       cancelled = true;
     };
-  }, [requestedId, session.userId]);
+  }, [requestedId, requestedStep, session.userId]);
+
+  useEffect(() => {
+    if (
+      !hydrated.current ||
+      requestedId ||
+      draft.activityCategory ||
+      activityTouched.current ||
+      activityDefaultRequested.current
+    )
+      return;
+    activityDefaultRequested.current = true;
+    let cancelled = false;
+    void api<{ activityCategory: string | null }>(
+      "/v1/producer/properties/activity-default",
+    )
+      .then(({ activityCategory }) => {
+        if (!activityCategory || cancelled || activityTouched.current) return;
+        setDraft((current) =>
+          current.activityCategory || activityTouched.current
+            ? current
+            : { ...current, activityCategory },
+        );
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [draft.activityCategory, requestedId]);
 
   useEffect(() => {
     if (!hydrated.current || viewOnlyRef.current) return;
@@ -828,6 +977,13 @@ function RuralPropertyWizard({
 
   function buildStepData(targetStep: number) {
     if (targetStep === 1) {
+      return {
+        success: documentsReady,
+        data: { documentsProcessed: documentsReady },
+        error: null,
+      } as const;
+    }
+    if (targetStep === 2) {
       return Step1IdentificationSchema.safeParse({
         propertyName: draft.propertyName,
         registrationNumber: draft.registrationNumber.trim() || null,
@@ -840,7 +996,7 @@ function RuralPropertyWizard({
         accessDirections: draft.accessDirections.trim() || null,
       });
     }
-    if (targetStep === 2) {
+    if (targetStep === 3) {
       if (
         !draft.totalAreaHectares.trim() ||
         !draft.cultivatedAreaHectares.trim()
@@ -855,12 +1011,12 @@ function RuralPropertyWizard({
         boundaries,
       });
     }
-    if (targetStep === 3)
+    if (targetStep === 4)
       return Step3WaterSchema.safeParse({
         waterSource: draft.waterSource,
         irrigationSystem: draft.irrigationSystem,
       });
-    if (targetStep === 4)
+    if (targetStep === 5)
       return Step4ActivitySchema.safeParse({
         activityCategory: draft.activityCategory,
         productionSystem: draft.productionSystem,
@@ -884,6 +1040,7 @@ function RuralPropertyWizard({
     if(!online){persistLocal();return false;}
     saving.current=true;setSaveState("saving");
     const {propertyId,revision,...data}=draft;
+    delete data.wizardVersion;
     const attempt=pendingDraft.current ?? {version:editVersion.current,payload:{propertyId:propertyId??undefined,expectedRevision:propertyId?revision:undefined,commandId:commandId(),draft:data}};
     pendingDraft.current=attempt;
     try{localStorage.setItem(pendingKey,JSON.stringify(attempt));}catch{}
@@ -916,7 +1073,7 @@ function RuralPropertyWizard({
   }, [signature, online, state, saveState]);
 
   async function submitAll(completeOnly=false) {
-    const missing = [1,2,3,4].filter(n => !buildStepData(n).success);
+    const missing = [1,2,3,4,5].filter(n => !buildStepData(n).success);
     if (missing.length || !draft.agroecologicalCommitment) {
       setNotice(missing.length ? "Complete as etapas pendentes: " + missing.join(", ") + ". Você pode voltar a elas pelos botões acima." : "Confirme o compromisso antes de enviar.");
       return;
@@ -938,10 +1095,10 @@ function RuralPropertyWizard({
     try {
       // Recover an uncertain response with its original command before sending new edits.
       if (pendingSave.current) await send(pendingSave.current.payload);
-      for (const n of [1,2,3,4,5]) {
+      for (const n of [2,3,4,5,6]) {
         const parsed=buildStepData(n);
         if (!parsed.success) throw new Error("PROPERTY_INCOMPLETE");
-        await send({propertyId:propertyId??undefined,expectedRevision:propertyId?revision:undefined,step:n,stepData:parsed.data,completeOnly:n===5?completeOnly:undefined,commandId:commandId()});
+        await send({propertyId:propertyId??undefined,expectedRevision:propertyId?revision:undefined,step:n,stepData:parsed.data,completeOnly:n===6?completeOnly:undefined,commandId:commandId()});
       }
       try {localStorage.removeItem(localKey(session.userId,null));localStorage.removeItem(localKey(session.userId,propertyId))}catch{}
       dirty.current=false;setSaveState("saved");onNavigate("/produtor/propriedades");
@@ -956,16 +1113,20 @@ function RuralPropertyWizard({
 
   async function next() {
     if (viewOnlyRef.current) {
-      if (step === 5) { onNavigate("/produtor/propriedades"); return; }
-      setDraft((current) => ({ ...current, step: Math.min(5, current.step + 1) }));
+      if (step === 6) { onNavigate("/produtor/propriedades"); return; }
+      setDraft((current) => ({ ...current, step: Math.min(6, current.step + 1) }));
       return;
     }
-    if (step===5) {await submitAll();return;}
+    if (step===6) {await submitAll();return;}
     if (saving.current) return;
     const valid=buildStepData(step).success;
+    if (step === 1 && !valid) {
+      setNotice("Anexe e processe um CAR ou CCIR, confira os dados documentais e salve-os antes de avançar.");
+      return;
+    }
     await saveStep(step);
     setNotice(valid ? "" : "Etapa com pendências. Você pode voltar para completar antes de enviar.");
-    setDraft(current=>({...current,step:Math.min(5,current.step+1)}));
+    setDraft(current=>({...current,step:Math.min(6,current.step+1)}));
   }
 
   async function confirmPassword() {
@@ -1035,18 +1196,14 @@ function RuralPropertyWizard({
           <h1>{draft.propertyName || "Novo imóvel rural"}</h1>
         </div>
       </header>
-      <p className="rural-account-line">
-        Produtor da conta: {session.fullName || "cadastrado"}
-        {accountCpf ? ` · CPF ${accountCpf}` : ""}. Estes dados não são pedidos de novo.
-      </p>
       <div className="rural-wizard-tools">
-        <p>Etapa {step} de 5</p>
+        <p>Etapa {step} de 6</p>
         <button className="secondary" disabled={saving.current} onClick={() => void continueLater()}>
           {viewOnly ? "Voltar aos imóveis" : "Continuar mais tarde"}
         </button>
       </div>
 
-      <nav className="rural-step-progress account-section-nav" aria-label={`Progresso: etapa ${step} de 5`}>
+      <nav className="rural-step-progress account-section-nav" aria-label={`Progresso: etapa ${step} de 6`}>
         {steps.map(([title, , pill], index) => (
           <button
             type="button"
@@ -1069,7 +1226,7 @@ function RuralPropertyWizard({
         ))}
       </nav>
 
-      <p className="account-notice">Etapas pendentes: {[1,2,3,4].filter(n=>!buildStepData(n).success).join(", ") || "nenhuma"}. Toque em uma etapa para continuar o preenchimento.</p>
+      <p className="account-notice">Etapas pendentes: {[1,2,3,4,5,6].filter(n=>!buildStepData(n).success).join(", ") || "nenhuma"}. Toque em uma etapa para continuar o preenchimento.</p>
 
       {!online && (
         <div className="rural-connectivity-notice" role="status">
@@ -1083,7 +1240,7 @@ function RuralPropertyWizard({
           <AlertTriangle />
           <div>
             <h2>O cadastro foi atualizado</h2>
-            <p>Os dados do documento já estão nas etapas. Continue o preenchimento. O que o CAR não traz, como água e atividade, continua com você.</p>
+            <p>Confira os dados reconhecidos pelo documento e continue o preenchimento das demais seções.</p>
           </div>
           <button className="secondary" onClick={() => {
             try { localStorage.removeItem(localKey(session.userId, draft.propertyId)); } catch {}
@@ -1095,16 +1252,66 @@ function RuralPropertyWizard({
       )}
 
       {reauth && <div className="rural-state-card" role="alert"><label>Confirme sua senha para salvar<input type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}/></label><button className="secondary" onClick={()=>void confirmPassword()}>Confirmar senha</button></div>}
-      <div className="account-panel rural-wizard-card" inert={step===5 && saveState==="saving" ? true : undefined}>
+      {step !== 1 && draft.propertyId && (
+        <div hidden>
+          <DocumentsPanel
+            propertyId={draft.propertyId}
+            embedded
+            readOnly={viewOnly}
+            onReadinessChange={({ documents: nextDocuments, requiredReady }) => {
+              updateDocumentReadiness({ documents: nextDocuments, requiredReady });
+            }}
+          />
+        </div>
+      )}
+      <div className="account-panel rural-wizard-card" inert={step===6 && saveState==="saving" ? true : undefined}>
         <div className="account-section-intro rural-step-copy">
           <span>Passo {step}</span>
           <h2>{stepMeta[0]}</h2>
           <p>{stepMeta[1]}</p>
         </div>
 
-        <fieldset className="rural-lock" disabled={viewOnly} inert={viewOnly ? true : undefined}>
+        <fieldset className="rural-lock" disabled={viewOnly && step !== 1} inert={viewOnly && step !== 1 ? true : undefined}>
         {step === 1 && (
-          <div className="rural-form-grid">
+        <div className="rural-form-grid rural-document-step">
+          {draft.propertyId ? (
+            <DocumentsPanel
+              propertyId={draft.propertyId}
+              embedded
+              readOnly={viewOnly}
+              onReadinessChange={({ documents: nextDocuments, requiredReady }) => {
+                updateDocumentReadiness({ documents: nextDocuments, requiredReady });
+              }}
+            />
+          ) : (
+            <div className="rural-document-start rural-wide-field">
+              <FileText aria-hidden="true" />
+              <div>
+                <h3>Comece anexando o CAR ou CCIR</h3>
+                <p>O sistema cria um rascunho seguro para guardar os documentos deste imóvel.</p>
+              </div>
+              <button
+                type="button"
+                className="primary"
+                disabled={!online || saving.current}
+                onClick={() => void saveStep(1, true)}
+              >
+                Iniciar etapa de documentos
+              </button>
+            </div>
+          )}
+          {documents.length > 0 && (
+            <p className="rural-document-readiness rural-wide-field" role="status">
+              {documentsReady
+                ? "Documento CAR/CCIR processado e dados documentais salvos."
+                : "Para avançar, processe um CAR ou CCIR e salve os dados documentais obrigatórios."}
+            </p>
+          )}
+        </div>
+        )}
+
+        {step === 2 && (
+        <div className="rural-form-grid">
             <label>
               Nome da propriedade ou chácara
               <input
@@ -1194,7 +1401,7 @@ function RuralPropertyWizard({
           </div>
         )}
 
-        {step === 2 && (
+        {step === 3 && (
           <div className="rural-form-grid">
             <label>
               Área total (ha)
@@ -1259,7 +1466,7 @@ function RuralPropertyWizard({
               {showingEstimate && estimatedPerimeter ? (
                 <PerimeterSketch sideMeters={estimatedPerimeter.sideMeters} />
               ) : draft.latitudeSede == null || draft.longitudeSede == null ? (
-                <button type="button" className="secondary" onClick={() => patch({ step: 1 })}>
+                <button type="button" className="secondary" onClick={() => patch({ step: 2 })}>
                   Marcar a sede no mapa
                 </button>
               ) : null}
@@ -1270,7 +1477,7 @@ function RuralPropertyWizard({
           </div>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <div className="rural-form-grid">
             <label>
               Fonte principal de água
@@ -1301,7 +1508,7 @@ function RuralPropertyWizard({
           </div>
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <div className="rural-form-grid">
             <label>
               Atividade principal
@@ -1348,7 +1555,7 @@ function RuralPropertyWizard({
           </div>
         )}
 
-        {step === 5 && (
+        {step === 6 && (
           <div className="rural-review">
             <dl>
               <div><dt>Produtor</dt><dd>{session.fullName || "Conta já cadastrada"}{accountCpf ? ` · ${accountCpf}` : ""}</dd></div>
@@ -1374,7 +1581,51 @@ function RuralPropertyWizard({
               <div><dt>Atividade</dt><dd>{activityLabel(draft.activityCategory)}</dd></div>
               <div><dt>Sistema</dt><dd>{systemLabel(draft.productionSystem)}</dd></div>
             </dl>
-            <p className="rural-readonly-note">Água, atividade e sistema não vêm do PDF do CAR. Se estiverem em branco, volte nas etapas 3 e 4 e escolha.</p>
+            <section className="rural-document-review" aria-labelledby="rural-document-review-title">
+              <div>
+                <h3 id="rural-document-review-title">Documentos do imóvel — etapa 1</h3>
+                <p>
+                  {documentsReady
+                    ? "Documento exigido processado; dados documentais salvos."
+                    : "Falta processar e salvar os dados documentais exigidos."}
+                </p>
+              </div>
+              {documents.length ? (
+                <ul>
+                  {documents.map((document) => (
+                    <li key={document.id}>
+                      <strong>{document.documentType === "car_sicar" ? "CAR / SICAR" : document.documentType === "ccir_incra" ? "CCIR / INCRA" : document.documentType}</strong>
+                      <span>{document.fileName}</span>
+                      <span>
+                        Envio: {document.status}; processamento: {document.extractionStatus ?? "não concluído"}; dados: {document.dataSaved ? "salvos" : "pendentes"}.
+                      </span>
+                      {document.dataSaved && (
+                        <span>
+                          Dados extraídos: {document.extractedData.propertyRegisteredName} · {document.extractedData.municipality}/RO · {formatHa(document.extractedData.totalAreaHectares)}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>Nenhum documento exigido foi anexado a este imóvel.</p>
+              )}
+              <button type="button" className="secondary" onClick={() => patch({ step: 1 })}>
+                Corrigir documentos
+              </button>
+            </section>
+            <nav className="rural-review-shortcuts" aria-label="Corrigir seção do imóvel">
+              {steps.slice(1, 5).map(([title], index) => (
+                <button
+                  key={title}
+                  type="button"
+                  className="secondary"
+                  onClick={() => patch({ step: index + 2 })}
+                >
+                  Corrigir {title.toLowerCase()}
+                </button>
+              ))}
+            </nav>
             <label className="account-toggle rural-commitment">
               <input
                 type="checkbox"
@@ -1409,14 +1660,14 @@ function RuralPropertyWizard({
               <><WifiOff /> Rascunho salvo localmente</>
             ) : null}
           </div>
-          {step===5 && !viewOnly && <button type="button" className="secondary" disabled={saving.current || state!=="ready"} onClick={()=>void submitAll(true)}>Concluir e salvar</button>}
+          {step===6 && !viewOnly && <button type="button" className="secondary" disabled={saving.current || state!=="ready"} onClick={()=>void submitAll(true)}>Concluir e salvar</button>}
           <button
             type="button"
             className="primary"
             disabled={saving.current || state === "conflict"}
             onClick={() => void next()}
           >
-            {viewOnly ? (step === 5 ? "Voltar aos imóveis" : "Ver próxima etapa") : step === 5 ? "Revisar e enviar" : "Salvar e continuar"}
+            {viewOnly ? (step === 6 ? "Voltar aos imóveis" : "Ver próxima etapa") : step === 6 ? "Revisar e enviar" : "Salvar e continuar"}
             <ChevronRight />
           </button>
         </footer>

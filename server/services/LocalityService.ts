@@ -8,6 +8,7 @@ import {
   type LocalityCoverage,
   type Municipality,
 } from "../../shared/contracts/locality.ts";
+import { findRoMunicipality } from "../../shared/localities/roMunicipalities.ts";
 
 export class LocalityError extends Error {
   constructor(
@@ -219,6 +220,15 @@ export const LocalityService = {
     requestId: string,
     ipHash: string,
   ) {
+    const canonicalMunicipality = findRoMunicipality({
+      name: input.name,
+      ibgeCode: input.ibgeCode,
+    });
+    if (
+      input.state !== "RO" ||
+      !canonicalMunicipality
+    )
+      throw new LocalityError("VALIDATION_FAILED", 422);
     const client = await requirePool().connect();
     try {
       await client.query("BEGIN");
@@ -262,7 +272,12 @@ export const LocalityService = {
           "INSERT INTO public.app_municipalities(ibge_code,name,state,created_by,updated_by)",
           "VALUES($1,$2,upper($3),$4,$4) RETURNING *",
         ].join(" "),
-        [input.ibgeCode, input.name, input.state, actor.userId],
+        [
+          canonicalMunicipality.ibgeCode,
+          canonicalMunicipality.name,
+          input.state,
+          actor.userId,
+        ],
       );
       const row = inserted.rows[0];
 
@@ -314,6 +329,23 @@ export const LocalityService = {
         await client.query("ROLLBACK");
         return { status: "not_found" as const };
       }
+      if (
+        input.name &&
+        (current.state !== "RO" ||
+          !findRoMunicipality({
+            name: input.name,
+            ibgeCode: current.ibge_code,
+          }))
+      ) {
+        await client.query("ROLLBACK");
+        throw new LocalityError("VALIDATION_FAILED", 422);
+      }
+      const canonicalName = input.name
+        ? findRoMunicipality({
+            name: input.name,
+            ibgeCode: current.ibge_code,
+          })?.name
+        : undefined;
 
       const replayTarget = await replayedTarget(client, input.commandId, [
         "locality.municipality_updated",
@@ -349,7 +381,7 @@ export const LocalityService = {
           "  revision=revision+1",
           " WHERE id=$1 RETURNING *",
         ].join(" "),
-        [municipalityId, input.name ?? null, nextActive, actor.userId],
+        [municipalityId, canonicalName ?? null, nextActive, actor.userId],
       );
       const row = updated.rows[0];
 

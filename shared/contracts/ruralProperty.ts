@@ -85,7 +85,7 @@ export const Step1IdentificationSchema = z
     registrationNumber: z.string().trim().max(64).nullable().optional(),
     lineVicinal: z.string().trim().min(2).max(64),
     ruralZoneSector: z.string().trim().min(2).max(64),
-    municipality: z.string().trim().min(2).max(100).default("Ariquemes"),
+    municipality: z.string().trim().min(2).max(100),
     state: z.literal("RO").default("RO"),
     latitudeSede: latitude,
     longitudeSede: longitude,
@@ -117,7 +117,7 @@ export const Step3WaterSchema = z
 
 export const Step4ActivitySchema = z
   .object({
-    activityCategory: RuralActivityCategorySchema,
+    activityCategory: RuralActivityCategorySchema.optional(),
     productionSystem: ProductionSystemSchema,
     hasWashingFacility: z.boolean(),
   })
@@ -149,7 +149,7 @@ export const SaveWizardStepSchema = z.discriminatedUnion("step", [
     .object({
       propertyId: z.uuid().optional(),
       expectedRevision: z.number().int().positive().optional(),
-      step: z.literal(1),
+      step: z.literal(2),
       stepData: Step1IdentificationSchema,
       ...commonSaveFields,
     })
@@ -174,7 +174,7 @@ export const SaveWizardStepSchema = z.discriminatedUnion("step", [
     .object({
       propertyId: z.uuid(),
       expectedRevision: z.number().int().positive(),
-      step: z.literal(2),
+      step: z.literal(3),
       stepData: Step2DimensionsSchema,
       ...commonSaveFields,
     })
@@ -183,7 +183,7 @@ export const SaveWizardStepSchema = z.discriminatedUnion("step", [
     .object({
       propertyId: z.uuid(),
       expectedRevision: z.number().int().positive(),
-      step: z.literal(3),
+      step: z.literal(4),
       stepData: Step3WaterSchema,
       ...commonSaveFields,
     })
@@ -192,7 +192,7 @@ export const SaveWizardStepSchema = z.discriminatedUnion("step", [
     .object({
       propertyId: z.uuid(),
       expectedRevision: z.number().int().positive(),
-      step: z.literal(4),
+      step: z.literal(5),
       stepData: Step4ActivitySchema,
       ...commonSaveFields,
     })
@@ -201,7 +201,7 @@ export const SaveWizardStepSchema = z.discriminatedUnion("step", [
     .object({
       propertyId: z.uuid(),
       expectedRevision: z.number().int().positive(),
-      step: z.literal(5),
+      step: z.literal(6),
       stepData: Step5ReviewSchema,
       ...commonSaveFields,
     })
@@ -249,8 +249,8 @@ export type RuralPropertyView = {
   lineVicinal: string;
   municipality: string;
   state: "RO";
-  latitudeSede: number;
-  longitudeSede: number;
+  latitudeSede: number | null;
+  longitudeSede: number | null;
   accessDirections: string | null;
   waterSource: z.infer<typeof WaterSourceSchema> | null;
   irrigationSystem: z.infer<typeof IrrigationSystemSchema> | null;
@@ -302,7 +302,7 @@ export function propertyIsViewOnly(input: {
 
 // Partial input remains draft-only. Completion still uses the strict step schemas.
 export const RuralDraftDataSchema=z.object({
- step:z.number().int().min(1).max(5), propertyName:z.string().max(128), registrationNumber:z.string().max(64),
+ step:z.number().int().min(1).max(6), propertyName:z.string().max(128), registrationNumber:z.string().max(64),
  lineVicinal:z.string().max(64),ruralZoneSector:z.string().max(64),municipality:z.string().max(100),state:z.literal("RO"),
  latitudeSede:z.number().min(-14).max(-7).nullable(),longitudeSede:z.number().min(-67).max(-59).nullable(),
  accessDirections:z.string().max(500),totalAreaHectares:z.string().max(30),cultivatedAreaHectares:z.string().max(30),

@@ -1,5 +1,37 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-10-02 — Localidades de Rondônia, cadastro produtor e imóvel em seis etapas
+
+Status: **implementação preparada no branch; schema lógico 43; migration ainda não aplicada ao Supabase. Nenhum deploy ou homologação real foi executado.**
+
+Solicitação: completar o catálogo de Rondônia e evitar localidades duplicadas; retirar imóvel/atividade do cadastro inicial do produtor; orientar produtores ainda não aprovados; iniciar o cadastro de cada imóvel pelos documentos e concluir o wizard em seis etapas.
+
+Decisões e compatibilidade:
+- `shared/localities/roMunicipalities.ts` mantém snapshot versionado dos 52 municípios e códigos IBGE, com a fonte oficial do IBGE indicada no arquivo. A lista é apenas referência para a gestão; vitrine, produtor e consumidor continuam usando o catálogo existente de localidades **ativas**, sem listas paralelas de cobertura.
+- A gestão oferece seletor com “Escolha o município”, resolução entre município e código, normalização sem acento/caixa/espaços e mensagem “Município já cadastrado”. A verificação em serviço melhora o feedback; as restrições únicas já existentes no banco para IBGE e nome normalizado continuam sendo a garantia contra concorrência.
+- Os campos legados de produtor permanecem no schema para leitura histórica, mas a migration os torna opcionais; contratos, formulário e chamadas Express/Edge não enviam `property_name`/`rural_activity_type`. Os RPCs mantêm os parâmetros opcionais por compatibilidade, sem persistir valores do cadastro inicial.
+- O wizard usa a etapa 1 para documentos CAR/CCIR, com upload, processamento, dados editáveis e revisão no próprio imóvel. O backend mantém a exigência de documento limpo, extração processada e nome, município e área documental salvos. Cada documento segue ligado ao `propertyId`, preservando custódia, processamento e histórico. Imóveis antigos conservam seus dados e seus índices de progresso são deslocados uma etapa; rascunhos locais antigos também são migrados na restauração.
+- A migration permite que nome, localização e coordenadas fiquem nulos enquanto o rascunho começa pelos documentos; remove o município padrão Ariquemes para não inventar uma localidade. O constraint de submissão mantém esses campos obrigatórios, amplia o progresso para 1–6 e preserva os dados antigos. A atividade do primeiro imóvel configurado é o padrão server-side para novos imóveis; uma escolha explícita posterior prevalece.
+- A mensagem de onboarding leva a Imóveis rurais e orienta a iniciar Novo imóvel. O backend só permite escopo de entrega quando o perfil do produtor está `verified`. Este repositório não contém rotas de loja/publicação de produtos; não se afirma gate de produto inexistente.
+
+Arquivos principais: `shared/localities/roMunicipalities.ts`, `shared/contracts/locality.ts`, `shared/contracts/auth.ts`, `shared/contracts/ruralProperty.ts`, `src/pages/admin/locality/AdminLocalitiesPage.tsx`, `src/pages/account/AccountHub.tsx`, `src/pages/producer/ProducerPropertiesPage.tsx`, `src/pages/documents/DocumentsPanel.tsx`, `server/services/LocalityService.ts`, `server/services/RuralPropertyService.ts`, `server/services/AccessScopeService.ts`, `server/routes/ruralPropertyRoutes.ts` e `supabase/functions/public-registration/index.ts`.
+
+Banco e manifesto:
+- Migration aditiva: `supabase/migrations/20261002170000_producer_onboarding_documents_stage.sql`.
+- `supabase/manifest.json`: schema lógico **43**, migration e hash sincronizados (`bb664bc4dc7e3ecd972a947fe97f6e5b8c93f5a4e9f279ec08630bfb1ab0e77a`).
+- Esta sessão não tem acesso ao projeto remoto. Em uma janela coordenada de release, após confirmar o projeto e o histórico na instância autorizada, executar `npm run migrations:verify`, `npx supabase migration list --linked`, `npx supabase db push --linked` e novamente `npx supabase migration list --linked`; verificar a aplicação da versão `20261002170000` antes de promover o código pela integração main-only do Vercel. Não executar contra Production sem confirmar o `project-ref` e aprovar a janela.
+- Não foi alterada a configuração do Vercel. A publicação deve ser confirmada na própria execução de Production; merge, build local e migration no Git não comprovam deploy.
+
+Validação local concluída:
+- `npm run typecheck`, `npm run migrations:verify` e `npm run verify:t08:free` passaram. O gate T08 inclui typecheck do app, verificação de segurança, 26 testes de contrato/rota, verificador de evidências, build/bundle e **17 cenários E2E**, incluindo etapa 1 documental, bloqueio sem documento, edição dos dados extraídos, onboarding, persistência e layout de 320 a 1440 px.
+- `npm run test:unit` passou com 273 testes; passaram também `npm run test:registration:hotfix` (19), `npm run test:t12:unit` (41), `npm run test:t09t10` (57), `npm run test:t06:unit` (22), `tests/unit/ruralPropertyOnboarding.test.ts`/contratos de produtor e localidade direcionados (28) e `tests/e2e/shell.spec.ts` direcionado ao cadastro responsivo e campos removidos (7).
+- A execução completa de `tests/e2e/shell.spec.ts` ficou em 11/26: as falhas restantes estão em asserções de shell/configuração, login/recuperação e T02 fora do fluxo alterado. Os cenários focados no cadastro do produtor passaram.
+- A suíte `tests/integration/supabase.test.ts`, inclusive o teste concorrente de unicidade por código e nome normalizado, foi compilada, mas os 10 testes de banco/JWT foram ignorados porque não há ambiente `development` Supabase isolado configurado nesta sessão. A concorrência é coberta também pelas duas restrições únicas já presentes no banco.
+- O build terminou com aviso não bloqueante de chunk JavaScript acima de 500 kB. `npm ci` reportou quatro advisories nas dependências existentes (2 moderate, 2 high); nenhuma dependência foi adicionada ou atualizada. Verificação de segredos e verificação de bundle não encontraram segredos.
+- Permanecem pendentes a aplicação/validação remota da migration, a confirmação do deploy Vercel e a homologação operacional. Testes E2E usam serviços HTTP simulados e não comprovam persistência real.
+
+---
+
 ## 2026-09-30 — Imóvel aprovado não grava, administrador entra, aceite LGPD no cadastro
 
 Status: **correção na `main`; schema lógico continua 37. Nenhuma migration nova. A fila da T11 permanece.** A migration `20260930013000_approved_property_withdraw.sql` segue só no Git: esta sessão não tem credencial de banco e o conector da Vercel deste time responde 403. O aceite da LGPD usa a tabela `app_consent_records`, que já existia. `app_releases` não foi alterado.

@@ -64,7 +64,8 @@ for (const width of [320, 360, 430, 768, 1024, 1440]) {
     await expect(
       page.getByRole("heading", { name: "Cadastro de produtor" }),
     ).toBeVisible();
-    await expect(page.getByLabel("Nome de seu imóvel")).toBeVisible();
+    await expect(page.getByLabel("Nome de seu imóvel")).toHaveCount(0);
+    await expect(page.getByLabel("Atividade principal")).toHaveCount(0);
 
     const cpf = page.getByLabel("CPF");
     await cpf.fill("52998224725");
@@ -279,7 +280,7 @@ test("conta separa consumidor e produtor e administração fica independente", a
   ] as const) {
     await page.goto(path);
     await expect(page.getByRole("heading", { name: heading })).toBeVisible();
-    const password = page.getByLabel("Senha", { exact: true });
+    const password = page.getByRole("textbox", { name: /^Senha/ });
     await expect(password).toHaveAttribute("type", "password");
     await page.getByRole("button", { name: "Mostrar senha" }).click();
     await expect(password).toHaveAttribute("type", "text");
@@ -295,7 +296,8 @@ test("conta separa consumidor e produtor e administração fica independente", a
   await expect(
     page.getByRole("heading", { name: "Cadastro de produtor" }),
   ).toBeVisible();
-  await expect(page.getByLabel("Nome de seu imóvel")).toBeVisible();
+  await expect(page.getByLabel("Nome de seu imóvel")).toHaveCount(0);
+  await expect(page.getByLabel("Atividade principal")).toHaveCount(0);
 
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
@@ -386,7 +388,7 @@ test("senha forte orienta e bloqueia cadastro fraco", async ({ page }) => {
   await expect(page.getByText("Número")).toBeVisible();
   await expect(page.getByText(/Símbolo, por exemplo/)).toBeVisible();
 
-  const password = page.getByLabel("Senha", { exact: true });
+  const password = page.getByRole("textbox", { name: /^Senha/ });
   const confirmation = page.getByLabel("Confirmar senha");
   const submit = page.getByRole("button", { name: "Criar cadastro" });
 
@@ -415,7 +417,7 @@ test("cadastros mostram exatamente os campos obrigatórios ausentes", async ({ p
   for (const path of ["/cadastro/consumidor", "/cadastro/produtor"]) {
     await page.goto(path);
 
-    await page.getByLabel("Senha", { exact: true }).fill("SenhaForte!2026");
+    await page.getByRole("textbox", { name: /^Senha/ }).fill("SenhaForte!2026");
     await page.getByLabel("Confirmar senha").fill("SenhaForte!2026");
     await page.getByRole("button", { name: "Criar cadastro" }).click();
 
@@ -427,14 +429,8 @@ test("cadastros mostram exatamente os campos obrigatórios ausentes", async ({ p
     await expect(page.getByText("Informe seu celular com DDD.")).toBeVisible();
     await expect(page.getByText("Informe seu e-mail.")).toBeVisible();
 
-    if (path.endsWith("produtor"))
-      await expect(
-        page.getByText("Informe o nome de seu imóvel."),
-      ).toBeVisible();
-    else
-      await expect(
-        page.getByText("Informe o nome de seu imóvel."),
-      ).toHaveCount(0);
+    await expect(page.getByText("Informe o nome de seu imóvel.")).toHaveCount(0);
+    await expect(page.getByText("Informe a atividade principal.")).toHaveCount(0);
 
     await expect(page.getByLabel("Nome completo")).toBeFocused();
   }

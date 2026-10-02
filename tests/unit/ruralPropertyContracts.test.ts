@@ -7,6 +7,7 @@ import {
   Step3WaterSchema,
   Step4ActivitySchema,
   Step5ReviewSchema,
+  SaveRuralDraftSchema,
   SubmitPropertySchema,
 } from "../../shared/contracts/ruralProperty";
 import {
@@ -62,14 +63,19 @@ describe("T08 contratos de imóvel rural", () => {
     ).toBe(false);
   });
 
-  it("05 mantém município padrão Ariquemes e UF RO", () => {
+  it("05 exige município e mantém UF RO por padrão", () => {
     const parsed = Step1IdentificationSchema.parse({
       ...step1,
-      municipality: undefined,
       state: undefined,
     });
     expect(parsed.municipality).toBe("Ariquemes");
     expect(parsed.state).toBe("RO");
+    expect(
+      Step1IdentificationSchema.safeParse({
+        ...step1,
+        municipality: undefined,
+      }).success,
+    ).toBe(false);
   });
 
   it("06 aceita áreas válidas e perímetro opcional", () => {
@@ -150,7 +156,7 @@ describe("T08 contratos de imóvel rural", () => {
     ).toBe(true);
   });
 
-  it("14 exige aceite explícito no passo 5", () => {
+  it("14 exige aceite explícito na etapa 6", () => {
     expect(
       Step5ReviewSchema.safeParse({ agroecologicalCommitment: false }).success,
     ).toBe(false);
@@ -171,7 +177,44 @@ describe("T08 contratos de imóvel rural", () => {
     ).toBe(false);
   });
 
-  it("16 submit rejeita campos extras e compromisso ausente", () => {
+  it("16 permite criar rascunho vazio na etapa de documentos, mas não salva identidade como etapa 1", () => {
+    const commandId = crypto.randomUUID();
+    expect(
+      SaveRuralDraftSchema.safeParse({
+        commandId,
+        draft: {
+          step: 1,
+          propertyName: "",
+          registrationNumber: "",
+          lineVicinal: "",
+          ruralZoneSector: "",
+          municipality: "",
+          state: "RO",
+          latitudeSede: null,
+          longitudeSede: null,
+          accessDirections: "",
+          totalAreaHectares: "",
+          cultivatedAreaHectares: "",
+          polygonGeojson: "",
+          waterSource: "",
+          irrigationSystem: "",
+          activityCategory: "",
+          productionSystem: "",
+          hasWashingFacility: true,
+          agroecologicalCommitment: false,
+        },
+      }).success,
+    ).toBe(true);
+    expect(
+      SaveWizardStepSchema.safeParse({
+        step: 1,
+        stepData: step1,
+        commandId,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("17 submit rejeita campos extras e compromisso ausente", () => {
     expect(
       SubmitPropertySchema.safeParse({
         expectedRevision: 2,
@@ -182,7 +225,7 @@ describe("T08 contratos de imóvel rural", () => {
     ).toBe(false);
   });
 
-  it("17 desenha a ficha de perímetro com quadrado fechado na sede", () => {
+  it("18 desenha a ficha de perímetro com quadrado fechado na sede", () => {
     const result = estimatePropertyPerimeter(-9.533644, -62.437444, 32.1826);
     expect(result).not.toBeNull();
     expect(GeoJsonPolygonSchema.safeParse(result!.polygon).success).toBe(true);

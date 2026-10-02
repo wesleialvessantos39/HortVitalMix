@@ -123,6 +123,22 @@ ruralPropertyRouter.get(
 );
 
 ruralPropertyRouter.get(
+  "/producer/properties/activity-default",
+  originProtection,
+  async (req: Request, res: Response) => {
+    const actor = requireProducer(req, res);
+    if (!actor) return;
+    try {
+      res.status(200).json(
+        await RuralPropertyService.getDefaultActivity(actor.userId),
+      );
+    } catch (error) {
+      sendError(res, error);
+    }
+  },
+);
+
+ruralPropertyRouter.get(
   "/producer/properties/:id",
   originProtection,
   async (req: Request, res: Response) => {
@@ -169,7 +185,7 @@ ruralPropertyRouter.post(
         req.requestId,
         req.clientIpHash,
       );
-      const created = parsed.data.step === 1 && !parsed.data.propertyId;
+      const created = parsed.data.step === 2 && !parsed.data.propertyId;
       res.status(created ? 201 : 200).json(result);
     } catch (error) {
       sendError(res, error);
@@ -215,6 +231,7 @@ ruralPropertyRouter.post(
 
 ruralPropertyRouter.post("/producer/properties/wizard/draft",originProtection,async(req,res)=>{
  const actor=requireProducer(req,res);if(!actor)return;
+ if(!requireRecentAuth(req,res,actor.userId))return;
  const input=SaveRuralDraftSchema.safeParse(req.body);if(!input.success){res.status(400).json({error:"VALIDATION_ERROR"});return;}
  try{res.json(await RuralPropertyService.saveDraft(actor.userId,actor.role,input.data,req.requestId,req.clientIpHash));}catch(e){sendError(res,e);}
 });

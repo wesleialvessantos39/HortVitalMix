@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 const read = (path) => readFileSync(path, "utf8");
 const migration = read("supabase/migrations/20260926190000_trilha08_rural_properties.sql");
+const onboardingMigration = read("supabase/migrations/20261002170000_producer_onboarding_documents_stage.sql");
 const manifest = JSON.parse(read("supabase/manifest.json"));
 const contracts = read("shared/contracts/ruralProperty.ts");
 const service = read("server/services/RuralPropertyService.ts");
@@ -60,6 +61,25 @@ required(
   "T08_MIGRATION_EVIDENCE_MISSING",
 );
 
+required(
+  onboardingMigration,
+  [
+    "ALTER COLUMN property_name DROP NOT NULL",
+    "ALTER COLUMN rural_zone_sector DROP NOT NULL",
+    "ALTER COLUMN line_vicinal DROP NOT NULL",
+    "ALTER COLUMN municipality DROP NOT NULL",
+    "ALTER COLUMN municipality DROP DEFAULT",
+    "ALTER COLUMN latitude_sede DROP NOT NULL",
+    "ALTER COLUMN longitude_sede DROP NOT NULL",
+    "ALTER COLUMN rural_activity_type DROP NOT NULL",
+    "ALTER COLUMN rural_activity_type DROP DEFAULT",
+    "wizard_current_step BETWEEN 1 AND 6",
+    "LEAST(wizard_current_step + 1, 6)",
+    "property_name IS NOT NULL",
+  ],
+  "T08_ONBOARDING_MIGRATION_EVIDENCE_MISSING",
+);
+
 if (migration.includes("REFERENCES public.app_user_addresses"))
   throw new Error("T08_PROPERTY_MUST_NOT_REFERENCE_PERSONAL_ADDRESS");
 if (/CREATE EXTENSION\s+.*postgis/i.test(migration))
@@ -100,6 +120,8 @@ required(
     "app_property_boundaries",
     "app_rural_activities",
     "assertComplete",
+    "hasRequiredDocumentExtraction",
+    "selectPropertyActivityCategory",
     "redactPII",
   ],
   "T08_SERVICE_EVIDENCE_MISSING",
@@ -126,7 +148,10 @@ required(
   ui,
   [
     "/produtor/propriedades",
-    "Etapa {step} de 5",
+    "Etapa {step} de 6",
+    "Documentos do imóvel",
+    "PROPERTY_DOCUMENTS_REQUIRED",
+    "PROPERTY_DOCUMENT_DATA_REQUIRED",
     "2000",
     "Rascunho salvo",
     "Rascunho salvo localmente",

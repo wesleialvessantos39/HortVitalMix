@@ -62,11 +62,7 @@ describe("public registration resilient transport", () => {
     );
 
     await expect(
-      registerPublicAccount("producer", {
-        ...payload,
-        propertyName: "Test Property",
-        activityType: "misto",
-      }),
+      registerPublicAccount("producer", payload),
     ).resolves.toMatchObject({ transport: "supabase_edge" });
 
     expect(mocks.api).not.toHaveBeenCalled();

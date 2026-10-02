@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 42,
+  "schemaVersion": 43,
   "migrations": [
     {
       "version": "20260919030126",
@@ -235,7 +235,12 @@
       "version": "20261001154343",
       "name": "registration_locality_enforcement",
       "file": "20261001154343_registration_locality_enforcement.sql"
+    },
+    {
+      "version": "20261002170000",
+      "name": "producer_onboarding_documents_stage",
+      "file": "20261002170000_producer_onboarding_documents_stage.sql"
     }
   ],
-  "migrationHistoryHash": "221bb7fcf60f2bbef291f3319345f41a4aa3598998d88029b5c288323b31481d"
+  "migrationHistoryHash": "bb664bc4dc7e3ecd972a947fe97f6e5b8c93f5a4e9f279ec08630bfb1ab0e77a"
 }

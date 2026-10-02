@@ -85,12 +85,13 @@ describe("escopo de acesso — localização do titular", () => {
 
 describe("escopo de acesso — resultado da gestão de localidades", () => {
   it("07 conflito de revisão informa a revisão corrente", () => {
-    expect(
-      LocalityMutationResultSchema.parse({
-        status: "conflict",
-        currentRevision: 4,
-      }).currentRevision,
-    ).toBe(4);
+    const result = LocalityMutationResultSchema.parse({
+      status: "conflict",
+      currentRevision: 4,
+    });
+    expect(result.status).toBe("conflict");
+    if (result.status === "conflict")
+      expect(result.currentRevision).toBe(4);
   });
 
   it("08 impacto da desativação é sempre não negativo", () => {
