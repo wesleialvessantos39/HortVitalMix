@@ -58,8 +58,6 @@ function registration(overrides: Record<string, unknown> = {}) {
       return "(69) " + number.slice(0, 5) + "-" + number.slice(5);
     })(),
     password: `Hvm!${marker}Aa9#`,
-    propertyName: `Sítio ${marker.slice(0, 8)}`,
-    activityType: "misto",
     // Trava de cobertura: o cadastro público só conclui em município ativo.
     municipality: "Ariquemes",
     state: "RO",
@@ -217,7 +215,7 @@ describe.skipIf(!enabled)("Supabase real e JWTs reais", () => {
       expect(chain.rows[0]).toMatchObject({
         status: "active",
         role_code: "producer",
-        property_name: payload.propertyName,
+        property_name: null,
         verification_status: "declared",
         trust_level: 0,
       });

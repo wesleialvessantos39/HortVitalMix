@@ -92,6 +92,23 @@ function mapDbError(error: unknown): never {
   throw new AccessScopeError("UNAVAILABLE", 503);
 }
 
+export function producerIsApproved(verificationStatus: string | null | undefined) {
+  return verificationStatus === "verified";
+}
+
+async function assertProducerApproved(client: PoolClient, producerId: string) {
+  const result = await client.query<{ verification_status: string }>(
+    "SELECT verification_status FROM public.app_producer_profiles WHERE id=$1",
+    [producerId],
+  );
+  if (!producerIsApproved(result.rows[0]?.verification_status))
+    throw new AccessScopeError(
+      "PRODUCER_NOT_APPROVED",
+      403,
+      "A loja e a publicação de produtos dependem da aprovação do imóvel.",
+    );
+}
+
 function mapPartialBlock(
   row: Record<string, any>,
   municipalityIds: string[],
@@ -154,6 +171,7 @@ export const AccessScopeService = {
       delivers: boolean | null;
       blocked: boolean;
       block_kind: string;
+      verification_status: string | null;
     }>(
       [
         "SELECT public.fn_locality_coverage_by_id($2::uuid) AS coverage,",
@@ -161,6 +179,9 @@ export const AccessScopeService = {
         "         (SELECT pp.id FROM public.app_producer_profiles pp",
         "            JOIN public.app_people pe ON pe.id=pp.person_id",
         "           WHERE pe.user_id=$1::uuid LIMIT 1), $2::uuid) AS delivers,",
+        "       (SELECT pp.verification_status FROM public.app_producer_profiles pp",
+        "          JOIN public.app_people pe ON pe.id=pp.person_id",
+        "         WHERE pe.user_id=$1::uuid LIMIT 1) AS verification_status,",
         "       public.fn_is_publish_blocked($1::uuid,$2::uuid) AS blocked,",
         "       public.fn_partial_block_kind($1::uuid,'producer_publishing') AS block_kind",
       ].join(" "),
@@ -169,8 +190,11 @@ export const AccessScopeService = {
     const row = result.rows[0];
     const coverage = row?.coverage ?? "unknown";
     const blocked = Boolean(row?.blocked) || row?.block_kind === "all";
+    const approved = producerIsApproved(row?.verification_status);
     const reason = blocked
       ? "PARTIAL_BLOCK"
+      : !approved
+        ? "PRODUCER_NOT_APPROVED"
       : coverage !== "active"
         ? coverage === "inactive"
           ? "LOCALITY_DISABLED"
@@ -219,6 +243,7 @@ export const AccessScopeService = {
     const client = await requirePool().connect();
     try {
       const producerId = await resolveProducerId(client, userId);
+      await assertProducerApproved(client, producerId);
       const scope = await client.query<{ scope: DeliveryScopeMode; revision: number }>(
         "SELECT scope,revision FROM public.app_producer_delivery_scopes WHERE producer_id=$1",
         [producerId],
@@ -255,6 +280,7 @@ export const AccessScopeService = {
     try {
       await client.query("BEGIN");
       const producerId = await resolveProducerId(client, userId, true);
+      await assertProducerApproved(client, producerId);
 
       const replayed = await client.query(
         "SELECT 1 FROM public.app_audit_events WHERE command_id=$1 LIMIT 1",

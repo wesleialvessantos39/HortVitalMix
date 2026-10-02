@@ -59,6 +59,21 @@ const blankForm = {
   consolidatedRuralAreaHectares: "",
   fiscalModules: "",
 };
+export type PropertyDocumentSummary = {
+  id: string;
+  documentType: DocumentView["document_type"];
+  fileName: string;
+  status: DocumentView["status"];
+  extractionStatus: string | null;
+  dataSaved: boolean;
+  extractedData: {
+    propertyRegisteredName: string;
+    municipality: string;
+    totalAreaHectares: string;
+    carNumber: string;
+    ccirNumber: string;
+  };
+};
 function textOrEmpty(value: unknown) {
   return value == null || value === "" ? "" : String(value);
 }
@@ -112,11 +127,20 @@ export function DocumentsPanel({
   admin = false,
   initialDocumentId,
   onNavigate,
+  embedded = false,
+  readOnly = false,
+  onReadinessChange,
 }: {
   propertyId: string;
   admin?: boolean;
   initialDocumentId?: string;
   onNavigate?: (url: string) => void;
+  embedded?: boolean;
+  readOnly?: boolean;
+  onReadinessChange?: (result: {
+    documents: PropertyDocumentSummary[];
+    requiredReady: boolean;
+  }) => void;
 }) {
   const base = admin ? "/v1/admin/documents" : "/v1/producer/documents";
   const [docs, setDocs] = useState<DocumentView[]>([]),
@@ -151,9 +175,76 @@ export function DocumentsPanel({
       const r = await api<{ documents: DocumentView[] }>(
         `${base}?propertyId=${encodeURIComponent(propertyId)}`,
       );
-      setDocs(
-        admin ? r.documents : r.documents.filter((d) => d.status !== "archived"),
-      );
+      const visible = admin
+        ? r.documents
+        : r.documents.filter((d) => d.status !== "archived");
+      setDocs(visible);
+      if (!admin && onReadinessChange) {
+        const required = visible.filter(
+          (document) =>
+            document.status === "clean" &&
+            ["car_sicar", "ccir_incra"].includes(document.document_type),
+        );
+        const extractions = await Promise.all(
+          required.map(async (document) => {
+            const result = await api<{
+              extraction: ExtractionView | null;
+            }>(`${base}/${document.id}/extraction`).catch(() => null);
+            const extraction = result?.extraction ?? null;
+            const fields = fieldsFromExtraction(extraction) as Record<string, unknown> | null;
+            const extractedData = {
+              propertyRegisteredName: textOrEmpty(fields?.propertyRegisteredName).trim(),
+              municipality: textOrEmpty(fields?.municipality).trim(),
+              totalAreaHectares: textOrEmpty(fields?.totalAreaHectares).trim(),
+              carNumber: textOrEmpty(fields?.carNumber).trim(),
+              ccirNumber: textOrEmpty(fields?.ccirNumber).trim(),
+            };
+            const dataSaved = Boolean(
+              extractedData.propertyRegisteredName &&
+                extractedData.municipality &&
+                Number(extractedData.totalAreaHectares) > 0,
+            );
+            return {
+              id: document.id,
+              documentType: document.document_type,
+              fileName: document.file_name,
+              status: document.status,
+              extractionStatus: extraction?.status ?? null,
+              dataSaved,
+              extractedData,
+            } satisfies PropertyDocumentSummary;
+          }),
+        );
+        onReadinessChange({
+          documents: visible.map((document) => {
+            const extraction = extractions.find((item) => item.id === document.id);
+            return (
+              extraction ?? {
+                id: document.id,
+                documentType: document.document_type,
+                fileName: document.file_name,
+                status: document.status,
+                extractionStatus: null,
+                dataSaved: false,
+                extractedData: {
+                  propertyRegisteredName: "",
+                  municipality: "",
+                  totalAreaHectares: "",
+                  carNumber: "",
+                  ccirNumber: "",
+                },
+              }
+            );
+          }),
+          requiredReady: extractions.some(
+            (item) =>
+              item.status === "clean" &&
+              item.dataSaved &&
+              (item.extractionStatus === "completed" ||
+                item.extractionStatus === "flagged_discrepancy"),
+          ),
+        });
+      }
       return r.documents;
     } catch (e) {
       showError(e);
@@ -303,6 +394,7 @@ export function DocumentsPanel({
             ? "O PDF foi lido e o cadastro do imóvel foi preenchido. Município, área e o ponto no mapa também. Nome e CPF do produtor continuam os da sua conta."
             : "O PDF foi lido. A área total não substituiu a área cultivada já informada.",
       );
+      await load();
     } catch (e) {
       showError(e);
     } finally {
@@ -479,6 +571,7 @@ export function DocumentsPanel({
           fiscalModules: optionalArea(form.fiscalModules),
         }),
       });
+      await load();
       await open(selected);
       setNotice(
         !result.propertyUpdated
@@ -494,7 +587,11 @@ export function DocumentsPanel({
     }
   }
   return (
-    <section className="documents-panel">
+    <section
+      className={
+        "documents-panel" + (embedded ? " documents-panel--embedded" : "")
+      }
+    >
       <header className="account-detail-top documents-head">
         {onNavigate && (
           <button
@@ -507,14 +604,14 @@ export function DocumentsPanel({
           </button>
         )}
         <div>
-          <span className="eyebrow">Imóvel rural</span>
-          <h1>Documentos do imóvel</h1>
+          <span className="eyebrow">{embedded ? "Etapa 1" : "Imóvel rural"}</span>
+          {embedded ? <h2>Documentos do imóvel</h2> : <h1>Documentos do imóvel</h1>}
         </div>
       </header>
       <p className="rural-page-lead">
         Envie o PDF do CAR ou do CCIR. O sistema lê o texto do arquivo e preenche o cadastro.
       </p>
-      {!admin && (
+      {!admin && !readOnly && (
         <fieldset className="account-panel" disabled={busy}>
           <div className="account-section-intro">
             <h2>Enviar documento</h2>
@@ -617,7 +714,7 @@ export function DocumentsPanel({
                     Ver documento
                   </button>
                 )}
-                {!admin && d.status === "quarantine" && (
+                {!admin && !readOnly && d.status === "quarantine" && (
                   <button
                     disabled={busy}
                     onClick={() => void action(d, "confirm")}
@@ -625,7 +722,7 @@ export function DocumentsPanel({
                     Conferir envio
                   </button>
                 )}
-                {!admin && d.status !== "archived" && (
+                {!admin && !readOnly && d.status !== "archived" && (
                   <button
                     className="secondary"
                     disabled={busy}
@@ -702,7 +799,7 @@ export function DocumentsPanel({
                     </div>
                   ))}
                 </dl>
-                <details>
+                {!readOnly && <details>
                   <summary>Corrigir um dado lido errado</summary>
                 <form
                   className="document-form"
@@ -844,7 +941,7 @@ export function DocumentsPanel({
                     Salvar correção
                   </button>
                 </form>
-                </details>
+                </details>}
               </>
             ) : admin ? (
               <>

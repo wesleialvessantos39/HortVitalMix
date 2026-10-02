@@ -87,19 +87,7 @@ const base = {
 };
 
 export const RegisterConsumerSchema = z.object(base).strict();
-export const RegisterProducerSchema = z
-  .object({
-    ...base,
-    propertyName: z.string().trim().min(2).max(128),
-    activityType: z.enum([
-      "hortalicas_folhosas",
-      "legumes_picados",
-      "frutas",
-      "temperos",
-      "misto",
-    ]),
-  })
-  .strict();
+export const RegisterProducerSchema = z.object(base).strict();
 
 export const PortalRoleSchema = z.enum([
   "consumer",
@@ -172,11 +160,4 @@ export const PasswordChangeSchema = z
   })
   .strict();
 
-export type Registration = z.infer<typeof RegisterConsumerSchema> &
-  Partial<
-    Pick<
-      z.infer<typeof RegisterProducerSchema>,
-      "propertyName" | "activityType"
-    >
-  >;
-
+export type Registration = z.infer<typeof RegisterConsumerSchema>;

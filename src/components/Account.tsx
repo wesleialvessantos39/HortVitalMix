@@ -105,8 +105,6 @@ const requiredMessages: Record<string, string> = {
   email: "Informe seu e-mail.",
   password: "Crie uma senha.",
   confirmPassword: "Confirme sua senha.",
-  propertyName: "Informe o nome de seu imóvel.",
-  activityType: "Selecione a atividade principal.",
   municipality: "Informe o município do seu endereço de entrega.",
 };
 
@@ -125,9 +123,6 @@ function friendlyFieldMessage(
   if (field === "email") return "Informe um e-mail válido.";
   if (field === "password")
     return "A senha ainda não atende a todos os requisitos de segurança.";
-  if (field === "propertyName")
-    return "Informe o nome de seu imóvel com pelo menos 2 caracteres.";
-  if (field === "activityType") return "Selecione a atividade principal.";
   if (field === "municipality")
     return "Selecione um município atendido pela plataforma.";
   if (field === "state") return "Informe a UF do município.";
@@ -1394,45 +1389,6 @@ export function Account({
             passwordError={fieldErrors.password}
             confirmationError={fieldErrors.confirmPassword}
           />
-        )}
-
-        {mode === "producer" && (
-          <>
-            <label>
-              Nome de seu imóvel
-              <input
-                name="propertyName"
-                required
-                minLength={2}
-                maxLength={128}
-                aria-invalid={Boolean(fieldErrors.propertyName)}
-              />
-              {fieldErrors.propertyName && (
-                <small className="field-error" role="alert">
-                  {fieldErrors.propertyName}
-                </small>
-              )}
-            </label>
-            <label>
-              Atividade principal
-              <select
-                name="activityType"
-                defaultValue="misto"
-                aria-invalid={Boolean(fieldErrors.activityType)}
-              >
-                <option value="misto">Produção mista</option>
-                <option value="hortalicas_folhosas">Hortaliças folhosas</option>
-                <option value="legumes_picados">Legumes picados</option>
-                <option value="frutas">Frutas</option>
-                <option value="temperos">Temperos</option>
-              </select>
-              {fieldErrors.activityType && (
-                <small className="field-error" role="alert">
-                  {fieldErrors.activityType}
-                </small>
-              )}
-            </label>
-          </>
         )}
 
         {(mode === "consumer" || mode === "producer") && (

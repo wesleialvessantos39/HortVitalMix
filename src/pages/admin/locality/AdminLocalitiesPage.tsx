@@ -9,6 +9,11 @@ import type {
   LocalityMutationResult,
   MunicipalityImpact,
 } from "../../../../shared/contracts/locality";
+import {
+  findRoMunicipality,
+  normalizeMunicipalityName,
+  RO_MUNICIPALITIES,
+} from "../../../../shared/localities/roMunicipalities";
 
 type Props = {
   access: AdminVerifySessionResponse;
@@ -17,15 +22,6 @@ type Props = {
 
 type LoadState = "loading" | "ready" | "error";
 
-function normalizedKey(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\̀-\ͯ]/g, "")
-    .replace(/[^a-zA-Z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .toLowerCase();
-}
-
 export function AdminLocalitiesPage({ access, onNavigate }: Props) {
   const [state, setState] = useState<LoadState>("loading");
   const [municipalities, setMunicipalities] = useState<AdminMunicipality[]>([]);
@@ -33,13 +29,19 @@ export function AdminLocalitiesPage({ access, onNavigate }: Props) {
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState("");
-  const [uf, setUf] = useState("RO");
   const [ibgeCode, setIbgeCode] = useState("");
   const [pending, setPending] = useState<{
     municipality: AdminMunicipality;
     nextActive: boolean;
     impact: MunicipalityImpact | null;
   } | null>(null);
+  const duplicate = municipalities.some(
+    (row) =>
+      row.ibgeCode === ibgeCode ||
+      (Boolean(name) &&
+        normalizeMunicipalityName(row.name) ===
+          normalizeMunicipalityName(name)),
+  );
 
   const load = useCallback(async (signal?: AbortSignal) => {
     setState("loading");
@@ -83,7 +85,7 @@ export function AdminLocalitiesPage({ access, onNavigate }: Props) {
       return;
     }
     if (code === "LOCALITY_DUPLICATE") {
-      setError("Já existe um município cadastrado com esse código IBGE ou nome.");
+      setError("Município já cadastrado.");
       return;
     }
     if (code === "LOCALITY_REVISION_CONFLICT") {
@@ -104,7 +106,7 @@ export function AdminLocalitiesPage({ access, onNavigate }: Props) {
         method: "POST",
         body: JSON.stringify({
           name: name.trim(),
-          state: uf.trim().toUpperCase(),
+          state: "RO",
           ibgeCode: ibgeCode.trim(),
           commandId: cryptoRandomUUID(),
         }),
@@ -114,7 +116,7 @@ export function AdminLocalitiesPage({ access, onNavigate }: Props) {
         setName("");
         setIbgeCode("");
       } else if (result.status === "duplicate") {
-        setError("Já existe um município cadastrado com esse código IBGE ou nome.");
+        setError("Município já cadastrado.");
       } else {
         setError("Não foi possível cadastrar o município agora.");
       }
@@ -233,27 +235,35 @@ export function AdminLocalitiesPage({ access, onNavigate }: Props) {
           <label>
             Nome do município
             <input
+              list="ro-municipality-catalog"
               required
-              minLength={3}
-              maxLength={100}
+              placeholder="Escolha o município"
               value={name}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event) => {
+                const value = event.currentTarget.value;
+                const municipality = findRoMunicipality({
+                  name: value,
+                });
+                setName(municipality?.name ?? value);
+                setIbgeCode(municipality?.ibgeCode ?? "");
+              }}
             />
+            <datalist id="ro-municipality-catalog">
+              {RO_MUNICIPALITIES.map((municipality) => (
+                <option key={municipality.ibgeCode} value={municipality.name}>
+                  {municipality.ibgeCode}
+                </option>
+              ))}
+            </datalist>
             {name.trim() && (
               <small className="admin-table-sub">
-                Chave normalizada: {normalizedKey(name)}
+                UF: Rondônia (RO)
               </small>
             )}
           </label>
           <label>
             UF
-            <input
-              required
-              minLength={2}
-              maxLength={2}
-              value={uf}
-              onChange={(event) => setUf(event.target.value.toUpperCase())}
-            />
+            <input value="RO — Rondônia" disabled />
           </label>
           <label>
             Código IBGE
@@ -263,12 +273,20 @@ export function AdminLocalitiesPage({ access, onNavigate }: Props) {
               pattern="[0-9]{7}"
               maxLength={7}
               value={ibgeCode}
-              onChange={(event) =>
-                setIbgeCode(event.target.value.replace(/\D/g, ""))
-              }
+              onChange={(event) => {
+                const code = event.currentTarget.value.replace(/\D/g, "");
+                const municipality = findRoMunicipality({ ibgeCode: code });
+                setIbgeCode(code);
+                setName(municipality?.name ?? "");
+              }}
             />
           </label>
-          <button className="admin-primary" type="submit" disabled={busy}>
+          {duplicate && (
+            <p className="admin-alert admin-alert--error" role="alert">
+              Município já cadastrado.
+            </p>
+          )}
+          <button className="admin-primary" type="submit" disabled={busy || duplicate}>
             {busy ? "Salvando…" : "Cadastrar"}
           </button>
         </form>

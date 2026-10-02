@@ -54,6 +54,8 @@ export function AccountHub({ path, session, onNavigate }: Props) {
   const [consents, setConsents] = useState<ConsentView[]>([]);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
+  const [producerApproved, setProducerApproved] = useState<boolean | null>(null);
+  const [producerGuideOpen, setProducerGuideOpen] = useState(false);
 
   async function load(signal?: AbortSignal) {
     setNotice("");
@@ -74,6 +76,33 @@ export function AccountHub({ path, session, onNavigate }: Props) {
     return () => controller.abort();
   }, [session.userId, path]);
 
+  useEffect(() => {
+    if (path !== "/conta" || session.activeRole !== "producer") return;
+    const controller = new AbortController();
+    void api<{
+      properties: Array<{
+        status: string;
+        queueStatus?: string | null;
+        reviewDecision?: string | null;
+      }>;
+    }>("/v1/producer/properties", { signal: controller.signal })
+      .then(({ properties }) => {
+        if (controller.signal.aborted) return;
+        setProducerApproved(
+          properties.some(
+            (property) =>
+              property.status === "verified" ||
+              property.queueStatus === "approved" ||
+              property.reviewDecision === "approved",
+          ),
+        );
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setProducerApproved(null);
+      });
+    return () => controller.abort();
+  }, [path, session.activeRole, session.userId]);
+
   if (path === "/conta") {
     return (
       <section className="account-hub">
@@ -85,6 +114,39 @@ export function AccountHub({ path, session, onNavigate }: Props) {
             <p>{experience.introduction}</p>
           </div>
         </header>
+
+        {session.activeRole === "producer" && producerApproved === false && (
+          <section className="producer-onboarding-notice" role="status">
+            <div>
+              <strong>Seu perfil de produtor ainda não está aprovado.</strong>
+              <p>Cadastre um imóvel rural e envie o CAR ou CCIR para iniciar a análise.</p>
+            </div>
+            <button
+              type="button"
+              className="secondary"
+              aria-expanded={producerGuideOpen}
+              aria-controls="producer-onboarding-guide"
+              onClick={() => setProducerGuideOpen((open) => !open)}
+            >
+              {producerGuideOpen ? "Fechar guia" : "Ver guia passo a passo"}
+            </button>
+            {producerGuideOpen && (
+              <div id="producer-onboarding-guide" className="producer-onboarding-guide">
+                <ol>
+                  <li>Abra <strong>Imóveis rurais</strong> para começar o cadastro da propriedade.</li>
+                  <li>Na tela de imóveis, toque em <strong>Novo imóvel rural</strong>; a etapa 1 começa pelos documentos.</li>
+                </ol>
+                <button
+                  type="button"
+                  className="primary"
+                  onClick={() => onNavigate("/produtor/propriedades")}
+                >
+                  Ir para Imóveis rurais
+                </button>
+              </div>
+            )}
+          </section>
+        )}
 
         <div className="account-hub-grid">
           {sections.map(([to, label, Icon], index) => (
@@ -114,16 +176,18 @@ export function AccountHub({ path, session, onNavigate }: Props) {
                   <small>Cadastre propriedades, áreas, água e atividades produtivas</small>
                 </span>
               </button>
-              <button
-                className="account-hub-card"
-                onClick={() => onNavigate("/produtor/entrega")}
-              >
-                <Truck />
-                <span>
-                  <strong>Escopo de entrega</strong>
-                  <small>Defina se você entrega no município do imóvel, em todos ou em municípios escolhidos</small>
-                </span>
-              </button>
+              {producerApproved && (
+                <button
+                  className="account-hub-card"
+                  onClick={() => onNavigate("/produtor/entrega")}
+                >
+                  <Truck />
+                  <span>
+                    <strong>Escopo de entrega</strong>
+                    <small>Defina se você entrega no município do imóvel, em todos ou em municípios escolhidos</small>
+                  </span>
+                </button>
+              )}
             </>
           )}
         </div>

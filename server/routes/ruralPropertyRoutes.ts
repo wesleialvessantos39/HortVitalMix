@@ -123,6 +123,22 @@ ruralPropertyRouter.get(
 );
 
 ruralPropertyRouter.get(
+  "/producer/properties/activity-default",
+  originProtection,
+  async (req: Request, res: Response) => {
+    const actor = requireProducer(req, res);
+    if (!actor) return;
+    try {
+      res.status(200).json(
+        await RuralPropertyService.getDefaultActivity(actor.userId),
+      );
+    } catch (error) {
+      sendError(res, error);
+    }
+  },
+);
+
+ruralPropertyRouter.get(
   "/producer/properties/:id",
   originProtection,
   async (req: Request, res: Response) => {
@@ -169,7 +185,7 @@ ruralPropertyRouter.post(
         req.requestId,
         req.clientIpHash,
       );
-      const created = parsed.data.step === 1 && !parsed.data.propertyId;
+      const created = parsed.data.step === 2 && !parsed.data.propertyId;
       res.status(created ? 201 : 200).json(result);
     } catch (error) {
       sendError(res, error);

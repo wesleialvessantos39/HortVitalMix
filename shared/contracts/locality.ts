@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  findRoMunicipality,
+  normalizeMunicipalityName,
+} from "../localities/roMunicipalities.ts";
 
 /**
  * Contratos de localidade, cobertura e escopo de entrega.
@@ -82,8 +86,27 @@ export const CreateMunicipalitySchema = z
     state: LocalityStateSchema.default("RO"),
     commandId: z.uuid(),
   })
-  .strict();
+  .strict()
+  .superRefine((value, ctx) => {
+    if (
+      value.state !== "RO" ||
+      !findRoMunicipality({
+        name: value.name,
+        ibgeCode: value.ibgeCode,
+      })
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["ibgeCode"],
+        message: "Município e código IBGE devem corresponder a Rondônia.",
+      });
+    }
+  });
 export type CreateMunicipalityInput = z.infer<typeof CreateMunicipalitySchema>;
+
+export function localityNameKey(value: string) {
+  return normalizeMunicipalityName(value);
+}
 
 export const UpdateMunicipalitySchema = z
   .object({
