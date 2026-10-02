@@ -51,4 +51,14 @@ describe("adminLocalityRouter está montado nos três prefixos", () => {
     expect(res.status).not.toBe(401);
     expect(res.body.error).not.toBe("UNAUTHORIZED");
   });
+
+  it("o cadastro administrativo exige sessão antes de validar os dados", async () => {
+    const res = await request(app)
+      .post("/api/v1/admin/localities")
+      .set("X-HVM-Request", "1")
+      .send({});
+
+    expect(res.status).toBe(401);
+    expect(res.body.error).toBe("UNAUTHORIZED");
+  });
 });

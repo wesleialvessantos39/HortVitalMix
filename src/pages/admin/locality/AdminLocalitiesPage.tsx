@@ -88,9 +88,29 @@ export function AdminLocalitiesPage({ access, onNavigate }: Props) {
       setError("Município já cadastrado.");
       return;
     }
+    if (code === "duplicate" || code === "DUPLICATE") {
+      setError("Município já cadastrado.");
+      return;
+    }
     if (code === "LOCALITY_REVISION_CONFLICT") {
       setError("O cadastro mudou em outra sessão. Recarregue a lista antes de tentar novamente.");
       void load();
+      return;
+    }
+    if (code === "VALIDATION_FAILED") {
+      setError("Confira o município e o código IBGE selecionados e tente novamente.");
+      return;
+    }
+    if (code === "FORBIDDEN") {
+      setError("Seu perfil não tem permissão para cadastrar municípios.");
+      return;
+    }
+    if (code === "UNAUTHORIZED" || code === "REAUTH_REQUIRED") {
+      setError("Sua sessão administrativa expirou. Entre novamente para cadastrar.");
+      return;
+    }
+    if (code === "UNAVAILABLE") {
+      setError("O serviço de localidades está temporariamente indisponível. Tente novamente.");
       return;
     }
     setError("Não foi possível concluir a operação agora.");
@@ -249,7 +269,7 @@ export function AdminLocalitiesPage({ access, onNavigate }: Props) {
               <option value="">Escolha o município</option>
               {RO_MUNICIPALITIES.map((municipality) => (
                 <option key={municipality.ibgeCode} value={municipality.name}>
-                  {municipality.ibgeCode}
+                  {municipality.name} — {municipality.ibgeCode}
                 </option>
               ))}
             </select>

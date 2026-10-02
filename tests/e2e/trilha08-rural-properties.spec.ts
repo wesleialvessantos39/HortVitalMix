@@ -484,7 +484,26 @@ test("08b etapa de documentos não cria overflow em mobile e desktop", async ({ 
   }
 });
 
-test("08c etapa de revisão mantém documentos, atalhos e ações operáveis em 360px e 1440px", async ({ page }) => {
+test("08c identificação mantém campos estruturados, legíveis e operáveis em mobile e desktop", async ({ page }) => {
+  await mockT08(page, fullProperty({ wizardCurrentStep: 2 }));
+  for (const width of [360, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/produtor/propriedades/novo?id=" + propertyId);
+    await expect(page.getByLabel("Nome da propriedade ou chácara")).toBeVisible();
+    await expect(page.getByLabel("Município")).toBeVisible();
+    expect(
+      await page.getByLabel("Nome da propriedade ou chácara").evaluate(
+        (field) => getComputedStyle(field.parentElement!).display === "flex",
+      ),
+    ).toBe(true);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+    ).toBe(true);
+    await expect(page.getByRole("button", { name: /Salvar e continuar/ })).toBeVisible();
+  }
+});
+
+test("08d etapa de revisão mantém documentos, atalhos e ações operáveis em 360px e 1440px", async ({ page }) => {
   await mockT08(page, fullProperty({ wizardCurrentStep: 6 }), true);
   for (const width of [360, 1440]) {
     await page.setViewportSize({ width, height: 900 });
@@ -494,6 +513,15 @@ test("08c etapa de revisão mantém documentos, atalhos e ações operáveis em 
     await expect(page.getByRole("heading", { name: "Documentos do imóvel — etapa 1" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Corrigir documentos" })).toBeVisible();
     await expect(page.getByRole("button", { name: /Revisar e enviar/ })).toBeVisible();
+    await expect(page.locator(".rural-step-dot > span").first()).toBeVisible();
+    await expect(page.locator(".rural-step-dot")).toHaveCount(6);
+    expect(
+      await page.locator(".rural-step-progress").evaluate((nav) => {
+        const bounds = nav.getBoundingClientRect();
+        return bounds.left >= 0 && bounds.right <= window.innerWidth;
+      }),
+      `navegação de etapas fora da tela em ${width}px`,
+    ).toBe(true);
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
       `overflow em ${width}px na revisão`,

@@ -57,6 +57,8 @@ async function mock(page: Page, role: string) {
         updatedAt: "2026-09-27T00:00:00Z",
         updatedBy: null,
       });
+    if (path === "/v1/admin/localities")
+      return json({ municipalities: [], activeMunicipalityIds: [] });
     if (path === "/v1/admin/users")
       return json({
         users: [
@@ -187,6 +189,71 @@ async function mock(page: Page, role: string) {
   });
   return commands;
 }
+
+test("Super administrador vê o nome e o IBGE e evita duplicar o município", async ({
+  page,
+}) => {
+  await mock(page, "platform_super_admin");
+  const municipalities: Array<{
+    id: string;
+    ibgeCode: string;
+    name: string;
+    state: string;
+    isActive: boolean;
+    revision: number;
+    deactivatedAt: string | null;
+    createdAt: string;
+    updatedAt: string;
+  }> = [];
+  const created: Array<Record<string, unknown>> = [];
+  await page.route("**/v1/admin/localities", async (route) => {
+    if (route.request().method() === "POST") {
+      const body = route.request().postDataJSON() as Record<string, unknown>;
+      created.push(body);
+      const municipality = {
+        id: "44444444-4444-4444-8444-444444444444",
+        ibgeCode: String(body.ibgeCode),
+        name: String(body.name),
+        state: "RO",
+        isActive: true,
+        revision: 1,
+      };
+      municipalities.push({
+        ...municipality,
+        deactivatedAt: null,
+        createdAt: "2026-10-02T00:00:00.000Z",
+        updatedAt: "2026-10-02T00:00:00.000Z",
+      });
+      return route.fulfill({ status: 201, json: { status: "created", municipality } });
+    }
+    return route.fulfill({
+      status: 200,
+      json: {
+        municipalities,
+        activeMunicipalityIds: municipalities.map((municipality) => municipality.id),
+      },
+    });
+  });
+
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto("/admin/localidades");
+  await expect(page.getByRole("heading", { name: "Localidades" })).toBeVisible();
+  await page.getByLabel("Nome do município").selectOption({
+    label: "Ariquemes — 1100023",
+  });
+  await expect(page.getByLabel("Código IBGE")).toHaveValue("1100023");
+  await page.getByRole("button", { name: "Cadastrar" }).click();
+  await expect(page.locator(".admin-alert--success")).toContainText("Ariquemes");
+  expect(created[0]).toMatchObject({ name: "Ariquemes", ibgeCode: "1100023", state: "RO" });
+
+  await page.getByLabel("Nome do município").selectOption({
+    label: "Ariquemes — 1100023",
+  });
+  await expect(page.getByRole("alert")).toContainText("Município já cadastrado");
+  await expect(page.getByRole("button", { name: "Cadastrar" })).toBeDisabled();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
 for (const role of ["platform_admin", "platform_super_admin"])
   for (const width of [320, 390, 768, 1024, 1440])
     test(`${role}: populated administrative screens at ${width}px`, async ({
@@ -206,7 +273,7 @@ for (const role of ["platform_admin", "platform_super_admin"])
         "conta/enderecos",
         "conta/preferencias",
         "conta/privacidade",
-        ...(role === "platform_super_admin" ? ["configuracao"] : []),
+        ...(role === "platform_super_admin" ? ["configuracao", "localidades"] : []),
       ];
       for (const path of paths) {
         await page.goto("/admin/" + path);
@@ -220,6 +287,10 @@ for (const role of ["platform_admin", "platform_super_admin"])
             { message: path + " must fit viewport" },
           )
           .toBe(true);
+        if (path === "localidades") {
+          await expect(page.locator(".admin-form-grid")).toBeVisible();
+          await expect(page.getByLabel("Nome do município")).toBeVisible();
+        }
         if (path === "usuarios") {
           await expect(page.getByText(fullName).first()).toBeVisible();
           if (role === "platform_super_admin") {

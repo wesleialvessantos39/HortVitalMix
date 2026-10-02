@@ -77,6 +77,7 @@ adminLocalityRouter.get("/localities", ...guard, async (req, res) => {
 adminLocalityRouter.post(
   "/localities",
   originProtection,
+  ...guard,
   requireRecentAuth,
   async (req: Request, res: Response) => {
     const parsed = CreateMunicipalitySchema.safeParse(req.body);

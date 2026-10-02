@@ -3048,14 +3048,96 @@ textarea { min-width: 0; }
   body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
   dialog { max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y: auto; }
 }
-.rural-step-dot { border: 0; background: transparent; text-align: left; cursor: pointer; }
-.rural-step-dot > span { display: none; }
-.rural-step-dot small {
-  display: inline;
+.rural-step-progress.account-section-nav {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
   overflow: visible;
-  text-overflow: unset;
-  white-space: nowrap;
-  font-size: 12px;
+  padding: 0;
+  margin: 0 0 16px;
+}
+.rural-wizard-card .rural-form-grid > label:not(.account-toggle) {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  margin: 0;
+  color: #233a2b;
+  font-size: inherit;
+  font-weight: 650;
+}
+.rural-wizard-card .rural-form-grid > label.account-toggle {
+  flex-direction: row;
+  align-items: center;
+  margin: 0;
+}
+.rural-wizard-card .rural-form-grid input:not([type="checkbox"]),
+.rural-wizard-card .rural-form-grid select,
+.rural-wizard-card .rural-form-grid textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  margin: 0;
+  border: 1px solid #cbd9ce;
+  border-radius: 12px;
+  padding: 11px 13px;
+  background: #fff;
+  color: #1f3025;
+  font: inherit;
+}
+.rural-wizard-card .rural-form-grid textarea {
+  min-height: 112px;
+}
+.rural-step-progress.account-section-nav .rural-step-dot {
+  min-width: 0;
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid #dce9df;
+  border-radius: 14px;
+  background: #fff;
+  color: #52645a;
+  text-align: left;
+  white-space: normal;
+  cursor: pointer;
+}
+.rural-step-progress.account-section-nav .rural-step-dot > span {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 30px;
+  border-radius: 50%;
+  background: #eef3ef;
+  color: #52645a;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+.rural-step-dot small {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  font-size: 0.76rem;
+  line-height: 1.25;
+}
+.rural-step-progress.account-section-nav .rural-step-dot.is-current {
+  border-color: #2e7d32;
+  background: #eef8f1;
+  color: #143d24;
+}
+.rural-step-progress.account-section-nav .rural-step-dot.is-current > span,
+.rural-step-progress.account-section-nav .rural-step-dot.is-complete > span {
+  background: #1b4d2e;
+  color: #fff;
+}
+.rural-step-progress.account-section-nav .rural-step-dot:focus-visible {
+  outline: 3px solid rgba(46, 125, 50, 0.3);
+  outline-offset: 2px;
 }
 .rural-page-lead {
   margin: 0 0 14px;
@@ -3139,5 +3221,21 @@ textarea { min-width: 0; }
   .rural-wizard-tools .secondary { width: 100%; }
   .rural-wizard-tools { align-items: stretch; flex-direction: column; }
   .rural-dimension-sheet dl { grid-template-columns: 1fr; }
+  .rural-step-progress.account-section-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+  }
+  .rural-step-progress.account-section-nav .rural-step-dot {
+    min-height: 68px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    padding: 7px 4px;
+    text-align: center;
+  }
+  .rural-step-progress.account-section-nav .rural-step-dot small {
+    font-size: 0.7rem;
+    text-align: center;
+  }
 }
 .admin-card textarea { display:block; width:100%; min-height:80px; margin:12px 0; font:inherit; }
