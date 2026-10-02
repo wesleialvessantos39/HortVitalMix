@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   connect: vi.fn(),
   sign: vi.fn(),
   download: vi.fn(),
+  remove: vi.fn(),
   release: vi.fn(),
 }));
 vi.mock("../../server/db/pool.ts", () => ({
@@ -12,13 +13,18 @@ vi.mock("../../server/db/pool.ts", () => ({
 vi.mock("../../server/supabase/client.ts", () => ({
   supabaseAdmin: {
     storage: {
-      from: () => ({ createSignedUrl: mocks.sign, download: mocks.download }),
+      from: () => ({
+        createSignedUrl: mocks.sign,
+        download: mocks.download,
+        remove: mocks.remove,
+      }),
     },
   },
 }));
 import {
   DocumentStorageService,
   getDocument,
+  processPropertyDocumentStorageCleanup,
 } from "../../server/services/DocumentStorageService";
 import { GeminiDocumentProcessor } from "../../server/services/GeminiDocumentProcessor";
 const a = {
@@ -54,15 +60,73 @@ it.each(["quarantine", "rejected", "archived"])(
   },
 );
 it("producer list hides archived documents and auditor still sees them", async () => {
-  mocks.query.mockResolvedValueOnce({ rows: [{ id: "prop" }] });
-  mocks.query.mockResolvedValueOnce({ rows: [] });
+  mocks.query.mockImplementation(async (sql) => ({
+    rows: sql.includes("SELECT p.id") ? [{ id: "prop" }] : [],
+  }));
   await DocumentStorageService.list(a, "prop");
-  expect(mocks.query.mock.calls[1][0]).toContain("status<>'archived'");
-  expect(mocks.query.mock.calls[1][1]).toEqual(["prop", false]);
-  mocks.query.mockResolvedValueOnce({ rows: [{ id: "prop" }] });
-  mocks.query.mockResolvedValueOnce({ rows: [] });
+  expect(
+    mocks.query.mock.calls.find(([sql]) => String(sql).includes("status<>'archived'"))?.[1],
+  ).toEqual(["prop", false]);
+  mocks.query.mockClear();
+  mocks.query.mockImplementation(async (sql) => ({
+    rows: sql.includes("SELECT p.id") ? [{ id: "prop" }] : [],
+  }));
   await DocumentStorageService.list({ ...a, auditor: true }, "prop");
-  expect(mocks.query.mock.calls[3][1]).toEqual(["prop", true]);
+  expect(
+    mocks.query.mock.calls.find(([sql]) => String(sql).includes("status<>'archived'"))?.[1],
+  ).toEqual(["prop", true]);
+});
+it("retries queued private-file deletion through a grace period", async () => {
+  let firstRemovedAt: Date | null = null;
+  mocks.query.mockImplementation(async (sql) => {
+    if (sql.includes("SELECT storage_path"))
+      return { rows: [{ storage_path: "properties/property/document.pdf", first_removed_at: firstRemovedAt }] };
+    if (sql.startsWith("UPDATE public.app_property_document_storage_cleanup") && firstRemovedAt === null)
+      firstRemovedAt = new Date();
+    return { rows: [] };
+  });
+  mocks.remove.mockResolvedValue({ error: null });
+  await processPropertyDocumentStorageCleanup();
+  expect(mocks.remove).toHaveBeenCalledWith(["properties/property/document.pdf"]);
+  expect(
+    mocks.query.mock.calls.some(([sql]) =>
+      String(sql).startsWith("UPDATE public.app_property_document_storage_cleanup"),
+    ),
+  ).toBe(true);
+  expect(
+    mocks.query.mock.calls.some(([sql]) =>
+      String(sql).startsWith("DELETE FROM public.app_property_document_storage_cleanup"),
+    ),
+  ).toBe(true);
+
+  firstRemovedAt = new Date(Date.now() - 25 * 60 * 60 * 1000);
+  mocks.query.mockClear();
+  await processPropertyDocumentStorageCleanup();
+  expect(mocks.remove).toHaveBeenCalledTimes(2);
+  expect(
+    mocks.query.mock.calls.some(([sql]) =>
+      String(sql).startsWith("DELETE FROM public.app_property_document_storage_cleanup"),
+    ),
+  ).toBe(true);
+});
+it("retains failed private-file cleanup jobs for a later retry", async () => {
+  mocks.query.mockImplementation(async (sql) => ({
+    rows: sql.includes("SELECT storage_path")
+      ? [{ storage_path: "properties/property/document.pdf" }]
+      : [],
+  }));
+  mocks.remove.mockResolvedValue({ error: new Error("storage unavailable") });
+  await processPropertyDocumentStorageCleanup();
+  expect(
+    mocks.query.mock.calls.some(([sql]) =>
+      String(sql).startsWith("UPDATE public.app_property_document_storage_cleanup"),
+    ),
+  ).toBe(true);
+  expect(
+    mocks.query.mock.calls.some(([sql]) =>
+      String(sql).startsWith("DELETE FROM public.app_property_document_storage_cleanup"),
+    ),
+  ).toBe(false);
 });
 it("clean file is returned inline and audited", async () => {
   const bytes = Buffer.from("%PDF-1.7");

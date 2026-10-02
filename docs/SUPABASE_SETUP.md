@@ -34,6 +34,12 @@ A rotação Free preserva isolamento e ordem de promoção, mas é uma errata op
 
 ## Migrations
 
+### Exclusão segura de rascunhos documentados — 2026-10-02
+
+A migration aditiva `20261002190000_draft_property_document_cleanup.sql` (schema lógico 44) configura a remoção em cascata das evidências operacionais de imóveis `draft` excluídos e cria uma fila interna de compensação para apagar objetos do bucket privado. A fila é acessível somente ao backend com `service_role`; falhas de Storage mantêm o caminho para nova tentativa, e uma segunda remoção após 24 horas cobre uploads tardios de URLs previamente emitidas. Eventos append-only de auditoria são preservados sem o arquivo nem o conteúdo extraído. A exclusão de imóveis concluídos ou em qualquer outro estado continua proibida.
+
+Antes de promover esse código, confira o manifesto com `npm run migrations:verify` e aplique/verifique a migration na janela coordenada do ambiente correto. **Esta migration não foi aplicada ao Supabase remoto nesta sessão.** Não execute `db push` em Production sem confirmar o `project-ref` e obter aprovação da janela.
+
 Histórico canônico, aplicado em development e homologation:
 
 1. `20260919030126_foundation_releases.sql`

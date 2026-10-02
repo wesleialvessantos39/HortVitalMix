@@ -3,6 +3,7 @@ import { dbPool } from "../db/pool.ts";
 import { redactPII } from "../security/redactPII.ts";
 import type { DecideVerificationRequest } from "../../shared/contracts/verificationQueue.ts";
 import { propertyIdentityKey } from "../../shared/rural/propertyIdentity.ts";
+import { processPropertyDocumentStorageCleanup } from "./DocumentStorageService.ts";
 
 const STALE_CLAIM_HOURS = 4;
 
@@ -214,6 +215,7 @@ export class VerificationQueueService {
 
   static async list(actor: AdminActor, tab: QueueTab) {
     assertAuditor(actor);
+    await processPropertyDocumentStorageCleanup();
     const client = await requirePool().connect();
     try {
       await this.releaseStaleClaims(client);
@@ -246,6 +248,7 @@ export class VerificationQueueService {
 
   static async getOne(actor: AdminActor, requestId: string) {
     assertAuditor(actor);
+    await processPropertyDocumentStorageCleanup();
     const result = await requirePool().query(`${LIST_SQL} WHERE r.id = $1`, [requestId]);
     if (!result.rows[0]) throw new VerificationQueueError("NOT_FOUND", 404);
     return { request: result.rows[0] };

@@ -197,8 +197,68 @@ export async function checkedBytes(doc: Record<string, any>) {
   if (data.size > 15728640) throw new DocumentError("FILE_TOO_LARGE", 413);
   return Buffer.from(await data.arrayBuffer());
 }
+
+export async function processPropertyDocumentStorageCleanup() {
+  if (!dbPool) return;
+  let paths: string[] = [];
+  try {
+    const pending = await pool().query<{
+      storage_path: string;
+      first_removed_at: Date | string | null;
+    }>(
+      `SELECT storage_path,first_removed_at
+         FROM public.app_property_document_storage_cleanup
+        WHERE first_removed_at IS NULL
+           OR first_removed_at < clock_timestamp() - interval '24 hours'
+        ORDER BY COALESCE(first_removed_at,created_at)
+        LIMIT 100`,
+    );
+    paths = pending.rows.map((row) => row.storage_path);
+    if (!paths.length) return;
+
+    const { error } = await storage().remove(paths);
+    if (error) {
+      await pool().query(
+        `UPDATE public.app_property_document_storage_cleanup
+            SET attempts=attempts+1,last_attempt_at=clock_timestamp()
+          WHERE storage_path=ANY($1::text[])`,
+        [paths],
+      );
+      return;
+    }
+    await pool().query(
+      `UPDATE public.app_property_document_storage_cleanup
+          SET attempts=attempts+1,
+              last_attempt_at=clock_timestamp(),
+              first_removed_at=COALESCE(first_removed_at,clock_timestamp())
+        WHERE storage_path=ANY($1::text[])`,
+      [paths],
+    );
+    await pool().query(
+      `DELETE FROM public.app_property_document_storage_cleanup
+        WHERE storage_path=ANY($1::text[])
+          AND first_removed_at < clock_timestamp() - interval '24 hours'`,
+      [paths],
+    );
+  } catch {
+    if (paths.length) {
+      try {
+        await pool().query(
+          `UPDATE public.app_property_document_storage_cleanup
+              SET attempts=attempts+1,last_attempt_at=clock_timestamp()
+            WHERE storage_path=ANY($1::text[])`,
+          [paths],
+        );
+      } catch {
+        return;
+      }
+    }
+  }
+}
+
 export const DocumentStorageService = {
   async list(a: DocumentActor, propertyId: string) {
+    await processPropertyDocumentStorageCleanup();
     const p = await pool().query(
       `SELECT p.id FROM public.app_properties p JOIN public.app_producer_profiles pp ON pp.id=p.producer_id JOIN public.app_people pe ON pe.id=pp.person_id WHERE p.id=$1 AND ($2::boolean OR pe.user_id=$3)`,
       [propertyId, a.auditor, a.userId],

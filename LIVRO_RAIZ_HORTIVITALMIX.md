@@ -1,5 +1,15 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-10-02 — Responsividade do Novo imóvel e exclusão de rascunho com documentos
+
+Status: **correção preparada no PR para `main`; schema lógico 44 no manifesto. A migration não foi aplicada remotamente e nenhum deploy foi executado nesta sessão.**
+
+- O fluxo atual do imóvel mantém as seis etapas e os recursos documentais. A área útil do wizard foi ampliada no desktop, o progresso apresenta seis etapas sem criar overflow, os botões de revisão não competem por colunas e documentos/atalhos de revisão têm layout responsivo, quebra de conteúdo e controles com área de toque adequada. Os testes Playwright cobrem documentos e revisão em 360px e 1440px.
+- O produtor autenticado, com prova de autenticação recente, pode excluir apenas imóvel `draft` ainda não concluído (`completed_at IS NULL`), sujeito à revisão otimista e ao `commandId` idempotente. A transação registra auditoria mínima sem valores documentais e apaga o imóvel; estados concluído, enviado, em análise, aprovado, recusado, suspenso ou retirado permanecem protegidos pela regra do serviço e pelo trigger de status.
+- A migration aditiva configura cascata para documentos, scans, extrações, validações, jobs, revisões, limites e fila/decisões administrativas dependentes. Alterações diretas em evidências continuam bloqueadas; a função de imutabilidade permite somente a remoção em cascata disparada pela exclusão do imóvel. Eventos existentes de auditoria append-only são preservados como metadados operacionais, sem arquivo ou conteúdo extraído.
+- Os caminhos dos objetos do bucket privado entram numa fila interna restrita a `service_role` na mesma transação da exclusão. O backend tenta removê-los após o `COMMIT`, mantém falhas para nova tentativa e repete a remoção após uma janela de 24 horas para cobrir uploads tardios de URLs previamente emitidas. Leituras de documentos e da fila administrativa processam a limpeza pendente. A policy do bucket exige vínculo com documento limpo, de modo que um objeto sem referência não fica disponível ao produtor ou aos portais administrativos. Imóveis e documentos de outros estados não são alterados.
+- `supabase/manifest.json` passa ao schema lógico **44**, com a migration `20261002190000_draft_property_document_cleanup.sql` e hash verificado pelo comando do repositório. A compatibilidade das APIs existentes foi mantida; nenhuma dependência foi adicionada. A migration ainda precisa ser aplicada e verificada no ambiente autorizado antes de promover o código. Não se alega publicação no Supabase nem no Vercel.
+
 ## 2026-10-02 — Localidades de Rondônia, cadastro produtor e imóvel em seis etapas
 
 Status: **implementação preparada no branch; schema lógico 43; migration ainda não aplicada ao Supabase. Nenhum deploy ou homologação real foi executado.**

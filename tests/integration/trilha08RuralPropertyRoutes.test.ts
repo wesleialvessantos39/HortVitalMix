@@ -211,4 +211,31 @@ describe("T08 rotas de imóveis rurais", () => {
     expect(response.status).toBe(200);
     expect(submit.mock.calls[0]?.[2]).toBe(propertyId);
   });
+
+  it("09 confirma a exclusão do rascunho e deixa de expô-lo no detalhe do produtor", async () => {
+    let deleted = false;
+    const remove = vi
+      .spyOn(RuralPropertyService, "deleteDraft")
+      .mockImplementation(async () => {
+        deleted = true;
+      });
+    vi.spyOn(RuralPropertyService, "getProperty").mockImplementation(
+      async () => {
+        if (deleted) throw new RuralPropertyError("PROPERTY_NOT_FOUND", 404);
+        return property;
+      },
+    );
+
+    const response = await mutationHeaders(
+      request(makeApp()).delete("/v1/producer/properties/" + propertyId),
+    ).send({ expectedRevision: 4, commandId: crypto.randomUUID() });
+    expect(response.status).toBe(204);
+    expect(remove.mock.calls[0]?.[0]).toBe("44444444-4444-4444-8444-444444444444");
+
+    const detail = await request(makeApp()).get(
+      "/v1/producer/properties/" + propertyId,
+    );
+    expect(detail.status).toBe(404);
+    expect(detail.body.error).toBe("PROPERTY_NOT_FOUND");
+  });
 });
