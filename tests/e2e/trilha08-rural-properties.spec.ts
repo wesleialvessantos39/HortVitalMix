@@ -473,12 +473,35 @@ test("08b etapa de documentos não cria overflow em mobile e desktop", async ({ 
     await expect(
       page.getByRole("heading", { name: "Documentos do imóvel" }).first(),
     ).toBeVisible();
+    await expect(page.locator(".document-upload").first()).toBeVisible();
+    await expect(page.getByLabel("Selecionar PDF ou imagem")).toBeEnabled();
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= window.innerWidth,
       ),
       `overflow em ${width}px na etapa de documentos`,
     ).toBe(true);
+  }
+});
+
+test("08c etapa de revisão mantém documentos, atalhos e ações operáveis em 360px e 1440px", async ({ page }) => {
+  await mockT08(page, fullProperty({ wizardCurrentStep: 6 }), true);
+  for (const width of [360, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/produtor/propriedades/novo?id=" + propertyId);
+    await page.getByRole("button", { name: /Etapa 6: Revisão e submissão/ }).click();
+    await expect(page.getByRole("heading", { name: "Revisão e submissão" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Documentos do imóvel — etapa 1" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Corrigir documentos" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Revisar e enviar/ })).toBeVisible();
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+      `overflow em ${width}px na revisão`,
+    ).toBe(true);
+
+    await page.getByRole("button", { name: "Corrigir documentos" }).click();
+    await expect(page.getByRole("heading", { name: "Documentos do imóvel" }).first()).toBeVisible();
+    await expect(page.locator(".document-upload").first()).toBeVisible();
   }
 });
 

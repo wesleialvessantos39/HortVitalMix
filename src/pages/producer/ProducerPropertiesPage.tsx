@@ -1643,7 +1643,12 @@ function RuralPropertyWizard({
         )}
 
         </fieldset>
-        <footer className="rural-wizard-actions">
+        <footer
+          className={
+            "rural-wizard-actions" +
+            (step === 6 && !viewOnly ? " has-complete-action" : "")
+          }
+        >
           <button
             className="secondary"
             disabled={step === 1 || saving.current}

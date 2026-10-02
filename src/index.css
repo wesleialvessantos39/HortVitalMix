@@ -2275,8 +2275,18 @@ dialog p {
 .rural-wizard-page {
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   margin: 0 auto 28px;
   box-sizing: border-box;
+}
+
+.producer-route-layout.rural-property-layout {
+  max-width: 1440px !important;
+  padding-inline: clamp(16px, 3vw, 40px) !important;
+}
+
+.rural-wizard-page {
+  max-width: 1240px;
 }
 
 .rural-page-heading,
@@ -2320,7 +2330,7 @@ dialog p {
 
 .rural-properties-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
   gap: 12px;
 }
 
@@ -2617,13 +2627,14 @@ dialog p {
 
 .rural-step-progress {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 8px;
   margin: 0 0 22px;
 }
 
 .rural-step-dot {
   min-width: 0;
+  min-height: 44px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2642,9 +2653,9 @@ dialog p {
 }
 
 .rural-step-dot small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: left;
 }
 
 .rural-step-dot.is-current {
@@ -2777,6 +2788,67 @@ dialog p {
   overflow-wrap: anywhere;
 }
 
+.rural-document-review {
+  min-width: 0;
+  margin: 20px 0;
+  padding: 16px;
+  border: 1px solid #dce9df;
+  border-radius: 16px;
+  background: #f7faf8;
+}
+
+.rural-document-review h3 {
+  margin: 0 0 8px;
+  color: var(--dark);
+  font-size: 1.02rem;
+}
+
+.rural-document-review p {
+  margin: 0 0 12px;
+}
+
+.rural-document-review ul {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+}
+
+.rural-document-review li {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.rural-document-review li strong {
+  color: var(--dark);
+}
+
+.rural-document-review li span {
+  color: var(--muted);
+}
+
+.rural-review-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 8px;
+  margin: 16px 0 0;
+}
+
+.rural-review-shortcuts button {
+  min-height: 48px;
+  padding: 10px 12px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .rural-commitment {
   border: 1px solid #cfe3d3;
   background: #e8f5e9;
@@ -2804,7 +2876,12 @@ dialog p {
   padding-top: 18px;
 }
 
+.rural-wizard-actions.has-complete-action {
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+}
+
 .rural-save-indicator {
+  min-width: 0;
   justify-self: center;
   min-height: 28px;
   display: inline-flex;
@@ -2828,9 +2905,7 @@ dialog p {
 }
 
 @media (max-width: 1024px) {
-  .rural-properties-grid {
-    grid-template-columns: 1fr;
-  }
+  .rural-properties-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 768px) {
@@ -2870,7 +2945,17 @@ dialog p {
   }
 
   .rural-step-dot {
-    justify-content: center;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 4px 2px;
+    text-align: center;
+  }
+
+  .rural-step-dot small {
+    font-size: 0.65rem;
+    line-height: 1.2;
+    text-align: center;
   }
 
   .rural-wizard-card {
@@ -2879,6 +2964,10 @@ dialog p {
   }
 
   .rural-wizard-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .rural-wizard-actions.has-complete-action {
     grid-template-columns: 1fr;
   }
 
