@@ -3934,3 +3934,13 @@ A publicação do commit e o status Vercel devem ser conferidos pelo SHA exato e
 - Testes de integração contra o Supabase real (concorrência de duplicidade, fluxos E2E com upload real) não foram executados nesta rodada.
 - Validação visual manual em dispositivos reais não foi feita; apenas Playwright.
 - SHA/deploy Vercel: ver commit de fechamento abaixo.
+
+### Fechamento da rodada 2026-10-03 (evidências no ambiente real)
+- **SHA publicado:** `0d302ca85fe019055c4e5a8d921da7fe8a1183fb` na `main`. Deployment Production Vercel `dpl_F35W5sQYgLGfYLuPoRPPbPH5kq4t`, estado `READY`, alias `hortvitalmix.vercel.app` (HTTP 200).
+- **`app_releases`:** release `localidades-onboarding-6etapas-0d302ca` marcada como corrente (schema 43, hash `da2359fd…b953b9d6`).
+- **Duplicidade de município (banco real, via transação/rollback):** mesmo código IBGE rejeitado por `uq_app_municipalities_ibge`; mesmo nome com caixa/acento/espaços rejeitado por `uq_app_municipalities_name` (UF + nome normalizado). Teste concorrente com 6 inserts simultâneos do mesmo município: 1 sucesso, 5 rejeitados; registro de teste removido (total voltou a 6).
+- **Catálogo oficial:** 52 municípios, 52 códigos IBGE únicos, 52 nomes únicos.
+- **RLS:** nenhuma tabela do schema `public` sem RLS habilitada.
+- **Advisors de segurança:** sem achado novo introduzido por esta rodada. Itens pré-existentes: `rls_enabled_no_policy` (INFO) em 4 tabelas de uso exclusivo do servidor; `auth_leaked_password_protection` desativado (WARN, depende de configuração do Auth/plano); funções `SECURITY DEFINER` auxiliares executáveis por `authenticated` (WARN).
+- **Advisors de performance:** apenas INFO de índices não usados/FKs sem índice e WARN `multiple_permissive_policies` nas tabelas de bloqueio parcial da T12; anteriores a esta rodada e não alterados.
+- **Ainda não comprovado:** upload/extração de documento real com PDF em produção; fluxos autenticados completos no site publicado; validação em aparelhos físicos.
