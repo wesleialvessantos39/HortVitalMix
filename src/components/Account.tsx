@@ -1220,7 +1220,7 @@ export function Account({
       <h1>{heading}</h1>
       <p>
         {mode === "producer"
-          ? "Cadastre seus dados e identifique o imóvel ligado à sua produção."
+          ? "Cadastre seus dados pessoais. O imóvel rural será cadastrado depois, em um fluxo próprio."
           : mode === "consumer"
             ? "Cadastre seus dados para utilizar o HortiVitalMix."
             : mode === "recovery"
