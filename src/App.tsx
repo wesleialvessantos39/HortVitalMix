@@ -343,7 +343,7 @@ export default function App() {
         </div>
         {!isProducerPropertyRoute && search}
       </header>
-      <main id="conteudo" className={isAdminRoute || publicLoginRole ? "layout admin-route-layout" : isProducerPropertyRoute || isProducerScopeRoute ? "layout producer-route-layout" : "layout"}>
+      <main id="conteudo" className={isAdminRoute || publicLoginRole ? "layout admin-route-layout" : isProducerPropertyRoute ? "layout producer-route-layout rural-property-layout" : isProducerScopeRoute ? "layout producer-route-layout" : "layout"}>
         {(sessionLoading && (guestAccessRoute || isAccountDataRoute || isProducerPropertyRoute || path === "/minha-conta")) || (shellSession && guestAccessRoute) ? <p role="status" className="account-notice">Carregando sua conta…</p> : publicLoginRole ? (
           <PublicLoginPage key={publicLoginRole} role={publicLoginRole} onNavigate={go} onSessionAdopt={adoptSession}/>
         ) : isAdminRoute ? (
