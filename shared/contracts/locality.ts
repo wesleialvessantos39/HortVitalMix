@@ -122,6 +122,14 @@ export const UpdateMunicipalitySchema = z
   );
 export type UpdateMunicipalityInput = z.infer<typeof UpdateMunicipalitySchema>;
 
+export const DeleteMunicipalitySchema = z
+  .object({
+    expectedRevision: z.number().int().positive(),
+    commandId: z.uuid(),
+  })
+  .strict();
+export type DeleteMunicipalityInput = z.infer<typeof DeleteMunicipalitySchema>;
+
 export const LocalityMutationResultSchema = z.discriminatedUnion("status", [
   z.object({
     status: z.literal("created"),
@@ -133,6 +141,18 @@ export const LocalityMutationResultSchema = z.discriminatedUnion("status", [
   }),
   z.object({ status: z.literal("conflict"), currentRevision: z.number().int() }),
   z.object({ status: z.literal("duplicate") }),
+  z.object({
+    status: z.literal("deleted"),
+    municipalityId: z.uuid(),
+    impact: z.object({
+      municipalityId: z.uuid(),
+      isActive: z.boolean(),
+      people: z.number().int().nonnegative(),
+      properties: z.number().int().nonnegative(),
+      deliveryScopes: z.number().int().nonnegative(),
+      partialBlocks: z.number().int().nonnegative(),
+    }).strict().optional(),
+  }),
   z.object({ status: z.literal("not_found") }),
   z.object({ status: z.literal("invalid_state") }),
   z.object({ status: z.literal("unavailable") }),
@@ -336,10 +356,10 @@ export const LocalityErrorCode = {
 
 /** Mensagem literal exigida pelo proprietário para região desativada. */
 export const LOCALITY_DISABLED_MESSAGE =
-  "essa região está desativada, dúvidas entre em contato conosco hortivitalmix@gmail.com";
+  "Sua região está bloqueada. Dúvidas, entre em contato conosco: hortivitalmix@gmail.com.";
 
 export const LOCALITY_NOT_COVERED_MESSAGE =
-  "O sistema ainda não possui cobertura na sua localidade. Em breve estaremos por lá.";
+  "Sua região está fora de cobertura. Dúvidas, entre em contato conosco: hortivitalmix@gmail.com.";
 
 export function localityBlockedMessage(coverage: LocalityCoverage): string {
   if (coverage === "inactive") return LOCALITY_DISABLED_MESSAGE;
