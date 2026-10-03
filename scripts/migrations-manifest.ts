@@ -41,6 +41,8 @@ export function assertManifestHash() {
 }
 
 const remoteVersionAliases: Readonly<Record<string, string>> = {
+  // Reconstrução controlada de localidades/onboarding aplicada pelo Supabase.
+  "20261003030427": "20261003025010",
   // Sincronização canônica imóvel/auditoria aplicada com timestamp físico Supabase.
   "20260930184151": "20260930184100",
   // T12: hardening final da fila/arquivo aplicado com timestamp físico Supabase.
