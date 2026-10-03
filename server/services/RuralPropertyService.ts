@@ -388,7 +388,7 @@ async function assertPropertyLocality(
       403,
       "A publicação nesta localidade está suspensa pela administração da plataforma.",
     );
-  return row.id;
+  return row;
 }
 
 async function assertComplete(client: PoolClient, row: Record<string, any>) {
