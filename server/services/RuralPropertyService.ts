@@ -357,9 +357,14 @@ async function assertPropertyLocality(
   state: string,
   municipality: string,
 ) {
-  const resolved = await client.query<{ id: string; coverage: string }>(
+  const resolved = await client.query<{
+    id: string;
+    name: string;
+    state: string;
+    coverage: string;
+  }>(
     [
-      "SELECT m.id,",
+      "SELECT m.id,m.name,m.state,",
       "       CASE WHEN m.is_active THEN 'active' ELSE 'inactive' END AS coverage",
       "  FROM public.app_municipalities m",
       " WHERE m.state = upper($1)",
@@ -383,12 +388,12 @@ async function assertPropertyLocality(
       403,
       "A publicação nesta localidade está suspensa pela administração da plataforma.",
     );
-  return row.id;
+  return row;
 }
 
 async function assertComplete(client: PoolClient, row: Record<string, any>) {
   if (
-    !row.property_name || !row.line_vicinal || !row.rural_zone_sector || row.latitude_sede === null || row.longitude_sede === null ||
+    !row.property_name || !row.line_vicinal || !row.rural_zone_sector || !row.municipality || row.latitude_sede === null || row.longitude_sede === null ||
     row.total_area_hectares === null ||
     row.cultivated_area_hectares === null ||
     !row.water_source ||
@@ -689,9 +694,15 @@ export class RuralPropertyService {
       let row: Record<string, any>;
       let reusingIdentity = false;
       let submittedDocuments: Array<{ id: string; extraction_id: string | null }> | null = null;
+      let stepLocality: {
+        id: string;
+        name: string;
+        state: string;
+        coverage: string;
+      } | null = null;
       if (input.step === 2) {
-        // Trava de localidade no passo que declara o município do imóvel.
-        await assertPropertyLocality(
+        // Resolve pela fonte canônica ativa e persiste o nome oficial do catálogo.
+        stepLocality = await assertPropertyLocality(
           client,
           userId,
           input.stepData.state,
@@ -703,7 +714,7 @@ export class RuralPropertyService {
         const matches = await matchingProperties(client, producerId, {
           registration_number: data.registrationNumber,
           property_name: data.propertyName,
-          municipality: data.municipality,
+          municipality: stepLocality?.name ?? data.municipality,
           line_vicinal: data.lineVicinal,
         });
         if (matches[0]) {
@@ -729,8 +740,8 @@ export class RuralPropertyService {
             data.registrationNumber || null,
             data.ruralZoneSector,
             data.lineVicinal,
-            data.municipality,
-            data.state,
+            stepLocality?.name ?? data.municipality,
+            stepLocality?.state ?? data.state,
             data.latitudeSede,
             data.longitudeSede,
             data.accessDirections || null,
@@ -767,8 +778,8 @@ export class RuralPropertyService {
                 data.registrationNumber || null,
                 data.ruralZoneSector,
                 data.lineVicinal,
-                data.municipality,
-                data.state,
+                stepLocality?.name ?? data.municipality,
+                stepLocality?.state ?? data.state,
                 data.latitudeSede,
                 data.longitudeSede,
                 data.accessDirections || null,
@@ -887,12 +898,19 @@ export class RuralPropertyService {
           ).rows[0];
         } else {
           if(current.draft_data)throw new RuralPropertyError("PROPERTY_INCOMPLETE",422);
+          // A etapa final nunca pode transformar um rascunho em "concluído"
+          // com localidade desativada ou sem a prova documental da etapa 1.
+          await assertPropertyLocality(
+            client,
+            userId,
+            current.state,
+            current.municipality,
+          );
           await assertComplete(client, current);
-          if (!input.completeOnly)
-            submittedDocuments = await assertRequiredPropertyDocument(
-              client,
-              current.id,
-            );
+          submittedDocuments = await assertRequiredPropertyDocument(
+            client,
+            current.id,
+          );
           row = await transitionToSubmitted(client, producerId, current, input.completeOnly);
           if (!input.completeOnly)
             await reopenPropertyVerification(client, propertyId!, producerId);

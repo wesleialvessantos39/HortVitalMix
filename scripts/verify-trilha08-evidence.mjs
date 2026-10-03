@@ -204,8 +204,10 @@ if (
   throw new Error("T08_VERCEL_MUST_REMAIN_MAIN_ONLY");
 
 const buildCommand = String(vercel.buildCommand ?? "");
-if (buildCommand.includes("test:t08") || buildCommand.includes("typecheck"))
-  throw new Error("T08_VERCEL_HOBBY_BUILD_REGRESSION");
+if (!buildCommand.includes("verify:reconstruction"))
+  throw new Error("T08_VERCEL_RECONSTRUCTION_GATE_MISSING");
+if (!pkg.scripts?.["verify:reconstruction"] || !pkg.scripts?.["test:reconstruction:e2e"])
+  throw new Error("T08_RECONSTRUCTION_SCRIPTS_MISSING");
 
 for (const token of [
   "Google Maps",

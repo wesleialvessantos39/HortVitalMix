@@ -56,6 +56,11 @@ export function AccountHub({ path, session, onNavigate }: Props) {
   const [notice, setNotice] = useState("");
   const [producerApproved, setProducerApproved] = useState<boolean | null>(null);
   const [producerGuideOpen, setProducerGuideOpen] = useState(false);
+  const [producerGuideProperty, setProducerGuideProperty] = useState<{
+    id: string;
+    status: string;
+    wizardCurrentStep: number;
+  } | null>(null);
 
   async function load(signal?: AbortSignal) {
     setNotice("");
@@ -81,7 +86,9 @@ export function AccountHub({ path, session, onNavigate }: Props) {
     const controller = new AbortController();
     void api<{
       properties: Array<{
+        id: string;
         status: string;
+        wizardCurrentStep: number;
         queueStatus?: string | null;
         reviewDecision?: string | null;
       }>;
@@ -96,9 +103,17 @@ export function AccountHub({ path, session, onNavigate }: Props) {
               property.reviewDecision === "approved",
           ),
         );
+        setProducerGuideProperty(
+          properties.find((property) =>
+            ["draft", "completed", "rejected"].includes(property.status),
+          ) ?? null,
+        );
       })
       .catch(() => {
-        if (!controller.signal.aborted) setProducerApproved(null);
+        if (!controller.signal.aborted) {
+          setProducerApproved(null);
+          setProducerGuideProperty(null);
+        }
       });
     return () => controller.abort();
   }, [path, session.activeRole, session.userId]);
@@ -118,8 +133,8 @@ export function AccountHub({ path, session, onNavigate }: Props) {
         {session.activeRole === "producer" && producerApproved === false && (
           <section className="producer-onboarding-notice" role="status">
             <div>
-              <strong>Seu perfil de produtor ainda não está aprovado.</strong>
-              <p>Cadastre um imóvel rural e envie o CAR ou CCIR para iniciar a análise.</p>
+              <strong>Seu cadastro de produtor ainda não foi aprovado.</strong>
+              <p>Para continuar, cadastre seu imóvel rural e envie as informações para análise.</p>
             </div>
             <button
               type="button"
@@ -133,15 +148,27 @@ export function AccountHub({ path, session, onNavigate }: Props) {
             {producerGuideOpen && (
               <div id="producer-onboarding-guide" className="producer-onboarding-guide">
                 <ol>
-                  <li>Abra <strong>Imóveis rurais</strong> para começar o cadastro da propriedade.</li>
-                  <li>Na tela de imóveis, toque em <strong>Novo imóvel rural</strong>; a etapa 1 começa pelos documentos.</li>
+                  <li>
+                    {producerGuideProperty
+                      ? `Existe um imóvel em andamento. O cadastro salvo está na etapa ${Math.max(1, Math.min(6, producerGuideProperty.wizardCurrentStep))} de 6.`
+                      : "Abra Imóveis rurais e inicie um novo cadastro."}
+                  </li>
+                  <li>A etapa 1 é <strong>Documentos do imóvel</strong>; anexe e confira o CAR ou CCIR.</li>
+                  <li>Ao abrir o imóvel, as etapas pendentes são recalculadas pelos dados reais e ficam disponíveis para acesso direto.</li>
+                  <li>Na etapa 6, confira a ficha e envie para análise.</li>
                 </ol>
                 <button
                   type="button"
                   className="primary"
-                  onClick={() => onNavigate("/produtor/propriedades")}
+                  onClick={() =>
+                    onNavigate(
+                      producerGuideProperty
+                        ? `/produtor/propriedades/novo?id=${encodeURIComponent(producerGuideProperty.id)}&step=${Math.max(1, Math.min(6, producerGuideProperty.wizardCurrentStep))}`
+                        : "/produtor/propriedades",
+                    )
+                  }
                 >
-                  Ir para Imóveis rurais
+                  {producerGuideProperty ? "Continuar cadastro do imóvel" : "Ir para Imóveis rurais"}
                 </button>
               </div>
             )}

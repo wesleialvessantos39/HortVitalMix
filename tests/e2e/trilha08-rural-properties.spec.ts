@@ -104,6 +104,32 @@ async function mockT08(
         revision: 1,
       });
 
+    if (path === "/v1/localities" && method === "GET")
+      return json({
+        municipalities: [
+          {
+            id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            ibgeCode: "1100023",
+            name: "Ariquemes",
+            state: "RO",
+            isActive: true,
+            revision: 1,
+          },
+          {
+            id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+            ibgeCode: "1100122",
+            name: "Ji-Paraná",
+            state: "RO",
+            isActive: true,
+            revision: 1,
+          },
+        ],
+        activeMunicipalityIds: [
+          "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        ],
+      });
+
     if (path === "/v1/account/addresses" && method === "GET")
       return json({ addresses: [] });
 
@@ -345,6 +371,11 @@ test("03b cria rascunho sem inventar dados antes do upload documental", async ({
   await page.getByRole("button", { name: /Etapa 2: Identificação e acesso/ }).click();
   await expect(page.getByLabel("Nome da propriedade ou chácara")).toHaveValue("");
   await expect(page.getByLabel("Município")).toHaveValue("");
+  await expect(page.getByLabel("Município").locator("option")).toHaveText([
+    "Escolha o município",
+    "Ariquemes",
+    "Ji-Paraná",
+  ]);
   expect(mocked.property?.latitudeSede).toBeNull();
   expect(mocked.property?.longitudeSede).toBeNull();
 });
@@ -356,7 +387,7 @@ test("04 bloqueia avanço e submissão se não houver documento processado", asy
   await expect(page.getByText(/Anexe e processe um CAR ou CCIR/)).toBeVisible();
   await expect(page.getByText("Etapa 1 de 6")).toBeVisible();
   await page.getByRole("button", { name: "Etapa 6: Revisão e submissão, pendente" }).click();
-  await page.getByRole("button", { name: "Revisar e enviar" }).click();
+  await page.getByRole("button", { name: "Enviar para análise" }).click();
   await expect(page.getByText(/Complete as etapas pendentes: 1/)).toBeVisible();
 });
 
@@ -524,12 +555,12 @@ test("11 completa as seis etapas e submete o imóvel", async ({ page }) => {
   await expect(page.getByLabel(/Confirmo que revisei os dados/)).toBeChecked();
   await expect(page.getByText("Documento exigido processado; dados documentais salvos.")).toBeVisible();
   await expect(page.getByText(/Dados extraídos: Sítio Esperança/)).toBeVisible();
-  await page.getByRole("button", { name: /Revisar e enviar/ }).click();
+  await page.getByRole("button", { name: /Enviar para análise/ }).click();
   await expect(page.getByText("Enviado para análise")).toBeVisible();
   expect(mocked.property?.status).toBe("submitted");
 });
 
-test("12 conclui sem enviar, protege exclusão e permite envio posterior",async({page})=>{
+test("12 revisão final não oferece caminho paralelo que contorne a submissão",async({page})=>{
  const mocked=await mockT08(page,fullProperty({wizardCurrentStep:5}),true);
  await page.goto("/produtor/propriedades/novo?id="+propertyId);
  await page.getByLabel("Atividade principal").selectOption("hortalicas_folhosas");
@@ -537,12 +568,10 @@ test("12 conclui sem enviar, protege exclusão e permite envio posterior",async(
  await page.getByRole("button",{name:/Salvar e continuar/}).click();
  await page.getByLabel(/Confirmo que revisei os dados/).check();
  await expect(page.getByLabel(/Confirmo que revisei os dados/)).toBeChecked();
- await page.getByRole("button",{name:"Concluir e salvar"}).click();
- await expect(page.getByText("Concluído — pronto para enviar")).toBeVisible();
- await expect(page.getByRole("button",{name:"Excluir rascunho"})).toHaveCount(0);
- expect(mocked.property?.status).toBe("completed");
+ await expect(page.getByRole("button",{name:"Concluir e salvar"})).toHaveCount(0);
  await page.getByRole("button",{name:"Enviar para análise"}).click();
  await expect(page.getByText("Enviado para análise")).toBeVisible();
+ expect(mocked.property?.status).toBe("submitted");
 });
 
 const viewports = [

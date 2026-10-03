@@ -1,5 +1,43 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-10-03 — Reconstrução controlada de localidades, cadastro do produtor e imóvel rural v6
+
+Status da reconstrução: **schema lógico 44 aplicado no Supabase Production; PR #67 preparado para `main`; Vercel Preview validado antes da integração. Sem reset, sem exclusão de histórico e sem GitHub Actions criado pelo projeto.**
+
+Motivo: uma implementação anterior deixou o fluxo parcialmente inconsistente entre cadastro público, localidades, imóvel rural, banco e responsividade. A correção foi refeita verticalmente, preservando dados e contratos existentes quando compatíveis.
+
+Implementação consolidada:
+- O cadastro inicial do **Produtor** voltou a representar somente identidade e contato: nome, CPF, celular, município ativo, e-mail, senha e aceite LGPD. Nome do imóvel e atividade rural não são mais solicitados nesse cadastro.
+- O município de cadastro público continua vindo da **fonte central de localidades ativas**. Sem catálogo disponível, o formulário falha fechado e não inventa município.
+- O **Super administrador** mantém a gestão de localidades com os 52 municípios oficiais de Rondônia disponíveis para seleção, código IBGE canônico, proteção contra duplicidade e ativação/desativação sem apagar histórico.
+- As mutações administrativas de localidades e bloqueios parciais agora passam pela mesma guarda de sessão/setor das leituras administrativas antes da reautenticação recente.
+- O cadastro do imóvel rural permanece com **exatamente 6 etapas**: 1) Documentos do imóvel; 2) Identificação e acesso; 3) Dimensões; 4) Segurança hídrica; 5) Culturas e processamento; 6) Revisão e submissão.
+- Na etapa 1, CAR/CCIR ficam vinculados ao `propertyId`; documento limpo, extração processada e dados documentais obrigatórios continuam sendo exigidos antes do envio para análise.
+- Na identificação do imóvel, **Município deixou de ser texto livre** e usa o catálogo ativo central. O backend resolve novamente a localidade e persiste o nome/UF canônicos.
+- A etapa final revalida localidade, bloqueio de publicação, completude estrutural e documento obrigatório dentro da transação. O caminho de conclusão não pode contornar a prova documental.
+- O guia da conta do produtor não aprovado usa o estado real dos imóveis para retomar o cadastro na etapa correspondente. Escopo de entrega continua condicionado à aprovação do produtor.
+- O wizard recebeu escopo visual próprio e navegação responsiva de 6 etapas; mobile, tablet e desktop não dependem mais da regra antiga de 5 colunas nem de nomes forçados em `nowrap`.
+- A Vercel continua usando a integração Git existente. O build gratuito preserva `migrations:verify`, `typecheck:app`, `security:check`, Vite e verificação do bundle; não foi criado pipeline pago.
+
+Banco e migration:
+- Migration canônica: `supabase/migrations/20261003025010_hortivital_reconstruction_hardening.sql`.
+- Versão física aplicada no Supabase Production: **`20261003030427_hortivital_reconstruction_hardening`**.
+- `supabase/manifest.json`: schema lógico **44** e hash **`1b14c938e8d843bd57e85b9ff5f6855aa69f1d90a8bf08b188a08ba018e4583c`**.
+- `ck_app_properties_submission_complete` passou a exigir também `municipality IS NOT NULL` em qualquer imóvel fora de rascunho.
+- Foram criados índices parciais para `app_municipalities.created_by`, `updated_by` e `deactivated_by`.
+- Nenhuma tabela de produção foi truncada, nenhum usuário/imóvel/documento foi apagado e migrations antigas não foram editadas.
+
+Evidências desta reconstrução:
+- Supabase real confirmou a migration física, a constraint endurecida e os três índices.
+- Produção anterior permaneceu conectada ao banco durante a reconstrução: `/api/v1/localities` e `/api/v1/config` responderam 200.
+- O Preview final do PR é usado como gate de compilação; o ambiente Preview não possui a mesma conexão de banco de Production, portanto 503 de dependência no Preview não é tratado como evidência de falha do banco de produção.
+- PR de integração: **#67 — “Reconstruir localidades, onboarding do produtor e wizard rural v6”**.
+- O fechamento de Production deve registrar em `app_releases` o SHA realmente publicado somente depois de o deployment `main` ficar READY.
+
+Arquivos centrais desta rodada: `src/components/Account.tsx`, `src/pages/account/AccountHub.tsx`, `src/pages/producer/ProducerPropertiesPage.tsx`, `src/index.css`, `server/routes/adminLocalityRoutes.ts`, `server/services/RuralPropertyService.ts`, `shared/contracts/auth.ts`, `shared/contracts/foundation.ts`, `supabase/manifest.json`, `scripts/migrations-manifest.ts`, `vercel.json` e os testes T08/T12 responsivos.
+
+---
+
 ## 2026-10-02 — Localidades de Rondônia, cadastro produtor e imóvel em seis etapas
 
 Status: **implementação preparada no branch; schema lógico 43; migration ainda não aplicada ao Supabase. Nenhum deploy ou homologação real foi executado.**

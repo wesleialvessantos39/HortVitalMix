@@ -1220,7 +1220,7 @@ export function Account({
       <h1>{heading}</h1>
       <p>
         {mode === "producer"
-          ? "Cadastre seus dados e identifique o imóvel ligado à sua produção."
+          ? "Cadastre seus dados pessoais. O imóvel rural será cadastrado depois, em um fluxo próprio."
           : mode === "consumer"
             ? "Cadastre seus dados para utilizar o HortiVitalMix."
             : mode === "recovery"
@@ -1278,48 +1278,38 @@ export function Account({
             <label>
               Município
               <>
-                {locality.municipalities.length ? (
-                  <select
-                    name="municipality"
-                    required
-                    value={registrationMunicipality}
-                    aria-invalid={Boolean(fieldErrors.municipality)}
-                    onChange={(event) => {
-                      setRegistrationMunicipality(event.target.value);
-                      clearFieldError("municipality");
-                    }}
-                  >
-                    <option value="">Selecione o município</option>
-                    {locality.municipalities.map((row) => (
-                      <option key={row.id} value={row.name}>
-                        {row.name} – {row.state}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    name="municipality"
-                    required
-                    minLength={3}
-                    maxLength={100}
-                    placeholder="Ex.: Ariquemes"
-                    value={registrationMunicipality}
-                    aria-invalid={Boolean(fieldErrors.municipality)}
-                    onChange={(event) => {
-                      setRegistrationMunicipality(event.target.value);
-                      clearFieldError("municipality");
-                    }}
-                  />
-                )}
+                <select
+                  name="municipality"
+                  required
+                  value={registrationMunicipality}
+                  disabled={locality.loading || locality.unavailable || !locality.municipalities.length}
+                  aria-busy={locality.loading}
+                  aria-invalid={Boolean(fieldErrors.municipality)}
+                  aria-describedby="registration-locality-status"
+                  onChange={(event) => {
+                    setRegistrationMunicipality(event.target.value);
+                    clearFieldError("municipality");
+                  }}
+                >
+                  <option value="">
+                    {locality.loading ? "Carregando municípios…" : "Escolha o município"}
+                  </option>
+                  {locality.municipalities.map((row) => (
+                    <option key={row.id} value={row.name}>
+                      {row.name} – {row.state}
+                    </option>
+                  ))}
+                </select>
                 <input
                   type="hidden"
                   name="state"
                   value={registrationState}
                 />
               </>
-              <small className="field-hint">
-                Atendemos apenas os municípios ativos da nossa região. Sem
-                cobertura, o cadastro não é concluído.
+              <small id="registration-locality-status" className={locality.unavailable ? "field-error" : "field-hint"} role={locality.unavailable ? "alert" : undefined}>
+                {locality.unavailable
+                  ? "Não foi possível carregar os municípios ativos. Atualize a página para continuar o cadastro."
+                  : "Atendemos apenas os municípios ativos da nossa região. Sem cobertura, o cadastro não é concluído."}
               </small>
               {fieldErrors.municipality && (
                 <small className="field-error" role="alert">
