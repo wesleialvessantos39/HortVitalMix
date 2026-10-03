@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 43,
+  "schemaVersion": 44,
   "migrations": [
     {
       "version": "20260919030126",
@@ -240,7 +240,12 @@
       "version": "20261002170000",
       "name": "producer_onboarding_documents_stage",
       "file": "20261002170000_producer_onboarding_documents_stage.sql"
+    },
+    {
+      "version": "20261003025010",
+      "name": "hortivital_reconstruction_hardening",
+      "file": "20261003025010_hortivital_reconstruction_hardening.sql"
     }
   ],
-  "migrationHistoryHash": "da2359fdd048e346c6855e4a57f61e66533a0d6ec11511ae95aca1b9e953b9d6"
+  "migrationHistoryHash": "1b14c938e8d843bd57e85b9ff5f6855aa69f1d90a8bf08b188a08ba018e4583c"
 }
