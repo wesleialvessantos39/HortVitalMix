@@ -20,6 +20,10 @@ import {
 import { api, type ApiFailure } from "../../lib/api";
 import type { ShellSession } from "../../hooks/useSession";
 import {
+  fetchMunicipalities,
+  type Municipality,
+} from "../../services/LocalityCatalogService";
+import {
   GeoJsonPolygonSchema,
   Step1IdentificationSchema,
   Step2DimensionsSchema,
@@ -99,7 +103,7 @@ const blankDraft: Draft = {
 };
 
 const steps = [
-  ["Documentos do imóvel", "Anexe e confira o CAR ou o CCIR do imóvel.", "Documentos"],
+  ["Documentos do imóvel", "Envie o CAR ou CCIR e confira os dados extraídos.", "Documentos"],
   ["Identificação e acesso", "Localize a propriedade", "Identificação"],
   ["Dimensões", "A área vem do documento", "Dimensões"],
   ["Segurança hídrica", "Escolha a fonte e a irrigação do imóvel", "Água"],
@@ -514,7 +518,7 @@ function PropertyList({
           <div>
             <h2>Nenhum imóvel rural cadastrado</h2>
             <p>
-              Comece pela identificação da chácara, linha vicinal e ponto da sede.
+              Comece pelos documentos do imóvel. O cadastro é salvo como rascunho e pode ser retomado depois.
             </p>
           </div>
         </div>
@@ -689,6 +693,8 @@ function RuralPropertyWizard({
   const [accountCpf, setAccountCpf] = useState("");
   const [documents, setDocuments] = useState<PropertyDocumentSummary[]>([]);
   const [documentsReady, setDocumentsReady] = useState(false);
+  const [activeMunicipalities, setActiveMunicipalities] = useState<Municipality[]>([]);
+  const [localitiesUnavailable, setLocalitiesUnavailable] = useState(false);
   const hydrated = useRef(false);
   const saving = useRef(false);
   const dirty = useRef(false);
@@ -790,6 +796,22 @@ function RuralPropertyWizard({
         if (!cancelled && profile.cpfMasked) setAccountCpf(profile.cpfMasked);
       })
       .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchMunicipalities()
+      .then((result) => {
+        if (cancelled) return;
+        setActiveMunicipalities(result.municipalities);
+        setLocalitiesUnavailable(false);
+      })
+      .catch(() => {
+        if (!cancelled) setLocalitiesUnavailable(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -1330,7 +1352,7 @@ function RuralPropertyWizard({
               <FileText aria-hidden="true" />
               <div>
                 <h3>Comece anexando o CAR ou CCIR</h3>
-                <p>O sistema cria um rascunho seguro para guardar os documentos deste imóvel.</p>
+                <p>O documento ficará vinculado a este imóvel e poderá preencher os próximos campos.</p>
               </div>
               <button
                 type="button"
@@ -1391,11 +1413,31 @@ function RuralPropertyWizard({
             </label>
             <label>
               Município
-              <input
+              <select
                 value={draft.municipality}
-                onChange={(event) => patch({ municipality: event.target.value })}
-                maxLength={100}
-              />
+                aria-describedby={localitiesUnavailable ? "property-locality-status" : undefined}
+                onChange={(event) => patch({ municipality: event.target.value, state: "RO" })}
+              >
+                <option value="">Escolha o município</option>
+                {draft.municipality &&
+                  !activeMunicipalities.some(
+                    (municipality) => municipality.name === draft.municipality,
+                  ) && (
+                    <option value={draft.municipality} disabled>
+                      {draft.municipality} — indisponível para novos cadastros
+                    </option>
+                  )}
+                {activeMunicipalities.map((municipality) => (
+                  <option key={municipality.id} value={municipality.name}>
+                    {municipality.name}
+                  </option>
+                ))}
+              </select>
+              {localitiesUnavailable && (
+                <small id="property-locality-status" role="status">
+                  Não foi possível atualizar o catálogo de municípios agora. Tente novamente antes de salvar esta etapa.
+                </small>
+              )}
             </label>
             <label>
               UF
@@ -1702,14 +1744,13 @@ function RuralPropertyWizard({
               <><WifiOff /> Rascunho salvo localmente</>
             ) : null}
           </div>
-          {step===6 && !viewOnly && <button type="button" className="secondary" disabled={saving.current || state!=="ready"} onClick={()=>void submitAll(true)}>Concluir e salvar</button>}
           <button
             type="button"
             className="primary"
             disabled={saving.current || state === "conflict"}
             onClick={() => void next()}
           >
-            {viewOnly ? (step === 6 ? "Voltar aos imóveis" : "Ver próxima etapa") : step === 6 ? "Revisar e enviar" : "Salvar e continuar"}
+            {viewOnly ? (step === 6 ? "Voltar aos imóveis" : "Ver próxima etapa") : step === 6 ? "Enviar para análise" : "Salvar e continuar"}
             <ChevronRight />
           </button>
         </footer>
