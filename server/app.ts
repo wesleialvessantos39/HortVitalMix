@@ -15,8 +15,14 @@ import { documentRouter, adminDocumentRouter } from "./routes/documentRoutes.ts"
 import { adminVerificationRouter } from "./routes/adminVerificationRoutes.ts";
 import { localityRouter } from "./routes/localityRoutes.ts";
 import { adminLocalityRouter } from "./routes/adminLocalityRoutes.ts";
+import { drainStorageDeletionQueue } from "./services/StorageDeletionQueueService.ts";
 export const app = express();
 app.disable("x-powered-by");
+
+// Manutenção idempotente: a primeira instância de produção conclui objetos
+// pendentes pela API oficial do Storage, sem tocar em storage.objects via SQL.
+if (runtime.appEnv === "production")
+  void drainStorageDeletionQueue();
 
 app.use(requestIdMiddleware);
 app.use(clientIpHashMiddleware);
