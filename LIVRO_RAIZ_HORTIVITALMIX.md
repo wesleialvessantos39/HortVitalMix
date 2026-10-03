@@ -2,7 +2,7 @@
 
 ## 2026-10-03 — Reconstrução controlada de localidades, cadastro do produtor e imóvel rural v6
 
-Status da reconstrução: **schema lógico 44 aplicado no Supabase Production; PR #67 preparado para `main`; Vercel Preview validado antes da integração. Sem reset, sem exclusão de histórico e sem GitHub Actions criado pelo projeto.**
+Status da reconstrução: **concluída em produção. Schema lógico 44 aplicado no Supabase Production; PR #67 integrado em `main` no SHA de implementação `5f2a6caf4e58ce64c9333db412d3ede6a17ad319`; deployment Vercel Production `dpl_FzyPK2RniMKtpeebBmDrKfVzvPbA` ficou READY e o domínio oficial foi verificado. Sem reset, sem exclusão de histórico e sem GitHub Actions criado pelo projeto.**
 
 Motivo: uma implementação anterior deixou o fluxo parcialmente inconsistente entre cadastro público, localidades, imóvel rural, banco e responsividade. A correção foi refeita verticalmente, preservando dados e contratos existentes quando compatíveis.
 
@@ -32,7 +32,7 @@ Evidências desta reconstrução:
 - Produção anterior permaneceu conectada ao banco durante a reconstrução: `/api/v1/localities` e `/api/v1/config` responderam 200.
 - O Preview final do PR é usado como gate de compilação; o ambiente Preview não possui a mesma conexão de banco de Production, portanto 503 de dependência no Preview não é tratado como evidência de falha do banco de produção.
 - PR de integração: **#67 — “Reconstruir localidades, onboarding do produtor e wizard rural v6”**.
-- O fechamento de Production deve registrar em `app_releases` o SHA realmente publicado somente depois de o deployment `main` ficar READY.
+- Fechamento de Production confirmado: `/api/v1/localities` e `/api/v1/config` responderam HTTP 200 no domínio oficial após o deploy, assim como `/cadastro/produtor` e `/produtor/propriedades`. O registro `app_releases` deve apontar para o SHA deste fechamento documental após a publicação deste commit.
 
 Arquivos centrais desta rodada: `src/components/Account.tsx`, `src/pages/account/AccountHub.tsx`, `src/pages/producer/ProducerPropertiesPage.tsx`, `src/index.css`, `server/routes/adminLocalityRoutes.ts`, `server/services/RuralPropertyService.ts`, `shared/contracts/auth.ts`, `shared/contracts/foundation.ts`, `supabase/manifest.json`, `scripts/migrations-manifest.ts`, `vercel.json` e os testes T08/T12 responsivos.
 
