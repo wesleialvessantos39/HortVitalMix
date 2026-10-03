@@ -44,6 +44,17 @@ describe("adminLocalityRouter está montado nos três prefixos", () => {
     expect(res.body.error).toBe("NOT_FOUND");
   });
 
+  it("mutações administrativas exigem sessão antes da reautenticação", async () => {
+    for (const endpoint of ["/v1/admin/localities", "/v1/admin/access-blocks"]) {
+      const res = await request(app)
+        .post(endpoint)
+        .set("sec-fetch-site", "same-origin")
+        .send({});
+      expect(res.status).toBe(401);
+      expect(res.body.message).toBe("Token de sessão administrativa ausente.");
+    }
+  });
+
   it("o catálogo público de localidades segue acessível sem sessão", async () => {
     const res = await request(app).get("/api/v1/localities");
     // Sem banco configurado no teste o serviço pode responder 503; o que importa
