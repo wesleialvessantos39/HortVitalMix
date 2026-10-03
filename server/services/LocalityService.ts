@@ -281,6 +281,30 @@ export const LocalityService = {
       );
       const row = inserted.rows[0];
 
+      // Se a cobertura foi removida anteriormente, o recadastro do mesmo
+      // município reconecta automaticamente as pessoas afetadas.
+      await client.query(
+        `UPDATE public.app_people p
+            SET municipality_id=$1,updated_at=clock_timestamp(),revision=revision+1
+          WHERE p.municipality_id IS NULL
+            AND p.user_id IN (
+              SELECT i.user_id
+                FROM public.app_locality_user_impacts i
+               WHERE i.resolved_at IS NULL
+                 AND i.state=$2
+                 AND i.locality_name_normalized=public.fn_locality_normalize($3)
+            )`,
+        [row.id,row.state,row.name],
+      );
+      await client.query(
+        `UPDATE public.app_locality_user_impacts
+            SET resolved_at=clock_timestamp()
+          WHERE resolved_at IS NULL
+            AND state=$1
+            AND locality_name_normalized=public.fn_locality_normalize($2)`,
+        [row.state,row.name],
+      );
+
       await writeAudit(client, {
         requestId,
         actorId: actor.userId,
@@ -409,6 +433,116 @@ export const LocalityService = {
 
       await client.query("COMMIT");
       return { status: "updated" as const, municipality: mapMunicipality(row) };
+    } catch (error) {
+      try {
+        await client.query("ROLLBACK");
+      } catch {}
+      if (error instanceof LocalityError) throw error;
+      mapDbError(error);
+    } finally {
+      client.release();
+    }
+  },
+
+  async deleteMunicipality(
+    municipalityId: string,
+    input: { expectedRevision: number; commandId: string },
+    actor: { userId: string; role: string },
+    requestId: string,
+    ipHash: string,
+  ) {
+    const client = await requirePool().connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(
+        "SELECT pg_advisory_xact_lock(hashtext('app_municipalities'))",
+      );
+
+      const replayTarget = await replayedTarget(client,input.commandId,[
+        "locality.municipality_deleted",
+      ]);
+      if (replayTarget === municipalityId) {
+        await client.query("COMMIT");
+        return { status: "deleted" as const, municipalityId };
+      }
+
+      const locked = await client.query<Record<string,any>>(
+        "SELECT * FROM public.app_municipalities WHERE id=$1 FOR UPDATE",
+        [municipalityId],
+      );
+      const current = locked.rows[0];
+      if (!current) {
+        await client.query("ROLLBACK");
+        return { status: "not_found" as const };
+      }
+      if (current.revision !== input.expectedRevision) {
+        await client.query("ROLLBACK");
+        return {
+          status: "conflict" as const,
+          currentRevision: current.revision as number,
+        };
+      }
+
+      const impactRow = await client.query<Record<string,string>>(
+        `SELECT
+           (SELECT count(*)::text FROM public.app_people WHERE municipality_id=$1) AS people,
+           (SELECT count(*)::text
+              FROM public.app_properties p
+             WHERE p.state=$2
+               AND public.fn_locality_normalize(p.municipality)=$3
+               AND p.status<>'withdrawn') AS properties,
+           (SELECT count(*)::text FROM public.app_producer_delivery_municipalities WHERE municipality_id=$1) AS deliveries,
+           (SELECT count(*)::text FROM public.app_access_partial_block_municipalities WHERE municipality_id=$1) AS blocks`,
+        [municipalityId,current.state,current.name_normalized],
+      );
+      const measured = impactRow.rows[0] ?? {};
+      const impact = {
+        municipalityId,
+        isActive: Boolean(current.is_active),
+        people: Number(measured.people ?? 0),
+        properties: Number(measured.properties ?? 0),
+        deliveryScopes: Number(measured.deliveries ?? 0),
+        partialBlocks: Number(measured.blocks ?? 0),
+      };
+
+      await client.query(
+        `INSERT INTO public.app_locality_user_impacts(
+             user_id,locality_name,locality_name_normalized,state
+           )
+           SELECT p.user_id,$2,$3,$4
+             FROM public.app_people p
+            WHERE p.municipality_id=$1
+              AND p.user_id IS NOT NULL
+           ON CONFLICT(user_id,locality_name_normalized,state)
+             WHERE resolved_at IS NULL
+           DO NOTHING`,
+        [municipalityId,current.name,current.name_normalized,current.state],
+      );
+
+      await writeAudit(client,{
+        requestId,
+        actorId: actor.userId,
+        actorRole: actor.role,
+        action: "locality.municipality_deleted",
+        targetId: municipalityId,
+        before: {
+          ibge_code: current.ibge_code,
+          name: current.name,
+          state: current.state,
+          is_active: current.is_active,
+          revision: current.revision,
+        },
+        after: { deleted: true, impact },
+        ipHash,
+        commandId: input.commandId,
+      });
+
+      await client.query(
+        "DELETE FROM public.app_municipalities WHERE id=$1",
+        [municipalityId],
+      );
+      await client.query("COMMIT");
+      return { status: "deleted" as const, municipalityId, impact };
     } catch (error) {
       try {
         await client.query("ROLLBACK");
