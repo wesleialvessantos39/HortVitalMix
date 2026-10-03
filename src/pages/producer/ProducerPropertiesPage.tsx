@@ -450,9 +450,27 @@ function PropertyList({
                   : "Inicie um imóvel; a etapa 1 orienta o envio do CAR ou CCIR."}
               </li>
             </ol>
-            <p className="rural-onboarding-action">
-              Use o botão <strong>Novo imóvel rural</strong> logo acima para iniciar.
-            </p>
+            {(() => {
+              const draftProperty = properties.find((property) => property.status === "draft");
+              return draftProperty ? (
+                <button
+                  type="button"
+                  className="primary rural-onboarding-action"
+                  onClick={() =>
+                    onNavigate(
+                      "/produtor/propriedades/novo?id=" + draftProperty.id +
+                        "&step=" + Math.min(Math.max(draftProperty.wizardCurrentStep, 1), 6),
+                    )
+                  }
+                >
+                  Continuar cadastro do imóvel
+                </button>
+              ) : (
+                <p className="rural-onboarding-action">
+                  Use o botão <strong>Novo imóvel rural</strong> logo acima para iniciar.
+                </p>
+              );
+            })()}
           </section>
         )}
       <button
@@ -1226,7 +1244,31 @@ function RuralPropertyWizard({
         ))}
       </nav>
 
-      <p className="account-notice">Etapas pendentes: {[1,2,3,4,5,6].filter(n=>!buildStepData(n).success).join(", ") || "nenhuma"}. Toque em uma etapa para continuar o preenchimento.</p>
+      <p className="account-notice rural-pending-steps" role="status">
+        {(() => {
+          const pending = [1, 2, 3, 4, 5, 6].filter((n) => !buildStepData(n).success);
+          if (!pending.length) return "Todas as etapas estão completas.";
+          return (
+            <>
+              Etapas pendentes:{" "}
+              {pending.map((n, i) => (
+                <span key={n}>
+                  <button
+                    type="button"
+                    className="rural-pending-link"
+                    aria-label={`Ir para a etapa ${n}: ${steps[n - 1][0]}`}
+                    onClick={() => viewOnly ? setDraft((c) => ({ ...c, step: n })) : patch({ step: n })}
+                  >
+                    {n}
+                  </button>
+                  {i < pending.length - 2 ? ", " : i === pending.length - 2 ? " e " : ""}
+                </span>
+              ))}
+              . Toque em uma etapa para continuar o preenchimento.
+            </>
+          );
+        })()}
+      </p>
 
       {!online && (
         <div className="rural-connectivity-notice" role="status">

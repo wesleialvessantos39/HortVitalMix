@@ -544,3 +544,25 @@ test("12 conclui sem enviar, protege exclusão e permite envio posterior",async(
  await page.getByRole("button",{name:"Enviar para análise"}).click();
  await expect(page.getByText("Enviado para análise")).toBeVisible();
 });
+
+const viewports = [
+  [320, 568], [360, 800], [390, 844], [412, 915],
+  [768, 1024], [1024, 768], [1280, 720], [1440, 900],
+] as const;
+
+for (const [width, height] of viewports) {
+  test(`13 sem overflow horizontal em ${width}x${height} (lista e etapas 1-6)`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await mockT08(page, fullProperty({ wizardCurrentStep: 3 }));
+    const noOverflow = async () =>
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.goto("/produtor/propriedades");
+    await expect(page.getByText("Chácara Boa Colheita")).toBeVisible();
+    await noOverflow();
+    for (let step = 1; step <= 6; step++) {
+      await page.goto(`/produtor/propriedades/novo?id=${propertyId}&step=${step}`);
+      await expect(page.getByText(`Etapa ${step} de 6`)).toBeVisible();
+      await noOverflow();
+    }
+  });
+}

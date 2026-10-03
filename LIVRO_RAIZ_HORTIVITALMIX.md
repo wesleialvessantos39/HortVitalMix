@@ -3907,3 +3907,30 @@ A publicação do commit e o status Vercel devem ser conferidos pelo SHA exato e
 - Versão física aplicada no Supabase: `20260930184151`.
 - Schema lógico: `40`.
 - Hash canônico das migrations: `d7cb39ab1b3edd045c7dfce8dd982f82ea8639ba29209fb67acfb5537ee5d2bf`.
+
+
+## 2026-10-03 — RECONSTRUÇÃO: LOCALIDADES, ONBOARDING DO PRODUTOR E IMÓVEL EM SEIS ETAPAS
+
+### Auditoria (Fase 0)
+- GitHub `main` (6b77b94) já continha o código de Localidades, onboarding sem nome/atividade do imóvel, wizard de 6 etapas com Documentos na etapa 1, e a migration `20261002170000_producer_onboarding_documents_stage.sql`.
+- **Supabase de produção NÃO tinha essa migration aplicada** (último histórico: `20261001154343`). O arquivo SQL no GitHub não era prova de banco atualizado.
+- Dry-run em transação com ROLLBACK revelou **defeito real na migration**: o `UPDATE wizard_current_step+1` rodava enquanto `ck_app_properties_submission_complete` (que exigia etapa 5) ainda existia, violando a constraint no imóvel `withdrawn`. Causa raiz: ordem das operações.
+- Seletor de município em `AdminLocalitiesPage` exibia o `ibgeCode` como texto do `<option>` em vez do nome.
+
+### Correções
+- Migration corrigida antes de aplicar (constraint removida antes do UPDATE e recriada depois). Sem migration duplicada. Manifesto/hash atualizado: `da2359fdd048e346c6855e4a57f61e66533a0d6ec11511ae95aca1b9e953b9d6`, schema lógico `43`.
+- `<option>` de Localidades agora mostra o nome do município; o código IBGE aparece no campo próprio (preenchimento bidirecional nome ↔ IBGE preservado).
+- Etapas pendentes (1–6) agora são botões clicáveis calculados pelas validações reais; o guia da lista de imóveis mostra "Continuar cadastro do imóvel" levando ao rascunho na etapa atual.
+- Teste E2E novo: ausência de overflow horizontal em 320×568, 360×800, 390×844, 412×915, 768×1024, 1024×768, 1280×720 e 1440×900 (lista + etapas 1–6).
+
+### Supabase produção
+- Migration `20261002170000` aplicada via transação e registrada em `supabase_migrations.schema_migrations`. Resultado verificado: `app_producer_profiles.property_name/rural_activity_type` nulos permitidos; imóveis: 1 `withdrawn` etapa 6, 7 rascunhos etapa 2, 1 rascunho etapa 5 (migrados +1). Nenhum dado removido.
+- Edge Function `public-registration` reimplantada a partir do repositório.
+
+### Testes executados (local)
+`migrations:verify`, `typecheck:app`, `security:check`, `test:unit` (273 ok), `test:t08:unit`, `test:t12:unit`, `test:t08:e2e` (25 ok), `playwright.mobile.config` (4 ok), `npm run build` (ok).
+
+### Pendências reais
+- Testes de integração contra o Supabase real (concorrência de duplicidade, fluxos E2E com upload real) não foram executados nesta rodada.
+- Validação visual manual em dispositivos reais não foi feita; apenas Playwright.
+- SHA/deploy Vercel: ver commit de fechamento abaixo.

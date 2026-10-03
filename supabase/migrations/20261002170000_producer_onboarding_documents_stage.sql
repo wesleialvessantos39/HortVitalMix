@@ -148,6 +148,7 @@ ALTER TABLE public.app_properties
   ALTER COLUMN municipality DROP DEFAULT,
   ALTER COLUMN latitude_sede DROP NOT NULL,
   ALTER COLUMN longitude_sede DROP NOT NULL,
+  DROP CONSTRAINT ck_app_properties_submission_complete,
   DROP CONSTRAINT app_properties_wizard_current_step_check,
   ADD CONSTRAINT app_properties_wizard_current_step_check
     CHECK (wizard_current_step BETWEEN 1 AND 6);
@@ -167,7 +168,6 @@ UPDATE public.app_properties
    AND (draft_data->>'step') ~ '^[1-5]$';
 
 ALTER TABLE public.app_properties
-  DROP CONSTRAINT ck_app_properties_submission_complete,
   ADD CONSTRAINT ck_app_properties_submission_complete CHECK (
     status = 'draft' OR (
       property_name IS NOT NULL AND rural_zone_sector IS NOT NULL

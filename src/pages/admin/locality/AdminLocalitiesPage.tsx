@@ -249,7 +249,7 @@ export function AdminLocalitiesPage({ access, onNavigate }: Props) {
               <option value="">Escolha o município</option>
               {RO_MUNICIPALITIES.map((municipality) => (
                 <option key={municipality.ibgeCode} value={municipality.name}>
-                  {municipality.ibgeCode}
+                  {municipality.name}
                 </option>
               ))}
             </select>
