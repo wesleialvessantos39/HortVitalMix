@@ -22,7 +22,7 @@ describe("T14 montagem na aplicação", () => {
         });
         void vercelHandler(req, res);
       },
-    ).get("/api?__hvm_path=v1/products&search=couve");
+    ).get("/api?__hvm_path=v1/products&path=v1%2Fproducts&search=couve");
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ products: [] });
     expect(list).toHaveBeenCalledExactlyOnceWith({ search: "couve" });
