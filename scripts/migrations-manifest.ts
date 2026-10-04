@@ -36,7 +36,10 @@ export function migrationHash() {
 export function assertManifestHash() {
   const actual = migrationHash();
   if (actual !== manifest.migrationHistoryHash)
-    throw new Error("MIGRATION_HASH_MANIFEST_MISMATCH");
+    throw new Error(
+      "MIGRATION_HASH_MANIFEST_MISMATCH actual=" + actual +
+      " expected=" + manifest.migrationHistoryHash,
+    );
   return actual;
 }
 
