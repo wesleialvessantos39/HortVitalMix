@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
+import { drainStorageDeletionQueue } from "./StorageDeletionQueueService.ts";
 import { redactPII } from "../security/redactPII.ts";
 import {
   propertyIsViewOnly,
@@ -539,18 +540,24 @@ export class RuralPropertyService {
   }
   static async deleteDraft(userId:string,propertyId:string,expectedRevision:number,commandId:string,requestId:string,ipHash:string){
     const client=await requirePool().connect();
+    let shouldDrainStorage=false;
     try{
       await client.query("BEGIN");const producerId=await resolveProducer(client,userId,true);
       const replay=await replayTarget(client,commandId,userId,"rural_property.draft_deleted");
       if(!replay){
         const row=await lockProperty(client,producerId,propertyId);assertRevision(row,expectedRevision);
         if(row.status!=="draft" || row.completed_at)throw new RuralPropertyError("COMPLETED_PROPERTY_DELETE_FORBIDDEN",409);
-        if ((await client.query("SELECT 1 FROM public.app_documents WHERE property_id=$1 LIMIT 1",[propertyId])).rows.length) throw new RuralPropertyError("PROPERTY_HAS_DOCUMENTS",409,"Este imóvel possui documentos com histórico de custódia e não pode ser excluído.");
-        await audit(client,{userId,role:"producer",requestId,ipHash,commandId,action:"rural_property.draft_deleted",targetId:propertyId,before:summaryMetadata(row)});
-        await client.query("DELETE FROM public.app_properties WHERE id=$1 AND producer_id=$2",[propertyId,producerId]);
+        await audit(client,{userId,role:"producer",requestId,ipHash,commandId,action:"rural_property.draft_deleted",targetId:propertyId,before:summaryMetadata(row),after:{deleted:true}});
+        const purged=await client.query<{deleted:number}>(
+          "SELECT public.purge_draft_property($1,$2) AS deleted",
+          [propertyId,producerId],
+        );
+        if(Number(purged.rows[0]?.deleted??0)!==1)throw new RuralPropertyError("PROPERTY_NOT_FOUND",404);
+        shouldDrainStorage=true;
       }
       await client.query("COMMIT");
     }catch(e){await client.query("ROLLBACK");mapDbError(e);}finally{client.release();}
+    if(shouldDrainStorage) void drainStorageDeletionQueue();
   }
   static async listProperties(userId: string) {
     const client = await requirePool().connect();
@@ -1059,6 +1066,47 @@ export class RuralPropertyService {
     }
   }
 
+  static async approvedDeletionImpact(userId: string, propertyId: string) {
+    const client = await requirePool().connect();
+    try {
+      const producerId = await resolveProducer(client,userId);
+      const current = await client.query<Record<string,any>>(
+        `SELECT p.*
+           FROM public.app_properties p
+          WHERE p.id=$1 AND p.producer_id=$2 AND p.status='verified'`,
+        [propertyId,producerId],
+      );
+      const row=current.rows[0];
+      if(!row)throw new RuralPropertyError("PROPERTY_NOT_FOUND",404);
+      const siblings=await client.query<{count:string}>(
+        `SELECT count(*)::text AS count
+           FROM public.app_properties p
+          WHERE p.producer_id=$1
+            AND p.id<>$2
+            AND p.status='verified'
+            AND p.state=$3
+            AND public.fn_locality_normalize(p.municipality)=public.fn_locality_normalize($4)
+            AND EXISTS (
+              SELECT 1 FROM public.app_verification_requests vr
+               WHERE vr.property_id=p.id
+                 AND vr.status='approved'
+                 AND vr.superseded_at IS NULL
+            )`,
+        [producerId,propertyId,row.state,row.municipality],
+      );
+      const remainingInRegion=Number(siblings.rows[0]?.count??0);
+      return {
+        propertyId,
+        municipality: row.municipality,
+        state: row.state,
+        remainingApprovedInRegion: remainingInRegion,
+        losesRegionAccess: remainingInRegion===0,
+      };
+    } finally {
+      client.release();
+    }
+  }
+
   static async withdrawApproved(userId: string, propertyId: string, expectedRevision: number, commandId: string, requestId: string, ipHash: string) {
     const client = await requirePool().connect();
     try {
@@ -1094,7 +1142,27 @@ export class RuralPropertyService {
               )`,
           [producerId, propertyId],
         );
-        await audit(client, { userId, role: "producer", requestId, ipHash, commandId, action: "rural_property.withdrawn", targetId: propertyId, before: summaryMetadata(row), after: { status: "withdrawn" } });
+        const remainingRegion = await client.query<{count:string}>(
+          `SELECT count(*)::text AS count
+             FROM public.app_properties p
+            WHERE p.producer_id=$1
+              AND p.id<>$2
+              AND p.status='verified'
+              AND p.state=$3
+              AND public.fn_locality_normalize(p.municipality)=public.fn_locality_normalize($4)`,
+          [producerId,propertyId,row.state,row.municipality],
+        );
+        await audit(client, {
+          userId, role: "producer", requestId, ipHash, commandId,
+          action: "rural_property.withdrawn", targetId: propertyId,
+          before: summaryMetadata(row),
+          after: {
+            status: "withdrawn",
+            municipality: row.municipality,
+            state: row.state,
+            remainingApprovedInRegion: Number(remainingRegion.rows[0]?.count??0),
+          },
+        });
       }
       await client.query("COMMIT");
     } catch (error) {
