@@ -25,6 +25,21 @@ import { issueRecentAuthProof, RECENT_AUTH_WINDOW_MS } from "../security/recentA
 import { adminRuralPropertyRouter } from "./adminRuralPropertyRoutes.ts";
 import { adminAccountReviewRouter } from "./adminAccountReviewRoutes.ts";
 export const adminGovernanceRouter = Router();
+
+function requireAccountGovernance(req: Request,res: Response,next: any) {
+  if (
+    req.adminActor?.isSuperAdmin ||
+    req.adminActor?.sectors.includes("account_governance")
+  ) {
+    next();
+    return;
+  }
+  res.status(403).json({
+    error:"FORBIDDEN",
+    message:"Acesso restrito à governança de contas.",
+    requestId:req.requestId,
+  });
+}
 adminGovernanceRouter.use((req,res,next)=>{
  if(req.path.startsWith("/registration-reviews") || /^\/users\/[^/]+\/delete$/.test(req.path)) adminAccountReviewRouter(req,res,next); else next();
 });
@@ -471,7 +486,10 @@ adminGovernanceRouter.get(
 
     const params: unknown[] = [];
     let scope = "";
-    if (!req.adminActor.isSuperAdmin) {
+    if (
+      !req.adminActor.isSuperAdmin &&
+      !req.adminActor.sectors.includes("account_governance")
+    ) {
       params.push(req.adminActor.userId);
       scope = `
         AND ar.role_code='platform_admin'
@@ -543,7 +561,7 @@ const StatusChangeSchema = z.object({
  if(v.status==="blocked" && v.mode==="custom" && (!v.startsAt || !v.endsAt || Date.parse(v.endsAt)<=Date.parse(v.startsAt) || Date.parse(v.endsAt)<=Date.now())) ctx.addIssue({code:"custom",message:"Informe um intervalo válido com término futuro."});
  if(v.status==="blocked" && v.mode!=="custom" && (v.startsAt || v.endsAt))ctx.addIssue({code:"custom",message:"Datas exigem bloqueio personalizado."});
 });
-adminGovernanceRouter.patch("/users/:userId/status",originProtection,adminSessionMiddleware,requireSuperAdmin,requireRecentAuth,async(req,res)=>{
+adminGovernanceRouter.patch("/users/:userId/status",originProtection,adminSessionMiddleware,requireAccountGovernance,requireRecentAuth,async(req,res)=>{
  if(!dbPool || !req.adminActor){res.status(503).json({error:"UNAVAILABLE"});return;}
  const parsed=StatusChangeSchema.safeParse(req.body), id=z.string().uuid().safeParse(req.params.userId);
  if(!parsed.success || !id.success){res.status(422).json({error:"VALIDATION_FAILED"});return;}
