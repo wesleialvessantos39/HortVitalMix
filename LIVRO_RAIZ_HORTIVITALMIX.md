@@ -4185,3 +4185,10 @@ Detalhes, API, regras e comandos de reprodução: [docs/TRILHA13_CATEGORIAS.md](
 - O fechamento documental posterior preserva schema/hash/código funcional e sincroniza a SHA final da main com `app_releases` somente após seu deployment READY e nova verificação. O SHA funcional acima identifica o código validado antes desse registro documental.
 
 Checklist T13 concluído: migration/seed canônico; ENABLE+FORCE RLS e grants SELECT; serviço com hierarquia, conflitos, idempotência e auditoria; contratos Zod; menu responsivo; CRUD exclusivo do Super Admin e impacto; schema 48; testes mínimos e evidências; produção main/pdx1 conferida. A T14 permanece para a próxima missão.
+
+### 2026-10-04 — T13: confirmação de sessão preservando formulário e impacto
+
+- A revisão final reproduziu o caso de sessão antiga: o atalho para login era redirecionado pela sessão ativa e descartava a edição. Corrigido exclusivamente em `AdminCategoriesPage`/CSS da T13, reutilizando `AdminLoginPage` em diálogo local. O login bem-sucedido fecha o diálogo e retoma a edição com os campos e o mesmo `commandId`; nenhuma tela/serviço histórico de autenticação foi modificado.
+- A confirmação também funciona durante a desativação, retornando ao relatório de impacto. Escritas continuam exigindo a verificação de sessão/papel no backend.
+- Cinco casos adicionais passaram: retomada de criação em **320/390/768/1440 px** sem overflow e retomada da desativação. Verificação dedicada final: **41 passaram (16 T12 + 25 T13)**. Typecheck integral, build, verificação de segredos, inicialização da API e história compilada com HTTP/PostgreSQL real passaram novamente.
+- Correção aditiva sem migration, mudança de schema/hash, dependência nova ou mutação de dado existente. A release corrente acompanha a SHA final da main somente após novo deployment READY/pdx1 e conferência de health/ready/config.

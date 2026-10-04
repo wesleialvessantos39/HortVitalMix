@@ -34,7 +34,8 @@ async function mock(page: Page, options: Options = {}) {
   let rows = options.empty ? [] : structuredClone(seed);
   let fail = Boolean(options.unavailable),
     conflict = Boolean(options.conflict),
-    products = options.products ?? 0;
+    products = options.products ?? 0,
+    needsReauth = Boolean(options.reauth);
   const commands: Array<{
     path: string;
     method: string;
@@ -76,6 +77,24 @@ async function mock(page: Page, options: Options = {}) {
         sectors: ["document_verification"],
         requiresReauth: false,
       });
+    if (path === "/v1/admin/bootstrap/status")
+      return json({ status: "closed", reason: null });
+    if (path === "/v1/admin/auth/login") {
+      commands.push({
+        path,
+        method: request.method(),
+        body: request.postDataJSON(),
+      });
+      needsReauth = false;
+      return json({
+        status: "session_created",
+        accessToken: "fresh-local-admin",
+        refreshToken: "fresh-local-refresh",
+        expiresIn: 3600,
+        role: "platform_super_admin",
+        sectors: [],
+      });
+    }
     if (path.startsWith("/v1/localities"))
       return json({ municipalities: [], activeMunicipalityIds: [] });
     if (path === "/v1/categories") {
@@ -105,7 +124,7 @@ async function mock(page: Page, options: Options = {}) {
     if (path.startsWith("/v1/admin/categories") && request.method() !== "GET") {
       const body = request.postDataJSON();
       commands.push({ path, method: request.method(), body });
-      if (options.reauth)
+      if (needsReauth)
         return json({ error: "ADMIN_REAUTHENTICATION_REQUIRED" }, 401);
       if (options.cycle)
         return json({ error: "CATEGORY_CYCLE_FORBIDDEN" }, 422);
@@ -169,6 +188,39 @@ async function mock(page: Page, options: Options = {}) {
     },
   };
 }
+test("T13 confirma sessão durante desativação e retoma o diálogo de impacto", async ({
+  page,
+}) => {
+  await mock(page, { admin: true, reauth: true });
+  await page.goto("/admin/categorias");
+  await page
+    .getByRole("button", { name: "Desativar Frutas", exact: true })
+    .click();
+  const impact = page.getByRole("dialog", { name: "Desativar Frutas?" });
+  await impact.getByRole("button", { name: "Confirmar desativação" }).click();
+  await impact
+    .getByRole("button", { name: "Confirmar sessão administrativa" })
+    .click();
+  const authDialog = page.getByRole("dialog", {
+    name: "Confirmar sessão administrativa",
+  });
+  await authDialog
+    .getByLabel("E-mail", { exact: true })
+    .fill("admin@example.test");
+  await authDialog
+    .getByLabel("Senha", { exact: true })
+    .fill("SenhaLocal-2026!");
+  await authDialog
+    .getByRole("button", { name: "Entrar como Super administrador" })
+    .click();
+  await expect(authDialog).not.toBeVisible();
+  await expect(impact).toBeVisible();
+  await impact.getByRole("button", { name: "Confirmar desativação" }).click();
+  await expect(impact).not.toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Reativar Frutas", exact: true }),
+  ).toBeVisible();
+});
 async function noOverflow(page: Page) {
   expect(
     await page.evaluate(
@@ -453,3 +505,50 @@ test("T13 guia para reautenticação preserva a edição", async ({ page }) => {
     "Nova categoria",
   );
 });
+for (const width of [320, 390, 768, 1440]) {
+  test(`T13 confirma sessão na própria tela e retoma criação sem perder a edição em ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const state = await mock(page, { admin: true, reauth: true });
+    await page.goto("/admin/categorias");
+    await page
+      .getByLabel("Nome", { exact: true })
+      .fill("Nova categoria preservada");
+    await page.getByRole("button", { name: "Criar categoria" }).click();
+    await page
+      .getByRole("button", { name: "Confirmar sessão administrativa" })
+      .click();
+    await expect(page).toHaveURL(/\/admin\/categorias$/);
+    const dialog = page.getByRole("dialog", {
+      name: "Confirmar sessão administrativa",
+    });
+    await expect(dialog).toBeVisible();
+    await noOverflow(page);
+    await dialog
+      .getByLabel("E-mail", { exact: true })
+      .fill("admin@example.test");
+    await dialog.getByLabel("Senha", { exact: true }).fill("SenhaLocal-2026!");
+    await dialog
+      .getByRole("button", {
+        name: "Entrar como Super administrador",
+        exact: true,
+      })
+      .click();
+    await expect(dialog).not.toBeVisible();
+    await expect(page.getByLabel("Nome", { exact: true })).toHaveValue(
+      "Nova categoria preservada",
+    );
+    await page.getByRole("button", { name: "Criar categoria" }).click();
+    await expect(page.getByText(/Categoria salva/)).toBeVisible();
+    const mutations = state.commands.filter(
+      (row) => row.path === "/v1/admin/categories",
+    );
+    expect(mutations).toHaveLength(2);
+    expect(mutations[1].body.commandId).toBe(mutations[0].body.commandId);
+    expect(
+      state.commands.find((row) => row.path.endsWith("/auth/login"))?.body
+        .portalRole,
+    ).toBe("platform_super_admin");
+  });
+}
