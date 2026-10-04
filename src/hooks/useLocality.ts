@@ -30,17 +30,17 @@ export type UseLocalityResult = {
  * (item 4): a região escolhida aqui não é derivada do login.
  *
  * Regra de vida da escolha guardada: se o município continua ATIVO a escolha
- * permanece; se o Super administrador DESATIVOU o município, a escolha é
- * mantida e a vitrine passa a exibir a mensagem de região desativada (item 2);
- * se o município saiu do catálogo por completo, a escolha é descartada.
+ * permanece; se o município foi bloqueado ou excluído do catálogo, a escolha
+ * é mantida para que o sistema mostre a mensagem correta e impeça operação
+ * silenciosa em uma região sem cobertura.
  */
 export function useLocality(): UseLocalityResult {
   const [municipalities, setMunicipalities] = useState<Municipality[]>([]);
   const [selected, setSelected] = useState<StoredLocality | null>(() =>
     readStoredLocality(),
   );
-  const [disabledSelection, setDisabledSelection] =
-    useState<StoredLocality | null>(null);
+  const [blockedSelection, setBlockedSelection] =
+    useState<{selection:StoredLocality;coverage:LocalityCoverage} | null>(null);
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
 
@@ -55,11 +55,11 @@ export function useLocality(): UseLocalityResult {
         setUnavailable(false);
         const stored = readStoredLocality();
         if (!stored) {
-          setDisabledSelection(null);
+          setBlockedSelection(null);
           return;
         }
         if (result.activeMunicipalityIds.includes(stored.municipalityId)) {
-          setDisabledSelection(null);
+          setBlockedSelection(null);
           return;
         }
         // Fora da lista ativa: pode estar desativado (mantém para avisar) ou
@@ -67,18 +67,18 @@ export function useLocality(): UseLocalityResult {
         try {
           const resolution = await fetchCoverage(stored.state, stored.name);
           if (cancelled) return;
-          if (resolution.coverage === "inactive") {
-            setDisabledSelection(stored);
+          if (resolution.coverage !== "active") {
+            setBlockedSelection({selection:stored,coverage:resolution.coverage});
             return;
           }
         } catch {
           // Sem resposta do servidor a escolha é preservada.
           if (cancelled) return;
-          setDisabledSelection(null);
+          setBlockedSelection(null);
           return;
         }
         if (cancelled) return;
-        setDisabledSelection(null);
+        setBlockedSelection(null);
         writeStoredLocality(null);
       })
       .catch(() => {
@@ -93,7 +93,7 @@ export function useLocality(): UseLocalityResult {
   }, []);
 
   const select = useCallback((municipality: Municipality | null) => {
-    setDisabledSelection(null);
+    setBlockedSelection(null);
     writeStoredLocality(
       municipality
         ? {
@@ -108,15 +108,15 @@ export function useLocality(): UseLocalityResult {
   const coverage = useMemo<LocalityCoverage | null>(() => {
     if (!selected) return null;
     if (
-      disabledSelection &&
-      disabledSelection.municipalityId === selected.municipalityId
+      blockedSelection &&
+      blockedSelection.selection.municipalityId === selected.municipalityId
     )
-      return "inactive";
+      return blockedSelection.coverage;
     const match = municipalities.find(
       (row) => row.id === selected.municipalityId,
     );
     return match && match.isActive ? "active" : null;
-  }, [municipalities, selected, disabledSelection]);
+  }, [municipalities, selected, blockedSelection]);
 
   const isActive = useCallback(
     (municipalityId: string) =>
