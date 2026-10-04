@@ -47,7 +47,7 @@ foundationRouter.get("/ready", async (_req, res) => {
         });
       return;
     }
-    void drainStorageDeletionQueue();
+    await drainStorageDeletionQueue();
     const matches =
       row.schema_version === FOUNDATION_SCHEMA_VERSION &&
       row.migration_history_hash === manifest.migrationHistoryHash &&
