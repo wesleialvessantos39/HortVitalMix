@@ -40,6 +40,9 @@ import { DeliveryScopePage } from "./pages/producer/DeliveryScopePage";
 import { DocumentsPanel } from "./pages/documents/DocumentsPanel";
 import { CategoryNavSection } from "./components/catalog/CategoryNavSection";
 import type { Category } from "../shared/contracts/category";
+import { PublicProductCatalog } from "./components/catalog/PublicProductCatalog";
+const ProducerCatalogPage = lazy(() => import("./pages/producer/ProducerCatalogPage"));
+const ProductEditorPage = lazy(() => import("./pages/producer/ProductEditorPage"));
 const ProducerStoreSettingsPage = lazy(() => import("./pages/producer/ProducerStoreSettingsPage"));
 const PublicProducerStorePage = lazy(() => import("./pages/public/PublicProducerStorePage"));
 const fallback = {
@@ -123,6 +126,8 @@ export default function App() {
     path === "/produtor/propriedades/novo";
   const isProducerScopeRoute = path === "/produtor/entrega";
   const isProducerStoreRoute = path === "/produtor/loja";
+  const productEditorId = path.match(/^\/produtor\/produtos\/([^/]+)\/editar$/)?.[1];
+  const isProducerProductRoute = path === "/produtor/produtos" || path === "/produtor/produtos/novo" || Boolean(productEditorId);
   const publicStoreSlug = path.match(/^\/produtores\/([^/]+)\/?$/)?.[1];
   const publicPortalSession =
     Boolean(shellSession) &&
@@ -348,15 +353,15 @@ export default function App() {
             </button>
           </div>
         </div>
-        {!isProducerPropertyRoute && !isProducerStoreRoute && search}
+        {!isProducerPropertyRoute && !isProducerStoreRoute && !isProducerProductRoute && search}
       </header>
-      <main id="conteudo" className={isAdminRoute || publicLoginRole ? "layout admin-route-layout" : isProducerPropertyRoute ? "layout producer-route-layout rural-property-layout" : isProducerScopeRoute || isProducerStoreRoute ? "layout producer-route-layout" : "layout"}>
+      <main id="conteudo" className={isAdminRoute || publicLoginRole ? "layout admin-route-layout" : isProducerPropertyRoute ? "layout producer-route-layout rural-property-layout" : isProducerScopeRoute || isProducerStoreRoute || isProducerProductRoute ? "layout producer-route-layout" : "layout"}>
         {shellSession?.localityWarning && !isAdminRoute && (
           <p className="account-notice locality-blocked" role="alert">
             {shellSession.localityWarning}
           </p>
         )}
-        {(sessionLoading && (guestAccessRoute || isAccountDataRoute || isProducerPropertyRoute || isProducerStoreRoute || path === "/minha-conta")) || (shellSession && guestAccessRoute) ? <p role="status" className="account-notice">Carregando sua conta…</p> : publicLoginRole ? (
+        {(sessionLoading && (guestAccessRoute || isAccountDataRoute || isProducerPropertyRoute || isProducerStoreRoute || isProducerProductRoute || path === "/minha-conta")) || (shellSession && guestAccessRoute) ? <p role="status" className="account-notice">Carregando sua conta…</p> : publicLoginRole ? (
           <PublicLoginPage key={publicLoginRole} role={publicLoginRole} onNavigate={go} onSessionAdopt={adoptSession}/>
         ) : isAdminRoute ? (
           <AdminRouter path={path} onNavigate={go} onSessionRefresh={refreshSession} />
@@ -382,6 +387,10 @@ export default function App() {
           <Suspense fallback={<p role="status">Carregando a vitrine…</p>}>
             <PublicProducerStorePage key={publicStoreSlug} slug={publicStoreSlug} onNavigate={go} />
           </Suspense>
+        ) : isProducerProductRoute && shellSession?.activeRole === "producer" ? (
+          <Suspense fallback={<p role="status">Carregando seu catálogo…</p>}>
+            {path === "/produtor/produtos" ? <ProducerCatalogPage key={shellSession.userId} session={shellSession} onNavigate={go}/> : <ProductEditorPage key={shellSession.userId + ":" + (productEditorId ?? "novo")} id={productEditorId} session={shellSession} onNavigate={go}/>}
+          </Suspense>
         ) : isProducerStoreRoute && shellSession?.activeRole === "producer" ? (
           <Suspense fallback={<p role="status">Carregando sua loja…</p>}>
             <ProducerStoreSettingsPage key={shellSession.userId} session={shellSession} onNavigate={go} />
@@ -397,7 +406,7 @@ export default function App() {
           />
         ) : isProducerScopeRoute && shellSession?.activeRole === "producer" ? (
           <DeliveryScopePage session={shellSession} onNavigate={go} />
-        ) : isProducerPropertyRoute || isProducerScopeRoute || isProducerStoreRoute ? (
+        ) : isProducerPropertyRoute || isProducerScopeRoute || isProducerStoreRoute || isProducerProductRoute ? (
           <Account
             path="/minha-conta"
             onNavigate={go}
@@ -538,7 +547,7 @@ export default function App() {
                       </button>
                     )}
                   </div>
-                  <div className="empty">
+                  {path === "/produtos" && !localityBlocked ? <PublicProductCatalog categoryId={categoryId} search={query} onNavigate={go}/> : <div className="empty">
                     <span className="empty-icon">
                       {path === "/planos" ? (
                         <CalendarDays />
@@ -566,7 +575,7 @@ export default function App() {
                     >
                       Conheça as opções de cadastro <ChevronRight size={15} />
                     </button>}
-                  </div>
+                  </div>}
                 </section>
               )}
             </div>

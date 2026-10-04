@@ -1,0 +1,1067 @@
+{
+  "baseSha": "0d1486f757c6411b907323152895f01fe713d4d6",
+  "baseSchema": 48,
+  "schema": 49,
+  "date": "2026-10-04",
+  "vitest": {
+    "passed": 527,
+    "failed": 0,
+    "explicitlySkipped": 92,
+    "total": 619
+  },
+  "newContractsHttp": {
+    "passed": 56,
+    "failed": 0
+  },
+  "postgres": {
+    "version": "17.6",
+    "migrations": 54,
+    "trilha12": 22,
+    "trilha13": 20,
+    "trilha14": 18,
+    "failed": 0,
+    "localOnly": true
+  },
+  "story": {
+    "passed": 1,
+    "failed": 0,
+    "realBuiltReact": true,
+    "realBrowser": true,
+    "realHttp": true,
+    "realPostgres": true,
+    "externalAuthAndStorage": "Adaptadores sintéticos exclusivamente locais"
+  },
+  "focusedBrowser": {
+    "trilha12": 16,
+    "trilha13": 25,
+    "trilha14": 16,
+    "total": 57,
+    "transientConnectionResetRetested": true,
+    "finalFailures": 0,
+    "widths": [
+      320,
+      390,
+      768,
+      1440
+    ]
+  },
+  "checks": {
+    "typecheck": "passed",
+    "build": "passed",
+    "security": "passed",
+    "apiColdStart": "passed",
+    "historicalMigrationsUnchanged": true,
+    "newDependencies": false
+  },
+  "supabase": {
+    "projectRef": "xipbsazvymkqqfmfegwu",
+    "schema": 49,
+    "migrations": 54,
+    "canonicalMigration": "20261004202124",
+    "physicalMigration": "20261004210207",
+    "hash": "b73d77a039fa20dd25bb4abdf89e3f36349abb9e44d9c287d89bcf89a53e777e",
+    "oldRelationsCompared": 49,
+    "oldDataUnchangedAfterMigration": true,
+    "snapshotBefore": [
+      {
+        "relation": "auth.users",
+        "rows": 4,
+        "digest": "af6e985cfc86f3415a8860388269d944"
+      },
+      {
+        "relation": "public.app_access_partial_block_municipalities",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_access_partial_block_properties",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_access_partial_blocks",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_account_deletions",
+        "rows": 1,
+        "digest": "a220e73eb7acce29b432a2cc693eeb8a"
+      },
+      {
+        "relation": "public.app_admin_auth_attempts",
+        "rows": 177,
+        "digest": "d3fda16bc32848ce38f859772764fd8c"
+      },
+      {
+        "relation": "public.app_admin_invite_sectors",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_admin_invites",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_admin_mfa_challenges",
+        "rows": 6,
+        "digest": "5b58d76af6873f493cf0b14c3e2f9981"
+      },
+      {
+        "relation": "public.app_admin_principals",
+        "rows": 1,
+        "digest": "41bd774ab91d9894cedb1866a986cd18"
+      },
+      {
+        "relation": "public.app_admin_sector_members",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_admin_sectors",
+        "rows": 6,
+        "digest": "5f9dffedd27e2c86cc9373fa3a0504b9"
+      },
+      {
+        "relation": "public.app_audit_events",
+        "rows": 332,
+        "digest": "81286614faf3b7023054d88aad7bdd0a"
+      },
+      {
+        "relation": "public.app_car_validations",
+        "rows": 1,
+        "digest": "ea696e56e84c3371e4a74fd7712a2b1f"
+      },
+      {
+        "relation": "public.app_categories",
+        "rows": 5,
+        "digest": "33b307fc16431b485a9b13628cb95d9f"
+      },
+      {
+        "relation": "public.app_consent_records",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_contact_verification_challenges",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_attempts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_document_extractions",
+        "rows": 1,
+        "digest": "ec67d86ef3515091d321bb71496fcd60"
+      },
+      {
+        "relation": "public.app_document_jobs",
+        "rows": 5,
+        "digest": "cef50bae1e80993b744548f295da69ed"
+      },
+      {
+        "relation": "public.app_document_reviews",
+        "rows": 13,
+        "digest": "658dc4082bcdb82edb4489753c5724c0"
+      },
+      {
+        "relation": "public.app_document_scans",
+        "rows": 7,
+        "digest": "acf62ff0c98aa835e1291b9af83b10a6"
+      },
+      {
+        "relation": "public.app_documents",
+        "rows": 7,
+        "digest": "e75f34f86ae6c09475175e383548f171"
+      },
+      {
+        "relation": "public.app_global_config",
+        "rows": 1,
+        "digest": "fae25bf4fed8daa8c5e56310bd486779"
+      },
+      {
+        "relation": "public.app_locality_user_impacts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_municipalities",
+        "rows": 7,
+        "digest": "e0a14113ef423dcbc211d164a3cec6f0"
+      },
+      {
+        "relation": "public.app_outbox_events",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_password_recovery_requests",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_people",
+        "rows": 3,
+        "digest": "2c499fbc6c5b1341ba5308a798ce33bd"
+      },
+      {
+        "relation": "public.app_producer_delivery_municipalities",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_producer_delivery_scopes",
+        "rows": 1,
+        "digest": "0f7bf78a48601cae06f36eb5892afa03"
+      },
+      {
+        "relation": "public.app_producer_profiles",
+        "rows": 2,
+        "digest": "325072d73a06783f907d97a3800c0d51"
+      },
+      {
+        "relation": "public.app_producer_stores",
+        "rows": 1,
+        "digest": "134801ca0628c08136193216d07e44c1"
+      },
+      {
+        "relation": "public.app_properties",
+        "rows": 1,
+        "digest": "573a8a8fd924accf1e1781364d9b0856"
+      },
+      {
+        "relation": "public.app_property_boundaries",
+        "rows": 1,
+        "digest": "093d23638ad0489591bff1982c7a10fd"
+      },
+      {
+        "relation": "public.app_property_deletion_archive",
+        "rows": 1,
+        "digest": "254f0a1035993791965454650301b31a"
+      },
+      {
+        "relation": "public.app_registration_reviews",
+        "rows": 1,
+        "digest": "3024ed3a40072c778e6a4c771ce4e9b3"
+      },
+      {
+        "relation": "public.app_releases",
+        "rows": 61,
+        "digest": "c79bdeceb11e5d4820d76608dfe7bc28"
+      },
+      {
+        "relation": "public.app_role_security_challenges",
+        "rows": 3,
+        "digest": "ce46a7a465d063a7ea3d25d069976b88"
+      },
+      {
+        "relation": "public.app_roles",
+        "rows": 4,
+        "digest": "16b2e21f7b61d3c17d02349564e0fa16"
+      },
+      {
+        "relation": "public.app_rural_activities",
+        "rows": 1,
+        "digest": "4fd2b0bd7d3af416516c6a80683d3839"
+      },
+      {
+        "relation": "public.app_storage_deletion_queue",
+        "rows": 9,
+        "digest": "c5c7f4313c4caecf062527f4034b72ac"
+      },
+      {
+        "relation": "public.app_store_operating_hours",
+        "rows": 7,
+        "digest": "594d5e41a5c820999312fbd6f1db1388"
+      },
+      {
+        "relation": "public.app_user_addresses",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_user_preferences",
+        "rows": 1,
+        "digest": "2860877d8b880981ed1769cdeb7f4549"
+      },
+      {
+        "relation": "public.app_user_role_assignments",
+        "rows": 5,
+        "digest": "20d19811d2a37270dd73711ab2c180c6"
+      },
+      {
+        "relation": "public.app_users",
+        "rows": 4,
+        "digest": "9a44819f861935f6705e5a11d04f5d28"
+      },
+      {
+        "relation": "public.app_verification_decisions",
+        "rows": 2,
+        "digest": "8e95a569c00f628b921579cec1fdd7de"
+      },
+      {
+        "relation": "public.app_verification_requests",
+        "rows": 2,
+        "digest": "882fd2799cf9d85647ec87b4e650253c"
+      }
+    ],
+    "snapshotAfterMigration": [
+      {
+        "relation": "auth.users",
+        "rows": 4,
+        "digest": "af6e985cfc86f3415a8860388269d944"
+      },
+      {
+        "relation": "public.app_access_partial_block_municipalities",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_access_partial_block_properties",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_access_partial_blocks",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_account_deletions",
+        "rows": 1,
+        "digest": "a220e73eb7acce29b432a2cc693eeb8a"
+      },
+      {
+        "relation": "public.app_admin_auth_attempts",
+        "rows": 177,
+        "digest": "d3fda16bc32848ce38f859772764fd8c"
+      },
+      {
+        "relation": "public.app_admin_invite_sectors",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_admin_invites",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_admin_mfa_challenges",
+        "rows": 6,
+        "digest": "5b58d76af6873f493cf0b14c3e2f9981"
+      },
+      {
+        "relation": "public.app_admin_principals",
+        "rows": 1,
+        "digest": "41bd774ab91d9894cedb1866a986cd18"
+      },
+      {
+        "relation": "public.app_admin_sector_members",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_admin_sectors",
+        "rows": 6,
+        "digest": "5f9dffedd27e2c86cc9373fa3a0504b9"
+      },
+      {
+        "relation": "public.app_audit_events",
+        "rows": 332,
+        "digest": "81286614faf3b7023054d88aad7bdd0a"
+      },
+      {
+        "relation": "public.app_car_validations",
+        "rows": 1,
+        "digest": "ea696e56e84c3371e4a74fd7712a2b1f"
+      },
+      {
+        "relation": "public.app_categories",
+        "rows": 5,
+        "digest": "33b307fc16431b485a9b13628cb95d9f"
+      },
+      {
+        "relation": "public.app_consent_records",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_contact_verification_challenges",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_attempts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_document_extractions",
+        "rows": 1,
+        "digest": "ec67d86ef3515091d321bb71496fcd60"
+      },
+      {
+        "relation": "public.app_document_jobs",
+        "rows": 5,
+        "digest": "cef50bae1e80993b744548f295da69ed"
+      },
+      {
+        "relation": "public.app_document_reviews",
+        "rows": 13,
+        "digest": "658dc4082bcdb82edb4489753c5724c0"
+      },
+      {
+        "relation": "public.app_document_scans",
+        "rows": 7,
+        "digest": "acf62ff0c98aa835e1291b9af83b10a6"
+      },
+      {
+        "relation": "public.app_documents",
+        "rows": 7,
+        "digest": "e75f34f86ae6c09475175e383548f171"
+      },
+      {
+        "relation": "public.app_global_config",
+        "rows": 1,
+        "digest": "fae25bf4fed8daa8c5e56310bd486779"
+      },
+      {
+        "relation": "public.app_locality_user_impacts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_municipalities",
+        "rows": 7,
+        "digest": "e0a14113ef423dcbc211d164a3cec6f0"
+      },
+      {
+        "relation": "public.app_outbox_events",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_password_recovery_requests",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_people",
+        "rows": 3,
+        "digest": "2c499fbc6c5b1341ba5308a798ce33bd"
+      },
+      {
+        "relation": "public.app_producer_delivery_municipalities",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_producer_delivery_scopes",
+        "rows": 1,
+        "digest": "0f7bf78a48601cae06f36eb5892afa03"
+      },
+      {
+        "relation": "public.app_producer_profiles",
+        "rows": 2,
+        "digest": "325072d73a06783f907d97a3800c0d51"
+      },
+      {
+        "relation": "public.app_producer_stores",
+        "rows": 1,
+        "digest": "134801ca0628c08136193216d07e44c1"
+      },
+      {
+        "relation": "public.app_properties",
+        "rows": 1,
+        "digest": "573a8a8fd924accf1e1781364d9b0856"
+      },
+      {
+        "relation": "public.app_property_boundaries",
+        "rows": 1,
+        "digest": "093d23638ad0489591bff1982c7a10fd"
+      },
+      {
+        "relation": "public.app_property_deletion_archive",
+        "rows": 1,
+        "digest": "254f0a1035993791965454650301b31a"
+      },
+      {
+        "relation": "public.app_registration_reviews",
+        "rows": 1,
+        "digest": "3024ed3a40072c778e6a4c771ce4e9b3"
+      },
+      {
+        "relation": "public.app_releases",
+        "rows": 61,
+        "digest": "c79bdeceb11e5d4820d76608dfe7bc28"
+      },
+      {
+        "relation": "public.app_role_security_challenges",
+        "rows": 3,
+        "digest": "ce46a7a465d063a7ea3d25d069976b88"
+      },
+      {
+        "relation": "public.app_roles",
+        "rows": 4,
+        "digest": "16b2e21f7b61d3c17d02349564e0fa16"
+      },
+      {
+        "relation": "public.app_rural_activities",
+        "rows": 1,
+        "digest": "4fd2b0bd7d3af416516c6a80683d3839"
+      },
+      {
+        "relation": "public.app_storage_deletion_queue",
+        "rows": 9,
+        "digest": "c5c7f4313c4caecf062527f4034b72ac"
+      },
+      {
+        "relation": "public.app_store_operating_hours",
+        "rows": 7,
+        "digest": "594d5e41a5c820999312fbd6f1db1388"
+      },
+      {
+        "relation": "public.app_user_addresses",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_user_preferences",
+        "rows": 1,
+        "digest": "2860877d8b880981ed1769cdeb7f4549"
+      },
+      {
+        "relation": "public.app_user_role_assignments",
+        "rows": 5,
+        "digest": "20d19811d2a37270dd73711ab2c180c6"
+      },
+      {
+        "relation": "public.app_users",
+        "rows": 4,
+        "digest": "9a44819f861935f6705e5a11d04f5d28"
+      },
+      {
+        "relation": "public.app_verification_decisions",
+        "rows": 2,
+        "digest": "8e95a569c00f628b921579cec1fdd7de"
+      },
+      {
+        "relation": "public.app_verification_requests",
+        "rows": 2,
+        "digest": "882fd2799cf9d85647ec87b4e650253c"
+      }
+    ],
+    "newSecurityAdvisories": 0,
+    "newPerformanceAdvisories": {
+      "multiplePermissivePolicies": 3,
+      "unusedIndexes": 5,
+      "unindexedForeignKeys": 0
+    }
+  },
+  "playwrightComparison": {
+    "base": {
+      "startTime": "2026-10-04T21:01:38.371Z",
+      "duration": 789476.306,
+      "expected": 150,
+      "skipped": 0,
+      "unexpected": 53,
+      "flaky": 0
+    },
+    "delivery": {
+      "startTime": "2026-10-04T21:01:39.180Z",
+      "duration": 791082.873,
+      "expected": 163,
+      "skipped": 0,
+      "unexpected": 56,
+      "flaky": 0
+    },
+    "newFailures": [],
+    "sameFailures": [
+      {
+        "file": "access-confirmation.spec.ts",
+        "title": "submitted properties are visible and review uses revision and command id",
+        "key": "access-confirmation.spec.ts :: submitted properties are visible and review uses revision and command id",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_admin: populated administrative screens at 320px",
+        "key": "admin-governance-responsive.spec.ts :: platform_admin: populated administrative screens at 320px",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_admin: populated administrative screens at 390px",
+        "key": "admin-governance-responsive.spec.ts :: platform_admin: populated administrative screens at 390px",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_admin: populated administrative screens at 768px",
+        "key": "admin-governance-responsive.spec.ts :: platform_admin: populated administrative screens at 768px",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_admin: populated administrative screens at 1024px",
+        "key": "admin-governance-responsive.spec.ts :: platform_admin: populated administrative screens at 1024px",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_admin: populated administrative screens at 1440px",
+        "key": "admin-governance-responsive.spec.ts :: platform_admin: populated administrative screens at 1440px",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_super_admin: populated administrative screens at 320px",
+        "key": "admin-governance-responsive.spec.ts :: platform_super_admin: populated administrative screens at 320px",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_super_admin: populated administrative screens at 390px",
+        "key": "admin-governance-responsive.spec.ts :: platform_super_admin: populated administrative screens at 390px",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_super_admin: populated administrative screens at 768px",
+        "key": "admin-governance-responsive.spec.ts :: platform_super_admin: populated administrative screens at 768px",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_super_admin: populated administrative screens at 1024px",
+        "key": "admin-governance-responsive.spec.ts :: platform_super_admin: populated administrative screens at 1024px",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_super_admin: populated administrative screens at 1440px",
+        "key": "admin-governance-responsive.spec.ts :: platform_super_admin: populated administrative screens at 1440px",
+        "status": "unexpected"
+      },
+      {
+        "file": "iphone-responsive.spec.ts",
+        "title": "iPhone viewport and touch: consumer",
+        "key": "iphone-responsive.spec.ts :: iPhone viewport and touch: consumer",
+        "status": "unexpected"
+      },
+      {
+        "file": "iphone-responsive.spec.ts",
+        "title": "iPhone viewport and touch: producer",
+        "key": "iphone-responsive.spec.ts :: iPhone viewport and touch: producer",
+        "status": "unexpected"
+      },
+      {
+        "file": "iphone-responsive.spec.ts",
+        "title": "iPhone viewport and touch: platform_admin",
+        "key": "iphone-responsive.spec.ts :: iPhone viewport and touch: platform_admin",
+        "status": "unexpected"
+      },
+      {
+        "file": "iphone-responsive.spec.ts",
+        "title": "iPhone viewport and touch: platform_super_admin",
+        "key": "iphone-responsive.spec.ts :: iPhone viewport and touch: platform_super_admin",
+        "status": "unexpected"
+      },
+      {
+        "file": "session-navigation.spec.ts",
+        "title": "sessão persiste na navegação e cadastro só reaparece ao sair: consumer",
+        "key": "session-navigation.spec.ts :: sessão persiste na navegação e cadastro só reaparece ao sair: consumer",
+        "status": "unexpected"
+      },
+      {
+        "file": "session-navigation.spec.ts",
+        "title": "sessão persiste na navegação e cadastro só reaparece ao sair: producer",
+        "key": "session-navigation.spec.ts :: sessão persiste na navegação e cadastro só reaparece ao sair: producer",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "falha de config é não bloqueante e mantém navegação",
+        "key": "shell.spec.ts :: falha de config é não bloqueante e mantém navegação",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "config pública válida atualiza slogan da shell",
+        "key": "shell.spec.ts :: config pública válida atualiza slogan da shell",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "fluxos públicos de segurança estão acessíveis e responsivos",
+        "key": "shell.spec.ts :: fluxos públicos de segurança estão acessíveis e responsivos",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "rotas diretas de recuperação preservam estado correto",
+        "key": "shell.spec.ts :: rotas diretas de recuperação preservam estado correto",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "recuperação explicita o perfil e mantém administração isolada",
+        "key": "shell.spec.ts :: recuperação explicita o perfil e mantém administração isolada",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "conta separa consumidor e produtor e administração fica independente",
+        "key": "shell.spec.ts :: conta separa consumidor e produtor e administração fica independente",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "senha forte orienta e bloqueia cadastro fraco",
+        "key": "shell.spec.ts :: senha forte orienta e bloqueia cadastro fraco",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — configuração admin responsiva em 320px",
+        "key": "shell.spec.ts :: Trilha 02 — configuração admin responsiva em 320px",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — configuração admin responsiva em 360px",
+        "key": "shell.spec.ts :: Trilha 02 — configuração admin responsiva em 360px",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — configuração admin responsiva em 768px",
+        "key": "shell.spec.ts :: Trilha 02 — configuração admin responsiva em 768px",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — configuração admin responsiva em 1440px",
+        "key": "shell.spec.ts :: Trilha 02 — configuração admin responsiva em 1440px",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — loading permanece visível por pelo menos 100ms",
+        "key": "shell.spec.ts :: Trilha 02 — loading permanece visível por pelo menos 100ms",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — erro recuperável mostra card e retry",
+        "key": "shell.spec.ts :: Trilha 02 — erro recuperável mostra card e retry",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — conflito 409 preserva edição e oferece reload",
+        "key": "shell.spec.ts :: Trilha 02 — conflito 409 preserva edição e oferece reload",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — sucesso 200 exibe confirmação e nova revisão",
+        "key": "shell.spec.ts :: Trilha 02 — sucesso 200 exibe confirmação e nova revisão",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha03-auth.spec.ts",
+        "title": "Trilha 03 — portal administrativo usa ponto de entrada independente",
+        "key": "trilha03-auth.spec.ts :: Trilha 03 — portal administrativo usa ponto de entrada independente",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha04-contact-recovery.spec.ts",
+        "title": "Trilha 04 — confirmação usa página própria e Supabase-only",
+        "key": "trilha04-contact-recovery.spec.ts :: Trilha 04 — confirmação usa página própria e Supabase-only",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha04-contact-recovery.spec.ts",
+        "title": "Trilha 04 — redefinição inválida permanece em página visual própria",
+        "key": "trilha04-contact-recovery.spec.ts :: Trilha 04 — redefinição inválida permanece em página visual própria",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — login administrativo responsivo em 320px",
+        "key": "trilha05-admin.spec.ts :: Trilha 05 — login administrativo responsivo em 320px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — login administrativo responsivo em 390px",
+        "key": "trilha05-admin.spec.ts :: Trilha 05 — login administrativo responsivo em 390px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — login administrativo responsivo em 430px",
+        "key": "trilha05-admin.spec.ts :: Trilha 05 — login administrativo responsivo em 430px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — login administrativo responsivo em 768px",
+        "key": "trilha05-admin.spec.ts :: Trilha 05 — login administrativo responsivo em 768px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — login administrativo responsivo em 1024px",
+        "key": "trilha05-admin.spec.ts :: Trilha 05 — login administrativo responsivo em 1024px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — login administrativo responsivo em 1440px",
+        "key": "trilha05-admin.spec.ts :: Trilha 05 — login administrativo responsivo em 1440px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — ajuda de governança abre, fecha por backdrop e Escape",
+        "key": "trilha05-admin.spec.ts :: Trilha 05 — ajuda de governança abre, fecha por backdrop e Escape",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — seletor administrativo conduz a telas de entrada distintas",
+        "key": "trilha05-admin.spec.ts :: Trilha 05 — seletor administrativo conduz a telas de entrada distintas",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — seletor administrativo expõe o estado protegido do bootstrap",
+        "key": "trilha05-admin.spec.ts :: Trilha 05 — seletor administrativo expõe o estado protegido do bootstrap",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — seletor sempre oferece diagnóstico do bootstrap enquanto não estiver fechado",
+        "key": "trilha05-admin.spec.ts :: Trilha 05 — seletor sempre oferece diagnóstico do bootstrap enquanto não estiver fechado",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha06-account.spec.ts",
+        "title": "T06 sem overflow em 320px",
+        "key": "trilha06-account.spec.ts :: T06 sem overflow em 320px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha06-account.spec.ts",
+        "title": "T06 sem overflow em 360px",
+        "key": "trilha06-account.spec.ts :: T06 sem overflow em 360px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha06-account.spec.ts",
+        "title": "T06 sem overflow em 768px",
+        "key": "trilha06-account.spec.ts :: T06 sem overflow em 768px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha06-account.spec.ts",
+        "title": "T06 sem overflow em 1024px",
+        "key": "trilha06-account.spec.ts :: T06 sem overflow em 1024px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha06-account.spec.ts",
+        "title": "T06 sem overflow em 1440px",
+        "key": "trilha06-account.spec.ts :: T06 sem overflow em 1440px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha06-account.spec.ts",
+        "title": "T06 expõe as quatro áreas da conta",
+        "key": "trilha06-account.spec.ts :: T06 expõe as quatro áreas da conta",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha06-account.spec.ts",
+        "title": "conta antiga oferece acesso às quatro seções e retorno à segurança",
+        "key": "trilha06-account.spec.ts :: conta antiga oferece acesso às quatro seções e retorno à segurança",
+        "status": "unexpected"
+      }
+    ],
+    "baseOnlyFailures": [
+      {
+        "file": "trilha07-addresses.spec.ts",
+        "title": "geolocalização do aparelho envia latitude e longitude como pin manual",
+        "key": "trilha07-addresses.spec.ts :: geolocalização do aparelho envia latitude e longitude como pin manual",
+        "status": "unexpected"
+      }
+    ],
+    "addedCases": [
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "catálogo e criação responsivos em 320px",
+        "key": "trilha14-products.spec.ts :: catálogo e criação responsivos em 320px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "editor, preço, upload e publicação em 320px",
+        "key": "trilha14-products.spec.ts :: editor, preço, upload e publicação em 320px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "catálogo e criação responsivos em 390px",
+        "key": "trilha14-products.spec.ts :: catálogo e criação responsivos em 390px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "editor, preço, upload e publicação em 390px",
+        "key": "trilha14-products.spec.ts :: editor, preço, upload e publicação em 390px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "catálogo e criação responsivos em 768px",
+        "key": "trilha14-products.spec.ts :: catálogo e criação responsivos em 768px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "editor, preço, upload e publicação em 768px",
+        "key": "trilha14-products.spec.ts :: editor, preço, upload e publicação em 768px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "catálogo e criação responsivos em 1440px",
+        "key": "trilha14-products.spec.ts :: catálogo e criação responsivos em 1440px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "editor, preço, upload e publicação em 1440px",
+        "key": "trilha14-products.spec.ts :: editor, preço, upload e publicação em 1440px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "409 preserva informação e preço e exige recarregamento explícito",
+        "key": "trilha14-products.spec.ts :: 409 preserva informação e preço e exige recarregamento explícito",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "sessão antiga retoma preço com mesmo comando sem descartar edição",
+        "key": "trilha14-products.spec.ts :: sessão antiga retoma preço com mesmo comando sem descartar edição",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "publicação sem foto mostra erro e mantém rascunho",
+        "key": "trilha14-products.spec.ts :: publicação sem foto mostra erro e mantém rascunho",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "loja não habilitada informa próximo passo e impede criação",
+        "key": "trilha14-products.spec.ts :: loja não habilitada informa próximo passo e impede criação",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "catálogo recupera falha de leitura",
+        "key": "trilha14-products.spec.ts :: catálogo recupera falha de leitura",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "estado de carregamento é anunciado",
+        "key": "trilha14-products.spec.ts :: estado de carregamento é anunciado",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "consulta pública seleciona categoria e mostra embalagem, peso e preço",
+        "key": "trilha14-products.spec.ts :: consulta pública seleciona categoria e mostra embalagem, peso e preço",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "visitante não acessa editor do produtor",
+        "key": "trilha14-products.spec.ts :: visitante não acessa editor do produtor",
+        "status": "expected"
+      }
+    ],
+    "status": "completed",
+    "initialCandidateFailures": [
+      {
+        "file": "documents.spec.ts",
+        "title": "conferência responsiva 320",
+        "key": "documents.spec.ts :: conferência responsiva 320",
+        "status": "unexpected"
+      },
+      {
+        "file": "session-navigation.spec.ts",
+        "title": "marca e endereços administrativos: platform_super_admin 360",
+        "key": "session-navigation.spec.ts :: marca e endereços administrativos: platform_super_admin 360",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "navegação, diálogo e indisponibilidade honesta",
+        "key": "shell.spec.ts :: navegação, diálogo e indisponibilidade honesta",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha03-auth.spec.ts",
+        "title": "Trilha 03 — seleção pública nunca oferece papel administrativo",
+        "key": "trilha03-auth.spec.ts :: Trilha 03 — seleção pública nunca oferece papel administrativo",
+        "status": "unexpected"
+      }
+    ],
+    "retests": {
+      "delivery": {
+        "startTime": "2026-10-04T21:15:35.546Z",
+        "duration": 8959.517,
+        "expected": 3,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "base": {
+        "startTime": "2026-10-04T21:16:27.136Z",
+        "duration": 12117.495,
+        "expected": 3,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "shell": {
+        "startTime": "2026-10-04T21:17:23.471Z",
+        "duration": 3495.5840000000003,
+        "expected": 2,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    "notes": [
+      "Três diferenças em documentos/cadastro/navegação passaram em repetição isolada na base e na entrega, sem mudança de produção.",
+      "A expectativa antiga de catálogo indisponível foi atualizada para a API T14: erro recuperável e catálogo vazio independente de falha de configuração.",
+      "O seletor de slogan passou a apontar para o header móvel visível, em vez do primeiro header desktop oculto; apenas teste.",
+      "A suíte ampla mantém falhas anteriores; não constitui homologação integral das trilhas históricas. Todos os 16 casos adicionados pela T14 passaram."
+    ]
+  },
+  "production": {
+    "status": "pending"
+  }
+}

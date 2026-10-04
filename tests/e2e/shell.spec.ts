@@ -87,6 +87,13 @@ for (const width of [320, 360, 430, 768, 1024, 1440]) {
 }
 
 test("navegação, diálogo e indisponibilidade honesta", async ({ page }) => {
+  await page.route(/\/v1\/products(?:\?.*)?$/, (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "DEPENDENCY_UNAVAILABLE" }),
+    }),
+  );
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
@@ -105,11 +112,18 @@ test("navegação, diálogo e indisponibilidade honesta", async ({ page }) => {
 
   await expect(page).toHaveURL(/produtos/);
   await expect(
-    page.getByText("O catálogo ainda não está disponível"),
+    page.getByText("Não foi possível carregar os produtos."),
   ).toBeVisible();
+  await expect(page.locator(".hvm-product-error").getByRole("button", { name: "Tentar novamente", exact: true })).toBeVisible();
 });
 
 test("falha de config é não bloqueante e mantém navegação", async ({ page }) => {
+  await page.route(/\/v1\/products(?:\?.*)?$/, (route) =>
+    route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ products: [] }),
+    }),
+  );
   await page.route("**/api/v1/config", async (route) => {
     await route.fulfill({
       status: 503,
@@ -121,7 +135,7 @@ test("falha de config é não bloqueante e mantém navegação", async ({ page }
   await page.setViewportSize({ width: 360, height: 800 });
   await page.goto("/");
 
-  await expect(page.getByText("Tudo fresco. Tudo da sua região.").first()).toBeVisible();
+  await expect(page.locator(".mobile-header").getByText("Tudo fresco. Tudo da sua região.")).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
   await page
@@ -131,7 +145,7 @@ test("falha de config é não bloqueante e mantém navegação", async ({ page }
 
   await expect(page).toHaveURL(/produtos/);
   await expect(
-    page.getByText("O catálogo ainda não está disponível"),
+    page.getByRole("heading", { name: "Nenhum produto disponível agora", exact: true }),
   ).toBeVisible();
 });
 

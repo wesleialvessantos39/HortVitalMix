@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { Pool } from "pg";
+import manifest from "../../supabase/manifest.json" with { type: "json" };
+import { productFixture } from "../helpers/productFixtures.ts";
 vi.mock("../../server/db/pool.ts", async () => {
   const value = process.env.HVM_T13_LOCAL_DATABASE_URL;
   if (!value) return { dbPool: null };
@@ -130,7 +132,7 @@ describe.runIf(Boolean(process.env.HVM_T13_LOCAL_DATABASE_URL))(
             "SELECT count(*)::int AS count FROM supabase_migrations.schema_migrations",
           )
         ).rows[0].count,
-      ).toBe(53);
+      ).toBe(manifest.migrations.length);
     });
     afterAll(async () => {
       try {
@@ -614,20 +616,26 @@ describe.runIf(Boolean(process.env.HVM_T13_LOCAL_DATABASE_URL))(
       ).toBe(child.id);
     });
     it("relatório futuro conta apenas produtos publicados e revalida impacto na escrita", async () => {
-      expect(
-        (await pool().query("SELECT to_regclass('app_products') AS products"))
-          .rows[0].products,
-      ).toBeNull();
+      const hasProducts = Boolean((await pool().query("SELECT to_regclass('app_products') AS products")).rows[0].products);
       const category = await create();
-      // Disposable compatibility fixture; T13 never creates this table in its migration.
-      await pool().query(
-        "CREATE TABLE app_products(id uuid DEFAULT gen_random_uuid(),category_id uuid NOT NULL,is_published boolean NOT NULL)",
-      );
+      // T14 supplies the real table now. The legacy branch remains valid when
+      // this T13 suite is deliberately run against its pre-T14 local schema.
+      let fixtureUser: string | null = null;
+      if (!hasProducts) await pool().query("CREATE TABLE app_products(id uuid DEFAULT gen_random_uuid(),category_id uuid NOT NULL,is_published boolean NOT NULL)");
       try {
-        await pool().query(
-          "INSERT INTO app_products(category_id,is_published) VALUES($1,true),($1,false)",
-          [category.id],
-        );
+        if (hasProducts) {
+          const f = await productFixture(pool());
+          fixtureUser = f.userId;
+          const rows = await pool().query<{id:string}>(`INSERT INTO app_products(store_id,category_id,title,description,packaging_type,net_weight_grams,unit_type)
+            VALUES($1,$2,'Couve local','Descrição alimentar local T14','pote_higienizado',250,'pote'),
+            ($1,$2,'Couve rascunho','Descrição alimentar local T14','pote_higienizado',250,'pote') RETURNING id`,[f.store.id,category.id]);
+          for (const row of rows.rows) await pool().query("INSERT INTO app_price_versions(product_id,price_cents,created_by_user_id) VALUES($1,1290,$2)",[row.id,f.userId]);
+          const publishedId = rows.rows[0].id;
+          await pool().query("INSERT INTO app_product_media(product_id,media_url,is_primary) VALUES($1,$2,true)",[
+            publishedId,`https://xipbsazvymkqqfmfegwu.supabase.co/storage/v1/object/product-media/${f.store.id}/${publishedId}/${randomUUID()}-${"a".repeat(64)}.png`,
+          ]);
+          await pool().query("UPDATE app_products SET is_published=true WHERE id=$1",[publishedId]);
+        } else await pool().query("INSERT INTO app_products(category_id,is_published) VALUES($1,true),($1,false)",[category.id]);
         expect(
           await CategoryService.getDeactivationImpact(category.id, actor),
         ).toMatchObject({ activeProducts: 1, requiresConfirmation: true });
@@ -649,7 +657,8 @@ describe.runIf(Boolean(process.env.HVM_T13_LOCAL_DATABASE_URL))(
           context(),
         );
       } finally {
-        await pool().query("DROP TABLE app_products");
+        if (fixtureUser) await pool().query("DELETE FROM auth.users WHERE id=$1",[fixtureUser]);
+        if (!hasProducts) await pool().query("DROP TABLE app_products");
       }
     });
   },

@@ -15,6 +15,7 @@ import {
   type StorePublic,
 } from "../../../shared/contracts/producerStore";
 import "../producer/producerStore.css";
+import { PublicProductCatalog } from "../../components/catalog/PublicProductCatalog";
 
 export default function PublicProducerStorePage({
   slug,
@@ -182,14 +183,7 @@ export default function PublicProducerStorePage({
       </details>
       <section className="hvm-store-products">
         <h2>Colheitas e Produtos Disponíveis</h2>
-        <div className="hvm-store-empty">
-          <Sprout size={32} />
-          <h3>Novas colheitas em breve</h3>
-          <p>
-            Quando o catálogo estiver disponível, os produtos desta loja
-            aparecerão aqui.
-          </p>
-        </div>
+        <PublicProductCatalog storeSlug={store.slug} onNavigate={onNavigate} emptyTitle="Novas colheitas em breve"/>
       </section>
       <button className="secondary" onClick={() => onNavigate("/")}>
         <ArrowLeft size={17} /> Voltar ao início
