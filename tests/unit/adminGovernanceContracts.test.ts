@@ -101,6 +101,19 @@ describe("Trilha 05 — contratos de governança administrativa", () => {
     ).toBe(false);
   });
 
+  it("aceita delegação explícita de governança de contas e configuração global", () => {
+    for (const sector of ["account_governance","platform_configuration"] as const) {
+      expect(
+        CreateInviteSchema.safeParse({
+          email: sector + "@example.com",
+          targetRole: "platform_admin",
+          sectors: [sector],
+          commandId: crypto.randomUUID(),
+        }).success,
+      ).toBe(true);
+    }
+  });
+
   it("preserva senha forte no bootstrap e na credencial administrativa separada", () => {
     const base = {
       fullName: "Administrador Teste",
