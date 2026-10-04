@@ -1,0 +1,60 @@
+{
+  "baseSha": "cf869496e77956f1d50a538ac3b45d88a716a59c",
+  "base": {
+    "passed": 118,
+    "failed": 44
+  },
+  "t12": {
+    "passed": 135,
+    "failed": 43
+  },
+  "newFailures": [],
+  "baseOnlyFailures": [
+    "tests/e2e/trilha07-addresses.spec.ts:286:1 › geolocalização do aparelho envia latitude e longitude como pin manual"
+  ],
+  "reproducedFailures": [
+    "tests/e2e/access-confirmation.spec.ts:133:1 › submitted properties are visible and review uses revision and command id",
+    "tests/e2e/iphone-responsive.spec.ts:2:83 › iPhone viewport and touch: consumer",
+    "tests/e2e/iphone-responsive.spec.ts:2:83 › iPhone viewport and touch: producer",
+    "tests/e2e/iphone-responsive.spec.ts:2:83 › iPhone viewport and touch: platform_admin",
+    "tests/e2e/iphone-responsive.spec.ts:2:83 › iPhone viewport and touch: platform_super_admin",
+    "tests/e2e/session-navigation.spec.ts:66:3 › sessão persiste na navegação e cadastro só reaparece ao sair: consumer",
+    "tests/e2e/shell.spec.ts:112:1 › falha de config é não bloqueante e mantém navegação",
+    "tests/e2e/shell.spec.ts:138:1 › config pública válida atualiza slogan da shell",
+    "tests/e2e/shell.spec.ts:164:1 › fluxos públicos de segurança estão acessíveis e responsivos",
+    "tests/e2e/shell.spec.ts:195:1 › rotas diretas de recuperação preservam estado correto",
+    "tests/e2e/session-navigation.spec.ts:66:3 › sessão persiste na navegação e cadastro só reaparece ao sair: producer",
+    "tests/e2e/shell.spec.ts:213:1 › recuperação explicita o perfil e mantém administração isolada",
+    "tests/e2e/shell.spec.ts:240:1 › conta separa consumidor e produtor e administração fica independente",
+    "tests/e2e/trilha03-auth.spec.ts:41:1 › Trilha 03 — portal administrativo usa ponto de entrada independente",
+    "tests/e2e/shell.spec.ts:380:1 › senha forte orienta e bloqueia cadastro fraco",
+    "tests/e2e/shell.spec.ts:454:3 › Trilha 02 — configuração admin responsiva em 320px",
+    "tests/e2e/trilha04-contact-recovery.spec.ts:14:1 › Trilha 04 — confirmação usa página própria e Supabase-only",
+    "tests/e2e/shell.spec.ts:454:3 › Trilha 02 — configuração admin responsiva em 360px",
+    "tests/e2e/trilha04-contact-recovery.spec.ts:23:1 › Trilha 04 — redefinição inválida permanece em página visual própria",
+    "tests/e2e/shell.spec.ts:454:3 › Trilha 02 — configuração admin responsiva em 768px",
+    "tests/e2e/trilha05-admin.spec.ts:4:3 › Trilha 05 — login administrativo responsivo em 320px",
+    "tests/e2e/shell.spec.ts:454:3 › Trilha 02 — configuração admin responsiva em 1440px",
+    "tests/e2e/trilha05-admin.spec.ts:4:3 › Trilha 05 — login administrativo responsivo em 390px",
+    "tests/e2e/shell.spec.ts:497:1 › Trilha 02 — loading permanece visível por pelo menos 100ms",
+    "tests/e2e/trilha05-admin.spec.ts:4:3 › Trilha 05 — login administrativo responsivo em 430px",
+    "tests/e2e/shell.spec.ts:513:1 › Trilha 02 — erro recuperável mostra card e retry",
+    "tests/e2e/trilha05-admin.spec.ts:4:3 › Trilha 05 — login administrativo responsivo em 768px",
+    "tests/e2e/trilha05-admin.spec.ts:4:3 › Trilha 05 — login administrativo responsivo em 1024px",
+    "tests/e2e/trilha05-admin.spec.ts:4:3 › Trilha 05 — login administrativo responsivo em 1440px",
+    "tests/e2e/shell.spec.ts:529:1 › Trilha 02 — conflito 409 preserva edição e oferece reload",
+    "tests/e2e/trilha05-admin.spec.ts:34:1 › Trilha 05 — ajuda de governança abre, fecha por backdrop e Escape",
+    "tests/e2e/trilha05-admin.spec.ts:75:1 › Trilha 05 — seletor administrativo conduz a telas de entrada distintas",
+    "tests/e2e/trilha05-admin.spec.ts:114:1 › Trilha 05 — seletor administrativo expõe o estado protegido do bootstrap",
+    "tests/e2e/shell.spec.ts:560:1 › Trilha 02 — sucesso 200 exibe confirmação e nova revisão",
+    "tests/e2e/trilha05-admin.spec.ts:123:1 › Trilha 05 — seletor sempre oferece diagnóstico do bootstrap enquanto não estiver fechado",
+    "tests/e2e/trilha06-account.spec.ts:127:3 › T06 sem overflow em 320px",
+    "tests/e2e/trilha06-account.spec.ts:127:3 › T06 sem overflow em 360px",
+    "tests/e2e/trilha06-account.spec.ts:127:3 › T06 sem overflow em 768px",
+    "tests/e2e/trilha06-account.spec.ts:127:3 › T06 sem overflow em 1024px",
+    "tests/e2e/trilha07-addresses.spec.ts:251:1 › produtor vê endereço pessoal sem convite de entrega ao consumidor",
+    "tests/e2e/trilha06-account.spec.ts:127:3 › T06 sem overflow em 1440px",
+    "tests/e2e/trilha06-account.spec.ts:140:1 › T06 expõe as quatro áreas da conta",
+    "tests/e2e/trilha06-account.spec.ts:196:1 › conta antiga oferece acesso às quatro seções e retorno à segurança"
+  ]
+}

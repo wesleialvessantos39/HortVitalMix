@@ -61,6 +61,10 @@ O Playwright da T12 verifica 320/390/768/1440px sem overflow, formulário, matri
 
 Antes da implementação, 275 testes unitários passaram. A suíte geral encontrou falhas já presentes no SHA original: mocks sem `requireAdminSector`, consulta de confirmação sem `app_users.single()` e expectativas antigas que proibiam exclusão de imóveis permitida pela v46. Foram ajustados **somente os testes** às regras atuais; os serviços anteriores não foram alterados. Um literal de status no teste E2E da T08 recebeu `as const` para o TypeScript integral.
 
+A suíte Playwright completa da entrega executou **178 casos: 135 passaram e 43 falharam**. A mesma suíte histórica no worktree isolado do SHA original executou **162 casos: 118 passaram e 44 falharam**. Todas as 43 falhas da entrega ocorreram também na base; nenhum novo teste falhou. O caso adicional da base é a geolocalização da T07, que passou na entrega. Ambos usaram Chromium portátil, dois workers e servidor local, sem credenciais pessoais. [Comparação dos casos](TRILHA12_REGRESSAO.json).
+
+A suíte ampla permanece vermelha e não permite afirmar homologação integral de T01–T11. Os fluxos aprovados anteriormente não foram reescritos para corrigir seletores, mocks ou expectativas antigos do navegador fora desta missão.
+
 ## Infraestrutura e limite de escopo
 
 Mantidos Supabase Free único, Vercel Hobby, runtime Express/Node Serverless em `pdx1` e publicação somente da `main`. Sem serviço pago ou GitHub Actions novo. Não foram implementados T13+, taxonomia, cadastro de produtos, carrinho, frete, pedidos ou pagamentos. Logo/banner permanecem opcionais; o envio de mídia não fazia parte da missão T12.
@@ -72,6 +76,6 @@ Mantidos Supabase Free único, Vercel Hobby, runtime Express/Node Serverless em 
 - Serviço contra PostgreSQL 17 local e 52 migrations: **22 passaram**. Playwright T12: **16 passaram**, incluindo revisão visual nas quatro larguras e nova execução após os ajustes de contraste/cabeçalho mobile.
 - Migration aplicada no Supabase canônico: versão física **20261004124506**, equivalente à canônica **20261004120547**. Manifesto: schema **47**, hash **d846bc9157099e0725186ca88c06feb5f1c9f452651cd829fb98bbb130ede885**.
 - Conferência após DDL: RLS ENABLE/FORCE nas duas tabelas, somente SELECT para anon/authenticated, zero tabela pública sem RLS e zero novo achado de segurança. Tabelas novas vazias; registros anteriores preservados (4 Auth/users, 3 pessoas, 2 perfis, 1 imóvel, 2 solicitações, 2 decisões, 7 documentos, 7 municípios).
-- Suíte completa de navegador e comparação com o SHA original em andamento. Publicação Vercel/release ainda não fechada neste registro.
+- Suíte completa de navegador comparada ao SHA original: **zero falha nova**, com as limitações descritas acima. Publicação Vercel/release ainda não fechada neste registro.
 
 Não se confunde build local, testes controlados ou banco local com homologação autenticada remota. Não foram usados dados reais do titular como fixtures nem enviados e-mails de teste a terceiros.
