@@ -45,12 +45,15 @@ describe("localidade — contratos de cobertura", () => {
 
   it("04 mensagem de região desativada é literal e com o e-mail de contato", () => {
     expect(LOCALITY_DISABLED_MESSAGE).toBe(
-      "essa região está desativada, dúvidas entre em contato conosco hortivitalmix@gmail.com",
+      "Sua região está bloqueada. Dúvidas, entre em contato conosco: hortivitalmix@gmail.com.",
     );
     expect(localityBlockedMessage("inactive")).toBe(LOCALITY_DISABLED_MESSAGE);
   });
 
-  it("05 localidade fora do catálogo usa a mensagem de ausência de cobertura", () => {
+  it("05 localidade fora do catálogo usa a mensagem profissional de ausência de cobertura", () => {
+    expect(LOCALITY_NOT_COVERED_MESSAGE).toBe(
+      "Sua região está fora de cobertura. Dúvidas, entre em contato conosco: hortivitalmix@gmail.com.",
+    );
     expect(localityBlockedMessage("unknown")).toBe(LOCALITY_NOT_COVERED_MESSAGE);
   });
 });
