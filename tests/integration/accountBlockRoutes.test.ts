@@ -4,7 +4,8 @@ import {beforeEach,expect,it,vi} from 'vitest';
 const m=vi.hoisted(()=>({query:vi.fn(),release:vi.fn()}));
 vi.mock('../../server/db/pool.ts',()=>({dbPool:{connect:async()=>m,query:m.query}}));
 vi.mock('../../server/middleware/adminSession.ts',()=>({
- adminSessionMiddleware:(q:any,s:any,n:any)=>{q.adminActor={userId:'11111111-1111-4111-8111-111111111111',role:q.headers['x-role'],isSuperAdmin:q.headers['x-role']==='platform_super_admin'};q.requestId='33333333-3333-4333-8333-333333333333';q.clientIpHash='a'.repeat(64);n();},
+ adminSessionMiddleware:(q:any,s:any,n:any)=>{q.adminActor={userId:'11111111-1111-4111-8111-111111111111',role:q.headers['x-role'],sectors:[],isSuperAdmin:q.headers['x-role']==='platform_super_admin'};q.requestId='33333333-3333-4333-8333-333333333333';q.clientIpHash='a'.repeat(64);n();},
+ requireAdminSector:()=> (q:any,s:any,n:any)=>q.adminActor.isSuperAdmin?n():s.sendStatus(403),
  requireSuperAdmin:(q:any,s:any,n:any)=>q.adminActor.isSuperAdmin?n():s.sendStatus(403),
  requireRecentAuth:(q:any,s:any,n:any)=>q.headers['x-stale']?s.sendStatus(401):n(),
 }));

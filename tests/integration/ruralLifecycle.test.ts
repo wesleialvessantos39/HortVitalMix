@@ -9,17 +9,27 @@ beforeEach(()=>{vi.clearAllMocks();row={id,producer_id:id,status:'draft',revisio
  if(sql.includes('SELECT * FROM public.app_properties'))return {rows:[row]};
  return {rows:[]};
 });});
-it('deletes only never-completed drafts and audits atomically',async()=>{
+it('deletes drafts and audits atomically under the v46 lifecycle',async()=>{
  await RuralPropertyService.deleteDraft(uid,id,2,id,id,'a'.repeat(64));
  expect(m.query.mock.calls.some(([sql])=>sql.startsWith('DELETE FROM public.app_properties'))).toBe(true);
  expect(m.query.mock.calls.at(-1)?.[0]).toBe('COMMIT');
 });
-it.each(['completed','submitted','verified','rejected','suspended'])('rejects deletion of %s',async(status)=>{
- row.status=status;await expect(RuralPropertyService.deleteDraft(uid,id,2,id,id,'a'.repeat(64))).rejects.toMatchObject({code:'COMPLETED_PROPERTY_DELETE_FORBIDDEN'});
+it.each(['completed','submitted','rejected','suspended'])('preserves v46 deletion of %s',async(status)=>{
+ row.status=status;await RuralPropertyService.deleteDraft(uid,id,2,id,id,'a'.repeat(64));
+ expect(m.query.mock.calls.some(([sql])=>sql.startsWith('DELETE FROM public.app_properties'))).toBe(true);
+ expect(m.query.mock.calls.at(-1)?.[0]).toBe('COMMIT');
+});
+it('requires explicit acknowledgement to delete the last approved property in its region',async()=>{
+ row.status='verified';await expect(RuralPropertyService.deleteDraft(uid,id,2,id,id,'a'.repeat(64))).rejects.toMatchObject({code:'LAST_APPROVED_REGION_CONFIRMATION_REQUIRED'});
  expect(m.query.mock.calls.some(([sql])=>sql.startsWith('DELETE FROM'))).toBe(false);
 });
-it('prevents deletion even after a completed property returns to draft',async()=>{
- row.completed_at=new Date();await expect(RuralPropertyService.deleteDraft(uid,id,2,id,id,'a'.repeat(64))).rejects.toMatchObject({code:'COMPLETED_PROPERTY_DELETE_FORBIDDEN'});
+it('allows acknowledged deletion of the last approved property',async()=>{
+ row.status='verified';await RuralPropertyService.deleteDraft(uid,id,2,id,id,'a'.repeat(64),true);
+ expect(m.query.mock.calls.at(-1)?.[0]).toBe('COMMIT');
+});
+it('allows deletion of a draft that was previously completed, preserving v46',async()=>{
+ row.completed_at=new Date();await RuralPropertyService.deleteDraft(uid,id,2,id,id,'a'.repeat(64));
+ expect(m.query.mock.calls.at(-1)?.[0]).toBe('COMMIT');
 });
 it('rejects stale revisions before deleting',async()=>{
  await expect(RuralPropertyService.deleteDraft(uid,id,1,id,id,'a'.repeat(64))).rejects.toMatchObject({code:'PROPERTY_REVISION_CONFLICT'});

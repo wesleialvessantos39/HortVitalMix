@@ -600,7 +600,7 @@ for (const scenario of [
   {status:"completed",last:false,warning:"Excluir este imóvel?"},
   {status:"verified",last:true,warning:"perde acesso à sua loja de vendas dessa região"},
   {status:"verified",last:false,warning:"Seus outros imóveis aprovados nesta região continuam disponíveis"},
-]) test(`exclusão ${scenario.status}, último aprovado ${scenario.last}: confirma impacto e remove cadastro`,async({page})=>{
+] as const) test(`exclusão ${scenario.status}, último aprovado ${scenario.last}: confirma impacto e remove cadastro`,async({page})=>{
   await mockT08(page,fullProperty({status:scenario.status,completedAt:"2026-09-26T00:00:00.000Z"}));
   const deletions:any[]=[];let deleted=false;let warning="";
   await page.route("**/producer/properties**",async route=>{
