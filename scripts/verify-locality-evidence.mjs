@@ -113,7 +113,9 @@ required(
 required(
   contracts,
   [
-    "essa região está desativada, dúvidas entre em contato conosco hortivitalmix@gmail.com",
+    "Sua região está bloqueada. Dúvidas, entre em contato conosco: hortivitalmix@gmail.com.",
+    "Sua região está fora de cobertura. Dúvidas, entre em contato conosco: hortivitalmix@gmail.com.",
+    "DeleteMunicipalitySchema",
     '"active", "inactive", "unknown"',
     '"property_municipality",',
     '"all",',
@@ -143,6 +145,8 @@ required(
     "resolveCoverage",
     "assertOperational",
     "deactivationImpact",
+    "deleteMunicipality",
+    "app_locality_user_impacts",
     "app_audit_events",
     "pg_advisory_xact_lock",
   ],
@@ -159,6 +163,7 @@ required(
     "listPartialBlocks",
     "createPartialBlock",
     "revokePartialBlock",
+    "NO_APPROVED_PROPERTY_IN_REGION",
   ],
   "ACCESS_SCOPE_SERVICE_MISSING",
 );
@@ -181,6 +186,7 @@ required(
     'adminLocalityRouter.get("/localities", ...guard',
     '"/localities/:municipalityId/impact"',
     'adminLocalityRouter.patch(',
+    'adminLocalityRouter.delete(',
     '"/access-blocks/subject"',
     '"/access-blocks/subject-properties"',
     '"/access-blocks/:blockId/revoke"',
