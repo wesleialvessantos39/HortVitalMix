@@ -518,7 +518,7 @@ SELECT u.id,p.cpf_normalized,public.governance_name_key(p.full_name),
          SELECT ap.admin_user_id FROM public.app_admin_principals ap ORDER BY ap.created_at LIMIT 1
        )) IS NOT NULL;
 
-DO $
+DO $$
 DECLARE stale record;
 BEGIN
   FOR stale IN
@@ -530,7 +530,7 @@ BEGIN
     PERFORM public.purge_account_domain(stale.id);
     DELETE FROM public.app_users WHERE id=stale.id;
   END LOOP;
-END $;
+END $$;
 
 COMMENT ON TABLE public.app_locality_user_impacts IS
   'Registra pessoas afetadas pela remoção física de uma localidade para aviso e reconexão automática se a cobertura retornar.';
