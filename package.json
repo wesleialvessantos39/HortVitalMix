@@ -74,7 +74,8 @@
     "verify:reconstruction": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:unit && npm run test:t08:unit && npm run verify:t08:evidence && npm run test:t09t10 && npm run test:t12:unit && npm run verify:t12:evidence && npm run test:reconstruction:e2e",
     "test:t12:store": "vitest run tests/unit/producerStoreContracts.test.ts tests/integration/producerStoreRoutes.test.ts",
     "test:t12:store:postgres": "vitest run tests/integration/producerStorePostgres.test.ts",
-    "test:t12:store:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha12-producer-store.spec.ts"
+    "test:t12:store:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha12-producer-store.spec.ts",
+    "verify:t12:store:runtime": "node scripts/check-api-cold-start.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",
@@ -85,7 +86,7 @@
     "pg": "8.23.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "sanitize-html": "2.18.0",
+    "sanitize-html": "2.17.0",
     "zod": "4.6.5"
   },
   "devDependencies": {

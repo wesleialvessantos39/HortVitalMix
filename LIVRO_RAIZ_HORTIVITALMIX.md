@@ -4120,6 +4120,7 @@ Implementação aditiva sobre `main@cf869496e77956f1d50a538ac3b45d88a716a59c`, s
 - Conferência remota após DDL: preservados **4 Auth/users, 3 pessoas, 2 perfis produtores, 1 imóvel, 2 solicitações, 2 decisões, 7 documentos e 7 municípios**. Novas tabelas vazias; nenhuma loja de demonstração criada em produção. Zero tabela pública sem RLS e nenhum novo achado no advisor de segurança.
 - Mantidos Supabase Free único, Vercel Hobby, Serverless `pdx1`, deployment exclusivamente pela `main`. Nenhuma trilha T13+ foi iniciada.
 - A integração Git gerou prévias Hobby apesar do mapa de branches herdado. Reforçada a restrição main com `ignoreCommand` explícito (`scripts/vercel-main-only.mjs`) no arquivo e no projeto Vercel: 1 libera main; 0 ignora outras branches. Sem contratação ou atualização de plano.
+- Verificação pós-deploy detectou incompatibilidade CommonJS/ESM do parser de sanitize-html 2.18.0. A versão homologada foi restaurada temporariamente, sem desfazer o DDL. A dependência final é **sanitize-html 2.17.0 / htmlparser2 8**; 420 testes gerais, 26 contratos/rotas e 22 PostgreSQL passaram novamente. Importação completa da API sem require(ESM) passou e foi adicionada ao build Vercel para impedir repetição dessa falha de inicialização.
 
 ### Validação e evidências da T12
 

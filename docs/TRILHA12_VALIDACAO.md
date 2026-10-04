@@ -38,6 +38,7 @@ Nenhuma migration histórica, função de autenticação, decisão da T11 ou ló
 npm ci --no-audit --no-fund
 npm run typecheck
 npm test
+npm run verify:t12:store:runtime
 npm run build
 npm run test:t12:store:e2e
 ```
@@ -70,6 +71,8 @@ A suíte ampla permanece vermelha e não permite afirmar homologação integral 
 Mantidos Supabase Free único, Vercel Hobby, runtime Express/Node Serverless em `pdx1` e publicação somente da `main`. Sem serviço pago ou GitHub Actions novo. Não foram implementados T13+, taxonomia, cadastro de produtos, carrinho, frete, pedidos ou pagamentos. Logo/banner permanecem opcionais; o envio de mídia não fazia parte da missão T12.
 
 A integração Vercel gerou prévias Hobby da branch de trabalho apesar do mapa `deploymentEnabled` que já estava na base (ramos não especificados podem continuar habilitados). Foi adicionada defesa explícita `ignoreCommand` em `vercel.json` e no projeto: build continua somente quando `VERCEL_GIT_COMMIT_REF === main`. O retorno 0 ignora outras branches e 1 libera main, conforme o contrato Vercel. Nenhum plano foi atualizado ou recurso pago contratado; o build final continua exclusivo da main.
+
+O primeiro deployment READY revelou, na invocação, `ERR_REQUIRE_ESM`: sanitize-html 2.18.0 requer htmlparser2 12 ESM, incompatível com o carregador CommonJS do Vercel. A versão homologada foi restaurada temporariamente e `/api/ready` voltou a schema 46. A versão final fixa **sanitize-html 2.17.0 / htmlparser2 8**, compatíveis com CommonJS; os 420 testes gerais, os 26 de contratos/rotas e os 22 PostgreSQL passaram novamente. A importação completa da API com `--no-experimental-require-module` passou e agora é uma etapa do build Vercel. O DDL aditivo e os dados anteriores não foram revertidos ou removidos.
 
 ## Resultado e publicação
 
