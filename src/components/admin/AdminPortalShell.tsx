@@ -42,7 +42,8 @@ export function AdminPortalShell({
 }: Props) {
   const visible = items.filter(([to]) => {
     if (access.role === "platform_super_admin") return true;
-    if (to === "/admin/configuracao") return false;
+    if (to === "/admin/configuracao")
+      return access.sectors.includes("platform_configuration");
     if (to === "/admin/documentos/fila")
       return access.sectors.includes("document_verification");
     if (to === "/admin/localidades" || to === "/admin/bloqueios")
