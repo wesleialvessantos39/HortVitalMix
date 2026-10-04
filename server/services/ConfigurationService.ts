@@ -12,7 +12,7 @@ import { assertRecentAuth } from "./reauthService.ts";
 
 export interface ActorContext {
   userId: string;
-  role: "platform_super_admin";
+  role: "platform_admin" | "platform_super_admin";
   sessionIssuedAt: string;
 }
 
@@ -233,11 +233,14 @@ export class ConfigurationService {
     const before: Record<string, unknown> = {};
     const after: Record<string, unknown> = {};
     const mapping: Record<string, keyof CurrentConfigRow> = {
+      platformName: "platform_name",
       slogan: "slogan",
       defaultMunicipality: "default_municipality",
       defaultState: "default_state",
       supportEmail: "support_email",
       supportPhone: "support_phone",
+      currency: "currency",
+      timezone: "timezone",
     };
 
     for (const [field, column] of Object.entries(mapping)) {
@@ -253,15 +256,60 @@ export class ConfigurationService {
 
   private static fieldToColumn(field: string): string {
     const map: Record<string, string> = {
+      platformName: "platform_name",
       slogan: "slogan",
       defaultMunicipality: "default_municipality",
       defaultState: "default_state",
       supportEmail: "support_email",
       supportPhone: "support_phone",
+      currency: "currency",
+      timezone: "timezone",
     };
     const column = map[field];
     if (!column) throw new Error("unknown_field:" + field);
     return column;
+  }
+
+  static async getOverview() {
+    if (!dbPool)
+      throw Object.assign(new Error("db_not_configured"), {
+        code: "DB_NOT_CONFIGURED",
+      });
+    const result=await dbPool.query<{
+      active_users:string;
+      blocked_users:string;
+      pending_reviews:string;
+      active_municipalities:string;
+      blocked_municipalities:string;
+      approved_properties:string;
+      verification_queue:string;
+      active_blocks:string;
+      audit_24h:string;
+    }>(`SELECT
+      (SELECT count(*)::text FROM public.app_users
+        WHERE public.effective_account_status(status,block_starts_at,block_ends_at)='active') AS active_users,
+      (SELECT count(*)::text FROM public.app_users
+        WHERE public.effective_account_status(status,block_starts_at,block_ends_at)='blocked') AS blocked_users,
+      (SELECT count(*)::text FROM public.app_registration_reviews WHERE status='pending') AS pending_reviews,
+      (SELECT count(*)::text FROM public.app_municipalities WHERE is_active) AS active_municipalities,
+      (SELECT count(*)::text FROM public.app_municipalities WHERE NOT is_active) AS blocked_municipalities,
+      (SELECT count(*)::text FROM public.app_properties WHERE status='verified') AS approved_properties,
+      (SELECT count(*)::text FROM public.app_verification_requests
+        WHERE superseded_at IS NULL AND status IN ('pending','claimed','in_review')) AS verification_queue,
+      (SELECT count(*)::text FROM public.app_access_partial_blocks WHERE is_active) AS active_blocks,
+      (SELECT count(*)::text FROM public.app_audit_events WHERE created_at>=now()-interval '24 hours') AS audit_24h`);
+    const row=result.rows[0];
+    return {
+      activeUsers:Number(row?.active_users??0),
+      blockedUsers:Number(row?.blocked_users??0),
+      pendingRegistrationReviews:Number(row?.pending_reviews??0),
+      activeMunicipalities:Number(row?.active_municipalities??0),
+      blockedMunicipalities:Number(row?.blocked_municipalities??0),
+      approvedProperties:Number(row?.approved_properties??0),
+      verificationQueue:Number(row?.verification_queue??0),
+      activeAccessBlocks:Number(row?.active_blocks??0),
+      auditEvents24h:Number(row?.audit_24h??0),
+    };
   }
 
   static async getAdminConfig(): Promise<GlobalConfigAdminResponse | null> {
