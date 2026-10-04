@@ -317,7 +317,7 @@ test("01 lista vazia diferencia imóvel rural de endereço pessoal", async ({ pa
 test("01b produtor sem aprovação recebe guia até iniciar novo imóvel", async ({ page }) => {
   await mockT08(page);
   await page.goto("/conta");
-  await expect(page.getByText("Seu perfil de produtor ainda não está aprovado.")).toBeVisible();
+  await expect(page.getByText("Seu cadastro de produtor ainda não foi aprovado.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Escopo de entrega" })).toHaveCount(0);
   await page.getByRole("button", { name: "Ver guia passo a passo" }).click();
   await expect(page.getByText(/Abra Imóveis rurais/)).toBeVisible();
@@ -595,3 +595,27 @@ for (const [width, height] of viewports) {
     }
   });
 }
+
+for (const scenario of [
+  {status:"completed",last:false,warning:"Excluir este imóvel?"},
+  {status:"verified",last:true,warning:"perde acesso à sua loja de vendas dessa região"},
+  {status:"verified",last:false,warning:"Seus outros imóveis aprovados nesta região continuam disponíveis"},
+]) test(`exclusão ${scenario.status}, último aprovado ${scenario.last}: confirma impacto e remove cadastro`,async({page})=>{
+  await mockT08(page,fullProperty({status:scenario.status,completedAt:"2026-09-26T00:00:00.000Z"}));
+  const deletions:any[]=[];let deleted=false;let warning="";
+  await page.route("**/producer/properties**",async route=>{
+    const request=route.request();const path=new URL(request.url()).pathname;
+    if(path.endsWith("/deletion-impact"))return route.fulfill({json:{revision:4,approved:scenario.status==='verified',lastApprovedInRegion:scenario.last,municipality:"Ariquemes"}});
+    if(request.method()==='DELETE'){deletions.push(request.postDataJSON());deleted=true;return route.fulfill({status:204});}
+    if(path.endsWith('/producer/properties')&&deleted)return route.fulfill({json:{properties:[]}});
+    return route.fallback();
+  });
+  page.on('dialog',async dialog=>{warning=dialog.message();await dialog.accept();});
+  await page.goto('/produtor/propriedades');
+  await page.getByRole('button',{name:'Excluir imóvel',exact:true}).click();
+  await expect.poll(()=>deletions.length).toBe(1);
+  expect(warning).toContain(scenario.warning);
+  expect(deletions[0].expectedRevision).toBe(4);
+  expect(deletions[0].acknowledgeLastApprovedRegion).toBe(scenario.last);
+  await expect(page.locator('.rural-property-card')).toHaveCount(0);
+});

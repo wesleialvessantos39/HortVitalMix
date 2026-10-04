@@ -106,11 +106,11 @@ export function AdminConfiguracaoPage({
 
   const trimmedPhone = phone.trim();
   const hasChanges =
-    platformName !== state.config.platformName ||
-    slogan !== state.config.slogan ||
-    municipality !== state.config.defaultMunicipality ||
+    platformName.trim() !== state.config.platformName ||
+    slogan.trim() !== state.config.slogan ||
+    municipality.trim() !== state.config.defaultMunicipality ||
     uf !== state.config.defaultState ||
-    email !== state.config.supportEmail ||
+    email.trim().toLowerCase() !== state.config.supportEmail ||
     trimmedPhone !== (state.config.supportPhone ?? "") ||
     currency !== state.config.currency ||
     timezone !== state.config.timezone;
@@ -125,12 +125,12 @@ export function AdminConfiguracaoPage({
     if (!hasChanges || !state.config || outcome.kind === "submitting") return;
 
     const payload: Record<string, unknown> = {};
-    if (platformName !== state.config.platformName) payload.platformName = platformName;
-    if (slogan !== state.config.slogan) payload.slogan = slogan;
-    if (municipality !== state.config.defaultMunicipality)
-      payload.defaultMunicipality = municipality;
+    if (platformName.trim() !== state.config.platformName) payload.platformName = platformName.trim();
+    if (slogan.trim() !== state.config.slogan) payload.slogan = slogan.trim();
+    if (municipality.trim() !== state.config.defaultMunicipality)
+      payload.defaultMunicipality = municipality.trim();
     if (uf !== state.config.defaultState) payload.defaultState = uf;
-    if (email !== state.config.supportEmail) payload.supportEmail = email;
+    if (email.trim().toLowerCase() !== state.config.supportEmail) payload.supportEmail = email.trim().toLowerCase();
     if (trimmedPhone !== (state.config.supportPhone ?? ""))
       payload.supportPhone = trimmedPhone.length === 0 ? null : trimmedPhone;
     if (currency !== state.config.currency) payload.currency = currency;

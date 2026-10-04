@@ -44,6 +44,7 @@ export function assertManifestHash() {
 }
 
 const remoteVersionAliases: Readonly<Record<string, string>> = {
+  "20261004014120": "20261004013902",
   // Governança de imóveis/contas/localidades aplicada pelo Supabase em UTC.
   "20261004012409": "20261003151000",
   // Reconstrução controlada de localidades/onboarding aplicada pelo Supabase.

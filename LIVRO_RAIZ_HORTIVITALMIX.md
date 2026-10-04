@@ -4069,3 +4069,25 @@ A publicação do commit e o status Vercel devem ser conferidos pelo SHA exato e
 - **Advisors de segurança:** sem achado novo introduzido por esta rodada. Itens pré-existentes: `rls_enabled_no_policy` (INFO) em 4 tabelas de uso exclusivo do servidor; `auth_leaked_password_protection` desativado (WARN, depende de configuração do Auth/plano); funções `SECURITY DEFINER` auxiliares executáveis por `authenticated` (WARN).
 - **Advisors de performance:** apenas INFO de índices não usados/FKs sem índice e WARN `multiple_permissive_policies` nas tabelas de bloqueio parcial da T12; anteriores a esta rodada e não alterados.
 - **Ainda não comprovado:** upload/extração de documento real com PDF em produção; fluxos autenticados completos no site publicado; validação em aparelhos físicos.
+
+## 2026-10-04 — Complemento de integridade: exclusão em qualquer etapa e aprovação de recadastro
+
+- Integrada a atualização concorrente `a521545` antes da correção complementar. A migration já aplicada `20261004012409` não foi reescrita.
+- Schema lógico **46**: migration canônica `20261004013902_property_deletion_and_registration_integrity.sql`, versão física Supabase **20261004014120**. Hash **307a3186739b87f8a4ca008971b4b9b3df8220391568c1bd4cb1b3e8cc7eae22**.
+- O produtor pode excluir imóveis em rascunho, concluídos, enviados, devolvidos e aprovados. O histórico de documentos passa para uma tabela privada imutável, sem manter o imóvel nos cadastros ativos. Objetos do Storage são removidos pela fila existente.
+- A confirmação consulta o estado do banco. A exclusão do último imóvel aprovado na mesma UF/município exige aviso explícito e confirmação; a transação bloqueia o perfil para impedir que duas exclusões simultâneas eliminem a região sem aviso. Com outro imóvel aprovado na mesma região, a região permanece elegível.
+- Bloqueios personalizados aceitam somente imóveis aprovados. A lista de imóveis elegíveis para publicação combina aprovação regional, conta ativa, cobertura e bloqueios por imóvel/região. Compra exige endereço de entrega ativo na região. As lojas e checkout ainda são módulos futuros: estes serviços são o contrato obrigatório para sua integração, não prova de uma loja transacional existente.
+- Exclusão de conta é transacional e remove o Auth e os registros operacionais. Um principal administrativo independente que compartilha a pessoa não é eliminado por engano ao excluir a conta pública. O registro mínimo de exclusão e a auditoria continuam para reconhecer CPF/nome/e-mail em novas tentativas. Super administradores e a própria conta do operador permanecem protegidos.
+- Cadastros com CPF ou nome normalizado de contas bloqueadas/excluídas ficam em análise. O CPF do titular bloqueado só é liberado para o novo cadastro após decisão administrativa; a tentativa de cadastro não arquiva o titular existente. Pendentes não recebem códigos por nenhum dos endpoints da aplicação.
+- Aprovação gera confirmação com metadado `registration_approved`; falhas de envio podem ser repetidas com o mesmo comando. O template local traz “Sua conta foi aprovada. Confirme seu e-mail…”. A aplicação desse template no painel remoto do Supabase requer conclusão do login seguro; não confundir arquivo local com configuração hospedada.
+- Mantido o novo painel global e seus setores delegados (`account_governance`, `platform_configuration`). Comparação ignora espaços nas bordas e caixa do e-mail; envio vazio não inicia carregamento. Botões indisponíveis usam cursor adequado.
+- Cobertura e sessão atualizam ao voltar à janela e periodicamente. Uma localidade recadastrada recupera a seleção pelo nome/UF mesmo com UUID novo. Ajustado overflow dos botões de imóveis em 320px.
+
+### Validação executada
+
+- Build completo, TypeScript, manifesto e verificação de segredos passaram.
+- Testes de imóveis (26), cadastro/transporte (19), localidades (43) passaram. Suíte unitária possui 275 casos; corrigida a expectativa obsoleta do build gratuito para incluir TypeScript.
+- Playwright: 37 dos 39 testes iniciais passaram; corrigidos o overflow em 320px e a expectativa antiga do texto do guia, e ambos passaram na repetição. Três novos testes de exclusão (concluído, último aprovado regional, aprovado com outro imóvel) passaram; teste de salvar sem alterações também passou.
+- Banco real, transações revertidas: exclusão com custódia, exclusão sincronizada Auth/domínio e recadastro de CPF bloqueado com análise e preservação do titular anterior passaram.
+- Estado persistente verificado: **0 rascunhos**, **0 objetos pendentes na fila de limpeza**, **0 contas ativas marcadas deleted**, **0 pessoas órfãs**. O imóvel histórico withdrawn não foi restaurado nem apagado sem solicitação específica.
+- Edge Function `public-registration` publicada na versão **9**. Fechamento do SHA/deployment será registrado após a publicação.

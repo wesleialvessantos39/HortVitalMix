@@ -354,7 +354,7 @@ async function findExistingPerson(
 
   // Consulta CPF e e-mail em paralelo no banco de dados
   const [cpfResult, emailResult] = await Promise.all([
-    admin.from("app_people").select("id,user_id,cpf_normalized,email_normalized").eq("cpf_normalized", data.cpf).is("archived_at", null).maybeSingle(),
+    admin.from("app_people").select("id,user_id,cpf_normalized,email_normalized").eq("cpf_normalized", data.cpf).is("archived_at", null).eq("registration_review_pending",false).maybeSingle(),
     admin.from("app_people").select("id,user_id,cpf_normalized,email_normalized").eq("email_normalized", data.email).maybeSingle(),
   ]);
 
@@ -388,47 +388,16 @@ async function addRoleToExistingIdentity(
   const person = await findExistingPerson(data, requestId);
   if (!person) return null;
 
-  const account = await supabaseAdmin
-    .from("app_users")
-    .select("status")
-    .eq("id", person.user_id)
-    .maybeSingle();
-  if (account.error)
-    throw registrationError("REGISTRATION_DATABASE_UNAVAILABLE",503);
-
-  if (
-    account.data?.status === "blocked" ||
-    account.data?.status === "deleted"
-  ) {
-    const requested = await supabaseAdmin.rpc("request_account_reactivation", {
-      p_user_id: person.user_id,
-      p_role: role,
-    });
-    if (requested.error)
-      throw registrationError("REGISTRATION_DATA_REJECTED",409);
-    return {
-      userId:person.user_id,
-      reviewRequired:true,
-      confirmationRequired:true,
-      confirmationDispatchAccepted:false,
-      confirmationDispatchDeferred:true,
-      existingIdentity:true,
-      roleAdded:false,
-      role,
-    };
+  const state=await supabaseAdmin.from("app_users").select("status").eq("id",person.user_id).single();
+  if(state.error)throw registrationError("REGISTRATION_DATABASE_UNAVAILABLE",503);
+  if(["blocked","suspended","pending"].includes(state.data.status)) {
+    if(person.email_normalized!==data.email && person.cpf_normalized===data.cpf)return null;
+    if(person.email_normalized===data.email && person.cpf_normalized===data.cpf){
+      const queued=await supabaseAdmin.rpc("request_blocked_registration_review",{p_user_id:person.user_id,p_role:role});
+      if(queued.error)throw registrationError("REGISTRATION_DATA_REJECTED",409);
+      return {userId:person.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role};
+    }
   }
-
-  if(account.data?.status === "pending")
-    return {
-      userId:person.user_id,
-      reviewRequired:true,
-      confirmationRequired:true,
-      confirmationDispatchAccepted:false,
-      confirmationDispatchDeferred:true,
-      existingIdentity:true,
-      roleAdded:false,
-      role,
-    };
 
   if (
     person.cpf_normalized !== data.cpf ||
@@ -468,6 +437,15 @@ async function addRoleToExistingIdentity(
       throw registrationError("REGISTRATION_EXISTING_ACCOUNT_CONFIRM_REQUIRED", 409);
     if (verified.data.user.id !== person.user_id)
       throw registrationError("REGISTRATION_IDENTITY_CONFLICT", 409);
+
+    const account = await supabaseAdmin.from("app_users").select("status").eq("id",person.user_id).single();
+    if(account.error) throw registrationError("REGISTRATION_DATABASE_UNAVAILABLE",503);
+    if(account.data.status === "deleted") {
+      const requested = await supabaseAdmin.rpc("request_account_reactivation", {p_user_id:person.user_id,p_role:role});
+      if(requested.error) throw registrationError("REGISTRATION_DATA_REJECTED",409);
+      return {userId:person.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role};
+    }
+    if(account.data.status === "pending") return {userId:person.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role};
 
     // Acrescentar papel a uma identidade existente também respeita a trava de
     // cobertura: nenhum perfil novo nasce em região fora de operação.
@@ -724,12 +702,13 @@ export async function register(
 
 
   const accountState = await supabaseAdmin.from("app_users").select("status").eq("id",userId!).single();
+  if(accountState.error)throw registrationError("REGISTRATION_STATUS_UNKNOWN",503);
   return {
     userId,
     reviewRequired: accountState.data?.status === "pending",
-    confirmationRequired: true,
+    confirmationRequired: accountState.data?.status === "active",
     confirmationDispatchAccepted: false,
-    confirmationDispatchDeferred: true,
+    confirmationDispatchDeferred: accountState.data?.status === "active",
     existingIdentity: false,
     roleAdded: true,
     role,

@@ -39,10 +39,13 @@ export function useSession() {
     void refresh();
     const sync = () => void refresh();
     const clear = () => adoptSession(null);
+    const focus=()=>{if(document.visibilityState!=="hidden")void refresh();};
+    const timer=window.setInterval(focus,30000);window.addEventListener("focus",focus);
     window.addEventListener("hvm:session-changed", sync);
     window.addEventListener("hvm:session-cleared", clear);
     return () => {
       revision.current++;
+      window.clearInterval(timer);window.removeEventListener("focus",focus);
       window.removeEventListener("hvm:session-changed", sync);
       window.removeEventListener("hvm:session-cleared", clear);
     };

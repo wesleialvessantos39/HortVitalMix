@@ -346,3 +346,11 @@ test("super administrator confirms block, deletion and registration review", asy
     "delete",
   ]);
 });
+
+test('configuração sem alterações mantém salvar desabilitado sem cursor de espera',async({page})=>{
+ await mock(page,'platform_super_admin');await page.goto('/admin/configuracao');
+ const save=page.getByRole('button',{name:'Nenhuma alteração',exact:true});
+ await expect(save).toBeDisabled();
+ expect(await save.evaluate(el=>getComputedStyle(el).cursor)).toBe('not-allowed');
+ await expect(page.getByText('Revisão',{exact:true})).toHaveCount(0);
+});

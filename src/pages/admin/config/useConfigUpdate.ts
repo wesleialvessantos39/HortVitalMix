@@ -19,6 +19,7 @@ export function useConfigUpdate() {
       expectedRevision: number,
       commandId: string,
     ): Promise<UpdateOutcome> => {
+      if(Object.keys(payload).length===0){setOutcome({kind:"idle"});return {kind:"idle"};}
       setOutcome({ kind: "submitting" });
       try {
         const result = await api<{

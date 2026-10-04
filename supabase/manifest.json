@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 45,
+  "schemaVersion": 46,
   "migrations": [
     {
       "version": "20260919030126",
@@ -250,7 +250,12 @@
       "version": "20261003151000",
       "name": "governance_property_locality_hardening",
       "file": "20261003151000_governance_property_locality_hardening.sql"
+    },
+    {
+      "version": "20261004013902",
+      "name": "property_deletion_and_registration_integrity",
+      "file": "20261004013902_property_deletion_and_registration_integrity.sql"
     }
   ],
-  "migrationHistoryHash": "b6e091ddf47e060b8e21a098daaab0e31e6f50114c99f9b076302bd98d91dee2"
+  "migrationHistoryHash": "307a3186739b87f8a4ca008971b4b9b3df8220391568c1bd4cb1b3e8cc7eae22"
 }

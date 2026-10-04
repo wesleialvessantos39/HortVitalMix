@@ -387,37 +387,18 @@ function PropertyList({
     };
   }, [session.userId]);
 
-  async function deleteDraft(property:RuralPropertySummary){
-    if(!confirm("Excluir este rascunho? Esta ação não pode ser desfeita."))return;
+  async function deleteDraft(property: RuralPropertySummary) {
     setBusyId(property.id);setListNotice("");
-    try{await api("/v1/producer/properties/"+property.id,{method:"DELETE",body:JSON.stringify({expectedRevision:property.revision,commandId:commandId()})});localStorage.removeItem(localKey(session.userId,property.id));await load();}
-    catch(e){setListNotice((e as ApiFailure).message==="RECENT_AUTH_REQUIRED"?"Entre novamente para confirmar a exclusão. Seu rascunho está salvo.":messageForFailure(e));}finally{setBusyId(null);}
-  }
-  async function withdrawApproved(property: RuralPropertySummary) {
-    setBusyId(property.id);
-    setListNotice("");
     try {
-      const impact = await api<{
-        municipality: string;
-        state: string;
-        remainingApprovedInRegion: number;
-        losesRegionAccess: boolean;
-      }>("/v1/producer/properties/" + property.id + "/delete-impact");
-      const warning = impact.losesRegionAccess
-        ? `Esse imóvel está aprovado. Ao apagá-lo, você perde acesso à sua loja de vendas em ${impact.municipality}/${impact.state}. Para voltar a publicar nessa região, cadastre um imóvel e conclua novamente todo o processo de aprovação. Deseja continuar?`
-        : `Esse imóvel está aprovado. Ao apagá-lo, você perde acesso a este imóvel, mas sua loja continua disponível em ${impact.municipality}/${impact.state} porque existe outro imóvel aprovado nessa região. Deseja continuar?`;
-      if (!confirm(warning)) return;
-      await api("/v1/producer/properties/" + property.id + "/withdraw", {
-        method: "POST",
-        body: JSON.stringify({ expectedRevision: property.revision, commandId: commandId() }),
-      });
-      localStorage.removeItem(localKey(session.userId, property.id));
-      await load();
-    } catch (e) {
-      setListNotice(messageForFailure(e));
-    } finally {
-      setBusyId(null);
-    }
+      const impact=await api<{revision:number;approved:boolean;lastApprovedInRegion:boolean;municipality:string}>(`/v1/producer/properties/${property.id}/deletion-impact`);
+      const warning=impact.lastApprovedInRegion
+       ? "Esse imóvel está aprovado. Ao apagá-lo você perde acesso à sua loja de vendas dessa região. Para recuperar o acesso, cadastre um imóvel e aguarde uma nova aprovação."
+       : impact.approved ? "Esse imóvel está aprovado. Ao apagá-lo você perde acesso a este imóvel. Seus outros imóveis aprovados nesta região continuam disponíveis."
+       : "Excluir este imóvel? O cadastro e seus documentos deixam de ficar disponíveis.";
+      if(!confirm(warning+" Esta ação não pode ser desfeita.")) return;
+      await api(`/v1/producer/properties/${property.id}`,{method:"DELETE",body:JSON.stringify({expectedRevision:impact.revision,commandId:commandId(),acknowledgeLastApprovedRegion:impact.lastApprovedInRegion})});
+      localStorage.removeItem(localKey(session.userId,property.id));await load();
+    } catch(e) {setListNotice((e as ApiFailure).message==="LAST_APPROVED_REGION_CONFIRMATION_REQUIRED"?"Os imóveis desta região mudaram. Selecione Excluir novamente para conferir o aviso atualizado.":messageForFailure(e));} finally {setBusyId(null);}
   }
   async function submitCompleted(property: RuralPropertySummary) {
     setBusyId(property.id);setListNotice("");
@@ -619,26 +600,9 @@ function PropertyList({
                     Documentos do imóvel
                   </button>
 
-                  {property.status === "draft" && !property.completedAt && (
-                    <button
-                      className="secondary rural-delete-btn"
-                      disabled={busyId === property.id}
-                      onClick={() => void deleteDraft(property)}
-                    >
-                      <Trash2 size={16} />
-                      Excluir rascunho
-                    </button>
-                  )}
-                  {isApproved(property) && (
-                    <button
-                      className="secondary rural-delete-btn"
-                      disabled={busyId === property.id}
-                      onClick={() => void withdrawApproved(property)}
-                    >
-                      <Trash2 size={16} />
-                      Excluir propriedade
-                    </button>
-                  )}
+                  <button className="secondary rural-delete-btn" disabled={busyId===property.id} onClick={()=>void deleteDraft(property)}>
+                    <Trash2 size={16}/>{property.status==='draft'?'Excluir rascunho':'Excluir imóvel'}
+                  </button>
                 </div>
               </div>
 
@@ -663,7 +627,7 @@ function PropertyList({
               )}
               {property.completedAt && !isApproved(property) && (
                 <small className="rural-helper-note">
-                  Cadastro enviado: alterações seguem a análise do sistema. Rascunhos e imóveis aprovados têm fluxo próprio de exclusão.
+                  Edições exigem nova análise. Você pode excluir este imóvel a qualquer momento.
                 </small>
               )}
             </article>
@@ -1275,43 +1239,32 @@ function RuralPropertyWizard({
         ))}
       </nav>
 
-      <section className="rural-pending-summary" role="status" aria-label="Situação do cadastro">
+      <div className="rural-pending-steps" role="status">
         {(() => {
           const pending = [1, 2, 3, 4, 5, 6].filter((n) => !buildStepData(n).success);
-          if (!pending.length)
-            return (
-              <>
-                <CheckCircle2 size={18} aria-hidden="true" />
-                <div>
-                  <strong>Cadastro completo</strong>
-                  <span>Todas as etapas obrigatórias estão preenchidas.</span>
-                </div>
-              </>
-            );
+          if (!pending.length) return "Todas as etapas estão completas.";
           return (
             <>
-              <AlertTriangle size={18} aria-hidden="true" />
-              <div>
-                <strong>Faltam {pending.length} {pending.length === 1 ? "etapa" : "etapas"}</strong>
-                <span>Selecione uma etapa para continuar o preenchimento:</span>
-                <div className="rural-pending-chips">
-                  {pending.map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      className="rural-pending-link"
-                      aria-label={`Ir para a etapa ${n}: ${steps[n - 1][0]}`}
-                      onClick={() => viewOnly ? setDraft((current) => ({ ...current, step: n })) : patch({ step: n })}
-                    >
-                      {n}. {steps[n - 1][2]}
-                    </button>
-                  ))}
-                </div>
+              <strong>Etapas pendentes</strong>
+              <span className="rural-pending-description">Selecione uma etapa para continuar o preenchimento.</span>
+              <div className="rural-pending-list">
+              {pending.map((n) => (
+                <span key={n}>
+                  <button
+                    type="button"
+                    className="rural-pending-link"
+                    aria-label={`Ir para a etapa ${n}: ${steps[n - 1][0]}`}
+                    onClick={() => viewOnly ? setDraft((c) => ({ ...c, step: n })) : patch({ step: n })}
+                  >
+                    <span>{n}</span> {steps[n - 1][0]}
+                  </button>
+                </span>
+              ))}
               </div>
             </>
           );
         })()}
-      </section>
+      </div>
 
       {!online && (
         <div className="rural-connectivity-notice" role="status">

@@ -574,6 +574,7 @@ adminGovernanceRouter.patch("/users/:userId/status",originProtection,adminSessio
   const target=await client.query("SELECT * FROM public.app_users WHERE id=$1 FOR UPDATE",[id.data]);
   if(!target.rowCount){await client.query("ROLLBACK");res.status(404).json({error:"USER_NOT_FOUND"});return;}
   if(!["active","blocked"].includes(target.rows[0].status)){await client.query("ROLLBACK");res.status(409).json({error:"ACCOUNT_REQUIRES_REVIEW"});return;}
+  if(!req.adminActor.isSuperAdmin && (await client.query("SELECT 1 FROM public.app_user_role_assignments WHERE user_id=$1 AND role_code='platform_super_admin' AND revoked_at IS NULL",[id.data])).rowCount){await client.query("ROLLBACK");res.status(403).json({error:"SUPER_ADMIN_PROTECTED"});return;}
   const v=parsed.data;
   if(v.status==="blocked"){
    // One unscheduled active super admin must remain available across the entire future interval.

@@ -1,3 +1,6 @@
+import {dbPool} from "../db/pool.ts";
+import {z} from "zod";
+import {localityBlockedMessage} from "../../shared/contracts/locality.ts";
 import { Router, type Request, type Response } from "express";
 import { originProtection } from "../security/originProtection.ts";
 import { verifyRecentAuthProof } from "../security/recentAuth.ts";
@@ -174,3 +177,22 @@ localityRouter.put(
     }
   },
 );
+
+localityRouter.get("/localities/account-coverage",async(req,res)=>{
+ if(!req.actor){res.status(401).json({error:"AUTH_REQUIRED"});return;}
+ if(!dbPool){res.status(503).json({error:"UNAVAILABLE"});return;}
+ try {
+ const result=await dbPool.query(`WITH regions AS (
+ SELECT m.name,m.state FROM public.app_people p JOIN public.app_municipalities m ON m.id=p.municipality_id WHERE p.user_id=$1
+ UNION SELECT i.locality_name,i.state FROM public.app_locality_user_impacts i WHERE i.user_id=$1 AND i.resolved_at IS NULL
+ UNION SELECT pr.municipality,pr.state FROM public.app_properties pr JOIN public.app_producer_profiles pp ON pp.id=pr.producer_id JOIN public.app_people p ON p.id=pp.person_id WHERE p.user_id=$1 AND pr.status='verified'
+ UNION SELECT a.city,a.state FROM public.app_user_addresses a JOIN public.app_people p ON p.id=a.person_id WHERE p.user_id=$1 AND a.is_active
+ ) SELECT r.name,r.state,public.fn_locality_coverage(r.state,r.name) AS coverage FROM regions r WHERE r.name IS NOT NULL`,[req.actor.userId]);
+ res.json({regions:result.rows.map(row=>({...row,message:row.coverage==='active'?null:localityBlockedMessage(row.coverage)}))});
+ }catch{res.status(503).json({error:"UNAVAILABLE"});}
+});
+localityRouter.get("/localities/access",async(req,res)=>{
+ if(!req.actor){res.status(401).json({error:"AUTH_REQUIRED"});return;}
+ const id=z.uuid().safeParse(req.query.municipalityId);if(!id.success){res.status(422).json({error:"VALIDATION_FAILED"});return;}
+ try {const [publishing,purchasing]=await Promise.all([AccessScopeService.canPublishIn(req.actor.userId,id.data),AccessScopeService.canPurchaseIn(req.actor.userId,id.data)]);res.json({publishing,purchasing});}catch(e){const f=accessScopeFailure(e,req.requestId);res.status(f.status).json({error:f.error});}
+});

@@ -4,41 +4,24 @@ import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
 import {
   adminSessionMiddleware,
+  requireAdminSector,
   requireRecentAuth,
 } from "../middleware/adminSession.ts";
 import { originProtection } from "../security/originProtection.ts";
+import {supabaseAdmin,createSupabasePublicClient} from "../supabase/client.ts";
+import {issueConfirmationContext} from "../security/confirmationContext.ts";
+import {runtime} from "../config/runtime.ts";
 import { reportFailure } from "../config/reportFailure.ts";
-import { supabaseAdmin, supabasePublic } from "../supabase/client.ts";
-import { runtime } from "../config/runtime.ts";
-import { safeRequestOrigin } from "../security/origin.ts";
-import { issueConfirmationContext } from "../security/confirmationContext.ts";
-import { drainStorageDeletionQueue } from "../services/StorageDeletionQueueService.ts";
 
 export const adminAccountReviewRouter = Router();
-
-function requireAccountGovernance(req: any,res: any,next: any) {
-  if (
-    req.adminActor?.isSuperAdmin ||
-    req.adminActor?.sectors?.includes("account_governance")
-  ) {
-    next();
-    return;
-  }
-  res.status(403).json({
-    error: "FORBIDDEN",
-    message: "Acesso restrito à governança de contas.",
-    requestId: req.requestId,
-  });
-}
-
-adminAccountReviewRouter.use(adminSessionMiddleware, requireAccountGovernance);
+const accountGuard = [adminSessionMiddleware, requireAdminSector("account_governance")];
 const command = z.object({ commandId: z.string().uuid() }).strict();
 const decision = command.extend({
   decision: z.enum(["approved", "rejected"]),
   note: z.string().trim().min(3).max(1000),
 });
 
-adminAccountReviewRouter.get("/registration-reviews", async (_req, res) => {
+adminAccountReviewRouter.get("/registration-reviews", ...accountGuard, async (_req, res) => {
   try {
     if (!dbPool) throw new Error("UNAVAILABLE");
     const result =
@@ -57,164 +40,111 @@ adminAccountReviewRouter.get("/registration-reviews", async (_req, res) => {
 adminAccountReviewRouter.post(
   "/users/:userId/delete",
   originProtection,
+  ...accountGuard,
   requireRecentAuth,
   async (req, res) => {
-    const parsed = command.safeParse(req.body);
-    const id = z.string().uuid().safeParse(req.params.userId);
+    const parsed = command.safeParse(req.body),
+      id = z.string().uuid().safeParse(req.params.userId);
     if (!parsed.success || !id.success) {
       res.status(422).json({ error: "VALIDATION_FAILED" });
       return;
     }
-    if (!dbPool || !req.adminActor || !supabaseAdmin) {
-      res.status(503).json({ error: "UNAVAILABLE" });
-      return;
-    }
-
+    let client: PoolClient | undefined;
     try {
-      const target = await dbPool.query<{
-        status:string;
-        cpf_normalized:string;
-        full_name:string;
-        email_normalized:string;
-        is_super:boolean;
-      }>(
-        `SELECT u.status,p.cpf_normalized,p.full_name,p.email_normalized,
-                EXISTS(
-                  SELECT 1 FROM public.app_user_role_assignments r
-                   WHERE r.user_id=u.id
-                     AND r.role_code='platform_super_admin'
-                     AND r.revoked_at IS NULL
-                ) AS is_super
-           FROM public.app_users u
-           JOIN public.app_people p ON p.user_id=u.id
-          WHERE u.id=$1
-          ORDER BY p.created_at
-          LIMIT 1`,
+      if (!dbPool || !req.adminActor) throw new Error("UNAVAILABLE");
+      client = await dbPool.connect();
+      await client.query("BEGIN");
+      await client.query(
+        "SELECT pg_advisory_xact_lock(hashtext('hvm-account-blocks'))",
+      );
+      const replay = await client.query(
+        "SELECT 1 FROM public.app_audit_events WHERE actor_id=$1 AND command_id=$2 AND action='account.deleted' AND target_id=$3",
+        [req.adminActor.userId, parsed.data.commandId, id.data],
+      );
+      if (replay.rowCount) {
+        await client.query("COMMIT");
+        res.json({ status: "deleted" });
+        return;
+      }
+      const target = await client.query(
+        `SELECT u.status,p.cpf_normalized,p.full_name,coalesce(ap.admin_email,p.email_normalized) AS email_normalized,
+   EXISTS(SELECT 1 FROM public.app_user_role_assignments r WHERE r.user_id=u.id AND r.role_code='platform_super_admin' AND r.revoked_at IS NULL) AS is_super
+   FROM public.app_users u LEFT JOIN public.app_admin_principals ap ON ap.admin_user_id=u.id
+   JOIN public.app_people p ON p.user_id=u.id OR p.id=ap.person_id WHERE u.id=$1 FOR UPDATE OF u`,
         [id.data],
       );
-      const row=target.rows[0];
-      if(!row){
-        res.status(404).json({error:"USER_NOT_FOUND"});
+      const row = target.rows[0];
+      if (!row) {
+        await client.query("ROLLBACK");
+        res.status(404).json({ error: "USER_NOT_FOUND" });
         return;
       }
-      if(row.is_super || id.data===req.adminActor.userId){
-        res.status(409).json({error:"SUPER_ADMIN_PROTECTED"});
+      if (row.is_super || id.data === req.adminActor.userId) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "SUPER_ADMIN_PROTECTED" });
         return;
       }
-
-      // A exclusão no Supabase Auth dispara a sincronização canônica que remove
-      // app_users/roles/admin_principals. O histórico de segurança fica apenas
-      // no tombstone e na auditoria, não como conta ativa.
-      const removed=await supabaseAdmin.auth.admin.deleteUser(id.data);
-      if(removed.error && removed.error.status!==404){
-        reportFailure({
-          category:"account_auth_delete_failed",
-          requestId:req.requestId,
-          detail:removed.error.code ?? String(removed.error.status ?? "unknown"),
-        });
-        res.status(503).json({error:"AUTH_DELETE_FAILED"});
-        return;
-      }
-
-      const client=await dbPool.connect();
-      try{
-        await client.query("BEGIN");
-        await client.query(
-          `INSERT INTO public.app_account_deletions(
-             user_id,cpf_normalized,name_key,email_normalized,deleted_by,deleted_at
-           )
-           VALUES($1,$2,public.governance_name_key($3),$4,$5,clock_timestamp())
-           ON CONFLICT DO NOTHING`,
-          [id.data,row.cpf_normalized,row.full_name,row.email_normalized,req.adminActor.userId],
-        );
-        await client.query(
-          `UPDATE public.app_account_deletions
-              SET deleted_by=$2,email_normalized=COALESCE(email_normalized,$3)
-            WHERE user_id=$1`,
-          [id.data,req.adminActor.userId,row.email_normalized],
-        );
-        await client.query(
-          "UPDATE public.app_people SET archived_at=COALESCE(archived_at,clock_timestamp()) WHERE user_id=$1",
-          [id.data],
-        );
-        await client.query(
-          "DELETE FROM public.app_users WHERE id=$1",
-          [id.data],
-        );
-        await client.query(
-          `UPDATE public.app_registration_reviews
-              SET status='rejected',reviewed_at=COALESCE(reviewed_at,clock_timestamp()),
-                  reviewed_by=COALESCE(reviewed_by,$2),
-                  review_note=COALESCE(review_note,'Conta excluída pela administração')
-            WHERE user_id=$1 AND status='pending'`,
-          [id.data,req.adminActor.userId],
-        );
-        const replay=await client.query(
-          `SELECT 1 FROM public.app_audit_events
-            WHERE actor_id=$1 AND command_id=$2
-              AND action='account.deleted' AND target_id=$3`,
-          [req.adminActor.userId,parsed.data.commandId,id.data],
-        );
-        if(!replay.rowCount){
-          await client.query(
-            `INSERT INTO public.app_audit_events(
-              request_id,actor_id,actor_role,action,target_entity,target_id,
-              payload_before,payload_after,client_ip_hash,command_id
-            )
-            VALUES($1,$2,$3,'account.deleted','app_users',$4,$5,$6,$7,$8)`,
-            [
-              req.requestId,req.adminActor.userId,req.adminActor.role,id.data,
-              JSON.stringify({status:row.status}),
-              JSON.stringify({deleted:true,authDeleted:true}),
-              req.clientIpHash,parsed.data.commandId,
-            ],
-          );
-        }
+      if (row.status === "deleted") {
         await client.query("COMMIT");
-      }catch(error){
-        await client.query("ROLLBACK").catch(()=>undefined);
-        throw error;
-      }finally{
-        client.release();
+        res.json({ status: "deleted" });
+        return;
       }
-      await drainStorageDeletionQueue();
-      res.json({status:"deleted"});
+      await client.query(
+        `INSERT INTO public.app_account_deletions(user_id,cpf_normalized,name_key,deleted_by,email_normalized)
+   VALUES($1,$2,public.governance_name_key($3::text),$4,$5)`,
+        [id.data, row.cpf_normalized, row.full_name, req.adminActor.userId,row.email_normalized],
+      );
+      await client.query(
+        `UPDATE public.app_users SET status='deleted',block_starts_at=NULL,block_ends_at=NULL,
+   authorization_revision=authorization_revision+1,updated_at=now() WHERE id=$1`,
+        [id.data],
+      );
+      await client.query(
+        "UPDATE public.app_people SET archived_at=now() WHERE user_id=$1",
+        [id.data],
+      );
+      await client.query(
+        "UPDATE public.app_registration_reviews SET status='rejected',reviewed_at=now(),reviewed_by=$2,review_note='Conta excluída pela administração' WHERE user_id=$1 AND status='pending'",
+        [id.data, req.adminActor.userId],
+      );
+      await client.query("DELETE FROM auth.sessions WHERE user_id=$1", [
+        id.data,
+      ]);
+      await client.query(
+        `INSERT INTO public.app_audit_events(request_id,actor_id,actor_role,action,target_entity,target_id,payload_before,payload_after,client_ip_hash,command_id)
+    VALUES($1,$2,$3,'account.deleted','app_users',$4,$5,$6,$7,$8)`,
+        [
+          req.requestId,
+          req.adminActor.userId,
+          req.adminActor.role,
+          id.data,
+          JSON.stringify({ status: row.status }),
+          JSON.stringify({ status: "deleted" }),
+          req.clientIpHash,
+          parsed.data.commandId,
+        ],
+      );
+      await client.query("SELECT public.delete_active_account($1,$2)",[id.data,req.adminActor.userId]);
+      await client.query("COMMIT");
+      res.json({ status: "deleted" });
     } catch (error) {
+      if (client) await client.query("ROLLBACK").catch(() => undefined);
       reportFailure({
         category: "account_delete_failed",
         requestId: req.requestId,
         detail: (error as { code?: string }).code ?? "unknown",
       });
       res.status(503).json({ error: "UNAVAILABLE" });
+    } finally {
+      client?.release();
     }
   },
 );
 
-async function sendApprovalConfirmation(
-  req: any,
-  userId: string,
-  role: "consumer" | "producer",
-  email: string,
-) {
-  if (!supabasePublic || !supabaseAdmin) return false;
-  const auth=await supabaseAdmin.auth.admin.getUserById(userId);
-  if(auth.error || !auth.data.user) return false;
-  if(auth.data.user.email_confirmed_at) return true;
-  const origin=safeRequestOrigin(req) ?? runtime.origins[0] ?? "https://hortvitalmix.vercel.app";
-  const target =
-    origin.replace(/\/$/,"") +
-    `/confirmar-contato?portal=${encodeURIComponent(role)}&approved=1&context=${encodeURIComponent(issueConfirmationContext(userId,role))}`;
-  const sent=await supabasePublic.auth.resend({
-    type:"signup",
-    email,
-    options:{emailRedirectTo:target},
-  });
-  return !sent.error;
-}
-
 adminAccountReviewRouter.post(
   "/registration-reviews/:reviewId/decision",
   originProtection,
+  ...accountGuard,
   requireRecentAuth,
   async (req, res) => {
     const parsed = decision.safeParse(req.body),
@@ -237,7 +167,7 @@ adminAccountReviewRouter.post(
       );
       if (replay.rowCount) {
         await client.query("COMMIT");
-        res.json({ status: "reviewed" });
+        res.json({ status: "reviewed",confirmationSent:await sendApprovalConfirmation(id.data) });
         return;
       }
       const result = await client.query(
@@ -248,16 +178,16 @@ adminAccountReviewRouter.post(
       if (
         !row ||
         row.status !== "pending" ||
-        !["pending", "deleted"].includes(row.account_status)
+        !["pending", "deleted", "blocked", "suspended"].includes(row.account_status)
       ) {
         await client.query("ROLLBACK");
         res.status(409).json({ error: "REVIEW_ALREADY_DECIDED" });
         return;
       }
-      let approvalEmail: string | null = null;
-      let approvalRole: "consumer" | "producer" | null = null;
       if (parsed.data.decision === "approved") {
-        // A identidade arquivada só volta se o CPF/e-mail não pertence a outro cadastro vigente.
+        await client.query("UPDATE public.app_people p SET archived_at=now() FROM public.app_users u WHERE p.user_id=u.id AND u.id=ANY($2::uuid[]) AND u.id<>$1 AND u.status IN ('blocked','suspended','deleted') AND p.cpf_normalized=(SELECT cpf_normalized FROM public.app_people WHERE user_id=$1)",[row.user_id,row.matched_user_ids]);
+        await client.query("UPDATE public.app_people SET registration_review_pending=false WHERE user_id=$1",[row.user_id]);
+        await client.query("UPDATE auth.users SET email_confirmed_at=NULL,raw_user_meta_data=coalesce(raw_user_meta_data,'{}'::jsonb)||'{\"registration_approved\":true}'::jsonb WHERE id=$1",[row.user_id]);
         await client.query(
           "UPDATE public.app_people SET archived_at=NULL WHERE user_id=$1",
           [row.user_id],
@@ -293,20 +223,6 @@ adminAccountReviewRouter.post(
               ],
             );
         }
-        const confirmation = await client.query<{email_normalized:string;role_code:"consumer"|"producer"}>(
-          `SELECT p.email_normalized,r.role_code
-             FROM public.app_people p
-             JOIN public.app_user_role_assignments r ON r.user_id=p.user_id
-            WHERE p.user_id=$1
-              AND p.archived_at IS NULL
-              AND r.role_code IN ('consumer','producer')
-              AND r.revoked_at IS NULL
-            ORDER BY CASE WHEN r.role_code=$2 THEN 0 ELSE 1 END
-            LIMIT 1`,
-          [row.user_id,row.requested_role ?? "consumer"],
-        );
-        approvalEmail=confirmation.rows[0]?.email_normalized ?? null;
-        approvalRole=confirmation.rows[0]?.role_code ?? null;
       } else if (row.account_status === "pending")
         await client.query(
           "UPDATE public.app_users SET status='suspended',authorization_revision=authorization_revision+1 WHERE id=$1",
@@ -335,12 +251,7 @@ adminAccountReviewRouter.post(
         ],
       );
       await client.query("COMMIT");
-      let confirmationSent=false;
-      if(parsed.data.decision==="approved" && approvalEmail && approvalRole){
-        confirmationSent=await sendApprovalConfirmation(
-          req,row.user_id,approvalRole,approvalEmail,
-        ).catch(()=>false);
-      }
+      const confirmationSent=parsed.data.decision==="approved" ? await sendApprovalConfirmation(id.data) : false;
       res.json({ status: "reviewed", confirmationSent });
     } catch (error) {
       if (client) await client.query("ROLLBACK").catch(() => undefined);
@@ -360,3 +271,16 @@ adminAccountReviewRouter.post(
     }
   },
 );
+
+async function sendApprovalConfirmation(reviewId:string) {
+ if(!dbPool || !supabaseAdmin)return false;
+ const row=(await dbPool.query("SELECT r.user_id,p.email_normalized,coalesce(r.requested_role,(SELECT role_code FROM public.app_user_role_assignments WHERE user_id=r.user_id AND role_code IN ('producer','consumer') AND revoked_at IS NULL LIMIT 1)) AS role FROM public.app_registration_reviews r JOIN public.app_people p ON p.user_id=r.user_id JOIN public.app_users u ON u.id=r.user_id WHERE r.id=$1 AND r.status='approved' AND u.status='active' AND r.confirmation_sent_at IS NULL",[reviewId])).rows[0];
+ if(!row || !['consumer','producer'].includes(row.role))return false;
+ try {
+  const client=createSupabasePublicClient();if(!client)return false;
+  const context=issueConfirmationContext(row.user_id,row.role);
+  const sent=await client.auth.resend({type:"signup",email:row.email_normalized,options:{emailRedirectTo:(runtime.origins[0]||"https://hortvitalmix.vercel.app")+"/confirmar-contato?portal="+row.role+"&context="+encodeURIComponent(context)}});
+  if(sent.error)return false;
+  await dbPool.query("UPDATE public.app_registration_reviews SET confirmation_sent_at=now() WHERE id=$1",[reviewId]);return true;
+ }catch{return false;}
+}

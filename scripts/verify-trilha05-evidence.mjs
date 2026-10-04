@@ -100,8 +100,8 @@ const checks = {
     read("src/pages/admin/AdminAcceptInvitePage.tsx").includes("credencial administrativa separada") &&
     read("src/pages/admin/AdminGovernancePage.tsx").includes("CPF já cadastrado (opcional)") &&
     read("src/pages/admin/AdminUsersPage.tsx").includes("Perfis vinculados") &&
-    router.includes('const superOnly = path==="/admin/configuracao"') &&
-    read("src/components/admin/AdminPortalShell.tsx").includes('if (to === "/admin/configuracao") return false;') &&
+    router.includes('path==="/admin/configuracao"') && router.includes('"platform_configuration"') &&
+    read("src/components/admin/AdminPortalShell.tsx").includes('access.sectors.includes("platform_configuration")') &&
     adminPrincipalMigration.includes("CREATE TABLE public.app_admin_principals") &&
     adminPrincipalMigration.includes("linkedExistingPerson"),
   persistentRateLimit:

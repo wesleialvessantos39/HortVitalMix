@@ -288,3 +288,13 @@ export function requireRecentAuth(
   }
   next();
 }
+
+/** Delegated capabilities are granted only through the super administrator. */
+export function requireAdminSector(sector: AdminSectorCode) {
+ return (req: Request,res: Response,next: NextFunction): void => {
+  if(!req.adminActor?.isSuperAdmin && !req.adminActor?.sectors.includes(sector)) {
+   res.status(403).json({error:"FORBIDDEN",requestId:req.requestId});return;
+  }
+  next();
+ };
+}

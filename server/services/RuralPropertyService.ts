@@ -538,26 +538,33 @@ export class RuralPropertyService {
       const property=await mapProperty(client,row);await client.query("COMMIT");return {property};
     }catch(e){await client.query("ROLLBACK");mapDbError(e);}finally{client.release();}
   }
-  static async deleteDraft(userId:string,propertyId:string,expectedRevision:number,commandId:string,requestId:string,ipHash:string){
+  static async deleteDraft(userId:string,propertyId:string,expectedRevision:number,commandId:string,requestId:string,ipHash:string,acknowledgeLastApprovedRegion=false){
     const client=await requirePool().connect();
-    let shouldDrainStorage=false;
     try{
       await client.query("BEGIN");const producerId=await resolveProducer(client,userId,true);
       const replay=await replayTarget(client,commandId,userId,"rural_property.draft_deleted");
       if(!replay){
         const row=await lockProperty(client,producerId,propertyId);assertRevision(row,expectedRevision);
-        if(row.status!=="draft" || row.completed_at)throw new RuralPropertyError("COMPLETED_PROPERTY_DELETE_FORBIDDEN",409);
-        await audit(client,{userId,role:"producer",requestId,ipHash,commandId,action:"rural_property.draft_deleted",targetId:propertyId,before:summaryMetadata(row),after:{deleted:true}});
-        const purged=await client.query<{deleted:number}>(
-          "SELECT public.purge_draft_property($1,$2) AS deleted",
-          [propertyId,producerId],
-        );
-        if(Number(purged.rows[0]?.deleted??0)!==1)throw new RuralPropertyError("PROPERTY_NOT_FOUND",404);
-        shouldDrainStorage=true;
+        if(row.status==='verified' && !acknowledgeLastApprovedRegion) {
+          const others=await client.query("SELECT 1 FROM public.app_properties WHERE producer_id=$1 AND id<>$2 AND status='verified' AND state=$3 AND public.fn_locality_normalize(municipality)=public.fn_locality_normalize($4) LIMIT 1",[producerId,propertyId,row.state,row.municipality]);
+          if(!others.rowCount)throw new RuralPropertyError("LAST_APPROVED_REGION_CONFIRMATION_REQUIRED",409,"Esse imóvel está aprovado. Ao apagá-lo você perde acesso à sua loja de vendas dessa região.");
+        }
+        await audit(client,{userId,role:"producer",requestId,ipHash,commandId,action:"rural_property.draft_deleted",targetId:propertyId,before:summaryMetadata(row)});
+        await client.query("DELETE FROM public.app_properties WHERE id=$1 AND producer_id=$2",[propertyId,producerId]);
+        await client.query("UPDATE public.app_producer_profiles SET verification_status='declared' WHERE id=$1 AND NOT EXISTS(SELECT 1 FROM public.app_properties WHERE producer_id=$1 AND status='verified')",[producerId]);
       }
       await client.query("COMMIT");
     }catch(e){await client.query("ROLLBACK");mapDbError(e);}finally{client.release();}
-    if(shouldDrainStorage) await drainStorageDeletionQueue();
+    await drainStorageDeletionQueue();
+  }
+  static async deletionImpact(userId: string, propertyId: string) {
+    const client = await requirePool().connect();
+    try {
+      const producerId = await resolveProducer(client,userId);
+      const row = await lockProperty(client,producerId,propertyId);
+      const others = await client.query("SELECT count(*)::int count FROM public.app_properties WHERE producer_id=$1 AND id<>$2 AND status='verified' AND state=$3 AND public.fn_locality_normalize(municipality)=public.fn_locality_normalize($4)",[producerId,propertyId,row.state,row.municipality]);
+      return {revision:row.revision, approved:row.status==='verified',lastApprovedInRegion:row.status==='verified' && others.rows[0].count===0,municipality:row.municipality,state:row.state};
+    } finally {client.release();}
   }
   static async listProperties(userId: string) {
     const client = await requirePool().connect();
@@ -1108,68 +1115,6 @@ export class RuralPropertyService {
   }
 
   static async withdrawApproved(userId: string, propertyId: string, expectedRevision: number, commandId: string, requestId: string, ipHash: string) {
-    const client = await requirePool().connect();
-    try {
-      await client.query("BEGIN");
-      const producerId = await resolveProducer(client, userId, true);
-      const replay = await replayTarget(client, commandId, userId, "rural_property.withdrawn");
-      if (!replay) {
-        const row = await lockProperty(client, producerId, propertyId);
-        assertRevision(row, expectedRevision);
-        if (row.status !== "verified")
-          throw new RuralPropertyError("PROPERTY_NOT_EDITABLE", 409, "Só uma propriedade aprovada pode ser excluída por este caminho.");
-        await client.query(
-          "UPDATE public.app_properties SET status='withdrawn' WHERE id=$1 AND producer_id=$2",
-          [propertyId, producerId],
-        );
-        await client.query(
-          `UPDATE public.app_verification_requests
-              SET superseded_at=COALESCE(superseded_at,clock_timestamp()),
-                  superseded_by_request_id=NULL,
-                  updated_at=clock_timestamp()
-            WHERE property_id=$1
-              AND status='approved'
-              AND superseded_at IS NULL`,
-          [propertyId],
-        );
-        await client.query(
-          `UPDATE public.app_producer_profiles
-              SET verification_status='declared'
-            WHERE id=$1
-              AND NOT EXISTS (
-                SELECT 1 FROM public.app_properties
-                 WHERE producer_id=$1 AND status='verified' AND id<>$2
-              )`,
-          [producerId, propertyId],
-        );
-        const remainingRegion = await client.query<{count:string}>(
-          `SELECT count(*)::text AS count
-             FROM public.app_properties p
-            WHERE p.producer_id=$1
-              AND p.id<>$2
-              AND p.status='verified'
-              AND p.state=$3
-              AND public.fn_locality_normalize(p.municipality)=public.fn_locality_normalize($4)`,
-          [producerId,propertyId,row.state,row.municipality],
-        );
-        await audit(client, {
-          userId, role: "producer", requestId, ipHash, commandId,
-          action: "rural_property.withdrawn", targetId: propertyId,
-          before: summaryMetadata(row),
-          after: {
-            status: "withdrawn",
-            municipality: row.municipality,
-            state: row.state,
-            remainingApprovedInRegion: Number(remainingRegion.rows[0]?.count??0),
-          },
-        });
-      }
-      await client.query("COMMIT");
-    } catch (error) {
-      await client.query("ROLLBACK");
-      mapDbError(error);
-    } finally {
-      client.release();
-    }
+    return this.deleteDraft(userId, propertyId, expectedRevision, commandId, requestId, ipHash,true);
   }
 }

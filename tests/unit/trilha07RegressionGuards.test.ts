@@ -35,9 +35,9 @@ describe("guardas de regressão T07", () => {
   it("mantém o buildCommand do Vercel Hobby enxuto", () => {
     const vercel = JSON.parse(readFileSync("vercel.json", "utf8"));
     expect(vercel.buildCommand).toBe(
-      "npm run migrations:verify && npm run security:check && vite build && node --import tsx scripts/check-bundle.ts",
+      "npm run migrations:verify && npm run typecheck:app && npm run security:check && vite build && node --import tsx scripts/check-bundle.ts",
     );
-    expect(vercel.buildCommand).not.toContain("typecheck");
+    expect(vercel.buildCommand).toContain("typecheck:app");
     expect(vercel.buildCommand).not.toContain("test:t07");
   });
 });

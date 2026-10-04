@@ -14,8 +14,11 @@
     .foot{padding:18px 28px;background:#F8F9FA;font-size:12px;line-height:1.5;color:#68756b}
   </style></head>
 <body><div class="wrap"><div class="card"><div class="brand">HortiVitalMix</div><div class="body">
-<h1>Confirme seu cadastro</h1>
-<p>Seu cadastro foi iniciado. Confirme seu endereço de e-mail para ativar o acesso à HortiVitalMix.</p>
+{{ if .Data.registration_approved }}
+<h1>Sua conta foi aprovada</h1><p>Sua conta foi aprovada. Confirme seu e-mail para concluir o cadastro e acessar a HortiVitalMix.</p>
+{{ else }}
+<h1>Confirme seu cadastro</h1><p>Seu cadastro foi iniciado. Confirme seu endereço de e-mail para ativar o acesso à HortiVitalMix.</p>
+{{ end }}
 <p><a class="button" href="{{ .ConfirmationURL }}">Confirmar cadastro</a></p>
 <p class="muted">Se o botão não funcionar, use o código abaixo quando a tela solicitar:</p>
 <p><span class="code">{{ .Token }}</span></p>

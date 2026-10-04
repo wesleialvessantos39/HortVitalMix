@@ -40,7 +40,7 @@ button {
   cursor: pointer;
 }
 button:disabled {
-  cursor: wait;
+  cursor: not-allowed;
   opacity: 0.65;
 }
 a {
@@ -3307,3 +3307,10 @@ textarea { min-width: 0; }
   .rural-pending-chips{display:grid;grid-template-columns:1fr;width:100%}
   .rural-pending-link{width:100%;justify-content:flex-start}
 }
+
+.rural-pending-steps{display:flex;flex-direction:column;gap:10px;padding:16px 18px;border:1px solid #e3d8b4;border-radius:16px;background:#fffaf0;color:#635327;margin:16px 0;min-width:0}
+.rural-pending-description{font-size:.85rem;line-height:1.5}
+.rural-pending-list{display:flex;flex-wrap:wrap;gap:8px}
+.rural-pending-list .rural-pending-link{display:inline-flex;gap:8px;min-height:44px;padding:8px 12px;border:1px solid #d8cdaf;border-radius:12px;background:#fff;color:#635327;font-size:.85rem;text-decoration:none;margin:0;text-align:left}
+.rural-pending-link>span{display:grid;place-items:center;background:#f4ecd6;border-radius:50%;width:24px;height:24px;flex-shrink:0}
+@media(max-width:480px){.rural-property-subactions{flex-direction:column;align-items:stretch}.rural-property-subactions button{width:100%;min-width:0;white-space:normal}}

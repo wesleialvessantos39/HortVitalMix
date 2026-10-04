@@ -48,7 +48,9 @@ export function useLocality(): UseLocalityResult {
 
   useEffect(() => {
     let cancelled = false;
-    fetchMunicipalities()
+    const refresh=()=>{
+    if(document.visibilityState=== "hidden")return;
+    void fetchMunicipalities()
       .then(async (result) => {
         if (cancelled) return;
         setMunicipalities(result.municipalities);
@@ -62,6 +64,8 @@ export function useLocality(): UseLocalityResult {
           setBlockedSelection(null);
           return;
         }
+        const replacement=result.municipalities.find(m=>m.state===stored.state && m.name.localeCompare(stored.name,"pt-BR",{sensitivity:"base"})===0);
+        if(replacement?.isActive){writeStoredLocality({municipalityId:replacement.id,name:replacement.name,state:replacement.state});setBlockedSelection(null);return;}
         // Fora da lista ativa: pode estar desativado (mantém para avisar) ou
         // ter saído do catálogo (descarta).
         try {
@@ -79,7 +83,7 @@ export function useLocality(): UseLocalityResult {
         }
         if (cancelled) return;
         setBlockedSelection(null);
-        writeStoredLocality(null);
+
       })
       .catch(() => {
         if (!cancelled) setUnavailable(true);
@@ -87,9 +91,8 @@ export function useLocality(): UseLocalityResult {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-    return () => {
-      cancelled = true;
-    };
+    };refresh();const timer=window.setInterval(refresh,15000);window.addEventListener("focus",refresh);
+    return ()=>{cancelled=true;window.clearInterval(timer);window.removeEventListener("focus",refresh);};
   }, []);
 
   const select = useCallback((municipality: Municipality | null) => {
@@ -115,7 +118,7 @@ export function useLocality(): UseLocalityResult {
     const match = municipalities.find(
       (row) => row.id === selected.municipalityId,
     );
-    return match && match.isActive ? "active" : null;
+    return match && match.isActive ? "active" : "unknown";
   }, [municipalities, selected, blockedSelection]);
 
   const isActive = useCallback(

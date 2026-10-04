@@ -175,10 +175,10 @@ export const AccessScopeService = {
       blocked: boolean;
       block_kind: string;
       verification_status: string | null;
-      approved_property: boolean;
+      eligible_properties: string[];
     }>(
       [
-        "SELECT public.fn_locality_coverage_by_id($2::uuid) AS coverage,",
+        "SELECT ARRAY(SELECT public.fn_publish_eligible_properties($1::uuid,$2::uuid)) AS eligible_properties, public.fn_locality_coverage_by_id($2::uuid) AS coverage,",
         "       public.fn_producer_delivers_to(",
         "         (SELECT pp.id FROM public.app_producer_profiles pp",
         "            JOIN public.app_people pe ON pe.id=pp.person_id",
@@ -186,21 +186,6 @@ export const AccessScopeService = {
         "       (SELECT pp.verification_status FROM public.app_producer_profiles pp",
         "          JOIN public.app_people pe ON pe.id=pp.person_id",
         "         WHERE pe.user_id=$1::uuid LIMIT 1) AS verification_status,",
-        "       EXISTS (",
-        "         SELECT 1 FROM public.app_properties p",
-        "          JOIN public.app_producer_profiles pp ON pp.id=p.producer_id",
-        "          JOIN public.app_people pe ON pe.id=pp.person_id",
-        "          JOIN public.app_municipalities m ON m.id=$2::uuid",
-        "         WHERE pe.user_id=$1::uuid",
-        "           AND p.status='verified'",
-        "           AND p.state=m.state",
-        "           AND public.fn_locality_normalize(p.municipality)=m.name_normalized",
-        "           AND EXISTS (",
-        "             SELECT 1 FROM public.app_verification_requests vr",
-        "              WHERE vr.property_id=p.id AND vr.status='approved'",
-        "                AND vr.superseded_at IS NULL",
-        "           )",
-        "       ) AS approved_property,",
         "       public.fn_is_publish_blocked($1::uuid,$2::uuid) AS blocked,",
         "       public.fn_partial_block_kind($1::uuid,'producer_publishing') AS block_kind",
       ].join(" "),
@@ -210,21 +195,20 @@ export const AccessScopeService = {
     const coverage = row?.coverage ?? "unknown";
     const blocked = Boolean(row?.blocked) || row?.block_kind === "all";
     const approved = producerIsApproved(row?.verification_status);
-    const approvedInRegion = Boolean(row?.approved_property);
     const reason = blocked
       ? "PARTIAL_BLOCK"
       : !approved
         ? "PRODUCER_NOT_APPROVED"
-      : !approvedInRegion
-        ? "NO_APPROVED_PROPERTY_IN_REGION"
       : coverage !== "active"
         ? coverage === "inactive"
           ? "LOCALITY_DISABLED"
           : "LOCALITY_NOT_COVERED"
+        : !row?.eligible_properties?.length
+          ? "NO_APPROVED_PROPERTY_IN_REGION"
         : row?.delivers === false
           ? "OUTSIDE_DELIVERY_SCOPE"
           : null;
-    return { allowed: reason === null, reason };
+    return { allowed: reason === null, reason, eligiblePropertyIds: row?.eligible_properties ?? [] };
   },
 
   /**
@@ -235,11 +219,14 @@ export const AccessScopeService = {
     const pool = requirePool();
     const result = await pool.query<{
       coverage: string | null;
+      eligible_address: boolean;
+      account_active: boolean;
       blocked: boolean;
       block_kind: string;
     }>(
       [
-        "SELECT" ,
+        "SELECT EXISTS(SELECT 1 FROM public.app_users WHERE id=$1 AND public.effective_account_status(status,block_starts_at,block_ends_at)='active') AS account_active,",
+        "       EXISTS(SELECT 1 FROM public.app_user_addresses a JOIN public.app_people p ON p.id=a.person_id JOIN public.app_municipalities m ON m.state=a.state AND m.name_normalized=public.fn_locality_normalize(a.city) WHERE p.user_id=$1 AND a.is_active AND m.id=$2) AS eligible_address,",
         municipalityId === null
           ? " NULL::text AS coverage,"
           : " public.fn_locality_coverage_by_id($2) AS coverage,",
@@ -251,10 +238,10 @@ export const AccessScopeService = {
     const row = result.rows[0];
     const blocked = Boolean(row?.blocked) || row?.block_kind === "all";
     const coverage = row?.coverage ?? "unknown";
-    const reason = blocked
+    const reason = !row?.account_active ? "ACCOUNT_UNAVAILABLE" : blocked
       ? "PARTIAL_BLOCK"
       : coverage === "active"
-        ? null
+        ? row?.eligible_address ? null : "DELIVERY_ADDRESS_REQUIRED"
         : coverage === "inactive"
           ? "LOCALITY_DISABLED"
           : "LOCALITY_NOT_COVERED";
@@ -494,14 +481,7 @@ export const AccessScopeService = {
             "SELECT p.id FROM public.app_properties p",
             "  JOIN public.app_producer_profiles pp ON pp.id=p.producer_id",
             "  JOIN public.app_people pe ON pe.id=pp.person_id",
-            " WHERE pe.user_id=$1 AND p.id=ANY($2::uuid[])",
-            "   AND p.status='verified'",
-            "   AND EXISTS (",
-            "     SELECT 1 FROM public.app_verification_requests vr",
-            "      WHERE vr.property_id=p.id",
-            "        AND vr.status='approved'",
-            "        AND vr.superseded_at IS NULL",
-            "   )",
+            " WHERE pe.user_id=$1 AND pe.archived_at IS NULL AND p.status='verified' AND p.id=ANY($2::uuid[])",
           ].join(" "),
           [input.userId, selectedProperties],
         );

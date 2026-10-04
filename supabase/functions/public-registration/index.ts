@@ -144,9 +144,9 @@ function logFailure(requestId: string, category: string, detail?: string) {
 
 // Mensagens literais da trava de cobertura por localidade.
 const LOCALITY_DISABLED_MESSAGE =
-  "Sua região está bloqueada. Dúvidas, entre em contato conosco: hortivitalmix@gmail.com.";
+  "essa região está desativada, dúvidas entre em contato conosco hortivitalmix@gmail.com";
 const LOCALITY_NOT_COVERED_MESSAGE =
-  "Sua região está fora de cobertura. Dúvidas, entre em contato conosco: hortivitalmix@gmail.com.";
+  "O sistema ainda não possui cobertura na sua localidade. Em breve estaremos por lá.";
 
 /**
  * Trava de cobertura. Falha-fechado: qualquer resposta que não seja
@@ -328,9 +328,9 @@ Deno.serve(async (req) => {
       .from("app_people")
       .select("id,user_id,cpf_normalized,email_normalized")
       .or(
-        `and(cpf_normalized.eq.${data.cpf},archived_at.is.null),and(email_normalized.eq.${JSON.stringify(
+        `and(cpf_normalized.eq.${data.cpf},archived_at.is.null,registration_review_pending.eq.false),email_normalized.eq.${JSON.stringify(
           data.email,
-        )},archived_at.is.null)`,
+        )}`,
       )
       .limit(2);
 
@@ -352,51 +352,20 @@ Deno.serve(async (req) => {
     return safeFailure(503, "DATABASE_UNAVAILABLE", requestId, origin);
   }
 
-  if (existing) {
-    const account = await admin
-      .from("app_users")
-      .select("status")
-      .eq("id",existing.user_id)
-      .maybeSingle();
-    if(account.error)
-      return safeFailure(503,"DATABASE_UNAVAILABLE",requestId,origin);
-
-    if (
-      account.data?.status === "blocked" ||
-      account.data?.status === "deleted"
-    ) {
-      const requested = await admin.rpc("request_account_reactivation", {
-        p_user_id:existing.user_id,
-        p_role:role,
-      });
-      if(requested.error)
-        return safeFailure(409,"REACTIVATION_NOT_ALLOWED",requestId,origin);
-      return json(201,{
-        userId:existing.user_id,
-        reviewRequired:true,
-        confirmationRequired:true,
-        confirmationDispatchAccepted:false,
-        confirmationDispatchDeferred:true,
-        existingIdentity:true,
-        roleAdded:false,
-        role,
-        requestId,
-      },origin);
+  if(existing){
+    const account=await admin.from("app_users").select("status").eq("id",existing.user_id).single();
+    if(account.error)return safeFailure(503,"DATABASE_UNAVAILABLE",requestId,origin);
+    if(["blocked","suspended","pending"].includes(account.data.status)){
+      if(existing.email_normalized!==data.email && existing.cpf_normalized===data.cpf)existing=null;
+      else if(existing.email_normalized===data.email && existing.cpf_normalized===data.cpf){
+        const queued=await admin.rpc("request_blocked_registration_review",{p_user_id:existing.user_id,p_role:role});
+        if(queued.error)return safeFailure(409,"REVIEW_NOT_ALLOWED",requestId,origin);
+        return json(201,{userId:existing.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role,requestId},origin);
+      }
     }
+  }
 
-    if(account.data?.status === "pending")
-      return json(201,{
-        userId:existing.user_id,
-        reviewRequired:true,
-        confirmationRequired:true,
-        confirmationDispatchAccepted:false,
-        confirmationDispatchDeferred:true,
-        existingIdentity:true,
-        roleAdded:false,
-        role,
-        requestId,
-      },origin);
-
+  if (existing) {
     if (
       existing.cpf_normalized !== data.cpf ||
       existing.email_normalized !== data.email
@@ -445,6 +414,15 @@ Deno.serve(async (req) => {
         );
       if (verified.data.user.id !== existing.user_id)
         return safeFailure(409, "IDENTITY_CONFLICT", requestId, origin);
+
+      const account = await admin.from("app_users").select("status").eq("id",existing.user_id).single();
+      if(account.error) return safeFailure(503,"DATABASE_UNAVAILABLE",requestId,origin);
+      if(account.data.status === "deleted") {
+        const requested = await admin.rpc("request_account_reactivation", {p_user_id:existing.user_id,p_role:role});
+        if(requested.error) return safeFailure(409,"REACTIVATION_NOT_ALLOWED",requestId,origin);
+        return json(201,{userId:existing.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role,requestId},origin);
+      }
+      if(account.data.status === "pending") return json(201,{userId:existing.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role,requestId},origin);
 
       const blocked = await assertLocalityActive(
         admin,
@@ -549,35 +527,34 @@ Deno.serve(async (req) => {
   }
 
   const accountState = await admin.from("app_users").select("status").eq("id",userId).single();
-  const reviewRequired = accountState.data?.status === "pending";
+  if(accountState.error)return safeFailure(503,"DATABASE_UNAVAILABLE",requestId,origin);
+  if(accountState.data.status!=="active")return json(201,{userId,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:false,roleAdded:true,role,requestId},origin);
   let confirmationDispatchAccepted = false;
-  if (!reviewRequired) {
-    try {
-      const sent = await publicClient.auth.resend({
-        type: "signup",
-        email: data.email,
-        options: { emailRedirectTo: redirectTo },
-      });
-      confirmationDispatchAccepted = !sent.error;
-      if (sent.error)
-        logFailure(
-          requestId,
-          "public_registration_confirmation_deferred",
-          sent.error.code ?? String(sent.error.status ?? "unknown"),
-        );
-    } catch {
-      logFailure(requestId, "public_registration_confirmation_transport");
-    }
+  try {
+    const sent = await publicClient.auth.resend({
+      type: "signup",
+      email: data.email,
+      options: { emailRedirectTo: redirectTo },
+    });
+    confirmationDispatchAccepted = !sent.error;
+    if (sent.error)
+      logFailure(
+        requestId,
+        "public_registration_confirmation_deferred",
+        sent.error.code ?? String(sent.error.status ?? "unknown"),
+      );
+  } catch {
+    logFailure(requestId, "public_registration_confirmation_transport");
   }
 
   return json(
     201,
     {
       userId,
-      reviewRequired,
+      reviewRequired: accountState.data?.status === "pending",
       confirmationRequired: true,
       confirmationDispatchAccepted,
-      confirmationDispatchDeferred: reviewRequired || !confirmationDispatchAccepted,
+      confirmationDispatchDeferred: !confirmationDispatchAccepted,
       existingIdentity: false,
       roleAdded: true,
       role,

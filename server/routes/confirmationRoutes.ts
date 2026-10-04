@@ -47,6 +47,9 @@ confirmationRouter.post("/confirmation", loginRateLimit, async (req, res) => {
       res.status(401).json({ error: "CONFIRMATION_LINK_INVALID" });
       return;
     }
+    const account=await supabaseAdmin.from("app_users").select("status").eq("id",user.id).single();
+    if(account.error){res.status(503).json({error:"DEPENDENCY_UNAVAILABLE"});return;}
+    if(account.data.status!=="active"){res.status(403).json({error:account.data.status==="pending"?"ACCOUNT_REVIEW_PENDING":"ACCOUNT_UNAVAILABLE"});return;}
     const [person, roles] = await Promise.all([
       supabaseAdmin
         .from("app_people")
