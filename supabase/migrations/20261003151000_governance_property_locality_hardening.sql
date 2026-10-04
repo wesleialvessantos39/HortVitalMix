@@ -53,6 +53,46 @@ ALTER TABLE public.app_people
   ADD CONSTRAINT app_people_user_id_fkey
   FOREIGN KEY(user_id) REFERENCES public.app_users(id) ON DELETE SET NULL;
 
+-- Auth e domínio devem sumir juntos. A tabela app_account_deletions é o
+-- único tombstone de segurança usado para reconhecer reincidência de CPF/nome.
+CREATE OR REPLACE FUNCTION public.trg_fn_auth_user_deleted()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_cpf char(11);
+  v_name text;
+  v_email varchar(255);
+BEGIN
+  SELECT p.cpf_normalized,p.full_name,p.email_normalized
+    INTO v_cpf,v_name,v_email
+    FROM public.app_people p
+   WHERE p.user_id=OLD.id
+   ORDER BY p.created_at
+   LIMIT 1;
+
+  IF v_cpf IS NOT NULL AND v_name IS NOT NULL THEN
+    INSERT INTO public.app_account_deletions(
+      user_id,cpf_normalized,name_key,email_normalized,deleted_by,deleted_at
+    )
+    VALUES(
+      OLD.id,v_cpf,public.governance_name_key(v_name),
+      COALESCE(v_email,lower(OLD.email)),OLD.id,clock_timestamp()
+    )
+    ON CONFLICT DO NOTHING;
+  END IF;
+
+  UPDATE public.app_people
+     SET archived_at=COALESCE(archived_at,clock_timestamp())
+   WHERE user_id=OLD.id;
+
+  DELETE FROM public.app_users WHERE id=OLD.id;
+  RETURN OLD;
+END;
+$function$;
+
 -- 3) Memória de impacto quando uma localidade é efetivamente removida.
 CREATE TABLE IF NOT EXISTS public.app_locality_user_impacts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
