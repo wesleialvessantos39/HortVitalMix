@@ -353,6 +353,50 @@ Deno.serve(async (req) => {
   }
 
   if (existing) {
+    const account = await admin
+      .from("app_users")
+      .select("status")
+      .eq("id",existing.user_id)
+      .maybeSingle();
+    if(account.error)
+      return safeFailure(503,"DATABASE_UNAVAILABLE",requestId,origin);
+
+    if (
+      account.data?.status === "blocked" ||
+      account.data?.status === "deleted"
+    ) {
+      const requested = await admin.rpc("request_account_reactivation", {
+        p_user_id:existing.user_id,
+        p_role:role,
+      });
+      if(requested.error)
+        return safeFailure(409,"REACTIVATION_NOT_ALLOWED",requestId,origin);
+      return json(201,{
+        userId:existing.user_id,
+        reviewRequired:true,
+        confirmationRequired:true,
+        confirmationDispatchAccepted:false,
+        confirmationDispatchDeferred:true,
+        existingIdentity:true,
+        roleAdded:false,
+        role,
+        requestId,
+      },origin);
+    }
+
+    if(account.data?.status === "pending")
+      return json(201,{
+        userId:existing.user_id,
+        reviewRequired:true,
+        confirmationRequired:true,
+        confirmationDispatchAccepted:false,
+        confirmationDispatchDeferred:true,
+        existingIdentity:true,
+        roleAdded:false,
+        role,
+        requestId,
+      },origin);
+
     if (
       existing.cpf_normalized !== data.cpf ||
       existing.email_normalized !== data.email
@@ -401,15 +445,6 @@ Deno.serve(async (req) => {
         );
       if (verified.data.user.id !== existing.user_id)
         return safeFailure(409, "IDENTITY_CONFLICT", requestId, origin);
-
-      const account = await admin.from("app_users").select("status").eq("id",existing.user_id).single();
-      if(account.error) return safeFailure(503,"DATABASE_UNAVAILABLE",requestId,origin);
-      if(account.data.status === "deleted" || account.data.status === "blocked") {
-        const requested = await admin.rpc("request_account_reactivation", {p_user_id:existing.user_id,p_role:role});
-        if(requested.error) return safeFailure(409,"REACTIVATION_NOT_ALLOWED",requestId,origin);
-        return json(201,{userId:existing.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role,requestId},origin);
-      }
-      if(account.data.status === "pending") return json(201,{userId:existing.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role,requestId},origin);
 
       const blocked = await assertLocalityActive(
         admin,
