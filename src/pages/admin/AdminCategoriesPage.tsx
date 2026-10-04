@@ -13,6 +13,7 @@ import {
 import type { AdminVerifySessionResponse } from "../../../shared/contracts/adminGovernance";
 import { CategoryIcon } from "../../components/categories/CategoryIcon";
 import { CategoryEditor } from "./categories/CategoryEditor";
+import { AdminLoginPage } from "./AdminLoginPage";
 import "./categories/categories-admin.css";
 
 type Props = {
@@ -47,6 +48,8 @@ export default function AdminCategoriesPage({ access, onNavigate }: Props) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [reauth, setReauth] = useState(false);
+  const [confirmingSession, setConfirmingSession] = useState(false);
+  const sessionDialog = useRef<HTMLDialogElement>(null);
   const [pending, setPending] = useState<{
     category: Category;
     impact: CategoryImpact;
@@ -82,6 +85,20 @@ export default function AdminCategoriesPage({ access, onNavigate }: Props) {
     if (pending) dialog.current?.showModal();
     else dialog.current?.close();
   }, [pending]);
+  useEffect(() => {
+    if (confirmingSession) sessionDialog.current?.showModal();
+    else sessionDialog.current?.close();
+  }, [confirmingSession]);
+  function sessionNavigation(to: string) {
+    if (to === "/admin/painel") {
+      setConfirmingSession(false);
+      setReauth(false);
+      setError("");
+      setNotice("Sessão confirmada. Você pode retomar a edição e salvar.");
+    } else if (to === "/administracao" || to === "/") {
+      setConfirmingSession(false);
+    } else onNavigate(to);
+  }
   function failure(value: unknown) {
     const code = (value as ApiFailure).message;
     if (
@@ -89,6 +106,7 @@ export default function AdminCategoriesPage({ access, onNavigate }: Props) {
         "REAUTH_REQUIRED",
         "ADMIN_REAUTHENTICATION_REQUIRED",
         "SESSION_REQUIRED",
+        "UNAUTHORIZED",
       ].includes(code)
     ) {
       setReauth(true);
@@ -253,9 +271,7 @@ export default function AdminCategoriesPage({ access, onNavigate }: Props) {
       {reauth && (
         <button
           className="admin-primary"
-          onClick={() =>
-            onNavigate("/entrar/super-administrador?reason=reauth")
-          }
+          onClick={() => setConfirmingSession(true)}
         >
           Confirmar sessão administrativa
         </button>
@@ -370,6 +386,14 @@ export default function AdminCategoriesPage({ access, onNavigate }: Props) {
                 {error}
               </p>
             )}
+            {reauth && (
+              <button
+                className="admin-primary"
+                onClick={() => setConfirmingSession(true)}
+              >
+                Confirmar sessão administrativa
+              </button>
+            )}
             <div className="hvm-category-actions">
               <button
                 className="admin-secondary"
@@ -391,6 +415,30 @@ export default function AdminCategoriesPage({ access, onNavigate }: Props) {
             </div>
           </>
         )}
+      </dialog>
+      <dialog
+        ref={sessionDialog}
+        className="hvm-category-dialog hvm-category-reauth-dialog"
+        aria-labelledby="hvm-category-reauth-title"
+        onCancel={() => setConfirmingSession(false)}
+      >
+        <h2 id="hvm-category-reauth-title">Confirmar sessão administrativa</h2>
+        <p>
+          A edição permanece aberta enquanto você confirma seu acesso de Super
+          Admin.
+        </p>
+        {confirmingSession && (
+          <AdminLoginPage
+            intendedRole="platform_super_admin"
+            onNavigate={sessionNavigation}
+          />
+        )}
+        <button
+          className="admin-secondary"
+          onClick={() => setConfirmingSession(false)}
+        >
+          Voltar à edição
+        </button>
       </dialog>
     </section>
   );

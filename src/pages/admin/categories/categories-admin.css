@@ -141,6 +141,33 @@
 .hvm-category-dialog::backdrop {
   background: #122d1d80;
 }
+.hvm-category-reauth-dialog {
+  width: min(600px, calc(100vw - 32px));
+}
+.hvm-category-reauth-dialog .admin-login-page {
+  min-height: 0;
+  background: transparent;
+}
+.hvm-category-reauth-dialog .admin-login-header {
+  padding: 8px 0;
+  height: auto;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.hvm-category-reauth-dialog .admin-login-layout {
+  display: block;
+  min-height: 0;
+  padding: 16px 0;
+}
+.hvm-category-reauth-dialog .admin-login-copy {
+  display: none;
+}
+.hvm-category-reauth-dialog .admin-login-card {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  padding: 18px;
+}
 .hvm-category-dialog h2 {
   font-size: 20px;
 }

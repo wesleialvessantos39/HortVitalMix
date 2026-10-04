@@ -454,9 +454,13 @@
       }
     ],
     "focusedFinal": {
-      "passed": 20,
+      "passed": 25,
       "failed": 0,
-      "additionalCase": "primeira carga em aba inicialmente oculta"
+      "previousPassed": 20,
+      "additionalCases": [
+        "confirmação de sessão preservando formulário e comando em 320/390/768/1440px",
+        "confirmação de sessão dentro do diálogo de desativação"
+      ]
     },
     "focusedT12": {
       "passed": 16,
@@ -516,5 +520,19 @@
     "browserJavaScriptErrors": 0,
     "oldDataUnchangedAfterDeploy": true,
     "documentationRelease": "SHA final sincronizada em app_releases somente após deployment READY e verificação"
+  },
+  "reauthCorrection": {
+    "scope": [
+      "AdminCategoriesPage",
+      "categories-admin.css"
+    ],
+    "olderModulesUnchanged": true,
+    "reproducedBefore": "atalho de confirmação redirecionava para /admin/painel e perdia formulário",
+    "after": "login administrativo existente em diálogo local; retoma edição/desativação sem navegar",
+    "focusedT12T13": {
+      "passed": 41,
+      "failed": 0
+    },
+    "builtBrowserHttpPostgresStory": "passed"
   }
 }
