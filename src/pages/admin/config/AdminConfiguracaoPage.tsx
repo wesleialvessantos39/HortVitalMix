@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import {
   AlertTriangle,
   Ban,
@@ -201,16 +201,7 @@ export function AdminConfiguracaoPage({
     },
   ];
 
-  const visibleCards = useMemo(
-    () => cards.filter((card) => card.enabled),
-    [
-      overview,
-      canAccounts,
-      canLocalities,
-      canDocuments,
-      isSuper,
-    ],
-  );
+  const visibleCards = cards.filter((card) => card.enabled);
 
   return (
     <section className="admin-config-page" aria-labelledby="admin-config-title">
