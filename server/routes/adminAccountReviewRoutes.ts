@@ -12,6 +12,7 @@ import { supabaseAdmin, supabasePublic } from "../supabase/client.ts";
 import { runtime } from "../config/runtime.ts";
 import { safeRequestOrigin } from "../security/origin.ts";
 import { issueConfirmationContext } from "../security/confirmationContext.ts";
+import { drainStorageDeletionQueue } from "../services/StorageDeletionQueueService.ts";
 
 export const adminAccountReviewRouter = Router();
 
@@ -176,6 +177,7 @@ adminAccountReviewRouter.post(
       }finally{
         client.release();
       }
+      void drainStorageDeletionQueue();
       res.json({status:"deleted"});
     } catch (error) {
       reportFailure({
