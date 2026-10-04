@@ -43,6 +43,10 @@ import { authEmailRetryAfter } from "../security/authEmailRateLimit.ts";
 import { issueRecentAuthProof, RECENT_AUTH_WINDOW_MS } from "../security/recentAuth.ts";
 
 import { issueConfirmationContext } from "../security/confirmationContext.ts";
+import {
+  LOCALITY_DISABLED_MESSAGE,
+  LOCALITY_NOT_COVERED_MESSAGE,
+} from "../../shared/contracts/locality.ts";
 import { confirmationRouter } from "./confirmationRoutes.ts";
 export const authRouter = Router();
 authRouter.use(confirmationRouter);
@@ -139,6 +143,32 @@ export function redirectUrl(req: Request, path: string) {
   } catch {
     return null;
   }
+}
+
+async function accountLocalityWarning(userId: string) {
+  if (!dbPool) return null;
+  const result=await dbPool.query<{
+    municipality_id:string|null;
+    is_active:boolean|null;
+    impacted:boolean;
+  }>(
+    `SELECT p.municipality_id,m.is_active,
+            EXISTS(
+              SELECT 1 FROM public.app_locality_user_impacts i
+               WHERE i.user_id=$1 AND i.resolved_at IS NULL
+            ) AS impacted
+       FROM public.app_people p
+       LEFT JOIN public.app_municipalities m ON m.id=p.municipality_id
+      WHERE p.user_id=$1 AND p.archived_at IS NULL
+      ORDER BY p.updated_at DESC
+      LIMIT 1`,
+    [userId],
+  );
+  const row=result.rows[0];
+  if(!row)return null;
+  if(row.municipality_id && row.is_active===false)return LOCALITY_DISABLED_MESSAGE;
+  if(!row.municipality_id && row.impacted)return LOCALITY_NOT_COVERED_MESSAGE;
+  return null;
 }
 
 function sessionIdFromToken(token: string) {
@@ -335,6 +365,7 @@ async function handlePublicLoginRequest(
     setRecentAuth(res, data.user.id, data.access_token);
     resetLoginRateLimit(req.clientIpHash);
     res.setHeader("Server-Timing", "auth-login;dur=" + Math.max(0, Date.now() - startedAt));
+    const localityWarning=await accountLocalityWarning(data.user.id);
     res.json({
       status: "authenticated",
       userId: data.user.id,
@@ -343,6 +374,7 @@ async function handlePublicLoginRequest(
       roles: access.roles,
       activeRole: portalRole,
       portalKind: portalKindForRole(portalRole),
+      localityWarning,
     });
   } catch (error) {
     next(error);
@@ -422,6 +454,7 @@ authRouter.post("/refresh", async (req, res, next) => {
     }
 
     setSession(res, data, requestedRole);
+    const localityWarning=await accountLocalityWarning(data.user.id);
     res.json({
       status: "authenticated",
       userId: data.user.id,
@@ -429,6 +462,7 @@ authRouter.post("/refresh", async (req, res, next) => {
       roles: access.roles,
       activeRole: requestedRole,
       portalKind: portalKindForRole(requestedRole),
+      localityWarning,
       accessToken: data.access_token,
       refreshToken: data.refresh_token,
       expiresIn: data.expires_in,
@@ -538,6 +572,7 @@ authRouter.get("/session", async (req, res, next) => {
         roles: req.actor.roles,
         activeRole,
         portalKind: portalKindForRole(activeRole),
+        localityWarning: await accountLocalityWarning(req.actor.userId),
       });
       return;
     }
@@ -592,6 +627,7 @@ authRouter.get("/session", async (req, res, next) => {
       roles: access.roles,
       activeRole,
       portalKind: portalKindForRole(activeRole),
+      localityWarning: await accountLocalityWarning(id),
     });
   } catch (error) {
     next(error);
