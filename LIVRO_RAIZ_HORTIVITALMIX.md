@@ -4119,6 +4119,7 @@ Implementação aditiva sobre `main@cf869496e77956f1d50a538ac3b45d88a716a59c`, s
 - Compatibilidade v46: imóvel pode ser nulo no rascunho; loja ativa exige imóvel e apresentação por CHECK. Trigger adicional pausa/desvincula antes da exclusão do imóvel e pausa na retirada da aprovação. Exclusão do perfil cascata somente às novas tabelas. Assim, não se introduz `ON DELETE RESTRICT` que impediria o hard delete já homologado. Nenhuma migration, função ou trigger histórica foi substituída.
 - Conferência remota após DDL: preservados **4 Auth/users, 3 pessoas, 2 perfis produtores, 1 imóvel, 2 solicitações, 2 decisões, 7 documentos e 7 municípios**. Novas tabelas vazias; nenhuma loja de demonstração criada em produção. Zero tabela pública sem RLS e nenhum novo achado no advisor de segurança.
 - Mantidos Supabase Free único, Vercel Hobby, Serverless `pdx1`, deployment exclusivamente pela `main`. Nenhuma trilha T13+ foi iniciada.
+- A integração Git gerou prévias Hobby apesar do mapa de branches herdado. Reforçada a restrição main com `ignoreCommand` explícito (`scripts/vercel-main-only.mjs`) no arquivo e no projeto Vercel: 1 libera main; 0 ignora outras branches. Sem contratação ou atualização de plano.
 
 ### Validação e evidências da T12
 

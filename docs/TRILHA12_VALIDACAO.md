@@ -69,6 +69,8 @@ A suíte ampla permanece vermelha e não permite afirmar homologação integral 
 
 Mantidos Supabase Free único, Vercel Hobby, runtime Express/Node Serverless em `pdx1` e publicação somente da `main`. Sem serviço pago ou GitHub Actions novo. Não foram implementados T13+, taxonomia, cadastro de produtos, carrinho, frete, pedidos ou pagamentos. Logo/banner permanecem opcionais; o envio de mídia não fazia parte da missão T12.
 
+A integração Vercel gerou prévias Hobby da branch de trabalho apesar do mapa `deploymentEnabled` que já estava na base (ramos não especificados podem continuar habilitados). Foi adicionada defesa explícita `ignoreCommand` em `vercel.json` e no projeto: build continua somente quando `VERCEL_GIT_COMMIT_REF === main`. O retorno 0 ignora outras branches e 1 libera main, conforme o contrato Vercel. Nenhum plano foi atualizado ou recurso pago contratado; o build final continua exclusivo da main.
+
 ## Resultado e publicação
 
 - TypeScript integral e build completo passaram, incluindo manifesto/hash, verificação de segredos e bundle.

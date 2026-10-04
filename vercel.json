@@ -2,6 +2,7 @@
   "framework": "vite",
   "buildCommand": "npm run migrations:verify && npm run typecheck:app && npm run security:check && vite build && node --import tsx scripts/check-bundle.ts",
   "installCommand": "npm ci --no-audit --no-fund",
+  "ignoreCommand": "node scripts/vercel-main-only.mjs",
   "outputDirectory": "dist",
   "regions": [
     "pdx1"
