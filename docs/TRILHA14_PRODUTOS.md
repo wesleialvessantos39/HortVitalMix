@@ -32,7 +32,7 @@ Nenhuma migration antiga, serviço de T01–T13, função/policy/trigger anterio
 
 Prefixos existentes preservados: `/v1`, `/api/v1` e `/_hvm_api/v1`.
 
-As duas queries da T14 (catálogo público e upload) são extraídas da URL normalizada pelo dispatcher existente. A Vercel pode manter um objeto `req.query` próprio com metadados de roteamento; usar esse objeto fazia a validação estrita responder 400 em produção. O caso foi reproduzido antes da correção e coberto por dois testes de transporte. Parâmetros desconhecidos enviados pelo cliente e valores duplicados continuam rejeitados. Nenhum dispatcher ou rota anterior foi modificado.
+As duas queries da T14 (catálogo público e upload) são extraídas da URL normalizada pelo dispatcher existente. A Vercel pode manter um objeto `req.query` próprio e incluir `path`/`__hvm_path` na própria URL; esses dois parâmetros reservados são consumidos antes do contrato estrito. Os cenários reproduziram 400 antes e 200 após a correção e estão cobertos pelos dois testes de transporte. Parâmetros desconhecidos de negócio e valores duplicados continuam rejeitados. Nenhum dispatcher ou rota anterior foi modificado.
 
 | Método | Rota relativa | Comportamento |
 | --- | --- | --- |
@@ -80,3 +80,11 @@ Histórico remoto validado: schema 49, 54 migrations e hash acima. As 49 relaç�
 O advisor de desempenho aponta três novas ocorrências de [policies permissivas para leitura pública e do titular](https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies), seguindo a separação já usada na T12. As condições são indexadas e a identidade é avaliada por subconsulta escalar. Índices novos ainda sem uso constam como INFO enquanto o catálogo está vazio; nenhuma FK nova ficou sem índice. Os achados anteriores permanecem registrados na base.
 
 Supabase Free único e Vercel Hobby, funções Serverless `pdx1`, deploy exclusivamente pela `main`, sem novo serviço pago. Estoque/lotes/reservas T15 e trilhas posteriores permanecem fora desta entrega.
+
+## Fechamento em produção
+
+[PR #72](https://github.com/wesleialvessantos39/HortVitalMix/pull/72) e ajustes de transporte [#73](https://github.com/wesleialvessantos39/HortVitalMix/pull/73)/[#74](https://github.com/wesleialvessantos39/HortVitalMix/pull/74) integrados. SHA funcional **1be864b5c5fac0b0f96b25c91d25a08e0756b765**, deployment **dpl_8foUwTbVGk5LagfXpCkhgqPCeWWY**, READY, produção, `main`, `pdx1`, em [hortvitalmix.vercel.app](https://hortvitalmix.vercel.app). Release funcional **t14-v49-1be864b**, schema 49 e hash canônico acima. `verify:deploy` aprovou health, ready e configuração.
+
+Consulta pública e busca retornaram 200 com catálogo vazio real; filtros desconhecidos/duplicados retornaram 400; catálogo privado sem sessão, 401; loja inexistente, 404; categorias T13 continuam retornando as cinco oficiais. Cabeçalhos de request ID presentes. Navegador publicado em 390/1440 px validou catálogo, seleção de Frutas, ausência de overflow, bloqueio do editor anônimo e vitrine indisponível, com zero erro JavaScript. Nenhum log error/fatal apareceu no deployment funcional.
+
+As 48 relações anteriores de negócio/identidade mantiveram contagens e hashes após publicação; somente `app_releases` recebeu a atualização autorizada de versão. Fluxos de criação/preço/upload foram validados com PostgreSQL/HTTP/React reais locais e adaptadores externos Auth/Storage; a conferência publicada usou acesso anônimo, sem usuários reais ou dados fictícios em produção. O fechamento documental preserva código/schema/hash e sincroniza a SHA final da main na release somente após novo deployment READY.
