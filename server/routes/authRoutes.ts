@@ -214,6 +214,77 @@ async function handlePublicLoginRequest(
       return;
     }
 
+    // Antes de consultar o GoTrue, resolve estados administrativos conhecidos.
+    // Isso permite mensagem correta mesmo quando a identidade Auth já foi
+    // removida fisicamente após uma exclusão administrativa.
+    if (dbPool) {
+      const known = await dbPool.query<{
+        status: string | null;
+        block_starts_at: string | null;
+        block_ends_at: string | null;
+        deleted: boolean;
+      }>(
+        `SELECT
+           (
+             SELECT u.status
+               FROM public.app_people p
+               JOIN public.app_users u ON u.id=p.user_id
+              WHERE p.archived_at IS NULL
+                AND p.email_normalized=$1
+              ORDER BY p.updated_at DESC
+              LIMIT 1
+           ) AS status,
+           (
+             SELECT u.block_starts_at::text
+               FROM public.app_people p
+               JOIN public.app_users u ON u.id=p.user_id
+              WHERE p.archived_at IS NULL AND p.email_normalized=$1
+              ORDER BY p.updated_at DESC LIMIT 1
+           ) AS block_starts_at,
+           (
+             SELECT u.block_ends_at::text
+               FROM public.app_people p
+               JOIN public.app_users u ON u.id=p.user_id
+              WHERE p.archived_at IS NULL AND p.email_normalized=$1
+              ORDER BY p.updated_at DESC LIMIT 1
+           ) AS block_ends_at,
+           (
+             EXISTS(
+               SELECT 1 FROM public.app_account_deletions d
+                WHERE d.email_normalized=$1
+             )
+             AND NOT EXISTS(
+               SELECT 1
+                 FROM public.app_people p
+                 JOIN public.app_users u ON u.id=p.user_id
+                WHERE p.archived_at IS NULL AND p.email_normalized=$1
+             )
+           ) AS deleted`,
+        [email],
+      );
+      const state=known.rows[0];
+      if(state?.deleted){
+        clear(res);
+        res.status(403).json({error:"ACCOUNT_DELETED"});
+        return;
+      }
+      if(state?.status==="pending"){
+        clear(res);
+        res.status(403).json({error:"ACCOUNT_REVIEW_PENDING"});
+        return;
+      }
+      if(state?.status==="blocked"){
+        const now=Date.now();
+        const starts=state.block_starts_at?Date.parse(state.block_starts_at):null;
+        const ends=state.block_ends_at?Date.parse(state.block_ends_at):null;
+        if((starts===null || starts<=now) && (ends===null || ends>now)){
+          clear(res);
+          res.status(403).json({error:ends?"ACCOUNT_BLOCKED_TEMPORARY":"ACCOUNT_BLOCKED_INDEFINITE"});
+          return;
+        }
+      }
+    }
+
     const response = await tokenGrant({ email, password }, "password");
     if (!response.ok) {
       const failure = await response.json().catch(() => ({}));
@@ -1065,6 +1136,7 @@ for (const role of ["consumer", "producer"] as const)
       );
       if (
         result.confirmationRequired &&
+        !result.reviewRequired &&
         !confirmationDispatchAccepted &&
         supabasePublic
       ) {
@@ -1087,7 +1159,9 @@ for (const role of ["consumer", "producer"] as const)
       res.status(201).json({
         ...result,
         confirmationDispatchAccepted,
-        confirmationDispatchDeferred: result.confirmationRequired && !confirmationDispatchAccepted,
+        confirmationDispatchDeferred:
+          result.confirmationRequired &&
+          (!confirmationDispatchAccepted || Boolean(result.reviewRequired)),
       });
     } catch (error) {
       const message = (error as Error)?.message;
