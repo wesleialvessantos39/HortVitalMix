@@ -4173,3 +4173,15 @@ Implementação aditiva sobre `main@f92467cc276bf167641684fd5197e96098d02d49`, T
 - Uso por Super Admin real no site publicado e aparelhos físicos não foi apresentado como testado.
 
 Detalhes, API, regras e comandos de reprodução: [docs/TRILHA13_CATEGORIAS.md](docs/TRILHA13_CATEGORIAS.md).
+
+### Fechamento funcional em produção da T13
+
+- [PR #70](https://github.com/wesleialvessantos39/HortVitalMix/pull/70) integrado à `main` funcional **a6364b20eb673f1a7500023691375571f6e76bf8**, após checks de segurança concluídos com sucesso. A prévia da branch foi **CANCELED** pela guarda exclusiva main; o check Supabase Preview foi ignorado, sem criação de branch/banco pago.
+- Deployment **dpl_FKsZcr18keg9YuUrDCmVRX7Mn7gA**, **READY**, target production, região **pdx1**, publicado em **https://hortvitalmix.vercel.app**. Release funcional **t13-v48-a6364b2**, schema **48**, hash canônico acima.
+- `scripts/verify-deploy.ts --schema 48 --sha a6364b20eb673f1a7500023691375571f6e76bf8` passou em 04/10/2026: health, ready e configuração pública. A release foi sincronizada somente após o deployment READY e confirmação de inicialização da API.
+- **GET /api/v1/categories = 200**, com as cinco categorias reais, ícones e ordens 1–5. **GET /api/v1/admin/categories = 401 UNAUTHORIZED** sem sessão. Cabeçalhos de request ID presentes.
+- Navegador publicado exibiu as cinco categorias, selecionou **Frutas** e atualizou `/produtos`/título corretamente. A tentativa anônima de acessar `/admin/categorias` redirecionou ao acesso administrativo. Nenhum erro JavaScript foi observado.
+- Conferência após publicação: os mesmos dez grupos de registros anteriores mantiveram contadores e hashes idênticos, incluindo a loja real e seus sete horários. Nenhum dado real foi usado para teste de mutação.
+- O fechamento documental posterior preserva schema/hash/código funcional e sincroniza a SHA final da main com `app_releases` somente após seu deployment READY e nova verificação. O SHA funcional acima identifica o código validado antes desse registro documental.
+
+Checklist T13 concluído: migration/seed canônico; ENABLE+FORCE RLS e grants SELECT; serviço com hierarquia, conflitos, idempotência e auditoria; contratos Zod; menu responsivo; CRUD exclusivo do Super Admin e impacto; schema 48; testes mínimos e evidências; produção main/pdx1 conferida. A T14 permanece para a próxima missão.

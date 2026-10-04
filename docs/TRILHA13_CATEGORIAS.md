@@ -87,3 +87,7 @@ O cadastro de produtos, preços, estoque e vínculos comerciais da T14 não é i
 ## Aplicação no Supabase canônico
 
 Migration aplicada em 04/10/2026, versão física `20261004142901`, associada à versão canônica `20261004133608`. Histórico remoto completo validado: 53 migrations, schema 48 e hash `e957840c37f1929afba4c4da1290daeb28dfad9b8fdc8418227c885ebe412665`. As cinco categorias oficiais estão ativas e ordenadas. RLS habilitado/forçado, somente SELECT para anon/authenticated e nenhuma tabela pública sem RLS. Nenhum achado novo de segurança foi introduzido. Os dez grupos de registros anteriores mantiveram contadores e hashes idênticos, incluindo a loja existente e seus sete horários.
+
+## Publicação funcional
+
+[PR #70](https://github.com/wesleialvessantos39/HortVitalMix/pull/70) integrado à main `a6364b20eb673f1a7500023691375571f6e76bf8`. Deployment `dpl_FKsZcr18keg9YuUrDCmVRX7Mn7gA` READY, production, pdx1, em [hortvitalmix.vercel.app](https://hortvitalmix.vercel.app). Release funcional `t13-v48-a6364b2`, schema 48; health/ready/config conferidos pelo script de deploy. A API pública retorna as cinco categorias em ordem; a gestão anônima retorna 401. Navegador publicado confirmou seleção de Frutas e redirecionamento do acesso administrativo sem sessão, sem erro JavaScript. Os contadores e hashes anteriores continuaram idênticos após a publicação. O fechamento documental mantém código/schema/hash e sincroniza a SHA final da main pela release corrente, após deployment READY.

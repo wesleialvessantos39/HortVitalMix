@@ -498,5 +498,23 @@
       "verificationDecisions": 2
     },
     "newSecurityAdvisories": 0
+  },
+  "production": {
+    "functionalSha": "a6364b20eb673f1a7500023691375571f6e76bf8",
+    "pullRequest": 70,
+    "deployment": "dpl_FKsZcr18keg9YuUrDCmVRX7Mn7gA",
+    "state": "READY",
+    "target": "production",
+    "region": "pdx1",
+    "url": "https://hortvitalmix.vercel.app",
+    "releaseTag": "t13-v48-a6364b2",
+    "healthReadyConfig": "passed",
+    "publicCategoriesStatus": 200,
+    "publicCategoriesCount": 5,
+    "adminAnonymousStatus": 401,
+    "browserNavigation": "passed",
+    "browserJavaScriptErrors": 0,
+    "oldDataUnchangedAfterDeploy": true,
+    "documentationRelease": "SHA final sincronizada em app_releases somente após deployment READY e verificação"
   }
 }
