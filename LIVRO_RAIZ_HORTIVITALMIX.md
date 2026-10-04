@@ -1,5 +1,92 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-10-03/04 — Governança integral de imóveis, contas, localidades e configuração global — schema 45
+
+Status desta rodada: **migration do schema lógico 45 aplicada com sucesso no Supabase Production; Edge Function pública de cadastro promovida à versão 8; branch de correção em homologação final antes da integração em `main`.** O fechamento de Production e o SHA final serão registrados nesta mesma entrada após a promoção do código.
+
+### Motivo e invariantes
+
+Esta rodada corrige divergências que permitiam rascunhos rurais aparecerem como imóveis administrativos, impediam a exclusão de rascunhos com documentos, deixavam espelhos antigos de contas após exclusão no Supabase Auth, não distinguiam bloqueio de exclusão de localidade e deixavam a Configuração Global pequena demais para a governança efetiva da plataforma.
+
+A regra central passa a ser: **Frontend, backend, Supabase Auth, banco de domínio e Storage precisam convergir para o mesmo estado operacional.** Histórico de segurança não pode reaparecer como conta, imóvel ou localidade ativa.
+
+### Imóveis rurais e acesso à loja
+
+- Imóvel em `draft` nunca é tratado como imóvel aprovado, nunca aparece no seletor administrativo de bloqueio e nunca concede publicação.
+- O endpoint administrativo `/access-blocks/subject-properties` lista somente imóveis `verified` com solicitação de verificação atual em `approved`.
+- A publicação do produtor em uma região exige, além de cobertura e ausência de bloqueio, **um imóvel aprovado naquela própria região**. A nova razão interna `NO_APPROVED_PROPERTY_IN_REGION` impede que uma aprovação de outro município libere publicação indevida.
+- A exclusão de rascunho não é mais bloqueada por “histórico de custódia”. `purge_draft_property` elimina documento, extração, varredura, validação e o próprio rascunho quando — e somente quando — o imóvel ainda está em `draft`.
+- A evidência documental de imóveis que deixaram de ser rascunho continua protegida contra exclusão ordinária.
+- Arquivos físicos nunca são apagados por SQL. Os caminhos entram em `app_storage_deletion_queue` e são removidos pela Supabase Storage API.
+- Ao excluir imóvel aprovado, o backend calcula quantos outros imóveis aprovados permanecem no mesmo município. Se for o último, o produtor é avisado de que perde a loja/publicação daquela região até obter nova aprovação. Havendo outro aprovado na mesma região, perde somente o imóvel excluído.
+- O resumo de etapas pendentes do wizard foi redesenhado para o padrão visual HortiVitalMix, com status, chips de navegação e responsividade mobile/desktop.
+
+### Saneamento executado no banco real
+
+Snapshot imediatamente anterior à migration:
+- 8 imóveis em rascunho e 1 retirado;
+- 9 documentos ligados a rascunhos, 16 documentos totais;
+- 13 linhas em `app_users`, porém somente 4 identidades reais em `auth.users`;
+- 9 espelhos antigos com `block_reason='auth_user_deleted'`.
+
+Após a migration:
+- **0 rascunhos** e **0 documentos de rascunho** nas tabelas operacionais;
+- 7 documentos históricos legítimos preservados;
+- **4 linhas em `app_users` e 4 identidades em `auth.users`**, sem espelho órfão;
+- perfis de produtor e 7 localidades cadastradas preservados;
+- os 9 objetos físicos dos rascunhos foram enfileirados para remoção pela Storage API no primeiro runtime atualizado que executar a drenagem canônica.
+
+### Exclusão e reincidência de contas
+
+- A exclusão administrativa passa a ser **hard delete operacional**: a identidade é removida do Supabase Auth e o domínio ativo da conta é eliminado, incluindo papéis, principal administrativo, perfil, imóveis e vínculos operacionais pertinentes.
+- Permanece apenas `app_account_deletions`, um tombstone mínimo de segurança com identificadores necessários para reconhecer reincidência. Ele não representa usuário ativo e não aparece como conta.
+- O trigger de exclusão do Auth foi refeito para chamar a limpeza canônica do domínio, impedindo que `app_users` volte a acumular linhas suspensas sem correspondente no Auth.
+- Login de identidade realmente excluída devolve a mensagem: **“Sua conta foi excluída! Dúvidas, entre em contato conosco: hortivitalmix@gmail.com.”**
+- Conta bloqueada ou identidade compatível com histórico de exclusão segue para revisão administrativa antes de recuperar/criar acesso.
+- Durante essa revisão, o e-mail de confirmação não é disparado. Depois de decisão `approved`, o backend libera o envio de confirmação pelo Supabase Auth e o fluxo da aplicação informa: **“Sua conta foi aprovada. Confirme seu e-mail agora para liberar o acesso.”**
+- A mensagem de revisão é: **“Devido às circunstâncias, sua conta foi enviada para aprovação. Dúvidas, entre em contato conosco: hortivitalmix@gmail.com.”**
+- A governança de contas pode ser delegada pelo Super administrador através do novo setor `account_governance`.
+
+### Localidades — bloquear é diferente de excluir
+
+- Município **bloqueado** permanece cadastrado e pode ser desbloqueado. Usuários vinculados recebem: **“Sua região está bloqueada. Dúvidas, entre em contato conosco: hortivitalmix@gmail.com.”**
+- Município **excluído** é removido fisicamente do catálogo de cobertura. O impacto é medido antes da exclusão e os usuários atingidos são registrados em `app_locality_user_impacts`.
+- Usuário afetado por exclusão recebe: **“Sua região está fora de cobertura. Dúvidas, entre em contato conosco: hortivitalmix@gmail.com.”**
+- Consumidor não pode comprar e produtor não pode publicar na região bloqueada ou fora de cobertura.
+- Se a mesma localidade for cadastrada novamente, o backend reconecta automaticamente os usuários impactados e encerra o impacto aberto.
+- A gestão administrativa agora oferece ações separadas **Bloquear/Desbloquear** e **Excluir**, com confirmação e contagem de pessoas, imóveis, escopos e bloqueios afetados.
+
+### Configuração Global e delegação administrativa
+
+- Novo setor delegável `platform_configuration`; o Super administrador mantém acesso total e pode delegar essa central a um Administrador.
+- A tela deixou de expor o selo técnico “REVISÃO #1”.
+- A Configuração Global foi reconstruída como central administrativa responsiva, com indicadores de contas, aprovações pendentes, localidades, imóveis aprovados, fila de verificação, bloqueios ativos e auditoria recente.
+- Os parâmetros editáveis agora abrangem nome da plataforma, slogan, município/UF padrão, moeda, fuso horário, e-mail e telefone de suporte.
+- **Salvar alterações fica desabilitado quando nada mudou**, eliminando o estado de carregamento sem alteração.
+- O backend continua usando revisão otimista e reautenticação recente; conflitos não sobrescrevem silenciosamente outra sessão.
+
+### Banco, migration e Edge Function
+
+- Schema lógico: **45**.
+- Migration canônica: `20261003151000_governance_property_locality_hardening.sql`.
+- Versão física aplicada pelo Supabase: **`20261004012409_governance_property_locality_hardening`**.
+- Hash canônico do histórico: **`b6e091ddf47e060b8e21a098daaab0e31e6f50114c99f9b076302bd98d91dee2`**.
+- `scripts/migrations-manifest.ts` mapeia a versão física UTC para a versão canônica do repositório.
+- Edge Function `public-registration`: **versão 8 ACTIVE**, preservando o modelo de e-mail de segurança centralizado no Supabase Auth/SMTP e aplicando o fluxo “revisão primeiro, confirmação depois”.
+- Novas estruturas: `app_locality_user_impacts`, `app_storage_deletion_queue`, `purge_draft_property` e `purge_account_domain`.
+- Novos setores: `account_governance` e `platform_configuration`.
+
+### Segurança e validação
+
+- A migration foi aplicada somente depois de snapshot do banco e inspeção de FKs/triggers. Uma tentativa com erro de sintaxe foi rejeitada atomicamente pelo Supabase antes de qualquer alteração; o SQL foi corrigido, resealado e aplicado com sucesso.
+- A prévia Vercel passou pelo gate gratuito do projeto: manifesto de migrations, TypeScript do app, verificação de segurança, Vite e bundle. A homologação final do head e o deployment Production ainda são registrados no fechamento desta entrada.
+- Advisories do Supabase continuam mostrando débitos técnicos conhecidos de funções `SECURITY DEFINER` legadas, índices/FKs e políticas RLS; as duas novas tabelas são deliberadamente service-role-only com RLS sem política pública. Esses advisories não foram misturados nesta migration de governança para evitar mudança de autorização não relacionada.
+- Nenhum GitHub Actions pago foi adicionado.
+
+Arquivos centrais desta rodada: `server/services/RuralPropertyService.ts`, `server/services/StorageDeletionQueueService.ts`, `server/services/AccessScopeService.ts`, `server/services/LocalityService.ts`, `server/services/AuthService.ts`, `server/routes/ruralPropertyRoutes.ts`, `server/routes/adminLocalityRoutes.ts`, `server/routes/adminAccountReviewRoutes.ts`, `server/routes/adminGovernanceRoutes.ts`, `server/routes/adminConfigRoutes.ts`, `server/routes/authRoutes.ts`, `src/pages/producer/ProducerPropertiesPage.tsx`, `src/pages/admin/locality/AdminLocalitiesPage.tsx`, `src/pages/admin/AdminUsersPage.tsx`, `src/pages/admin/config/AdminConfiguracaoPage.tsx`, `src/hooks/useLocality.ts`, `shared/contracts/locality.ts`, `shared/contracts/adminGovernance.ts`, `shared/contracts/adminConfig.ts`, `supabase/functions/public-registration/index.ts`, `supabase/manifest.json` e a migration do schema 45.
+
+---
+
 ## 2026-10-03 — Reconstrução controlada de localidades, cadastro do produtor e imóvel rural v6
 
 Status da reconstrução: **concluída em produção. Schema lógico 44 aplicado no Supabase Production; PR #67 integrado em `main` no SHA de implementação `5f2a6caf4e58ce64c9333db412d3ede6a17ad319`; deployment Vercel Production `dpl_FzyPK2RniMKtpeebBmDrKfVzvPbA` ficou READY e o domínio oficial foi verificado. Sem reset, sem exclusão de histórico e sem GitHub Actions criado pelo projeto.**
