@@ -11,8 +11,8 @@ export function accountBlockCode(row: AccountBlock) {
  return effectiveAccountStatus(row)==="blocked" ? (row.block_ends_at ? "ACCOUNT_BLOCKED_TEMPORARY" : "ACCOUNT_BLOCKED_INDEFINITE") : "ACCOUNT_UNAVAILABLE";
 }
 export const blockMessages: Record<string,string> = {
- ACCOUNT_DELETED: "Sua conta foi excluída por determinação da administração",
- ACCOUNT_REVIEW_PENDING: "Seu cadastro aguarda validação da administração.",
- ACCOUNT_BLOCKED_TEMPORARY: "Seu acesso está temporariamente bloqueado.",
- ACCOUNT_BLOCKED_INDEFINITE: "Seu acesso está bloqueado por prazo indeterminado.",
+ ACCOUNT_DELETED: "Sua conta foi excluída! Dúvidas, entre em contato conosco: hortivitalmix@gmail.com.",
+ ACCOUNT_REVIEW_PENDING: "Devido às circunstâncias, sua conta foi enviada para aprovação. Dúvidas, entre em contato conosco: hortivitalmix@gmail.com.",
+ ACCOUNT_BLOCKED_TEMPORARY: "Sua conta está temporariamente bloqueada. Dúvidas, entre em contato conosco: hortivitalmix@gmail.com.",
+ ACCOUNT_BLOCKED_INDEFINITE: "Sua conta está bloqueada. Dúvidas, entre em contato conosco: hortivitalmix@gmail.com.",
 };
