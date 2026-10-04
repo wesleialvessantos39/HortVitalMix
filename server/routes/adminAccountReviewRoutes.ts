@@ -177,7 +177,7 @@ adminAccountReviewRouter.post(
       }finally{
         client.release();
       }
-      void drainStorageDeletionQueue();
+      await drainStorageDeletionQueue();
       res.json({status:"deleted"});
     } catch (error) {
       reportFailure({
