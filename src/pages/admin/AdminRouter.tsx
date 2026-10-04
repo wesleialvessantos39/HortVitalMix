@@ -46,21 +46,21 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
  if(path==="/admin/aceitar-convite"||path==="/admin/convite")
   return <AdminAcceptInvitePage onNavigate={onNavigate}/>;
 
- const superOnly = path==="/admin/configuracao";
- const localityRoute =
+  const localityRoute =
   path==="/admin/localidades" ||
   path==="/admin/bloqueios" ||
   path.startsWith("/admin/localidades/") ||
   path.startsWith("/admin/bloqueios/");
  return <AdminAccessGate
   onNavigate={onNavigate}
-  requiredRole={superOnly ? "platform_super_admin" : undefined}
-  requiredSector={
+   requiredSector={
    path==="/admin/imoveis" || path.startsWith("/admin/documentos/fila")
     ? "document_verification"
     : localityRoute
       ? "location_management"
-      : undefined
+      : path==="/admin/configuracao"
+        ? "platform_configuration"
+        : undefined
   }
  >
   {access=><AdminPortalShell
@@ -80,8 +80,8 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
           ? <AdminLocalitiesPage access={access} onNavigate={onNavigate}/>
           : path==="/admin/bloqueios" || path.startsWith("/admin/bloqueios/")
             ? <AdminAccessBlocksPage access={access} onNavigate={onNavigate}/>
-        : path==="/admin/configuracao" && access.role==="platform_super_admin"
-          ? <AdminConfiguracaoPage onNavigate={onNavigate}/>
+        : path==="/admin/configuracao"
+          ? <AdminConfiguracaoPage access={access} onNavigate={onNavigate}/>
           : <AdminDashboardPage access={access} onNavigate={onNavigate}/>}
    </AdminPortalShell>}
  </AdminAccessGate>;
