@@ -557,7 +557,7 @@ export class RuralPropertyService {
       }
       await client.query("COMMIT");
     }catch(e){await client.query("ROLLBACK");mapDbError(e);}finally{client.release();}
-    if(shouldDrainStorage) void drainStorageDeletionQueue();
+    if(shouldDrainStorage) await drainStorageDeletionQueue();
   }
   static async listProperties(userId: string) {
     const client = await requirePool().connect();
