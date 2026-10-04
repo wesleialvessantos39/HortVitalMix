@@ -6,7 +6,6 @@ import { originProtection } from "../security/originProtection.ts";
 import {
   adminSessionMiddleware,
   requireRecentAuth,
-  requireSuperAdmin,
 } from "../middleware/adminSession.ts";
 import { AdminGovernanceService } from "../services/AdminGovernanceService.ts";
 import {
