@@ -79,7 +79,11 @@
     "test:t13:unit": "vitest run tests/unit/categoryContracts.test.ts tests/integration/categoryRoutes.test.ts tests/integration/categoryMount.test.ts",
     "test:t13:postgres": "vitest run tests/integration/categoryPostgres.test.ts",
     "test:t13:story": "vitest run tests/integration/categoryBrowserPostgres.test.ts",
-    "test:t13:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha13-categories.spec.ts"
+    "test:t13:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha13-categories.spec.ts",
+    "test:t14:unit": "vitest run tests/unit/productContracts.test.ts tests/integration/productRoutes.test.ts tests/integration/productMount.test.ts",
+    "test:t14:postgres": "vitest run tests/integration/productPostgres.test.ts",
+    "test:t14:story": "vitest run tests/integration/productBrowserPostgres.test.ts",
+    "test:t14:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha14-products.spec.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",

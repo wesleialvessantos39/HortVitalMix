@@ -84,6 +84,7 @@ async function mockStore(
     }
     if (path === "/v1/account/addresses") return json({ addresses: [] });
     if (path.startsWith("/v1/localities")) return json({ municipalities: [] });
+    if (path === "/v1/products") return json({ products: [] });
     if (path === "/v1/account/profile")
       return json({
         fullName: "Produtor Local",

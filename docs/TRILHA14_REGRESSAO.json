@@ -1,0 +1,572 @@
+{
+  "baseSha": "0d1486f757c6411b907323152895f01fe713d4d6",
+  "baseSchema": 48,
+  "schema": 49,
+  "date": "2026-10-04",
+  "vitest": {
+    "passed": 527,
+    "failed": 0,
+    "explicitlySkipped": 92,
+    "total": 619
+  },
+  "newContractsHttp": {
+    "passed": 56,
+    "failed": 0
+  },
+  "postgres": {
+    "version": "17.6",
+    "migrations": 54,
+    "trilha12": 22,
+    "trilha13": 20,
+    "trilha14": 18,
+    "failed": 0,
+    "localOnly": true
+  },
+  "story": {
+    "passed": 1,
+    "failed": 0,
+    "realBuiltReact": true,
+    "realBrowser": true,
+    "realHttp": true,
+    "realPostgres": true,
+    "externalAuthAndStorage": "Adaptadores sintéticos exclusivamente locais"
+  },
+  "focusedBrowser": {
+    "trilha12": 16,
+    "trilha13": 25,
+    "trilha14": 16,
+    "total": 57,
+    "transientConnectionResetRetested": true,
+    "finalFailures": 0,
+    "widths": [
+      320,
+      390,
+      768,
+      1440
+    ]
+  },
+  "checks": {
+    "typecheck": "passed",
+    "build": "passed",
+    "security": "passed",
+    "apiColdStart": "passed",
+    "historicalMigrationsUnchanged": true,
+    "newDependencies": false
+  },
+  "supabase": {
+    "projectRef": "xipbsazvymkqqfmfegwu",
+    "schema": 49,
+    "migrations": 54,
+    "canonicalMigration": "20261004202124",
+    "physicalMigration": "20261004210207",
+    "hash": "b73d77a039fa20dd25bb4abdf89e3f36349abb9e44d9c287d89bcf89a53e777e",
+    "oldRelationsCompared": 49,
+    "oldDataUnchangedAfterMigration": true,
+    "snapshotBefore": [
+      {
+        "relation": "auth.users",
+        "rows": 4,
+        "digest": "af6e985cfc86f3415a8860388269d944"
+      },
+      {
+        "relation": "public.app_access_partial_block_municipalities",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_access_partial_block_properties",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_access_partial_blocks",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_account_deletions",
+        "rows": 1,
+        "digest": "a220e73eb7acce29b432a2cc693eeb8a"
+      },
+      {
+        "relation": "public.app_admin_auth_attempts",
+        "rows": 177,
+        "digest": "d3fda16bc32848ce38f859772764fd8c"
+      },
+      {
+        "relation": "public.app_admin_invite_sectors",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_admin_invites",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_admin_mfa_challenges",
+        "rows": 6,
+        "digest": "5b58d76af6873f493cf0b14c3e2f9981"
+      },
+      {
+        "relation": "public.app_admin_principals",
+        "rows": 1,
+        "digest": "41bd774ab91d9894cedb1866a986cd18"
+      },
+      {
+        "relation": "public.app_admin_sector_members",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_admin_sectors",
+        "rows": 6,
+        "digest": "5f9dffedd27e2c86cc9373fa3a0504b9"
+      },
+      {
+        "relation": "public.app_audit_events",
+        "rows": 332,
+        "digest": "81286614faf3b7023054d88aad7bdd0a"
+      },
+      {
+        "relation": "public.app_car_validations",
+        "rows": 1,
+        "digest": "ea696e56e84c3371e4a74fd7712a2b1f"
+      },
+      {
+        "relation": "public.app_categories",
+        "rows": 5,
+        "digest": "33b307fc16431b485a9b13628cb95d9f"
+      },
+      {
+        "relation": "public.app_consent_records",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_contact_verification_challenges",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_attempts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_document_extractions",
+        "rows": 1,
+        "digest": "ec67d86ef3515091d321bb71496fcd60"
+      },
+      {
+        "relation": "public.app_document_jobs",
+        "rows": 5,
+        "digest": "cef50bae1e80993b744548f295da69ed"
+      },
+      {
+        "relation": "public.app_document_reviews",
+        "rows": 13,
+        "digest": "658dc4082bcdb82edb4489753c5724c0"
+      },
+      {
+        "relation": "public.app_document_scans",
+        "rows": 7,
+        "digest": "acf62ff0c98aa835e1291b9af83b10a6"
+      },
+      {
+        "relation": "public.app_documents",
+        "rows": 7,
+        "digest": "e75f34f86ae6c09475175e383548f171"
+      },
+      {
+        "relation": "public.app_global_config",
+        "rows": 1,
+        "digest": "fae25bf4fed8daa8c5e56310bd486779"
+      },
+      {
+        "relation": "public.app_locality_user_impacts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_municipalities",
+        "rows": 7,
+        "digest": "e0a14113ef423dcbc211d164a3cec6f0"
+      },
+      {
+        "relation": "public.app_outbox_events",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_password_recovery_requests",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_people",
+        "rows": 3,
+        "digest": "2c499fbc6c5b1341ba5308a798ce33bd"
+      },
+      {
+        "relation": "public.app_producer_delivery_municipalities",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_producer_delivery_scopes",
+        "rows": 1,
+        "digest": "0f7bf78a48601cae06f36eb5892afa03"
+      },
+      {
+        "relation": "public.app_producer_profiles",
+        "rows": 2,
+        "digest": "325072d73a06783f907d97a3800c0d51"
+      },
+      {
+        "relation": "public.app_producer_stores",
+        "rows": 1,
+        "digest": "134801ca0628c08136193216d07e44c1"
+      },
+      {
+        "relation": "public.app_properties",
+        "rows": 1,
+        "digest": "573a8a8fd924accf1e1781364d9b0856"
+      },
+      {
+        "relation": "public.app_property_boundaries",
+        "rows": 1,
+        "digest": "093d23638ad0489591bff1982c7a10fd"
+      },
+      {
+        "relation": "public.app_property_deletion_archive",
+        "rows": 1,
+        "digest": "254f0a1035993791965454650301b31a"
+      },
+      {
+        "relation": "public.app_registration_reviews",
+        "rows": 1,
+        "digest": "3024ed3a40072c778e6a4c771ce4e9b3"
+      },
+      {
+        "relation": "public.app_releases",
+        "rows": 61,
+        "digest": "c79bdeceb11e5d4820d76608dfe7bc28"
+      },
+      {
+        "relation": "public.app_role_security_challenges",
+        "rows": 3,
+        "digest": "ce46a7a465d063a7ea3d25d069976b88"
+      },
+      {
+        "relation": "public.app_roles",
+        "rows": 4,
+        "digest": "16b2e21f7b61d3c17d02349564e0fa16"
+      },
+      {
+        "relation": "public.app_rural_activities",
+        "rows": 1,
+        "digest": "4fd2b0bd7d3af416516c6a80683d3839"
+      },
+      {
+        "relation": "public.app_storage_deletion_queue",
+        "rows": 9,
+        "digest": "c5c7f4313c4caecf062527f4034b72ac"
+      },
+      {
+        "relation": "public.app_store_operating_hours",
+        "rows": 7,
+        "digest": "594d5e41a5c820999312fbd6f1db1388"
+      },
+      {
+        "relation": "public.app_user_addresses",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_user_preferences",
+        "rows": 1,
+        "digest": "2860877d8b880981ed1769cdeb7f4549"
+      },
+      {
+        "relation": "public.app_user_role_assignments",
+        "rows": 5,
+        "digest": "20d19811d2a37270dd73711ab2c180c6"
+      },
+      {
+        "relation": "public.app_users",
+        "rows": 4,
+        "digest": "9a44819f861935f6705e5a11d04f5d28"
+      },
+      {
+        "relation": "public.app_verification_decisions",
+        "rows": 2,
+        "digest": "8e95a569c00f628b921579cec1fdd7de"
+      },
+      {
+        "relation": "public.app_verification_requests",
+        "rows": 2,
+        "digest": "882fd2799cf9d85647ec87b4e650253c"
+      }
+    ],
+    "snapshotAfterMigration": [
+      {
+        "relation": "auth.users",
+        "rows": 4,
+        "digest": "af6e985cfc86f3415a8860388269d944"
+      },
+      {
+        "relation": "public.app_access_partial_block_municipalities",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_access_partial_block_properties",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_access_partial_blocks",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_account_deletions",
+        "rows": 1,
+        "digest": "a220e73eb7acce29b432a2cc693eeb8a"
+      },
+      {
+        "relation": "public.app_admin_auth_attempts",
+        "rows": 177,
+        "digest": "d3fda16bc32848ce38f859772764fd8c"
+      },
+      {
+        "relation": "public.app_admin_invite_sectors",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_admin_invites",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_admin_mfa_challenges",
+        "rows": 6,
+        "digest": "5b58d76af6873f493cf0b14c3e2f9981"
+      },
+      {
+        "relation": "public.app_admin_principals",
+        "rows": 1,
+        "digest": "41bd774ab91d9894cedb1866a986cd18"
+      },
+      {
+        "relation": "public.app_admin_sector_members",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_admin_sectors",
+        "rows": 6,
+        "digest": "5f9dffedd27e2c86cc9373fa3a0504b9"
+      },
+      {
+        "relation": "public.app_audit_events",
+        "rows": 332,
+        "digest": "81286614faf3b7023054d88aad7bdd0a"
+      },
+      {
+        "relation": "public.app_car_validations",
+        "rows": 1,
+        "digest": "ea696e56e84c3371e4a74fd7712a2b1f"
+      },
+      {
+        "relation": "public.app_categories",
+        "rows": 5,
+        "digest": "33b307fc16431b485a9b13628cb95d9f"
+      },
+      {
+        "relation": "public.app_consent_records",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_contact_verification_challenges",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_attempts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_document_extractions",
+        "rows": 1,
+        "digest": "ec67d86ef3515091d321bb71496fcd60"
+      },
+      {
+        "relation": "public.app_document_jobs",
+        "rows": 5,
+        "digest": "cef50bae1e80993b744548f295da69ed"
+      },
+      {
+        "relation": "public.app_document_reviews",
+        "rows": 13,
+        "digest": "658dc4082bcdb82edb4489753c5724c0"
+      },
+      {
+        "relation": "public.app_document_scans",
+        "rows": 7,
+        "digest": "acf62ff0c98aa835e1291b9af83b10a6"
+      },
+      {
+        "relation": "public.app_documents",
+        "rows": 7,
+        "digest": "e75f34f86ae6c09475175e383548f171"
+      },
+      {
+        "relation": "public.app_global_config",
+        "rows": 1,
+        "digest": "fae25bf4fed8daa8c5e56310bd486779"
+      },
+      {
+        "relation": "public.app_locality_user_impacts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_municipalities",
+        "rows": 7,
+        "digest": "e0a14113ef423dcbc211d164a3cec6f0"
+      },
+      {
+        "relation": "public.app_outbox_events",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_password_recovery_requests",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_people",
+        "rows": 3,
+        "digest": "2c499fbc6c5b1341ba5308a798ce33bd"
+      },
+      {
+        "relation": "public.app_producer_delivery_municipalities",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_producer_delivery_scopes",
+        "rows": 1,
+        "digest": "0f7bf78a48601cae06f36eb5892afa03"
+      },
+      {
+        "relation": "public.app_producer_profiles",
+        "rows": 2,
+        "digest": "325072d73a06783f907d97a3800c0d51"
+      },
+      {
+        "relation": "public.app_producer_stores",
+        "rows": 1,
+        "digest": "134801ca0628c08136193216d07e44c1"
+      },
+      {
+        "relation": "public.app_properties",
+        "rows": 1,
+        "digest": "573a8a8fd924accf1e1781364d9b0856"
+      },
+      {
+        "relation": "public.app_property_boundaries",
+        "rows": 1,
+        "digest": "093d23638ad0489591bff1982c7a10fd"
+      },
+      {
+        "relation": "public.app_property_deletion_archive",
+        "rows": 1,
+        "digest": "254f0a1035993791965454650301b31a"
+      },
+      {
+        "relation": "public.app_registration_reviews",
+        "rows": 1,
+        "digest": "3024ed3a40072c778e6a4c771ce4e9b3"
+      },
+      {
+        "relation": "public.app_releases",
+        "rows": 61,
+        "digest": "c79bdeceb11e5d4820d76608dfe7bc28"
+      },
+      {
+        "relation": "public.app_role_security_challenges",
+        "rows": 3,
+        "digest": "ce46a7a465d063a7ea3d25d069976b88"
+      },
+      {
+        "relation": "public.app_roles",
+        "rows": 4,
+        "digest": "16b2e21f7b61d3c17d02349564e0fa16"
+      },
+      {
+        "relation": "public.app_rural_activities",
+        "rows": 1,
+        "digest": "4fd2b0bd7d3af416516c6a80683d3839"
+      },
+      {
+        "relation": "public.app_storage_deletion_queue",
+        "rows": 9,
+        "digest": "c5c7f4313c4caecf062527f4034b72ac"
+      },
+      {
+        "relation": "public.app_store_operating_hours",
+        "rows": 7,
+        "digest": "594d5e41a5c820999312fbd6f1db1388"
+      },
+      {
+        "relation": "public.app_user_addresses",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_user_preferences",
+        "rows": 1,
+        "digest": "2860877d8b880981ed1769cdeb7f4549"
+      },
+      {
+        "relation": "public.app_user_role_assignments",
+        "rows": 5,
+        "digest": "20d19811d2a37270dd73711ab2c180c6"
+      },
+      {
+        "relation": "public.app_users",
+        "rows": 4,
+        "digest": "9a44819f861935f6705e5a11d04f5d28"
+      },
+      {
+        "relation": "public.app_verification_decisions",
+        "rows": 2,
+        "digest": "8e95a569c00f628b921579cec1fdd7de"
+      },
+      {
+        "relation": "public.app_verification_requests",
+        "rows": 2,
+        "digest": "882fd2799cf9d85647ec87b4e650253c"
+      }
+    ],
+    "newSecurityAdvisories": 0,
+    "newPerformanceAdvisories": {
+      "multiplePermissivePolicies": 3,
+      "unusedIndexes": 5,
+      "unindexedForeignKeys": 0
+    }
+  },
+  "playwrightComparison": {
+    "status": "running"
+  },
+  "production": {
+    "status": "pending"
+  }
+}

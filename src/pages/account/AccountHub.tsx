@@ -13,6 +13,7 @@ import {
   SlidersHorizontal,
   Sprout,
   Store,
+  Salad,
   Truck,
   UserRound,
 } from "lucide-react";
@@ -207,6 +208,10 @@ export function AccountHub({ path, session, onNavigate }: Props) {
               <button className="account-hub-card" onClick={() => onNavigate("/produtor/loja")}>
                 <Store />
                 <span><strong>Minha loja</strong><small>Prepare sua vitrine, configure horários e acompanhe a abertura</small></span>
+              </button>
+              <button className="account-hub-card" onClick={() => onNavigate("/produtor/produtos")}>
+                <Salad />
+                <span><strong>Meus produtos</strong><small>Cadastre alimentos, fotos, embalagens e preços de venda</small></span>
               </button>
               {producerApproved && (
                 <button
