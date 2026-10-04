@@ -4130,6 +4130,15 @@ Implementação aditiva sobre `main@cf869496e77956f1d50a538ac3b45d88a716a59c`, s
 - Playwright T12: **16 passaram**, com 320/390/768/1440px, edição/horários, vitrine sem login, conflito, publicação proibida, retomada após senha e pausa. Telas revisadas visualmente; consulta pública também percorreu navegador → API → PostgreSQL local → resposta.
 - Somente mocks/expectativas antigos foram ajustados nos testes de governança, confirmação e ciclo rural para refletir a v46; nenhum serviço histórico foi modificado. Falhas desses testes foram reproduzidas no SHA de base antes dos ajustes.
 - Comparação completa Playwright: entrega **135 passaram / 43 falharam**; base original **118 passaram / 44 falharam**. As **43 falhas da entrega foram reproduzidas no SHA original**; nenhum caso novo falhou. A base também falhou no teste de geolocalização da T07, que passou nesta entrega. A suíte ampla continua vermelha por falhas anteriores; isso não é prova de homologação integral de T01–T11. Lista comparativa em `docs/TRILHA12_REGRESSAO.json`.
-- Fechamento de Vercel/release será registrado após conclusão. Fluxos de produtor autenticado real no site publicado e aparelhos físicos não foram apresentados como testados.
+- Fluxos de produtor autenticado real no site publicado e aparelhos físicos não foram apresentados como testados.
 
 Detalhes reproduzíveis e adaptações justificadas: [docs/TRILHA12_VALIDACAO.md](docs/TRILHA12_VALIDACAO.md).
+
+### Fechamento funcional em produção da T12
+
+- [PR #69](https://github.com/wesleialvessantos39/HortVitalMix/pull/69) integrado; correção de compatibilidade do sanitizador na `main` funcional **cd52b261531c5e88390e75d090af885678668e0b**.
+- Deployment **dpl_9wbPPNsyiXaABhkx6U8gcq5RetBE**, **READY**, target production, região **pdx1**, promovido para **https://hortvitalmix.vercel.app**. Release funcional **t12-v47-cd52b26**, schema **47**, hash canônico acima.
+- `scripts/verify-deploy.ts --schema 47 --sha cd52b261531c5e88390e75d090af885678668e0b` passou em 04/10/2026: health, ready e configuração pública. `/api/ready` respondeu **ready / databaseConnected: true / schemaVersion: 47**.
+- API pública de loja inexistente respondeu **404 STORE_NOT_FOUND**; configuração de loja sem sessão respondeu **401 AUTH_REQUIRED**. Navegador publicado mostrou **Vitrine indisponível** e **Sessão necessária**, sem erro JavaScript. Configuração e localidades anteriores responderam 200 nos logs do deployment corrigido.
+- Contagem final dos registros anteriores idêntica à base; lojas/horários permanecem vazios. Nenhuma conta/imóvel/documento real foi usado como fixture de teste.
+- O fechamento documental posterior preserva o mesmo schema/hash; cada nova SHA de documentação é sincronizada com `app_releases` somente após seu deployment READY e nova verificação de readiness. O SHA funcional acima identifica o código efetivamente validado antes desse registro documental.

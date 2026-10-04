@@ -81,6 +81,22 @@ O primeiro deployment READY revelou, na invocação, `ERR_REQUIRE_ESM`: sanitize
 - Serviço contra PostgreSQL 17 local e 52 migrations: **22 passaram**. Playwright T12: **16 passaram**, incluindo revisão visual nas quatro larguras e nova execução após os ajustes de contraste/cabeçalho mobile.
 - Migration aplicada no Supabase canônico: versão física **20261004124506**, equivalente à canônica **20261004120547**. Manifesto: schema **47**, hash **d846bc9157099e0725186ca88c06feb5f1c9f452651cd829fb98bbb130ede885**.
 - Conferência após DDL: RLS ENABLE/FORCE nas duas tabelas, somente SELECT para anon/authenticated, zero tabela pública sem RLS e zero novo achado de segurança. Tabelas novas vazias; registros anteriores preservados (4 Auth/users, 3 pessoas, 2 perfis, 1 imóvel, 2 solicitações, 2 decisões, 7 documentos, 7 municípios).
-- Suíte completa de navegador comparada ao SHA original: **zero falha nova**, com as limitações descritas acima. Publicação Vercel/release ainda não fechada neste registro.
+- Suíte completa de navegador comparada ao SHA original: **zero falha nova**, com as limitações descritas acima.
+- Código funcional na main: **cd52b261531c5e88390e75d090af885678668e0b**, após [PR #69](https://github.com/wesleialvessantos39/HortVitalMix/pull/69) e correção do parser. Production **dpl_9wbPPNsyiXaABhkx6U8gcq5RetBE**, **READY/pdx1**; release funcional **t12-v47-cd52b26**.
+- Em 04/10/2026, o verificador de deployment passou com a SHA/schema exatos: health, ready e config. `/api/ready` = **200 ready**, banco conectado, schema **47**. Loja inexistente = **404 STORE_NOT_FOUND**; configuração sem sessão = **401 AUTH_REQUIRED**. Navegador público confirmou o estado indisponível e a proteção da página do produtor, sem erro JavaScript; logs confirmaram config/localidades = 200.
+- Este fechamento documental pode produzir uma SHA posterior ao código funcional citado. A publicação de documentação conserva o hash de migrations; sua própria release é sincronizada com a SHA após READY e readiness. A origem corrente do deployment é verificável em `app_releases` e na integração Git Vercel.
 
 Não se confunde build local, testes controlados ou banco local com homologação autenticada remota. Não foram usados dados reais do titular como fixtures nem enviados e-mails de teste a terceiros.
+
+## Checklist de entrega
+
+- [x] Migration aplicada e histórico físico/canônico reconciliado.
+- [x] ENABLE/FORCE RLS, leitura pública/titular e ausência de mutações diretas verificados.
+- [x] Publicação positiva/negativa, revisão, idempotência e exclusão v46 testadas em PostgreSQL.
+- [x] Bio sanitizada com biblioteca compatível com o runtime; cold start inserido no build.
+- [x] Contratos Zod estritos e rotina atômica de sete dias.
+- [x] Rotas `/produtor/loja` e `/produtores/:slug`, navegação e quatro larguras verificadas.
+- [x] Schema 47, manifesto/hash e Livro-Raiz atualizados.
+- [x] Produção READY em pdx1, API invocada e release funcional conferida.
+- [x] Suíte ampla executada e comparada com a base: nenhuma falha nova encontrada.
+- [ ] Homologação integral da suíte histórica de navegador: permanecem 43 falhas reproduzidas na base, fora do escopo T12.
