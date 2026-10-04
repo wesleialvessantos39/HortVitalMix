@@ -518,16 +518,19 @@ SELECT u.id,p.cpf_normalized,public.governance_name_key(p.full_name),
          SELECT ap.admin_user_id FROM public.app_admin_principals ap ORDER BY ap.created_at LIMIT 1
        )) IS NOT NULL;
 
-UPDATE public.app_people p
-   SET archived_at=COALESCE(p.archived_at,clock_timestamp())
-  FROM public.app_users u
- WHERE p.user_id=u.id
-   AND u.block_reason='auth_user_deleted'
-   AND NOT EXISTS(SELECT 1 FROM auth.users au WHERE au.id=u.id);
-
-DELETE FROM public.app_users u
- WHERE u.block_reason='auth_user_deleted'
-   AND NOT EXISTS(SELECT 1 FROM auth.users au WHERE au.id=u.id);
+DO $
+DECLARE stale record;
+BEGIN
+  FOR stale IN
+    SELECT u.id
+      FROM public.app_users u
+     WHERE u.block_reason='auth_user_deleted'
+       AND NOT EXISTS(SELECT 1 FROM auth.users au WHERE au.id=u.id)
+  LOOP
+    PERFORM public.purge_account_domain(stale.id);
+    DELETE FROM public.app_users WHERE id=stale.id;
+  END LOOP;
+END $;
 
 COMMENT ON TABLE public.app_locality_user_impacts IS
   'Registra pessoas afetadas pela remoção física de uma localidade para aviso e reconexão automática se a cobertura retornar.';
