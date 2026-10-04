@@ -43,6 +43,10 @@ import { authEmailRetryAfter } from "../security/authEmailRateLimit.ts";
 import { issueRecentAuthProof, RECENT_AUTH_WINDOW_MS } from "../security/recentAuth.ts";
 
 import { issueConfirmationContext } from "../security/confirmationContext.ts";
+import {
+  LOCALITY_DISABLED_MESSAGE,
+  LOCALITY_NOT_COVERED_MESSAGE,
+} from "../../shared/contracts/locality.ts";
 import { confirmationRouter } from "./confirmationRoutes.ts";
 export const authRouter = Router();
 authRouter.use(confirmationRouter);
@@ -141,6 +145,32 @@ export function redirectUrl(req: Request, path: string) {
   }
 }
 
+async function accountLocalityWarning(userId: string) {
+  if (!dbPool) return null;
+  const result=await dbPool.query<{
+    municipality_id:string|null;
+    is_active:boolean|null;
+    impacted:boolean;
+  }>(
+    `SELECT p.municipality_id,m.is_active,
+            EXISTS(
+              SELECT 1 FROM public.app_locality_user_impacts i
+               WHERE i.user_id=$1 AND i.resolved_at IS NULL
+            ) AS impacted
+       FROM public.app_people p
+       LEFT JOIN public.app_municipalities m ON m.id=p.municipality_id
+      WHERE p.user_id=$1 AND p.archived_at IS NULL
+      ORDER BY p.updated_at DESC
+      LIMIT 1`,
+    [userId],
+  );
+  const row=result.rows[0];
+  if(!row)return null;
+  if(row.municipality_id && row.is_active===false)return LOCALITY_DISABLED_MESSAGE;
+  if(!row.municipality_id && row.impacted)return LOCALITY_NOT_COVERED_MESSAGE;
+  return null;
+}
+
 function sessionIdFromToken(token: string) {
   try {
     const payload = JSON.parse(
@@ -214,6 +244,77 @@ async function handlePublicLoginRequest(
       return;
     }
 
+    // Antes de consultar o GoTrue, resolve estados administrativos conhecidos.
+    // Isso permite mensagem correta mesmo quando a identidade Auth já foi
+    // removida fisicamente após uma exclusão administrativa.
+    if (dbPool) {
+      const known = await dbPool.query<{
+        status: string | null;
+        block_starts_at: string | null;
+        block_ends_at: string | null;
+        deleted: boolean;
+      }>(
+        `SELECT
+           (
+             SELECT u.status
+               FROM public.app_people p
+               JOIN public.app_users u ON u.id=p.user_id
+              WHERE p.archived_at IS NULL
+                AND p.email_normalized=$1
+              ORDER BY p.updated_at DESC
+              LIMIT 1
+           ) AS status,
+           (
+             SELECT u.block_starts_at::text
+               FROM public.app_people p
+               JOIN public.app_users u ON u.id=p.user_id
+              WHERE p.archived_at IS NULL AND p.email_normalized=$1
+              ORDER BY p.updated_at DESC LIMIT 1
+           ) AS block_starts_at,
+           (
+             SELECT u.block_ends_at::text
+               FROM public.app_people p
+               JOIN public.app_users u ON u.id=p.user_id
+              WHERE p.archived_at IS NULL AND p.email_normalized=$1
+              ORDER BY p.updated_at DESC LIMIT 1
+           ) AS block_ends_at,
+           (
+             EXISTS(
+               SELECT 1 FROM public.app_account_deletions d
+                WHERE d.email_normalized=$1
+             )
+             AND NOT EXISTS(
+               SELECT 1
+                 FROM public.app_people p
+                 JOIN public.app_users u ON u.id=p.user_id
+                WHERE p.archived_at IS NULL AND p.email_normalized=$1
+             )
+           ) AS deleted`,
+        [email],
+      );
+      const state=known.rows[0];
+      if(state?.deleted){
+        clear(res);
+        res.status(403).json({error:"ACCOUNT_DELETED"});
+        return;
+      }
+      if(state?.status==="pending"){
+        clear(res);
+        res.status(403).json({error:"ACCOUNT_REVIEW_PENDING"});
+        return;
+      }
+      if(state?.status==="blocked"){
+        const now=Date.now();
+        const starts=state.block_starts_at?Date.parse(state.block_starts_at):null;
+        const ends=state.block_ends_at?Date.parse(state.block_ends_at):null;
+        if((starts===null || starts<=now) && (ends===null || ends>now)){
+          clear(res);
+          res.status(403).json({error:ends?"ACCOUNT_BLOCKED_TEMPORARY":"ACCOUNT_BLOCKED_INDEFINITE"});
+          return;
+        }
+      }
+    }
+
     const response = await tokenGrant({ email, password }, "password");
     if (!response.ok) {
       const failure = await response.json().catch(() => ({}));
@@ -264,6 +365,7 @@ async function handlePublicLoginRequest(
     setRecentAuth(res, data.user.id, data.access_token);
     resetLoginRateLimit(req.clientIpHash);
     res.setHeader("Server-Timing", "auth-login;dur=" + Math.max(0, Date.now() - startedAt));
+    const localityWarning=await accountLocalityWarning(data.user.id);
     res.json({
       status: "authenticated",
       userId: data.user.id,
@@ -272,6 +374,7 @@ async function handlePublicLoginRequest(
       roles: access.roles,
       activeRole: portalRole,
       portalKind: portalKindForRole(portalRole),
+      localityWarning,
     });
   } catch (error) {
     next(error);
@@ -351,6 +454,7 @@ authRouter.post("/refresh", async (req, res, next) => {
     }
 
     setSession(res, data, requestedRole);
+    const localityWarning=await accountLocalityWarning(data.user.id);
     res.json({
       status: "authenticated",
       userId: data.user.id,
@@ -358,6 +462,7 @@ authRouter.post("/refresh", async (req, res, next) => {
       roles: access.roles,
       activeRole: requestedRole,
       portalKind: portalKindForRole(requestedRole),
+      localityWarning,
       accessToken: data.access_token,
       refreshToken: data.refresh_token,
       expiresIn: data.expires_in,
@@ -467,6 +572,7 @@ authRouter.get("/session", async (req, res, next) => {
         roles: req.actor.roles,
         activeRole,
         portalKind: portalKindForRole(activeRole),
+        localityWarning: await accountLocalityWarning(req.actor.userId),
       });
       return;
     }
@@ -521,6 +627,7 @@ authRouter.get("/session", async (req, res, next) => {
       roles: access.roles,
       activeRole,
       portalKind: portalKindForRole(activeRole),
+      localityWarning: await accountLocalityWarning(id),
     });
   } catch (error) {
     next(error);
@@ -1065,6 +1172,7 @@ for (const role of ["consumer", "producer"] as const)
       );
       if (
         result.confirmationRequired &&
+        !result.reviewRequired &&
         !confirmationDispatchAccepted &&
         supabasePublic
       ) {
@@ -1087,7 +1195,9 @@ for (const role of ["consumer", "producer"] as const)
       res.status(201).json({
         ...result,
         confirmationDispatchAccepted,
-        confirmationDispatchDeferred: result.confirmationRequired && !confirmationDispatchAccepted,
+        confirmationDispatchDeferred:
+          result.confirmationRequired &&
+          (!confirmationDispatchAccepted || Boolean(result.reviewRequired)),
       });
     } catch (error) {
       const message = (error as Error)?.message;

@@ -8,6 +8,7 @@ export type ShellSession = {
   roles: string[];
   activeRole?: string | null;
   portalKind?: "public" | "administrative";
+  localityWarning?: string | null;
 };
 
 export function useSession() {

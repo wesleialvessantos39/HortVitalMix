@@ -498,7 +498,7 @@ export function Account({
         const targetRole = mode;
         onSessionAdopt(null);
         if (result.reviewRequired) {
-          navigate(loginPathForRole(targetRole)+"?review=1"+(result.confirmationRequired?"&confirm=1":""));
+          navigate(loginPathForRole(targetRole)+"?review=1");
           return;
         }
         if (result.confirmationRequired) {

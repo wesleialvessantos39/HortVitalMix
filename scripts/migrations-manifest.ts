@@ -36,11 +36,16 @@ export function migrationHash() {
 export function assertManifestHash() {
   const actual = migrationHash();
   if (actual !== manifest.migrationHistoryHash)
-    throw new Error("MIGRATION_HASH_MANIFEST_MISMATCH");
+    throw new Error(
+      "MIGRATION_HASH_MANIFEST_MISMATCH actual=" + actual +
+      " expected=" + manifest.migrationHistoryHash,
+    );
   return actual;
 }
 
 const remoteVersionAliases: Readonly<Record<string, string>> = {
+  // Governança de imóveis/contas/localidades aplicada pelo Supabase em UTC.
+  "20261004012409": "20261003151000",
   // Reconstrução controlada de localidades/onboarding aplicada pelo Supabase.
   "20261003030427": "20261003025010",
   // Sincronização canônica imóvel/auditoria aplicada com timestamp físico Supabase.

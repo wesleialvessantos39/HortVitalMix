@@ -3,6 +3,7 @@ import {
   CreateMunicipalitySchema,
   CreatePartialBlockSchema,
   DeliveryScopeModeSchema,
+  DeleteMunicipalitySchema,
   LOCALITY_DISABLED_MESSAGE,
   LOCALITY_NOT_COVERED_MESSAGE,
   LocalityCoverageQuerySchema,
@@ -45,12 +46,15 @@ describe("localidade — contratos de cobertura", () => {
 
   it("04 mensagem de região desativada é literal e com o e-mail de contato", () => {
     expect(LOCALITY_DISABLED_MESSAGE).toBe(
-      "essa região está desativada, dúvidas entre em contato conosco hortivitalmix@gmail.com",
+      "Sua região está bloqueada. Dúvidas, entre em contato conosco: hortivitalmix@gmail.com.",
     );
     expect(localityBlockedMessage("inactive")).toBe(LOCALITY_DISABLED_MESSAGE);
   });
 
-  it("05 localidade fora do catálogo usa a mensagem de ausência de cobertura", () => {
+  it("05 localidade fora do catálogo usa a mensagem profissional de ausência de cobertura", () => {
+    expect(LOCALITY_NOT_COVERED_MESSAGE).toBe(
+      "Sua região está fora de cobertura. Dúvidas, entre em contato conosco: hortivitalmix@gmail.com.",
+    );
     expect(localityBlockedMessage("unknown")).toBe(LOCALITY_NOT_COVERED_MESSAGE);
   });
 });
@@ -112,7 +116,17 @@ describe("localidade — gestão do Super administrador", () => {
     ).toBe(false);
   });
 
-  it("07 atualização exige revisão e ao menos uma alteração", () => {
+  it("07 exclusão física exige revisão corrente e commandId", () => {
+    expect(DeleteMunicipalitySchema.safeParse({
+      expectedRevision: 2,
+      commandId,
+    }).success).toBe(true);
+    expect(DeleteMunicipalitySchema.safeParse({
+      commandId,
+    }).success).toBe(false);
+  });
+
+  it("08 atualização exige revisão e ao menos uma alteração", () => {
     expect(
       UpdateMunicipalitySchema.safeParse({
         expectedRevision: 1,
@@ -130,7 +144,7 @@ describe("localidade — gestão do Super administrador", () => {
 });
 
 describe("localidade — escopo de entrega do produtor", () => {
-  it("08 modos canônicos do escopo", () => {
+  it("09 modos canônicos do escopo", () => {
     expect(DeliveryScopeModeSchema.options).toEqual([
       "property_municipality",
       "all",
@@ -138,7 +152,7 @@ describe("localidade — escopo de entrega do produtor", () => {
     ]);
   });
 
-  it("09 escopo personalizado exige ao menos um município", () => {
+  it("10 escopo personalizado exige ao menos um município", () => {
     const base = {
       expectedRevision: 1,
       commandId,
@@ -159,7 +173,7 @@ describe("localidade — escopo de entrega do produtor", () => {
     ).toBe(true);
   });
 
-  it("10 escopo lido não aceita campos extras", () => {
+  it("11 escopo lido não aceita campos extras", () => {
     expect(
       ProducerDeliveryScopeSchema.safeParse({
         mode: "all",

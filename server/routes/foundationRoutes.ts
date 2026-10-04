@@ -4,6 +4,7 @@ import { dbPool } from "../db/pool.ts";
 import { supabasePublic } from "../supabase/client.ts";
 import { runtime } from "../config/runtime.ts";
 import { reportFailure } from "../config/reportFailure.ts";
+import { drainStorageDeletionQueue } from "../services/StorageDeletionQueueService.ts";
 import {
   FOUNDATION_SCHEMA_VERSION,
   GlobalConfigPublicSchema,
@@ -46,6 +47,7 @@ foundationRouter.get("/ready", async (_req, res) => {
         });
       return;
     }
+    await drainStorageDeletionQueue();
     const matches =
       row.schema_version === FOUNDATION_SCHEMA_VERSION &&
       row.migration_history_hash === manifest.migrationHistoryHash &&

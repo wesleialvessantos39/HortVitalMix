@@ -30,6 +30,8 @@ export const AdminSectorCodeSchema = z.enum([
   "catalog_moderation",
   "finance_ops",
   "location_management",
+  "account_governance",
+  "platform_configuration",
 ]);
 export type AdminSectorCode = z.infer<typeof AdminSectorCodeSchema>;
 

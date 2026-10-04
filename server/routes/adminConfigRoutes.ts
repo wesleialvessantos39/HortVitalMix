@@ -1,5 +1,5 @@
-import { Router, type Request, type Response } from "express";
-import { adminSessionMiddleware, requireSuperAdmin } from "../middleware/adminSession.ts";
+import { Router, type NextFunction, type Request, type Response } from "express";
+import { adminSessionMiddleware } from "../middleware/adminSession.ts";
 import { originProtection } from "../security/originProtection.ts";
 import { ConfigurationService } from "../services/ConfigurationService.ts";
 import {
@@ -11,10 +11,29 @@ import { classifyDbError, reportFailure } from "../config/reportFailure.ts";
 
 export const adminConfigRouter = Router();
 
+function requirePlatformConfiguration(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  if (
+    req.adminActor?.isSuperAdmin ||
+    req.adminActor?.sectors.includes("platform_configuration")
+  ) {
+    next();
+    return;
+  }
+  res.status(403).json({
+    error: ConfigErrorCode.FORBIDDEN,
+    message: "Acesso restrito à configuração global.",
+    requestId: req.requestId,
+  });
+}
+
 adminConfigRouter.get(
   "/configuration",
   adminSessionMiddleware,
-  requireSuperAdmin,
+  requirePlatformConfiguration,
   async (req: Request, res: Response) => {
     try {
       const config = await ConfigurationService.getAdminConfig();
@@ -45,11 +64,33 @@ adminConfigRouter.get(
   },
 );
 
+adminConfigRouter.get(
+  "/configuration/overview",
+  adminSessionMiddleware,
+  requirePlatformConfiguration,
+  async (req: Request, res: Response) => {
+    try {
+      res.status(200).json(await ConfigurationService.getOverview());
+    } catch (error) {
+      reportFailure({
+        category: classifyDbError(error),
+        requestId: req.requestId,
+        route: req.path,
+        method: req.method,
+      });
+      res.status(503).json({
+        error: ConfigErrorCode.INTERNAL,
+        requestId: req.requestId,
+      });
+    }
+  },
+);
+
 adminConfigRouter.patch(
   "/configuration",
   originProtection,
   adminSessionMiddleware,
-  requireSuperAdmin,
+  requirePlatformConfiguration,
   async (req: Request, res: Response) => {
     const parsed = UpdateGlobalConfigSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -78,7 +119,7 @@ adminConfigRouter.patch(
         parsed.data,
         {
           userId: req.adminActor.userId,
-          role: "platform_super_admin",
+          role: req.adminActor.role,
           sessionIssuedAt: req.adminActor.sessionIssuedAt,
         },
         req.requestId,

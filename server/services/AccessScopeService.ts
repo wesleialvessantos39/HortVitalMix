@@ -175,6 +175,7 @@ export const AccessScopeService = {
       blocked: boolean;
       block_kind: string;
       verification_status: string | null;
+      approved_property: boolean;
     }>(
       [
         "SELECT public.fn_locality_coverage_by_id($2::uuid) AS coverage,",
@@ -185,6 +186,21 @@ export const AccessScopeService = {
         "       (SELECT pp.verification_status FROM public.app_producer_profiles pp",
         "          JOIN public.app_people pe ON pe.id=pp.person_id",
         "         WHERE pe.user_id=$1::uuid LIMIT 1) AS verification_status,",
+        "       EXISTS (",
+        "         SELECT 1 FROM public.app_properties p",
+        "          JOIN public.app_producer_profiles pp ON pp.id=p.producer_id",
+        "          JOIN public.app_people pe ON pe.id=pp.person_id",
+        "          JOIN public.app_municipalities m ON m.id=$2::uuid",
+        "         WHERE pe.user_id=$1::uuid",
+        "           AND p.status='verified'",
+        "           AND p.state=m.state",
+        "           AND public.fn_locality_normalize(p.municipality)=m.name_normalized",
+        "           AND EXISTS (",
+        "             SELECT 1 FROM public.app_verification_requests vr",
+        "              WHERE vr.property_id=p.id AND vr.status='approved'",
+        "                AND vr.superseded_at IS NULL",
+        "           )",
+        "       ) AS approved_property,",
         "       public.fn_is_publish_blocked($1::uuid,$2::uuid) AS blocked,",
         "       public.fn_partial_block_kind($1::uuid,'producer_publishing') AS block_kind",
       ].join(" "),
@@ -194,10 +210,13 @@ export const AccessScopeService = {
     const coverage = row?.coverage ?? "unknown";
     const blocked = Boolean(row?.blocked) || row?.block_kind === "all";
     const approved = producerIsApproved(row?.verification_status);
+    const approvedInRegion = Boolean(row?.approved_property);
     const reason = blocked
       ? "PARTIAL_BLOCK"
       : !approved
         ? "PRODUCER_NOT_APPROVED"
+      : !approvedInRegion
+        ? "NO_APPROVED_PROPERTY_IN_REGION"
       : coverage !== "active"
         ? coverage === "inactive"
           ? "LOCALITY_DISABLED"
@@ -476,6 +495,13 @@ export const AccessScopeService = {
             "  JOIN public.app_producer_profiles pp ON pp.id=p.producer_id",
             "  JOIN public.app_people pe ON pe.id=pp.person_id",
             " WHERE pe.user_id=$1 AND p.id=ANY($2::uuid[])",
+            "   AND p.status='verified'",
+            "   AND EXISTS (",
+            "     SELECT 1 FROM public.app_verification_requests vr",
+            "      WHERE vr.property_id=p.id",
+            "        AND vr.status='approved'",
+            "        AND vr.superseded_at IS NULL",
+            "   )",
           ].join(" "),
           [input.userId, selectedProperties],
         );

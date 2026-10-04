@@ -391,13 +391,22 @@ function PropertyList({
     if(!confirm("Excluir este rascunho? Esta ação não pode ser desfeita."))return;
     setBusyId(property.id);setListNotice("");
     try{await api("/v1/producer/properties/"+property.id,{method:"DELETE",body:JSON.stringify({expectedRevision:property.revision,commandId:commandId()})});localStorage.removeItem(localKey(session.userId,property.id));await load();}
-    catch(e){setListNotice((e as ApiFailure).message==="PROPERTY_HAS_DOCUMENTS"?"Este rascunho possui documentos com histórico de custódia e não pode ser excluído.":(e as ApiFailure).message==="RECENT_AUTH_REQUIRED"?"Entre novamente para confirmar a exclusão. Seu rascunho está salvo.":"Não foi possível excluir. Somente rascunhos nunca concluídos podem ser excluídos.");}finally{setBusyId(null);}
+    catch(e){setListNotice((e as ApiFailure).message==="RECENT_AUTH_REQUIRED"?"Entre novamente para confirmar a exclusão. Seu rascunho está salvo.":messageForFailure(e));}finally{setBusyId(null);}
   }
   async function withdrawApproved(property: RuralPropertySummary) {
-    if (!confirm("Se você excluir esta propriedade, perde a aprovação de produtor. Será preciso cadastrar uma nova propriedade e passar por uma nova aprovação.")) return;
     setBusyId(property.id);
     setListNotice("");
     try {
+      const impact = await api<{
+        municipality: string;
+        state: string;
+        remainingApprovedInRegion: number;
+        losesRegionAccess: boolean;
+      }>("/v1/producer/properties/" + property.id + "/delete-impact");
+      const warning = impact.losesRegionAccess
+        ? `Esse imóvel está aprovado. Ao apagá-lo, você perde acesso à sua loja de vendas em ${impact.municipality}/${impact.state}. Para voltar a publicar nessa região, cadastre um imóvel e conclua novamente todo o processo de aprovação. Deseja continuar?`
+        : `Esse imóvel está aprovado. Ao apagá-lo, você perde acesso a este imóvel, mas sua loja continua disponível em ${impact.municipality}/${impact.state} porque existe outro imóvel aprovado nessa região. Deseja continuar?`;
+      if (!confirm(warning)) return;
       await api("/v1/producer/properties/" + property.id + "/withdraw", {
         method: "POST",
         body: JSON.stringify({ expectedRevision: property.revision, commandId: commandId() }),
@@ -654,7 +663,7 @@ function PropertyList({
               )}
               {property.completedAt && !isApproved(property) && (
                 <small className="rural-helper-note">
-                  Já concluído: não pode ser excluído. Edições exigem nova análise.
+                  Cadastro enviado: alterações seguem a análise do sistema. Rascunhos e imóveis aprovados têm fluxo próprio de exclusão.
                 </small>
               )}
             </article>
@@ -1266,31 +1275,43 @@ function RuralPropertyWizard({
         ))}
       </nav>
 
-      <p className="account-notice rural-pending-steps" role="status">
+      <section className="rural-pending-summary" role="status" aria-label="Situação do cadastro">
         {(() => {
           const pending = [1, 2, 3, 4, 5, 6].filter((n) => !buildStepData(n).success);
-          if (!pending.length) return "Todas as etapas estão completas.";
+          if (!pending.length)
+            return (
+              <>
+                <CheckCircle2 size={18} aria-hidden="true" />
+                <div>
+                  <strong>Cadastro completo</strong>
+                  <span>Todas as etapas obrigatórias estão preenchidas.</span>
+                </div>
+              </>
+            );
           return (
             <>
-              Etapas pendentes:{" "}
-              {pending.map((n, i) => (
-                <span key={n}>
-                  <button
-                    type="button"
-                    className="rural-pending-link"
-                    aria-label={`Ir para a etapa ${n}: ${steps[n - 1][0]}`}
-                    onClick={() => viewOnly ? setDraft((c) => ({ ...c, step: n })) : patch({ step: n })}
-                  >
-                    {n}
-                  </button>
-                  {i < pending.length - 2 ? ", " : i === pending.length - 2 ? " e " : ""}
-                </span>
-              ))}
-              . Toque em uma etapa para continuar o preenchimento.
+              <AlertTriangle size={18} aria-hidden="true" />
+              <div>
+                <strong>Faltam {pending.length} {pending.length === 1 ? "etapa" : "etapas"}</strong>
+                <span>Selecione uma etapa para continuar o preenchimento:</span>
+                <div className="rural-pending-chips">
+                  {pending.map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      className="rural-pending-link"
+                      aria-label={`Ir para a etapa ${n}: ${steps[n - 1][0]}`}
+                      onClick={() => viewOnly ? setDraft((current) => ({ ...current, step: n })) : patch({ step: n })}
+                    >
+                      {n}. {steps[n - 1][2]}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </>
           );
         })()}
-      </p>
+      </section>
 
       {!online && (
         <div className="rural-connectivity-notice" role="status">

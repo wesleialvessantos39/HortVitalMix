@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 44,
+  "schemaVersion": 45,
   "migrations": [
     {
       "version": "20260919030126",
@@ -245,7 +245,12 @@
       "version": "20261003025010",
       "name": "hortivital_reconstruction_hardening",
       "file": "20261003025010_hortivital_reconstruction_hardening.sql"
+    },
+    {
+      "version": "20261003151000",
+      "name": "governance_property_locality_hardening",
+      "file": "20261003151000_governance_property_locality_hardening.sql"
     }
   ],
-  "migrationHistoryHash": "1b14c938e8d843bd57e85b9ff5f6855aa69f1d90a8bf08b188a08ba018e4583c"
+  "migrationHistoryHash": "b6e091ddf47e060b8e21a098daaab0e31e6f50114c99f9b076302bd98d91dee2"
 }

@@ -3268,3 +3268,42 @@ textarea { min-width: 0; }
     font-size: 0.66rem;
   }
 }
+
+
+/* HVM rural wizard — resumo de pendências no padrão visual do sistema */
+.rural-pending-summary{
+  margin:0 0 18px;
+  padding:14px 16px;
+  border:1px solid #dce9df;
+  border-radius:16px;
+  background:#fff;
+  display:flex;
+  align-items:flex-start;
+  gap:11px;
+  color:#294d34;
+}
+.rural-pending-summary>svg{flex:0 0 auto;margin-top:2px}
+.rural-pending-summary>div{min-width:0;display:flex;flex-direction:column;gap:4px}
+.rural-pending-summary strong{font-size:.94rem;line-height:1.25}
+.rural-pending-summary span{font-size:.84rem;line-height:1.4;color:#607267}
+.rural-pending-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px}
+.rural-pending-link{
+  min-width:0;
+  min-height:36px;
+  margin:0;
+  padding:7px 10px;
+  border:1px solid #cfe1d3;
+  border-radius:999px;
+  background:#f7fbf8;
+  color:#24552f;
+  font-size:.82rem;
+  font-weight:700;
+  text-decoration:none;
+}
+.rural-pending-link:hover:not(:disabled){background:#edf7ef;border-color:#9dc9a5}
+.rural-pending-link:focus-visible{outline:3px solid currentColor;outline-offset:2px}
+@media (max-width:480px){
+  .rural-pending-summary{padding:12px}
+  .rural-pending-chips{display:grid;grid-template-columns:1fr;width:100%}
+  .rural-pending-link{width:100%;justify-content:flex-start}
+}

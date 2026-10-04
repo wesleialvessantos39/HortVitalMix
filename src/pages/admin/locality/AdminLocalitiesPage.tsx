@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { MapPin, Plus, Power, RefreshCw } from "lucide-react";
+import { MapPin, Plus, Power, RefreshCw, Trash2 } from "lucide-react";
 import { api, type ApiFailure } from "../../../lib/api";
 import { cryptoRandomUUID } from "../../../lib/uuid";
 import type { AdminVerifySessionResponse } from "../../../../shared/contracts/adminGovernance";
@@ -35,6 +35,10 @@ export function AdminLocalitiesPage({ access, onNavigate }: Props) {
     nextActive: boolean;
     impact: MunicipalityImpact | null;
   } | null>(null);
+  const [pendingDelete,setPendingDelete]=useState<{
+    municipality: AdminMunicipality;
+    impact: MunicipalityImpact;
+  }|null>(null);
   const duplicate = municipalities.some(
     (row) =>
       row.ibgeCode === ibgeCode ||
@@ -146,6 +150,55 @@ export function AdminLocalitiesPage({ access, onNavigate }: Props) {
     setPending({ municipality, nextActive, impact: null });
   }
 
+  async function askDelete(municipality: AdminMunicipality) {
+    setError("");
+    setNotice("");
+    try {
+      const impact=await api<MunicipalityImpact>(
+        `/v1/admin/localities/${municipality.id}/impact`,
+      );
+      setPending(null);
+      setPendingDelete({municipality,impact});
+    } catch {
+      setError("Não foi possível medir o impacto da exclusão agora.");
+    }
+  }
+
+  async function confirmDelete() {
+    if(!pendingDelete)return;
+    const {municipality}=pendingDelete;
+    setBusy(true);
+    setPendingDelete(null);
+    setError("");
+    setNotice("");
+    try {
+      const result=await api<LocalityMutationResult>(
+        `/v1/admin/localities/${municipality.id}`,
+        {
+          method:"DELETE",
+          body:JSON.stringify({
+            expectedRevision:municipality.revision,
+            commandId:cryptoRandomUUID(),
+          }),
+        },
+      );
+      if(result.status==="deleted"){
+        setNotice(
+          `${municipality.name} – ${municipality.state} foi excluído da cobertura. Usuários vinculados passam a receber o aviso de região fora de cobertura.`,
+        );
+      }else if(result.status==="conflict"){
+        setError("O cadastro mudou em outra sessão. Recarregue a lista.");
+      }else{
+        setError("Não foi possível excluir o município agora.");
+      }
+      await load();
+    }catch(failure){
+      handleFailure(failure);
+    }finally{
+      setBusy(false);
+    }
+  }
+
   async function confirmChange() {
     if (!pending) return;
     const { municipality, nextActive } = pending;
@@ -195,9 +248,9 @@ export function AdminLocalitiesPage({ access, onNavigate }: Props) {
             <MapPin size={20} /> Localidades
           </h1>
           <p>
-            Só os municípios ativos aparecem na vitrine, aceitam novo cadastro e
-            permanecem publicando. Desativar corta a operação sem apagar
-            histórico.
+            Municípios ativos operam normalmente. Bloquear interrompe compras e
+            publicações sem apagar o cadastro; excluir remove a localidade da
+            cobertura e reconcilia automaticamente os usuários afetados.
           </p>
         </div>
         <button
@@ -338,17 +391,28 @@ export function AdminLocalitiesPage({ access, onNavigate }: Props) {
                     </td>
                     <td>{municipality.revision}</td>
                     <td>
-                      <button
-                        className="admin-table-action"
-                        type="button"
-                        disabled={busy}
-                        onClick={() =>
-                          void askChange(municipality, !municipality.isActive)
-                        }
-                      >
-                        <Power size={13} />
-                        {municipality.isActive ? "Desativar" : "Reativar"}
-                      </button>
+                      <div className="admin-button-row">
+                        <button
+                          className="admin-table-action"
+                          type="button"
+                          disabled={busy}
+                          onClick={() =>
+                            void askChange(municipality, !municipality.isActive)
+                          }
+                        >
+                          <Power size={13} />
+                          {municipality.isActive ? "Bloquear" : "Desbloquear"}
+                        </button>
+                        <button
+                          className="admin-table-action admin-danger-text"
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void askDelete(municipality)}
+                        >
+                          <Trash2 size={13} />
+                          Excluir
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -358,23 +422,50 @@ export function AdminLocalitiesPage({ access, onNavigate }: Props) {
         )}
       </div>
 
+      {pendingDelete && (
+        <div className="admin-card admin-alert admin-alert--error" role="alertdialog">
+          <h2><Trash2 size={17}/> Excluir {pendingDelete.municipality.name}</h2>
+          <p>
+            Esta ação remove o município do catálogo de cobertura. Pessoas
+            vinculadas passarão a receber “Sua região está fora de cobertura.
+            Dúvidas, entre em contato conosco: hortivitalmix@gmail.com.” Compras
+            e publicações nessa região deixam de ser permitidas até que o
+            município seja cadastrado novamente.
+          </p>
+          <ul>
+            <li>Pessoas afetadas: {pendingDelete.impact.people}</li>
+            <li>Imóveis afetados: {pendingDelete.impact.properties}</li>
+            <li>Escopos de entrega afetados: {pendingDelete.impact.deliveryScopes}</li>
+            <li>Bloqueios vinculados: {pendingDelete.impact.partialBlocks}</li>
+          </ul>
+          <div className="admin-button-row">
+            <button className="admin-primary admin-danger" type="button" disabled={busy} onClick={() => void confirmDelete()}>
+              Excluir localidade
+            </button>
+            <button className="admin-table-action" type="button" disabled={busy} onClick={() => setPendingDelete(null)}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
       {pending && (
         <div className="admin-card admin-alert admin-alert--error" role="alertdialog">
           <h2>
             <Power size={17} />
-            {pending.nextActive ? "Reativar" : "Desativar"} {pending.municipality.name}
+            {pending.nextActive ? "Desbloquear" : "Bloquear"} {pending.municipality.name}
           </h2>
           {pending.nextActive ? (
             <p>
-              O município volta a aparecer na vitrine e aceita novos cadastros e
-              publicações.
+              O município volta à cobertura ativa, com compras e publicações
+              novamente liberadas conforme os demais controles de acesso.
             </p>
           ) : (
             <>
               <p>
-                Ao desativar, produtores e consumidores deste município recebem:
-                “essa região está desativada, dúvidas entre em contato conosco
-                hortivitalmix@gmail.com”.
+                Ao bloquear, produtores e consumidores vinculados recebem:
+                “Sua região está bloqueada. Dúvidas, entre em contato conosco:
+                hortivitalmix@gmail.com.”
               </p>
               <ul>
                 <li>Pessoas vinculadas: {pending.impact?.people ?? 0}</li>

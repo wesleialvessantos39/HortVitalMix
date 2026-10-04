@@ -64,7 +64,7 @@ export function useConfigAdmin() {
         failure.status === 401
           ? "Sessão expirada. Faça login novamente."
           : failure.status === 403
-            ? "Acesso restrito ao Super Administrador."
+            ? "Seu perfil não possui permissão para configuração global."
             : failure.status === 503
               ? "Serviço de configuração indisponível."
               : failure.message === "NETWORK_UNAVAILABLE"

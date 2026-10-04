@@ -9,6 +9,7 @@ import {
 import {
   CreateMunicipalitySchema,
   CreatePartialBlockSchema,
+  DeleteMunicipalitySchema,
   PartialBlockSubjectSchema,
   RevokePartialBlockSchema,
   UpdateMunicipalitySchema,
@@ -171,6 +172,42 @@ adminLocalityRouter.patch(
   },
 );
 
+adminLocalityRouter.delete(
+  "/localities/:municipalityId",
+  ...guard,
+  originProtection,
+  requireRecentAuth,
+  async (req: Request, res: Response) => {
+    const parsed = DeleteMunicipalitySchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(422).json({
+        error: "VALIDATION_FAILED",
+        message: parsed.error.issues[0]?.message ?? "Dados inválidos.",
+        requestId: req.requestId,
+      });
+      return;
+    }
+    try {
+      const result = await LocalityService.deleteMunicipality(
+        req.params.municipalityId,
+        parsed.data,
+        actor(req),
+        req.requestId,
+        req.clientIpHash,
+      );
+      const status =
+        result.status === "deleted"
+          ? 200
+          : result.status === "conflict"
+            ? 409
+            : 404;
+      res.status(status).json(result);
+    } catch (error) {
+      fail(res, localityFailure(error, req.requestId));
+    }
+  },
+);
+
 // ---------------------------------------------------------------------------
 // Bloqueios parciais por localidade (item 5 do proprietário).
 // ---------------------------------------------------------------------------
@@ -291,6 +328,13 @@ adminLocalityRouter.get(
           "  JOIN public.app_producer_profiles pp ON pp.id=p.producer_id",
           "  JOIN public.app_people pe ON pe.id=pp.person_id",
           " WHERE pe.user_id=$1",
+          "   AND p.status='verified'",
+          "   AND EXISTS (",
+          "     SELECT 1 FROM public.app_verification_requests vr",
+          "      WHERE vr.property_id=p.id",
+          "        AND vr.status='approved'",
+          "        AND vr.superseded_at IS NULL",
+          "   )",
           " ORDER BY p.updated_at DESC",
           " LIMIT 200",
         ].join(" "),

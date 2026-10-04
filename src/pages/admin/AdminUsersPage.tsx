@@ -38,6 +38,8 @@ export function AdminUsersPage({
     [deleteConfirmed, setDeleteConfirmed] = useState(false),
     [refreshKey, setRefreshKey] = useState(0);
   const isSuper = access.role === "platform_super_admin";
+  const canGovernAccounts =
+    isSuper || access.sectors.includes("account_governance");
 
   const [refreshing, setRefreshing] = useState(false);
   const manualRefresh = useRef(false);
@@ -62,7 +64,7 @@ export function AdminUsersPage({
   }, []);
 
   async function changeStatus(user: UserRow, unblock = false) {
-    if (!isSuper) return;
+    if (!canGovernAccounts) return;
     setBusy(user.id);
     setError("");
     const status = unblock ? "active" : "blocked";
@@ -158,9 +160,9 @@ export function AdminUsersPage({
       </header>
       {!isSuper && (
         <div className="admin-alert">
-          Você visualiza consumidores, produtores e Administradores que
-          compartilham seus setores. A gestão de Super administradores permanece
-          no nível superior.
+          {canGovernAccounts
+            ? "O Super administrador delegou a você a governança de contas. Você pode analisar, bloquear, desbloquear e excluir contas não protegidas."
+            : "Você possui acesso somente de consulta nesta área. Ações de governança exigem o setor account_governance concedido pelo Super administrador."}
         </div>
       )}
       {error && <div className="admin-alert admin-alert--error">{error}</div>}
@@ -263,7 +265,7 @@ export function AdminUsersPage({
           </div>
         </form>
       )}
-      {isSuper && (
+      {canGovernAccounts && (
         <RegistrationReviews
           refreshKey={refreshKey}
           onChanged={() => void load()}
@@ -286,7 +288,7 @@ export function AdminUsersPage({
                   <th>Perfis vinculados</th>
                   <th>Setores</th>
                   <th>Status</th>
-                  {isSuper && <th>Ação</th>}
+                  {canGovernAccounts && <th>Ação</th>}
                 </tr>
               </thead>
               <tbody>
@@ -345,7 +347,7 @@ export function AdminUsersPage({
                           </small>
                         )}
                     </td>
-                    {isSuper && (
+                    {canGovernAccounts && (
                       <td data-label="Ações">
                         <div className="admin-button-row">
                           {["active", "blocked"].includes(u.status) && (

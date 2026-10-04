@@ -19,7 +19,16 @@ export function PublicLoginPage({ role, onNavigate, onSessionAdopt }: {
   const label = producer ? "Produtor" : "Consumidor";
   const Icon = producer ? Sprout : ShoppingBag;
   const params = new URLSearchParams(location.search);
-  const notice = params.get("review") === "1" ? "Sua solicitação foi enviada para validação da administração. O acesso depende da aprovação."+(params.get("confirm") === "1" ? " Confirme também o link enviado ao seu e-mail." : "") : params.get("roleAdded") === "1" ? "Novo perfil adicionado à sua conta. Você já pode entrar." : params.get("registered") === "1" ? "Cadastro realizado. Confira a confirmação enviada ao seu e-mail." : "";
+  const notice =
+    params.get("review") === "1"
+      ? "Devido às circunstâncias, sua conta foi enviada para aprovação. Você receberá a confirmação de e-mail somente depois da aprovação. Dúvidas, entre em contato conosco: hortivitalmix@gmail.com."
+      : params.get("approved") === "1"
+        ? "Sua conta foi aprovada. Confirme seu e-mail agora para liberar o acesso."
+        : params.get("roleAdded") === "1"
+          ? "Novo perfil adicionado à sua conta. Você já pode entrar."
+          : params.get("registered") === "1"
+            ? "Cadastro realizado. Confira a confirmação enviada ao seu e-mail."
+            : "";
   async function login(event: FormEvent) {
     event.preventDefault();
     if (busy) return;

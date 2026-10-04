@@ -344,6 +344,11 @@ export default function App() {
         {!isProducerPropertyRoute && search}
       </header>
       <main id="conteudo" className={isAdminRoute || publicLoginRole ? "layout admin-route-layout" : isProducerPropertyRoute ? "layout producer-route-layout rural-property-layout" : isProducerScopeRoute ? "layout producer-route-layout" : "layout"}>
+        {shellSession?.localityWarning && !isAdminRoute && (
+          <p className="account-notice locality-blocked" role="alert">
+            {shellSession.localityWarning}
+          </p>
+        )}
         {(sessionLoading && (guestAccessRoute || isAccountDataRoute || isProducerPropertyRoute || path === "/minha-conta")) || (shellSession && guestAccessRoute) ? <p role="status" className="account-notice">Carregando sua conta…</p> : publicLoginRole ? (
           <PublicLoginPage key={publicLoginRole} role={publicLoginRole} onNavigate={go} onSessionAdopt={adoptSession}/>
         ) : isAdminRoute ? (
