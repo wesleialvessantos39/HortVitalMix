@@ -388,6 +388,48 @@ async function addRoleToExistingIdentity(
   const person = await findExistingPerson(data, requestId);
   if (!person) return null;
 
+  const account = await supabaseAdmin
+    .from("app_users")
+    .select("status")
+    .eq("id", person.user_id)
+    .maybeSingle();
+  if (account.error)
+    throw registrationError("REGISTRATION_DATABASE_UNAVAILABLE",503);
+
+  if (
+    account.data?.status === "blocked" ||
+    account.data?.status === "deleted"
+  ) {
+    const requested = await supabaseAdmin.rpc("request_account_reactivation", {
+      p_user_id: person.user_id,
+      p_role: role,
+    });
+    if (requested.error)
+      throw registrationError("REGISTRATION_DATA_REJECTED",409);
+    return {
+      userId:person.user_id,
+      reviewRequired:true,
+      confirmationRequired:true,
+      confirmationDispatchAccepted:false,
+      confirmationDispatchDeferred:true,
+      existingIdentity:true,
+      roleAdded:false,
+      role,
+    };
+  }
+
+  if(account.data?.status === "pending")
+    return {
+      userId:person.user_id,
+      reviewRequired:true,
+      confirmationRequired:true,
+      confirmationDispatchAccepted:false,
+      confirmationDispatchDeferred:true,
+      existingIdentity:true,
+      roleAdded:false,
+      role,
+    };
+
   if (
     person.cpf_normalized !== data.cpf ||
     person.email_normalized !== data.email
@@ -426,15 +468,6 @@ async function addRoleToExistingIdentity(
       throw registrationError("REGISTRATION_EXISTING_ACCOUNT_CONFIRM_REQUIRED", 409);
     if (verified.data.user.id !== person.user_id)
       throw registrationError("REGISTRATION_IDENTITY_CONFLICT", 409);
-
-    const account = await supabaseAdmin.from("app_users").select("status").eq("id",person.user_id).single();
-    if(account.error) throw registrationError("REGISTRATION_DATABASE_UNAVAILABLE",503);
-    if(account.data.status === "deleted") {
-      const requested = await supabaseAdmin.rpc("request_account_reactivation", {p_user_id:person.user_id,p_role:role});
-      if(requested.error) throw registrationError("REGISTRATION_DATA_REJECTED",409);
-      return {userId:person.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role};
-    }
-    if(account.data.status === "pending") return {userId:person.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role};
 
     // Acrescentar papel a uma identidade existente também respeita a trava de
     // cobertura: nenhum perfil novo nasce em região fora de operação.
