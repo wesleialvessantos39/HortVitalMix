@@ -4098,3 +4098,10 @@ A publicação do commit e o status Vercel devem ser conferidos pelo SHA exato e
 - Release registrada no banco: **integrity-v46-c10d974**, schema **46**, hash canônico acima. `https://hortvitalmix.vercel.app/api/ready` retornou **ready**, **databaseConnected: true**, **schemaVersion: 46**.
 - Login no painel do Supabase aguardando confirmação de identidade do Google no dispositivo do titular. A personalização hospedada do e-mail de aprovação ainda não foi aplicada; o template versionado está pronto. Isso não impede as correções de exclusão, cobertura ou análise de recadastro publicadas.
 - Suite unitária completa executada: **275 testes passaram em 34 arquivos**. Fluxos autenticados completos em produção e dispositivos físicos não foram simulados como se tivessem sido testados.
+
+### 2026-10-04 — Pendência do e-mail concluída no Supabase
+
+- O titular entrou manualmente na conta correta; confirmado o projeto **xipbsazvymkqqfmfegwu**, organização **mwxgspszbhftwswkyaic**, plano **Free**.
+- Modelo de **Confirm sign up** salvo no painel de produção e conferido após recarregar. O corpo usa `{{ if .Data.registration_approved }}` para apresentar **“Sua conta foi aprovada. Confirme seu e-mail para concluir o cadastro e acessar a HortiVitalMix.”** após a aprovação administrativa. Cadastros comuns mantêm a confirmação habitual.
+- Preservados `{{ .ConfirmationURL }}` e `{{ .Token }}`, assunto **“Confirme seu cadastro no HortiVitalMix”** e as regras de envio após decisão administrativa. Nenhum serviço contratado, plano atualizado ou provedor pago de e-mail adicionado.
+- A pendência de configuração hospedada indicada acima está encerrada. Validação nesta etapa: persistência no painel após recarga; não foi enviado e-mail real a terceiros como teste.
