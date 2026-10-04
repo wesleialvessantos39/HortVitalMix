@@ -4090,4 +4090,11 @@ A publicação do commit e o status Vercel devem ser conferidos pelo SHA exato e
 - Playwright: 37 dos 39 testes iniciais passaram; corrigidos o overflow em 320px e a expectativa antiga do texto do guia, e ambos passaram na repetição. Três novos testes de exclusão (concluído, último aprovado regional, aprovado com outro imóvel) passaram; teste de salvar sem alterações também passou.
 - Banco real, transações revertidas: exclusão com custódia, exclusão sincronizada Auth/domínio e recadastro de CPF bloqueado com análise e preservação do titular anterior passaram.
 - Estado persistente verificado: **0 rascunhos**, **0 objetos pendentes na fila de limpeza**, **0 contas ativas marcadas deleted**, **0 pessoas órfãs**. O imóvel histórico withdrawn não foi restaurado nem apagado sem solicitação específica.
-- Edge Function `public-registration` publicada na versão **9**. Fechamento do SHA/deployment será registrado após a publicação.
+- Edge Function `public-registration` publicada na versão **9**.
+
+### Fechamento em produção
+
+- Código publicado na `main`: **c10d974ae332aff818f11c34f6ef130e1a3cb200**. Production Vercel **dpl_AyrXEVZtbSjMfybxZZX2bcgfRFUT**, estado **READY**.
+- Release registrada no banco: **integrity-v46-c10d974**, schema **46**, hash canônico acima. `https://hortvitalmix.vercel.app/api/ready` retornou **ready**, **databaseConnected: true**, **schemaVersion: 46**.
+- Login no painel do Supabase aguardando confirmação de identidade do Google no dispositivo do titular. A personalização hospedada do e-mail de aprovação ainda não foi aplicada; o template versionado está pronto. Isso não impede as correções de exclusão, cobertura ou análise de recadastro publicadas.
+- Suite unitária completa executada: **275 testes passaram em 34 arquivos**. Fluxos autenticados completos em produção e dispositivos físicos não foram simulados como se tivessem sido testados.
