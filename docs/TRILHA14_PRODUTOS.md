@@ -26,7 +26,7 @@ O catálogo público real aparece em `/produtos`, com busca e seleção de categ
 - Foto removida/exclusão de conta entra na fila de limpeza Storage da T12. Rollback depois de upload enfileira somente objeto sem referência persistida. Nova tentativa usa caminho físico distinto, e replay de comando concluído não reenviará arquivo.
 - Integridade de publicação também é validada por triggers diferidos: produto publicado requer preço e foto principal; troca da foto acontece atomicamente.
 
-Nenhuma migration antiga, serviço de T01–T13, função/policy/trigger anterior, dependência, configuração Vercel ou fluxo de autenticação foi reescrito. Integrações limitam-se à montagem das rotas, navegação/catálogo e metadados de schema/histórico. Dois testes anteriores receberam ajustes de fixture: contagem pelo manifesto e compatibilidade da T13 com a tabela real de produtos; a vitrine T12 recebe mock vazio da consulta nova.
+Nenhuma migration antiga, serviço de T01–T13, função/policy/trigger anterior, dependência, configuração Vercel ou fluxo de autenticação foi reescrito. Integrações limitam-se à montagem das rotas, navegação/catálogo e metadados de schema/histórico. Testes anteriores receberam ajustes de fixture: contagem pelo manifesto, compatibilidade da T13 com a tabela real de produtos, consulta vazia da vitrine T12 e as duas expectativas de placeholder da shell agora verificam a API de catálogo da T14. O teste de slogan seleciona o header móvel visível, sem mudança de interface.
 
 ## API
 
@@ -56,7 +56,9 @@ Contratos estritos em `shared/contracts/product.ts`: pesos 1–50000 g, validade
 - 16 testes de navegador T14 aprovados: 320/390/768/1440 px, criação/edição/preço/upload/publicação, cinco estados, sessão antiga, conflito com edição preservada, bloqueio de loja e isolamento de visitante. Os 41 casos dedicados T12/T13 também passaram; um reset transitório de conexão foi aprovado em repetição isolada.
 - Suíte geral: 527 passaram, zero falha, 92 explicitamente ignorados por requererem configuração. Typecheck integral, build, verificação de segredos/bundle e inicialização da API sem `require(ESM)` aprovados.
 
-As suítes de banco recusam URLs fora de `127.0.0.1:55432/postgres`. Não foram criados usuários, lojas, produtos ou arquivos fictícios no Supabase canônico. A comparação ampla de navegador e a conferência final da produção são registradas em `TRILHA14_REGRESSAO.json` e no Livro-Raiz ao término da entrega.
+As suítes de banco recusam URLs fora de `127.0.0.1:55432/postgres`. Não foram criados usuários, lojas, produtos ou arquivos fictícios no Supabase canônico. Evidências em `TRILHA14_REGRESSAO.json` e no Livro-Raiz.
+
+A comparação ampla Chromium executou 203 casos na base (150 sucessos/53 falhas) e 219 na entrega (163 sucessos/56 falhas). Todas as 16 adições T14 passaram. Das quatro diferenças iniciais, três eram esperas assíncronas e passaram em repetição isolada tanto na base quanto na entrega, sem alterar produção. A outra verificava o placeholder antigo, substituído pela consulta real da T14; duas expectativas da shell foram adaptadas e aprovadas, incluindo erro com retry e catálogo vazio independente de falha de configuração. **Nenhuma regressão nova ficou sem resolução; a suíte ampla continua com falhas anteriores e não representa homologação integral de T01–T13.**
 
 ```sh
 npm run test:t14:unit

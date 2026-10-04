@@ -564,7 +564,502 @@
     }
   },
   "playwrightComparison": {
-    "status": "running"
+    "base": {
+      "startTime": "2026-10-04T21:01:38.371Z",
+      "duration": 789476.306,
+      "expected": 150,
+      "skipped": 0,
+      "unexpected": 53,
+      "flaky": 0
+    },
+    "delivery": {
+      "startTime": "2026-10-04T21:01:39.180Z",
+      "duration": 791082.873,
+      "expected": 163,
+      "skipped": 0,
+      "unexpected": 56,
+      "flaky": 0
+    },
+    "newFailures": [],
+    "sameFailures": [
+      {
+        "file": "access-confirmation.spec.ts",
+        "title": "submitted properties are visible and review uses revision and command id",
+        "key": "access-confirmation.spec.ts :: submitted properties are visible and review uses revision and command id",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_admin: populated administrative screens at 320px",
+        "key": "admin-governance-responsive.spec.ts :: platform_admin: populated administrative screens at 320px",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_admin: populated administrative screens at 390px",
+        "key": "admin-governance-responsive.spec.ts :: platform_admin: populated administrative screens at 390px",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_admin: populated administrative screens at 768px",
+        "key": "admin-governance-responsive.spec.ts :: platform_admin: populated administrative screens at 768px",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_admin: populated administrative screens at 1024px",
+        "key": "admin-governance-responsive.spec.ts :: platform_admin: populated administrative screens at 1024px",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_admin: populated administrative screens at 1440px",
+        "key": "admin-governance-responsive.spec.ts :: platform_admin: populated administrative screens at 1440px",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_super_admin: populated administrative screens at 320px",
+        "key": "admin-governance-responsive.spec.ts :: platform_super_admin: populated administrative screens at 320px",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_super_admin: populated administrative screens at 390px",
+        "key": "admin-governance-responsive.spec.ts :: platform_super_admin: populated administrative screens at 390px",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_super_admin: populated administrative screens at 768px",
+        "key": "admin-governance-responsive.spec.ts :: platform_super_admin: populated administrative screens at 768px",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_super_admin: populated administrative screens at 1024px",
+        "key": "admin-governance-responsive.spec.ts :: platform_super_admin: populated administrative screens at 1024px",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_super_admin: populated administrative screens at 1440px",
+        "key": "admin-governance-responsive.spec.ts :: platform_super_admin: populated administrative screens at 1440px",
+        "status": "unexpected"
+      },
+      {
+        "file": "iphone-responsive.spec.ts",
+        "title": "iPhone viewport and touch: consumer",
+        "key": "iphone-responsive.spec.ts :: iPhone viewport and touch: consumer",
+        "status": "unexpected"
+      },
+      {
+        "file": "iphone-responsive.spec.ts",
+        "title": "iPhone viewport and touch: producer",
+        "key": "iphone-responsive.spec.ts :: iPhone viewport and touch: producer",
+        "status": "unexpected"
+      },
+      {
+        "file": "iphone-responsive.spec.ts",
+        "title": "iPhone viewport and touch: platform_admin",
+        "key": "iphone-responsive.spec.ts :: iPhone viewport and touch: platform_admin",
+        "status": "unexpected"
+      },
+      {
+        "file": "iphone-responsive.spec.ts",
+        "title": "iPhone viewport and touch: platform_super_admin",
+        "key": "iphone-responsive.spec.ts :: iPhone viewport and touch: platform_super_admin",
+        "status": "unexpected"
+      },
+      {
+        "file": "session-navigation.spec.ts",
+        "title": "sessão persiste na navegação e cadastro só reaparece ao sair: consumer",
+        "key": "session-navigation.spec.ts :: sessão persiste na navegação e cadastro só reaparece ao sair: consumer",
+        "status": "unexpected"
+      },
+      {
+        "file": "session-navigation.spec.ts",
+        "title": "sessão persiste na navegação e cadastro só reaparece ao sair: producer",
+        "key": "session-navigation.spec.ts :: sessão persiste na navegação e cadastro só reaparece ao sair: producer",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "falha de config é não bloqueante e mantém navegação",
+        "key": "shell.spec.ts :: falha de config é não bloqueante e mantém navegação",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "config pública válida atualiza slogan da shell",
+        "key": "shell.spec.ts :: config pública válida atualiza slogan da shell",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "fluxos públicos de segurança estão acessíveis e responsivos",
+        "key": "shell.spec.ts :: fluxos públicos de segurança estão acessíveis e responsivos",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "rotas diretas de recuperação preservam estado correto",
+        "key": "shell.spec.ts :: rotas diretas de recuperação preservam estado correto",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "recuperação explicita o perfil e mantém administração isolada",
+        "key": "shell.spec.ts :: recuperação explicita o perfil e mantém administração isolada",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "conta separa consumidor e produtor e administração fica independente",
+        "key": "shell.spec.ts :: conta separa consumidor e produtor e administração fica independente",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "senha forte orienta e bloqueia cadastro fraco",
+        "key": "shell.spec.ts :: senha forte orienta e bloqueia cadastro fraco",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — configuração admin responsiva em 320px",
+        "key": "shell.spec.ts :: Trilha 02 — configuração admin responsiva em 320px",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — configuração admin responsiva em 360px",
+        "key": "shell.spec.ts :: Trilha 02 — configuração admin responsiva em 360px",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — configuração admin responsiva em 768px",
+        "key": "shell.spec.ts :: Trilha 02 — configuração admin responsiva em 768px",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — configuração admin responsiva em 1440px",
+        "key": "shell.spec.ts :: Trilha 02 — configuração admin responsiva em 1440px",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — loading permanece visível por pelo menos 100ms",
+        "key": "shell.spec.ts :: Trilha 02 — loading permanece visível por pelo menos 100ms",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — erro recuperável mostra card e retry",
+        "key": "shell.spec.ts :: Trilha 02 — erro recuperável mostra card e retry",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — conflito 409 preserva edição e oferece reload",
+        "key": "shell.spec.ts :: Trilha 02 — conflito 409 preserva edição e oferece reload",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — sucesso 200 exibe confirmação e nova revisão",
+        "key": "shell.spec.ts :: Trilha 02 — sucesso 200 exibe confirmação e nova revisão",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha03-auth.spec.ts",
+        "title": "Trilha 03 — portal administrativo usa ponto de entrada independente",
+        "key": "trilha03-auth.spec.ts :: Trilha 03 — portal administrativo usa ponto de entrada independente",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha04-contact-recovery.spec.ts",
+        "title": "Trilha 04 — confirmação usa página própria e Supabase-only",
+        "key": "trilha04-contact-recovery.spec.ts :: Trilha 04 — confirmação usa página própria e Supabase-only",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha04-contact-recovery.spec.ts",
+        "title": "Trilha 04 — redefinição inválida permanece em página visual própria",
+        "key": "trilha04-contact-recovery.spec.ts :: Trilha 04 — redefinição inválida permanece em página visual própria",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — login administrativo responsivo em 320px",
+        "key": "trilha05-admin.spec.ts :: Trilha 05 — login administrativo responsivo em 320px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — login administrativo responsivo em 390px",
+        "key": "trilha05-admin.spec.ts :: Trilha 05 — login administrativo responsivo em 390px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — login administrativo responsivo em 430px",
+        "key": "trilha05-admin.spec.ts :: Trilha 05 — login administrativo responsivo em 430px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — login administrativo responsivo em 768px",
+        "key": "trilha05-admin.spec.ts :: Trilha 05 — login administrativo responsivo em 768px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — login administrativo responsivo em 1024px",
+        "key": "trilha05-admin.spec.ts :: Trilha 05 — login administrativo responsivo em 1024px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — login administrativo responsivo em 1440px",
+        "key": "trilha05-admin.spec.ts :: Trilha 05 — login administrativo responsivo em 1440px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — ajuda de governança abre, fecha por backdrop e Escape",
+        "key": "trilha05-admin.spec.ts :: Trilha 05 — ajuda de governança abre, fecha por backdrop e Escape",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — seletor administrativo conduz a telas de entrada distintas",
+        "key": "trilha05-admin.spec.ts :: Trilha 05 — seletor administrativo conduz a telas de entrada distintas",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — seletor administrativo expõe o estado protegido do bootstrap",
+        "key": "trilha05-admin.spec.ts :: Trilha 05 — seletor administrativo expõe o estado protegido do bootstrap",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — seletor sempre oferece diagnóstico do bootstrap enquanto não estiver fechado",
+        "key": "trilha05-admin.spec.ts :: Trilha 05 — seletor sempre oferece diagnóstico do bootstrap enquanto não estiver fechado",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha06-account.spec.ts",
+        "title": "T06 sem overflow em 320px",
+        "key": "trilha06-account.spec.ts :: T06 sem overflow em 320px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha06-account.spec.ts",
+        "title": "T06 sem overflow em 360px",
+        "key": "trilha06-account.spec.ts :: T06 sem overflow em 360px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha06-account.spec.ts",
+        "title": "T06 sem overflow em 768px",
+        "key": "trilha06-account.spec.ts :: T06 sem overflow em 768px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha06-account.spec.ts",
+        "title": "T06 sem overflow em 1024px",
+        "key": "trilha06-account.spec.ts :: T06 sem overflow em 1024px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha06-account.spec.ts",
+        "title": "T06 sem overflow em 1440px",
+        "key": "trilha06-account.spec.ts :: T06 sem overflow em 1440px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha06-account.spec.ts",
+        "title": "T06 expõe as quatro áreas da conta",
+        "key": "trilha06-account.spec.ts :: T06 expõe as quatro áreas da conta",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha06-account.spec.ts",
+        "title": "conta antiga oferece acesso às quatro seções e retorno à segurança",
+        "key": "trilha06-account.spec.ts :: conta antiga oferece acesso às quatro seções e retorno à segurança",
+        "status": "unexpected"
+      }
+    ],
+    "baseOnlyFailures": [
+      {
+        "file": "trilha07-addresses.spec.ts",
+        "title": "geolocalização do aparelho envia latitude e longitude como pin manual",
+        "key": "trilha07-addresses.spec.ts :: geolocalização do aparelho envia latitude e longitude como pin manual",
+        "status": "unexpected"
+      }
+    ],
+    "addedCases": [
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "catálogo e criação responsivos em 320px",
+        "key": "trilha14-products.spec.ts :: catálogo e criação responsivos em 320px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "editor, preço, upload e publicação em 320px",
+        "key": "trilha14-products.spec.ts :: editor, preço, upload e publicação em 320px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "catálogo e criação responsivos em 390px",
+        "key": "trilha14-products.spec.ts :: catálogo e criação responsivos em 390px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "editor, preço, upload e publicação em 390px",
+        "key": "trilha14-products.spec.ts :: editor, preço, upload e publicação em 390px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "catálogo e criação responsivos em 768px",
+        "key": "trilha14-products.spec.ts :: catálogo e criação responsivos em 768px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "editor, preço, upload e publicação em 768px",
+        "key": "trilha14-products.spec.ts :: editor, preço, upload e publicação em 768px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "catálogo e criação responsivos em 1440px",
+        "key": "trilha14-products.spec.ts :: catálogo e criação responsivos em 1440px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "editor, preço, upload e publicação em 1440px",
+        "key": "trilha14-products.spec.ts :: editor, preço, upload e publicação em 1440px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "409 preserva informação e preço e exige recarregamento explícito",
+        "key": "trilha14-products.spec.ts :: 409 preserva informação e preço e exige recarregamento explícito",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "sessão antiga retoma preço com mesmo comando sem descartar edição",
+        "key": "trilha14-products.spec.ts :: sessão antiga retoma preço com mesmo comando sem descartar edição",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "publicação sem foto mostra erro e mantém rascunho",
+        "key": "trilha14-products.spec.ts :: publicação sem foto mostra erro e mantém rascunho",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "loja não habilitada informa próximo passo e impede criação",
+        "key": "trilha14-products.spec.ts :: loja não habilitada informa próximo passo e impede criação",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "catálogo recupera falha de leitura",
+        "key": "trilha14-products.spec.ts :: catálogo recupera falha de leitura",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "estado de carregamento é anunciado",
+        "key": "trilha14-products.spec.ts :: estado de carregamento é anunciado",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "consulta pública seleciona categoria e mostra embalagem, peso e preço",
+        "key": "trilha14-products.spec.ts :: consulta pública seleciona categoria e mostra embalagem, peso e preço",
+        "status": "expected"
+      },
+      {
+        "file": "trilha14-products.spec.ts",
+        "title": "visitante não acessa editor do produtor",
+        "key": "trilha14-products.spec.ts :: visitante não acessa editor do produtor",
+        "status": "expected"
+      }
+    ],
+    "status": "completed",
+    "initialCandidateFailures": [
+      {
+        "file": "documents.spec.ts",
+        "title": "conferência responsiva 320",
+        "key": "documents.spec.ts :: conferência responsiva 320",
+        "status": "unexpected"
+      },
+      {
+        "file": "session-navigation.spec.ts",
+        "title": "marca e endereços administrativos: platform_super_admin 360",
+        "key": "session-navigation.spec.ts :: marca e endereços administrativos: platform_super_admin 360",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "navegação, diálogo e indisponibilidade honesta",
+        "key": "shell.spec.ts :: navegação, diálogo e indisponibilidade honesta",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha03-auth.spec.ts",
+        "title": "Trilha 03 — seleção pública nunca oferece papel administrativo",
+        "key": "trilha03-auth.spec.ts :: Trilha 03 — seleção pública nunca oferece papel administrativo",
+        "status": "unexpected"
+      }
+    ],
+    "retests": {
+      "delivery": {
+        "startTime": "2026-10-04T21:15:35.546Z",
+        "duration": 8959.517,
+        "expected": 3,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "base": {
+        "startTime": "2026-10-04T21:16:27.136Z",
+        "duration": 12117.495,
+        "expected": 3,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "shell": {
+        "startTime": "2026-10-04T21:17:23.471Z",
+        "duration": 3495.5840000000003,
+        "expected": 2,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    "notes": [
+      "Três diferenças em documentos/cadastro/navegação passaram em repetição isolada na base e na entrega, sem mudança de produção.",
+      "A expectativa antiga de catálogo indisponível foi atualizada para a API T14: erro recuperável e catálogo vazio independente de falha de configuração.",
+      "O seletor de slogan passou a apontar para o header móvel visível, em vez do primeiro header desktop oculto; apenas teste.",
+      "A suíte ampla mantém falhas anteriores; não constitui homologação integral das trilhas históricas. Todos os 16 casos adicionados pela T14 passaram."
+    ]
   },
   "production": {
     "status": "pending"
