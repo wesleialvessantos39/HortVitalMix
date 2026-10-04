@@ -32,6 +32,8 @@ Nenhuma migration antiga, serviço de T01–T13, função/policy/trigger anterio
 
 Prefixos existentes preservados: `/v1`, `/api/v1` e `/_hvm_api/v1`.
 
+As duas queries da T14 (catálogo público e upload) são extraídas da URL normalizada pelo dispatcher existente. A Vercel pode manter um objeto `req.query` próprio com metadados de roteamento; usar esse objeto fazia a validação estrita responder 400 em produção. O caso foi reproduzido antes da correção e coberto por dois testes de transporte. Parâmetros desconhecidos enviados pelo cliente e valores duplicados continuam rejeitados. Nenhum dispatcher ou rota anterior foi modificado.
+
 | Método | Rota relativa | Comportamento |
 | --- | --- | --- |
 | GET | /products | Público; filtros categoryId/storeSlug/search |
@@ -55,6 +57,7 @@ Contratos estritos em `shared/contracts/product.ts`: pesos 1–50000 g, validade
 - História completa com React compilado, Chromium, HTTP, middlewares e PostgreSQL reais: cria, muda preço conservando a linha anterior, rejeita publicação sem foto, envia foto, publica, consulta anonimamente, despublica e confere auditoria. Somente Auth/Storage externos são adaptados localmente; a configuração pública vem do PostgreSQL local.
 - 16 testes de navegador T14 aprovados: 320/390/768/1440 px, criação/edição/preço/upload/publicação, cinco estados, sessão antiga, conflito com edição preservada, bloqueio de loja e isolamento de visitante. Os 41 casos dedicados T12/T13 também passaram; um reset transitório de conexão foi aprovado em repetição isolada.
 - Suíte geral: 527 passaram, zero falha, 92 explicitamente ignorados por requererem configuração. Typecheck integral, build, verificação de segredos/bundle e inicialização da API sem `require(ESM)` aprovados.
+- Fechamento do transporte Vercel: **58** contratos/HTTP e **529** testes gerais passaram (92 ignorados), com novo build, história completa e cold start aprovados. Os dois casos adicionais cobrem a query interna da plataforma e o upload; foram reproduzidos antes da correção.
 
 As suítes de banco recusam URLs fora de `127.0.0.1:55432/postgres`. Não foram criados usuários, lojas, produtos ou arquivos fictícios no Supabase canônico. Evidências em `TRILHA14_REGRESSAO.json` e no Livro-Raiz.
 

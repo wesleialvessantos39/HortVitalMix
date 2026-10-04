@@ -19,6 +19,18 @@ import {
 } from "../services/ProductService.ts";
 
 export const productRouter = Router();
+function queryFromUrl(req: Request) {
+  // Vercel can retain its own parsed query (including routing metadata) after
+  // the existing dispatcher normalizes req.url. Validate only that URL, and
+  // preserve duplicate values so the strict contracts still reject them.
+  const params = new URL(req.url, "http://localhost").searchParams;
+  const query: Record<string, string | string[]> = Object.create(null);
+  for (const key of new Set(params.keys())) {
+    const values = params.getAll(key);
+    query[key] = values.length === 1 ? values[0] : values;
+  }
+  return query;
+}
 function cookie(req: Request, name: string) {
   const part = req.headers.cookie
     ?.split(";")
@@ -214,7 +226,7 @@ productRouter.post(
     const actor = producer(req, res, true);
     if (!actor) return;
     const id = z.uuid().safeParse(req.params.id),
-      input = ProductUploadQuerySchema.safeParse(req.query);
+      input = ProductUploadQuerySchema.safeParse(queryFromUrl(req));
     if (!id.success || !input.success || !Buffer.isBuffer(req.body)) {
       res.status(400).json({ error: "VALIDATION_ERROR" });
       return;
@@ -237,7 +249,7 @@ productRouter.post(
   },
 );
 productRouter.get("/products", async (req, res) => {
-  const query = ProductQuerySchema.safeParse(req.query);
+  const query = ProductQuerySchema.safeParse(queryFromUrl(req));
   if (!query.success) {
     res.status(400).json({ error: "VALIDATION_ERROR" });
     return;
