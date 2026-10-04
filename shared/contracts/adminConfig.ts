@@ -11,11 +11,14 @@ const PhoneE164 = z
 
 export const UpdateGlobalConfigPayloadSchema = z
   .object({
+    platformName: z.string().trim().min(2).max(80).optional(),
     slogan: z.string().trim().min(5).max(255).optional(),
     defaultMunicipality: z.string().trim().min(2).max(100).optional(),
     defaultState: BrazilianStatesEnum.optional(),
     supportEmail: z.string().trim().toLowerCase().email().max(255).optional(),
     supportPhone: PhoneE164.nullable().optional(),
+    currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/).optional(),
+    timezone: z.string().trim().min(3).max(80).optional(),
   })
   .strict();
 
@@ -54,6 +57,19 @@ export const GlobalConfigAdminResponseSchema =
 export type GlobalConfigAdminResponse = z.infer<
   typeof GlobalConfigAdminResponseSchema
 >;
+
+export const GlobalConfigOverviewSchema = z.object({
+  activeUsers: z.number().int().nonnegative(),
+  blockedUsers: z.number().int().nonnegative(),
+  pendingRegistrationReviews: z.number().int().nonnegative(),
+  activeMunicipalities: z.number().int().nonnegative(),
+  blockedMunicipalities: z.number().int().nonnegative(),
+  approvedProperties: z.number().int().nonnegative(),
+  verificationQueue: z.number().int().nonnegative(),
+  activeAccessBlocks: z.number().int().nonnegative(),
+  auditEvents24h: z.number().int().nonnegative(),
+}).strict();
+export type GlobalConfigOverview = z.infer<typeof GlobalConfigOverviewSchema>;
 
 export const ConfigUpdateResultSchema = z.discriminatedUnion("status", [
   z.object({
