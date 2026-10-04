@@ -43,7 +43,11 @@ ALTER TABLE public.app_registration_reviews
 ALTER TABLE public.app_verification_decisions
   DROP CONSTRAINT IF EXISTS app_verification_decisions_auditor_id_fkey;
 ALTER TABLE public.app_admin_invites
-  DROP CONSTRAINT IF EXISTS app_admin_invites_invited_by_fkey;
+  DROP CONSTRAINT IF EXISTS app_admin_invites_invited_by_fkey,
+  DROP CONSTRAINT IF EXISTS app_admin_invites_target_person_id_fkey;
+ALTER TABLE public.app_admin_invites
+  ADD CONSTRAINT app_admin_invites_target_person_id_fkey
+  FOREIGN KEY(target_person_id) REFERENCES public.app_people(id) ON DELETE SET NULL;
 
 -- Pessoa arquivada pode permanecer apenas como vínculo histórico sem representar
 -- uma conta ativa. A exclusão de app_users limpa o user_id automaticamente.
@@ -52,6 +56,76 @@ ALTER TABLE public.app_people DROP CONSTRAINT IF EXISTS app_people_user_id_fkey;
 ALTER TABLE public.app_people
   ADD CONSTRAINT app_people_user_id_fkey
   FOREIGN KEY(user_id) REFERENCES public.app_users(id) ON DELETE SET NULL;
+
+-- Exclusão operacional integral da conta. O tombstone mínimo é gravado
+-- antes; dados de perfil, imóveis e arquivos entram em remoção física.
+CREATE OR REPLACE FUNCTION public.purge_account_domain(p_user_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_property record;
+  v_person_ids uuid[];
+BEGIN
+  PERFORM set_config('hvm.account_purge','on',true);
+
+  SELECT array_agg(id) INTO v_person_ids
+    FROM public.app_people
+   WHERE user_id=p_user_id;
+
+  FOR v_property IN
+    SELECT p.id,p.producer_id
+      FROM public.app_properties p
+      JOIN public.app_producer_profiles pp ON pp.id=p.producer_id
+      JOIN public.app_people pe ON pe.id=pp.person_id
+     WHERE pe.user_id=p_user_id
+  LOOP
+    INSERT INTO public.app_storage_deletion_queue(bucket,object_path,reason)
+    SELECT storage_bucket,storage_path,'account_deleted'
+      FROM public.app_documents
+     WHERE property_id=v_property.id
+    ON CONFLICT(bucket,object_path)
+    DO UPDATE SET completed_at=NULL,last_error=NULL,requested_at=clock_timestamp();
+
+    DELETE FROM public.app_document_reviews r
+     WHERE EXISTS (
+       SELECT 1 FROM public.app_document_extractions e
+        WHERE e.id=r.extraction_id AND e.property_id=v_property.id
+     );
+    DELETE FROM public.app_car_validations WHERE property_id=v_property.id;
+    DELETE FROM public.app_document_jobs
+     WHERE document_id IN (
+       SELECT id FROM public.app_documents WHERE property_id=v_property.id
+     );
+    DELETE FROM public.app_document_scans
+     WHERE document_id IN (
+       SELECT id FROM public.app_documents WHERE property_id=v_property.id
+     );
+    DELETE FROM public.app_document_extractions WHERE property_id=v_property.id;
+    DELETE FROM public.app_documents WHERE property_id=v_property.id;
+    DELETE FROM public.app_verification_requests WHERE property_id=v_property.id;
+    DELETE FROM public.app_properties WHERE id=v_property.id;
+  END LOOP;
+
+  DELETE FROM public.app_producer_profiles
+   WHERE person_id=ANY(COALESCE(v_person_ids,ARRAY[]::uuid[]));
+
+  DELETE FROM public.app_admin_invites
+   WHERE auth_user_id=p_user_id
+      OR target_person_id=ANY(COALESCE(v_person_ids,ARRAY[]::uuid[]));
+
+  DELETE FROM public.app_admin_principals WHERE admin_user_id=p_user_id;
+  DELETE FROM public.app_registration_reviews WHERE user_id=p_user_id;
+
+  DELETE FROM public.app_people
+   WHERE id=ANY(COALESCE(v_person_ids,ARRAY[]::uuid[]));
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.purge_account_domain(uuid) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.purge_account_domain(uuid) TO service_role;
 
 -- Auth e domínio devem sumir juntos. A tabela app_account_deletions é o
 -- único tombstone de segurança usado para reconhecer reincidência de CPF/nome.
@@ -84,10 +158,7 @@ BEGIN
     ON CONFLICT DO NOTHING;
   END IF;
 
-  UPDATE public.app_people
-     SET archived_at=COALESCE(archived_at,clock_timestamp())
-   WHERE user_id=OLD.id;
-
+  PERFORM public.purge_account_domain(OLD.id);
   DELETE FROM public.app_users WHERE id=OLD.id;
   RETURN OLD;
 END;
@@ -146,6 +217,10 @@ AS $function$
 DECLARE
   v_draft boolean := false;
 BEGIN
+  IF TG_OP = 'DELETE' AND current_setting('hvm.account_purge',true)='on' THEN
+    RETURN OLD;
+  END IF;
+
   IF TG_OP = 'DELETE' THEN
     IF TG_TABLE_NAME = 'app_document_extractions' THEN
       SELECT EXISTS(
