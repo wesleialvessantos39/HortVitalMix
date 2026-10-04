@@ -75,7 +75,11 @@
     "test:t12:store": "vitest run tests/unit/producerStoreContracts.test.ts tests/integration/producerStoreRoutes.test.ts",
     "test:t12:store:postgres": "vitest run tests/integration/producerStorePostgres.test.ts",
     "test:t12:store:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha12-producer-store.spec.ts",
-    "verify:t12:store:runtime": "node scripts/check-api-cold-start.mjs"
+    "verify:t12:store:runtime": "node scripts/check-api-cold-start.mjs",
+    "test:t13:unit": "vitest run tests/unit/categoryContracts.test.ts tests/integration/categoryRoutes.test.ts tests/integration/categoryMount.test.ts",
+    "test:t13:postgres": "vitest run tests/integration/categoryPostgres.test.ts",
+    "test:t13:story": "vitest run tests/integration/categoryBrowserPostgres.test.ts",
+    "test:t13:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha13-categories.spec.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",

@@ -13,6 +13,8 @@ import { AdminEmailConfirmationPage } from "./AdminEmailConfirmationPage";
 import { AdminAccountPage } from "./AdminAccountPage";
 import { AdminLocalitiesPage } from "./locality/AdminLocalitiesPage";
 import { AdminAccessBlocksPage } from "./AdminAccessBlocksPage";
+import { lazy, Suspense } from "react";
+const AdminCategoriesPage = lazy(() => import("./AdminCategoriesPage"));
 
 type Props={
  path:string;
@@ -53,6 +55,7 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
   path.startsWith("/admin/bloqueios/");
  return <AdminAccessGate
   onNavigate={onNavigate}
+  requiredRole={path === "/admin/categorias" ? "platform_super_admin" : undefined}
    requiredSector={
    path==="/admin/imoveis" || path.startsWith("/admin/documentos/fila")
     ? "document_verification"
@@ -69,7 +72,9 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
     onNavigate={onNavigate}
     onSessionRefresh={onSessionRefresh}
    >
-    {path==="/admin/conta" || path.startsWith("/admin/conta/")
+    {path === "/admin/categorias"
+      ? <Suspense fallback={<p role="status">Carregando categorias…</p>}><AdminCategoriesPage access={access} onNavigate={onNavigate}/></Suspense>
+      : path==="/admin/conta" || path.startsWith("/admin/conta/")
       ? <AdminAccountPage path={path} access={access} onNavigate={onNavigate}/>
       : path==="/admin/governanca"
       ? <AdminGovernancePage onNavigate={onNavigate} access={access}/>

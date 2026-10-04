@@ -1,0 +1,502 @@
+{
+  "baseSha": "f92467cc276bf167641684fd5197e96098d02d49",
+  "baseSchema": 47,
+  "schema": 48,
+  "comparisonDate": "2026-10-04",
+  "vitest": {
+    "passed": 471,
+    "failed": 0,
+    "explicitlySkipped": 73,
+    "total": 544
+  },
+  "postgresT13": {
+    "passed": 20,
+    "failed": 0,
+    "localOnly": true
+  },
+  "story": {
+    "passed": 1,
+    "failed": 0,
+    "realBrowser": true,
+    "realHttp": true,
+    "realPostgres": true,
+    "externalAuth": "adaptador sintético exclusivamente local"
+  },
+  "postgresT12": {
+    "before": 22,
+    "after": 22,
+    "failed": 0
+  },
+  "playwright": {
+    "base": {
+      "startTime": "2026-10-04T14:10:18.015Z",
+      "duration": 745561.994,
+      "expected": 130,
+      "skipped": 0,
+      "unexpected": 48,
+      "flaky": 0
+    },
+    "delivery": {
+      "startTime": "2026-10-04T14:10:17.699Z",
+      "duration": 749242.028,
+      "expected": 150,
+      "skipped": 0,
+      "unexpected": 47,
+      "flaky": 0
+    },
+    "newFailures": [],
+    "sameFailures": [
+      {
+        "file": "access-confirmation.spec.ts",
+        "title": "submitted properties are visible and review uses revision and command id",
+        "key": "access-confirmation.spec.ts :: access-confirmation.spec.ts :: submitted properties are visible and review uses revision and command id",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_super_admin: populated administrative screens at 320px",
+        "key": "admin-governance-responsive.spec.ts :: admin-governance-responsive.spec.ts :: platform_super_admin: populated administrative screens at 320px",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_super_admin: populated administrative screens at 390px",
+        "key": "admin-governance-responsive.spec.ts :: admin-governance-responsive.spec.ts :: platform_super_admin: populated administrative screens at 390px",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_super_admin: populated administrative screens at 768px",
+        "key": "admin-governance-responsive.spec.ts :: admin-governance-responsive.spec.ts :: platform_super_admin: populated administrative screens at 768px",
+        "status": "unexpected"
+      },
+      {
+        "file": "admin-governance-responsive.spec.ts",
+        "title": "platform_super_admin: populated administrative screens at 1024px",
+        "key": "admin-governance-responsive.spec.ts :: admin-governance-responsive.spec.ts :: platform_super_admin: populated administrative screens at 1024px",
+        "status": "unexpected"
+      },
+      {
+        "file": "iphone-responsive.spec.ts",
+        "title": "iPhone viewport and touch: consumer",
+        "key": "iphone-responsive.spec.ts :: iphone-responsive.spec.ts :: iPhone viewport and touch: consumer",
+        "status": "unexpected"
+      },
+      {
+        "file": "iphone-responsive.spec.ts",
+        "title": "iPhone viewport and touch: producer",
+        "key": "iphone-responsive.spec.ts :: iphone-responsive.spec.ts :: iPhone viewport and touch: producer",
+        "status": "unexpected"
+      },
+      {
+        "file": "iphone-responsive.spec.ts",
+        "title": "iPhone viewport and touch: platform_admin",
+        "key": "iphone-responsive.spec.ts :: iphone-responsive.spec.ts :: iPhone viewport and touch: platform_admin",
+        "status": "unexpected"
+      },
+      {
+        "file": "iphone-responsive.spec.ts",
+        "title": "iPhone viewport and touch: platform_super_admin",
+        "key": "iphone-responsive.spec.ts :: iphone-responsive.spec.ts :: iPhone viewport and touch: platform_super_admin",
+        "status": "unexpected"
+      },
+      {
+        "file": "session-navigation.spec.ts",
+        "title": "sessão persiste na navegação e cadastro só reaparece ao sair: consumer",
+        "key": "session-navigation.spec.ts :: session-navigation.spec.ts :: sessão persiste na navegação e cadastro só reaparece ao sair: consumer",
+        "status": "unexpected"
+      },
+      {
+        "file": "session-navigation.spec.ts",
+        "title": "sessão persiste na navegação e cadastro só reaparece ao sair: producer",
+        "key": "session-navigation.spec.ts :: session-navigation.spec.ts :: sessão persiste na navegação e cadastro só reaparece ao sair: producer",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "falha de config é não bloqueante e mantém navegação",
+        "key": "shell.spec.ts :: shell.spec.ts :: falha de config é não bloqueante e mantém navegação",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "config pública válida atualiza slogan da shell",
+        "key": "shell.spec.ts :: shell.spec.ts :: config pública válida atualiza slogan da shell",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "fluxos públicos de segurança estão acessíveis e responsivos",
+        "key": "shell.spec.ts :: shell.spec.ts :: fluxos públicos de segurança estão acessíveis e responsivos",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "rotas diretas de recuperação preservam estado correto",
+        "key": "shell.spec.ts :: shell.spec.ts :: rotas diretas de recuperação preservam estado correto",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "recuperação explicita o perfil e mantém administração isolada",
+        "key": "shell.spec.ts :: shell.spec.ts :: recuperação explicita o perfil e mantém administração isolada",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "conta separa consumidor e produtor e administração fica independente",
+        "key": "shell.spec.ts :: shell.spec.ts :: conta separa consumidor e produtor e administração fica independente",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "senha forte orienta e bloqueia cadastro fraco",
+        "key": "shell.spec.ts :: shell.spec.ts :: senha forte orienta e bloqueia cadastro fraco",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — configuração admin responsiva em 320px",
+        "key": "shell.spec.ts :: shell.spec.ts :: Trilha 02 — configuração admin responsiva em 320px",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — configuração admin responsiva em 360px",
+        "key": "shell.spec.ts :: shell.spec.ts :: Trilha 02 — configuração admin responsiva em 360px",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — configuração admin responsiva em 768px",
+        "key": "shell.spec.ts :: shell.spec.ts :: Trilha 02 — configuração admin responsiva em 768px",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — configuração admin responsiva em 1440px",
+        "key": "shell.spec.ts :: shell.spec.ts :: Trilha 02 — configuração admin responsiva em 1440px",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — loading permanece visível por pelo menos 100ms",
+        "key": "shell.spec.ts :: shell.spec.ts :: Trilha 02 — loading permanece visível por pelo menos 100ms",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — erro recuperável mostra card e retry",
+        "key": "shell.spec.ts :: shell.spec.ts :: Trilha 02 — erro recuperável mostra card e retry",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — conflito 409 preserva edição e oferece reload",
+        "key": "shell.spec.ts :: shell.spec.ts :: Trilha 02 — conflito 409 preserva edição e oferece reload",
+        "status": "unexpected"
+      },
+      {
+        "file": "shell.spec.ts",
+        "title": "Trilha 02 — sucesso 200 exibe confirmação e nova revisão",
+        "key": "shell.spec.ts :: shell.spec.ts :: Trilha 02 — sucesso 200 exibe confirmação e nova revisão",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha03-auth.spec.ts",
+        "title": "Trilha 03 — portal administrativo usa ponto de entrada independente",
+        "key": "trilha03-auth.spec.ts :: trilha03-auth.spec.ts :: Trilha 03 — portal administrativo usa ponto de entrada independente",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha04-contact-recovery.spec.ts",
+        "title": "Trilha 04 — confirmação usa página própria e Supabase-only",
+        "key": "trilha04-contact-recovery.spec.ts :: trilha04-contact-recovery.spec.ts :: Trilha 04 — confirmação usa página própria e Supabase-only",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha04-contact-recovery.spec.ts",
+        "title": "Trilha 04 — redefinição inválida permanece em página visual própria",
+        "key": "trilha04-contact-recovery.spec.ts :: trilha04-contact-recovery.spec.ts :: Trilha 04 — redefinição inválida permanece em página visual própria",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — login administrativo responsivo em 320px",
+        "key": "trilha05-admin.spec.ts :: trilha05-admin.spec.ts :: Trilha 05 — login administrativo responsivo em 320px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — login administrativo responsivo em 390px",
+        "key": "trilha05-admin.spec.ts :: trilha05-admin.spec.ts :: Trilha 05 — login administrativo responsivo em 390px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — login administrativo responsivo em 430px",
+        "key": "trilha05-admin.spec.ts :: trilha05-admin.spec.ts :: Trilha 05 — login administrativo responsivo em 430px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — login administrativo responsivo em 768px",
+        "key": "trilha05-admin.spec.ts :: trilha05-admin.spec.ts :: Trilha 05 — login administrativo responsivo em 768px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — login administrativo responsivo em 1024px",
+        "key": "trilha05-admin.spec.ts :: trilha05-admin.spec.ts :: Trilha 05 — login administrativo responsivo em 1024px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — login administrativo responsivo em 1440px",
+        "key": "trilha05-admin.spec.ts :: trilha05-admin.spec.ts :: Trilha 05 — login administrativo responsivo em 1440px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — ajuda de governança abre, fecha por backdrop e Escape",
+        "key": "trilha05-admin.spec.ts :: trilha05-admin.spec.ts :: Trilha 05 — ajuda de governança abre, fecha por backdrop e Escape",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — seletor administrativo conduz a telas de entrada distintas",
+        "key": "trilha05-admin.spec.ts :: trilha05-admin.spec.ts :: Trilha 05 — seletor administrativo conduz a telas de entrada distintas",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — seletor administrativo expõe o estado protegido do bootstrap",
+        "key": "trilha05-admin.spec.ts :: trilha05-admin.spec.ts :: Trilha 05 — seletor administrativo expõe o estado protegido do bootstrap",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha05-admin.spec.ts",
+        "title": "Trilha 05 — seletor sempre oferece diagnóstico do bootstrap enquanto não estiver fechado",
+        "key": "trilha05-admin.spec.ts :: trilha05-admin.spec.ts :: Trilha 05 — seletor sempre oferece diagnóstico do bootstrap enquanto não estiver fechado",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha06-account.spec.ts",
+        "title": "T06 sem overflow em 320px",
+        "key": "trilha06-account.spec.ts :: trilha06-account.spec.ts :: T06 sem overflow em 320px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha06-account.spec.ts",
+        "title": "T06 sem overflow em 360px",
+        "key": "trilha06-account.spec.ts :: trilha06-account.spec.ts :: T06 sem overflow em 360px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha06-account.spec.ts",
+        "title": "T06 sem overflow em 768px",
+        "key": "trilha06-account.spec.ts :: trilha06-account.spec.ts :: T06 sem overflow em 768px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha06-account.spec.ts",
+        "title": "T06 sem overflow em 1024px",
+        "key": "trilha06-account.spec.ts :: trilha06-account.spec.ts :: T06 sem overflow em 1024px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha06-account.spec.ts",
+        "title": "T06 sem overflow em 1440px",
+        "key": "trilha06-account.spec.ts :: trilha06-account.spec.ts :: T06 sem overflow em 1440px",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha06-account.spec.ts",
+        "title": "T06 expõe as quatro áreas da conta",
+        "key": "trilha06-account.spec.ts :: trilha06-account.spec.ts :: T06 expõe as quatro áreas da conta",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha06-account.spec.ts",
+        "title": "conta antiga oferece acesso às quatro seções e retorno à segurança",
+        "key": "trilha06-account.spec.ts :: trilha06-account.spec.ts :: conta antiga oferece acesso às quatro seções e retorno à segurança",
+        "status": "unexpected"
+      },
+      {
+        "file": "trilha07-addresses.spec.ts",
+        "title": "produtor vê endereço pessoal sem convite de entrega ao consumidor",
+        "key": "trilha07-addresses.spec.ts :: trilha07-addresses.spec.ts :: produtor vê endereço pessoal sem convite de entrega ao consumidor",
+        "status": "unexpected"
+      }
+    ],
+    "baseOnlyFailures": [
+      {
+        "file": "trilha07-addresses.spec.ts",
+        "title": "geolocalização do aparelho envia latitude e longitude como pin manual",
+        "key": "trilha07-addresses.spec.ts :: trilha07-addresses.spec.ts :: geolocalização do aparelho envia latitude e longitude como pin manual",
+        "status": "unexpected"
+      }
+    ],
+    "newCases": [
+      {
+        "file": "trilha13-categories.spec.ts",
+        "title": "T13 navegação pública responsiva em 320px",
+        "key": "trilha13-categories.spec.ts :: trilha13-categories.spec.ts :: T13 navegação pública responsiva em 320px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha13-categories.spec.ts",
+        "title": "T13 gestão e impacto responsivos em 320px",
+        "key": "trilha13-categories.spec.ts :: trilha13-categories.spec.ts :: T13 gestão e impacto responsivos em 320px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha13-categories.spec.ts",
+        "title": "T13 navegação pública responsiva em 390px",
+        "key": "trilha13-categories.spec.ts :: trilha13-categories.spec.ts :: T13 navegação pública responsiva em 390px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha13-categories.spec.ts",
+        "title": "T13 gestão e impacto responsivos em 390px",
+        "key": "trilha13-categories.spec.ts :: trilha13-categories.spec.ts :: T13 gestão e impacto responsivos em 390px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha13-categories.spec.ts",
+        "title": "T13 navegação pública responsiva em 768px",
+        "key": "trilha13-categories.spec.ts :: trilha13-categories.spec.ts :: T13 navegação pública responsiva em 768px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha13-categories.spec.ts",
+        "title": "T13 gestão e impacto responsivos em 768px",
+        "key": "trilha13-categories.spec.ts :: trilha13-categories.spec.ts :: T13 gestão e impacto responsivos em 768px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha13-categories.spec.ts",
+        "title": "T13 navegação pública responsiva em 1440px",
+        "key": "trilha13-categories.spec.ts :: trilha13-categories.spec.ts :: T13 navegação pública responsiva em 1440px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha13-categories.spec.ts",
+        "title": "T13 gestão e impacto responsivos em 1440px",
+        "key": "trilha13-categories.spec.ts :: trilha13-categories.spec.ts :: T13 gestão e impacto responsivos em 1440px",
+        "status": "expected"
+      },
+      {
+        "file": "trilha13-categories.spec.ts",
+        "title": "T13 skeleton de carregamento sem categorias fictícias",
+        "key": "trilha13-categories.spec.ts :: trilha13-categories.spec.ts :: T13 skeleton de carregamento sem categorias fictícias",
+        "status": "expected"
+      },
+      {
+        "file": "trilha13-categories.spec.ts",
+        "title": "T13 estado vazio e erro com nova tentativa",
+        "key": "trilha13-categories.spec.ts :: trilha13-categories.spec.ts :: T13 estado vazio e erro com nova tentativa",
+        "status": "expected"
+      },
+      {
+        "file": "trilha13-categories.spec.ts",
+        "title": "T13 categoria desativada some e seleção retorna a todos os produtos",
+        "key": "trilha13-categories.spec.ts :: trilha13-categories.spec.ts :: T13 categoria desativada some e seleção retorna a todos os produtos",
+        "status": "expected"
+      },
+      {
+        "file": "trilha13-categories.spec.ts",
+        "title": "T13 Super Admin cria categoria com hierarquia, descrição e ícone",
+        "key": "trilha13-categories.spec.ts :: trilha13-categories.spec.ts :: T13 Super Admin cria categoria com hierarquia, descrição e ícone",
+        "status": "expected"
+      },
+      {
+        "file": "trilha13-categories.spec.ts",
+        "title": "T13 edição de slug autorizada e revisão enviada",
+        "key": "trilha13-categories.spec.ts :: trilha13-categories.spec.ts :: T13 edição de slug autorizada e revisão enviada",
+        "status": "expected"
+      },
+      {
+        "file": "trilha13-categories.spec.ts",
+        "title": "T13 conflito preserva formulário até recarregamento explícito",
+        "key": "trilha13-categories.spec.ts :: trilha13-categories.spec.ts :: T13 conflito preserva formulário até recarregamento explícito",
+        "status": "expected"
+      },
+      {
+        "file": "trilha13-categories.spec.ts",
+        "title": "T13 ciclo é informado sem perder campos",
+        "key": "trilha13-categories.spec.ts :: trilha13-categories.spec.ts :: T13 ciclo é informado sem perder campos",
+        "status": "expected"
+      },
+      {
+        "file": "trilha13-categories.spec.ts",
+        "title": "T13 desativação com impacto exige confirmação e permite reativação",
+        "key": "trilha13-categories.spec.ts :: trilha13-categories.spec.ts :: T13 desativação com impacto exige confirmação e permite reativação",
+        "status": "expected"
+      },
+      {
+        "file": "trilha13-categories.spec.ts",
+        "title": "T13 impacto alterado no envio requer nova confirmação",
+        "key": "trilha13-categories.spec.ts :: trilha13-categories.spec.ts :: T13 impacto alterado no envio requer nova confirmação",
+        "status": "expected"
+      },
+      {
+        "file": "trilha13-categories.spec.ts",
+        "title": "T13 Administrador setorial não vê o atalho nem acessa a gestão",
+        "key": "trilha13-categories.spec.ts :: trilha13-categories.spec.ts :: T13 Administrador setorial não vê o atalho nem acessa a gestão",
+        "status": "expected"
+      },
+      {
+        "file": "trilha13-categories.spec.ts",
+        "title": "T13 guia para reautenticação preserva a edição",
+        "key": "trilha13-categories.spec.ts :: trilha13-categories.spec.ts :: T13 guia para reautenticação preserva a edição",
+        "status": "expected"
+      }
+    ],
+    "focusedFinal": {
+      "passed": 20,
+      "failed": 0,
+      "additionalCase": "primeira carga em aba inicialmente oculta"
+    },
+    "focusedT12": {
+      "passed": 16,
+      "failed": 0
+    }
+  },
+  "notes": [
+    "A suíte ampla mantém falhas anteriores: 47 casos também falham na base. Nenhum caso novo falhou.",
+    "A geolocalização T07 falhou na base e passou na entrega, sem mudança no módulo T07.",
+    "O teste T07 de build foi alinhado à verificação de inicialização já presente na T12.",
+    "O teste PostgreSQL T12 usa a quantidade de migrations do manifesto, preservando todas as suas verificações de domínio.",
+    "Não foram usados usuários reais ou fixtures no Supabase canônico."
+  ],
+  "supabase": {
+    "projectRef": "xipbsazvymkqqfmfegwu",
+    "migrationCanonical": "20261004133608",
+    "migrationPhysical": "20261004142901",
+    "migrations": 53,
+    "schema": 48,
+    "hash": "e957840c37f1929afba4c4da1290daeb28dfad9b8fdc8418227c885ebe412665",
+    "rlsEnabled": true,
+    "rlsForced": true,
+    "anonAuthenticatedPrivileges": [
+      "SELECT"
+    ],
+    "activeCanonicalCategories": 5,
+    "publicTablesWithoutRls": 0,
+    "oldDataUnchanged": true,
+    "countsPreserved": {
+      "stores": 1,
+      "operatingHours": 7,
+      "users": 4,
+      "people": 3,
+      "producerProfiles": 2,
+      "properties": 1,
+      "documents": 7,
+      "municipalities": 7,
+      "verificationRequests": 2,
+      "verificationDecisions": 2
+    },
+    "newSecurityAdvisories": 0
+  }
+}

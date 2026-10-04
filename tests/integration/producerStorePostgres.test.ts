@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { Pool } from "pg";
+import manifest from "../../supabase/manifest.json" with { type: "json" };
 
 // This suite uses an empty, disposable local PostgreSQL bootstrapped with ALL
 // repository migrations. It never accepts a Supabase or non-loopback URL.
@@ -124,7 +125,7 @@ describe.runIf(Boolean(process.env.HVM_T12_LOCAL_DATABASE_URL))(
       const result = await pool().query(
         "SELECT count(*)::int AS count FROM supabase_migrations.schema_migrations",
       );
-      expect(result.rows[0].count).toBe(52);
+      expect(result.rows[0].count).toBe(manifest.migrations.length);
     });
     afterAll(async () => {
       await dbPool?.end();

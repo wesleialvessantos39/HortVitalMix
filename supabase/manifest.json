@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 47,
+  "schemaVersion": 48,
   "migrations": [
     {
       "version": "20260919030126",
@@ -260,7 +260,12 @@
       "version": "20261004120547",
       "name": "trilha12_producer_store",
       "file": "20261004120547_trilha12_producer_store.sql"
+    },
+    {
+      "version": "20261004133608",
+      "name": "trilha13_categories_taxonomy",
+      "file": "20261004133608_trilha13_categories_taxonomy.sql"
     }
   ],
-  "migrationHistoryHash": "d846bc9157099e0725186ca88c06feb5f1c9f452651cd829fb98bbb130ede885"
+  "migrationHistoryHash": "e957840c37f1929afba4c4da1290daeb28dfad9b8fdc8418227c885ebe412665"
 }
