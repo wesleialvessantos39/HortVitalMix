@@ -4,13 +4,13 @@
   "schema": 49,
   "date": "2026-10-04",
   "vitest": {
-    "passed": 527,
+    "passed": 529,
     "failed": 0,
     "explicitlySkipped": 92,
-    "total": 619
+    "total": 621
   },
   "newContractsHttp": {
-    "passed": 56,
+    "passed": 58,
     "failed": 0
   },
   "postgres": {
@@ -1063,5 +1063,18 @@
   },
   "production": {
     "status": "pending"
+  },
+  "transportCorrection": {
+    "scope": [
+      "server/routes/productRoutes.ts"
+    ],
+    "previousDispatcherUnchanged": true,
+    "producedFailureBefore": 400,
+    "localReproductionBefore": 400,
+    "localAfter": 200,
+    "unknownAndDuplicateClientParametersRejected": true,
+    "uploadMetadataTest": "passed",
+    "newTests": 2,
+    "productionStatus": "pending verification of corrected deployment"
   }
 }

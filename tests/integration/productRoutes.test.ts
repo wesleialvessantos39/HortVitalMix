@@ -25,10 +25,20 @@ const create = () => ({
   commandId: randomUUID(),
 });
 const command = () => ({ commandId: randomUUID(), expectedRevision: 1 });
-function app(role: string | null = "producer") {
+function app(role: string | null = "producer", vercelQuery = false) {
   const server = express();
   server.use(express.json());
   server.use((req, res, next) => {
+    if (vercelQuery) {
+      Object.defineProperty(req, "query", {
+        configurable: true,
+        value: {
+          ...req.query,
+          __hvm_path: "v1/producer/products",
+          path: ["v1", "producer", "products"],
+        },
+      });
+    }
     req.actor = role
       ? {
           userId,
@@ -59,6 +69,29 @@ beforeEach(() => {
   vi.mocked(verifyRecentAuthProof).mockReturnValue(true);
 });
 describe("T14 fronteira HTTP", () => {
+  it("metadados da Vercel não contaminam a revisão e o comando do upload", async () => {
+    const upload = vi
+      .spyOn(ProductService, "uploadMedia")
+      .mockResolvedValue({} as any);
+    const input = command();
+    const response = await authenticated(
+      request(app("producer", true)).post(
+        `/v1/producer/products/${id}/media/upload?commandId=${input.commandId}&expectedRevision=1`,
+      ),
+    )
+      .set("Content-Type", "image/png")
+      .send(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+    expect(response.status).toBe(200);
+    expect(upload).toHaveBeenCalledWith(
+      id,
+      personId,
+      input,
+      userId,
+      expect.any(Buffer),
+      "image/png",
+      expect.any(Object),
+    );
+  });
   it.each(["/v1", "/api/v1", "/_hvm_api/v1"])(
     "leitura pública e leitura privada em %s",
     async (prefix) => {
