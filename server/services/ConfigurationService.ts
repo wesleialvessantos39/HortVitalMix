@@ -297,7 +297,7 @@ export class ConfigurationService {
       (SELECT count(*)::text FROM public.app_verification_requests
         WHERE superseded_at IS NULL AND status IN ('pending','claimed','in_review')) AS verification_queue,
       (SELECT count(*)::text FROM public.app_access_partial_blocks WHERE is_active) AS active_blocks,
-      (SELECT count(*)::text FROM public.app_audit_events WHERE created_at>=now()-interval '24 hours') AS audit_24h`);
+      (SELECT count(*)::text FROM public.app_audit_events WHERE occurred_at>=now()-interval '24 hours') AS audit_24h`);
     const row=result.rows[0];
     return {
       activeUsers:Number(row?.active_users??0),
