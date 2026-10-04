@@ -1,5 +1,5 @@
 import { AccountGreeting } from "../../components/AccountGreeting";
-import { ShieldCheck, UsersRound, Settings, UserRound } from "lucide-react";
+import { ShieldCheck, UsersRound, Settings, UserRound, ListTree } from "lucide-react";
 import type { AdminVerifySessionResponse } from "../../../shared/contracts/adminGovernance";
 
 type Props={access:AdminVerifySessionResponse;onNavigate:(to:string)=>void};
@@ -22,6 +22,7 @@ export function AdminDashboardPage({access,onNavigate}:Props){
     <button onClick={()=>onNavigate("/admin/governanca")}><ShieldCheck/><span><strong>Governança</strong><small>{superAdmin?"Criar Administradores ou Super administradores por convite.":"Criar Administradores setoriais dentro dos seus setores."}</small></span></button>
     <button onClick={()=>onNavigate("/admin/usuarios")}><UsersRound/><span><strong>Usuários</strong><small>Consultar acessos administrativos e perfis vinculados.</small></span></button>
     {superAdmin&&<button onClick={()=>onNavigate("/admin/configuracao")}><Settings/><span><strong>Configuração</strong><small>Ajustar parâmetros globais da plataforma.</small></span></button>}
+    {superAdmin&&<button onClick={()=>onNavigate("/admin/categorias")}><ListTree/><span><strong>Categorias</strong><small>Organizar o catálogo global e sua ordem na vitrine.</small></span></button>}
    </div>
   </div>
  </section>

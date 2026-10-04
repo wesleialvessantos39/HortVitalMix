@@ -44,6 +44,8 @@ export function assertManifestHash() {
 }
 
 const remoteVersionAliases: Readonly<Record<string, string>> = {
+  // Taxonomia global T13 aplicada com timestamp físico gerado pelo Supabase.
+  "20261004142901": "20261004133608",
   // Vitrine comercial T12 aplicada com timestamp físico gerado pelo Supabase.
   "20261004124506": "20261004120547",
   "20261004014120": "20261004013902",

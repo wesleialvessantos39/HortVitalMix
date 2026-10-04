@@ -8,6 +8,7 @@ import {
   MapPin,
   Ban,
   UserRound,
+  ListTree,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import type { AdminVerifySessionResponse } from "../../../shared/contracts/adminGovernance";
@@ -30,6 +31,7 @@ const items = [
   ["/admin/localidades", "Localidades", MapPin],
   ["/admin/bloqueios", "Bloqueios", Ban],
   ["/admin/configuracao", "Configuração", Settings],
+  ["/admin/categorias", "Categorias", ListTree],
   ["/admin/conta", "Conta", UserRound],
 ] as const;
 
@@ -42,6 +44,7 @@ export function AdminPortalShell({
 }: Props) {
   const visible = items.filter(([to]) => {
     if (access.role === "platform_super_admin") return true;
+    if (to === "/admin/categorias") return false;
     if (to === "/admin/configuracao")
       return access.sectors.includes("platform_configuration");
     if (to === "/admin/documentos/fila")

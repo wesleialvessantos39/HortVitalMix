@@ -38,6 +38,8 @@ import { PublicLoginPage } from "./pages/auth/PublicLoginPage";
 import { ProducerPropertiesPage } from "./pages/producer/ProducerPropertiesPage";
 import { DeliveryScopePage } from "./pages/producer/DeliveryScopePage";
 import { DocumentsPanel } from "./pages/documents/DocumentsPanel";
+import { CategoryNavSection } from "./components/catalog/CategoryNavSection";
+import type { Category } from "../shared/contracts/category";
 const ProducerStoreSettingsPage = lazy(() => import("./pages/producer/ProducerStoreSettingsPage"));
 const PublicProducerStorePage = lazy(() => import("./pages/public/PublicProducerStorePage"));
 const fallback = {
@@ -58,14 +60,6 @@ const navigation = [
   ["/planos", "Planos", CalendarDays],
   ["/sobre", "Sobre nós", Sprout],
 ] as const;
-const categories = [
-  "Todos os produtos",
-  "Hortaliças folhosas",
-  "Legumes picados",
-  "Mix prontos",
-  "Temperos e ervas",
-  "Frutas",
-];
 const accountPaths = new Set([
   "/conta",
   "/minha-conta",
@@ -87,7 +81,8 @@ export default function App() {
     [path, setPath] = useState(location.pathname),
     [modal, setModal] = useState<string | null>(null),
     [query, setQuery] = useState(""),
-    [category, setCategory] = useState(categories[0]),
+    [category, setCategory] = useState("Todos os produtos"),
+    [categoryId, setCategoryId] = useState<string | null>(null),
     [deliveryLabel, setDeliveryLabel] = useState<string | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const {
@@ -198,6 +193,14 @@ export default function App() {
     setPath(next.pathname);
     window.scrollTo(0, 0);
   }, []);
+  const refreshCategorySelection = useCallback((selected: Category | null) => {
+    setCategoryId(selected?.id ?? null);
+    setCategory(selected?.name ?? "Todos os produtos");
+  }, []);
+  const selectCategory = useCallback((selected: Category | null) => {
+    refreshCategorySelection(selected);
+    go("/produtos");
+  }, [go, refreshCategorySelection]);
   const logo = (
     <a
       className="brand"
@@ -438,27 +441,7 @@ export default function App() {
                 </div>
                 <ChevronDown size={15} />
               </div>
-              <section className="card categories">
-                <h2>Categorias</h2>
-                <nav aria-label="Categorias de produtos">
-                  {categories.map((c, i) => (
-                    <button
-                      key={c}
-                      aria-pressed={category === c}
-                      onClick={() => {
-                        setCategory(c);
-                        go("/produtos");
-                      }}
-                    >
-                      <span className="category-icon">
-                        {i === 0 ? <Package size={18} /> : <Leaf size={18} />}
-                      </span>
-                      <span>{c}</span>
-                      <ChevronRight className="chevron" size={14} />
-                    </button>
-                  ))}
-                </nav>
-              </section>
+              <CategoryNavSection selectedId={categoryId} onSelect={selectCategory} onSelectionRefresh={refreshCategorySelection} />
               {!shellSession && !sessionLoading && <section className="producer-invite">
                 <Sprout />
                 <h3>Você produz por aqui?</h3>

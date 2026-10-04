@@ -1,0 +1,108 @@
+.categories.hvm-category-nav {
+  min-width: 0;
+}
+.categories.hvm-category-nav .category-icon {
+  flex-shrink: 0;
+}
+.categories.hvm-category-nav button > span:nth-child(2) {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.categories.hvm-category-nav .hvm-category-status {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 8px 10px;
+}
+.categories.hvm-category-nav .hvm-category-status button {
+  width: auto;
+  min-width: auto;
+  display: inline;
+  padding: 4px;
+  color: var(--primary);
+  text-decoration: underline;
+  font-size: 12px;
+}
+.hvm-category-skeleton {
+  display: block;
+  height: 48px;
+  border-radius: 11px;
+  background: linear-gradient(100deg, #edf2ed 30%, #f8faf8 50%, #edf2ed 70%);
+  background-size: 200% 100%;
+  animation: hvm-category-shimmer 1.5s ease-in-out infinite;
+}
+@keyframes hvm-category-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+@media (min-width: 768px) {
+  .categories.hvm-category-nav {
+    padding: 18px 12px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+  }
+  .categories.hvm-category-nav h2 {
+    margin: 0 10px 12px;
+  }
+  .categories.hvm-category-nav nav {
+    display: grid;
+    overflow: visible;
+    gap: 3px;
+    padding: 0;
+  }
+  .categories.hvm-category-nav nav button {
+    flex-direction: row;
+    text-align: left;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    font-size: 12px;
+    padding: 13px 10px;
+    border: 0;
+    background: transparent;
+  }
+  .categories.hvm-category-nav nav button:hover,
+  .categories.hvm-category-nav nav button[aria-pressed="true"] {
+    background: var(--light);
+    color: var(--primary);
+  }
+  .categories.hvm-category-nav .chevron {
+    display: block;
+    flex-shrink: 0;
+  }
+}
+@media (max-width: 767px) {
+  .categories.hvm-category-nav nav {
+    display: flex;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x pan-y;
+    scrollbar-width: thin;
+    gap: 9px;
+    padding-bottom: 7px;
+  }
+  .categories.hvm-category-nav nav button {
+    flex: 0 0 90px;
+    width: 90px;
+    min-width: 90px;
+    flex-direction: column;
+    text-align: center;
+    font-size: 11px;
+    gap: 7px;
+    padding: 10px 5px;
+  }
+  .categories.hvm-category-nav .chevron {
+    display: none;
+  }
+  .hvm-category-skeleton {
+    flex: 0 0 90px;
+    height: 76px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hvm-category-skeleton {
+    animation: none;
+  }
+}
