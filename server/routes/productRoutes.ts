@@ -24,6 +24,10 @@ function queryFromUrl(req: Request) {
   // the existing dispatcher normalizes req.url. Validate only that URL, and
   // preserve duplicate values so the strict contracts still reject them.
   const params = new URL(req.url, "http://localhost").searchParams;
+  // The catch-all function can also append its route parameters to the URL.
+  // These keys are consumed by the transport and never select business data.
+  params.delete("path");
+  params.delete("__hvm_path");
   const query: Record<string, string | string[]> = Object.create(null);
   for (const key of new Set(params.keys())) {
     const values = params.getAll(key);

@@ -76,7 +76,7 @@ describe("T14 fronteira HTTP", () => {
     const input = command();
     const response = await authenticated(
       request(app("producer", true)).post(
-        `/v1/producer/products/${id}/media/upload?commandId=${input.commandId}&expectedRevision=1`,
+        `/v1/producer/products/${id}/media/upload?commandId=${input.commandId}&expectedRevision=1&path=v1%2Fproducer%2Fproducts&__hvm_path=v1%2Fproducer%2Fproducts`,
       ),
     )
       .set("Content-Type", "image/png")
