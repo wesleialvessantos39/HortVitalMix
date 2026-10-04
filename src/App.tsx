@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import {
   Leaf,
   MapPin,
@@ -38,6 +38,8 @@ import { PublicLoginPage } from "./pages/auth/PublicLoginPage";
 import { ProducerPropertiesPage } from "./pages/producer/ProducerPropertiesPage";
 import { DeliveryScopePage } from "./pages/producer/DeliveryScopePage";
 import { DocumentsPanel } from "./pages/documents/DocumentsPanel";
+const ProducerStoreSettingsPage = lazy(() => import("./pages/producer/ProducerStoreSettingsPage"));
+const PublicProducerStorePage = lazy(() => import("./pages/public/PublicProducerStorePage"));
 const fallback = {
   platformName: "HortiVitalMix",
   slogan: "Tudo fresco. Tudo da sua região.",
@@ -125,6 +127,8 @@ export default function App() {
     path === "/produtor/propriedades" ||
     path === "/produtor/propriedades/novo";
   const isProducerScopeRoute = path === "/produtor/entrega";
+  const isProducerStoreRoute = path === "/produtor/loja";
+  const publicStoreSlug = path.match(/^\/produtores\/([^/]+)\/?$/)?.[1];
   const publicPortalSession =
     Boolean(shellSession) &&
     (shellSession?.portalKind === "public" ||
@@ -341,15 +345,15 @@ export default function App() {
             </button>
           </div>
         </div>
-        {!isProducerPropertyRoute && search}
+        {!isProducerPropertyRoute && !isProducerStoreRoute && search}
       </header>
-      <main id="conteudo" className={isAdminRoute || publicLoginRole ? "layout admin-route-layout" : isProducerPropertyRoute ? "layout producer-route-layout rural-property-layout" : isProducerScopeRoute ? "layout producer-route-layout" : "layout"}>
+      <main id="conteudo" className={isAdminRoute || publicLoginRole ? "layout admin-route-layout" : isProducerPropertyRoute ? "layout producer-route-layout rural-property-layout" : isProducerScopeRoute || isProducerStoreRoute ? "layout producer-route-layout" : "layout"}>
         {shellSession?.localityWarning && !isAdminRoute && (
           <p className="account-notice locality-blocked" role="alert">
             {shellSession.localityWarning}
           </p>
         )}
-        {(sessionLoading && (guestAccessRoute || isAccountDataRoute || isProducerPropertyRoute || path === "/minha-conta")) || (shellSession && guestAccessRoute) ? <p role="status" className="account-notice">Carregando sua conta…</p> : publicLoginRole ? (
+        {(sessionLoading && (guestAccessRoute || isAccountDataRoute || isProducerPropertyRoute || isProducerStoreRoute || path === "/minha-conta")) || (shellSession && guestAccessRoute) ? <p role="status" className="account-notice">Carregando sua conta…</p> : publicLoginRole ? (
           <PublicLoginPage key={publicLoginRole} role={publicLoginRole} onNavigate={go} onSessionAdopt={adoptSession}/>
         ) : isAdminRoute ? (
           <AdminRouter path={path} onNavigate={go} onSessionRefresh={refreshSession} />
@@ -371,6 +375,14 @@ export default function App() {
           />
         ) : path === "/cadastro" ? (
           <ChoosePortalPage onNavigate={go} />
+        ) : publicStoreSlug ? (
+          <Suspense fallback={<p role="status">Carregando a vitrine…</p>}>
+            <PublicProducerStorePage key={publicStoreSlug} slug={publicStoreSlug} onNavigate={go} />
+          </Suspense>
+        ) : isProducerStoreRoute && shellSession?.activeRole === "producer" ? (
+          <Suspense fallback={<p role="status">Carregando sua loja…</p>}>
+            <ProducerStoreSettingsPage key={shellSession.userId} session={shellSession} onNavigate={go} />
+          </Suspense>
         ) : path.startsWith("/produtor/documentos") && shellSession?.activeRole === "producer" ? (
           <DocumentsPanel propertyId={new URLSearchParams(location.search).get("propertyId") ?? ""} initialDocumentId={path.split("/")[3]} onNavigate={go} />
         ) : isProducerPropertyRoute && shellSession?.activeRole === "producer" ? (
@@ -382,7 +394,7 @@ export default function App() {
           />
         ) : isProducerScopeRoute && shellSession?.activeRole === "producer" ? (
           <DeliveryScopePage session={shellSession} onNavigate={go} />
-        ) : isProducerPropertyRoute || isProducerScopeRoute ? (
+        ) : isProducerPropertyRoute || isProducerScopeRoute || isProducerStoreRoute ? (
           <Account
             path="/minha-conta"
             onNavigate={go}

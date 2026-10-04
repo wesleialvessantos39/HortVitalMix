@@ -71,7 +71,10 @@
     "verify:t12:evidence": "node scripts/verify-locality-evidence.mjs",
     "verify:t12:free": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t12:unit && npm run verify:t12:evidence && vite build && node --import tsx scripts/check-bundle.ts",
     "test:reconstruction:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha08-rural-properties.spec.ts tests/e2e/admin-governance-responsive.spec.ts",
-    "verify:reconstruction": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:unit && npm run test:t08:unit && npm run verify:t08:evidence && npm run test:t09t10 && npm run test:t12:unit && npm run verify:t12:evidence && npm run test:reconstruction:e2e"
+    "verify:reconstruction": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:unit && npm run test:t08:unit && npm run verify:t08:evidence && npm run test:t09t10 && npm run test:t12:unit && npm run verify:t12:evidence && npm run test:reconstruction:e2e",
+    "test:t12:store": "vitest run tests/unit/producerStoreContracts.test.ts tests/integration/producerStoreRoutes.test.ts",
+    "test:t12:store:postgres": "vitest run tests/integration/producerStorePostgres.test.ts",
+    "test:t12:store:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha12-producer-store.spec.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",
@@ -82,6 +85,7 @@
     "pg": "8.23.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "sanitize-html": "2.18.0",
     "zod": "4.6.5"
   },
   "devDependencies": {
@@ -92,6 +96,7 @@
     "@types/pg": "8.23.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "@types/sanitize-html": "2.16.2",
     "@types/supertest": "7.2.1",
     "@vitejs/plugin-react": "6.1.1",
     "@vitest/coverage-v8": "5.0.1",

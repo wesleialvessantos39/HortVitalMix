@@ -49,6 +49,7 @@ beforeEach(() => {
             full_name: "Pessoa Cadastrada",
             email_normalized: "person@example.com",
           }
+        : name === "app_users" ? { status: "active" }
         : [{ role_code: "producer", expires_at: null }];
     const q: any = {
       select: () => q,
@@ -56,6 +57,7 @@ beforeEach(() => {
       is: () => q,
       in: () => Promise.resolve({ data, error: null }),
       maybeSingle: () => Promise.resolve({ data, error: null }),
+      single: () => Promise.resolve({ data, error: null }),
     };
     return q;
   });

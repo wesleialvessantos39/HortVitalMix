@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 46,
+  "schemaVersion": 47,
   "migrations": [
     {
       "version": "20260919030126",
@@ -255,7 +255,12 @@
       "version": "20261004013902",
       "name": "property_deletion_and_registration_integrity",
       "file": "20261004013902_property_deletion_and_registration_integrity.sql"
+    },
+    {
+      "version": "20261004120547",
+      "name": "trilha12_producer_store",
+      "file": "20261004120547_trilha12_producer_store.sql"
     }
   ],
-  "migrationHistoryHash": "307a3186739b87f8a4ca008971b4b9b3df8220391568c1bd4cb1b3e8cc7eae22"
+  "migrationHistoryHash": "d846bc9157099e0725186ca88c06feb5f1c9f452651cd829fb98bbb130ede885"
 }

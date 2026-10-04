@@ -44,6 +44,8 @@ export function assertManifestHash() {
 }
 
 const remoteVersionAliases: Readonly<Record<string, string>> = {
+  // Vitrine comercial T12 aplicada com timestamp físico gerado pelo Supabase.
+  "20261004124506": "20261004120547",
   "20261004014120": "20261004013902",
   // Governança de imóveis/contas/localidades aplicada pelo Supabase em UTC.
   "20261004012409": "20261003151000",

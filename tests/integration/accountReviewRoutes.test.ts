@@ -18,6 +18,7 @@ vi.mock("../../server/middleware/adminSession.ts", () => ({
     q.adminActor = {
       userId: "11111111-1111-4111-8111-111111111111",
       role: q.headers["x-role"],
+      sectors: [],
       isSuperAdmin: q.headers["x-role"] === "platform_super_admin",
     };
     q.requestId = "33333333-3333-4333-8333-333333333333";
@@ -25,6 +26,8 @@ vi.mock("../../server/middleware/adminSession.ts", () => ({
     n();
   },
   requireSuperAdmin: (q: any, s: any, n: any) =>
+    q.adminActor.isSuperAdmin ? n() : s.sendStatus(403),
+  requireAdminSector: () => (q: any, s: any, n: any) =>
     q.adminActor.isSuperAdmin ? n() : s.sendStatus(403),
   requireRecentAuth: (q: any, s: any, n: any) =>
     q.headers["x-stale"] ? s.sendStatus(401) : n(),
@@ -111,13 +114,14 @@ it("requires recent authentication", async () => {
     ).status,
   ).toBe(401);
 });
-it("deletes logically, revokes sessions, archives identity and records audit atomically", async () => {
+it("revokes sessions, preserves tombstone/audit and calls the v46 operational deletion", async () => {
   expect((await deletion().send(body)).status).toBe(200);
   for (const part of [
     "status='deleted'",
     "archived_at=now()",
     "DELETE FROM auth.sessions",
     "'account.deleted'",
+    "public.delete_active_account",
   ])
     expect(m.query.mock.calls.some(([sql]) => sql.includes(part))).toBe(true);
   expect(m.query.mock.calls.at(-1)?.[0]).toBe("COMMIT");
@@ -170,14 +174,14 @@ it("rolls back if restoring an archived identity conflicts with a current CPF", 
   ).toBe(409);
   expect(m.query.mock.calls.at(-1)?.[0]).toBe("ROLLBACK");
 });
-it("does not override another decision or an independently blocked account", async () => {
+it("does not override another decision or an already active account", async () => {
   m.reviewStatus = "rejected";
   expect(
     (await review().send({ ...body, decision: "approved", note: "Conferido" }))
       .status,
   ).toBe(409);
   m.reviewStatus = "pending";
-  m.accountStatus = "blocked";
+  m.accountStatus = "active";
   expect(
     (await review().send({ ...body, decision: "approved", note: "Conferido" }))
       .status,
