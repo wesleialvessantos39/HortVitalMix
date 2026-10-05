@@ -1,0 +1,242 @@
+.hvm-discovery {
+  min-width: 0;
+}
+.hvm-discovery-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  margin: 24px 0 12px;
+}
+.hvm-discovery-filters label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #355242;
+}
+.hvm-discovery-filters .hvm-discovery-search {
+  flex: 1 1 100%;
+}
+.hvm-discovery-search > span {
+  display: flex;
+  align-items: center;
+  padding-left: 13px;
+  gap: 10px;
+  background: white;
+  border: 1px solid #cbd8ce;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.hvm-discovery-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  padding: 14px 0;
+  background: transparent;
+  font: inherit;
+}
+.hvm-discovery-search button {
+  flex-shrink: 0;
+  min-height: 46px;
+  border-radius: 0;
+}
+.hvm-discovery-filters select {
+  min-height: 44px;
+  max-width: 100%;
+  padding: 10px 32px 10px 12px;
+  border: 1px solid #cbd8ce;
+  border-radius: 10px;
+  background: white;
+  font: inherit;
+}
+.hvm-discovery-position {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+}
+.hvm-discovery-reference {
+  display: flex;
+  align-items: start;
+  gap: 6px;
+  color: #64736b;
+  font-size: 12px;
+  line-height: 1.6;
+  margin-bottom: 22px;
+}
+.hvm-discovery-reference svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.hvm-discovery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.hvm-discovery-card {
+  border: 1px solid #dfe7df;
+  border-radius: 16px;
+  overflow: hidden;
+  background: white;
+  display: flex;
+  flex-direction: column;
+}
+.hvm-discovery-photo {
+  position: relative;
+  height: 148px;
+  background: #edf4ec;
+  display: grid;
+  place-items: center;
+  color: #69856b;
+}
+.hvm-discovery-photo > span {
+  display: grid;
+  justify-items: center;
+  gap: 9px;
+  font-size: 12px;
+}
+.hvm-discovery-photo img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.hvm-discovery-heart {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid #d8e4d9;
+  border-radius: 50%;
+  background: white;
+  color: #58725c;
+  display: grid;
+  place-items: center;
+}
+.hvm-discovery-heart[aria-pressed="true"] {
+  color: #c84d60;
+}
+.hvm-discovery-heart:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+.hvm-discovery-body {
+  padding: 18px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+}
+.hvm-discovery-verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #34744a;
+  font-size: 11px;
+  font-weight: 600;
+}
+.hvm-discovery-body h3 {
+  margin: 12px 0 5px;
+  font-size: 18px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.hvm-discovery-body p {
+  color: #64736b;
+  font-size: 13px;
+  margin: 4px 0;
+}
+.hvm-discovery-body .hvm-discovery-distance {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #355242;
+  font-weight: 600;
+  margin: 10px 0 20px;
+}
+.hvm-discovery-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  text-decoration: none;
+  min-height: 44px;
+  margin-top: auto;
+}
+.hvm-discovery-notice,
+.hvm-discovery-empty {
+  padding: 30px 24px;
+  border: 1px solid #dfe7df;
+  border-radius: 16px;
+  background: white;
+}
+.hvm-discovery-empty {
+  text-align: center;
+  color: #627769;
+  padding-block: 48px;
+}
+.hvm-discovery-empty h3 {
+  color: #2c4835;
+  margin: 16px 0 8px;
+}
+.hvm-discovery-empty p {
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 440px;
+  margin-inline: auto;
+}
+.hvm-discovery-error {
+  color: #8b3543;
+  margin-bottom: 16px;
+}
+.hvm-discovery-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+}
+.hvm-discovery-pagination button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.hvm-discovery :is(button, input, select, a):focus-visible {
+  outline: 3px solid #367945;
+  outline-offset: 3px;
+}
+@media (max-width: 1200px) {
+  .hvm-discovery-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .hvm-discovery-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hvm-discovery-search > span {
+    flex-wrap: wrap;
+    padding-left: 12px;
+  }
+  .hvm-discovery-search button {
+    width: calc(100% + 12px);
+    margin-left: -12px;
+  }
+  .hvm-discovery-filters > label:not(.hvm-discovery-search),
+  .hvm-discovery-position {
+    width: 100%;
+  }
+  .hvm-discovery-photo {
+    height: 170px;
+  }
+  .hvm-discovery-pagination {
+    gap: 8px;
+    font-size: 12px;
+  }
+}
