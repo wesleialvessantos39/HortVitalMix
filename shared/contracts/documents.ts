@@ -39,6 +39,8 @@ const optionalArea = z.number().min(0).max(999999).nullable().optional();
 export const ManualDocumentDataSchema = z
   .object({
     commandId: z.uuid(),
+    source: z.enum(["pdf_text", "producer_correction"]).optional(),
+    expectedRevision: z.number().int().positive().optional(),
     carNumber: z.string().trim().max(64).nullable().optional(),
     ccirNumber: z.string().trim().max(64).nullable().optional(),
     propertyRegisteredName: z.string().trim().min(2).max(128),
@@ -58,7 +60,8 @@ export const ManualDocumentDataSchema = z
     latitudeSede: z.number().min(-14).max(-7).nullable().optional(),
     longitudeSede: z.number().min(-67).max(-59).nullable().optional(),
   })
-  .strict();
+  .strict()
+  .refine((v) => (v.latitudeSede == null) === (v.longitudeSede == null), { message: "Informe latitude e longitude juntas", path: ["latitudeSede"] });
 export type ManualDocumentData = z.infer<typeof ManualDocumentDataSchema>;
 export type RequestUploadUrl = z.infer<typeof RequestUploadUrlSchema>;
 export type DocumentView = {

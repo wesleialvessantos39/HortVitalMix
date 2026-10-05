@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 52,
+  "schemaVersion": 53,
   "migrations": [
     {
       "version": "20260919030126",
@@ -290,7 +290,12 @@
       "version": "20261005131647",
       "name": "trilha17_discovery_favorites",
       "file": "20261005131647_trilha17_discovery_favorites.sql"
+    },
+    {
+      "version": "20261005144950",
+      "name": "registration_consent_fast_confirmation",
+      "file": "20261005144950_registration_consent_fast_confirmation.sql"
     }
   ],
-  "migrationHistoryHash": "adb81e6a4b6407916b5a0dc057e47f9e79d184a5d5faf426dfcd336d148f4531"
+  "migrationHistoryHash": "b1889d4aa6b99e721709bdedc4afbdcd68a1d44c65932ea2a36bff9fcf934676"
 }

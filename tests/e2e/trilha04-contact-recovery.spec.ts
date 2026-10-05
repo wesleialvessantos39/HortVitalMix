@@ -16,14 +16,15 @@ test("Trilha 04 — confirmação usa página própria e Supabase-only", async (
   await page.goto("/confirmar-contato");
   await expect(page.getByRole("heading", { name: "Confirme seu e-mail" })).toBeVisible();
   await expect(page.getByLabel("E-mail do cadastro")).toBeVisible();
-  await expect(page.getByLabel("Perfil", {exact:true})).toHaveValue("consumer");
+  await expect(page.getByRole("combobox")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Reenviar confirmação" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
 test("Trilha 04 — redefinição inválida permanece em página visual própria", async ({ page }) => {
   await page.goto("/redefinir-senha");
   await expect(page.getByRole("heading", { name: "Definir nova senha" })).toBeVisible();
-  await expect(page.getByText("Link inválido ou expirado")).toBeVisible();
+  await expect(page.getByText("Link indisponível", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Solicitar novo link" })).toBeVisible();
 });
 

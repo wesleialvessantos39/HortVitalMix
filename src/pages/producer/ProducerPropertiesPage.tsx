@@ -743,6 +743,22 @@ function RuralPropertyWizard({
     });
   }
 
+  async function synchronizeDocumentProperty() {
+    if (!draft.propertyId) return;
+    const { property } = await api<{ property: RuralPropertyView }>("/v1/producer/properties/" + draft.propertyId);
+    const server = draftFromProperty(property);
+    setDraft(current => ({
+      ...current,
+      propertyName: server.propertyName, registrationNumber: server.registrationNumber,
+      municipality: server.municipality, totalAreaHectares: server.totalAreaHectares,
+      cultivatedAreaHectares: server.cultivatedAreaHectares,
+      latitudeSede: server.latitudeSede, longitudeSede: server.longitudeSede,
+      revision: property.revision,
+    }));
+    pendingSave.current = null;
+    setSaveState("saved");
+  }
+
   useEffect(() => {
     const handleOnline = () => {
       setOnline(true);
@@ -1317,6 +1333,8 @@ function RuralPropertyWizard({
               propertyId={draft.propertyId}
               embedded
               readOnly={viewOnly}
+              propertyRevision={draft.revision}
+              onPropertyUpdated={synchronizeDocumentProperty}
               onReadinessChange={({ documents: nextDocuments, requiredReady }) => {
                 updateDocumentReadiness({ documents: nextDocuments, requiredReady });
               }}

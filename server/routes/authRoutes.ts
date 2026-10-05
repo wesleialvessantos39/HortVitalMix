@@ -13,7 +13,7 @@ import {
   SessionImportSchema,
   type PortalRole,
 } from "../../shared/contracts/auth.ts";
-import { LgpdCadastroAcceptanceSchema } from "../../shared/lgpdCadastro.ts";
+import { LgpdCadastroAcceptanceSchema, RegistrationConsentSchema } from "../../shared/lgpdCadastro.ts";
 import { runtime } from "../config/runtime.ts";
 import {
   createSupabasePublicClient,
@@ -30,6 +30,7 @@ import {
   consumeSecurityCodeChallenge,
   finalizeRecoveryChallenge,
   findActiveIdentityForRole,
+  publicConfirmationRole,
   invalidateChallenge,
   issueRecoveryChallenge,
   issueSecurityCodeChallenge,
@@ -658,7 +659,7 @@ authRouter.post("/logout", async (req, res, next) => {
 });
 
 authRouter.post("/resend-confirmation", async (req, res) => {
-  const input = RoleScopedEmailRequestSchema.safeParse(req.body);
+  const input = RoleScopedEmailRequestSchema.partial({ portalRole: true }).safeParse(req.body);
   if (!input.success) {
     res.status(400).json({
         error: "VALIDATION_ERROR",
@@ -671,15 +672,16 @@ authRouter.post("/resend-confirmation", async (req, res) => {
     return;
   }
 
-  const identity = await findActiveIdentityForRole(
+  const role = input.data.portalRole ?? await publicConfirmationRole(input.data.email);
+  const identity = role ? await findActiveIdentityForRole(
     input.data.email,
-    input.data.portalRole,
-  );
+    role,
+  ) : null;
 
   if (identity && supabasePublic) {
     const target = redirectUrl(
       req,
-      `/confirmar-contato?portal=${encodeURIComponent(input.data.portalRole)}&context=${encodeURIComponent(issueConfirmationContext(identity.user_id, input.data.portalRole as "consumer" | "producer"))}`,
+      `/confirmar-contato?portal=${encodeURIComponent(role!)}&context=${encodeURIComponent(issueConfirmationContext(identity.user_id, role as "consumer" | "producer"))}`,
     );
     if (target) {
       const { error } = await supabasePublic.auth.resend({
@@ -1145,7 +1147,7 @@ for (const role of ["consumer", "producer"] as const)
     const startedAt = Date.now();
     const parsed = (
       role === "producer" ? RegisterProducerSchema : RegisterConsumerSchema
-    ).safeParse(req.body);
+    ).extend({ consent: RegistrationConsentSchema.optional() }).safeParse(req.body);
 
     if (!parsed.success) {
       res.status(400).json({
@@ -1160,17 +1162,20 @@ for (const role of ["consumer", "producer"] as const)
     }
 
     try {
+      const { consent, ...registrationData } = parsed.data;
       const result = await register(
-        parsed.data,
+        registrationData,
         role,
         res.locals.requestId,
+        parsed.data.consent ? { policyVersion: parsed.data.consent.policyVersion, ipHash: req.clientIpHash || "0".repeat(64), userAgent: String(req.headers["user-agent"] ?? "unknown") } : undefined,
       );
       // A previous browser session is not proof that this new account was confirmed.
       clear(res);
       let confirmationDispatchAccepted = Boolean(
         result.confirmationDispatchAccepted,
       );
-      if (
+      const confirmationContext = ("confirmationContext" in result ? result.confirmationContext : undefined) || (result.userId && result.confirmationRequired && !result.reviewRequired ? issueConfirmationContext(result.userId, role) : undefined);
+      if (!parsed.data.consent &&
         result.confirmationRequired &&
         !result.reviewRequired &&
         !confirmationDispatchAccepted &&
@@ -1194,6 +1199,7 @@ for (const role of ["consumer", "producer"] as const)
       res.setHeader("Server-Timing", "auth-register;dur=" + Math.max(0, Date.now() - startedAt));
       res.status(201).json({
         ...result,
+        confirmationContext,
         confirmationDispatchAccepted,
         confirmationDispatchDeferred:
           result.confirmationRequired &&

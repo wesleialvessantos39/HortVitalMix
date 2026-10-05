@@ -20,6 +20,15 @@ function isAdministrativeRole(role: PortalRole) {
   return role === "platform_admin" || role === "platform_super_admin";
 }
 
+export async function publicConfirmationRole(email: string): Promise<"consumer" | "producer" | null> {
+  if (!supabaseAdmin) return null;
+  const person = await supabaseAdmin.from("app_people").select("user_id").eq("email_normalized", email.trim().toLowerCase()).is("archived_at", null).maybeSingle();
+  if (person.error || !person.data) return null;
+  const assignments = await supabaseAdmin.from("app_user_role_assignments").select("role_code,expires_at").eq("user_id", person.data.user_id).is("revoked_at", null).in("role_code", ["consumer", "producer"]).order("created_at", { ascending: false });
+  if (assignments.error) return null;
+  return assignments.data?.find(r => !r.expires_at || new Date(r.expires_at).getTime() > Date.now())?.role_code ?? null;
+}
+
 export async function findActiveIdentityForRole(
   email: string,
   role: PortalRole,

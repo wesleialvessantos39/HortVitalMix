@@ -10,6 +10,8 @@ import {
   type SubmitPropertyInput,
 } from "../../shared/contracts/ruralProperty.ts";
 import { propertyIdentityKey } from "../../shared/rural/propertyIdentity.ts";
+import { declaredDocumentFields } from "../../shared/documents/effectiveDocumentFields.ts";
+import type { ExtractionView } from "../../shared/contracts/aiExtraction.ts";
 import {
   LOCALITY_DISABLED_MESSAGE,
   LOCALITY_NOT_COVERED_MESSAGE,
@@ -450,18 +452,29 @@ export function selectPropertyActivityCategory<T extends string>(
 
 async function assertRequiredPropertyDocument(client: PoolClient, propertyId: string) {
   const documents = await client.query<
-    RequiredPropertyDocument & { id: string }
+    RequiredPropertyDocument & { id: string; dataReview: ExtractionView["dataReview"] }
   >(
     `SELECT d.id, e.id AS extraction_id, e.status AS extraction_status,
             e.payload_jsonb->>'propertyRegisteredName' AS property_name,
             e.payload_jsonb->>'municipality' AS municipality,
-            e.payload_jsonb->>'totalAreaHectares' AS total_area
+            e.payload_jsonb->>'totalAreaHectares' AS total_area,
+            (SELECT to_jsonb(r) FROM public.app_document_reviews r WHERE r.extraction_id=e.id
+              AND r.note LIKE 'Dados informados pelo produtor, sem leitura automática.%'
+              ORDER BY r.created_at DESC,r.id DESC LIMIT 1) AS "dataReview"
        FROM public.app_documents d
        LEFT JOIN public.app_document_extractions e ON e.document_id=d.id
       WHERE d.property_id=$1 AND d.status='clean'
         AND d.document_type IN ('car_sicar','ccir_incra')`,
     [propertyId],
   );
+  for (const doc of documents.rows) {
+    const corrected = declaredDocumentFields({ dataReview: doc.dataReview } as ExtractionView);
+    if (corrected) {
+      if (typeof corrected.propertyRegisteredName === "string") doc.property_name = corrected.propertyRegisteredName;
+      if (typeof corrected.municipality === "string") doc.municipality = corrected.municipality;
+      if (typeof corrected.totalAreaHectares === "number") doc.total_area = String(corrected.totalAreaHectares);
+    }
+  }
   if (!documents.rows.length)
     throw new RuralPropertyError(
       "PROPERTY_DOCUMENTS_REQUIRED",

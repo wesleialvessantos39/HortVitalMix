@@ -29,7 +29,11 @@ export function ContactConfirmationPage({
       portalRole:
         query.get("portal") === "producer"
           ? ("producer" as const)
-          : ("consumer" as const),
+          : query.get("portal") === "consumer"
+            ? ("consumer" as const)
+            : undefined,
+      pending: query.get("pending") === "1",
+      send: query.get("send") === "1",
       error: hash.get("error_code"),
     };
   });
@@ -47,11 +51,14 @@ export function ContactConfirmationPage({
         }
       })(),
   );
-  const [role, setRole] = useState(link.portalRole);
+  const [role, setRole] = useState<"consumer" | "producer" | undefined>(
+    link.portalRole,
+  );
   const [busy, setBusy] = useState(Boolean(link.context || link.accessToken));
   const [notice, setNotice] = useState("");
   const [retry, setRetry] = useState(0);
   const request = useRef<Promise<Result> | null>(null);
+  const dispatchStarted = useRef(false);
   const [cooldown, setCooldown] = useState(false);
   useEffect(() => {
     if (!link.context && !link.accessToken) {
@@ -63,12 +70,24 @@ export function ContactConfirmationPage({
     }
     let active = true;
     setBusy(true);
+    const send = link.send && !dispatchStarted.current;
+    if (send) {
+      dispatchStarted.current = true;
+      const query = new URLSearchParams(location.search);
+      query.delete("send");
+      history.replaceState(
+        history.state,
+        "",
+        location.pathname + "?" + query + location.hash,
+      );
+    }
     request.current ??= api<Result>("/v1/auth/confirmation", {
       method: "POST",
       body: JSON.stringify({
         context: link.context,
         accessToken: link.accessToken,
         portalRole: link.portalRole,
+        ...(send ? { resend: true } : {}),
       }),
     });
     void request.current
@@ -76,11 +95,13 @@ export function ContactConfirmationPage({
         if (!active) return;
         setResult(value);
         setRole(value.role);
-        setEmail(value.email ?? "");
+        if (value.email) setEmail(value.email);
         setNotice(
           value.status === "confirmed"
             ? "Seu e-mail foi confirmado. Agora você pode entrar com sua senha."
-            : "A confirmação ainda está pendente. Reenvie o link para o mesmo e-mail com o botão abaixo.",
+            : link.pending || value.status === "sent"
+              ? "Cadastro criado. Confira o e-mail cadastrado e a pasta de spam para confirmar sua conta."
+              : "A confirmação ainda está pendente. Reenvie o link para o mesmo e-mail com o botão abaixo.",
         );
         history.replaceState(
           history.state,
@@ -148,7 +169,11 @@ export function ContactConfirmationPage({
         sessionStorage.setItem("hvm:login-email:" + role, email);
       } catch {}
       onNavigate(
-        role === "producer" ? "/entrar/produtor" : "/entrar/consumidor",
+        role === "producer"
+          ? "/entrar/produtor"
+          : role === "consumer"
+            ? "/entrar/consumidor"
+            : "/entrar",
       );
     } catch {
       setNotice("Não foi possível preparar o login agora. Tente novamente.");
@@ -159,7 +184,7 @@ export function ContactConfirmationPage({
   const confirmed = result?.status === "confirmed";
   return (
     <section
-      className="t04-security-layout"
+      className="t04-security-layout t04-confirmation-layout"
       aria-labelledby="t04-confirm-title"
     >
       <aside className="t04-security-aside" aria-hidden="true">
@@ -177,10 +202,26 @@ export function ContactConfirmationPage({
         <h1 id="t04-confirm-title">
           {confirmed
             ? `Boas-vindas, ${result.fullName}!`
-            : busy
-              ? "Verificando seu e-mail…"
-              : "Confirme seu e-mail"}
+            : link.pending
+              ? role
+                ? `Cadastro de ${role === "producer" ? "produtor" : "consumidor"} criado`
+                : "Cadastro criado"
+              : busy
+                ? "Verificando seu e-mail…"
+                : "Confirme seu e-mail"}
         </h1>
+        {role && (
+          <p className="t04-confirm-role">
+            Perfil:{" "}
+            <strong>{role === "producer" ? "Produtor" : "Consumidor"}</strong>
+          </p>
+        )}
+        {link.pending && (
+          <p>
+            Seu perfil já foi identificado. Confirme o e-mail para entrar na sua
+            conta.
+          </p>
+        )}
         {notice && (
           <p className="t04-banner" role="status">
             {notice}
@@ -195,7 +236,7 @@ export function ContactConfirmationPage({
             Login
           </button>
         ) : (
-          !busy && (
+          (!busy || link.pending) && (
             <>
               {link.context || link.accessToken ? (
                 <button
@@ -211,16 +252,6 @@ export function ContactConfirmationPage({
               <form className="t04-form" onSubmit={resend}>
                 {!link.context && (
                   <>
-                    <label>
-                      Perfil
-                      <select
-                        value={role}
-                        onChange={(e) => setRole(e.target.value as typeof role)}
-                      >
-                        <option value="consumer">Consumidor</option>
-                        <option value="producer">Produtor</option>
-                      </select>
-                    </label>
                     <label>
                       E-mail do cadastro
                       <input

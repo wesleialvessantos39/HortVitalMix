@@ -17,6 +17,8 @@ import {
 } from "./DocumentStorageService.ts";
 import { inspectDocument } from "../security/magicBytes.ts";
 import { extractPdfDocument } from "./PdfTextExtractor.ts";
+import { effectiveDocumentFields } from "../../shared/documents/effectiveDocumentFields.ts";
+import type { ExtractionView } from "../../shared/contracts/aiExtraction.ts";
 export function geminiConfiguration() {
   const key = process.env.GEMINI_API_KEY,
     model = process.env.GEMINI_MODEL;
@@ -111,15 +113,26 @@ export const GeminiDocumentProcessor = {
     const d = await getDocument(a, id);
     if (d.status !== "clean") throw new DocumentError("DOCUMENT_NOT_AVAILABLE");
     const e = await pool().query(
-      `SELECT e.*, (SELECT to_jsonb(r) FROM public.app_document_reviews r WHERE r.extraction_id=e.id ORDER BY r.created_at DESC LIMIT 1) AS review FROM public.app_document_extractions e WHERE e.document_id=$1`,
+      `SELECT e.*, (SELECT to_jsonb(r) FROM public.app_document_reviews r WHERE r.extraction_id=e.id ORDER BY r.created_at DESC,r.id DESC LIMIT 1) AS review,
+        (SELECT to_jsonb(r) FROM public.app_document_reviews r WHERE r.extraction_id=e.id AND r.note LIKE 'Dados informados pelo produtor, sem leitura automática.%' ORDER BY r.created_at DESC,r.id DESC LIMIT 1) AS "dataReview"
+        FROM public.app_document_extractions e WHERE e.document_id=$1`,
       [id],
     );
     const j = await pool().query(
       "SELECT status,error_code FROM public.app_document_jobs WHERE document_id=$1",
       [id],
     );
+    const extraction = (e.rows[0] ?? null) as ExtractionView | null;
+    const fields = effectiveDocumentFields(extraction);
+    if (extraction && fields) {
+      const accountFallback = !fields.holderName && (!fields.holderCpfNormalized || fields.holderCpfNormalized === d.cpf_normalized);
+      extraction.effective_payload_jsonb = { ...fields, holderName: accountFallback ? d.full_name ?? null : fields.holderName };
+      extraction.holderNameSource = accountFallback ? "account" : fields.holderName ? "document" : null;
+      extraction.effective_discrepancies = validateExtraction(fields, { documentType: d.document_type, cpf: d.cpf_normalized, area: d.total_area_hectares == null ? null : Number(d.total_area_hectares) }).issues;
+    }
     return {
-      extraction: e.rows[0] ?? null,
+      extraction,
+      property: { revision: Number(d.property_revision), latitudeSede: d.latitude_sede == null ? null : Number(d.latitude_sede), longitudeSede: d.longitude_sede == null ? null : Number(d.longitude_sede) },
       job: j.rows[0] ?? null,
       ai: geminiConfiguration(),
     };

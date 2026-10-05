@@ -20,6 +20,8 @@
     linear-gradient(150deg,#143d24 0%,#1b4d2e 60%,#2e7d32 100%);
   overflow:hidden;
 }
+.t04-confirmation-layout .t04-security-aside{width:auto;min-width:0}
+.t04-confirm-role{margin:0 0 20px;color:#5d7264}
 .t04-security-aside::after{
   content:"";
   position:absolute;

@@ -2724,6 +2724,10 @@ dialog p {
   grid-column: 1 / -1;
 }
 
+.rural-document-step {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .rural-form-grid textarea {
   min-height: 112px;
   resize: vertical;

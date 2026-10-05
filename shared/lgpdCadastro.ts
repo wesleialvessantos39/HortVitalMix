@@ -1,6 +1,9 @@
 import { z } from "zod";
 
 export const LGPD_CADASTRO_POLICY_VERSION = "lgpd-cadastro-2026-10-02";
+export const RegistrationConsentSchema = z
+  .object({ policyVersion: z.literal(LGPD_CADASTRO_POLICY_VERSION) })
+  .strict();
 
 export const LgpdCadastroAcceptanceSchema = z
   .object({

@@ -4337,3 +4337,19 @@ Homologação operacional autenticada feita com PostgreSQL/HTTP/interface reais 
 - Snapshot após publicação confirmou novamente as **58 tabelas anteriores de negócio/identidade** intactas; apenas app_releases registra metadados desta entrega. Contagem de logs error/fatal do deployment na janela de 5 minutos vazia. Evidência API/browser acrescentada em **docs/TRILHA17_PRESERVACAO.json** e checklist concluído em **docs/TRILHA17_DESCOBERTA_FAVORITOS.md**.
 
 Checklist T17 concluído: migration/RLS/grants, ranking/texto, favoritos/auditoria/idempotência de comandos, home/Produtores mobile/desktop, link T12, manifesto/hash/Livro-Raiz, testes obrigatórios/regressão e produção main/pdx1. **T18 permanece para a próxima missão, sobre schema 52.**
+
+
+---
+
+## 2026-10-05 — Correções antes da próxima trilha: documentos do imóvel e cadastro
+
+Implementação aditiva sobre T17/main `c8e3957f16ec8013b93b0d2df522db34a6078e83`, solicitada pelo proprietário com imagem da etapa 1. T01–T17 preservadas; a T18 não foi iniciada.
+
+- Etapa documental ocupa toda a largura: desktop com original/dados lado a lado; mobile com original antes dos dados, identificação larga, áreas em pares quando cabem, foco e toque adequados. Prévia responde à mudança de largura.
+- Titular não é descartado; nome ausente utiliza a conta quando o CPF não diverge. Nome/CPF da pessoa permanecem intactos; divergência documental continua disponível para conferência.
+- Correções são novas evidências imutáveis. Salvar atualiza revisão, imóvel e rascunho atomicamente; frontend adota os dados autoritativos nas etapas seguintes. Reabrir/atualizar PDF não desfaz a correção. Áreas incompatíveis/revisão obsoleta abortam; retry/concorrência não duplicam conferências. Administração e submissão usam os dados efetivos.
+- Cadastro com aceite explícito grava pessoa, papel, perfil e consentimento na mesma transação; envio de e-mail fica fora da espera da navegação com `EdgeRuntime.waitUntil`. Contexto assinado identifica consumidor/produtor; confirmação não pergunta novamente o perfil e não cria sessão. Reenvio legado sem perfil resolve o papel no banco sem enumerar contas.
+- Migration aditiva `20261005144950_registration_consent_fast_confirmation.sql` cria somente um RPC privado, preservando o legado. Schema lógico **53**, **59 migrations**, hash **b1889d4aa6b99e721709bdedc4afbdcd68a1d44c65932ea2a36bff9fcf934676**. Avanço técnico de correção, sem nova trilha. Supabase Free único, Vercel Hobby/main/pdx1, RLS e dependências preservados.
+- Validação: **652 testes gerais**, **9 PostgreSQL/história completa** e **18 regressões T17 PostgreSQL** passaram; **46 browser** cadastro/documentos/T03/T04/T17 e **28 T08** passaram. Build, segurança, manifesto, TypeScript e cold start aprovados. Cadastro controlado abaixo de 10 s; latência real de Auth/rede e entrega de e-mail não possui garantia absoluta desse prazo. Sem contas/arquivos sintéticos remotos.
+
+Relatório: `docs/CORRECOES_IMOVEL_CADASTRO_2026-10-05.md`. Publicação e preservação remota serão registradas no fechamento após deployment READY.

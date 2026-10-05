@@ -13,6 +13,9 @@ export type PublicRegistrationResult = {
   role?: PublicRole;
   requestId?: string;
   transport?: "express" | "supabase_edge";
+  confirmationContext?: string;
+  confirmationDispatchScheduled?: boolean;
+  lgpdRecorded?: boolean;
 };
 
 const CANONICAL_SUPABASE_URL =
@@ -70,6 +73,7 @@ function shouldUseExpressFallback(error: unknown) {
 async function edgeRegistration(
   role: PublicRole,
   data: Record<string, unknown>,
+  consent?: { policyVersion: string },
 ): Promise<PublicRegistrationResult> {
   let response: Response;
   try {
@@ -80,7 +84,7 @@ async function edgeRegistration(
         "Content-Type": "application/json",
         "X-HVM-Request": "1",
       },
-      body: JSON.stringify({ role, data }),
+      body: JSON.stringify({ role, data, ...(consent ? { consent } : {}) }),
       signal: AbortSignal.timeout(20000),
     });
   } catch (error) {
@@ -110,12 +114,13 @@ async function edgeRegistration(
 export async function registerPublicAccount(
   role: PublicRole,
   data: Record<string, unknown>,
+  consent?: { policyVersion: string },
 ): Promise<PublicRegistrationResult> {
   // O cadastro público não depende mais do proxy/runtime do ambiente.
   // Vercel e Google Studio chamam diretamente a Edge canônica; o Express
   // existe apenas como contingência se a própria Edge estiver indisponível.
   try {
-    return await edgeRegistration(role, data);
+    return await edgeRegistration(role, data, consent);
   } catch (error) {
     if (!shouldUseExpressFallback(error)) throw error;
 
@@ -123,7 +128,7 @@ export async function registerPublicAccount(
       "/v1/auth/register-" + role,
       {
         method: "POST",
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, ...(consent ? { consent } : {}) }),
       },
     );
     return { ...result, transport: result.transport ?? "express" };

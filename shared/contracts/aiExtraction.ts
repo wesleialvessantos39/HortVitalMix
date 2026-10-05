@@ -42,4 +42,8 @@ export type ExtractionView = {
   created_at: string;
   extraction_engine: string;
   review?: { decision: string; note: string } | null;
+  dataReview?: { note: string; created_at: string } | null;
+  effective_payload_jsonb?: ExtractionPayload;
+  holderNameSource?: "document" | "account" | null;
+  effective_discrepancies?: string[];
 };

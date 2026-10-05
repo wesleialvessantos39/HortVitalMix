@@ -13,6 +13,7 @@ import {
 
 type RegistrationFailure = Error & { status?: number };
 type ChainState = "complete" | "incomplete" | "unknown";
+type RegistrationConsent = { policyVersion: string; ipHash: string; userAgent: string };
 
 const CANONICAL_PUBLIC_REGISTRATION_EDGE =
   "https://xipbsazvymkqqfmfegwu.supabase.co/functions/v1/public-registration";
@@ -62,6 +63,7 @@ async function registerThroughEdge(
   data: Registration,
   role: "consumer" | "producer",
   requestId: string,
+  consent?: RegistrationConsent,
 ) {
   let response: Response;
   try {
@@ -72,7 +74,7 @@ async function registerThroughEdge(
         "X-HVM-Request": "1",
         "X-Request-Id": requestId,
       },
-      body: JSON.stringify({ role, data }),
+      body: JSON.stringify({ role, data, ...(consent ? { consent: { policyVersion: consent.policyVersion } } : {}) }),
       signal: AbortSignal.timeout(20_000),
     });
   } catch (error) {
@@ -102,6 +104,9 @@ async function registerThroughEdge(
   return {
     reviewRequired: Boolean(body.reviewRequired),
     userId: typeof body.userId === "string" ? body.userId : undefined,
+    confirmationContext: typeof body.confirmationContext === "string" ? body.confirmationContext : undefined,
+    confirmationDispatchScheduled: Boolean(body.confirmationDispatchScheduled),
+    lgpdRecorded: Boolean(body.lgpdRecorded),
     confirmationRequired: Boolean(body.confirmationRequired),
     confirmationDispatchAccepted: Boolean(
       body.confirmationDispatchAccepted,
@@ -568,6 +573,7 @@ export async function register(
   data: Registration,
   role: "consumer" | "producer",
   requestId: string,
+  consent?: RegistrationConsent,
 ) {
   if (!supabaseAdmin) {
     reportFailure({
@@ -575,7 +581,7 @@ export async function register(
       requestId,
       detail: "edge_fallback",
     });
-    return registerThroughEdge(data, role, requestId);
+    return registerThroughEdge(data, role, requestId, consent);
   }
 
   const existing = await addRoleToExistingIdentity(
@@ -586,12 +592,14 @@ export async function register(
   if (existing) return existing;
 
   let userId: string | undefined;
+  let completedStatus: string | undefined;
 
   try {
     const created = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
       password: data.password,
       email_confirm: false,
+      user_metadata: { full_name: data.fullName, hvm_portal: "public", hvm_registration_role: role },
     });
 
     if (created.error || !created.data.user) {
@@ -630,7 +638,7 @@ export async function register(
     userId = created.data.user.id;
 
     try {
-      const completed = await supabaseAdmin.rpc("complete_public_registration", {
+      const completed = await supabaseAdmin.rpc(consent ? "complete_public_registration_with_consent" : "complete_public_registration", {
         p_user_id: userId,
         p_full_name: data.fullName,
         p_cpf_normalized: data.cpf,
@@ -639,10 +647,12 @@ export async function register(
         p_role: role,
         p_municipality: data.municipality,
         p_state: data.state,
+        ...(consent ? { p_policy_version: consent.policyVersion, p_ip_hash: consent.ipHash, p_user_agent: consent.userAgent.slice(0, 255) || "unknown" } : {}),
       });
 
       if (completed.error)
         throw mapDomainRegistrationError(completed.error, requestId);
+      if (consent) completedStatus = completed.data?.status;
     } catch (error) {
       const message = (error as Error)?.message;
       const knownFailure =
@@ -701,7 +711,7 @@ export async function register(
   }
 
 
-  const accountState = await supabaseAdmin.from("app_users").select("status").eq("id",userId!).single();
+  const accountState = completedStatus ? { data: { status: completedStatus }, error: null } : await supabaseAdmin.from("app_users").select("status").eq("id",userId!).single();
   if(accountState.error)throw registrationError("REGISTRATION_STATUS_UNKNOWN",503);
   return {
     userId,
@@ -712,5 +722,6 @@ export async function register(
     existingIdentity: false,
     roleAdded: true,
     role,
+    lgpdRecorded: Boolean(consent && completedStatus),
   };
 }

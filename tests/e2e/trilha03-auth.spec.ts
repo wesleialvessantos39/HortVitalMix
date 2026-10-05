@@ -46,8 +46,10 @@ test("Trilha 03 — portal administrativo usa ponto de entrada independente", as
     page.getByRole("heading", { name: "Gestão segura da plataforma." }),
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Entrar na administração" }),
+    page.getByRole("heading", { name: "Escolha o acesso" }),
   ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Entrar como Administrador", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Entrar como Super administrador", exact: true })).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Entrar como Consumidor" }),
   ).toHaveCount(0);
@@ -71,10 +73,11 @@ test("Trilha 03 — seleção pública nunca oferece papel administrativo", asyn
 });
 
 
-test("Trilha 03 — home expõe cadastro e admin/entrar mostra somente Administração", async ({ page }) => {
+test("Trilha 03 — home acessa cadastro pela Conta e admin/entrar mostra somente Administração", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  await page.getByRole("button", { name: /Conheça as opções de cadastro/ }).click();
+  await page.getByRole("link", { name: "Conta", exact: true }).click();
+  await page.getByRole("button", { name: "Criar cadastro", exact: true }).click();
   await expect(page).toHaveURL(/\/cadastro$/);
   await expect(page.getByRole("heading", { name: "Como você quer participar?" })).toBeVisible();
 
