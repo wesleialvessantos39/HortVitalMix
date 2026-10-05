@@ -33,6 +33,7 @@ const store = read("src/lib/localityStore.ts");
 const hook = read("src/hooks/useLocality.ts");
 const catalog = read("src/services/LocalityCatalogService.ts");
 const appShell = read("src/App.tsx");
+const locationSelector = read("src/components/LocationSelector.tsx");
 const account = read("src/components/Account.tsx");
 const router = read("src/pages/admin/AdminRouter.tsx");
 const shell = read("src/components/admin/AdminPortalShell.tsx");
@@ -290,11 +291,17 @@ required(
     "useLocality",
     "localityBlockedMessage",
     "locality-list",
-    "Alterar localização",
+    "LocationSelector",
     "DeliveryScopePage",
     "/produtor/entrega",
   ],
   "LOCALITY_APPSHELL_MISSING",
+);
+
+required(
+  locationSelector,
+  ["Selecionar localização", "Alterar localização", 'aria-haspopup="dialog"', "onOpen"],
+  "LOCALITY_SELECTOR_MISSING",
 );
 
 required(

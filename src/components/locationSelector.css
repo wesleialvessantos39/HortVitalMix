@@ -1,0 +1,75 @@
+.location-selector {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 190px;
+  min-height: 48px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #f7faf7;
+  color: var(--primary);
+  text-align: left;
+}
+
+.location-selector:hover,
+.location-selector[aria-expanded="true"] {
+  border-color: #b9d5c0;
+  background: var(--light);
+}
+
+.location-selector-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: #e8f2e9;
+}
+
+.location-selector-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 3px;
+}
+
+.location-selector-text small {
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.location-selector-text strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.delivery-summary > div {
+  min-width: 0;
+}
+
+.delivery-summary strong {
+  overflow-wrap: anywhere;
+}
+
+.delivery-summary .delivery-summary-help {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+@media (max-width: 767px) {
+  .mobile-header .location-selector {
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .mobile-header .location-selector-text strong {
+    font-size: 13px;
+  }
+}

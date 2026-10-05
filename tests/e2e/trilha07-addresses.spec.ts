@@ -313,7 +313,7 @@ test("geolocalização do aparelho envia latitude e longitude como pin manual", 
   expect(body.longitude).toBeCloseTo(-63.0408, 4);
 });
 
-test("troca de padrão sincroniza o cabeçalho de entrega", async ({ page }) => {
+test("troca de padrão sincroniza o resumo de entrega e preserva o seletor de região", async ({ page }) => {
   await mockT07(page);
   await page.goto("/conta/enderecos");
 
@@ -324,17 +324,17 @@ test("troca de padrão sincroniza o cabeçalho de entrega", async ({ page }) => 
     .click();
 
   await expect(
-    page.locator(".location-pill").getByText(
-      "Entrega para: Jardim · Ariquemes/RO",
-      { exact: true },
-    ),
-  ).toBeVisible();
-  await expect(
     page
       .locator(".address-card")
       .filter({ hasText: "Trabalho" })
       .getByText("Padrão", { exact: true }),
   ).toBeVisible();
+
+  await page.getByRole("link", { name: "Início", exact: true }).first().click();
+  await expect(
+    page.locator(".delivery-summary").getByText("Jardim · Ariquemes/RO", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Selecionar localização", exact: true })).toBeVisible();
 });
 
 test("limite de dez endereços bloqueia novo cadastro com mensagem amigável", async ({
