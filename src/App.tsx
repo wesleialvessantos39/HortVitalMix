@@ -11,7 +11,6 @@ import {
   Package,
   CalendarDays,
   ChevronRight,
-  ChevronDown,
   Check,
   Truck,
   Salad,
@@ -41,6 +40,7 @@ import { DocumentsPanel } from "./pages/documents/DocumentsPanel";
 import { CategoryNavSection } from "./components/catalog/CategoryNavSection";
 import type { Category } from "../shared/contracts/category";
 import { PublicProductCatalog } from "./components/catalog/PublicProductCatalog";
+import { LocationSelector } from "./components/LocationSelector";
 const ProducerCatalogPage = lazy(() => import("./pages/producer/ProducerCatalogPage"));
 const InventoryLotsPage = lazy(() => import("./pages/producer/InventoryLotsPage"));
 const ProducerDeliveryAreaPage = lazy(() => import("./pages/producer/ProducerDeliveryAreaPage"));
@@ -103,7 +103,6 @@ export default function App() {
   const display = config ?? fallback;
   const localityBlocked =
     locality.coverage !== null && locality.coverage !== "active";
-  const deliveryHeadline = deliveryLabel ?? locality.label;
   const openLocality = () => setModal("Localização");
   const isAdminRoute =
     path.startsWith("/admin/") ||
@@ -278,20 +277,11 @@ export default function App() {
             ))}
           </nav>
           <div className="header-actions">
-            <button
-              className="location-pill"
-              aria-haspopup="dialog"
-              onClick={openLocality}
-            >
-              <MapPin size={16} />
-              <span>
-                {deliveryLabel
-                  ? "Entrega para: " + deliveryLabel
-                  : locality.label
-                    ? "Localização: " + locality.label
-                    : "Selecionar localização"}
-              </span>
-            </button>
+            <LocationSelector
+              region={locality.label}
+              expanded={modal === "Localização"}
+              onOpen={openLocality}
+            />
             <button
               className="icon"
               aria-label="Notificações"
@@ -358,6 +348,11 @@ export default function App() {
           </div>
         </div>
         {!isProducerPropertyRoute && !isProducerStoreRoute && !isProducerProductRoute && search}
+        <LocationSelector
+          region={locality.label}
+          expanded={modal === "Localização"}
+          onOpen={openLocality}
+        />
       </header>
       <main id="conteudo" className={isAdminRoute || publicLoginRole ? "layout admin-route-layout" : isProducerPropertyRoute ? "layout producer-route-layout rural-property-layout" : isProducerScopeRoute || isProducerStoreRoute || isProducerProductRoute ? "layout producer-route-layout" : "layout"}>
         {shellSession?.localityWarning && !isAdminRoute && (
@@ -439,21 +434,16 @@ export default function App() {
         ) : (
           <>
             <aside>
-              <div className="card delivery">
-                <MapPin />
+              {deliveryLabel && <div className="card delivery delivery-summary">
+                <MapPin aria-hidden="true" />
                 <div>
-                  <small>{deliveryLabel ? "Entrega para" : "Localização"}</small>
-                  <strong>{deliveryHeadline ?? "Selecionar localização"}</strong>
-                  <button
-                    className="text-button"
-                    aria-haspopup="dialog"
-                    onClick={openLocality}
-                  >
-                    Alterar localização
-                  </button>
+                  <small>Endereço de entrega</small>
+                  <strong>{deliveryLabel}</strong>
+                  <span className="delivery-summary-help">
+                    Endereço padrão da sua conta.
+                  </span>
                 </div>
-                <ChevronDown size={15} />
-              </div>
+              </div>}
               <CategoryNavSection selectedId={categoryId} onSelect={selectCategory} onSelectionRefresh={refreshCategorySelection} />
               {!shellSession && !sessionLoading && <section className="producer-invite">
                 <Sprout />
@@ -612,11 +602,14 @@ export default function App() {
       </nav>
       <dialog
         ref={dialog}
+        id="shell-dialog"
+        aria-labelledby="shell-dialog-title"
+        aria-describedby={modal === "Localização" ? "locality-picker-description" : undefined}
         onCancel={() => setModal(null)}
         onClose={() => setModal(null)}
       >
         <div className="dialog-title">
-          <h2>{modal}</h2>
+          <h2 id="shell-dialog-title">{modal}</h2>
           <button
             className="icon"
             aria-label="Fechar"
@@ -627,16 +620,14 @@ export default function App() {
         </div>
         {modal === "Localização" ? (
           <div className="locality-picker">
+            <p id="locality-picker-description">
+              Escolha o município da sua região. A escolha funciona com ou sem login.
+            </p>
             {localityBlocked && locality.coverage ? (
               <p role="alert" className="locality-blocked">
                 {localityBlockedMessage(locality.coverage)}
               </p>
-            ) : (
-              <p>
-                Escolha a região que você quer ver. A troca funciona com ou sem
-                login e vale para consumidores, produtores e administradores.
-              </p>
-            )}
+            ) : null}
             {locality.unavailable ? (
               <p role="alert" className="locality-blocked">
                 Não foi possível carregar as localidades agora. Tente novamente
@@ -663,7 +654,10 @@ export default function App() {
                             : "locality-option"
                         }
                         aria-pressed={chosen}
-                        onClick={() => locality.select(municipality)}
+                        onClick={() => {
+                          locality.select(municipality);
+                          setModal(null);
+                        }}
                       >
                         <MapPin size={16} />
                         <span>
@@ -680,7 +674,10 @@ export default function App() {
               <button
                 type="button"
                 className="text-button"
-                onClick={() => locality.select(null)}
+                onClick={() => {
+                  locality.select(null);
+                  setModal(null);
+                }}
               >
                 Ver todas as regiões
               </button>
