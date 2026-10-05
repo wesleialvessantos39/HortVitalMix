@@ -44,6 +44,8 @@ export function assertManifestHash() {
 }
 
 const remoteVersionAliases: Readonly<Record<string, string>> = {
+  // Cesta multilojas T18 aplicada com timestamp físico próprio do Supabase.
+  "20261005212931": "20261005210404",
   // Capas e carrosséis aplicados pelo Supabase com timestamp físico próprio.
   "20261005194858": "20261005191237",
   // Correção de cadastro/aceite aplicada com timestamp físico gerado pelo Supabase.

@@ -1,0 +1,671 @@
+{
+  "baseMain": "af9fa2de633913a6a2d5561d86d0312531637539",
+  "projectRef": "xipbsazvymkqqfmfegwu",
+  "schemaBefore": 54,
+  "schemaAfter": 55,
+  "migration": {
+    "version": "20261005212931",
+    "name": "trilha18_carts"
+  },
+  "canonicalMigration": "20261005210404_trilha18_carts.sql",
+  "migrationHash": "e52b14f3195c5cdbd49a7e761bb486a2fbb8d8859837f1378d799569d033573a",
+  "existingRelations": 63,
+  "afterMigrationIdentical": true,
+  "before": [
+    {
+      "table_name": "auth.sessions",
+      "row_count": 24,
+      "digest": "d4b8ac08624774ee4045ec31141fbfc7"
+    },
+    {
+      "table_name": "auth.users",
+      "row_count": 5,
+      "digest": "230431a54d1aff343f3afa57044e7dee"
+    },
+    {
+      "table_name": "public.app_access_partial_block_municipalities",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_access_partial_block_properties",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_access_partial_blocks",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_account_deletions",
+      "row_count": 1,
+      "digest": "90f56a4983a5d45d4de69ca04726d44c"
+    },
+    {
+      "table_name": "public.app_admin_auth_attempts",
+      "row_count": 184,
+      "digest": "5adbc50e47443f6102c36527d820d9e9"
+    },
+    {
+      "table_name": "public.app_admin_invite_sectors",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_admin_invites",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_admin_mfa_challenges",
+      "row_count": 6,
+      "digest": "a6d421f8d7d7629445a15df75c9bb389"
+    },
+    {
+      "table_name": "public.app_admin_principals",
+      "row_count": 1,
+      "digest": "a73e95820a11f9d71280e5764e2686ff"
+    },
+    {
+      "table_name": "public.app_admin_sector_members",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_admin_sectors",
+      "row_count": 6,
+      "digest": "cc5455ce598245286c383e379c63107d"
+    },
+    {
+      "table_name": "public.app_audit_events",
+      "row_count": 417,
+      "digest": "3668d889fdf537ace57686a9e194df55"
+    },
+    {
+      "table_name": "public.app_car_validations",
+      "row_count": 2,
+      "digest": "225af21f75b8872ad34da1992f93cc52"
+    },
+    {
+      "table_name": "public.app_categories",
+      "row_count": 5,
+      "digest": "0e9458865066e8b109dedb951b5085ea"
+    },
+    {
+      "table_name": "public.app_consent_records",
+      "row_count": 1,
+      "digest": "65e91ba1151fcc0c5b63b89b3efa728f"
+    },
+    {
+      "table_name": "public.app_contact_verification_challenges",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_delivery_attempts",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_delivery_quotes",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_delivery_rules",
+      "row_count": 1,
+      "digest": "6a211aa2ac1772c6c0091fcc29c49e45"
+    },
+    {
+      "table_name": "public.app_document_extractions",
+      "row_count": 2,
+      "digest": "38c3a6fc96a9f553cae51323b56e56ff"
+    },
+    {
+      "table_name": "public.app_document_jobs",
+      "row_count": 5,
+      "digest": "e881b03cbb3eeb294cebf3e18b7ddd9a"
+    },
+    {
+      "table_name": "public.app_document_reviews",
+      "row_count": 30,
+      "digest": "dbe078b408b94d173048e4038f97a28c"
+    },
+    {
+      "table_name": "public.app_document_scans",
+      "row_count": 8,
+      "digest": "87db7b17e3eef883bd54337224e0f9c9"
+    },
+    {
+      "table_name": "public.app_documents",
+      "row_count": 8,
+      "digest": "1ea7664fcd810526e93e266be0303877"
+    },
+    {
+      "table_name": "public.app_favorites",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_global_config",
+      "row_count": 1,
+      "digest": "9ec3935e8e5024e8dbf3e2705456f76b"
+    },
+    {
+      "table_name": "public.app_inventory_lots",
+      "row_count": 1,
+      "digest": "34fb124216d19547bdecad68fe908a05"
+    },
+    {
+      "table_name": "public.app_inventory_movements",
+      "row_count": 1,
+      "digest": "a4f87aa2fa9c32773e3e14a56d7c35d4"
+    },
+    {
+      "table_name": "public.app_inventory_reservations",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_locality_user_impacts",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_municipalities",
+      "row_count": 7,
+      "digest": "2ea6c5a781971245906035bddc34293d"
+    },
+    {
+      "table_name": "public.app_outbox_events",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_password_recovery_requests",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_people",
+      "row_count": 4,
+      "digest": "ceed8e0373d0a7b48d04f059b3b67b41"
+    },
+    {
+      "table_name": "public.app_price_versions",
+      "row_count": 1,
+      "digest": "fc1d5d81f82eda0d3408493e8b96d718"
+    },
+    {
+      "table_name": "public.app_producer_delivery_municipalities",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_producer_delivery_scopes",
+      "row_count": 1,
+      "digest": "bd0d831558020c1333d81f3146dc5578"
+    },
+    {
+      "table_name": "public.app_producer_profiles",
+      "row_count": 3,
+      "digest": "ee1b9d2e83d4d87a3519003d60de993d"
+    },
+    {
+      "table_name": "public.app_producer_stores",
+      "row_count": 2,
+      "digest": "9371f0fa7d694d53b1279836a54f41a5"
+    },
+    {
+      "table_name": "public.app_product_media",
+      "row_count": 1,
+      "digest": "d0c8c151e3a3ff65a23037dfe5746efa"
+    },
+    {
+      "table_name": "public.app_products",
+      "row_count": 1,
+      "digest": "5f073e3cc1784f7c38df9c2a7edc4fed"
+    },
+    {
+      "table_name": "public.app_properties",
+      "row_count": 2,
+      "digest": "4ddda72e505dc7048abfe25b4c21729f"
+    },
+    {
+      "table_name": "public.app_property_boundaries",
+      "row_count": 2,
+      "digest": "7ea5d4220ad3ed4195c87f1e387bd7ae"
+    },
+    {
+      "table_name": "public.app_property_deletion_archive",
+      "row_count": 2,
+      "digest": "08e0dd5a08eff6224466d299099e9aec"
+    },
+    {
+      "table_name": "public.app_registration_reviews",
+      "row_count": 1,
+      "digest": "a4b1692c4dbaf90f7e9fa062b481b27e"
+    },
+    {
+      "table_name": "public.app_releases",
+      "row_count": 76,
+      "digest": "643c4f88a84b5fa474a0c8eb76bb18f9"
+    },
+    {
+      "table_name": "public.app_role_security_challenges",
+      "row_count": 3,
+      "digest": "4862b8fdc2090627cb62633493800cf9"
+    },
+    {
+      "table_name": "public.app_roles",
+      "row_count": 4,
+      "digest": "9f8251fda2d263d52a01c4408478d9d7"
+    },
+    {
+      "table_name": "public.app_rural_activities",
+      "row_count": 2,
+      "digest": "f0fd0f2f384c51770e46282a0ed4d2fc"
+    },
+    {
+      "table_name": "public.app_service_areas",
+      "row_count": 1,
+      "digest": "1f79f7f417a21107533be86ee46a5c72"
+    },
+    {
+      "table_name": "public.app_storage_deletion_queue",
+      "row_count": 10,
+      "digest": "7f154ea0589fdc41a837d38c4cfb6b26"
+    },
+    {
+      "table_name": "public.app_store_media",
+      "row_count": 1,
+      "digest": "be6a5c39aad9b1d334011766d05eb48b"
+    },
+    {
+      "table_name": "public.app_store_operating_hours",
+      "row_count": 14,
+      "digest": "eda350908e15e68d4b373475205cf604"
+    },
+    {
+      "table_name": "public.app_user_addresses",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_user_preferences",
+      "row_count": 1,
+      "digest": "13504828152f07a439bc83c8ffe2fa57"
+    },
+    {
+      "table_name": "public.app_user_role_assignments",
+      "row_count": 6,
+      "digest": "1b00fd61d3cf472f1052d0e193c8bc16"
+    },
+    {
+      "table_name": "public.app_users",
+      "row_count": 5,
+      "digest": "1e3fe9d9fb53c25f500531b87854ffc1"
+    },
+    {
+      "table_name": "public.app_verification_decisions",
+      "row_count": 3,
+      "digest": "f9c28179ae3adef227ece64ea8ceea28"
+    },
+    {
+      "table_name": "public.app_verification_requests",
+      "row_count": 3,
+      "digest": "0689e8edcd07bb650b6d50a70f07823a"
+    },
+    {
+      "table_name": "storage.buckets",
+      "row_count": 4,
+      "digest": "32c4cfb60e532b1ad7c59bed79a870d5"
+    },
+    {
+      "table_name": "storage.objects",
+      "row_count": 10,
+      "digest": "5f746ba1c127a36ab762f8a40b20fa57"
+    }
+  ],
+  "afterMigration": [
+    {
+      "table_name": "auth.sessions",
+      "row_count": 24,
+      "digest": "d4b8ac08624774ee4045ec31141fbfc7"
+    },
+    {
+      "table_name": "auth.users",
+      "row_count": 5,
+      "digest": "230431a54d1aff343f3afa57044e7dee"
+    },
+    {
+      "table_name": "public.app_access_partial_block_municipalities",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_access_partial_block_properties",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_access_partial_blocks",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_account_deletions",
+      "row_count": 1,
+      "digest": "90f56a4983a5d45d4de69ca04726d44c"
+    },
+    {
+      "table_name": "public.app_admin_auth_attempts",
+      "row_count": 184,
+      "digest": "5adbc50e47443f6102c36527d820d9e9"
+    },
+    {
+      "table_name": "public.app_admin_invite_sectors",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_admin_invites",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_admin_mfa_challenges",
+      "row_count": 6,
+      "digest": "a6d421f8d7d7629445a15df75c9bb389"
+    },
+    {
+      "table_name": "public.app_admin_principals",
+      "row_count": 1,
+      "digest": "a73e95820a11f9d71280e5764e2686ff"
+    },
+    {
+      "table_name": "public.app_admin_sector_members",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_admin_sectors",
+      "row_count": 6,
+      "digest": "cc5455ce598245286c383e379c63107d"
+    },
+    {
+      "table_name": "public.app_audit_events",
+      "row_count": 417,
+      "digest": "3668d889fdf537ace57686a9e194df55"
+    },
+    {
+      "table_name": "public.app_car_validations",
+      "row_count": 2,
+      "digest": "225af21f75b8872ad34da1992f93cc52"
+    },
+    {
+      "table_name": "public.app_categories",
+      "row_count": 5,
+      "digest": "0e9458865066e8b109dedb951b5085ea"
+    },
+    {
+      "table_name": "public.app_consent_records",
+      "row_count": 1,
+      "digest": "65e91ba1151fcc0c5b63b89b3efa728f"
+    },
+    {
+      "table_name": "public.app_contact_verification_challenges",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_delivery_attempts",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_delivery_quotes",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_delivery_rules",
+      "row_count": 1,
+      "digest": "6a211aa2ac1772c6c0091fcc29c49e45"
+    },
+    {
+      "table_name": "public.app_document_extractions",
+      "row_count": 2,
+      "digest": "38c3a6fc96a9f553cae51323b56e56ff"
+    },
+    {
+      "table_name": "public.app_document_jobs",
+      "row_count": 5,
+      "digest": "e881b03cbb3eeb294cebf3e18b7ddd9a"
+    },
+    {
+      "table_name": "public.app_document_reviews",
+      "row_count": 30,
+      "digest": "dbe078b408b94d173048e4038f97a28c"
+    },
+    {
+      "table_name": "public.app_document_scans",
+      "row_count": 8,
+      "digest": "87db7b17e3eef883bd54337224e0f9c9"
+    },
+    {
+      "table_name": "public.app_documents",
+      "row_count": 8,
+      "digest": "1ea7664fcd810526e93e266be0303877"
+    },
+    {
+      "table_name": "public.app_favorites",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_global_config",
+      "row_count": 1,
+      "digest": "9ec3935e8e5024e8dbf3e2705456f76b"
+    },
+    {
+      "table_name": "public.app_inventory_lots",
+      "row_count": 1,
+      "digest": "34fb124216d19547bdecad68fe908a05"
+    },
+    {
+      "table_name": "public.app_inventory_movements",
+      "row_count": 1,
+      "digest": "a4f87aa2fa9c32773e3e14a56d7c35d4"
+    },
+    {
+      "table_name": "public.app_inventory_reservations",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_locality_user_impacts",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_municipalities",
+      "row_count": 7,
+      "digest": "2ea6c5a781971245906035bddc34293d"
+    },
+    {
+      "table_name": "public.app_outbox_events",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_password_recovery_requests",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_people",
+      "row_count": 4,
+      "digest": "ceed8e0373d0a7b48d04f059b3b67b41"
+    },
+    {
+      "table_name": "public.app_price_versions",
+      "row_count": 1,
+      "digest": "fc1d5d81f82eda0d3408493e8b96d718"
+    },
+    {
+      "table_name": "public.app_producer_delivery_municipalities",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_producer_delivery_scopes",
+      "row_count": 1,
+      "digest": "bd0d831558020c1333d81f3146dc5578"
+    },
+    {
+      "table_name": "public.app_producer_profiles",
+      "row_count": 3,
+      "digest": "ee1b9d2e83d4d87a3519003d60de993d"
+    },
+    {
+      "table_name": "public.app_producer_stores",
+      "row_count": 2,
+      "digest": "9371f0fa7d694d53b1279836a54f41a5"
+    },
+    {
+      "table_name": "public.app_product_media",
+      "row_count": 1,
+      "digest": "d0c8c151e3a3ff65a23037dfe5746efa"
+    },
+    {
+      "table_name": "public.app_products",
+      "row_count": 1,
+      "digest": "5f073e3cc1784f7c38df9c2a7edc4fed"
+    },
+    {
+      "table_name": "public.app_properties",
+      "row_count": 2,
+      "digest": "4ddda72e505dc7048abfe25b4c21729f"
+    },
+    {
+      "table_name": "public.app_property_boundaries",
+      "row_count": 2,
+      "digest": "7ea5d4220ad3ed4195c87f1e387bd7ae"
+    },
+    {
+      "table_name": "public.app_property_deletion_archive",
+      "row_count": 2,
+      "digest": "08e0dd5a08eff6224466d299099e9aec"
+    },
+    {
+      "table_name": "public.app_registration_reviews",
+      "row_count": 1,
+      "digest": "a4b1692c4dbaf90f7e9fa062b481b27e"
+    },
+    {
+      "table_name": "public.app_releases",
+      "row_count": 76,
+      "digest": "643c4f88a84b5fa474a0c8eb76bb18f9"
+    },
+    {
+      "table_name": "public.app_role_security_challenges",
+      "row_count": 3,
+      "digest": "4862b8fdc2090627cb62633493800cf9"
+    },
+    {
+      "table_name": "public.app_roles",
+      "row_count": 4,
+      "digest": "9f8251fda2d263d52a01c4408478d9d7"
+    },
+    {
+      "table_name": "public.app_rural_activities",
+      "row_count": 2,
+      "digest": "f0fd0f2f384c51770e46282a0ed4d2fc"
+    },
+    {
+      "table_name": "public.app_service_areas",
+      "row_count": 1,
+      "digest": "1f79f7f417a21107533be86ee46a5c72"
+    },
+    {
+      "table_name": "public.app_storage_deletion_queue",
+      "row_count": 10,
+      "digest": "7f154ea0589fdc41a837d38c4cfb6b26"
+    },
+    {
+      "table_name": "public.app_store_media",
+      "row_count": 1,
+      "digest": "be6a5c39aad9b1d334011766d05eb48b"
+    },
+    {
+      "table_name": "public.app_store_operating_hours",
+      "row_count": 14,
+      "digest": "eda350908e15e68d4b373475205cf604"
+    },
+    {
+      "table_name": "public.app_user_addresses",
+      "row_count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "table_name": "public.app_user_preferences",
+      "row_count": 1,
+      "digest": "13504828152f07a439bc83c8ffe2fa57"
+    },
+    {
+      "table_name": "public.app_user_role_assignments",
+      "row_count": 6,
+      "digest": "1b00fd61d3cf472f1052d0e193c8bc16"
+    },
+    {
+      "table_name": "public.app_users",
+      "row_count": 5,
+      "digest": "1e3fe9d9fb53c25f500531b87854ffc1"
+    },
+    {
+      "table_name": "public.app_verification_decisions",
+      "row_count": 3,
+      "digest": "f9c28179ae3adef227ece64ea8ceea28"
+    },
+    {
+      "table_name": "public.app_verification_requests",
+      "row_count": 3,
+      "digest": "0689e8edcd07bb650b6d50a70f07823a"
+    },
+    {
+      "table_name": "storage.buckets",
+      "row_count": 4,
+      "digest": "32c4cfb60e532b1ad7c59bed79a870d5"
+    },
+    {
+      "table_name": "storage.objects",
+      "row_count": 10,
+      "digest": "5f746ba1c127a36ab762f8a40b20fa57"
+    }
+  ],
+  "newSecurityInfo": [
+    {
+      "name": "rls_enabled_no_policy",
+      "level": "INFO",
+      "metadata": {
+        "name": "app_cart_items",
+        "type": "table",
+        "schema": "public"
+      },
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+    },
+    {
+      "name": "rls_enabled_no_policy",
+      "level": "INFO",
+      "metadata": {
+        "name": "app_carts",
+        "type": "table",
+        "schema": "public"
+      },
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+    }
+  ],
+  "productionPublication": "Pending exact-main READY confirmation"
+}

@@ -49,6 +49,7 @@ import {
   LOCALITY_NOT_COVERED_MESSAGE,
 } from "../../shared/contracts/locality.ts";
 import { confirmationRouter } from "./confirmationRoutes.ts";
+import { mergeLoginCart, clearCartSession } from "../security/cartSession.ts";
 export const authRouter = Router();
 authRouter.use(confirmationRouter);
 
@@ -362,6 +363,7 @@ async function handlePublicLoginRequest(
       return;
     }
 
+    await mergeLoginCart(req, data.user.id);
     setSession(res, data, portalRole);
     setRecentAuth(res, data.user.id, data.access_token);
     resetLoginRateLimit(req.clientIpHash);
@@ -544,6 +546,7 @@ authRouter.post("/import-session", async (req, res, next) => {
       return;
     }
 
+    await mergeLoginCart(req, restored.data.session.user.id);
     setSession(res, restored.data.session, input.data.portalRole ?? null);
     res.json({
       status: "imported",
@@ -652,6 +655,7 @@ authRouter.post("/logout", async (req, res, next) => {
     }
 
     clear(res);
+    clearCartSession(res);
     res.status(204).end();
   } catch (error) {
     next(error);

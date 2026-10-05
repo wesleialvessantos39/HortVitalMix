@@ -8,6 +8,7 @@ import {
 import { ArrowLeft, ImagePlus, Leaf } from "lucide-react";
 import { api } from "../../lib/api";
 import { optimizeImage } from "../../lib/optimizeImage";
+import { MediaImage } from "../../components/catalog/MediaImage";
 import type { ShellSession } from "../../hooks/useSession";
 import {
   PublicCategoriesResponseSchema,
@@ -434,7 +435,7 @@ export default function ProductEditorPage({
                 <div className="hvm-product-media-grid">
                   {product.media.map((media) => (
                     <div className="hvm-product-media" key={media.id}>
-                      <img src={media.url} alt={`Foto de ${product.title}`} />
+                      <MediaImage src={media.url} alt={`Foto de ${product.title}`} />
                       {media.isPrimary ? (
                         <span className="hvm-product-badge published">
                           Foto principal

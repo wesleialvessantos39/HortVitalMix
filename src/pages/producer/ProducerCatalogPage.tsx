@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { MediaImage } from "../../components/catalog/MediaImage";
 import { ArrowLeft, Plus, Salad, Pencil, Store } from "lucide-react";
 import { api } from "../../lib/api";
 import type { ShellSession } from "../../hooks/useSession";
@@ -120,16 +121,16 @@ export default function ProducerCatalogPage({
               </div>
             ) : (
               <div className="hvm-product-grid">
-                {catalog.products.map((product) => {
+                {catalog.products.map((product,index) => {
                   const primary = product.media.find((m) => m.isPrimary);
                   return (
                     <article className="hvm-product-card" key={product.id}>
                       <div className="hvm-product-photo">
                         {primary ? (
-                          <img
+                          <MediaImage
                             src={primary.url}
                             alt={product.title}
-                            loading="lazy"
+                            priority={index<3}
                           />
                         ) : (
                           <Salad size={48} />

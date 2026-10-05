@@ -8,6 +8,8 @@ import {
 import "../../pages/producer/products.css";
 import { usePublicProducts } from "./usePublicProducts";
 import { MediaCarousel } from "./MediaCarousel";
+import { HortiMixBuilder } from "./HortiMixBuilder";
+import { ProductCartActions } from "./ProductCartActions";
 
 export function PublicProductCatalog({
   storeSlug,
@@ -81,6 +83,8 @@ export function PublicProductGrid({
       </div>
     );
   return (
+    <>
+    <HortiMixBuilder products={products} onNavigate={onNavigate}/>
     <div className="hvm-product-grid" aria-label="Catálogo de alimentos">
       {products.map((product, index) => {
         const media = [...product.media].sort(
@@ -144,10 +148,12 @@ export function PublicProductGrid({
                   Conheça {product.storeName}
                 </button>
               )}
+              <ProductCartActions productId={product.id} available={product.inStock}/>
             </div>
           </article>
         );
       })}
     </div>
+    </>
   );
 }

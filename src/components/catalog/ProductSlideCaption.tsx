@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Sprout } from "lucide-react";
+import { MediaImage } from "./MediaImage";
 import {
   formatProductPrice,
   UNIT_LABELS,
@@ -17,7 +18,7 @@ export function ProducerPortrait({
   return (
     <span className="hvm-slide-portrait">
       {url && failed !== url ? (
-        <img
+        <MediaImage
           src={url}
           alt={`Foto de ${name}`}
           loading="eager"

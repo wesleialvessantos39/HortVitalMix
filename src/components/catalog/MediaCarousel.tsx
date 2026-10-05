@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, ImageOff, Pause, Play } from "lucide-react";
 import "./mediaCarousel.css";
+import { MediaImage } from "./MediaImage";
 
 export type MediaSlide = {
   id: string;
@@ -116,12 +117,13 @@ export function MediaCarousel({
   const content = (
     <>
       {slide.imageUrl && !failed.has(slide.imageUrl) ? (
-        <img
+        <MediaImage
           src={slide.imageUrl}
           alt={slide.alt}
           loading={visible || priority ? "eager" : "lazy"}
           decoding="async"
-          fetchPriority={priority ? "high" : "auto"}
+          fetchPriority={priority || visible ? "high" : "auto"}
+          priority={priority || visible}
           onError={() =>
             setFailed((previous) => new Set(previous).add(slide.imageUrl!))
           }
@@ -199,7 +201,7 @@ export function MediaCarousel({
         <div className="hvm-carousel-surface">{content}</div>
       )}
       {visible && next?.imageUrl && next.imageUrl !== slide.imageUrl && (
-        <img
+        <MediaImage
           className="hvm-carousel-preload"
           src={next.imageUrl}
           alt=""

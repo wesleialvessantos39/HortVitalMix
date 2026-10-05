@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ImagePlus, Layers, Package, Trash2 } from "lucide-react";
 import { api, type ApiFailure } from "../../lib/api";
 import { optimizeImage } from "../../lib/optimizeImage";
+import { MediaImage } from "../../components/catalog/MediaImage";
 import { cryptoRandomUUID as uuid } from "../../lib/uuid";
 import {
   ProducerCatalogResponseSchema,
@@ -354,7 +355,7 @@ export function StoreMediaSettings({
           <div className="hvm-cover-thumbnails">
             {store.coverImages.map((image, index) => (
               <figure key={image.id}>
-                <img
+                <MediaImage
                   src={image.url}
                   alt={`Foto de capa ${index + 1}`}
                   loading="lazy"

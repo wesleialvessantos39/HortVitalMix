@@ -49,6 +49,7 @@ const ProducerStoreSettingsPage = lazy(() => import("./pages/producer/ProducerSt
 const PublicProducerStorePage = lazy(() => import("./pages/public/PublicProducerStorePage"));
 const RegionalHighlights = lazy(() => import("./components/catalog/RegionalHighlights"));
 const HomeDiscoveryPage = lazy(() => import("./pages/public/HomeDiscoveryPage"));
+const CartPage = lazy(() => import("./pages/public/CartPage"));
 const fallback = {
   platformName: "HortiVitalMix",
   slogan: "Tudo fresco. Tudo da sua região.",
@@ -90,7 +91,8 @@ export default function App() {
     [query, setQuery] = useState(""),
     [category, setCategory] = useState("Todos os produtos"),
     [categoryId, setCategoryId] = useState<string | null>(null),
-    [deliveryLabel, setDeliveryLabel] = useState<string | null>(null);
+    [deliveryLabel, setDeliveryLabel] = useState<string | null>(null),
+    [cartCount, setCartCount] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
   const {
     session: shellSession,
@@ -98,6 +100,12 @@ export default function App() {
     adoptSession,
     refresh: refreshSession,
   } = useSession();
+  useEffect(() => {
+    const update = (event: Event) => setCartCount((event as CustomEvent<number>).detail);
+    window.addEventListener("hvm:cart-updated",update);
+    return () => window.removeEventListener("hvm:cart-updated",update);
+  },[]);
+  useEffect(() => setCartCount(0),[shellSession?.userId]);
   // Item 4: a região da vitrine é escolhida pelo visitante e não depende do
   // login — vale igual para visitante, consumidor, produtor, Administrador e
   // Super administrador.
@@ -312,9 +320,10 @@ export default function App() {
             <button
               className="icon"
               aria-label="Carrinho"
-              onClick={() => setModal("Carrinho")}
+              onClick={() => go("/carrinho")}
             >
               <ShoppingCart />
+              {cartCount>0&&<span className="hvm-cart-count" aria-hidden="true">{cartCount}</span>}
             </button>
           </div>
         </div>
@@ -343,9 +352,10 @@ export default function App() {
             <button
               className="icon"
               aria-label="Carrinho"
-              onClick={() => setModal("Carrinho")}
+              onClick={() => go("/carrinho")}
             >
               <ShoppingCart />
+              {cartCount>0&&<span className="hvm-cart-count" aria-hidden="true">{cartCount}</span>}
             </button>
           </div>
         </div>
@@ -356,7 +366,7 @@ export default function App() {
           onOpen={openLocality}
         />
       </header>
-      <main id="conteudo" className={isAdminRoute || publicLoginRole ? "layout admin-route-layout" : isProducerPropertyRoute ? "layout producer-route-layout rural-property-layout" : isProducerScopeRoute || isProducerStoreRoute || isProducerProductRoute ? "layout producer-route-layout" : "layout"}>
+      <main id="conteudo" className={isAdminRoute || publicLoginRole ? "layout admin-route-layout" : isProducerPropertyRoute ? "layout producer-route-layout rural-property-layout" : isProducerScopeRoute || isProducerStoreRoute || isProducerProductRoute || path === "/carrinho" ? "layout producer-route-layout" : "layout"}>
         {shellSession?.localityWarning && !isAdminRoute && (
           <p className="account-notice locality-blocked" role="alert">
             {shellSession.localityWarning}
@@ -384,6 +394,10 @@ export default function App() {
           />
         ) : path === "/cadastro" ? (
           <ChoosePortalPage onNavigate={go} />
+        ) : path === "/carrinho" ? (
+          <Suspense fallback={<p role="status">Carregando sua cesta…</p>}>
+            {sessionLoading ? <p role="status">Carregando sua cesta…</p> : <CartPage key={shellSession?.userId ?? "guest"} signedIn={!!shellSession} onNavigate={go}/>}
+          </Suspense>
         ) : publicStoreSlug ? (
           <Suspense fallback={<p role="status">Carregando a vitrine…</p>}>
             <PublicProducerStorePage key={publicStoreSlug} slug={publicStoreSlug} onNavigate={go} />
