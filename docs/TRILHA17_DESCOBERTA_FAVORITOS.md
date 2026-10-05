@@ -51,7 +51,7 @@ Carrinho/Monte seu HortiMix T18, cupons, pedidos, checkout/Pix e acompanhamento 
 - **2** histórias com React compilado/HTTP/PostgreSQL reais: banco vazio sem fixtures em 320/1440px e salvar/remover/recarregar/link T12 em 390/1440px, incluindo toque real. Somente dependências externas Auth/Storage são adaptadas no ambiente descartável local.
 - **18** cenários de navegador T17 em 320/390/768/1440px, incluindo visitante, erro/recuperação, resposta perdida, filtros, posição e paginação. Dados sintéticos ficam exclusivamente nestes testes locais.
 - Regressão: **113** testes PostgreSQL T12–T16 e **99** cenários de navegador T07/T12–T16 passaram. Suíte geral: **646 passaram**, **165 ignorados** por configuração de integração ausente na execução geral; suites reais T17 e regressão PostgreSQL executadas separadamente.
-- Build, typecheck de produção, cold start ESM, manifesto, segurança e ausência de segredos no bundle aprovados. O build acrescenta os 40 testes T17 aos gates existentes.
+- Build, typecheck de produção, cold start ESM, manifesto, segurança e ausência de segredos no bundle aprovados. O script npm run build acrescenta os 40 testes T17 aos gates locais existentes; a configuração Vercel anterior permanece intacta.
 - [TRILHA17_PRESERVACAO.json](TRILHA17_PRESERVACAO.json): **58 tabelas anteriores**, incluindo identidade/negócio, mantiveram contagens/hashes antes/depois da migration; `app_releases` é tratado separadamente como metadado da publicação. Nenhum dado real foi usado como fixture.
 - Advisors: nenhum novo aviso de segurança. Três índices novos tiveram apenas INFO de [índice ainda não utilizado](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index), esperado antes do tráfego nas novas consultas. Avisos históricos não foram alterados fora da missão.
 
@@ -63,4 +63,17 @@ Carrinho/Monte seu HortiMix T18, cupons, pedidos, checkout/Pix e acompanhamento 
 - [x] Home/Produtores responsivos com link T12 e vazio honesto.
 - [x] Schema 51 → 52, manifesto/hash e histórico físico sincronizados.
 - [x] Regressão T01–T16 e dados anteriores preservados.
-- [ ] Fechamento main/produção: SHA e deployment READY registrados após publicação.
+- [x] Fechamento funcional main/produção: SHA, deployment READY e conferência pública registrados abaixo.
+
+
+## 5. Fechamento funcional em produção
+
+- [PR #78](https://github.com/wesleialvessantos39/HortVitalMix/pull/78) integrado. SHA funcional **0fd640baf19f8381b25c73e2396823c0ce24d095**, árvore **452f40816a7ae8aa5f6f9340cb1b48b10e867395**, idêntica à validada localmente.
+- Deployment **dpl_DUiEA2MXS2GM8t5Q6r3XCYJ92z1V**, **READY**, production/**main/pdx1**, domínio **https://hortvitalmix.vercel.app**. Release funcional **t17-v52-0fd640b**, schema **52**, hash canônico desta missão. Health/ready/config passaram na SHA exata depois de READY.
+- Descoberta padrão, busca e coordenadas 0/0: **200**; parâmetros desconhecidos/duplicados: **400**; favoritos/configuração T16 sem sessão: **401**. Produtos T14: **200**, categorias T13: **200**, cinco categorias oficiais preservadas. Request IDs presentes.
+- O ambiente publicado ainda não tem lojas públicas elegíveis: `/` e `/produtores` exibem o vazio real, sem dados de demonstração. A existência de loja privada/rascunho não cria um card público.
+- Navegador publicado conferido em **320/390/768/1440px**, com região Ariquemes, busca couve, categoria Frutas e vazio real, sem overflow ou erro JavaScript. Contexto móvel 390px com **hasTouch/isMobile** executou toques reais em Localização, região e busca. agent-browser também verificou a página publicada em desktop e dispositivo móvel. Favoritar com sessão foi comprovado na história completa local; nenhuma conta real foi usada como fixture de produção.
+- Novo snapshot após publicação confirmou **58 tabelas anteriores** com contagens/hashes idênticos ao baseline. Atualização somente de `app_releases` como metadado da entrega. Consulta de contagem dos logs error/fatal do deployment, janela de 5 minutos, retornou vazia.
+- O fechamento documental altera somente este relatório, evidência e apêndice do Livro-Raiz. Código funcional/schema/hash permanecem os mesmos; a release acompanha a SHA documental final após o respectivo deployment READY e nova verificação.
+
+Checklist T17 concluído. A próxima missão segue a base homologada T17/schema 52 e o escopo da T18 do plano enviado.
