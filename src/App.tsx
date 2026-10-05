@@ -47,6 +47,7 @@ const ProducerDeliveryAreaPage = lazy(() => import("./pages/producer/ProducerDel
 const ProductEditorPage = lazy(() => import("./pages/producer/ProductEditorPage"));
 const ProducerStoreSettingsPage = lazy(() => import("./pages/producer/ProducerStoreSettingsPage"));
 const PublicProducerStorePage = lazy(() => import("./pages/public/PublicProducerStorePage"));
+const RegionalHighlights = lazy(() => import("./components/catalog/RegionalHighlights"));
 const HomeDiscoveryPage = lazy(() => import("./pages/public/HomeDiscoveryPage"));
 const fallback = {
   platformName: "HortiVitalMix",
@@ -348,7 +349,7 @@ export default function App() {
             </button>
           </div>
         </div>
-        {!isProducerPropertyRoute && !isProducerStoreRoute && !isProducerProductRoute && search}
+        {path !== "/" && !isProducerPropertyRoute && !isProducerStoreRoute && !isProducerProductRoute && search}
         <LocationSelector
           region={locality.label}
           expanded={modal === "Localização"}
@@ -486,15 +487,10 @@ export default function App() {
                         );
                       })}
                     </div>
-                    <div className="hero-search">{search}</div>
                   </div>
-                  <div className="hero-art" aria-hidden="true">
-                    <Leaf size={86} />
-                    <div className="art-caption">
-                      <Sprout size={18} />
-                      Tudo da sua região.
-                    </div>
-                  </div>
+                  <Suspense fallback={<p role="status">Preparando os destaques…</p>}>
+                    <RegionalHighlights key={locality.selected?.municipalityId??"all"} municipalityId={locality.selected?.municipalityId} regionLabel={locality.label} blocked={localityBlocked} onNavigate={go}/>
+                  </Suspense>
                 </section>
               )}
               {path === "/sobre" ? (

@@ -44,6 +44,8 @@ export function assertManifestHash() {
 }
 
 const remoteVersionAliases: Readonly<Record<string, string>> = {
+  // Capas e carrosséis aplicados pelo Supabase com timestamp físico próprio.
+  "20261005194858": "20261005191237",
   // Correção de cadastro/aceite aplicada com timestamp físico gerado pelo Supabase.
   "20261005152423": "20261005144950",
   // Descoberta/favoritos T17 aplicada com timestamp físico gerado pelo Supabase.

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, FileText } from "lucide-react";
+import { ArrowLeft, Camera, FileText, FileUp } from "lucide-react";
 import { api, apiBase } from "../../lib/api";
 import {
   documentLabels,
@@ -759,6 +759,7 @@ export function DocumentsPanel({
             </label>
             <div className="document-actions">
               <label className="document-upload">
+                {embedded && <FileUp aria-hidden="true" size={16} />}
                 Selecionar PDF ou imagem
                 <input
                   aria-label="Selecionar PDF ou imagem"
@@ -772,6 +773,7 @@ export function DocumentsPanel({
                 />
               </label>
               <label className="document-upload">
+                {embedded && <Camera aria-hidden="true" size={16} />}
                 Tirar foto do documento
                 <input
                   aria-label="Tirar foto do documento"
@@ -927,7 +929,7 @@ export function DocumentsPanel({
                   })
                     .filter(([, value]) => String(value || "").trim())
                     .map(([label, value]) => (
-                      <div key={label}>
+                      <div key={label} data-field={label}>
                         <dt>{label}</dt>
                         <dd>{value}</dd>
                       </div>

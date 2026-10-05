@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 53,
+  "schemaVersion": 54,
   "migrations": [
     {
       "version": "20260919030126",
@@ -295,7 +295,12 @@
       "version": "20261005144950",
       "name": "registration_consent_fast_confirmation",
       "file": "20261005144950_registration_consent_fast_confirmation.sql"
+    },
+    {
+      "version": "20261005191237",
+      "name": "storefront_media_carousels",
+      "file": "20261005191237_storefront_media_carousels.sql"
     }
   ],
-  "migrationHistoryHash": "b1889d4aa6b99e721709bdedc4afbdcd68a1d44c65932ea2a36bff9fcf934676"
+  "migrationHistoryHash": "f698b258308af10af2e1d193c908372660262167ef5c648f34e0e81742d847e3"
 }

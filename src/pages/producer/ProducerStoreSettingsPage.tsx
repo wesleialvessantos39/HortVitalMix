@@ -11,6 +11,7 @@ import {
   Clock3,
   ExternalLink,
   Leaf,
+  Images,
   Pause,
   Store,
 } from "lucide-react";
@@ -26,6 +27,7 @@ import {
   type StoreSettings,
 } from "../../../shared/contracts/producerStore";
 import "./producerStore.css";
+import { StoreMediaSettings } from "./StoreMediaSettings";
 
 type Props = { session: ShellSession; onNavigate: (path: string) => void };
 type Draft = {
@@ -77,9 +79,10 @@ export default function ProducerStoreSettingsPage({
 }: Props) {
   const [settings, setSettings] = useState<StoreSettings | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
-  const [tab, setTab] = useState<"settings" | "hours">("settings");
+  const [tab, setTab] = useState<"settings" | "hours" | "media">("settings");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [mediaBusy, setMediaBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [conflict, setConflict] = useState(false);
@@ -100,7 +103,7 @@ export default function ProducerStoreSettingsPage({
   const hydrate = useCallback(async (signal?: AbortSignal) => {
     try {
       const result = StoreSettingsResponseSchema.parse(
-        await api("/v1/producer/store", { signal }),
+        await api("/v1/producer/store?media=1", { signal }),
       );
       if (signal?.aborted) return;
       setSettings(result);
@@ -133,7 +136,7 @@ export default function ProducerStoreSettingsPage({
       setError("");
       setNotice("");
       try {
-        const response = await api<{ store: StoreOwner }>(path, {
+        const response = await api<{ store: StoreOwner }>(path + "?media=1", {
           method,
           body: JSON.stringify(input),
         });
@@ -333,7 +336,12 @@ export default function ProducerStoreSettingsPage({
               </div>
             </div>
           )}
-          <button className="secondary" onClick={() => onNavigate("/produtor/loja/entrega")}>Área de entrega e frete</button>
+          <button
+            className="secondary"
+            onClick={() => onNavigate("/produtor/loja/entrega")}
+          >
+            Área de entrega e frete
+          </button>
           <div
             role="tablist"
             aria-label="Configurações da loja"
@@ -357,10 +365,46 @@ export default function ProducerStoreSettingsPage({
             >
               <Clock3 size={17} /> Rotina e horários
             </button>
+            <button
+              id="store-media-tab"
+              role="tab"
+              aria-selected={tab === "media"}
+              aria-controls="store-media-panel"
+              disabled={busy || mediaBusy}
+              onClick={() => setTab("media")}
+            >
+              <Images size={17} /> Fotos e capa
+            </button>
           </div>
-          <form onSubmit={save} noValidate>
-            <fieldset
+          <div
+            id="store-media-panel"
+            role="tabpanel"
+            aria-labelledby="store-media-tab"
+            hidden={tab !== "media"}
+          >
+            <StoreMediaSettings
+              key={store.id}
+              store={store}
               disabled={busy || store.status === "closed"}
+              onBusyChange={setMediaBusy}
+              onReload={() => hydrate()}
+              onRecentAuth={(retry) => {
+                pending.current = retry;
+                setReauthOpen(true);
+              }}
+              onUpdated={(saved) => {
+                setSettings((current) =>
+                  current ? { ...current, store: saved } : null,
+                );
+                pending.current = null;
+                setReauthOpen(false);
+                setPassword("");
+              }}
+            />
+          </div>
+          <form onSubmit={save} noValidate hidden={tab === "media"}>
+            <fieldset
+              disabled={busy || mediaBusy || store.status === "closed"}
               className="hvm-store-fieldset"
             >
               <div
@@ -542,7 +586,11 @@ export default function ProducerStoreSettingsPage({
                 className="primary"
                 type="submit"
                 disabled={
-                  busy || !dirty || conflict || store.status === "closed"
+                  busy ||
+                  mediaBusy ||
+                  !dirty ||
+                  conflict ||
+                  store.status === "closed"
                 }
               >
                 {busy ? "Salvando…" : "Salvar configurações"}
@@ -579,7 +627,12 @@ export default function ProducerStoreSettingsPage({
                 </label>
                 <button
                   className="secondary"
-                  disabled={busy || conflict || pauseReason.trim().length < 3}
+                  disabled={
+                    busy ||
+                    mediaBusy ||
+                    conflict ||
+                    pauseReason.trim().length < 3
+                  }
                   onClick={() =>
                     void execute(
                       `/v1/producer/store/${store.id}/pause`,
@@ -599,7 +652,7 @@ export default function ProducerStoreSettingsPage({
             ) : ["draft", "paused"].includes(store.status) ? (
               <button
                 className="primary"
-                disabled={busy || dirty || conflict}
+                disabled={busy || mediaBusy || dirty || conflict}
                 onClick={() =>
                   void execute(
                     `/v1/producer/store/${store.id}/publish`,

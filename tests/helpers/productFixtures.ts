@@ -9,6 +9,7 @@ export async function productFixture(
     trust?: number;
     verification?: string;
     coordinates?: { latitude: number; longitude: number };
+    municipality?: string;
   } = {},
 ) {
   const userId = randomUUID(),
@@ -43,12 +44,13 @@ export async function productFixture(
   );
   await pool.query(
     `INSERT INTO public.app_properties(id,producer_id,property_name,municipality,state,line_vicinal,status,wizard_current_step,total_area_hectares,cultivated_area_hectares,rural_zone_sector,latitude_sede,longitude_sede,water_source,irrigation_system)
-   VALUES($1,$2,'Chácara local T14','Ariquemes','RO','Linha C-65','verified',6,10,4,'Gleba Jamari',$3,$4,'poco_artesiano','gotejamento')`,
+   VALUES($1,$2,'Chácara local T14',$5,'RO','Linha C-65','verified',6,10,4,'Gleba Jamari',$3,$4,'poco_artesiano','gotejamento')`,
     [
       propertyId,
       profileId,
       options.coordinates?.latitude ?? -9.91,
       options.coordinates?.longitude ?? -63.04,
+      options.municipality ?? "Ariquemes",
     ],
   );
   await pool.query(

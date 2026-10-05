@@ -27,16 +27,20 @@ import "./discovery.css";
 function StorePhoto({
   name,
   avatarUrl,
+  priority,
 }: {
   name: string;
   avatarUrl: string | null;
+  priority: boolean;
 }) {
   const [failed, setFailed] = useState(false);
   return avatarUrl && !failed ? (
     <img
       src={avatarUrl}
       alt={`Foto de ${name}`}
-      loading="lazy"
+      loading={priority ? "eager" : "lazy"}
+      decoding="async"
+      fetchPriority={priority ? "high" : "auto"}
       onError={() => setFailed(true)}
     />
   ) : (
@@ -393,12 +397,13 @@ export default function HomeDiscoveryPage({
         </div>
       ) : (
         <div className="hvm-discovery-grid" aria-label="Produtores encontrados">
-          {result.stores.map((store) => (
+          {result.stores.map((store,index) => (
             <article className="hvm-discovery-card" key={store.id}>
               <div className="hvm-discovery-photo">
                 <StorePhoto
                   key={store.avatarUrl}
                   name={store.name}
+                  priority={index<3}
                   avatarUrl={store.avatarUrl}
                 />
                 <button

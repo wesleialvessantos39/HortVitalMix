@@ -1,6 +1,13 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { ArrowLeft, ImagePlus, Leaf } from "lucide-react";
 import { api } from "../../lib/api";
+import { optimizeImage } from "../../lib/optimizeImage";
 import type { ShellSession } from "../../hooks/useSession";
 import {
   PublicCategoriesResponseSchema,
@@ -13,7 +20,6 @@ import {
   ProductMutationResponseSchema,
   PACKAGING_LABELS,
   UNIT_LABELS,
-  PRODUCT_MEDIA_MAX_BYTES,
   formatProductPrice,
   productPriceToCents,
   type Product,
@@ -75,6 +81,8 @@ export default function ProductEditorPage({
     [loadError, setLoadError] = useState("");
   const [file, setFile] = useState<File | null>(null),
     [fileInputKey, setFileInputKey] = useState(0);
+  const [preparing, setPreparing] = useState(false);
+  const preparation = useRef(false);
   const commands = useProductCommands(session, (saved) => {
     setProduct(saved);
     if (!id) onNavigate(`/produtor/produtos/${saved.id}/editar?criado=1`);
@@ -171,30 +179,36 @@ export default function ProductEditorPage({
     );
   }
   async function upload() {
-    if (!file || !product) return;
-    if (
-      !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
-      file.size > PRODUCT_MEDIA_MAX_BYTES
-    ) {
-      commands.invalid("Escolha uma foto JPEG, PNG ou WebP de até 2 MB.");
-      return;
+    if (!file || !product || preparation.current) return;
+    preparation.current = true;
+    setPreparing(true);
+    try {
+      const image = await optimizeImage(file);
+      const commandId = commands.command({
+        action: "upload",
+        revision: product.revision,
+        name: file.name,
+        size: file.size,
+        lastModified: file.lastModified,
+      });
+      await commands.execute(
+        `/v1/producer/products/${product.id}/media/upload?commandId=${commandId}&expectedRevision=${product.revision}`,
+        null,
+        "Foto adicionada ao produto.",
+        "POST",
+        image,
+      );
+    } catch (error) {
+      commands.invalid(
+        (error as Error).message || "Não foi possível preparar a foto.",
+      );
+    } finally {
+      preparation.current = false;
+      setPreparing(false);
     }
-    const commandId = commands.command({
-      action: "upload",
-      revision: product.revision,
-      name: file.name,
-      size: file.size,
-      lastModified: file.lastModified,
-    });
-    await commands.execute(
-      `/v1/producer/products/${product.id}/media/upload?commandId=${commandId}&expectedRevision=${product.revision}`,
-      null,
-      "Foto adicionada ao produto.",
-      "POST",
-      file,
-    );
   }
-  const blocked = commands.busy || commands.reauth || commands.conflict;
+  const blocked =
+    preparing || commands.busy || commands.reauth || commands.conflict;
   const detailsChanged = product
     ? JSON.stringify(draft) !== JSON.stringify(draftFrom(product))
     : true;
@@ -477,7 +491,7 @@ export default function ProductEditorPage({
                   ))}
                 </div>
                 <label>
-                  Adicionar foto
+                  {preparing ? "Preparando foto…" : "Adicionar foto"}
                   <input
                     key={fileInputKey}
                     type="file"
