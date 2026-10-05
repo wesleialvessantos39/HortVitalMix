@@ -1,0 +1,811 @@
+/* Property screens: visual reference supplied by the owner, scoped to T08. */
+.rural-properties-reference,
+.rural-wizard-reference {
+  --rural-ink: #174730;
+  --rural-soft: #eff8f3;
+  --rural-border: #e5ebe7;
+  color: #243d2d;
+}
+
+.rural-properties-reference .rural-page-heading {
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.rural-properties-reference .rural-back-button,
+.rural-wizard-reference .rural-back-button {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--rural-border);
+  background: #fff;
+  color: #52645a;
+}
+
+.rural-properties-reference .rural-page-heading h1 {
+  margin: 3px 0 0;
+  font-size: clamp(24px, 2.4vw, 30px);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+.rural-properties-reference .rural-page-lead {
+  margin-bottom: 24px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.rural-properties-reference .rural-onboarding-guide {
+  gap: 18px;
+  margin-bottom: 24px;
+  padding: 30px 32px;
+  background: var(--rural-soft);
+  border: 1px solid #deede3;
+  border-radius: 18px;
+}
+
+.rural-properties-reference .rural-onboarding-guide h2 {
+  margin: 0;
+  font-size: clamp(20px, 2vw, 24px);
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+}
+
+.rural-properties-reference .rural-onboarding-guide ol {
+  gap: 8px;
+  padding-left: 22px;
+  font-size: 14px;
+}
+
+.rural-properties-reference .rural-onboarding-action {
+  margin: 0;
+  min-height: 44px;
+}
+
+.rural-properties-reference .rural-primary-action {
+  width: auto;
+  min-height: 44px;
+  margin: 0 0 20px;
+  padding: 10px 16px;
+  border-radius: 10px;
+}
+
+.rural-properties-reference .rural-properties-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+
+.rural-properties-reference .rural-property-card {
+  gap: 22px;
+  padding: 24px;
+  border-color: var(--rural-border);
+  border-radius: 20px;
+  box-shadow: 0 1px 4px #173d2310;
+}
+
+.rural-properties-reference .rural-property-card:hover {
+  transform: none;
+  box-shadow: 0 3px 12px #173d2310;
+}
+
+.rural-properties-reference .rural-property-badge-wrap {
+  align-items: center;
+  gap: 16px;
+}
+
+.rural-properties-reference .rural-property-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--rural-soft);
+}
+
+.rural-properties-reference .rural-property-card h2 {
+  color: #182f22;
+  font-size: 18px;
+}
+
+.rural-properties-reference .rural-status-badge {
+  border-radius: 999px;
+  padding: 5px 10px;
+}
+
+.rural-properties-reference .rural-progress-header {
+  font-size: 14px;
+}
+
+.rural-properties-reference .rural-progress-header small {
+  font-size: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.rural-properties-reference .rural-progress-line {
+  height: 8px;
+  background: #f1f3f5;
+}
+
+.rural-properties-reference .rural-progress-line > span {
+  background: #268654;
+}
+
+.rural-properties-reference .rural-property-card-actions {
+  gap: 12px;
+  padding: 0;
+  border: 0;
+}
+
+.rural-properties-reference .rural-property-card-actions > button {
+  width: 100%;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  min-height: 48px;
+  background: var(--rural-ink);
+}
+
+.rural-properties-reference .rural-property-card-actions > button.secondary {
+  background: #fff;
+}
+
+.rural-properties-reference .rural-property-subactions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+}
+
+.rural-properties-reference .rural-property-subactions button {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--rural-border);
+  background: #fff;
+  margin: 0;
+}
+
+.rural-properties-reference .rural-delete-btn {
+  border-color: #efd9dc !important;
+  color: #b34b53 !important;
+}
+
+.rural-action-mobile {
+  display: none;
+}
+
+.rural-wizard-reference .rural-wizard-heading {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.rural-wizard-reference .rural-heading-copy {
+  min-width: 0;
+}
+
+.rural-wizard-reference .rural-wizard-heading h1 {
+  margin: 4px 0 0;
+  font-size: clamp(22px, 2vw, 28px);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.rural-wizard-reference .rural-wizard-heading .rural-later-button {
+  width: auto;
+  height: auto;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.rural-wizard-reference .rural-wizard-tools {
+  flex-direction: row;
+  align-items: center;
+  margin: 0 0 8px;
+}
+
+.rural-wizard-reference .rural-completion-count {
+  color: #287453;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rural-wizard-reference .rural-step-progress.account-section-nav {
+  gap: 8px;
+  padding: 0 0 6px;
+  margin-bottom: 16px;
+}
+
+.rural-wizard-reference
+  .rural-step-progress.account-section-nav
+  .rural-step-dot {
+  min-height: 44px;
+  flex-direction: row;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--rural-border);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.rural-wizard-reference
+  .rural-step-progress.account-section-nav
+  .rural-step-dot
+  > span {
+  width: auto;
+  height: auto;
+  background: transparent;
+  font-size: 12px;
+}
+
+.rural-wizard-reference
+  .rural-step-progress.account-section-nav
+  .rural-step-dot
+  small {
+  font-size: 12px;
+  text-align: center;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+.rural-wizard-reference .rural-step-progress.account-section-nav .is-current {
+  background: var(--rural-ink);
+  border-color: var(--rural-ink);
+  color: #fff;
+}
+
+.rural-wizard-reference
+  .rural-step-progress.account-section-nav
+  .is-current
+  small,
+.rural-wizard-reference
+  .rural-step-progress.account-section-nav
+  .is-current
+  > span {
+  color: inherit;
+}
+
+.rural-wizard-reference
+  .rural-step-progress.account-section-nav
+  .is-complete:not(.is-current) {
+  color: #287453;
+  border-color: #cee4d7;
+}
+
+.rural-wizard-reference .rural-pending-steps {
+  gap: 6px;
+  margin: 0 0 22px;
+  padding: 16px 18px;
+  background: #fffcf2;
+  border-color: #eee7cd;
+}
+
+.rural-wizard-reference .rural-pending-list {
+  gap: 6px;
+}
+
+.rural-wizard-reference .rural-pending-list .rural-pending-link {
+  gap: 6px;
+  min-height: 44px;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-color: #eee7cd;
+  border-radius: 9px;
+}
+
+.rural-wizard-reference .rural-pending-link > span {
+  width: auto;
+  height: auto;
+  background: transparent;
+}
+
+.rural-wizard-reference .rural-wizard-card {
+  padding: clamp(18px, 2.5vw, 30px);
+  border-color: var(--rural-border);
+  border-radius: 18px;
+  box-shadow: 0 1px 4px #173d2308;
+}
+
+.rural-wizard-reference .rural-step-copy {
+  margin-bottom: 24px;
+  padding-bottom: 0;
+  border: 0;
+}
+
+.rural-wizard-reference .rural-step-copy > span {
+  font-size: 11px;
+  letter-spacing: 0.07em;
+}
+
+.rural-wizard-reference .documents-panel--embedded .document-management {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 20px;
+}
+
+.rural-wizard-reference .documents-panel--embedded .document-list > li {
+  grid-template-rows: auto 1fr;
+  align-content: stretch;
+  align-items: start;
+}
+
+.rural-wizard-reference .documents-panel--embedded fieldset.account-panel {
+  margin: 0;
+}
+
+.rural-wizard-reference
+  .documents-panel--embedded
+  .document-list
+  .document-actions {
+  align-self: end;
+}
+
+.rural-wizard-reference .documents-panel--embedded .account-section-intro {
+  padding-bottom: 0;
+  border: 0;
+  margin-bottom: 12px;
+}
+
+.rural-wizard-reference .documents-panel--embedded .account-section-intro p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.rural-wizard-reference
+  .documents-panel--embedded
+  .document-actions
+  .document-upload {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.rural-wizard-reference .documents-panel--embedded .account-panel,
+.rural-wizard-reference .documents-panel--embedded .document-list > li {
+  border: 1px solid var(--rural-border);
+  border-radius: 14px;
+}
+
+.rural-wizard-reference .documents-panel--embedded .document-comparison {
+  margin-top: 20px;
+  padding: 20px;
+  column-gap: 24px;
+}
+
+.rural-wizard-reference .documents-panel--embedded .document-original {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.rural-wizard-reference .documents-panel--embedded .document-original h3,
+.rural-wizard-reference .documents-panel--embedded .document-data h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.rural-wizard-reference .documents-panel--embedded .document-original h3 {
+  align-self: center;
+  margin: 0;
+}
+
+.rural-wizard-reference .documents-panel--embedded .document-open {
+  align-self: center;
+  margin: 0;
+  font-size: 11px;
+  text-align: right;
+  line-height: 1.4;
+}
+
+.rural-wizard-reference
+  .documents-panel--embedded
+  .document-original
+  > .document-view,
+.rural-wizard-reference
+  .documents-panel--embedded
+  .document-original
+  > .document-viewer,
+.rural-wizard-reference
+  .documents-panel--embedded
+  .document-original
+  > .secondary,
+.rural-wizard-reference .documents-panel--embedded .document-original > p {
+  grid-column: 1 / -1;
+}
+
+.rural-wizard-reference
+  .documents-panel--embedded
+  .document-original
+  > .secondary {
+  width: 100%;
+  margin-top: 0;
+}
+
+.rural-wizard-reference .documents-panel--embedded .document-viewer {
+  height: clamp(340px, 48vh, 520px);
+  border-radius: 10px;
+  border-color: var(--rural-border);
+  background: #f7f9fa;
+}
+
+.rural-wizard-reference .documents-panel--embedded .document-data dl {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.rural-wizard-reference .documents-panel--embedded .document-data dl > div {
+  grid-column: span 6;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f5f6f8;
+}
+
+.rural-wizard-reference
+  .documents-panel--embedded
+  .document-data
+  dl
+  > [data-field="CAR"],
+.rural-wizard-reference
+  .documents-panel--embedded
+  .document-data
+  dl
+  > [data-field="Código INCRA / CCIR"] {
+  grid-column: 1 / -1;
+}
+
+.rural-wizard-reference .documents-panel--embedded .document-data dt {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.035em;
+  color: #6d7972;
+}
+
+.rural-wizard-reference .documents-panel--embedded .document-data dd {
+  margin: 5px 0 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.rural-wizard-reference .documents-panel--embedded .document-data details {
+  padding: 14px;
+  background: #fff;
+  border-color: var(--rural-border);
+}
+
+.rural-wizard-reference .rural-document-readiness {
+  margin: 20px 0 0;
+  font-size: 12px;
+  color: #69796f;
+}
+
+.rural-wizard-reference .rural-wizard-actions {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding-top: 20px;
+}
+
+.rural-wizard-reference .rural-wizard-actions > button {
+  width: auto;
+  margin: 0;
+  min-height: 44px;
+  padding: 10px 14px;
+}
+
+.rural-properties-reference button:focus-visible,
+.rural-wizard-reference button:focus-visible {
+  outline: 3px solid #6ca486;
+  outline-offset: 3px;
+}
+
+@media (max-width: 900px) {
+  .rural-wizard-reference .documents-panel--embedded .document-management {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rural-wizard-reference .documents-panel--embedded .document-list > li {
+    grid-template-columns: 40px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: start;
+    gap: 10px;
+  }
+
+  .rural-wizard-reference
+    .documents-panel--embedded
+    .document-list
+    > li
+    > div:first-of-type {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+    gap: 4px 8px;
+  }
+
+  .rural-wizard-reference .documents-panel--embedded .document-list strong {
+    grid-column: 1;
+    grid-row: 1;
+    font-size: 14px;
+  }
+
+  .rural-wizard-reference .documents-panel--embedded .document-file-name {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+
+  .rural-wizard-reference .documents-panel--embedded .document-status {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+    margin: 0;
+    max-width: 110px;
+    font-size: 10px;
+  }
+
+  .rural-wizard-reference
+    .documents-panel--embedded
+    .document-list
+    .document-actions {
+    gap: 4px;
+    margin: 0;
+  }
+
+  .rural-wizard-reference
+    .documents-panel--embedded
+    .document-list
+    .document-actions
+    > button {
+    width: auto;
+    min-height: 44px;
+    border: 0;
+    padding: 6px 8px;
+    font-size: 12px;
+    background: transparent;
+  }
+
+  .rural-wizard-reference .documents-panel--embedded .document-viewer {
+    height: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .rural-properties-reference .rural-page-lead {
+    margin-left: 60px;
+    margin-bottom: 24px;
+  }
+
+  .rural-properties-reference .rural-onboarding-guide {
+    padding: 22px 18px;
+    gap: 18px;
+  }
+
+  .rural-properties-reference .rural-onboarding-action {
+    width: 100%;
+  }
+
+  .rural-properties-reference .rural-property-card {
+    padding: 20px 18px;
+    gap: 24px;
+  }
+
+  .rural-properties-reference .rural-property-card-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  .rural-properties-reference .rural-property-badge-wrap {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .rural-properties-reference .rural-property-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .rural-properties-reference .rural-property-card h2 {
+    font-size: 16px;
+  }
+
+  .rural-properties-reference .rural-status-badge {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .rural-properties-reference .rural-property-subactions {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  }
+
+  .rural-properties-reference .rural-action-desktop {
+    display: none;
+  }
+
+  .rural-properties-reference .rural-action-mobile {
+    display: inline;
+  }
+
+  .rural-wizard-reference .rural-wizard-heading {
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+
+  .rural-wizard-reference .rural-heading-copy {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .rural-wizard-reference .rural-later-button {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .rural-wizard-reference .rural-step-progress.account-section-nav {
+    display: flex;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-padding-inline: 4px;
+  }
+
+  .rural-wizard-reference
+    .rural-step-progress.account-section-nav
+    .rural-step-dot {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 8px 14px;
+  }
+
+  .rural-wizard-reference .rural-pending-steps {
+    padding: 14px;
+    margin-bottom: 18px;
+  }
+
+  .rural-wizard-reference .rural-pending-description {
+    font-size: 12px;
+  }
+
+  .rural-wizard-reference .rural-pending-list > span {
+    flex: 1 1 145px;
+    min-width: 0;
+  }
+
+  .rural-wizard-reference .rural-pending-list .rural-pending-link {
+    width: 100%;
+    justify-content: flex-start;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .rural-wizard-reference .rural-wizard-card {
+    padding: 16px;
+  }
+
+  .rural-wizard-reference .documents-panel--embedded .document-comparison {
+    padding: 14px;
+    gap: 20px;
+  }
+
+  .rural-wizard-reference .documents-panel--embedded .document-data dl > div {
+    grid-column: 1 / -1;
+  }
+
+  .rural-wizard-reference
+    .documents-panel--embedded
+    .document-data
+    dl
+    > [data-field="Área (ha)"],
+  .rural-wizard-reference
+    .documents-panel--embedded
+    .document-data
+    dl
+    > [data-field="Cultivada (ha)"],
+  .rural-wizard-reference
+    .documents-panel--embedded
+    .document-data
+    dl
+    > [data-field="Reserva (ha)"] {
+    grid-column: span 4;
+    padding: 9px;
+  }
+
+  .rural-wizard-reference .rural-wizard-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto;
+    gap: 8px;
+    margin: 0;
+    padding: 10px max(12px, env(safe-area-inset-left))
+      calc(10px + env(safe-area-inset-bottom))
+      max(12px, env(safe-area-inset-right));
+    background: #fff;
+    border-top: 1px solid var(--rural-border);
+    box-shadow: 0 -3px 14px #173d2308;
+  }
+
+  .rural-wizard-reference .rural-wizard-actions > button {
+    padding: 8px 10px;
+    font-size: 12px;
+    gap: 4px;
+  }
+
+  .rural-wizard-reference .rural-save-indicator {
+    grid-column: auto;
+    grid-row: auto;
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .rural-wizard-reference .rural-save-indicator svg,
+  .rural-wizard-reference .rural-wizard-actions > button svg {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .rural-wizard-reference .documents-panel--embedded .document-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .rural-wizard-reference .documents-panel--embedded .document-form > label {
+    grid-column: auto;
+  }
+
+  .rural-wizard-reference
+    .documents-panel--embedded
+    .document-form
+    > label:nth-child(-n + 4) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 360px) {
+  .rural-properties-reference .rural-page-heading h1 {
+    font-size: 22px;
+  }
+
+  .rural-properties-reference .rural-property-card {
+    padding: 16px 14px;
+  }
+
+  .rural-properties-reference .rural-property-card-top {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rural-properties-reference .rural-status-badge {
+    justify-self: start;
+    margin-left: 52px;
+  }
+
+  .rural-wizard-reference .rural-wizard-card,
+  .rural-wizard-reference .documents-panel--embedded .document-comparison {
+    padding: 12px;
+  }
+
+  .rural-wizard-reference .rural-wizard-actions > button {
+    font-size: 11px;
+    padding-inline: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rural-properties-reference .rural-property-card {
+    transition: none;
+  }
+}

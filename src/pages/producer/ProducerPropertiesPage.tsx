@@ -11,10 +11,11 @@ import {
   ChevronRight,
   FileText,
   MapPinned,
+  Plus,
   RefreshCw,
   Save,
-  Sprout,
   Trash2,
+  UserRound,
   WifiOff,
 } from "lucide-react";
 import { api, type ApiFailure } from "../../lib/api";
@@ -42,6 +43,7 @@ import {
   estimatePropertyPerimeter,
   isEstimatedPerimeter,
 } from "../../../shared/rural/estimatePropertyPerimeter";
+import "./ruralProperties.css";
 
 type Props = {
   path: string;
@@ -407,7 +409,7 @@ function PropertyList({
   }
 
   return (
-    <section className="rural-properties-page">
+    <section className="rural-properties-page rural-properties-reference">
       <header className="account-detail-top rural-page-heading">
         <button
           className="rural-back-button"
@@ -461,7 +463,7 @@ function PropertyList({
                 </button>
               ) : (
                 <p className="rural-onboarding-action">
-                  Use o botão <strong>Novo imóvel rural</strong> logo acima para iniciar.
+                  Use o botão <strong>Novo imóvel rural</strong> abaixo para iniciar.
                 </p>
               );
             })()}
@@ -471,7 +473,7 @@ function PropertyList({
         className="primary rural-primary-action"
         onClick={() => onNavigate("/produtor/propriedades/novo")}
       >
-        <Sprout />
+        <Plus aria-hidden="true" />
         Novo imóvel rural
       </button>
 
@@ -521,7 +523,7 @@ function PropertyList({
               <div className="rural-property-card-top">
                 <div className="rural-property-badge-wrap">
                   <span className="rural-property-icon" aria-hidden="true">
-                    <MapPinned size={20} />
+                    <UserRound size={22} />
                   </span>
                   <div>
                     <h2>{property.propertyName || "Imóvel sem nome — rascunho"}</h2>
@@ -538,8 +540,9 @@ function PropertyList({
               <div className="rural-property-progress-section">
                 <div className="rural-progress-header">
                   <small>Etapa {property.wizardCurrentStep} de 6</small>
+                  <small aria-hidden="true">{Math.round((property.wizardCurrentStep / 6) * 100)}%</small>
                 </div>
-                <div className="rural-progress-line" aria-label={`Etapa ${property.wizardCurrentStep} de 6`}>
+                <div className="rural-progress-line" role="progressbar" aria-label="Progresso do cadastro" aria-valuemin={0} aria-valuemax={6} aria-valuenow={property.wizardCurrentStep} aria-valuetext={`Etapa ${property.wizardCurrentStep} de 6`}>
                   <span style={{ width: `${(property.wizardCurrentStep / 6) * 100}%` }} />
                 </div>
               </div>
@@ -594,14 +597,16 @@ function PropertyList({
                 <div className="rural-property-subactions">
                   <button
                     className="secondary rural-docs-btn"
+                    aria-label="Documentos do imóvel"
                     onClick={() => onNavigate("/produtor/propriedades/novo?id=" + property.id + "&step=1")}
                   >
                     <FileText size={16} />
-                    Documentos do imóvel
+                    <span className="rural-action-desktop">Documentos do imóvel</span>
+                    <span className="rural-action-mobile" aria-hidden="true">Documentos</span>
                   </button>
 
-                  <button className="secondary rural-delete-btn" disabled={busyId===property.id} onClick={()=>void deleteDraft(property)}>
-                    <Trash2 size={16}/>{property.status==='draft'?'Excluir rascunho':'Excluir imóvel'}
+                  <button className="secondary rural-delete-btn" aria-label={property.status==='draft'?'Excluir rascunho':'Excluir imóvel'} disabled={busyId===property.id} onClick={()=>void deleteDraft(property)}>
+                    <Trash2 size={16}/><span className="rural-action-desktop">{property.status==='draft'?'Excluir rascunho':'Excluir imóvel'}</span><span className="rural-action-mobile" aria-hidden="true">Excluir</span>
                   </button>
                 </div>
               </div>
@@ -1187,7 +1192,7 @@ function RuralPropertyWizard({
 
   if (state === "loading") {
     return (
-      <section className="rural-wizard-page" aria-busy="true">
+      <section className="rural-wizard-page rural-wizard-reference" aria-busy="true">
         <p className="account-notice">Carregando o rascunho do imóvel…</p>
       </section>
     );
@@ -1195,7 +1200,7 @@ function RuralPropertyWizard({
 
   if (state === "error") {
     return (
-      <section className="rural-wizard-page">
+      <section className="rural-wizard-page rural-wizard-reference">
         <div className="rural-state-card" role="alert">
           <AlertTriangle />
           <div>
@@ -1211,7 +1216,7 @@ function RuralPropertyWizard({
   }
 
   return (
-    <section className="rural-wizard-page">
+    <section className="rural-wizard-page rural-wizard-reference">
       <header className="account-detail-top rural-wizard-heading">
         <button
           className="rural-back-button"
@@ -1220,16 +1225,17 @@ function RuralPropertyWizard({
         >
           <ArrowLeft />
         </button>
-        <div>
+        <div className="rural-heading-copy">
           <span className="eyebrow">Cadastro do imóvel</span>
           <h1>{draft.propertyName || "Novo imóvel rural"}</h1>
         </div>
+        <button className="secondary rural-later-button" disabled={saving.current} onClick={() => void continueLater()}>
+          {viewOnly ? "Voltar aos imóveis" : "Continuar mais tarde"}
+        </button>
       </header>
       <div className="rural-wizard-tools">
         <p>Etapa {step} de 6</p>
-        <button className="secondary" disabled={saving.current} onClick={() => void continueLater()}>
-          {viewOnly ? "Voltar aos imóveis" : "Continuar mais tarde"}
-        </button>
+        <p className="rural-completion-count">{Math.round((steps.filter((_, index) => buildStepData(index + 1).success).length / steps.length) * 100)}% concluído</p>
       </div>
 
       <nav className="rural-step-progress account-section-nav" aria-label={`Progresso: etapa ${step} de 6`}>
@@ -1239,6 +1245,7 @@ function RuralPropertyWizard({
             disabled={saving.current}
             onClick={() => viewOnly ? setDraft((current) => ({ ...current, step: index + 1 })) : patch({ step: index + 1 })}
             aria-label={`Etapa ${index+1}: ${title}${buildStepData(index+1).success ? ", completa" : ", pendente"}`}
+            aria-current={index + 1 === step ? "step" : undefined}
             key={title}
             className={
               "rural-step-dot" +
@@ -1249,7 +1256,7 @@ function RuralPropertyWizard({
                   : "")
             }
           >
-            <span>{buildStepData(index+1).success ? "✓" : index + 1}</span>
+            <span aria-hidden="true">{buildStepData(index+1).success ? "✓" : index + 1}</span>
             <small>{pill}</small>
           </button>
         ))}

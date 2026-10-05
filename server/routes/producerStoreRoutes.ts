@@ -1,4 +1,4 @@
-import { Router, type Request, type Response } from "express";
+import express, { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import {
   CreateDraftStoreSchema,
@@ -7,6 +7,9 @@ import {
   StoreCommandSchema,
   StoreSlugSchema,
   UpdateOperatingHoursSchema,
+  StoreCoverSettingsSchema,
+  StoreMediaRemoveSchema,
+  StoreMediaUploadQuerySchema,
 } from "../../shared/contracts/producerStore.ts";
 import { originProtection } from "../security/originProtection.ts";
 import { verifyRecentAuthProof } from "../security/recentAuth.ts";
@@ -14,8 +17,21 @@ import {
   ProducerStoreError,
   ProducerStoreService,
 } from "../services/ProducerStoreService.ts";
+import { StoreMediaService } from "../services/StoreMediaService.ts";
+import { PRODUCT_MEDIA_MAX_BYTES } from "../../shared/contracts/product.ts";
 
 export const producerStoreRouter = Router();
+function storeResponse(value: unknown, req: Request) {
+  if (!value || typeof value !== "object" || req.query.media === "1")
+    return value;
+  const {
+    coverMode: _mode,
+    publicProducerName: _name,
+    coverImages: _images,
+    ...legacy
+  } = value as Record<string, unknown>;
+  return legacy;
+}
 function cookie(req: Request, name: string) {
   const part = req.headers.cookie
     ?.split(";")
@@ -65,7 +81,8 @@ producerStoreRouter.get("/producer/store", async (req, res) => {
   const userId = requireProducer(req, res);
   if (!userId) return;
   try {
-    res.json(await ProducerStoreService.getStoreSettings(userId));
+    const result = await ProducerStoreService.getStoreSettings(userId);
+    res.json({ ...result, store: storeResponse(result.store, req) });
   } catch (error) {
     sendError(res, error);
   }
@@ -83,10 +100,13 @@ producerStoreRouter.post(
     }
     try {
       res.json({
-        store: await ProducerStoreService.getOrCreateDraftStore(
-          userId,
-          parsed.data.commandId,
-          { requestId: req.requestId, ipHash: req.clientIpHash },
+        store: storeResponse(
+          await ProducerStoreService.getOrCreateDraftStore(
+            userId,
+            parsed.data.commandId,
+            { requestId: req.requestId, ipHash: req.clientIpHash },
+          ),
+          req,
         ),
       });
     } catch (error) {
@@ -121,10 +141,13 @@ function registerMutation<T>(
       }
       try {
         res.json({
-          store: await run(id.data, userId, input.data, {
-            requestId: req.requestId,
-            ipHash: req.clientIpHash,
-          }),
+          store: storeResponse(
+            await run(id.data, userId, input.data, {
+              requestId: req.requestId,
+              ipHash: req.clientIpHash,
+            }),
+            req,
+          ),
         });
       } catch (error) {
         sendError(res, error);
@@ -150,6 +173,60 @@ registerMutation("post", "/publish", StoreCommandSchema, true, (...args) =>
 registerMutation("post", "/pause", PauseStoreSchema, false, (...args) =>
   ProducerStoreService.pauseStore(...args),
 );
+registerMutation("post", "/cover", StoreCoverSettingsSchema, true, (...args) =>
+  StoreMediaService.configure(...args),
+);
+registerMutation(
+  "post",
+  "/media/remove",
+  StoreMediaRemoveSchema,
+  false,
+  (...args) => StoreMediaService.remove(...args),
+);
+producerStoreRouter.post(
+  "/producer/store/:id/media/upload",
+  originProtection,
+  (req, res, next) => {
+    if (requireProducer(req, res, true)) next();
+  },
+  express.raw({
+    type: ["image/jpeg", "image/png", "image/webp"],
+    limit: PRODUCT_MEDIA_MAX_BYTES,
+  }),
+  async (req, res) => {
+    const userId = requireProducer(req, res, true);
+    if (!userId) return;
+    const id = z.uuid().safeParse(req.params.id);
+    const params = new URL(req.originalUrl, "http://localhost").searchParams;
+    const query: Record<string, unknown> = Object.create(null);
+    for (const key of new Set(params.keys())) {
+      const values = params.getAll(key);
+      query[key] = values.length === 1 ? values[0] : values;
+    }
+    delete query.media;
+    delete query.path;
+    delete query.__hvm_path;
+    const input = StoreMediaUploadQuerySchema.safeParse(query);
+    if (!id.success || !input.success || !Buffer.isBuffer(req.body)) {
+      res.status(400).json({ error: "VALIDATION_ERROR" });
+      return;
+    }
+    try {
+      res.json({
+        store: await StoreMediaService.upload(
+          id.data,
+          userId,
+          input.data,
+          req.body,
+          req.get("content-type")!.split(";")[0],
+          { requestId: req.requestId, ipHash: req.clientIpHash },
+        ),
+      });
+    } catch (error) {
+      sendError(res, error);
+    }
+  },
+);
 producerStoreRouter.get("/stores/:slug", async (req, res) => {
   const slug = StoreSlugSchema.safeParse(req.params.slug);
   if (!slug.success) {
@@ -157,7 +234,9 @@ producerStoreRouter.get("/stores/:slug", async (req, res) => {
     return;
   }
   try {
-    res.json(await ProducerStoreService.getPublicStore(slug.data));
+    res.json(
+      storeResponse(await ProducerStoreService.getPublicStore(slug.data), req),
+    );
   } catch (error) {
     sendError(res, error);
   }

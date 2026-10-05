@@ -3,6 +3,7 @@ import type { PoolClient } from "pg";
 import { z } from "zod";
 import { dbPool } from "../db/pool.ts";
 import { ARIQUEMES_CENTER } from "../../shared/contracts/delivery.ts";
+import { storeImageUrls } from "../storage/storeMedia.ts";
 import {
   DISCOVERY_PAGE_SIZE,
   DiscoveryAvatarSchema,
@@ -122,13 +123,17 @@ export const DiscoveryService = {
           (query.page - 1) * DISCOVERY_PAGE_SIZE,
         ],
       );
+      const avatars = await storeImageUrls(
+        result.rows.slice(0, DISCOVERY_PAGE_SIZE).map((row) => row.logo_url),
+      );
       return SearchStoresResponseSchema.parse({
         stores: result.rows.slice(0, DISCOVERY_PAGE_SIZE).map((row) => ({
           id: row.id,
           slug: row.store_slug,
           name: row.store_name,
-          avatarUrl: DiscoveryAvatarSchema.safeParse(row.logo_url).success
-            ? row.logo_url
+          avatarUrl: DiscoveryAvatarSchema.safeParse(avatars.get(row.logo_url))
+            .success
+            ? avatars.get(row.logo_url)
             : null,
           location: `${row.municipality}/${row.state}`,
           distanceKm: row.distance_km === null ? null : Number(row.distance_km),

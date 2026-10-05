@@ -15,7 +15,12 @@ import {
   type StorePublic,
 } from "../../../shared/contracts/producerStore";
 import "../producer/producerStore.css";
-import { PublicProductCatalog } from "../../components/catalog/PublicProductCatalog";
+import { PublicProductGrid } from "../../components/catalog/PublicProductCatalog";
+import { usePublicProducts } from "../../components/catalog/usePublicProducts";
+import { MediaCarousel } from "../../components/catalog/MediaCarousel";
+import { storeCoverSlides } from "../../components/catalog/storeCoverSlides";
+import { ProducerPortrait } from "../../components/catalog/ProductSlideCaption";
+import "../../components/catalog/storefrontMedia.css";
 
 export default function PublicProducerStorePage({
   slug,
@@ -24,6 +29,7 @@ export default function PublicProducerStorePage({
   slug: string;
   onNavigate: (path: string) => void;
 }) {
+  const catalog = usePublicProducts({ storeSlug: slug });
   const [store, setStore] = useState<StorePublic | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "missing" | "error">(
     "loading",
@@ -32,7 +38,9 @@ export default function PublicProducerStorePage({
   useEffect(() => {
     const controller = new AbortController();
     setState("loading");
-    api(`/v1/stores/${encodeURIComponent(slug)}`, { signal: controller.signal })
+    api(`/v1/stores/${encodeURIComponent(slug)}?media=1`, {
+      signal: controller.signal,
+    })
       .then((response) => {
         if (!controller.signal.aborted) {
           setStore(StorePublicResponseSchema.parse(response));
@@ -84,6 +92,12 @@ export default function PublicProducerStorePage({
         </div>
       </section>
     );
+  const covers = storeCoverSlides(
+    store,
+    store.name,
+    store.slug,
+    catalog.products,
+  );
   const harvestDays = store.operatingHours
     .filter((day) => day.isHarvestDay)
     .map((day) => STORE_DAY_LABELS[day.dayOfWeek]);
@@ -92,33 +106,47 @@ export default function PublicProducerStorePage({
     .map((day) => STORE_DAY_LABELS[day.dayOfWeek]);
   return (
     <article className="hvm-store hvm-store-public">
-      <div className="hvm-store-banner">
-        {store.bannerUrl ? (
-          <img src={store.bannerUrl} alt="" />
-        ) : (
-          <>
-            <span className="hvm-store-banner-leaf">
-              <Leaf size={104} />
-            </span>
-            <p>
-              Da terra, com cuidado.
-              <br />
-              <strong>Da sua região, com carinho.</strong>
-            </p>
-          </>
-        )}
-      </div>
+      {covers.length ? (
+        <MediaCarousel
+          className="hvm-store-cover"
+          priority
+          label="Capa da loja"
+          slides={covers}
+          onNavigate={onNavigate}
+        />
+      ) : (
+        <div className="hvm-store-banner">
+          {store.bannerUrl ? (
+            <img src={store.bannerUrl} alt="" />
+          ) : (
+            <>
+              <span className="hvm-store-banner-leaf">
+                <Leaf size={104} />
+              </span>
+              <p>
+                Da terra, com cuidado.
+                <br />
+                <strong>Da sua região, com carinho.</strong>
+              </p>
+            </>
+          )}
+        </div>
+      )}
       <header className="hvm-store-public-heading">
         <div className="hvm-store-avatar">
-          {store.avatarUrl ? (
-            <img src={store.avatarUrl} alt={`Identidade da ${store.name}`} />
-          ) : (
-            <Sprout size={36} />
-          )}
+          <ProducerPortrait
+            url={store.avatarUrl}
+            name={store.publicProducerName ?? store.name}
+          />
         </div>
         <div>
           <span className="eyebrow">Conheça quem cultiva</span>
           <h1>{store.name}</h1>
+          {store.publicProducerName && (
+            <p className="hvm-store-producer-name">
+              {store.publicProducerName}
+            </p>
+          )}
           {store.verification.isVerified && (
             <span className="hvm-store-verified">
               <ShieldCheck size={18} /> Produtor Verificado — Nível{" "}
@@ -183,7 +211,12 @@ export default function PublicProducerStorePage({
       </details>
       <section className="hvm-store-products">
         <h2>Colheitas e Produtos Disponíveis</h2>
-        <PublicProductCatalog storeSlug={store.slug} onNavigate={onNavigate} emptyTitle="Novas colheitas em breve"/>
+        <PublicProductGrid
+          {...catalog}
+          storeSlug={store.slug}
+          onNavigate={onNavigate}
+          emptyTitle="Novas colheitas em breve"
+        />
       </section>
       <button className="secondary" onClick={() => onNavigate("/")}>
         <ArrowLeft size={17} /> Voltar ao início

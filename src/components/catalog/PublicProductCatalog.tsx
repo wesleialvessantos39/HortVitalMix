@@ -1,14 +1,13 @@
-import { useEffect, useState } from "react";
 import { Leaf, Salad } from "lucide-react";
-import { api } from "../../lib/api";
 import {
-  PublicProductsResponseSchema,
   PACKAGING_LABELS,
   UNIT_LABELS,
   formatProductPrice,
   type PublicProduct,
 } from "../../../shared/contracts/product";
 import "../../pages/producer/products.css";
+import { usePublicProducts } from "./usePublicProducts";
+import { MediaCarousel } from "./MediaCarousel";
 
 export function PublicProductCatalog({
   storeSlug,
@@ -23,56 +22,37 @@ export function PublicProductCatalog({
   onNavigate: (path: string) => void;
   emptyTitle?: string;
 }) {
-  const [products, setProducts] = useState<PublicProduct[]>([]),
-    [loading, setLoading] = useState(true),
-    [error, setError] = useState(false),
-    [attempt, setAttempt] = useState(0);
-  useEffect(() => {
-    const controller = new AbortController();
-    let inFlight = false;
-    const params = new URLSearchParams();
-    if (storeSlug) params.set("storeSlug", storeSlug);
-    if (categoryId) params.set("categoryId", categoryId);
-    if (search?.trim()) params.set("search", search.trim().slice(0, 100));
-    async function load(initial = false) {
-      if (inFlight || controller.signal.aborted) return;
-      inFlight = true;
-      if (initial) {
-        setLoading(true);
-        setError(false);
-      }
-      try {
-        const result = PublicProductsResponseSchema.parse(
-          await api(`/v1/products?${params}`, { signal: controller.signal }),
-        );
-        if (!controller.signal.aborted) {
-          setProducts(result.products);
-          setError(false);
-        }
-      } catch {
-        if (!controller.signal.aborted) {
-          setError(true);
-          setProducts([]);
-        }
-      } finally {
-        inFlight = false;
-        if (!controller.signal.aborted) setLoading(false);
-      }
-    }
-    void load(true);
-    const refresh = () => {
-      if (document.visibilityState !== "hidden") void load();
-    };
-    const timer = window.setInterval(refresh, 30000);
-    window.addEventListener("focus", refresh);
-    document.addEventListener("visibilitychange", refresh);
-    return () => {
-      controller.abort();
-      window.clearInterval(timer);
-      window.removeEventListener("focus", refresh);
-      document.removeEventListener("visibilitychange", refresh);
-    };
-  }, [storeSlug, categoryId, search, attempt]);
+  const catalog = usePublicProducts({ storeSlug, categoryId, search });
+  return (
+    <PublicProductGrid
+      {...catalog}
+      storeSlug={storeSlug}
+      search={search}
+      onNavigate={onNavigate}
+      emptyTitle={emptyTitle}
+    />
+  );
+}
+
+export function PublicProductGrid({
+  products,
+  loading,
+  error,
+  retry,
+  storeSlug,
+  search,
+  onNavigate,
+  emptyTitle = "Nenhum produto disponível agora",
+}: {
+  products: PublicProduct[];
+  loading: boolean;
+  error: boolean;
+  retry: () => void;
+  storeSlug?: string;
+  search?: string;
+  onNavigate: (path: string) => void;
+  emptyTitle?: string;
+}) {
   if (loading)
     return (
       <p className="hvm-product-notice" role="status">
@@ -83,7 +63,7 @@ export function PublicProductCatalog({
     return (
       <div className="hvm-product-notice hvm-product-error" role="alert">
         <p>Não foi possível carregar os produtos.</p>
-        <button className="secondary" onClick={() => setAttempt((a) => a + 1)}>
+        <button className="secondary" onClick={retry}>
           Tentar novamente
         </button>
       </div>
@@ -102,13 +82,29 @@ export function PublicProductCatalog({
     );
   return (
     <div className="hvm-product-grid" aria-label="Catálogo de alimentos">
-      {products.map((product) => {
-        const primary = product.media.find((m) => m.isPrimary);
+      {products.map((product, index) => {
+        const media = [...product.media].sort(
+          (a, b) =>
+            Number(b.isPrimary) - Number(a.isPrimary) ||
+            a.displayOrder - b.displayOrder,
+        );
         return (
           <article className="hvm-product-card" key={product.id}>
             <div className="hvm-product-photo">
-              {primary ? (
-                <img src={primary.url} alt={product.title} loading="lazy" />
+              {media.length ? (
+                <MediaCarousel
+                  slides={media.map((m) => ({
+                    id: m.id,
+                    imageUrl: m.url,
+                    alt: product.title,
+                    href: storeSlug
+                      ? undefined
+                      : `/produtores/${encodeURIComponent(product.storeSlug)}`,
+                  }))}
+                  label={`Fotos de ${product.title}`}
+                  onNavigate={onNavigate}
+                  priority={index < 3}
+                />
               ) : (
                 <Leaf size={40} />
               )}
@@ -124,7 +120,12 @@ export function PublicProductCatalog({
                 {formatProductPrice(product.currentPrice.priceCents)}{" "}
                 <small>/ {UNIT_LABELS[product.unitType]}</small>
               </strong>
-              <span className={`hvm-product-badge ${product.inStock ? "published" : ""}`} aria-label="Disponibilidade">{product.inStock ? "Em estoque" : "Esgotado"}</span>
+              <span
+                className={`hvm-product-badge ${product.inStock ? "published" : ""}`}
+                aria-label="Disponibilidade"
+              >
+                {product.inStock ? "Em estoque" : "Esgotado"}
+              </span>
               <details>
                 <summary>Preparo e conservação</summary>
                 <p>{product.description}</p>

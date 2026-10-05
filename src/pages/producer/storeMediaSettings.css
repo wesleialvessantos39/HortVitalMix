@@ -1,0 +1,247 @@
+.hvm-store-media-settings {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 28px;
+  margin: 20px 0;
+}
+.hvm-store-media-editor,
+.hvm-store-cover-preview {
+  min-width: 0;
+}
+.hvm-store-media-editor form,
+.hvm-store-cover-uploads {
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e0e9e2;
+  border-radius: 18px;
+  margin-bottom: 20px;
+}
+.hvm-store-media-editor fieldset {
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.hvm-store-media-editor legend {
+  font-size: 18px;
+  font-weight: 750;
+  color: #204d33;
+  margin-bottom: 12px;
+}
+.hvm-store-media-editor p,
+.hvm-store-cover-preview > p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #6b7b6f;
+  margin-bottom: 16px;
+}
+.hvm-store-media-editor
+  label:has(> input:not([type="file"]):not([type="radio"])) {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 650;
+  color: #2c5239;
+}
+.hvm-store-media-editor input:not([type="file"]):not([type="radio"]) {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #d8e4da;
+  padding: 10px 12px;
+  border-radius: 9px;
+  font-size: 14px;
+  background: #fcfdfb;
+}
+.hvm-store-media-editor small {
+  font-size: 12px;
+  color: #76837a;
+  line-height: 1.5;
+  display: block;
+  margin: 8px 0;
+}
+.hvm-store-media-avatar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 22px 0;
+  flex-wrap: wrap;
+}
+.hvm-store-media-avatar .hvm-slide-portrait {
+  width: 64px;
+  height: 64px;
+  flex-basis: 64px;
+  border-color: #dcebe1;
+}
+.hvm-store-media-editor label.secondary {
+  flex-direction: row;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  cursor: pointer;
+  text-align: center;
+}
+.hvm-store-media-editor input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+.hvm-store-media-editor label.secondary:focus-within {
+  outline: 3px solid #79b78c;
+  outline-offset: 2px;
+}
+.hvm-store-media-editor label.secondary.disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.hvm-store-media-editor .hvm-cover-modes {
+  margin: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hvm-cover-modes legend {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+.hvm-store-media-editor .hvm-cover-modes label {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #dde6df;
+  border-radius: 12px;
+  cursor: pointer;
+  min-height: 68px;
+}
+.hvm-cover-modes label.selected {
+  background: #edf7f0;
+  border-color: #76aa87;
+}
+.hvm-cover-modes input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #205b39;
+  flex: 0 0 18px;
+}
+.hvm-cover-modes span {
+  min-width: 0;
+}
+.hvm-cover-modes svg {
+  flex-shrink: 0;
+  color: #447754;
+}
+.hvm-cover-modes strong {
+  font-size: 13px;
+}
+.hvm-cover-modes small {
+  margin: 3px 0 0;
+  font-weight: 400;
+}
+.hvm-store-cover-uploads > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.hvm-store-cover-uploads h3 {
+  font-size: 16px;
+  margin: 0;
+  color: #254e36;
+}
+.hvm-cover-thumbnails {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+.hvm-cover-thumbnails figure {
+  margin: 0;
+  min-width: 0;
+  border: 1px solid #e4eae4;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.hvm-cover-thumbnails img {
+  display: block;
+  aspect-ratio: 4/3;
+  width: 100%;
+  object-fit: cover;
+}
+.hvm-cover-thumbnails button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  border-radius: 0;
+  padding: 8px;
+  font-size: 11px;
+  color: #a44747;
+}
+.hvm-store-cover-preview {
+  position: sticky;
+  top: 24px;
+}
+.hvm-store-cover-preview .hvm-store-cover {
+  height: 400px;
+}
+.hvm-store-media-empty {
+  height: 300px;
+  border: 1px dashed #acc8b4;
+  background: #f1f8f3;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  text-align: center;
+  color: #437051;
+}
+.hvm-store-tabs:has(#store-media-tab) {
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.hvm-store-tabs:has(#store-media-tab) button {
+  min-height: 44px;
+  flex-shrink: 0;
+}
+@media (max-width: 900px) {
+  .hvm-store-media-settings {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hvm-store-cover-preview {
+    position: static;
+    grid-row: 1;
+  }
+  .hvm-store-cover-preview .hvm-store-cover {
+    height: 350px;
+  }
+  .hvm-store-media-editor form,
+  .hvm-store-cover-uploads {
+    padding: 18px;
+  }
+  .hvm-cover-thumbnails {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .hvm-store-tabs:has(#store-media-tab) {
+    border-radius: 14px;
+  }
+  .hvm-store-tabs:has(#store-media-tab) button {
+    padding: 10px 12px;
+    flex: 0 0 auto;
+  }
+}

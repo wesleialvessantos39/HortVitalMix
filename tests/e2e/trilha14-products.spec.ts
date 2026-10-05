@@ -47,6 +47,7 @@ async function mock(
     error?: boolean;
     published?: boolean;
     delay?: boolean;
+    hold?: Promise<void>;
   } = {},
 ) {
   let product = structuredClone(initial),
@@ -152,6 +153,7 @@ async function mock(
       }
       if (options.delay)
         await new Promise((resolve) => setTimeout(resolve, 500));
+      if (options.hold) await options.hold;
       return json({
         products: created ? [product] : [],
         store: {
@@ -410,11 +412,22 @@ test("catálogo recupera falha de leitura", async ({ page }) => {
   ).toBeVisible();
 });
 test("estado de carregamento é anunciado", async ({ page }) => {
-  await mock(page, { delay: true });
+  let release!: () => void;
+  const hold = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await mock(page, { hold });
   await page.goto("/produtor/produtos");
+  try {
+    await expect(
+      page.getByRole("status").filter({ hasText: "Carregando seus produtos" }),
+    ).toBeVisible();
+  } finally {
+    release();
+  }
   await expect(
     page.getByRole("status").filter({ hasText: "Carregando seus produtos" }),
-  ).toBeVisible();
+  ).toHaveCount(0);
 });
 test("consulta pública seleciona categoria e mostra embalagem, peso e preço", async ({
   page,

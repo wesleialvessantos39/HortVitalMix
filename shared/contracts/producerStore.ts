@@ -41,6 +41,38 @@ export const StoreCommandSchema = z
     commandId: z.uuid(),
   })
   .strict();
+export const StoreCoverModeSchema = z.enum(["images", "products", "mixed"]);
+export const StoreMediaPurposeSchema = z.enum(["avatar", "cover"]);
+export const StoreCoverSettingsSchema = StoreCommandSchema.extend({
+  coverMode: StoreCoverModeSchema,
+  publicProducerName: z.string().trim().min(2).max(128).nullable(),
+}).strict();
+export const StoreMediaRemoveSchema = StoreCommandSchema.extend({
+  mediaId: z.uuid(),
+}).strict();
+export const StoreMediaUploadQuerySchema = z
+  .object({
+    commandId: z.uuid(),
+    expectedRevision: z
+      .string()
+      .regex(/^[1-9]\d{0,9}$/)
+      .transform(Number)
+      .pipe(z.number().int().positive().max(2147483647)),
+    purpose: StoreMediaPurposeSchema,
+  })
+  .strict();
+export const StoreCoverImageSchema = z
+  .object({
+    id: z.uuid(),
+    url: z.url({ protocol: /^https$/ }).max(2048),
+    displayOrder: z.number().int().min(0).max(5),
+  })
+  .strict();
+const coverFields = {
+  coverMode: StoreCoverModeSchema.default("mixed"),
+  publicProducerName: z.string().nullable().default(null),
+  coverImages: z.array(StoreCoverImageSchema).max(6).default([]),
+};
 export const SaveStoreSettingsSchema = StoreCommandSchema.extend({
   propertyId: z.uuid(),
   storeSlug: StoreSlugSchema,
@@ -71,6 +103,7 @@ export const StoreOwnerResponseSchema = z
     revision: z.number().int().positive(),
     avatarUrl: z.string().nullable(),
     bannerUrl: z.string().nullable(),
+    ...coverFields,
     operatingHours: OperatingHoursSchema,
   })
   .strict();
@@ -98,6 +131,7 @@ export const StorePublicResponseSchema = z
     bannerUrl: z.string().nullable(),
     avatarUrl: z.string().nullable(),
     location: z.string(),
+    ...coverFields,
     verification: z
       .object({ isVerified: z.boolean(), trustLevel: z.number().int() })
       .strict(),

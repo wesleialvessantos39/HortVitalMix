@@ -9,8 +9,27 @@ import {
   DiscoveryService,
 } from "../services/DiscoveryService.ts";
 import { originProtection } from "../security/originProtection.ts";
+import { HighlightsQuerySchema } from "../../shared/contracts/highlights.ts";
+import { ProductService, ProductError } from "../services/ProductService.ts";
 
 export const discoveryRouter = Router();
+discoveryRouter.get("/discovery/highlights", async (req, res) => {
+  const input = HighlightsQuerySchema.safeParse(queryFromUrl(req));
+  if (!input.success) {
+    res.status(400).json({ error: "VALIDATION_ERROR" });
+    return;
+  }
+  try {
+    res.json(await ProductService.listHighlights(input.data));
+  } catch (error) {
+    res
+      .status(error instanceof ProductError ? error.status : 503)
+      .json({
+        error:
+          error instanceof ProductError ? error.code : "DEPENDENCY_UNAVAILABLE",
+      });
+  }
+});
 function queryFromUrl(req: Request) {
   const params = new URL(req.url, "http://localhost").searchParams;
   params.delete("path");

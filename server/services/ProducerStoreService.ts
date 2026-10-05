@@ -3,6 +3,7 @@ import type { PoolClient } from "pg";
 import sanitizeHtml from "sanitize-html";
 import { dbPool } from "../db/pool.ts";
 import { redactPII } from "../security/redactPII.ts";
+import { storeMediaDetails } from "../storage/storeMedia.ts";
 import {
   StoreOwnerResponseSchema,
   StorePublicResponseSchema,
@@ -26,7 +27,7 @@ export class ProducerStoreError extends Error {
   }
 }
 export type StoreAuditContext = { requestId: string; ipHash: string };
-type StoreRow = {
+export type StoreRow = {
   id: string;
   producer_profile_id: string;
   property_id: string | null;
@@ -39,6 +40,8 @@ type StoreRow = {
   revision: number;
   logo_url: string | null;
   banner_url: string | null;
+  cover_mode: "images" | "products" | "mixed";
+  public_producer_name: string | null;
 };
 
 // sanitize-html removes active elements and their contents. Decode its escaped
@@ -128,8 +131,7 @@ async function owner(client: PoolClient, row: StoreRow): Promise<StoreOwner> {
     cutoffHour: row.cutoff_hour.slice(0, 5),
     status: row.status,
     revision: row.revision,
-    avatarUrl: row.logo_url,
-    bannerUrl: row.banner_url,
+    ...(await storeMediaDetails(client, row)),
     operatingHours: await hours(client, row.id),
   });
 }
@@ -246,6 +248,7 @@ async function mutate<T extends StoreCommand>(
   action: string,
   context: StoreAuditContext,
   change: (client: PoolClient, current: StoreRow) => Promise<StoreRow>,
+  authorize?: (client: PoolClient, current: StoreRow) => Promise<void>,
 ) {
   const client = await pool().connect();
   const fingerprint = createHash("sha256")
@@ -261,6 +264,7 @@ async function mutate<T extends StoreCommand>(
     );
     const current = result.rows[0];
     if (!current) throw new ProducerStoreError("STORE_NOT_FOUND", 404);
+    if (authorize) await authorize(client, current);
     let saved = current;
     if (
       !(await isReplay(
@@ -301,6 +305,8 @@ async function mutate<T extends StoreCommand>(
     client.release();
   }
 }
+
+export { mutate as mutateStore };
 
 export const ProducerStoreService = {
   async getStoreSettings(userId: string): Promise<StoreSettings> {
@@ -555,7 +561,7 @@ export const ProducerStoreService = {
           trust_level: number;
         }
       >(
-        `SELECT s.store_name,s.store_slug,s.bio_clean,s.logo_url,s.banner_url,s.id,
+        `SELECT s.store_name,s.store_slug,s.bio_clean,s.logo_url,s.banner_url,s.id,s.cover_mode,s.public_producer_name,
           s.min_order_amount_cents,s.cutoff_hour,p.line_vicinal,p.municipality,p.state,pp.trust_level
           FROM public.app_producer_stores s
           JOIN public.app_producer_profiles pp ON pp.id=s.producer_profile_id
@@ -571,8 +577,7 @@ export const ProducerStoreService = {
         name: row.store_name,
         slug: row.store_slug,
         bio: row.bio_clean,
-        avatarUrl: row.logo_url,
-        bannerUrl: row.banner_url,
+        ...(await storeMediaDetails(client, row)),
         location: [row.line_vicinal, `${row.municipality}/${row.state}`]
           .filter(Boolean)
           .join(" · "),

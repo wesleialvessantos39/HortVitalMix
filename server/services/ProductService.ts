@@ -4,6 +4,14 @@ import { z } from "zod";
 import { InventoryService } from "./InventoryService.ts";
 import { dbPool } from "../db/pool.ts";
 import { supabaseAdmin } from "../supabase/client.ts";
+import { signedMediaUrls } from "../storage/signedMedia.ts";
+import { storeImageUrls } from "../storage/storeMedia.ts";
+import {
+  HIGHLIGHTS_PAGE_SIZE,
+  HighlightProductSchema,
+  HighlightsQuerySchema,
+  HighlightsResponseSchema,
+} from "../../shared/contracts/highlights.ts";
 import { sanitizeStoreBio } from "./ProducerStoreService.ts";
 import {
   CreateProductSchema,
@@ -168,20 +176,14 @@ async function responses(client: PoolClient, rows: Row[]): Promise<Product[]> {
   if (result.rows.length) {
     if (!supabaseAdmin)
       throw new ProductError("PRODUCT_MEDIA_UNAVAILABLE", 503);
-    const signed = await supabaseAdmin.storage
-      .from(PRODUCT_MEDIA_BUCKET)
-      .createSignedUrls(
-        result.rows.map((m) => mediaPath(m.media_url)),
-        900,
-      );
-    if (
-      signed.error ||
-      !signed.data ||
-      signed.data.some((m) => m.error || !m.signedUrl)
-    )
+    const signed = await signedMediaUrls(
+      PRODUCT_MEDIA_BUCKET,
+      result.rows.map((m) => mediaPath(m.media_url)),
+    ).catch(() => {
       throw new ProductError("PRODUCT_MEDIA_UNAVAILABLE", 503);
-    signed.data.forEach((m, index) =>
-      urls.set(result.rows[index].id, m.signedUrl!),
+    });
+    result.rows.forEach((m) =>
+      urls.set(m.id, signed.get(mediaPath(m.media_url))!),
     );
   }
   return rows.map((row) =>
@@ -376,6 +378,88 @@ export function productImageExtension(file: Buffer, contentType: string) {
   throw new ProductError("PRODUCT_IMAGE_INVALID", 422);
 }
 export const ProductService = {
+  async listHighlights(raw: z.infer<typeof HighlightsQuerySchema>) {
+    const query = HighlightsQuerySchema.parse(raw);
+    await InventoryService.releaseExpiredReservations();
+    const client = await pool().connect();
+    try {
+      await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
+      const selection = selectProduct
+        .replace(
+          "SELECT p.*,",
+          "SELECT p.*,ranked.municipality_id,ranked.municipality,s.public_producer_name,s.logo_url,",
+        )
+        .replace(
+          "WHERE product_id=p.id ORDER BY",
+          "WHERE product_id=p.id AND valid_from<=clock_timestamp() ORDER BY",
+        );
+      const result = await client.query<
+        Row & {
+          municipality_id: string;
+          municipality: string;
+          public_producer_name: string | null;
+          logo_url: string | null;
+        }
+      >(
+        `WITH ranked AS (
+        SELECT p.id,m.id AS municipality_id,m.name AS municipality,
+          row_number() OVER(PARTITION BY m.id ORDER BY p.created_at DESC,p.id) AS regional_rank
+        FROM public.app_products p JOIN public.app_categories c ON c.id=p.category_id
+        JOIN public.app_producer_stores s ON s.id=p.store_id
+        JOIN public.app_properties property ON property.id=s.property_id
+        JOIN public.app_municipalities m ON m.state=property.state AND m.name_normalized=public.fn_locality_normalize(property.municipality)
+        WHERE ${visible} AND m.is_active AND ($1::uuid IS NULL OR m.id=$1)
+          AND EXISTS(SELECT 1 FROM public.app_price_versions pv WHERE pv.product_id=p.id AND pv.valid_from<=clock_timestamp())
+      ) ${selection} JOIN ranked ON ranked.id=p.id
+      ORDER BY ranked.regional_rank,ranked.municipality,ranked.municipality_id,p.id LIMIT $2 OFFSET $3`,
+        [
+          query.municipalityId ?? null,
+          HIGHLIGHTS_PAGE_SIZE + 1,
+          (query.page - 1) * HIGHLIGHTS_PAGE_SIZE,
+        ],
+      );
+      const rows = result.rows.slice(0, HIGHLIGHTS_PAGE_SIZE);
+      const products = await responses(client, rows);
+      const avatars = await storeImageUrls(rows.map((row) => row.logo_url));
+      const available = await InventoryService.publicAvailability(
+        client,
+        rows.map((row) => row.id),
+      );
+      const response = HighlightsResponseSchema.parse({
+        page: query.page,
+        hasMore: result.rows.length > HIGHLIGHTS_PAGE_SIZE,
+        products: products.map(
+          (
+            {
+              storeId: _storeId,
+              revision: _revision,
+              isPublished: _published,
+              ...product
+            },
+            index,
+          ) =>
+            HighlightProductSchema.parse({
+              ...product,
+              inStock: available.has(product.id),
+              storeSlug: rows[index].store_slug,
+              storeName: rows[index].store_name,
+              producerName:
+                rows[index].public_producer_name ?? rows[index].store_name,
+              producerAvatarUrl: avatars.get(rows[index].logo_url) ?? null,
+              municipalityId: rows[index].municipality_id,
+              municipality: rows[index].municipality,
+            }),
+        ),
+      });
+      await client.query("COMMIT");
+      return response;
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => {});
+      translate(error);
+    } finally {
+      client.release();
+    }
+  },
   listOwnerProducts(
     personId: string,
     userId: string,
@@ -724,7 +808,10 @@ export const ProductService = {
         ],
       );
       const products = await responses(client, result.rows);
-      const available = await InventoryService.publicAvailability(client, result.rows.map(row => row.id));
+      const available = await InventoryService.publicAvailability(
+        client,
+        result.rows.map((row) => row.id),
+      );
       const publicProducts = products.map(
         (
           {
