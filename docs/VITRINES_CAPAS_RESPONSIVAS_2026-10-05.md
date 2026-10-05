@@ -34,4 +34,10 @@ Não há garantia de carregamento instantâneo em qualquer conexão. Primeira vi
 - História nova com React compilado → HTTP real → PostgreSQL → loja pública → home regional, **1 caso aprovado**, com CSP de produção. Auth/Storage externos simulados exclusivamente localmente; APIs, contratos, transações e autorização reais. Confere foto, capa, nome, preço, persistência após recarga e abertura da loja correta.
 - Typecheck, build completo com gates existentes, manifesto/hash, segurança, bundle sem segredos e cold start da API aprovados. Inspeção visual dos layouts, controles e ausência de overflow feita em navegador. Nenhuma fixture/conta/documento/foto/mensagem de teste criada em produção.
 
-Publicação funcional e conferência da SHA/main/READY serão registradas após integração. A release corrente avança somente após READY.
+## Publicação conferida
+
+[PR #80](https://github.com/wesleialvessantos39/HortVitalMix/pull/80) integrado; SHA funcional **5a05a8efdc8859ba9e8692671cb179ad10fdc780**. Árvore **f8506b0326b7759e964b0fa667f2194294d5b174**, idêntica à validada localmente. Deployment **dpl_DUJYx9SjfnFK7jvuRk2P73jeDW3K**, **READY**, production/main/**pdx1**. Site: **https://hortvitalmix.vercel.app**.
+
+Release funcional **vitrines-v54-5a05a8e**, schema 54/hash preservados, registrada somente após READY. `verify:deploy` aprovou health/ready/config para essa SHA. Destaques e produtos reais responderam 200; filtro por município 200 e configurações privadas 401 para visitante. Foto e preço de um produto real apareceram no destaque; clique abriu sua loja e fotos de capa/produto carregaram. Agent-browser conferiu 390/1440 px, busca única da home, ausência de overflow e erros JavaScript. Não foram realizados uploads, cadastros ou mensagens em produção. Logs error/fatal do deployment sem entradas na janela consultada de dez minutos.
+
+Após a release, as 60 relações anteriores excluindo `app_releases` também mantiveram contagens/digests. A finalização documental altera somente Livro-Raiz e este relatório; a release acompanha a SHA final da main após o deployment documental READY, sem mudar schema/hash.
