@@ -42,6 +42,7 @@ import { CategoryNavSection } from "./components/catalog/CategoryNavSection";
 import type { Category } from "../shared/contracts/category";
 import { PublicProductCatalog } from "./components/catalog/PublicProductCatalog";
 const ProducerCatalogPage = lazy(() => import("./pages/producer/ProducerCatalogPage"));
+const InventoryLotsPage = lazy(() => import("./pages/producer/InventoryLotsPage"));
 const ProductEditorPage = lazy(() => import("./pages/producer/ProductEditorPage"));
 const ProducerStoreSettingsPage = lazy(() => import("./pages/producer/ProducerStoreSettingsPage"));
 const PublicProducerStorePage = lazy(() => import("./pages/public/PublicProducerStorePage"));
@@ -127,7 +128,8 @@ export default function App() {
   const isProducerScopeRoute = path === "/produtor/entrega";
   const isProducerStoreRoute = path === "/produtor/loja";
   const productEditorId = path.match(/^\/produtor\/produtos\/([^/]+)\/editar$/)?.[1];
-  const isProducerProductRoute = path === "/produtor/produtos" || path === "/produtor/produtos/novo" || Boolean(productEditorId);
+  const inventoryProductId = path.match(/^\/produtor\/produtos\/([^/]+)\/lotes$/)?.[1];
+  const isProducerProductRoute = path === "/produtor/produtos" || path === "/produtor/produtos/novo" || Boolean(productEditorId) || Boolean(inventoryProductId);
   const publicStoreSlug = path.match(/^\/produtores\/([^/]+)\/?$/)?.[1];
   const publicPortalSession =
     Boolean(shellSession) &&
@@ -389,7 +391,7 @@ export default function App() {
           </Suspense>
         ) : isProducerProductRoute && shellSession?.activeRole === "producer" ? (
           <Suspense fallback={<p role="status">Carregando seu catálogo…</p>}>
-            {path === "/produtor/produtos" ? <ProducerCatalogPage key={shellSession.userId} session={shellSession} onNavigate={go}/> : <ProductEditorPage key={shellSession.userId + ":" + (productEditorId ?? "novo")} id={productEditorId} session={shellSession} onNavigate={go}/>}
+            {inventoryProductId ? <InventoryLotsPage key={shellSession.userId + ":" + inventoryProductId} id={inventoryProductId} session={shellSession} onNavigate={go}/> : path === "/produtor/produtos" ? <ProducerCatalogPage key={shellSession.userId} session={shellSession} onNavigate={go}/> : <ProductEditorPage key={shellSession.userId + ":" + (productEditorId ?? "novo")} id={productEditorId} session={shellSession} onNavigate={go}/>}
           </Suspense>
         ) : isProducerStoreRoute && shellSession?.activeRole === "producer" ? (
           <Suspense fallback={<p role="status">Carregando sua loja…</p>}>

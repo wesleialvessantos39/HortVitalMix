@@ -132,7 +132,7 @@ export const PublicProductSchema = ProductResponseSchema.omit({
   revision: true,
   isPublished: true,
 })
-  .extend({ storeSlug: z.string(), storeName: z.string() })
+  .extend({ storeSlug: z.string(), storeName: z.string(), inStock: z.boolean().default(false) })
   .strict();
 export const PublicProductsResponseSchema = z
   .object({ products: z.array(PublicProductSchema) })
