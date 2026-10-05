@@ -19,6 +19,7 @@ import { drainStorageDeletionQueue } from "./services/StorageDeletionQueueServic
 import { producerStoreRouter } from "./routes/producerStoreRoutes.ts";
 import { categoryRouter } from "./routes/categoryRoutes.ts";
 import { inventoryRouter } from "./routes/inventoryRoutes.ts";
+import { deliveryRouter } from "./routes/deliveryRoutes.ts";
 import { productRouter } from "./routes/productRoutes.ts";
 export const app = express();
 app.disable("x-powered-by");
@@ -100,6 +101,7 @@ for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
   app.use(prefix, categoryRouter);
   app.use(prefix, productRouter);
   app.use(prefix, inventoryRouter);
+  app.use(prefix, deliveryRouter);
 }
 for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
   app.use(prefix + "/producer/documents", documentRouter);

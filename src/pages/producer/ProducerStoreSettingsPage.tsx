@@ -333,6 +333,7 @@ export default function ProducerStoreSettingsPage({
               </div>
             </div>
           )}
+          <button className="secondary" onClick={() => onNavigate("/produtor/loja/entrega")}>Área de entrega e frete</button>
           <div
             role="tablist"
             aria-label="Configurações da loja"

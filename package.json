@@ -87,7 +87,11 @@
     "test:t15:unit": "vitest run tests/unit/inventoryContracts.test.ts tests/integration/inventoryRoutes.test.ts tests/integration/inventoryMount.test.ts",
     "test:t15:postgres": "vitest run tests/integration/inventoryPostgres.test.ts",
     "test:t15:story": "vitest run tests/integration/inventoryBrowserPostgres.test.ts",
-    "test:t15:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha15-inventory.spec.ts"
+    "test:t15:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha15-inventory.spec.ts",
+    "test:t16:unit": "vitest run tests/unit/deliveryContracts.test.ts tests/integration/deliveryRoutes.test.ts tests/integration/deliveryMount.test.ts",
+    "test:t16:postgres": "vitest run tests/integration/deliveryPostgres.test.ts",
+    "test:t16:story": "vitest run tests/integration/deliveryBrowserPostgres.test.ts",
+    "test:t16:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha16-delivery.spec.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",

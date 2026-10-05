@@ -4269,3 +4269,24 @@ Checklist T14 concluído: migration aplicada; RLS ENABLE/FORCE e leitura restrit
 - **51 relações anteriores de negócio/identidade** mantiveram contagens/hashes após publicação; somente app_releases recebeu atualização intencional. Nenhuma fixture em produção. Fluxo autenticado validado localmente com React/HTTP/guardas/PostgreSQL reais; transação externa de reserva/baixa também passou sob service_role, com triggers diferidos avaliados e rollback.
 - Checklist T15 concluído: três tabelas/migrações aplicadas, RLS ENABLE/FORCE e estoque privado, reserva concorrente/FIFO/TTL, lazy sweep sem cron, consumo idempotente, painel paginado responsivo, compatibilidade T12–T14, manifesto/hash/Livro-Raiz sincronizados, build/main/pdx1 e produção conferidos. A T16 permanece para a próxima missão.
 - Fechamento documental preserva código/schema/hash; a SHA final da main é sincronizada na release somente após seu deployment READY. Documentação: **docs/TRILHA15_ESTOQUE.md** e **docs/TRILHA15_REGRESSAO.json**.
+
+
+---
+
+## 2026-10-05 — TRILHA 16: ÁREA DE ENTREGA E FRETE GEODÉSICO (SCHEMA 51)
+
+Implementação estritamente aditiva sobre T15/main `2afcbad43d3954b6793fa96b678073623b9dda4d` (schema 50). Fonte: plano T12–T25, Trilha 16/Volume 3, fornecido pelo titular. Supabase único `xipbsazvymkqqfmfegwu`, Vercel Free/Hobby, main/pdx1 preservados; sem PostGIS, Google Maps, Mapbox, cron, dependência ou serviço pago novo.
+
+**Schema lógico 51 · 57 migrations · hash `d1ef54620ad0fd0cf8f83e7c7e0396249166226f4be8c874b50ea622babc3f23`.** Migration CLI `20261005034322_trilha16_service_areas_freight.sql`, versão física Supabase `20261005040640`; alias e manifesto sincronizados. Não altera migrations anteriores.
+
+- `fn_haversine_km` imutável/estável e três tabelas novas: `app_service_areas`, `app_delivery_rules`, `app_delivery_quotes`. Raio 1–150 km, centro exclusivamente no GPS T08 do imóvel atualmente vinculado à loja, tarifas em centavos, mínimo, gratuidade opcional e preparo.
+- `DeliveryQuoteService`: configuração atômica auditada/idempotente, revisão otimista e revalidação de titularidade/papel/conta. Cotação interna para endereço próprio T07, distância/raio calculados no banco, taxa exata e gratuidade >= limiar. TTL 15 min compartilhado com T15. Consumo rejeita expiração, inelegibilidade e alteração de regra, origem ou revisão/GPS do endereço; reconfere prazo após locks. Subtotal deve ser calculado pelo backend do futuro checkout.
+- RLS ENABLE+FORCE nas três tabelas; authenticated somente SELECT das próprias cotações; áreas/regras privadas. Escrita somente backend; sem privilégios de TRUNCATE/REFERENCES/TRIGGER. FKs CASCADE preservam exclusões T06/T07/T08/T12. Distância NUMERIC(8,2) comporta destinos globais fora do raio; elegibilidade usa distância integral.
+- Nova tela `/produtor/loja/entrega`, acessível em Minha loja → Área de entrega e frete; slider, referência Ariquemes confirmada no salvamento, tarifas/preparo, autenticação recente e campos preservados em erro. Badge de elegibilidade reutilizável. `/produtor/entrega` municipal permanece intacta.
+- Após DDL canônica, digest/contagens das 55 relações anteriores idênticos; tabelas novas vazias, nenhuma fixture em produção. Advisors sem WARN/ERROR novo; INFO privados/índices vazios documentados.
+- Verificação: 35 contratos/HTTP, 27 PostgreSQL T16, 14 testes responsivos T16 e história completa React compilado → HTTP → PostgreSQL. Regressões de banco T12–T15 22/20/18/26; histórias T14/T15 aprovadas; navegador T12–T16 86 aprovados. Suíte geral: 606 aprovados/144 pulados, com suites locais executadas separadamente. Build/typecheck/segredos/manifesto aprovados.
+- Precisão normativa: coordenadas dos centros Ariquemes↔Porto Velho resultam em 159,081402025558 km geodésicos; o ≈200 km do exemplo não corresponde ao Haversine desses centros. O cálculo correto é preservado e documentado.
+
+**Fora de escopo:** descoberta T17, carrinho, checkout, consumo público da cotação, pedidos/pagamentos e mudanças nos módulos anteriores. A preparação interna para uso futuro não cria esses fluxos.
+
+Documentação/evidências: `docs/TRILHA16_ENTREGA_FRETE.md` e `docs/TRILHA16_REGRESSAO.json`. Estado: migração canônica aplicada; publicação da main/SHA/READY e release em conferência final. O fechamento será registrado abaixo sem modificar este histórico anterior.

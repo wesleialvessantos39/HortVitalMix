@@ -1,0 +1,72 @@
+{
+  "trilha": 16,
+  "date": "2026-10-05",
+  "schemaVersion": 51,
+  "migrationCount": 57,
+  "migrationHistoryHash": "d1ef54620ad0fd0cf8f83e7c7e0396249166226f4be8c874b50ea622babc3f23",
+  "baseCommit": "2afcbad43d3954b6793fa96b678073623b9dda4d",
+  "migration": {
+    "version": "20261005040640",
+    "name": "trilha16_service_areas_freight"
+  },
+  "database": {
+    "previousRelationsUnchanged": 55,
+    "emptyNewTables": true,
+    "rlsEnabledAndForced": true,
+    "authenticatedWrites": false,
+    "newAdvisorWarnings": 0,
+    "haversineAriquemesPortoVelhoKm": 159.081402025558
+  },
+  "tests": {
+    "contractsHttpMount": {
+      "passed": 35
+    },
+    "postgresT16": {
+      "passed": 27
+    },
+    "browserT16": {
+      "passed": 14,
+      "widths": [
+        320,
+        390,
+        768,
+        1440
+      ]
+    },
+    "fullStoryT16": {
+      "passed": 1,
+      "realHttp": true,
+      "realPostgres": true,
+      "externalAuthStorage": "simulated"
+    },
+    "general": {
+      "passed": 606,
+      "skipped": 144
+    },
+    "postgresRegression": {
+      "T12": 22,
+      "T13": 20,
+      "T14": 18,
+      "T15": 26
+    },
+    "fullStoryRegression": {
+      "T14": 1,
+      "T15": 1
+    },
+    "browserRegressionT12ToT16": {
+      "passed": 86
+    }
+  },
+  "preserved": [
+    "T01–T15 migrations",
+    "T12 municipal delivery scope",
+    "T14 products and prices",
+    "T15 inventory engine",
+    "existing Vercel main/pdx1 configuration",
+    "previous database rows"
+  ],
+  "production": {
+    "status": "pending_main_release",
+    "authenticatedProductionMutationsTested": false
+  }
+}
