@@ -43,6 +43,7 @@ import type { Category } from "../shared/contracts/category";
 import { PublicProductCatalog } from "./components/catalog/PublicProductCatalog";
 const ProducerCatalogPage = lazy(() => import("./pages/producer/ProducerCatalogPage"));
 const InventoryLotsPage = lazy(() => import("./pages/producer/InventoryLotsPage"));
+const ProducerDeliveryAreaPage = lazy(() => import("./pages/producer/ProducerDeliveryAreaPage"));
 const ProductEditorPage = lazy(() => import("./pages/producer/ProductEditorPage"));
 const ProducerStoreSettingsPage = lazy(() => import("./pages/producer/ProducerStoreSettingsPage"));
 const PublicProducerStorePage = lazy(() => import("./pages/public/PublicProducerStorePage"));
@@ -126,7 +127,8 @@ export default function App() {
     path === "/produtor/propriedades" ||
     path === "/produtor/propriedades/novo";
   const isProducerScopeRoute = path === "/produtor/entrega";
-  const isProducerStoreRoute = path === "/produtor/loja";
+  const isProducerDeliveryAreaRoute = path === "/produtor/loja/entrega";
+  const isProducerStoreRoute = path === "/produtor/loja" || isProducerDeliveryAreaRoute;
   const productEditorId = path.match(/^\/produtor\/produtos\/([^/]+)\/editar$/)?.[1];
   const inventoryProductId = path.match(/^\/produtor\/produtos\/([^/]+)\/lotes$/)?.[1];
   const isProducerProductRoute = path === "/produtor/produtos" || path === "/produtor/produtos/novo" || Boolean(productEditorId) || Boolean(inventoryProductId);
@@ -395,7 +397,7 @@ export default function App() {
           </Suspense>
         ) : isProducerStoreRoute && shellSession?.activeRole === "producer" ? (
           <Suspense fallback={<p role="status">Carregando sua loja…</p>}>
-            <ProducerStoreSettingsPage key={shellSession.userId} session={shellSession} onNavigate={go} />
+            {isProducerDeliveryAreaRoute ? <ProducerDeliveryAreaPage key={shellSession.userId} session={shellSession} onNavigate={go} /> : <ProducerStoreSettingsPage key={shellSession.userId} session={shellSession} onNavigate={go} />}
           </Suspense>
         ) : path.startsWith("/produtor/documentos") && shellSession?.activeRole === "producer" ? (
           <DocumentsPanel propertyId={new URLSearchParams(location.search).get("propertyId") ?? ""} initialDocumentId={path.split("/")[3]} onNavigate={go} />

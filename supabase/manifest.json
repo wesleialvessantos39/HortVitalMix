@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 50,
+  "schemaVersion": 51,
   "migrations": [
     {
       "version": "20260919030126",
@@ -280,7 +280,12 @@
       "version": "20261005002322",
       "name": "trilha15_privileged_inventory_grants",
       "file": "20261005002322_trilha15_privileged_inventory_grants.sql"
+    },
+    {
+      "version": "20261005034322",
+      "name": "trilha16_service_areas_freight",
+      "file": "20261005034322_trilha16_service_areas_freight.sql"
     }
   ],
-  "migrationHistoryHash": "346882f5b85fdd09de8fa72d620139f28009323dcd1f0036cf0ef5c4058aa495"
+  "migrationHistoryHash": "d1ef54620ad0fd0cf8f83e7c7e0396249166226f4be8c874b50ea622babc3f23"
 }

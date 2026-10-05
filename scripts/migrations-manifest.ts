@@ -44,6 +44,8 @@ export function assertManifestHash() {
 }
 
 const remoteVersionAliases: Readonly<Record<string, string>> = {
+  // Área de entrega/frete T16 aplicada com timestamp físico gerado pelo Supabase.
+  "20261005040640": "20261005034322",
   // Grants privilegiados T15 aplicados com timestamp físico gerado pelo Supabase.
   "20261005002434": "20261005002322",
   // Estoque/lotes T15 aplicado com timestamp físico gerado pelo Supabase.

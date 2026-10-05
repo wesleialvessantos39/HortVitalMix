@@ -1,0 +1,17 @@
+.hvm-delivery-eligibility {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.hvm-delivery-eligibility svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.hvm-delivery-eligibility.eligible {
+  color: #34692d;
+}
+.hvm-delivery-eligibility.outside {
+  color: #7b541c;
+}
