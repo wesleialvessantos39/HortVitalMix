@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 51,
+  "schemaVersion": 52,
   "migrations": [
     {
       "version": "20260919030126",
@@ -285,7 +285,12 @@
       "version": "20261005034322",
       "name": "trilha16_service_areas_freight",
       "file": "20261005034322_trilha16_service_areas_freight.sql"
+    },
+    {
+      "version": "20261005131647",
+      "name": "trilha17_discovery_favorites",
+      "file": "20261005131647_trilha17_discovery_favorites.sql"
     }
   ],
-  "migrationHistoryHash": "d1ef54620ad0fd0cf8f83e7c7e0396249166226f4be8c874b50ea622babc3f23"
+  "migrationHistoryHash": "adb81e6a4b6407916b5a0dc057e47f9e79d184a5d5faf426dfcd336d148f4531"
 }

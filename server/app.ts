@@ -21,6 +21,7 @@ import { categoryRouter } from "./routes/categoryRoutes.ts";
 import { inventoryRouter } from "./routes/inventoryRoutes.ts";
 import { deliveryRouter } from "./routes/deliveryRoutes.ts";
 import { productRouter } from "./routes/productRoutes.ts";
+import { discoveryRouter } from "./routes/discoveryRoutes.ts";
 export const app = express();
 app.disable("x-powered-by");
 
@@ -102,6 +103,7 @@ for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
   app.use(prefix, productRouter);
   app.use(prefix, inventoryRouter);
   app.use(prefix, deliveryRouter);
+  app.use(prefix, discoveryRouter);
 }
 for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
   app.use(prefix + "/producer/documents", documentRouter);

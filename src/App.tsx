@@ -47,6 +47,7 @@ const ProducerDeliveryAreaPage = lazy(() => import("./pages/producer/ProducerDel
 const ProductEditorPage = lazy(() => import("./pages/producer/ProductEditorPage"));
 const ProducerStoreSettingsPage = lazy(() => import("./pages/producer/ProducerStoreSettingsPage"));
 const PublicProducerStorePage = lazy(() => import("./pages/public/PublicProducerStorePage"));
+const HomeDiscoveryPage = lazy(() => import("./pages/public/HomeDiscoveryPage"));
 const fallback = {
   platformName: "HortiVitalMix",
   slogan: "Tudo fresco. Tudo da sua região.",
@@ -541,7 +542,7 @@ export default function App() {
                       </button>
                     )}
                   </div>
-                  {path === "/produtos" && !localityBlocked ? <PublicProductCatalog categoryId={categoryId} search={query} onNavigate={go}/> : <div className="empty">
+                  {path === "/" || path === "/produtores" ? <Suspense fallback={<p role="status">Buscando produtores…</p>}><HomeDiscoveryPage session={shellSession} sessionLoading={sessionLoading} municipalityId={locality.selected?.municipalityId} regionLabel={locality.label} blocked={localityBlocked} onNavigate={go}/></Suspense> : path === "/produtos" && !localityBlocked ? <PublicProductCatalog categoryId={categoryId} search={query} onNavigate={go}/> : <div className="empty">
                     <span className="empty-icon">
                       {path === "/planos" ? (
                         <CalendarDays />

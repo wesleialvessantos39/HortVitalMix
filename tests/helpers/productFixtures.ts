@@ -4,7 +4,12 @@ import { ProducerStoreService } from "../../server/services/ProducerStoreService
 
 export async function productFixture(
   pool: Pool,
-  options: { active?: boolean; trust?: number; verification?: string } = {},
+  options: {
+    active?: boolean;
+    trust?: number;
+    verification?: string;
+    coordinates?: { latitude: number; longitude: number };
+  } = {},
 ) {
   const userId = randomUUID(),
     personId = randomUUID(),
@@ -38,8 +43,13 @@ export async function productFixture(
   );
   await pool.query(
     `INSERT INTO public.app_properties(id,producer_id,property_name,municipality,state,line_vicinal,status,wizard_current_step,total_area_hectares,cultivated_area_hectares,rural_zone_sector,latitude_sede,longitude_sede,water_source,irrigation_system)
-   VALUES($1,$2,'Chácara local T14','Ariquemes','RO','Linha C-65','verified',6,10,4,'Gleba Jamari',-9.91,-63.04,'poco_artesiano','gotejamento')`,
-    [propertyId, profileId],
+   VALUES($1,$2,'Chácara local T14','Ariquemes','RO','Linha C-65','verified',6,10,4,'Gleba Jamari',$3,$4,'poco_artesiano','gotejamento')`,
+    [
+      propertyId,
+      profileId,
+      options.coordinates?.latitude ?? -9.91,
+      options.coordinates?.longitude ?? -63.04,
+    ],
   );
   await pool.query(
     "INSERT INTO public.app_verification_requests(id,property_id,producer_id,status,archived_at) VALUES($1,$2,$3,'approved',now())",
