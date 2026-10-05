@@ -271,6 +271,9 @@ Módulos fiscais: 0,60
     expect(parsed?.fiscalModules).toBe(0.6);
     expect(parsed?.holderName).toBeNull();
   });
+  it.each(["Titular: Maria Aparecida Silva", "Nome do proprietário: Maria Aparecida Silva", "Nome do detentor\nMaria Aparecida Silva", "Proprietário ou possuidor:\nMaria Aparecida Silva"])("lê titular explícito: %s", label => {
+    expect(parseRuralDocumentText(sample + "\n" + label, "car_sicar")?.holderName).toBe("Maria Aparecida Silva");
+  });
   it("lê o recibo do CAR com coordenadas e ignora o titular ou", () => {
     const text = `
 Nome do Imóvel Rural: PA MARIA MENDES - LOTE 028

@@ -128,7 +128,7 @@ for (const width of [320, 390, 768, 1440])
     });
     expect(painted).toBe(true);
     const viewer = await page.locator(".document-viewer").boundingBox();
-    expect(viewer?.height ?? 999).toBeLessThanOrEqual(270);
+    expect(viewer?.height ?? 999).toBeLessThanOrEqual(width <= 900 ? 330 : 590);
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= window.innerWidth + 1,

@@ -21,6 +21,7 @@ function afterLabel(text: string, label: RegExp) {
 function realPersonName(value: string | null) {
   const clean = cut(value, 255);
   if (!clean) return null;
+  if (/^(?:ou\s+)?possuidor(?:a)?\b|^(?:nome|CPF|CNPJ|dados|identifica[cç][aã]o)\b/i.test(clean)) return null;
   if (/^(ou|e|de|da|do|o|a|os|as|rural|possuidor|possuidora|detentor|detentora)$/i.test(clean))
     return null;
   if (clean.split(/\s+/).length === 1 && clean.length < 5) return null;
@@ -113,7 +114,7 @@ export function parseRuralDocumentText(
   const holderName = realPersonName(
     afterLabel(
       source,
-      /(?:^|\n)\s*(?:titular|propriet[aá]rio|nome\s+do\s+detentor)\s*[:\-–]\s*([^\n]{2,160})/i,
+      /(?:^|\n)\s*(?:titular|(?:nome\s+(?:completo\s+)?(?:do\s+)?)?(?:propriet[aá]rio(?:\s+ou\s+possuidor)?|possuidor|detentor))\s*(?:[:\-–]\s*|\n\s*)([^\n]{2,160})/i,
     ),
   );
   const municipality = cut(

@@ -11,8 +11,7 @@ function validCpf(value: string) {
   if (!/^\d{11}$/.test(value) || /^(\d)\1{10}$/.test(value)) return false;
   for (let n = 9; n < 11; n += 1) {
     let sum = 0;
-    for (let i = 0; i < n; i += 1)
-      sum += Number(value[i]) * (n + 1 - i);
+    for (let i = 0; i < n; i += 1) sum += Number(value[i]) * (n + 1 - i);
     const digit = (sum * 10) % 11;
     if ((digit === 10 ? 0 : digit) !== Number(value[n])) return false;
   }
@@ -76,6 +75,10 @@ const RequestSchema = z
   .object({
     role: z.enum(["consumer", "producer"]),
     data: z.record(z.string(), z.unknown()),
+    consent: z
+      .object({ policyVersion: z.literal("lgpd-cadastro-2026-10-02") })
+      .strict()
+      .optional(),
   })
   .strict();
 
@@ -92,11 +95,7 @@ const responseHeaders = (origin: string | null) => ({
   vary: "Origin",
 });
 
-const json = (
-  status: number,
-  body: unknown,
-  origin: string | null,
-) =>
+const json = (status: number, body: unknown, origin: string | null) =>
   new Response(status === 204 ? null : JSON.stringify(body), {
     status,
     headers: responseHeaders(origin),
@@ -162,7 +161,9 @@ function localityBlocked(
     disabled ? 403 : 422,
     {
       error: disabled ? "LOCALITY_DISABLED" : "LOCALITY_NOT_COVERED",
-      message: disabled ? LOCALITY_DISABLED_MESSAGE : LOCALITY_NOT_COVERED_MESSAGE,
+      message: disabled
+        ? LOCALITY_DISABLED_MESSAGE
+        : LOCALITY_NOT_COVERED_MESSAGE,
       requestId,
     },
     origin,
@@ -204,7 +205,9 @@ function mapRpcError(
 
   if (code === "HVMLC" || message.includes("REGISTRATION_LOCALITY_"))
     return localityBlocked(
-      message.includes("REGISTRATION_LOCALITY_DISABLED") ? "inactive" : "unknown",
+      message.includes("REGISTRATION_LOCALITY_DISABLED")
+        ? "inactive"
+        : "unknown",
       requestId,
       origin,
     );
@@ -222,12 +225,7 @@ function mapRpcError(
     return safeFailure(400, "REGISTRATION_DATA_REJECTED", requestId, origin);
 
   if (code === "PGRST202" || code === "42883")
-    return safeFailure(
-      503,
-      "REGISTRATION_SCHEMA_OUTDATED",
-      requestId,
-      origin,
-    );
+    return safeFailure(503, "REGISTRATION_SCHEMA_OUTDATED", requestId, origin);
 
   return safeFailure(503, "DATABASE_UNAVAILABLE", requestId, origin);
 }
@@ -240,6 +238,7 @@ type ExistingPerson = {
 };
 
 Deno.serve(async (req) => {
+  const startedAt = performance.now();
   const origin = req.headers.get("origin");
   const requestId = crypto.randomUUID();
 
@@ -352,15 +351,44 @@ Deno.serve(async (req) => {
     return safeFailure(503, "DATABASE_UNAVAILABLE", requestId, origin);
   }
 
-  if(existing){
-    const account=await admin.from("app_users").select("status").eq("id",existing.user_id).single();
-    if(account.error)return safeFailure(503,"DATABASE_UNAVAILABLE",requestId,origin);
-    if(["blocked","suspended","pending"].includes(account.data.status)){
-      if(existing.email_normalized!==data.email && existing.cpf_normalized===data.cpf)existing=null;
-      else if(existing.email_normalized===data.email && existing.cpf_normalized===data.cpf){
-        const queued=await admin.rpc("request_blocked_registration_review",{p_user_id:existing.user_id,p_role:role});
-        if(queued.error)return safeFailure(409,"REVIEW_NOT_ALLOWED",requestId,origin);
-        return json(201,{userId:existing.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role,requestId},origin);
+  if (existing) {
+    const account = await admin
+      .from("app_users")
+      .select("status")
+      .eq("id", existing.user_id)
+      .single();
+    if (account.error)
+      return safeFailure(503, "DATABASE_UNAVAILABLE", requestId, origin);
+    if (["blocked", "suspended", "pending"].includes(account.data.status)) {
+      if (
+        existing.email_normalized !== data.email &&
+        existing.cpf_normalized === data.cpf
+      )
+        existing = null;
+      else if (
+        existing.email_normalized === data.email &&
+        existing.cpf_normalized === data.cpf
+      ) {
+        const queued = await admin.rpc("request_blocked_registration_review", {
+          p_user_id: existing.user_id,
+          p_role: role,
+        });
+        if (queued.error)
+          return safeFailure(409, "REVIEW_NOT_ALLOWED", requestId, origin);
+        return json(
+          201,
+          {
+            userId: existing.user_id,
+            reviewRequired: true,
+            confirmationRequired: false,
+            confirmationDispatchAccepted: false,
+            existingIdentity: true,
+            roleAdded: false,
+            role,
+            requestId,
+          },
+          origin,
+        );
       }
     }
   }
@@ -415,14 +443,55 @@ Deno.serve(async (req) => {
       if (verified.data.user.id !== existing.user_id)
         return safeFailure(409, "IDENTITY_CONFLICT", requestId, origin);
 
-      const account = await admin.from("app_users").select("status").eq("id",existing.user_id).single();
-      if(account.error) return safeFailure(503,"DATABASE_UNAVAILABLE",requestId,origin);
-      if(account.data.status === "deleted") {
-        const requested = await admin.rpc("request_account_reactivation", {p_user_id:existing.user_id,p_role:role});
-        if(requested.error) return safeFailure(409,"REACTIVATION_NOT_ALLOWED",requestId,origin);
-        return json(201,{userId:existing.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role,requestId},origin);
+      const account = await admin
+        .from("app_users")
+        .select("status")
+        .eq("id", existing.user_id)
+        .single();
+      if (account.error)
+        return safeFailure(503, "DATABASE_UNAVAILABLE", requestId, origin);
+      if (account.data.status === "deleted") {
+        const requested = await admin.rpc("request_account_reactivation", {
+          p_user_id: existing.user_id,
+          p_role: role,
+        });
+        if (requested.error)
+          return safeFailure(
+            409,
+            "REACTIVATION_NOT_ALLOWED",
+            requestId,
+            origin,
+          );
+        return json(
+          201,
+          {
+            userId: existing.user_id,
+            reviewRequired: true,
+            confirmationRequired: false,
+            confirmationDispatchAccepted: false,
+            existingIdentity: true,
+            roleAdded: false,
+            role,
+            requestId,
+          },
+          origin,
+        );
       }
-      if(account.data.status === "pending") return json(201,{userId:existing.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role,requestId},origin);
+      if (account.data.status === "pending")
+        return json(
+          201,
+          {
+            userId: existing.user_id,
+            reviewRequired: true,
+            confirmationRequired: false,
+            confirmationDispatchAccepted: false,
+            existingIdentity: true,
+            roleAdded: false,
+            role,
+            requestId,
+          },
+          origin,
+        );
 
       const blocked = await assertLocalityActive(
         admin,
@@ -440,8 +509,7 @@ Deno.serve(async (req) => {
         p_role: role,
       });
 
-      if (added.error)
-        return mapRpcError(added.error, requestId, origin);
+      if (added.error) return mapRpcError(added.error, requestId, origin);
 
       return json(
         201,
@@ -459,11 +527,11 @@ Deno.serve(async (req) => {
         origin,
       );
     } finally {
-      await publicClient.auth.signOut({ scope: "local" }).catch(() => undefined);
+      await publicClient.auth
+        .signOut({ scope: "local" })
+        .catch(() => undefined);
     }
   }
-
-
 
   // Mantém a mesma ordem transacional já homologada no Express:
   // 1) identidade não confirmada, 2) domínio atômico, 3) confirmação por e-mail.
@@ -476,6 +544,7 @@ Deno.serve(async (req) => {
     user_metadata: {
       full_name: data.fullName,
       hvm_portal: "public",
+      hvm_registration_role: role,
     },
   });
 
@@ -488,12 +557,7 @@ Deno.serve(async (req) => {
     );
 
     if (status === 429)
-      return safeFailure(
-        429,
-        "REGISTRATION_RATE_LIMITED",
-        requestId,
-        origin,
-      );
+      return safeFailure(429, "REGISTRATION_RATE_LIMITED", requestId, origin);
 
     if (status === 422 || status === 400)
       return safeFailure(409, "IDENTITY_CONFLICT", requestId, origin);
@@ -502,52 +566,139 @@ Deno.serve(async (req) => {
   }
 
   const userId = created.data.user.id;
-  const contextValue = btoa(JSON.stringify({uid:userId,role,exp:Date.now()+24*60*60_000})).replace(/=/g, "").replace(/\+/g,"-").replace(/\//g,"_");
-  const contextKey = await crypto.subtle.importKey("raw",new TextEncoder().encode(serviceRole),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
-  const mac = await crypto.subtle.sign("HMAC",contextKey,new TextEncoder().encode("hvm:confirmation:v1:"+contextValue));
-  const context = contextValue+"."+Array.from(new Uint8Array(mac),b=>b.toString(16).padStart(2,"0")).join("");
-  const redirectTo = CANONICAL_APP_ORIGIN+"/confirmar-contato?portal="+role+"&context="+encodeURIComponent(context);
+  const contextValue = btoa(
+    JSON.stringify({ uid: userId, role, exp: Date.now() + 24 * 60 * 60_000 }),
+  )
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
+  const contextKey = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(serviceRole),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const mac = await crypto.subtle.sign(
+    "HMAC",
+    contextKey,
+    new TextEncoder().encode("hvm:confirmation:v1:" + contextValue),
+  );
+  const context =
+    contextValue +
+    "." +
+    Array.from(new Uint8Array(mac), (b) =>
+      b.toString(16).padStart(2, "0"),
+    ).join("");
+  const redirectTo =
+    CANONICAL_APP_ORIGIN +
+    "/confirmar-contato?portal=" +
+    role +
+    "&context=" +
+    encodeURIComponent(context);
 
-  const completed = await admin.rpc("complete_public_registration", {
-    p_user_id: userId,
-    p_full_name: data.fullName,
-    p_cpf_normalized: data.cpf,
-    p_email_normalized: data.email,
-    p_phone_e164: data.phone,
-    p_role: role,
-    // Localidade declarada: a função de domínio revalida a cobertura e grava o
-    // município da pessoa. Sem estes parâmetros o cadastro perderia a região.
-    p_municipality: data.municipality,
-    p_state: data.state ?? "RO",
-  });
+  const consent = envelope.data.consent;
+  const ipBytes = consent
+    ? await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(
+          serviceRole +
+            ":hvm:registration-ip:" +
+            (req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+              "unknown"),
+        ),
+      )
+    : null;
+  const ipHash = ipBytes
+    ? Array.from(new Uint8Array(ipBytes), (b) =>
+        b.toString(16).padStart(2, "0"),
+      ).join("")
+    : "";
+  const completed = await admin.rpc(
+    consent
+      ? "complete_public_registration_with_consent"
+      : "complete_public_registration",
+    {
+      p_user_id: userId,
+      p_full_name: data.fullName,
+      p_cpf_normalized: data.cpf,
+      p_email_normalized: data.email,
+      p_phone_e164: data.phone,
+      p_role: role,
+      // Localidade declarada: a função de domínio revalida a cobertura e grava o
+      // município da pessoa. Sem estes parâmetros o cadastro perderia a região.
+      p_municipality: data.municipality,
+      p_state: data.state ?? "RO",
+      ...(consent
+        ? {
+            p_policy_version: consent.policyVersion,
+            p_ip_hash: ipHash,
+            p_user_agent:
+              (req.headers.get("user-agent") ?? "unknown").slice(0, 255) ||
+              "unknown",
+          }
+        : {}),
+    },
+  );
 
   if (completed.error) {
     await admin.auth.admin.deleteUser(userId).catch(() => undefined);
     return mapRpcError(completed.error, requestId, origin);
   }
 
-  const accountState = await admin.from("app_users").select("status").eq("id",userId).single();
-  if(accountState.error)return safeFailure(503,"DATABASE_UNAVAILABLE",requestId,origin);
-  if(accountState.data.status!=="active")return json(201,{userId,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:false,roleAdded:true,role,requestId},origin);
-  let confirmationDispatchAccepted = false;
-  try {
-    const sent = await publicClient.auth.resend({
-      type: "signup",
-      email: data.email,
-      options: { emailRedirectTo: redirectTo },
-    });
-    confirmationDispatchAccepted = !sent.error;
-    if (sent.error)
-      logFailure(
+  const accountState =
+    consent && completed.data?.status
+      ? { data: { status: completed.data.status }, error: null }
+      : await admin
+          .from("app_users")
+          .select("status")
+          .eq("id", userId)
+          .single();
+  if (accountState.error)
+    return safeFailure(503, "DATABASE_UNAVAILABLE", requestId, origin);
+  if (accountState.data.status !== "active")
+    return json(
+      201,
+      {
+        userId,
+        reviewRequired: true,
+        confirmationRequired: false,
+        confirmationDispatchAccepted: false,
+        existingIdentity: false,
+        roleAdded: true,
+        role,
         requestId,
-        "public_registration_confirmation_deferred",
-        sent.error.code ?? String(sent.error.status ?? "unknown"),
-      );
-  } catch {
-    logFailure(requestId, "public_registration_confirmation_transport");
-  }
+      },
+      origin,
+    );
+  const sendConfirmation = async () => {
+    try {
+      const sent = await publicClient.auth.resend({
+        type: "signup",
+        email: data.email,
+        options: { emailRedirectTo: redirectTo },
+      });
+      if (sent.error)
+        logFailure(
+          requestId,
+          "public_registration_confirmation_deferred",
+          sent.error.code ?? String(sent.error.status ?? "unknown"),
+        );
+      return !sent.error;
+    } catch {
+      logFailure(requestId, "public_registration_confirmation_transport");
+      return false;
+    }
+  };
+  // O runtime mantém este envio vivo após a resposta; a navegação espera apenas o commit do cadastro.
+  let confirmationDispatchAccepted = false,
+    confirmationDispatchScheduled = false;
+  if (typeof EdgeRuntime !== "undefined") {
+    EdgeRuntime.waitUntil(sendConfirmation());
+    confirmationDispatchScheduled = true;
+  } else confirmationDispatchAccepted = await sendConfirmation();
 
-  return json(
+  const response = json(
     201,
     {
       userId,
@@ -555,6 +706,9 @@ Deno.serve(async (req) => {
       confirmationRequired: true,
       confirmationDispatchAccepted,
       confirmationDispatchDeferred: !confirmationDispatchAccepted,
+      confirmationDispatchScheduled,
+      confirmationContext: context,
+      lgpdRecorded: Boolean(consent),
       existingIdentity: false,
       roleAdded: true,
       role,
@@ -563,4 +717,9 @@ Deno.serve(async (req) => {
     },
     origin,
   );
+  response.headers.set(
+    "Server-Timing",
+    "auth-register;dur=" + Math.round(performance.now() - startedAt),
+  );
+  return response;
 });

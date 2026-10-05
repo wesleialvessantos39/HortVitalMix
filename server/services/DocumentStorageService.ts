@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
 import { supabaseAdmin } from "../supabase/client.ts";
@@ -9,6 +9,7 @@ import {
   type ExtractionPayload,
 } from "../../shared/contracts/aiExtraction.ts";
 import { validateExtraction } from "./CarValidationEngine.ts";
+import { DECLARED_DATA_PREFIX } from "../../shared/documents/effectiveDocumentFields.ts";
 export class DocumentError extends Error {
   constructor(
     public code: string,
@@ -57,16 +58,21 @@ export async function applyExtractedProperty(
     latitudeSede?: number | null;
     longitudeSede?: number | null;
     cultivatedAreaHectares?: number | null;
+    correctCultivatedArea?: boolean;
+    clearLocation?: boolean;
+    expectedRevision?: number;
   },
 ) {
   const property = await c.query(
-    "SELECT status,cultivated_area_hectares,total_area_hectares,draft_data FROM public.app_properties WHERE id=$1 FOR UPDATE",
+    "SELECT status,revision,cultivated_area_hectares,total_area_hectares,draft_data FROM public.app_properties WHERE id=$1 FOR UPDATE",
     [propertyId],
   );
   const status = String(property.rows[0]?.status ?? "");
   const locked = !["draft", "completed", "rejected", "submitted"].includes(
     status,
   );
+  if (input.expectedRevision != null && Number(property.rows[0]?.revision) !== input.expectedRevision)
+    throw new DocumentError("PROPERTY_REVISION_CONFLICT");
   const name = input.propertyRegisteredName?.trim() || "";
   const city = input.municipality?.trim() || "";
   const nameOk = name.length >= 2 ? name.slice(0, 128) : null;
@@ -83,23 +89,23 @@ export async function applyExtractedProperty(
     input.totalAreaHectares != null && input.totalAreaHectares > 0
       ? input.totalAreaHectares
       : null;
+  const cultivatedCandidate = input.cultivatedAreaHectares;
+  const correctingCultivated = input.correctCultivatedArea && cultivatedCandidate != null;
+  if (!locked && correctingCultivated && area != null && cultivatedCandidate > area)
+    throw new DocumentError("PROPERTY_AREA_CONFLICT", 422);
+  if (!locked && input.correctCultivatedArea && !correctingCultivated && area != null && cultivated != null && cultivated > area)
+    throw new DocumentError("PROPERTY_AREA_CONFLICT", 422);
   const areaApplied =
-    !locked && area != null && (cultivated == null || cultivated <= area);
+    !locked && area != null && (correctingCultivated || cultivated == null || cultivated <= area);
   const lat = input.latitudeSede;
   const lng = input.longitudeSede;
   const locationApplied =
     !locked &&
-    lat != null &&
-    lng != null &&
-    lat >= -14 &&
-    lat <= -7 &&
-    lng >= -67 &&
-    lng <= -59;
+    (Boolean(input.clearLocation) || (lat != null && lng != null && lat >= -14 && lat <= -7 && lng >= -67 && lng <= -59));
   const nextTotal = areaApplied && area != null ? area : currentTotal;
-  const cultivatedCandidate = input.cultivatedAreaHectares;
   const cultivatedApplied =
     !locked &&
-    cultivated == null &&
+    (cultivated == null || Boolean(input.correctCultivatedArea)) &&
     cultivatedCandidate != null &&
     cultivatedCandidate >= 0 &&
     nextTotal != null &&
@@ -141,8 +147,8 @@ export async function applyExtractedProperty(
         areaApplied,
         area ?? 0,
         locationApplied,
-        lat ?? 0,
-        lng ?? 0,
+        lat ?? null,
+        lng ?? null,
         cultivatedApplied,
         cultivatedCandidate ?? 0,
         nextDraft ? JSON.stringify(nextDraft) : null,
@@ -153,6 +159,7 @@ export async function applyExtractedProperty(
     propertyUpdated,
     areaApplied,
     locationApplied,
+    cultivatedApplied,
     propertyStatus: status,
   };
 }
@@ -185,7 +192,7 @@ export async function getDocument(
   lock = false,
 ) {
   const r = await c.query(
-    `SELECT d.*,p.total_area_hectares,p.status AS property_status,pe.cpf_normalized FROM public.app_documents d JOIN public.app_properties p ON p.id=d.property_id JOIN public.app_producer_profiles pp ON pp.id=d.producer_id JOIN public.app_people pe ON pe.id=pp.person_id WHERE d.id=$1 AND ($2::boolean OR pe.user_id=$3) ${lock ? "FOR UPDATE OF d" : ""}`,
+    `SELECT d.*,p.total_area_hectares,p.status AS property_status,p.revision AS property_revision,p.latitude_sede,p.longitude_sede,pe.cpf_normalized,pe.full_name FROM public.app_documents d JOIN public.app_properties p ON p.id=d.property_id JOIN public.app_producer_profiles pp ON pp.id=d.producer_id JOIN public.app_people pe ON pe.id=pp.person_id WHERE d.id=$1 AND ($2::boolean OR pe.user_id=$3) ${lock ? "FOR UPDATE OF d" : ""}`,
     [id, a.auditor, a.userId],
   );
   if (!r.rows[0]) throw new DocumentError("DOCUMENT_NOT_FOUND", 404);
@@ -379,16 +386,26 @@ export const DocumentStorageService = {
   async declare(a: DocumentActor, id: string, input: ManualDocumentData) {
     if (a.auditor) throw new DocumentError("FORBIDDEN", 403);
     return transaction(async (c) => {
+      await c.query("SELECT pg_advisory_xact_lock(hashtext($1))", ["document.declare:" + a.userId + ":" + input.commandId]);
+      const inputHash = createHash("sha256").update(JSON.stringify(input)).digest("hex");
       const replay = await c.query(
-        `SELECT payload_after FROM public.app_audit_events WHERE command_id=$1 AND actor_id=$2 AND action='document.declared'`,
+        `SELECT target_id,payload_after FROM public.app_audit_events WHERE command_id=$1 AND actor_id=$2 AND action='document.declared'`,
         [input.commandId, a.userId],
       );
-      if (replay.rows[0]?.payload_after) return replay.rows[0].payload_after;
+      if (replay.rows[0]?.payload_after) {
+        if (String(replay.rows[0].target_id) !== id) throw new DocumentError("COMMAND_CONFLICT");
+        if (replay.rows[0].payload_after.inputHash && replay.rows[0].payload_after.inputHash !== inputHash) throw new DocumentError("COMMAND_CONFLICT");
+        return replay.rows[0].payload_after;
+      }
       const doc = await getDocument(a, id, c, true);
       if (doc.status !== "clean")
         throw new DocumentError("DOCUMENT_NOT_AVAILABLE");
       if (!["car_sicar", "ccir_incra"].includes(doc.document_type))
         throw new DocumentError("EXTRACTION_TYPE_UNSUPPORTED", 422);
+      const saved = await c.query("SELECT e.id FROM public.app_document_extractions e WHERE e.document_id=$1", [id]);
+      // Uma leitura do mesmo PDF nunca substitui uma conferência já persistida.
+      if (input.source === "pdf_text" && saved.rows.length)
+        return { propertyUpdated: false, areaApplied: false, alreadySaved: true, propertyStatus: doc.property_status };
       const area = Math.round(input.totalAreaHectares * 10000) / 10000;
       const payload: ExtractionPayload = ExtractionSchema.parse({
         documentType: doc.document_type,
@@ -400,7 +417,7 @@ export const DocumentStorageService = {
           : null,
         sicarProtocol: null,
         propertyRegisteredName: input.propertyRegisteredName,
-        holderName: input.holderName || null,
+        holderName: input.holderName || ((!input.holderCpfNormalized || input.holderCpfNormalized === doc.cpf_normalized) ? doc.full_name : null) || null,
         holderCpfNormalized: input.holderCpfNormalized || null,
         municipality: input.municipality,
         totalAreaHectares: area,
@@ -463,8 +480,11 @@ export const DocumentStorageService = {
         );
       }
       const declaredNote =
-        "Dados informados pelo produtor, sem leitura automática.\n" +
+        DECLARED_DATA_PREFIX +
         JSON.stringify({
+          source: input.source ?? "producer_correction",
+          latitudeSede: input.latitudeSede,
+          longitudeSede: input.longitudeSede,
           carNumber: payload.carNumber,
           ccirNumber: payload.ccirNumber,
           propertyRegisteredName: payload.propertyRegisteredName,
@@ -484,24 +504,32 @@ export const DocumentStorageService = {
       const applied = await applyExtractedProperty(c, doc.property_id, {
         propertyRegisteredName: input.propertyRegisteredName,
         municipality: input.municipality,
-        carNumber: payload.carNumber,
+        carNumber: payload.carNumber || payload.ccirNumber,
         totalAreaHectares: area,
         latitudeSede: input.latitudeSede ?? null,
         longitudeSede: input.longitudeSede ?? null,
         cultivatedAreaHectares: input.consolidatedRuralAreaHectares ?? null,
+        correctCultivatedArea: input.source !== "pdf_text",
+        clearLocation: input.source !== "pdf_text" && input.latitudeSede === null && input.longitudeSede === null,
+        expectedRevision: input.expectedRevision,
       });
       const result = {
         extraction,
         propertyUpdated: applied.propertyUpdated,
         areaApplied: applied.areaApplied,
+        locationApplied: applied.locationApplied,
+        cultivatedApplied: applied.cultivatedApplied,
         propertyStatus: applied.propertyStatus,
         discrepancies: check.issues,
       };
       await audit(c, a, "document.declared", id, input.commandId, {
         propertyUpdated: result.propertyUpdated,
         areaApplied: applied.areaApplied,
+        locationApplied: applied.locationApplied,
+        cultivatedApplied: applied.cultivatedApplied,
         propertyStatus: applied.propertyStatus,
         engine: extraction.extraction_engine,
+        inputHash,
       });
       return result;
     });

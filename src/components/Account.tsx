@@ -483,9 +483,10 @@ export function Account({
         const result = await registerPublicAccount(
           mode,
           publicRegistrationPayload ?? (form as Record<string, unknown>),
+          { policyVersion: LGPD_CADASTRO_POLICY_VERSION },
         );
-        if (result.userId) {
-          await api("/v1/auth/lgpd-acceptance", {
+        if (result.userId && !result.lgpdRecorded) {
+          void api("/v1/auth/lgpd-acceptance", {
             method: "POST",
             body: JSON.stringify({
               email: String(form.email ?? ""),
@@ -495,7 +496,7 @@ export function Account({
           }).catch(() => undefined);
         }
 
-        const targetRole = mode;
+        const targetRole = result.role ?? mode;
         onSessionAdopt(null);
         if (result.reviewRequired) {
           navigate(loginPathForRole(targetRole)+"?review=1");
@@ -503,7 +504,10 @@ export function Account({
         }
         if (result.confirmationRequired) {
           try { sessionStorage.setItem("hvm:login-email:"+targetRole,String(form.email ?? "")); } catch {}
-          navigate(`/confirmar-contato?portal=${targetRole}&pending=1`);
+          const query = new URLSearchParams({ portal: targetRole, pending: "1" });
+          if (result.confirmationContext) query.set("context", result.confirmationContext);
+          if (result.confirmationDispatchDeferred && !result.confirmationDispatchScheduled) query.set("send", "1");
+          navigate(`/confirmar-contato?${query}`);
           return;
         }
 

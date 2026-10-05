@@ -58,6 +58,18 @@ export function DocumentPreview({
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [ready, setReady] = useState(0);
+  const [width, setWidth] = useState(0);
+  const onTextRef = useRef(onText);
+  onTextRef.current = onText;
+  const viewer = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!viewer.current) return;
+    const observer = new ResizeObserver((entries) =>
+      setWidth(Math.round(entries[0].contentRect.width)),
+    );
+    observer.observe(viewer.current);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!url || image) return;
@@ -79,7 +91,8 @@ export function DocumentPreview({
           useSystemFonts: true,
           disableAutoFetch: true,
           disableStream: true,
-        } as Parameters<typeof pdfjs.getDocument>[0]).promise) as unknown as PdfDoc;
+        } as Parameters<typeof pdfjs.getDocument>[0])
+          .promise) as unknown as PdfDoc;
         if (cancel) {
           loaded.destroy?.();
           return;
@@ -95,7 +108,7 @@ export function DocumentPreview({
         if (cancel) return;
         setTotal(loaded.numPages);
         setReady((value) => value + 1);
-        onText?.(parts.join("\n"));
+        onTextRef.current?.(parts.join("\n"));
       } catch {
         if (!cancel) setFailed(true);
       }
@@ -118,7 +131,10 @@ export function DocumentPreview({
         if (!pdfPage || !target || cancel) return;
         const box = target.parentElement?.getBoundingClientRect();
         const natural = pdfPage.getViewport({ scale: 1 });
-        const scale = Math.min(((box?.width || 320) - 16) / natural.width, 1.35);
+        const scale = Math.min(
+          ((box?.width || 320) - 16) / natural.width,
+          1.35,
+        );
         const viewport = pdfPage.getViewport({ scale: Math.max(scale, 0.2) });
         target.width = Math.max(1, Math.floor(viewport.width));
         target.height = Math.max(1, Math.floor(viewport.height));
@@ -134,17 +150,17 @@ export function DocumentPreview({
       cancel = true;
       task?.cancel?.();
     };
-  }, [page, ready, image]);
+  }, [page, ready, image, width]);
 
   if (image)
     return (
-      <div className="document-viewer">
+      <div className="document-viewer" ref={viewer}>
         <img alt="Documento enviado" src={url} />
       </div>
     );
   return (
     <div className="document-view">
-      <div className="document-viewer">
+      <div className="document-viewer" ref={viewer}>
         <canvas
           ref={canvas}
           className="document-page"
@@ -152,12 +168,19 @@ export function DocumentPreview({
           aria-label="Página do documento"
         />
         {failed && (
-          <p>Não consegui abrir este PDF. Envie de novo o arquivo baixado do SICAR.</p>
+          <p>
+            Não consegui abrir este PDF. Envie de novo o arquivo baixado do
+            SICAR.
+          </p>
         )}
       </div>
       {total > 1 && (
         <div className="document-pager">
-          <button type="button" disabled={page <= 1} onClick={() => setPage((n) => n - 1)}>
+          <button
+            type="button"
+            disabled={page <= 1}
+            onClick={() => setPage((n) => n - 1)}
+          >
             Anterior
           </button>
           <span>
