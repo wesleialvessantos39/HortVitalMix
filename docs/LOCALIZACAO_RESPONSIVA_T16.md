@@ -35,4 +35,10 @@ Inspeção adicional com agent-browser em **320/390/768/1024/1200/1440 px**: um 
 
 Os testes PostgreSQL completos e a suíte histórica integral não foram reexecutados nesta rodada de interface. Não há mudança de SQL/serviço/contrato; a T16 foi conferida por seus testes HTTP/interface existentes e por consultas reais somente de leitura. O aviso anterior de bundle acima de 500 kB permanece não bloqueante.
 
-Publicação segue a integração Git já existente, exclusivamente `main`, em `pdx1`, sem mudança de plano ou serviço contratado. A conferência de Production e da release será registrada no fechamento do Livro-Raiz após READY.
+## Publicação conferida
+
+PR [#77](https://github.com/wesleialvessantos39/HortVitalMix/pull/77) integrado na **main `944f68e1039fab9aaed088b515f571a7723f06f2`**. A árvore Git publicada coincide exatamente com a árvore validada localmente (`80fa7801e21b39f4631208cd3d950c0c201d1da9`). Deployment **dpl_2DyWvnWQ6rHxTgGi35m98mRnNKXQ**, **READY**, production/main/**pdx1**, no domínio **https://hortvitalmix.vercel.app**. Release funcional `t16-localizacao-v51-944f68e`; `verify:deploy` passou para health/ready/config na SHA exata. Nenhuma mudança de plano ou serviço contratado.
+
+Navegador em Production, com catálogo real e sem fixtures: escolha de município, fechamento/foco, persistência após recarga e limpeza confirmados. Conferidas novamente as seis larguras, inclusive com **Machadinho D'Oeste – RO**, sem overflow e com um seletor visível. Conferência adicional em contexto Chromium móvel com `hasTouch: true`, 390 px e `locator.tap()`: escolha de Ariquemes, recarga e limpeza passaram, com zero erro JavaScript. A API privada `/api/v1/producer/store/delivery` continua retornando **401 AUTH_REQUIRED** para visitante.
+
+Esta rodada modifica no Supabase somente o registro corrente de release em `app_releases`, após READY, mantendo schema/hash. Nenhuma fixture ou nova migration em produção. O fechamento documental atualiza somente este relatório e o apêndice do Livro-Raiz; a release acompanha a SHA final da main após o deploy documental READY.
