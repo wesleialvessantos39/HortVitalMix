@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 54,
+  "schemaVersion": 55,
   "migrations": [
     {
       "version": "20260919030126",
@@ -300,7 +300,12 @@
       "version": "20261005191237",
       "name": "storefront_media_carousels",
       "file": "20261005191237_storefront_media_carousels.sql"
+    },
+    {
+      "version": "20261005210404",
+      "name": "trilha18_carts",
+      "file": "20261005210404_trilha18_carts.sql"
     }
   ],
-  "migrationHistoryHash": "f698b258308af10af2e1d193c908372660262167ef5c648f34e0e81742d847e3"
+  "migrationHistoryHash": "e52b14f3195c5cdbd49a7e761bb486a2fbb8d8859837f1378d799569d033573a"
 }

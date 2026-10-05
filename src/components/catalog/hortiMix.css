@@ -1,0 +1,108 @@
+.hvm-mix {
+  border: 1px solid #dbe7d8;
+  border-radius: 16px;
+  background: #f6faf4;
+  margin: 0 0 24px;
+  color: #244936;
+  min-width: 0;
+}
+.header-actions .icon:has(.hvm-cart-count){position:relative}
+.hvm-cart-count{position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;padding:0 4px;border-radius:10px;background:#1b4d2e;color:white;font-size:11px;display:grid;place-items:center}
+.hvm-mix > summary {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  cursor: pointer;
+  padding: 18px;
+  font-weight: 750;
+  min-height: 52px;
+}
+.hvm-mix > summary:focus-visible {
+  outline: 3px solid #71a468;
+  outline-offset: 2px;
+  border-radius: 16px;
+}
+.hvm-mix-content {
+  padding: 0 18px 18px;
+}
+.hvm-mix-content p {
+  line-height: 1.6;
+}
+.hvm-mix fieldset {
+  border: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) 80px;
+  gap: 14px;
+  min-width: 0;
+}
+.hvm-mix label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 650;
+  min-width: 0;
+}
+.hvm-mix input,
+.hvm-mix select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #cadbc7;
+  border-radius: 10px;
+  padding: 11px;
+  background: white;
+  min-height: 44px;
+}
+.hvm-mix ul {
+  padding: 0;
+  list-style: none;
+}
+.hvm-mix li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #dbe7d8;
+  overflow-wrap: anywhere;
+}
+.hvm-mix li button {
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+.hvm-mix-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+.hvm-product-cart-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+.hvm-product-cart-actions p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.hvm-product-cart-actions button {
+  min-height: 44px;
+  justify-content: center;
+}
+@media (max-width: 600px) {
+  .hvm-mix fieldset {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hvm-mix-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .hvm-mix-content {
+    padding: 0 14px 14px;
+  }
+}

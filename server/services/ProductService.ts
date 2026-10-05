@@ -419,12 +419,11 @@ export const ProductService = {
         ],
       );
       const rows = result.rows.slice(0, HIGHLIGHTS_PAGE_SIZE);
-      const products = await responses(client, rows);
-      const avatars = await storeImageUrls(rows.map((row) => row.logo_url));
-      const available = await InventoryService.publicAvailability(
-        client,
-        rows.map((row) => row.id),
-      );
+      const [products,avatars,available] = await Promise.all([
+        responses(client, rows),
+        storeImageUrls(rows.map((row) => row.logo_url)),
+        InventoryService.publicAvailability(client,rows.map((row) => row.id)),
+      ]);
       const response = HighlightsResponseSchema.parse({
         page: query.page,
         hasMore: result.rows.length > HIGHLIGHTS_PAGE_SIZE,
@@ -807,11 +806,10 @@ export const ProductService = {
           query.search || null,
         ],
       );
-      const products = await responses(client, result.rows);
-      const available = await InventoryService.publicAvailability(
-        client,
-        result.rows.map((row) => row.id),
-      );
+      const [products,available] = await Promise.all([
+        responses(client,result.rows),
+        InventoryService.publicAvailability(client,result.rows.map((row) => row.id)),
+      ]);
       const publicProducts = products.map(
         (
           {

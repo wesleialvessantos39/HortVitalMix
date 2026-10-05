@@ -23,6 +23,7 @@ import {
   type SearchStoresResponse,
 } from "../../../shared/contracts/discovery";
 import "./discovery.css";
+import { MediaImage } from "../../components/catalog/MediaImage";
 
 function StorePhoto({
   name,
@@ -35,12 +36,13 @@ function StorePhoto({
 }) {
   const [failed, setFailed] = useState(false);
   return avatarUrl && !failed ? (
-    <img
+    <MediaImage
       src={avatarUrl}
       alt={`Foto de ${name}`}
       loading={priority ? "eager" : "lazy"}
       decoding="async"
       fetchPriority={priority ? "high" : "auto"}
+      priority={priority}
       onError={() => setFailed(true)}
     />
   ) : (

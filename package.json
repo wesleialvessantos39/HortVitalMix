@@ -95,7 +95,11 @@
     "test:t17:unit": "vitest run tests/unit/discoveryContracts.test.ts tests/integration/discoveryRoutes.test.ts tests/integration/discoveryMount.test.ts",
     "test:t17:postgres": "vitest run tests/integration/discoveryPostgres.test.ts",
     "test:t17:story": "vitest run tests/integration/discoveryBrowserPostgres.test.ts",
-    "test:t17:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha17-discovery.spec.ts"
+    "test:t17:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha17-discovery.spec.ts",
+    "test:t18:unit": "vitest run tests/unit/cartContracts.test.ts tests/unit/cartSession.test.ts tests/unit/mediaCache.test.ts tests/integration/cartRoutes.test.ts",
+    "test:t18:postgres": "vitest run tests/integration/cartPostgres.test.ts",
+    "test:t18:story": "vitest run tests/integration/cartBrowserPostgres.test.ts",
+    "test:t18:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha18-cart.spec.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",
