@@ -21,6 +21,7 @@ Migration criada pelo CLI **20261005210404_trilha18_carts.sql**, aplicada como *
 - RLS **ENABLE/FORCE** nas duas tabelas; `anon`, `authenticated` e PUBLIC sem privilégios. Sem policies de cliente, conforme exceção explícita da T18: resolução inteiramente pelo backend. `service_role` tem somente SELECT/INSERT/UPDATE/DELETE nas tabelas novas.
 - Supabase real confirmou os grants/RLS. A comparação antes/depois da migration manteve **63 relações existentes** com contagens/digests idênticos, incluindo Auth, Storage, identidade, propriedades, preços e estoque. Evidência contém somente metadados/hashes em [TRILHA18_PRESERVACAO.json](TRILHA18_PRESERVACAO.json).
 - Advisors: nenhum WARN/ERROR novo. As duas tabelas têm apenas INFO [RLS sem policy](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy), esperado para tabelas deliberadamente exclusivas do backend sem grants de cliente.
+  Performance registra somente INFO de [índices ainda não usados](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index) nas relações novas, criadas ainda sem itens de produção.
 
 ### 1.2 Serviço, sessão e contratos
 
@@ -64,6 +65,7 @@ Checkout/cotação congelada, reserva/consumo de estoque, cupons, pedido, gatewa
 - **12** cenários T18 de navegador: cesta/montador nas quatro larguras, recuperação de resposta perdida/erro e duas verificações das fotos.
 - Regressão: **446** testes unitários/contratos, **146** PostgreSQL T12–T17/mídias em bases descartáveis separadas, **79** cenários anteriores de navegador T12/T14–T17. Suítes antigas deixam fixtures locais; por isso não foram tratadas como um único banco vazio compartilhado.
 - TypeScript de produção, `npm run build`, manifesto, segurança do cliente/bundle e cold start ESM aprovados. Typecheck global dos testes conserva um erro anterior em `tests/unit/registrationBackground.test.ts:38` (`transform` vs `strip`), reproduzido na main base; nenhum erro novo de TypeScript permaneceu.
+- O check automático **Supabase Preview** da main informa `Remote migration versions not found in local migrations directory`. A mesma falha aparece na entrega funcional anterior **5a05a8efdc8859ba9e8692671cb179ad10fdc780**: o conector não interpreta o mapa histórico de aliases físicos/canônicos. O validador do projeto conferiu as **61 migrations remotas**, nomes, ordem, schema 55 e hash. Nenhuma versão de migration antiga ou histórico remoto foi renumerado para contornar essa diferença. Os checks de segurança do PR 81 concluíram com sucesso; a prévia Vercel foi cancelada pela guarda main.
 - Sem fixtures de conta, produto, estoque ou upload em produção. A verificação publicada da cesta pode criar somente a cesta vazia normal de visitante nas tabelas novas.
 
 Comandos novos: `npm run test:t18:unit`, `test:t18:postgres`, `test:t18:story` e `test:t18:e2e`. PostgreSQL/história requerem `HVM_T18_LOCAL_DATABASE_URL` estritamente `127.0.0.1:55432/postgres` e as migrations aplicadas em banco descartável; história requer build anterior.
@@ -77,4 +79,16 @@ Comandos novos: `npm run test:t18:unit`, `test:t18:postgres`, `test:t18:story` e
 - [x] Fotos compartilhadas/prioritárias e upload otimizado comprovados.
 - [x] Schema 54 → 55, manifesto/hash/alias e Livro-Raiz sincronizados.
 - [x] Regressão em banco/interface e preservação remota verificadas.
-- [ ] Fechamento de publicação main/READY e release final: registro abaixo após confirmação.
+- [x] Publicação funcional main/READY e release conferidas; evidências abaixo.
+
+## 5. Publicação e preservação final
+
+[PR #81](https://github.com/wesleialvessantos39/HortVitalMix/pull/81) integrado. SHA funcional **72e6faecacbfd0a5d6aac2351b35e8f60c0bdca2**, árvore **9b80de85f9ce99a5a3df55145038e4b8172ab040**, idêntica à validada localmente. Deployment **dpl_Av5CHboQtYLSnobNQaYXnA58nGW2**, **READY**, production/**main/pdx1**, aproximadamente 64 segundos de build. Site: **https://hortvitalmix.vercel.app**.
+
+Release funcional **t18-v55-72e6fae** registrada somente depois do READY da SHA exata. `verify:deploy` aprovou health/ready/config no schema 55, usando o proxy do ambiente de execução. Cesta real respondeu **200**, com requestId e estado vazio válido. Agent-browser conferiu cesta e montador em **390/1440 px**, sem overflow ou erros JavaScript; controles e fotos reais carregaram.
+
+Verificação de rede por Chrome DevTools Protocol no catálogo → loja: **uma resposta de foto de produto antes e uma no total depois da navegação**, sem novo download dessa foto. As imagens visíveis carregaram e o navegador não registrou erro JavaScript. Essa é uma amostra real; não estabelece um tempo absoluto para todas as conexões. Logs error/fatal do deployment sem entradas na janela consultada de dez minutos.
+
+Após release e navegação, **62 relações anteriores**, excluindo o histórico autorizado `app_releases`, conservaram contagens/digests. Produção sem fixtures de conta, produto, estoque ou upload; apenas uma cesta vazia normal de visitante foi criada pela navegação pública.
+
+O fechamento documental altera somente Livro-Raiz, este relatório e o JSON de evidências. A release acompanha a SHA documental final da main após seu READY, mantendo schema/hash; a referência funcional acima identifica exatamente o código verificado. A release corrente pode ser conferida em `/api/ready`.
