@@ -50,4 +50,15 @@ Queries novas usam URL normalizada e consomem os metadados reservados `path`/`__
 
 Não foram criados dados sintéticos nem usuários de teste em produção. Evidências estruturadas em `TRILHA15_REGRESSAO.json`. A regressão dedicada acima comprova os caminhos afetados; as falhas históricas da suíte ampla permanecem registradas no fechamento da T14, sem declaração de homologação integral de todas as jornadas antigas.
 
-Geometria/frete T16 e carrinho/checkout/pagamento seguem nas trilhas futuras. Publicação final e release são registradas após deployment READY na SHA exata da main.
+Geometria/frete T16 e carrinho/checkout/pagamento seguem nas trilhas futuras. Publicação funcional conferida no fechamento abaixo; a release corrente acompanha a SHA final da main após deployment READY.
+
+
+## Fechamento em produção
+
+[PR #75](https://github.com/wesleialvessantos39/HortVitalMix/pull/75) integrado. SHA funcional **1c643205d7ff99d0063ddc97ba200a1ada46a22a**, deployment **dpl_HL3o9JgQfAWe55u3fPsMwRzEGM64**, READY, produção, main, pdx1. Release funcional **t15-v50-1c64320**, schema 50, 56 migrations e hash canônico acima. Health/readiness/configuração e SHA exata aprovadas por verify:deploy.
+
+Consulta pública e busca: 200; queries desconhecidas/duplicadas: 400; catálogo privado e lotes sem sessão: 401; categorias oficiais T13: 200/cinco categorias. Request IDs presentes. Navegador publicado em 390/1440 px aprovou catálogo, filtro Frutas, ausência de overflow, bloqueio de editor/lotes para visitante e vitrine inexistente, com zero erro JavaScript. Nenhum log error/fatal apareceu no deployment funcional.
+
+As **51 relações anteriores de negócio/identidade** mantiveram contagens e hashes após publicação; somente app_releases recebeu atualização autorizada. Tabelas novas continuam sem fixtures. Os fluxos autenticados de colheita/reserva/baixa foram verificados com React/HTTP/guardas/PostgreSQL locais reais; a transação externa também passou sob service_role com avaliação imediata dos triggers diferidos e rollback. A conferência publicada usou acesso anônimo, sem criar identidade ou colheita fictícia em produção.
+
+O fechamento documental altera somente este relatório, a evidência JSON e a entrada do Livro-Raiz. Código funcional/schema/hash permanecem iguais; a release final é sincronizada com a SHA final da main somente após seu novo deployment READY e conferência de health/readiness/configuração.

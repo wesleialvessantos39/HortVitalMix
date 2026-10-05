@@ -51,7 +51,9 @@
   "preservation": {
     "relationsCompared": 52,
     "unexpectedChanges": [],
-    "productionSyntheticDataCreated": false
+    "productionSyntheticDataCreated": false,
+    "relationsAfterDeploymentCompared": 51,
+    "intentionalReleaseUpdate": true
   },
   "security": {
     "tablesEnableAndForceRls": 3,
@@ -68,6 +70,30 @@
     "A regressão dedicada T12–T14 foi repetida nesta entrega. As falhas históricas da suíte ampla permanecem registradas no fechamento da T14 e não são declaradas homologadas pela T15."
   ],
   "production": {
-    "status": "Awaiting main integration and exact-SHA deployment verification"
+    "functionalSha": "1c643205d7ff99d0063ddc97ba200a1ada46a22a",
+    "deploymentId": "dpl_HL3o9JgQfAWe55u3fPsMwRzEGM64",
+    "status": "READY",
+    "branch": "main",
+    "regions": [
+      "pdx1"
+    ],
+    "releaseTag": "t15-v50-1c64320",
+    "url": "https://hortvitalmix.vercel.app",
+    "healthReadyConfig": "passed",
+    "publicProductsHttp": 200,
+    "unknownAndDuplicateQueriesHttp": 400,
+    "privateInventoryAnonymousHttp": 401,
+    "categoriesHttp": 200,
+    "categoriesCount": 5,
+    "browser": {
+      "mobileWidth": 390,
+      "desktopWidth": 1440,
+      "publicCatalog": true,
+      "categoryFilter": true,
+      "inventoryGuestBlocked": true,
+      "javascriptErrors": 0
+    },
+    "runtimeErrorFatalScan": 0,
+    "finalReleasePolicy": "Document-only follow-up preserves functional code/schema/hash; current app_releases SHA follows exact final main deployment after READY."
   }
 }
