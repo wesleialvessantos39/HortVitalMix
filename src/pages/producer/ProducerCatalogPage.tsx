@@ -161,6 +161,7 @@ export default function ProducerCatalogPage({
                           >
                             <Pencil size={16} /> Editar produto
                           </button>
+                          <button className="secondary" onClick={() => onNavigate(`/produtor/produtos/${product.id}/lotes`)}>Lotes e colheitas</button>
                           <button
                             className="text-button"
                             disabled={

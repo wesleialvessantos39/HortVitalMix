@@ -124,6 +124,7 @@ export function PublicProductCatalog({
                 {formatProductPrice(product.currentPrice.priceCents)}{" "}
                 <small>/ {UNIT_LABELS[product.unitType]}</small>
               </strong>
+              <span className={`hvm-product-badge ${product.inStock ? "published" : ""}`} aria-label="Disponibilidade">{product.inStock ? "Em estoque" : "Esgotado"}</span>
               <details>
                 <summary>Preparo e conservação</summary>
                 <p>{product.description}</p>

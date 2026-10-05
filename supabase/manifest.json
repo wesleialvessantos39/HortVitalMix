@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 49,
+  "schemaVersion": 50,
   "migrations": [
     {
       "version": "20260919030126",
@@ -270,7 +270,17 @@
       "version": "20261004202124",
       "name": "trilha14_products_and_pricing",
       "file": "20261004202124_trilha14_products_and_pricing.sql"
+    },
+    {
+      "version": "20261004235555",
+      "name": "trilha15_inventory",
+      "file": "20261004235555_trilha15_inventory.sql"
+    },
+    {
+      "version": "20261005002322",
+      "name": "trilha15_privileged_inventory_grants",
+      "file": "20261005002322_trilha15_privileged_inventory_grants.sql"
     }
   ],
-  "migrationHistoryHash": "b73d77a039fa20dd25bb4abdf89e3f36349abb9e44d9c287d89bcf89a53e777e"
+  "migrationHistoryHash": "346882f5b85fdd09de8fa72d620139f28009323dcd1f0036cf0ef5c4058aa495"
 }

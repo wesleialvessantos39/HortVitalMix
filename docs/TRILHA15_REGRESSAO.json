@@ -1,0 +1,73 @@
+{
+  "base": {
+    "commit": "4c2735d145e33aae4ed53f29b6e258604460b568",
+    "schema": 49
+  },
+  "delivery": {
+    "schema": 50,
+    "migrationCount": 56,
+    "migrationHistoryHash": "346882f5b85fdd09de8fa72d620139f28009323dcd1f0036cf0ef5c4058aa495"
+  },
+  "migrations": [
+    {
+      "version": "20261005002132",
+      "name": "trilha15_inventory"
+    },
+    {
+      "version": "20261005002434",
+      "name": "trilha15_privileged_inventory_grants"
+    }
+  ],
+  "tests": {
+    "contractsAndHttp": 42,
+    "postgresT15": 26,
+    "postgresRegression": {
+      "T12": 22,
+      "T13": 20,
+      "T14": 18
+    },
+    "browser": {
+      "T12": 16,
+      "T13": 25,
+      "T14": 16,
+      "T15": 15
+    },
+    "fullStory": 1,
+    "general": {
+      "passed": 571,
+      "skipped": 119,
+      "total": 690
+    },
+    "viewports": [
+      320,
+      390,
+      768,
+      1440
+    ],
+    "typecheck": "passed",
+    "build": "passed",
+    "apiColdStart": "passed"
+  },
+  "preservation": {
+    "relationsCompared": 52,
+    "unexpectedChanges": [],
+    "productionSyntheticDataCreated": false
+  },
+  "security": {
+    "tablesEnableAndForceRls": 3,
+    "anonAndAuthenticatedDirectAccess": false,
+    "movementUpdateAndDeleteGranted": false,
+    "truncateGranted": false,
+    "newWarnings": 0,
+    "intentionalNoPolicyInfo": 3,
+    "newUnindexedForeignKeys": 0,
+    "unusedNewIndexesInfo": 6
+  },
+  "verificationLimits": [
+    "A história local usa React compilado, HTTP, guardas e PostgreSQL reais; somente Auth/Storage externos possuem adaptadores sintéticos locais.",
+    "A regressão dedicada T12–T14 foi repetida nesta entrega. As falhas históricas da suíte ampla permanecem registradas no fechamento da T14 e não são declaradas homologadas pela T15."
+  ],
+  "production": {
+    "status": "Awaiting main integration and exact-SHA deployment verification"
+  }
+}

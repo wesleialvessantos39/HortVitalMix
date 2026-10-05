@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { PoolClient } from "pg";
 import { z } from "zod";
+import { InventoryService } from "./InventoryService.ts";
 import { dbPool } from "../db/pool.ts";
 import { supabaseAdmin } from "../supabase/client.ts";
 import { sanitizeStoreBio } from "./ProducerStoreService.ts";
@@ -707,6 +708,7 @@ export const ProductService = {
     storeSlug?: string;
     search?: string;
   }) {
+    await InventoryService.releaseExpiredReservations();
     const client = await pool().connect();
     try {
       await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
@@ -722,6 +724,7 @@ export const ProductService = {
         ],
       );
       const products = await responses(client, result.rows);
+      const available = await InventoryService.publicAvailability(client, result.rows.map(row => row.id));
       const publicProducts = products.map(
         (
           {
@@ -734,6 +737,7 @@ export const ProductService = {
         ) =>
           PublicProductSchema.parse({
             ...product,
+            inStock: available.has(product.id),
             storeSlug: result.rows[index].store_slug,
             storeName: result.rows[index].store_name,
           }),
