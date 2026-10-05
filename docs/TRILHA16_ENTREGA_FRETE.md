@@ -45,4 +45,6 @@ Os testes locais recusam qualquer URL que não seja `127.0.0.1:55432/postgres`. 
 
 ## Publicação
 
-Migração canônica aplicada e auditorias aprovadas. Publicação na main e conferência da SHA exata/READY serão registradas no fechamento desta trilha, junto ao release canônico e à verificação do site publicado.
+PR [#76](https://github.com/wesleialvessantos39/HortVitalMix/pull/76) integrado na main. Código funcional **488e38a7a1dd8e970105f4bcdd8309d88d3cd863**; deployment **dpl_GeMNaTatKxzr8gn19BjCk8BrpdD1**, **READY**, production/main/pdx1. Release funcional `t16-v51-488e38a`, schema/hash sincronizados. `verify:deploy` aprovado para health/ready/config na SHA exata. Catálogo e filtros 200, interface mobile/desktop sem overflow, configuração privada/editor/estoque bloqueados para visitante, zero erros JavaScript. A API canônica `/api/v1/producer/store/delivery` retorna 401 para visitante. O dispatcher e os três prefixos Express foram verificados localmente; na Vercel, o frontend conserva o transporte `/api` já existente. Consulta de logs error/fatal da publicação: zero entradas em janela de 10 min. Após registrar release, 54 relações antigas (excluindo apenas `app_releases`) continuam com digest idêntico.
+
+A conferência autenticada operacional usa a história completa local; não se declara salvamento com uma conta real em produção. O fechamento documental altera somente este relatório, as evidências e o apêndice do Livro-Raiz. O registro `app_releases` acompanha a SHA final da main depois que o deploy documental também estiver READY.

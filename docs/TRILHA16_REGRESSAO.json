@@ -58,7 +58,7 @@
     }
   },
   "preserved": [
-    "T01–T15 migrations",
+    "T01\u2013T15 migrations",
     "T12 municipal delivery scope",
     "T14 products and prices",
     "T15 inventory engine",
@@ -66,7 +66,38 @@
     "previous database rows"
   ],
   "production": {
-    "status": "pending_main_release",
-    "authenticatedProductionMutationsTested": false
+    "status": "READY",
+    "functionalCommit": "488e38a7a1dd8e970105f4bcdd8309d88d3cd863",
+    "pr": 76,
+    "deploymentId": "dpl_GeMNaTatKxzr8gn19BjCk8BrpdD1",
+    "branch": "main",
+    "region": "pdx1",
+    "schemaVersion": 51,
+    "verifyDeploy": [
+      "health",
+      "ready",
+      "config"
+    ],
+    "browser": {
+      "publicCatalog": true,
+      "categoryFilter": true,
+      "mobileWidth": 390,
+      "desktopWidth": 1440,
+      "privateGuestBlocked": true,
+      "deliverySettingsGuestBlocked": true,
+      "inventoryGuestBlocked": true,
+      "unavailableStore": true,
+      "javascriptErrors": 0,
+      "productResponses": [
+        200,
+        200,
+        200
+      ]
+    },
+    "runtimeErrorFatalLogs": 0,
+    "runtimeLogWindow": "10m",
+    "oldRelationsUnchangedAfterReleaseExcludingAppReleases": 54,
+    "authenticatedProductionMutationsTested": false,
+    "canonicalDeliveryApiGuestStatus": 401
   }
 }

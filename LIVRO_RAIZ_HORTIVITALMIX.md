@@ -4290,3 +4290,9 @@ Implementação estritamente aditiva sobre T15/main `2afcbad43d3954b6793fa96b678
 **Fora de escopo:** descoberta T17, carrinho, checkout, consumo público da cotação, pedidos/pagamentos e mudanças nos módulos anteriores. A preparação interna para uso futuro não cria esses fluxos.
 
 Documentação/evidências: `docs/TRILHA16_ENTREGA_FRETE.md` e `docs/TRILHA16_REGRESSAO.json`. Estado: migração canônica aplicada; publicação da main/SHA/READY e release em conferência final. O fechamento será registrado abaixo sem modificar este histórico anterior.
+
+### Fechamento T16 — produção e preservação verificadas (2026-10-05)
+
+PR #76 integrado: código funcional `488e38a7a1dd8e970105f4bcdd8309d88d3cd863`, deployment `dpl_GeMNaTatKxzr8gn19BjCk8BrpdD1` **READY**, production/main/pdx1. Release funcional `t16-v51-488e38a`; schema 51/hash `d1ef54620ad0fd0cf8f83e7c7e0396249166226f4be8c874b50ea622babc3f23` e 57 migrations sincronizados. `verify:deploy` (health/ready/config) passou na SHA exata. Site publicado: catálogo/filtros 200, mobile/desktop sem overflow, área de entrega/editor/estoque protegidos para visitante e zero erros JavaScript. API privada canônica `/api/v1/producer/store/delivery` retorna 401; dispatcher/prefixos Express protegidos nos testes locais; logs error/fatal da publicação sem entradas na janela de 10 min. Após o release, as 54 relações anteriores excluindo `app_releases` mantêm digest/contagens idênticos.
+
+Homologação operacional autenticada feita com PostgreSQL/HTTP/interface reais em ambiente local descartável, Auth/Storage externos simulados; produção sem fixtures. Todas as verificações descritas acima aprovadas. O fechamento documental modifica somente Livro-Raiz e evidências; `app_releases` deve espelhar a SHA final da main após READY, preservando schema/hash. T17 não iniciada.
