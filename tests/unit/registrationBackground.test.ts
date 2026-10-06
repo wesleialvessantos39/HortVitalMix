@@ -35,7 +35,7 @@ describe("Cadastro Edge: confirmação fora do caminho crítico", () => {
         "supabase/functions/public-registration/index.ts",
         "utf8",
       ).replace(/^import .*;\n/gm, "");
-      const compiled = stripTypeScriptTypes(source, { mode: "transform" });
+      const compiled = stripTypeScriptTypes(source, { mode: "strip" });
       const sandbox = {
         z,
         createClient: () => ({

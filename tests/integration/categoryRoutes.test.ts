@@ -24,6 +24,7 @@ vi.mock("../../server/supabase/client.ts", () => {
         error: null,
       }),
     },
+    rpc: async () => ({ data: [{ created_at: state.issued }], error: null }),
     from: (table: string) => {
       const data =
         table === "app_admin_principals"
@@ -75,7 +76,7 @@ function app() {
 }
 const authenticated = (test: request.Test) =>
   test
-    .set("Authorization", "Bearer verified-test-token")
+    .set("Authorization", "Bearer header." + Buffer.from(JSON.stringify({ session_id: "22222222-2222-4222-8222-222222222222" })).toString("base64url") + ".auth-adapted")
     .set("Sec-Fetch-Site", "same-origin");
 const create = () => ({
   name: "Hortaliças",

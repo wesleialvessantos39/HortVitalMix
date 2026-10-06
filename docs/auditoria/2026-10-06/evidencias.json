@@ -1,0 +1,189 @@
+{
+  "data": "2026-10-06",
+  "estado": "PENDENTE JUSTIFICADO",
+  "canonical": {
+    "repository": "wesleialvessantos39/HortVitalMix",
+    "branch": "main",
+    "commit": "b3cb8532a1349c1f1a14d7b150f1e9e76d1f6079",
+    "deploy": {
+      "id": "dpl_DKsMqw2mrEe7zdRjssoU65t7exGw",
+      "url": "hortvitalmix-wccxf5ii7-wesleialvessantos-projects.vercel.app",
+      "readyState": "READY",
+      "mainSha": "b3cb8532a1349c1f1a14d7b150f1e9e76d1f6079",
+      "branch": "main",
+      "alias": [
+        "hortvitalmix.vercel.app",
+        "hortvitalmix-wesleialvessantos-projects.vercel.app",
+        "hortvitalmix-git-main-wesleialvessantos-projects.vercel.app"
+      ],
+      "target": "production",
+      "regions": [
+        "pdx1"
+      ]
+    },
+    "release": [
+      {
+        "release_tag": "t19-v56-b3cb853",
+        "commit_sha": "b3cb8532a1349c1f1a14d7b150f1e9e76d1f6079",
+        "schema_version": 56,
+        "migration_history_hash": "2caaa0fd11223a49aceb6479581aad7c8e15a1fa122166564b06981d06217572"
+      }
+    ]
+  },
+  "baseline": {
+    "node": "24.19.0",
+    "build": "passed",
+    "manifest": "passed schema56",
+    "typecheck": "failed TS2322 registrationBackground transform",
+    "lint": "failed same typecheck",
+    "unitIntegration": {
+      "filesPassed": 77,
+      "filesSkipped": 27,
+      "passed": 707,
+      "skipped": 237,
+      "total": 944
+    },
+    "coverage": {
+      "lines": 33.87,
+      "functions": 43.43,
+      "statements": 32.66,
+      "branches": 25.93,
+      "result": "failed"
+    },
+    "browser": {
+      "passed": 277,
+      "failed": 39,
+      "total": 316
+    },
+    "postgres": {
+      "passed": 191,
+      "failed": 1,
+      "skipped": 15,
+      "suiteSetupFailures": 1
+    },
+    "mediaFreshPostgres": {
+      "passed": 15,
+      "failed": 0
+    }
+  },
+  "security": {
+    "truncateProduction": [
+      {
+        "rolname": "authenticated",
+        "relname": "app_consent_records",
+        "can_truncate": true
+      },
+      {
+        "rolname": "anon",
+        "relname": "app_consent_records",
+        "can_truncate": true
+      },
+      {
+        "rolname": "authenticated",
+        "relname": "app_user_preferences",
+        "can_truncate": true
+      },
+      {
+        "rolname": "anon",
+        "relname": "app_user_preferences",
+        "can_truncate": true
+      }
+    ],
+    "localSessionAndGrants": {
+      "beforePassed": 1,
+      "beforeFailed": 6,
+      "afterPassed": 7,
+      "afterFailed": 0,
+      "auth": "adapted",
+      "database": "real loopback PostgreSQL, synthetic records rolled back"
+    },
+    "targetedLocal": {
+      "passed": 40,
+      "failed": 1,
+      "lastFixtureCorrectionRetested": false
+    },
+    "productionHttpNegativeCases": 13,
+    "positiveProductionAuthValidated": false,
+    "coverageComplete": false
+  },
+  "postgresSelectStatistics": [
+    {
+      "queryid": "-3781935344746762406",
+      "calls": 357,
+      "mean_ms": "8.942",
+      "max_ms": "179.325",
+      "normalized_query": "SELECT p.*,c.name AS category_name,s.store_slug,s.store_name,\n v.id AS price_id,v.price_cents,v.valid_from FROM public.app_products p\n JOIN public.app_categories c ON c.id=p.category_id\n JOIN public.app_producer_stores s ON s.id=p.store_id\n JOIN LATERAL (SELECT id,price_cents,valid_from FROM public.app_price_versions\n   WHERE product_id=p.id ORDER BY valid_from DESC LIMIT $4) v ON $5 WHERE p.is_published AND c.is_active AND hvm_store_private.store_is_visible(p.store_id)\n       AND ($1::uuid IS NULL OR p.category_id=$1) AND ($2::text IS NULL OR s.store_slug=$2)\n       AND ($3::text IS NULL OR strpos(lower(p.title),lower($3))>$6)\n       ORDER BY p.created_at DESC,p.id LIMIT $7"
+    },
+    {
+      "queryid": "-8050063031524501203",
+      "calls": 167,
+      "mean_ms": "14.560",
+      "max_ms": "154.008",
+      "normalized_query": "SELECT s.id,s.store_slug,s.store_name,s.logo_url,p.municipality,p.state,pp.trust_level,\n          public.fn_haversine_km(p.latitude_sede,p.longitude_sede,$1,$2) AS distance_km\n         FROM public.app_producer_stores s\n         JOIN public.app_producer_profiles pp ON pp.id=s.producer_profile_id\n         JOIN public.app_properties p ON p.id=s.property_id\n         WHERE s.status=$8 AND pp.verification_status=$9\n          AND hvm_store_private.store_is_visible(s.id)\n          AND ($3::text IS NULL OR s.store_name ILIKE $3 OR EXISTS(\n            SELECT $10 FROM public.app_products product WHERE product.store_id=s.id\n             AND product.title ILIKE $3 AND product.is_published\n AND hvm_store_private.store_is_visible(product.store_id)\n AND EXISTS(SELECT $11 FROM public.app_categories c WHERE c.id=product.category_id AND c.is_active)\n AND EXISTS(SELECT $12 FROM public.app_price_versions pv WHERE pv.product_id=product.id AND pv.valid_from<=clock_timestamp())))\n          AND ($4::text IS NULL OR EXISTS(SELECT $13 FROM public.app_products product\n            JOIN public.app_categories category ON category.id=product.category_id\n            WHERE product.store_id=s.id AND category.slug=$4 AND product.is_published\n AND hvm_store_private.store_is_visible(product.store_id)\n AND EXISTS(SELECT $14 FROM public.app_categories c WHERE c.id=product.category_id AND c.is_active)\n AND EXISTS(SELECT $15 FROM public.app_price_versions pv WHERE pv.product_id=product.id AND pv.valid_from<=clock_timestamp())))\n          AND ($5::uuid IS NULL OR EXISTS(SELECT $16 FROM public.app_municipalities m\n            WHERE m.id=$5 AND m.is_active AND m.state=p.state\n             AND m.name_normalized=public.fn_locality_normalize(p.municipality)))\n         ORDER BY distance_km ASC NULLS LAST,pp.trust_leve"
+    },
+    {
+      "queryid": "-3787640472051436426",
+      "calls": 5525,
+      "mean_ms": "0.165",
+      "max_ms": "10.101",
+      "normalized_query": "SELECT\n           u.status,u.block_starts_at,u.block_ends_at,\n           COALESCE(public_person.id, admin_person.id)::text AS person_id,\n           COALESCE(public_person.full_name, admin_person.full_name) AS full_name,\n           CASE\n             WHEN $2::uuid IS NULL THEN $3\n             ELSE EXISTS (\n               SELECT $4\n                 FROM auth.sessions s\n                WHERE s.id = $2::uuid\n                  AND s.user_id = u.id\n             )\n           END AS live_session,\n           COALESCE(\n             array_agg(r.role_code ORDER BY r.role_code)\n               FILTER (WHERE r.role_code IS NOT NULL),\n             ARRAY[]::varchar[]\n           ) AS roles\n         FROM public.app_users u\n         LEFT JOIN public.app_people public_person\n           ON public_person.user_id = u.id\n         LEFT JOIN public.app_admin_principals ap\n           ON ap.admin_user_id = u.id\n         LEFT JOIN public.app_people admin_person\n           ON admin_person.id = ap.person_id\n         LEFT JOIN public.app_user_role_assignments r\n           ON r.user_id = u.id\n          AND r.revoked_at IS NULL\n          AND (r.expires_at IS NULL OR r.expires_at > now())\n        WHERE u.id = $1\n        GROUP BY\n          u.id,\n          u.status,\n          public_person.id,\n          admin_person.id"
+    },
+    {
+      "queryid": "-6840698502060459665",
+      "calls": 2727,
+      "mean_ms": "0.332",
+      "max_ms": "51.790",
+      "normalized_query": "SELECT id,ibge_code,name,state,is_active,revision   FROM public.app_municipalities  WHERE is_active ORDER BY name ASC"
+    }
+  ],
+  "network": {
+    "samplePerEndpoint": 10,
+    "concurrency": 1,
+    "counts": 40,
+    "units": "ms, includes session proxy",
+    "health": {
+      "mean": 180.1,
+      "p50": 184.3,
+      "p95": 203.4,
+      "p99": 203.4
+    },
+    "ready": {
+      "mean": 187.8,
+      "p50": 184.5,
+      "p95": 204.4,
+      "p99": 204.4
+    },
+    "products": {
+      "mean": 199.6,
+      "p50": 203.8,
+      "p95": 246.8,
+      "p99": 246.8,
+      "bytesIdentity": 1436,
+      "bytesBr": 1092
+    },
+    "categories": {
+      "mean": 174.4,
+      "p50": 184.1,
+      "p95": 202.2,
+      "p99": 202.2,
+      "bytesIdentity": 1446,
+      "bytesBr": 694
+    },
+    "finalComparison": null
+  },
+  "candidate": {
+    "schema": 57,
+    "migration": "20261006023915_audit_sessions_and_client_privileges.sql",
+    "hash": "614027ef88c383fb30dbf14fcf670104cf2fb7025cfa801253059bca67014b25",
+    "appliedRemote": false,
+    "buildFinalVerified": false,
+    "regressionFinalVerified": false
+  },
+  "blockage": {
+    "code": "409 environment_offline",
+    "connectivity": "offline",
+    "message": "Environment is not connected",
+    "rawLogsRecovered": false
+  },
+  "note": "Resultados agregados registrados durante a execução; não substituem testes autenticados de produção ou logs completos."
+}

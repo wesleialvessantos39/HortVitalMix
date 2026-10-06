@@ -4,6 +4,7 @@ import {
   createSupabaseUserClient,
   supabaseAdmin,
 } from "../supabase/client.ts";
+import { resolveLiveAuthSession } from "../security/liveSession.ts";
 
 export type IdentityAccessSnapshot = {
   status: string;
@@ -19,6 +20,7 @@ export type IdentityAccessSnapshot = {
 async function resolveViaDataApi(
   userId: string,
   accessToken?: string | null,
+  sessionId?: string | null,
 ): Promise<IdentityAccessSnapshot | null> {
   const dataClient =
     supabaseAdmin ?? (accessToken ? createSupabaseUserClient(accessToken) : null);
@@ -41,6 +43,10 @@ async function resolveViaDataApi(
     ]);
 
   if (userError || rolesError || !user) return null;
+  const session = sessionId
+    ? await resolveLiveAuthSession(userId, sessionId, false)
+    : null;
+  if (session?.status === "unavailable") return null;
 
   const activeRoles = (roles ?? [])
     .filter(
@@ -56,10 +62,9 @@ async function resolveViaDataApi(
     roles: activeRoles,
     personId,
     fullName: person.data?.full_name ?? null,
-    // O chamador já validou o access token com Supabase Auth. Quando o
-    // Transaction Pooler não está disponível, essa validação Auth é a fonte
-    // de verdade para a sessão viva.
-    liveSession: true,
+    // Login recém-validado não tem sessionId nesta chamada; sessões existentes
+    // mantêm o controle de validade mesmo sem conexão direta com o Pooler.
+    liveSession: !sessionId || session?.status === "active",
   };
 }
 
@@ -95,6 +100,7 @@ export async function resolveIdentityAccess(
                  FROM auth.sessions s
                 WHERE s.id = $2::uuid
                   AND s.user_id = u.id
+                  AND (s.not_after IS NULL OR s.not_after > now())
              )
            END AS live_session,
            COALESCE(
@@ -138,5 +144,5 @@ export async function resolveIdentityAccess(
     }
   }
 
-  return resolveViaDataApi(userId, accessToken);
+  return resolveViaDataApi(userId, accessToken, sessionId);
 }

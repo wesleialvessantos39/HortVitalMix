@@ -5,7 +5,7 @@ import type { Server } from "node:http";
 import express from "express";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { Pool } from "pg";
-const auth = vi.hoisted(() => ({ userId: "" }));
+const auth = vi.hoisted(() => ({ userId: "", sessionId: "", token: "" }));
 vi.mock("../../server/db/pool.ts", async () => {
   const value = process.env.HVM_T13_LOCAL_DATABASE_URL;
   if (!value) return { dbPool: null };
@@ -28,7 +28,7 @@ vi.mock("../../server/supabase/client.ts", () => ({
       getUser: async (token: string) => ({
         data: {
           user:
-            token === "local-t13-super-admin"
+            token === auth.token
               ? {
                   id: auth.userId,
                   email_confirmed_at: "2026-01-01T00:00:00Z",
@@ -53,6 +53,8 @@ describe.runIf(Boolean(process.env.HVM_T13_LOCAL_DATABASE_URL))(
       if (!existsSync("dist/index.html"))
         throw new Error("BUILD_REQUIRED_FOR_T13_STORY");
       auth.userId = randomUUID();
+      auth.sessionId = randomUUID();
+      auth.token = "header." + Buffer.from(JSON.stringify({ session_id: auth.sessionId })).toString("base64url") + ".local-auth-adapter";
       const personId = randomUUID();
       await pool().query(
         "INSERT INTO auth.users(id,email,email_confirmed_at) VALUES($1,$2,now())",
@@ -75,6 +77,7 @@ describe.runIf(Boolean(process.env.HVM_T13_LOCAL_DATABASE_URL))(
         "INSERT INTO app_admin_principals(admin_user_id,person_id,admin_email,portal_role) VALUES($1,$2,$3,'platform_super_admin')",
         [auth.userId, personId, auth.userId + "@example.test"],
       );
+      await pool().query("INSERT INTO auth.sessions(id,user_id,created_at) VALUES($1,$2,now())", [auth.sessionId, auth.userId]);
       const app = express();
       app.use(express.json());
       app.use((req, res, next) => {
@@ -161,15 +164,16 @@ describe.runIf(Boolean(process.env.HVM_T13_LOCAL_DATABASE_URL))(
           });
       });
       try {
-        await page.addInitScript(() =>
+        await page.addInitScript((accessToken: string) =>
           localStorage.setItem(
             "hvm.admin.session",
             JSON.stringify({
-              accessToken: "local-t13-super-admin",
+              accessToken,
               refreshToken: "local-only",
               expiresAt: Date.now() + 3600000,
             }),
           ),
+          auth.token,
         );
         await page.goto(baseURL + "/admin/categorias");
         await browserExpect

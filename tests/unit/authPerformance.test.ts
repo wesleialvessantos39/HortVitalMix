@@ -26,6 +26,9 @@ function chain(data: unknown) {
  query.then = (resolve: any) => Promise.resolve({ data, error: null }).then(resolve);
  return query;
 }
+const userId = "11111111-1111-4111-8111-111111111111";
+const sessionId = "22222222-2222-4222-8222-222222222222";
+const token = "header." + Buffer.from(JSON.stringify({ session_id: sessionId })).toString("base64url") + ".auth-adapted";
 beforeEach(() => vi.resetAllMocks());
 describe("authentication request performance without authorization bypass", () => {
  it.each(["/v1/admin/auth/login", "/api/v1/admin/auth/verify-session", "/_hvm_api/v1/admin/invites", "/v1/auth/logout", "/v1/auth/session"])("does not resolve public identity before the dedicated handler: %s", async path => {
@@ -34,15 +37,17 @@ describe("authentication request performance without authorization bypass", () =
   expect(next).toHaveBeenCalledOnce(); expect(mocks.getUser).not.toHaveBeenCalled(); expect(mocks.resolve).not.toHaveBeenCalled();
  });
  it.each(["platform_super_admin", "platform_admin"])("validates %s once and retains its sector restrictions", async role => {
-  mocks.getUser.mockResolvedValue({data:{user:{id:"user",email_confirmed_at:"2026-01-01"}},error:null});
+  mocks.getUser.mockResolvedValue({data:{user:{id:userId,email_confirmed_at:"2026-01-01"}},error:null});
+  mocks.rpc.mockResolvedValue({data:[{created_at:new Date().toISOString()}],error:null});
   mocks.from.mockImplementation(table => chain(({
-   app_admin_principals:{admin_user_id:"user",portal_role:role},
+   app_admin_principals:{admin_user_id:userId,portal_role:role},
    app_user_role_assignments:[{role_code:role,expires_at:null}],
    app_users:{status:"active"}, app_admin_sector_members:[{sector_code:"operations",expires_at:null}],
   } as any)[table]));
-  const req:any={headers:{cookie:`hvm_access=token; hvm_portal_role=${role}`}};
+  const req:any={headers:{cookie:`hvm_access=${token}; hvm_portal_role=${role}`}};
   const next=vi.fn(); await adminSessionMiddleware(req,response() as unknown as Response,next);
   expect(next).toHaveBeenCalledOnce(); expect(mocks.getUser).toHaveBeenCalledOnce();
+  expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith("fn_live_auth_session",{p_user_id:userId,p_session_id:sessionId});
   expect(req.adminActor.role).toBe(role);
   expect(req.adminActor.sectors).toEqual(role==="platform_admin"?["operations"]:[]);
  });

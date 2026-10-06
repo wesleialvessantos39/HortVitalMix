@@ -7,6 +7,8 @@ import type {
   AdminSectorCode,
 } from "../../shared/contracts/adminGovernance.ts";
 import { AdminErrorCode } from "../../shared/contracts/adminGovernance.ts";
+import { resolveLiveAuthSession, sessionIdFromVerifiedToken } from "../security/liveSession.ts";
+import { verifyRecentAuthProof } from "../security/recentAuth.ts";
 
 export interface AdminActorContext {
   userId: string;
@@ -29,22 +31,20 @@ function readCookie(req: Request, name: string) {
   }
 }
 
-function resolveSessionIssuedAt(token: string, lastSignInAt?: string | null) {
-  if (lastSignInAt) {
-    const parsed = new Date(lastSignInAt).getTime();
-    if (Number.isFinite(parsed)) return lastSignInAt;
-  }
+export async function adminSessionMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
   try {
-    const payload = JSON.parse(
-      Buffer.from(token.split(".")[1], "base64url").toString(),
-    ) as { iat?: unknown };
-    if (typeof payload.iat === "number" && Number.isFinite(payload.iat))
-      return new Date(payload.iat * 1000).toISOString();
-  } catch {}
-  return new Date(0).toISOString();
+    await resolveAdminSession(req, res, next);
+  } catch {
+    if (!res.headersSent)
+      res.status(503).json({ error: AdminErrorCode.UNAVAILABLE, requestId: req.requestId });
+  }
 }
 
-export async function adminSessionMiddleware(
+async function resolveAdminSession(
   req: Request,
   res: Response,
   next: NextFunction,
@@ -242,12 +242,23 @@ export async function adminSessionMiddleware(
     }
   }
 
+  const live = await resolveLiveAuthSession(userData.user.id, sessionIdFromVerifiedToken(token));
+  if (live.status !== "active") {
+    res.status(live.status === "invalid" ? 401 : 503).json({
+      error: live.status === "invalid" ? AdminErrorCode.UNAUTHORIZED : AdminErrorCode.UNAVAILABLE,
+      requestId: req.requestId,
+    });
+    return;
+  }
+
   req.adminActor = {
     userId: userData.user.id,
     role,
     sectors,
     isSuperAdmin: role === "platform_super_admin",
-    sessionIssuedAt: resolveSessionIssuedAt(token, userData.user.last_sign_in_at),
+    sessionIssuedAt: verifyRecentAuthProof(readCookie(req, "hvm_reauth"), userData.user.id, token)
+      ? new Date().toISOString()
+      : live.createdAt,
   };
   next();
 }
@@ -278,7 +289,7 @@ export function requireRecentAuth(
     return;
   }
   const issued = new Date(req.adminActor.sessionIssuedAt).getTime();
-  if (!Number.isFinite(issued) || Date.now() - issued > 15 * 60_000) {
+  if (!Number.isFinite(issued) || issued > Date.now() + 30_000 || Date.now() - issued > 15 * 60_000) {
     res.status(401).json({
       error: AdminErrorCode.REAUTH_REQUIRED,
       message: "Reautenticação administrativa recente requerida.",
