@@ -78,4 +78,21 @@ O check legado **Supabase Preview** não interpreta os aliases de timestamps fí
 - [x] Interface de revisão, recálculo e recuperação de resposta perdida entregue.
 - [x] Fluxo completo React → HTTP → PostgreSQL, mobile/desktop conferido.
 - [x] Migração remota, manifesto/alias/schema 56 e preservação conferidos.
-- [ ] Publicação main/READY, release e Livro-Raiz finalizados.
+- [x] Publicação main/READY, release e Livro-Raiz finalizados.
+
+
+## 5. Publicação e preservação final
+
+[PR #82](https://github.com/wesleialvessantos39/HortVitalMix/pull/82) integrado. SHA funcional **e1ec92b12476c83402730f8580f0bdfd97d7a872**, árvore **dd8b2ca74a29e98c42cd00cdd2295fb6a52fa5ef**, idêntica à validada localmente. Deployment **dpl_KEPq5SqkmNwA1qCpDJpfrmjxVeme**, **READY**, production/**main/pdx1**, build em aproximadamente **57 segundos**. Site: **https://hortvitalmix.vercel.app/checkout**.
+
+Release funcional **t19-v56-e1ec92b** registrada somente após READY da SHA exata e validação do histórico. `verify:deploy` aprovou health/ready/config, schema **56** e release correspondente. Seis verificações reais de API — contexto, dispatcher, leitura de cotação/recibo e criação/confirmação sem login — retornaram **401 AUTH_REQUIRED**, JSON e requestId, sem gravar transações anônimas. A URL alternativa `/_hvm_api` continua sendo o transporte dos ambientes não canônicos; em produção o frontend mantém `/api`, como na T18, sem alteração de roteamento Vercel.
+
+Agent-browser conferiu a página publicada sem login em **390/1440 px**, com conteúdo/controles corretos, sem overflow/erro JavaScript/overlay. A cesta automática do cabeçalho foi interceptada com resposta vazia na verificação publicada para evitar criar uma sessão nas tabelas T18 existentes; Auth/rotas checkout/configuração usados pela tela continuaram reais. O fluxo autenticado de negócio completo foi comprovado na história local com PostgreSQL real; não houve compra/reserva, login de cliente ou fixture de produto/estoque/upload em produção.
+
+O catálogo publicado em Ariquemes manteve a foto real carregada, com prioridade **eager/high**, sem overflow ou erro JavaScript, reutilizando a implementação T18.
+
+Logs **error/fatal** do deployment sem entradas na janela consultada de dez minutos. Após release/navegação, **64 relações anteriores**, excluindo somente `app_releases`, conservaram contagens e digests — incluindo a cesta T18, Auth, Storage, estoque e preços. A evidência registra snapshots antes/depois da migração e após publicação.
+
+Segurança GitHub do PR aprovada; Supabase Preview do PR ignorado por prévias desabilitadas, Vercel da branch cancelada pela guarda main. O check de migrações da main conserva a limitação histórica de aliases físicos já documentada; o validador canônico do projeto aprovou as **62 migrations reais**. Nenhuma migração antiga ou histórico remoto foi reescrito.
+
+Fechamento documental limitado a relatório/evidência/Livro-Raiz; a release corrente segue a SHA documental final da main somente após seu próprio READY, conservando o código funcional/schema/hash acima. A referência funcional identifica exatamente a implementação testada; `/api/ready` identifica a release corrente.

@@ -4420,3 +4420,11 @@ Relatório: **docs/TRILHA18_CESTA_HORTIMIX.md**. Evidência: **docs/TRILHA18_PRE
 - Sem dependências/serviços pagos, mudança de infraestrutura/Vercel/lockfile, renumeração de migrations anteriores ou fixtures de conta/produto/estoque/upload em produção. Publicação permanece exclusivamente **main/pdx1**; release da SHA exata somente após READY.
 
 Relatório: **docs/TRILHA19_CHECKOUT_TRANSACIONAL.md**. Evidência: **docs/TRILHA19_PRESERVACAO.json**. **T19 implementada; T20/T21 permanecem futuras.** A T20 deve evoluir os payment_intents existentes de forma aditiva.
+
+
+### Fechamento da publicação — Trilha 19
+
+- [PR #82](https://github.com/wesleialvessantos39/HortVitalMix/pull/82) integrado à main funcional **e1ec92b12476c83402730f8580f0bdfd97d7a872**, árvore **dd8b2ca74a29e98c42cd00cdd2295fb6a52fa5ef** idêntica à validada localmente. Deployment **dpl_KEPq5SqkmNwA1qCpDJpfrmjxVeme**, **READY**, production/main/**pdx1**, build em aproximadamente 57 segundos. Release funcional **t19-v56-e1ec92b** registrada somente após READY. `verify:deploy` health/ready/config aprovado no schema **56**.
+- **https://hortvitalmix.vercel.app/checkout**: tela publicada sem login em 390/1440 px, controles corretos, sem overflow/erros JavaScript. Seis verificações reais de API/dispatcher exigiram Auth com JSON/requestId e 401; nenhuma transação anônima. A leitura automática da cesta do cabeçalho foi interceptada vazia apenas no navegador de verificação para preservar a base T18; Auth/configuração/rotas checkout reais. O fluxo autenticado completo está provado em PostgreSQL local real, sem compra/reserva ou fixtures de negócio em produção.
+- Depois da release/navegação, **64 relações anteriores**, excluindo somente `app_releases`, mantiveram contagens/digests, inclusive cesta, Auth, Storage, produtos, preços e estoque. Logs error/fatal sem entradas na janela consultada. Segurança do PR aprovada; prévias Vercel/Supabase desabilitadas/canceladas pela governança. Limitação histórica do check Supabase de aliases permanece descrita no relatório; histórico canônico de 62 migrations validado.
+- Fechamento documental restrito a Livro-Raiz/relatório/evidência; release acompanha a SHA final da main somente após READY, sem mudar schema 56/hash ou implementação homologada. **T20 deve partir desta base e evoluir os intents pendentes existentes.**
