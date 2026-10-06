@@ -1,0 +1,1018 @@
+{
+  "data": "2026-10-06",
+  "capturedAt": "2026-10-06T12:54:09.105919+00:00",
+  "estado": [
+    "PROBLEMA ENCONTRADO E CORRIGIDO",
+    "PENDENTE JUSTIFICADO"
+  ],
+  "repository": "wesleialvessantos39/HortVitalMix",
+  "productionBranch": "main",
+  "initial": {
+    "repository": "wesleialvessantos39/HortVitalMix",
+    "branch": "main",
+    "commit": "b3cb8532a1349c1f1a14d7b150f1e9e76d1f6079",
+    "deploy": {
+      "id": "dpl_DKsMqw2mrEe7zdRjssoU65t7exGw",
+      "url": "hortvitalmix-wccxf5ii7-wesleialvessantos-projects.vercel.app",
+      "readyState": "READY",
+      "mainSha": "b3cb8532a1349c1f1a14d7b150f1e9e76d1f6079",
+      "branch": "main",
+      "alias": [
+        "hortvitalmix.vercel.app",
+        "hortvitalmix-wesleialvessantos-projects.vercel.app",
+        "hortvitalmix-git-main-wesleialvessantos-projects.vercel.app"
+      ],
+      "target": "production",
+      "regions": [
+        "pdx1"
+      ]
+    },
+    "release": [
+      {
+        "release_tag": "t19-v56-b3cb853",
+        "commit_sha": "b3cb8532a1349c1f1a14d7b150f1e9e76d1f6079",
+        "schema_version": 56,
+        "migration_history_hash": "2caaa0fd11223a49aceb6479581aad7c8e15a1fa122166564b06981d06217572"
+      }
+    ]
+  },
+  "baseline": {
+    "node": "24.19.0",
+    "build": "passed",
+    "manifest": "passed schema56",
+    "typecheck": "failed TS2322 registrationBackground transform",
+    "lint": "failed same typecheck",
+    "unitIntegration": {
+      "filesPassed": 77,
+      "filesSkipped": 27,
+      "passed": 707,
+      "skipped": 237,
+      "total": 944
+    },
+    "coverage": {
+      "lines": 33.87,
+      "functions": 43.43,
+      "statements": 32.66,
+      "branches": 25.93,
+      "result": "failed"
+    },
+    "browser": {
+      "passed": 277,
+      "failed": 39,
+      "total": 316
+    },
+    "postgres": {
+      "passed": 191,
+      "failed": 1,
+      "skipped": 15,
+      "suiteSetupFailures": 1
+    },
+    "mediaFreshPostgres": {
+      "passed": 15,
+      "failed": 0
+    }
+  },
+  "functionalFinal": {
+    "commit": "1fafc77de3358ccfb66af1fe4eb5578857b59c66",
+    "tree": "7fee761b8f0e80acd3474a715fb50b952977d943",
+    "deployment": "dpl_7qT6hyE2sas4CX5mf84VbPPhs1XP",
+    "state": "READY",
+    "alias": "hortvitalmix.vercel.app",
+    "release": "audit-v57-1fafc77",
+    "schema": 57,
+    "physicalMigrations": 63,
+    "migration": "20261006023915_audit_sessions_and_client_privileges.sql",
+    "physicalVersion": "20261006120330",
+    "hash": "614027ef88c383fb30dbf14fcf670104cf2fb7025cfa801253059bca67014b25",
+    "region": "pdx1",
+    "runtime": "nodejs22.x"
+  },
+  "publicationIncident": {
+    "introducedRegressions": 1,
+    "resolvedRegressions": 1,
+    "failedCommit": "133f50c6b707dbd17b41af03f90c62f7b21a7256",
+    "failedDeployment": "dpl_79yMBFAJXy7VcQcpiGGnYmCfxYzq",
+    "error": "ERR_REQUIRE_ESM: sanitize-html requires ESM-only htmlparser2 12",
+    "rollbackDeployment": "dpl_DKsMqw2mrEe7zdRjssoU65t7exGw",
+    "rollbackHealth": 200,
+    "rollbackReady": 200,
+    "fix": "sanitize-html 2.18.0 with scoped htmlparser2 10.1.0 CommonJS; plain require probe before tsx API import"
+  },
+  "finalLocal": {
+    "node": "22.23.3",
+    "lint": "passed",
+    "build": "passed",
+    "security": "passed",
+    "coldStart": "passed without require ESM or tsx for CommonJS probe",
+    "contractPassed": 9,
+    "standard": {
+      "filesPassed": 79,
+      "filesSkipped": 29,
+      "passed": 729,
+      "skipped": 260,
+      "total": 989
+    },
+    "postgres": {
+      "suites": 19,
+      "scenariosPassed": 214,
+      "jointPasses": 213,
+      "unchangedIsolatedRecheckPassed": 1
+    },
+    "postgresStoreNode22": {
+      "passed": 22,
+      "failed": 0
+    },
+    "realCurrentIntegration": {
+      "files": 7,
+      "passed": 26,
+      "failed": 0,
+      "services": "real local Auth/PostgREST/PostgreSQL; transport-only loopback adapter; external requests blocked"
+    },
+    "realSupabase": {
+      "passed": 16,
+      "failed": 0,
+      "auth": "GoTrue 2.196.0",
+      "rest": "PostgREST 16.2",
+      "storage": "Storage 1.72.1",
+      "postgres": "17",
+      "edge": "Deno 2.9.6",
+      "location": "isolated local synthetic data; not production"
+    },
+    "browser": {
+      "total": 316,
+      "jointPassed": 311,
+      "jointTimeouts": 5,
+      "unchangedIsolatedRecheckPassed": 5,
+      "timeoutIncreased": false,
+      "assertionsRemoved": false
+    },
+    "legacyOutbox": {
+      "passed": 1,
+      "failed": 3,
+      "initialUnmodifiedCodeSameFailures": true,
+      "reason": "SUPABASE_AUTH_ONLY_DELIVERY; inactive legacy implementation preserved"
+    },
+    "coverage": {
+      "lines": 34.19,
+      "functions": 43.83,
+      "statements": 32.96,
+      "branches": 26.57,
+      "result": "failed preexisting global/specific thresholds",
+      "thresholdsChanged": false
+    }
+  },
+  "supabase": {
+    "carts": 3,
+    "buckets": [
+      {
+        "id": "documents",
+        "public": false,
+        "fileSizeLimit": null,
+        "allowedMimeTypes": null
+      },
+      {
+        "id": "documents_private",
+        "public": false,
+        "fileSizeLimit": 15728640,
+        "allowedMimeTypes": [
+          "application/pdf",
+          "image/png",
+          "image/jpeg"
+        ]
+      },
+      {
+        "id": "product-media",
+        "public": false,
+        "fileSizeLimit": 2097152,
+        "allowedMimeTypes": [
+          "image/jpeg",
+          "image/png",
+          "image/webp"
+        ]
+      },
+      {
+        "id": "store-media",
+        "public": false,
+        "fileSizeLimit": 2097152,
+        "allowedMimeTypes": [
+          "image/jpeg",
+          "image/png",
+          "image/webp"
+        ]
+      }
+    ],
+    "policies": 88,
+    "authUsers": 5,
+    "rlsForced": 64,
+    "rlsEnabled": 64,
+    "sessionRpc": {
+      "anonExecute": false,
+      "fakeSessionRows": 0,
+      "serviceRoleExecute": true,
+      "authenticatedExecute": false
+    },
+    "publicTables": 64,
+    "publicIndexes": 241,
+    "storageObjects": 10,
+    "publicFunctions": 57,
+    "currentVerification": {
+      "name": "public.app_property_current_verification",
+      "kind": "view",
+      "exists": true,
+      "anonSelect": false,
+      "authenticatedSelect": false,
+      "serviceRoleSelect": true,
+      "definitionHash": "dd7dae9ef4c8f31f7d6f783b3e761245"
+    },
+    "sessionRpcDefinition": {
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "volatility": "s",
+      "definitionHash": "b3dc301958ebd120ad16e434ee389893",
+      "securityDefiner": true
+    },
+    "destructiveClientGrants": [
+      {
+        "role": "anon",
+        "table": "public.app_consent_records",
+        "delete": false,
+        "insert": false,
+        "update": false,
+        "truncate": false
+      },
+      {
+        "role": "anon",
+        "table": "public.app_user_preferences",
+        "delete": false,
+        "insert": false,
+        "update": false,
+        "truncate": false
+      },
+      {
+        "role": "authenticated",
+        "table": "public.app_consent_records",
+        "delete": false,
+        "insert": false,
+        "update": false,
+        "truncate": false
+      },
+      {
+        "role": "authenticated",
+        "table": "public.app_user_preferences",
+        "delete": false,
+        "insert": false,
+        "update": false,
+        "truncate": false
+      }
+    ],
+    "triggersPublicStorageAuth": 52
+  },
+  "edge": {
+    "slug": "public-registration",
+    "initialVersion": 10,
+    "finalVersion": 11,
+    "status": "ACTIVE",
+    "verifyJwt": false,
+    "sourceMatchesRepository": true,
+    "sourceSha256": "49337834bfef80a4e17e40b2f2e516df2606c34e5726a5f0d8e04cf6efc80a52",
+    "ezbrSha256": "0c1d6112dcb0f7a976bfd4b3a77006fcbc1564a150d2df2ca03e66dbe5842fd5",
+    "adminBootstrapVersion": 4
+  },
+  "dependencies": {
+    "initialAdvisories": 6,
+    "initialHigh": 3,
+    "initialModerate": 3,
+    "finalAdvisories": 0,
+    "forceFix": false
+  },
+  "production": {
+    "smoke": [
+      {
+        "path": "/api/health",
+        "status": 200,
+        "cache": "no-store, max-age=0",
+        "requestId": true
+      },
+      {
+        "path": "/api/ready",
+        "status": 200,
+        "cache": "no-store, max-age=0",
+        "requestId": true
+      },
+      {
+        "path": "/api/v1/products",
+        "status": 200,
+        "cache": "no-store, max-age=0",
+        "requestId": true
+      },
+      {
+        "path": "/api/v1/categories",
+        "status": 200,
+        "cache": "no-store",
+        "requestId": true
+      }
+    ],
+    "ready": {
+      "status": "ready",
+      "databaseConnected": true,
+      "schemaVersion": 57,
+      "releaseTag": "audit-v57-1fafc77",
+      "requestId": "24c5f3da-b083-4f6f-aded-65a9c3b7c3c4"
+    },
+    "negative": [
+      {
+        "method": "GET",
+        "path": "/api/v1/account/profile",
+        "status": 401,
+        "expected": 401,
+        "error": "AUTH_REQUIRED",
+        "requestId": true,
+        "cache": "no-store, max-age=0"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/producer/products",
+        "status": 401,
+        "expected": 401,
+        "error": "AUTH_REQUIRED",
+        "requestId": true,
+        "cache": "no-store, max-age=0"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/checkout/context",
+        "status": 401,
+        "expected": 401,
+        "error": "AUTH_REQUIRED",
+        "requestId": true,
+        "cache": "no-store, max-age=0"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/admin/configuration",
+        "status": 401,
+        "expected": 401,
+        "error": "UNAUTHORIZED",
+        "requestId": true,
+        "cache": "no-store, max-age=0"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/admin/users",
+        "status": 401,
+        "expected": 401,
+        "error": "UNAUTHORIZED",
+        "requestId": true,
+        "cache": "no-store, max-age=0"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/admin/auth/verify-session",
+        "status": 401,
+        "expected": 401,
+        "error": "UNAUTHORIZED",
+        "requestId": true,
+        "cache": "no-store, max-age=0"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/producer/documents/11111111-1111-4111-8111-111111111111/download",
+        "status": 401,
+        "expected": 401,
+        "error": "AUTH_REQUIRED",
+        "requestId": true,
+        "cache": "no-store, max-age=0"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/producer/documents/22222222-2222-4222-8222-222222222222/file",
+        "status": 401,
+        "expected": 401,
+        "error": "AUTH_REQUIRED",
+        "requestId": true,
+        "cache": "no-store, max-age=0"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/v1/account/profile",
+        "status": 401,
+        "expected": 401,
+        "error": "AUTH_REQUIRED",
+        "requestId": true,
+        "cache": "no-store, max-age=0"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/checkout/confirm",
+        "status": 401,
+        "expected": 401,
+        "error": "AUTH_REQUIRED",
+        "requestId": true,
+        "cache": "no-store, max-age=0"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/auth/login",
+        "status": 403,
+        "expected": 403,
+        "error": "ORIGIN_NOT_ALLOWED",
+        "requestId": true,
+        "cache": "no-store, max-age=0"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/admin/users",
+        "status": 401,
+        "expected": 401,
+        "error": "UNAUTHORIZED",
+        "requestId": true,
+        "cache": "no-store, max-age=0"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/products?role=platform_super_admin",
+        "status": 400,
+        "expected": 400,
+        "error": "VALIDATION_ERROR",
+        "requestId": false,
+        "cache": "no-store, max-age=0"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/auth/lgpd-acceptance",
+        "status": 401,
+        "expected": 401,
+        "error": "CONSENT_PROOF_REQUIRED",
+        "requestId": true,
+        "cache": "no-store, max-age=0"
+      }
+    ],
+    "browser": {
+      "cases": 40,
+      "widths": [
+        320,
+        390,
+        768,
+        1024,
+        1440
+      ],
+      "routes": [
+        "/",
+        "/admin/entrar",
+        "/administracao",
+        "/entrar/administrador",
+        "/entrar/consumidor",
+        "/entrar/produtor",
+        "/entrar/super-administrador",
+        "/produtos"
+      ],
+      "pageErrors": 0,
+      "overflow": 0,
+      "apiMocked": false,
+      "expectedSession401Recorded": true
+    },
+    "originalVerifyDeploy": "passed with NODE_USE_ENV_PROXY=1; direct Node fetch ECONNREFUSED is a local transport limitation",
+    "positivePrivateAuthenticationVerified": false
+  },
+  "network": {
+    "initial": [
+      {
+        "path": "/api/health",
+        "samples": 10,
+        "concurrency": 1,
+        "meanMs": 180.1,
+        "p50Ms": 184.3,
+        "p95Ms": 203.4,
+        "p99Ms": 203.4,
+        "errorRate": 0.0,
+        "wireBytes": [
+          127,
+          127,
+          127,
+          127,
+          127,
+          127,
+          127,
+          127,
+          127,
+          127
+        ],
+        "encoding": [
+          "identity"
+        ]
+      },
+      {
+        "path": "/api/ready",
+        "samples": 10,
+        "concurrency": 1,
+        "meanMs": 187.8,
+        "p50Ms": 184.5,
+        "p95Ms": 204.4,
+        "p99Ms": 204.4,
+        "errorRate": 0.0,
+        "wireBytes": [
+          144,
+          144,
+          144,
+          144,
+          144,
+          144,
+          144,
+          144,
+          144,
+          144
+        ],
+        "encoding": [
+          "identity"
+        ]
+      },
+      {
+        "path": "/api/v1/products",
+        "samples": 10,
+        "concurrency": 1,
+        "meanMs": 199.6,
+        "p50Ms": 203.8,
+        "p95Ms": 246.8,
+        "p99Ms": 246.8,
+        "errorRate": 0.0,
+        "wireBytes": [
+          1092,
+          1092,
+          1092,
+          1092,
+          1092,
+          1092,
+          1092,
+          1092,
+          1092,
+          1092
+        ],
+        "encoding": [
+          "br"
+        ]
+      },
+      {
+        "path": "/api/v1/categories",
+        "samples": 10,
+        "concurrency": 1,
+        "meanMs": 174.4,
+        "p50Ms": 184.1,
+        "p95Ms": 202.2,
+        "p99Ms": 202.2,
+        "errorRate": 0.0,
+        "wireBytes": [
+          694,
+          694,
+          694,
+          694,
+          694,
+          694,
+          694,
+          694,
+          694,
+          694
+        ],
+        "encoding": [
+          "br"
+        ]
+      }
+    ],
+    "final": [
+      {
+        "path": "/api/health",
+        "samples": 10,
+        "concurrency": 1,
+        "meanMs": 186.1,
+        "p50Ms": 185.28,
+        "p95Ms": 229.37,
+        "p99Ms": 229.37,
+        "errorRate": 0,
+        "wireBytes": [
+          127,
+          127,
+          127,
+          127,
+          127,
+          127,
+          127,
+          127,
+          127,
+          127
+        ],
+        "identityBytes": 127,
+        "encoding": [
+          "identity"
+        ],
+        "headers": {
+          "content-encoding": null,
+          "content-length": "127",
+          "cache-control": "no-store, max-age=0",
+          "vary": null,
+          "x-vercel-cache": "MISS"
+        }
+      },
+      {
+        "path": "/api/ready",
+        "samples": 10,
+        "concurrency": 1,
+        "meanMs": 205.1,
+        "p50Ms": 207.73,
+        "p95Ms": 282.5,
+        "p99Ms": 282.5,
+        "errorRate": 0,
+        "wireBytes": [
+          146,
+          146,
+          146,
+          146,
+          146,
+          146,
+          146,
+          146,
+          146,
+          146
+        ],
+        "identityBytes": 146,
+        "encoding": [
+          "identity"
+        ],
+        "headers": {
+          "content-encoding": null,
+          "content-length": "146",
+          "cache-control": "no-store, max-age=0",
+          "vary": null,
+          "x-vercel-cache": "MISS"
+        }
+      },
+      {
+        "path": "/api/v1/products",
+        "samples": 10,
+        "concurrency": 1,
+        "meanMs": 234.6,
+        "p50Ms": 215.77,
+        "p95Ms": 536.43,
+        "p99Ms": 536.43,
+        "errorRate": 0,
+        "wireBytes": [
+          1094,
+          1094,
+          1094,
+          1094,
+          1094,
+          1094,
+          1094,
+          1094,
+          1094,
+          1094
+        ],
+        "identityBytes": 1436,
+        "encoding": [
+          "br"
+        ],
+        "headers": {
+          "content-encoding": "br",
+          "content-length": null,
+          "cache-control": "no-store, max-age=0",
+          "vary": null,
+          "x-vercel-cache": "MISS"
+        }
+      },
+      {
+        "path": "/api/v1/categories",
+        "samples": 10,
+        "concurrency": 1,
+        "meanMs": 179.9,
+        "p50Ms": 157.7,
+        "p95Ms": 292.5,
+        "p99Ms": 292.5,
+        "errorRate": 0,
+        "wireBytes": [
+          694,
+          694,
+          694,
+          694,
+          694,
+          694,
+          694,
+          694,
+          694,
+          694
+        ],
+        "identityBytes": 1446,
+        "encoding": [
+          "br"
+        ],
+        "headers": {
+          "content-encoding": "br",
+          "content-length": null,
+          "cache-control": "no-store",
+          "vary": null,
+          "x-vercel-cache": "MISS"
+        }
+      }
+    ],
+    "measurementScope": "10 sequential samples per endpoint, concurrency 1; includes proxy/network; no claimed latency improvement"
+  },
+  "localLoad": {
+    "scope": "local PostgreSQL/Express/Supabase services; no production load; synthetic dataset",
+    "results": [
+      {
+        "path": "/api/v1/products",
+        "concurrency": 1,
+        "samples": 20,
+        "meanMs": 5.3,
+        "p50Ms": 4.5,
+        "p95Ms": 9.9,
+        "p99Ms": 12.7,
+        "errorRate": 0,
+        "statuses": [
+          200
+        ],
+        "decodedBytes": [
+          15
+        ]
+      },
+      {
+        "path": "/api/v1/products",
+        "concurrency": 2,
+        "samples": 20,
+        "meanMs": 5,
+        "p50Ms": 4.5,
+        "p95Ms": 5.9,
+        "p99Ms": 14.7,
+        "errorRate": 0,
+        "statuses": [
+          200
+        ],
+        "decodedBytes": [
+          15
+        ]
+      },
+      {
+        "path": "/api/v1/products",
+        "concurrency": 4,
+        "samples": 20,
+        "meanMs": 7.7,
+        "p50Ms": 6.5,
+        "p95Ms": 18.9,
+        "p99Ms": 20.9,
+        "errorRate": 0,
+        "statuses": [
+          200
+        ],
+        "decodedBytes": [
+          15
+        ]
+      },
+      {
+        "path": "/api/v1/categories",
+        "concurrency": 1,
+        "samples": 20,
+        "meanMs": 2.1,
+        "p50Ms": 2.2,
+        "p95Ms": 2.5,
+        "p99Ms": 2.7,
+        "errorRate": 0,
+        "statuses": [
+          200
+        ],
+        "decodedBytes": [
+          1446
+        ]
+      },
+      {
+        "path": "/api/v1/categories",
+        "concurrency": 2,
+        "samples": 20,
+        "meanMs": 2.6,
+        "p50Ms": 2.7,
+        "p95Ms": 3.3,
+        "p99Ms": 3.5,
+        "errorRate": 0,
+        "statuses": [
+          200
+        ],
+        "decodedBytes": [
+          1446
+        ]
+      },
+      {
+        "path": "/api/v1/categories",
+        "concurrency": 4,
+        "samples": 20,
+        "meanMs": 3.8,
+        "p50Ms": 3.5,
+        "p95Ms": 5.4,
+        "p99Ms": 5.6,
+        "errorRate": 0,
+        "statuses": [
+          200
+        ],
+        "decodedBytes": [
+          1446
+        ]
+      },
+      {
+        "path": "/api/v1/discovery/stores",
+        "concurrency": 1,
+        "samples": 20,
+        "meanMs": 3.3,
+        "p50Ms": 3.1,
+        "p95Ms": 4,
+        "p99Ms": 6.3,
+        "errorRate": 0,
+        "statuses": [
+          200
+        ],
+        "decodedBytes": [
+          84
+        ]
+      },
+      {
+        "path": "/api/v1/discovery/stores",
+        "concurrency": 2,
+        "samples": 20,
+        "meanMs": 5.2,
+        "p50Ms": 4.7,
+        "p95Ms": 8.1,
+        "p99Ms": 10.2,
+        "errorRate": 0,
+        "statuses": [
+          200
+        ],
+        "decodedBytes": [
+          84
+        ]
+      },
+      {
+        "path": "/api/v1/discovery/stores",
+        "concurrency": 4,
+        "samples": 20,
+        "meanMs": 5.5,
+        "p50Ms": 5.4,
+        "p95Ms": 8.7,
+        "p99Ms": 9.2,
+        "errorRate": 0,
+        "statuses": [
+          200
+        ],
+        "decodedBytes": [
+          84
+        ]
+      }
+    ]
+  },
+  "lgpd": {
+    "policyVersion": "lgpd-cadastro-2026-10-02",
+    "legalTextChanged": false,
+    "juridicalReviewRequired": true,
+    "knownAnalyticsFound": false,
+    "realPersonalDocumentsSentToAi": false
+  },
+  "storageOperationalObservation": {
+    "category": "storage_deletion_queue_failed",
+    "causeProved": false,
+    "maintenanceCodeChanged": false,
+    "pendingJobs": 0,
+    "completedHistoricalJobs": 10,
+    "jobsWithLastError": 0,
+    "destructiveReprocessing": false
+  },
+  "publication": {
+    "github": true,
+    "supabase": true,
+    "vercel": true,
+    "rootBook": "recorded in this documentation commit",
+    "documentaryCommit": "commit containing this evidence; final active SHA is recorded in current production release",
+    "finalDocumentaryVerification": "/workspace/scratch/hvm-publication-final.json"
+  },
+  "pending": [
+    "preexisting global/specific coverage thresholds",
+    "three inactive outbox cases reproduced on initial code",
+    "positive authenticated production flows and MFA with dedicated credentials",
+    "representative authenticated load/query plans",
+    "unproven cause of Storage startup maintenance events, queue has zero pending",
+    "leaked password protection requires Pro; free architecture preserved",
+    "juridical review: controller, legal bases, Gemini documents, international transfers, retention/export/deletion"
+  ],
+  "rawLogDigests": [
+    {
+      "file": "hvm-baseline-typecheck.log",
+      "bytes": 169,
+      "sha256": "fd3de6c502dd7bd41fa21daed2bcacfce76abc2167c918002096a5a3a71c8c25"
+    },
+    {
+      "file": "hvm-baseline-build.log",
+      "bytes": 10967,
+      "sha256": "50b2d8aa3dc648a45757fe2e3f08b3ee4a1b71acf932575200e59d72a8514737"
+    },
+    {
+      "file": "hvm-baseline-test.log",
+      "bytes": 138340,
+      "sha256": "f99d0428426467160a3ce059993e6f28097feedb325f588d2776b37f9f32c8bb"
+    },
+    {
+      "file": "hvm-baseline-test-coverage.log",
+      "bytes": 149181,
+      "sha256": "0b3eed898f83e48b5ecd2f3402f98e6d94e5c08509afe2f7fd44a2d8cdf81abe"
+    },
+    {
+      "file": "hvm-baseline-e2e.log",
+      "bytes": 93516,
+      "sha256": "5d19f0e148dda9a9650ee5c8a15b1754bbba02dfd2106d62119ae8d82e69dac5"
+    },
+    {
+      "file": "hvm-node22-lint.log",
+      "bytes": 258,
+      "sha256": "c9a8ff86e97fc677478148f5d02f8ce526cc7621f49bf96a323007f1562cd1e2"
+    },
+    {
+      "file": "hvm-node22-build.log",
+      "bytes": 11009,
+      "sha256": "63fc7e3a4a726c655d5eeefe785ec2733df8bcbaf386fdd1d727a100ea634a7d"
+    },
+    {
+      "file": "hvm-node22-tests.log",
+      "bytes": 146198,
+      "sha256": "c72ec9f34d53d35262ecdeb7276f067c28b6a354fa711dfa7ff6a9355ec75d4e"
+    },
+    {
+      "file": "hvm-node22-coverage.log",
+      "bytes": 157208,
+      "sha256": "22e3fed89fade7a3186f77f3a676d11cae61459bcbdc9bf7b007e0db6e0ac04b"
+    },
+    {
+      "file": "hvm-node22-coldstart.log",
+      "bytes": 69,
+      "sha256": "9d985428001b1e0392b6b43443ba5925d6864a2046ddc4e6fbec859b94929f9f"
+    },
+    {
+      "file": "hvm-plain-coldstart-before.log",
+      "bytes": 739,
+      "sha256": "3b3a1dd718fb41fb8e1ddabf610859a87e73337862db9d5af3a6b744c952a64d"
+    },
+    {
+      "file": "hvm-plain-coldstart-after.log",
+      "bytes": 69,
+      "sha256": "9d985428001b1e0392b6b43443ba5925d6864a2046ddc4e6fbec859b94929f9f"
+    },
+    {
+      "file": "hvm-parser-security-tests.log",
+      "bytes": 4092,
+      "sha256": "c677ad18337b3675426a067cf65d20e948cd5777713193c69f5bd3a3f65832e0"
+    },
+    {
+      "file": "hvm-node22-store-postgres.log",
+      "bytes": 4169,
+      "sha256": "a157d6e52bf51abcee2c4cd34f4969c5e3c44c792574be49ae1e840ab72d772b"
+    },
+    {
+      "file": "hvm-isolated-corrected-postgres.log",
+      "bytes": 51296,
+      "sha256": "3d43084d4cfb47cd1db1e9ad1d0fa882a2964e7166aed80942dbbca3fc66cf64"
+    },
+    {
+      "file": "hvm-final-category-recheck.log",
+      "bytes": 556,
+      "sha256": "c1bbcc1eeb2793ad9de4c17d249eeb9c72054709eb6910e9372f553b57ed4b55"
+    },
+    {
+      "file": "hvm-complete-final-e2e.log",
+      "bytes": 44417,
+      "sha256": "8d7d66b4e846b601d82c3f701683e65e862d8500b9e3c4402791471574e7a424"
+    },
+    {
+      "file": "hvm-final-browser-recheck.log",
+      "bytes": 901,
+      "sha256": "60db9f383ad1644d048256d292b96836a47941fe48fc8a5b45cee89e200686b8"
+    },
+    {
+      "file": "hvm-existing-real-integration-transport.log",
+      "bytes": 4980,
+      "sha256": "68feba0455c662571b206aeaa8e6f037e541c7a2482f9efdd1e8dafb643b30c5"
+    },
+    {
+      "file": "hvm-final-real-supabase.log",
+      "bytes": 3049,
+      "sha256": "5c41dcec57f33f4820d817cc23b9333a90803273ea5ee130435b8812f729ca15"
+    },
+    {
+      "file": "hvm-original-legacy-outbox.log",
+      "bytes": 3989,
+      "sha256": "2349023c9d42a5b41e6e2dcfde2f73ef22576e56707518df56202982dd16ae17"
+    },
+    {
+      "file": "hvm-production-verify-deploy-proxy.log",
+      "bytes": 585,
+      "sha256": "83fc2c0743be0de55cbb6c55ada7fc309d681ef0101503aeb69aec4901d714d9"
+    },
+    {
+      "file": "hvm-production-browser.log",
+      "bytes": 1715,
+      "sha256": "30c7eb42a61fb89b9729a24b9c85dd92c0f95b1aca54445da053023838b89fdf"
+    }
+  ],
+  "logLocation": "/workspace/scratch",
+  "note": "Snapshot of verified functional implementation before documentation-only publication. No credentials, full tokens or Vercel bypass URLs included. Local real services do not prove private production functionality."
+}
