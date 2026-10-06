@@ -1,9 +1,10 @@
-import { effectiveAccountStatus, accountBlockCode } from "../../shared/accountBlock.ts";
-import { dbPool } from "../db/pool.ts";
 import {
-  createSupabaseUserClient,
-  supabaseAdmin,
-} from "../supabase/client.ts";
+  effectiveAccountStatus,
+  accountBlockCode,
+} from "../../shared/accountBlock.ts";
+import { dbPool } from "../db/pool.ts";
+import { createSupabaseUserClient, supabaseAdmin } from "../supabase/client.ts";
+import { resolveLiveAuthSession } from "../security/liveSession.ts";
 
 export type IdentityAccessSnapshot = {
   status: string;
@@ -19,28 +20,46 @@ export type IdentityAccessSnapshot = {
 async function resolveViaDataApi(
   userId: string,
   accessToken?: string | null,
+  sessionId?: string | null,
 ): Promise<IdentityAccessSnapshot | null> {
   const dataClient =
-    supabaseAdmin ?? (accessToken ? createSupabaseUserClient(accessToken) : null);
+    supabaseAdmin ??
+    (accessToken ? createSupabaseUserClient(accessToken) : null);
   if (!dataClient) return null;
 
-  const [{ data: user, error: userError }, { data: roles, error: rolesError }, principal, person] =
-    await Promise.all([
-      dataClient
-        .from("app_users")
-        .select("status,block_starts_at,block_ends_at")
-        .eq("id", userId)
-        .maybeSingle(),
-      dataClient
-        .from("app_user_role_assignments")
-        .select("role_code,expires_at")
-        .eq("user_id", userId)
-        .is("revoked_at", null),
-      dataClient.from("app_admin_principals").select("person_id").eq("admin_user_id", userId).maybeSingle(),
-      dataClient.from("app_people").select("id,full_name").eq("user_id", userId).maybeSingle(),
-    ]);
+  const [
+    { data: user, error: userError },
+    { data: roles, error: rolesError },
+    principal,
+    person,
+  ] = await Promise.all([
+    dataClient
+      .from("app_users")
+      .select("status,block_starts_at,block_ends_at")
+      .eq("id", userId)
+      .maybeSingle(),
+    dataClient
+      .from("app_user_role_assignments")
+      .select("role_code,expires_at")
+      .eq("user_id", userId)
+      .is("revoked_at", null),
+    dataClient
+      .from("app_admin_principals")
+      .select("person_id")
+      .eq("admin_user_id", userId)
+      .maybeSingle(),
+    dataClient
+      .from("app_people")
+      .select("id,full_name")
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
 
   if (userError || rolesError || !user) return null;
+  const session = sessionId
+    ? await resolveLiveAuthSession(userId, sessionId, false)
+    : null;
+  if (session?.status === "unavailable") return null;
 
   const activeRoles = (roles ?? [])
     .filter(
@@ -52,14 +71,14 @@ async function resolveViaDataApi(
   const personId = principal.data?.person_id ?? person.data?.id ?? null;
 
   return {
-    status: effectiveAccountStatus(user), blockCode: accountBlockCode(user),
+    status: effectiveAccountStatus(user),
+    blockCode: accountBlockCode(user),
     roles: activeRoles,
     personId,
     fullName: person.data?.full_name ?? null,
-    // O chamador já validou o access token com Supabase Auth. Quando o
-    // Transaction Pooler não está disponível, essa validação Auth é a fonte
-    // de verdade para a sessão viva.
-    liveSession: true,
+    // Login recém-validado não tem sessionId nesta chamada; sessões existentes
+    // mantêm o controle de validade mesmo sem conexão direta com o Pooler.
+    liveSession: !sessionId || session?.status === "active",
   };
 }
 
@@ -95,6 +114,7 @@ export async function resolveIdentityAccess(
                  FROM auth.sessions s
                 WHERE s.id = $2::uuid
                   AND s.user_id = u.id
+                  AND (s.not_after IS NULL OR s.not_after > now())
              )
            END AS live_session,
            COALESCE(
@@ -125,7 +145,8 @@ export async function resolveIdentityAccess(
       const row = result.rows[0];
       if (row)
         return {
-          status: effectiveAccountStatus(row), blockCode: accountBlockCode(row),
+          status: effectiveAccountStatus(row),
+          blockCode: accountBlockCode(row),
           roles: row.roles ?? [],
           personId: row.person_id ?? null,
           fullName: row.full_name ?? null,
@@ -138,5 +159,5 @@ export async function resolveIdentityAccess(
     }
   }
 
-  return resolveViaDataApi(userId, accessToken);
+  return resolveViaDataApi(userId, accessToken, sessionId);
 }

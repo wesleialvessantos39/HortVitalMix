@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+test.use({ isMobile: true, hasTouch: true });
 for(const role of ['consumer','producer','platform_admin','platform_super_admin'])test('iPhone viewport and touch: '+role,async({page})=>{
  let logged=false;
  await page.route('**/*',async r=>{const u=new URL(r.request().url());if(!u.pathname.includes('/v1/'))return r.continue();const path=u.pathname.replace(/^\/(api|_hvm_api)/,'');

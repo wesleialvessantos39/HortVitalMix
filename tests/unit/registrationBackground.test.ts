@@ -4,6 +4,7 @@ import { webcrypto } from "node:crypto";
 import { stripTypeScriptTypes } from "node:module";
 import { z } from "zod";
 import { describe, it, expect, vi } from "vitest";
+import { verifyRegistrationConsentProof } from "../../server/security/registrationConsent.ts";
 
 describe("Cadastro Edge: confirmação fora do caminho crítico", () => {
   it.each(["consumer", "producer"])(
@@ -35,7 +36,7 @@ describe("Cadastro Edge: confirmação fora do caminho crítico", () => {
         "supabase/functions/public-registration/index.ts",
         "utf8",
       ).replace(/^import .*;\n/gm, "");
-      const compiled = stripTypeScriptTypes(source, { mode: "transform" });
+      const compiled = stripTypeScriptTypes(source, { mode: "strip" });
       const sandbox = {
         z,
         createClient: () => ({
@@ -97,6 +98,30 @@ describe("Cadastro Edge: confirmação fora do caminho crítico", () => {
         confirmationDispatchScheduled: true,
       });
       expect(body.confirmationContext).toMatch(/^[\w-]+\.[a-f0-9]{64}$/);
+      expect(
+        verifyRegistrationConsentProof(
+          body.consentProof,
+          {
+            userId: body.userId,
+            email: "local@example.test",
+            policyVersion: "lgpd-cadastro-2026-10-02",
+          },
+          Date.now(),
+          "local-secret-only",
+        ),
+      ).toBe(true);
+      expect(
+        verifyRegistrationConsentProof(
+          body.confirmationContext,
+          {
+            userId: body.userId,
+            email: "local@example.test",
+            policyVersion: "lgpd-cadastro-2026-10-02",
+          },
+          Date.now(),
+          "local-secret-only",
+        ),
+      ).toBe(false);
       expect(rpc).toHaveBeenCalledWith(
         "complete_public_registration_with_consent",
         expect.objectContaining({

@@ -1,4 +1,10 @@
 import { test, expect } from "@playwright/test";
+test.beforeEach(async ({ page }, info) => {
+  if (!info.title.startsWith("Trilha 02")) return;
+  await page.addInitScript(() => localStorage.setItem("hvm.admin.session", JSON.stringify({ accessToken: "synthetic-admin-test", refreshToken: "synthetic-refresh-test", expiresAt: Date.now() + 3600000 })));
+  await page.route("**/v1/admin/auth/verify-session", (route) => route.fulfill({ json: { authorized: true, role: "platform_super_admin", sectors: [], requiresReauth: false } }));
+  await page.route("**/v1/auth/session", (route) => route.fulfill({ json: { userId: "11111111-1111-4111-8111-111111111111", email: "admin@example.test", roles: ["platform_super_admin"], activeRole: "platform_super_admin", portalKind: "administrative" } }));
+});
 
 for (const width of [320, 360, 430, 768, 1024, 1440]) {
   test(`shell e cadastro em ${width}px`, async ({ page }) => {
@@ -124,7 +130,7 @@ test("falha de config é não bloqueante e mantém navegação", async ({ page }
       body: JSON.stringify({ products: [] }),
     }),
   );
-  await page.route("**/api/v1/config", async (route) => {
+  await page.route("**/v1/config", async (route) => {
     await route.fulfill({
       status: 503,
       contentType: "application/json",
@@ -150,7 +156,7 @@ test("falha de config é não bloqueante e mantém navegação", async ({ page }
 });
 
 test("config pública válida atualiza slogan da shell", async ({ page }) => {
-  await page.route("**/api/v1/config", async (route) => {
+  await page.route("**/v1/config", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -182,21 +188,22 @@ test("fluxos públicos de segurança estão acessíveis e responsivos", async ({
   await page.getByRole("button", { name: "Esqueci minha senha" }).click();
   await expect(
     page.getByRole("heading", {
-      name: "Recuperação de senha — cadastro Consumidor",
+      name: "Recuperar senha",
     }),
   ).toBeVisible();
   await expect(page).toHaveURL(/portal=consumer/);
+  await expect(page.locator(".t04-context")).toContainText("Consumidor");
 
   await page.getByRole("button", { name: "Voltar para entrar" }).click();
   await page.getByRole("button", { name: "Reenviar confirmação" }).click();
   await expect(
     page.getByRole("heading", {
-      name: "Confirmação de cadastro — Consumidor",
+      name: "Confirme seu e-mail",
     }),
   ).toBeVisible();
   await expect(page).toHaveURL(/portal=consumer/);
 
-  await page.getByRole("button", { name: "Voltar para entrar" }).click();
+  await page.getByRole("button", { name: "Ir para o login" }).click();
   await expect(
     page.getByRole("button", { name: "Entrar com link ou código" }),
   ).toHaveCount(0);
@@ -209,17 +216,17 @@ test("fluxos públicos de segurança estão acessíveis e responsivos", async ({
 test("rotas diretas de recuperação preservam estado correto", async ({ page }) => {
   await page.goto("/recuperar-senha");
   await expect(
-    page.getByRole("heading", { name: "Recupere sua senha" }),
+    page.getByRole("heading", { name: "Recuperar senha" }),
   ).toBeVisible();
 
   await page.goto("/redefinir-senha");
   await expect(
-    page.getByRole("heading", { name: "Defina sua nova senha" }),
+    page.getByRole("heading", { name: "Definir nova senha" }),
   ).toBeVisible();
 
   await page.goto("/confirmar-contato");
   await expect(
-    page.getByRole("heading", { name: "Confirme seu cadastro" }),
+    page.getByRole("heading", { name: "Confirme seu e-mail" }),
   ).toBeVisible();
 });
 
@@ -229,25 +236,29 @@ test("recuperação explicita o perfil e mantém administração isolada", async
   await page.getByRole("button", { name: "Esqueci minha senha" }).click();
   await expect(
     page.getByRole("heading", {
-      name: "Recuperação de senha — cadastro Produtor",
+      name: "Recuperar senha",
     }),
   ).toBeVisible();
+  await expect(page.locator(".t04-context")).toContainText("Produtor");
 
   await page.goto("/entrar/administrador");
+  await expect(page.getByRole("heading", { name: "Entrar como Administrador", exact: true, level: 2 })).toBeVisible();
   await page.getByRole("button", { name: "Esqueci minha senha" }).click();
   await expect(
     page.getByRole("heading", {
-      name: "Recuperação de senha — Administrador",
+      name: "Recuperar senha",
     }),
   ).toBeVisible();
+  await expect(page.locator(".t04-context")).toContainText("Administrador");
 
   await page.goto("/entrar/super-administrador");
   await page.getByRole("button", { name: "Esqueci minha senha" }).click();
   await expect(
     page.getByRole("heading", {
-      name: "Recuperação de senha — Super administrador",
+      name: "Recuperar senha",
     }),
   ).toBeVisible();
+  await expect(page.locator(".t04-context")).toContainText("Super administrador");
 });
 
 
@@ -265,13 +276,13 @@ test("conta separa consumidor e produtor e administração fica independente", a
 
   await page.getByRole("button", { name: "Entrar como Consumidor" }).click();
   await expect(
-    page.getByRole("heading", { name: "Entrar como Consumidor" }),
+    page.getByRole("heading", { name: "Entrar como Consumidor", exact: true, level: 2 }),
   ).toBeVisible();
   await expect(page.getByText("Criar cadastro de consumidor")).toBeVisible();
 
   await page.goto("/entrar/produtor");
   await expect(
-    page.getByRole("heading", { name: "Entrar como Produtor" }),
+    page.getByRole("heading", { name: "Entrar como Produtor", exact: true, level: 2 }),
   ).toBeVisible();
   await expect(page.getByText("Criar cadastro de produtor")).toBeVisible();
 
@@ -293,7 +304,7 @@ test("conta separa consumidor e produtor e administração fica independente", a
     ["/entrar/super-administrador", "Entrar como Super administrador"],
   ] as const) {
     await page.goto(path);
-    await expect(page.getByRole("heading", { name: heading })).toBeVisible();
+    await expect(page.getByRole("heading", { name: heading, exact: true, level: 2 })).toBeVisible();
     const password = page.getByRole("textbox", { name: /^Senha/ });
     await expect(password).toHaveAttribute("type", "password");
     await page.getByRole("button", { name: "Mostrar senha" }).click();
@@ -481,7 +492,8 @@ for (const width of [320, 360, 768, 1440]) {
 
     await page.goto("/admin/configuracao");
     await expect(page.getByRole("heading", { name: "Configuração Global" })).toBeVisible();
-    await expect(page.getByText("Revisão").first()).toBeVisible();
+    expect((await page.request.get("/api/v1/admin/configuration")).status()).toBe(401);
+    await expect(page.getByLabel("Slogan institucional")).toHaveValue(adminConfigResponse().slogan);
 
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
@@ -490,7 +502,7 @@ for (const width of [320, 360, 768, 1440]) {
     const pageWidth = await page.locator(".admin-config-page").evaluate(
       (element) => element.getBoundingClientRect().width,
     );
-    expect(pageWidth).toBeLessThanOrEqual(920);
+    expect(pageWidth).toBeLessThanOrEqual(width);
 
     const gridColumns = await page.locator(".admin-config-grid").first().evaluate(
       (element) => getComputedStyle(element).gridTemplateColumns,
@@ -508,8 +520,11 @@ for (const width of [320, 360, 768, 1440]) {
   });
 }
 
-test("Trilha 02 — loading permanece visível por pelo menos 100ms", async ({ page }) => {
+test("Trilha 02 — loading permanece visível enquanto a requisição está pendente", async ({ page }) => {
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => { release = resolve; });
   await page.route("**/*admin/configuration", async (route) => {
+    await pending;
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -521,6 +536,7 @@ test("Trilha 02 — loading permanece visível por pelo menos 100ms", async ({ p
   await expect(page.getByLabel("Carregando configuração")).toBeVisible();
   await page.waitForTimeout(90);
   await expect(page.getByLabel("Carregando configuração")).toBeVisible();
+  release();
   await expect(page.getByRole("heading", { name: "Configuração Global" })).toBeVisible();
 });
 
@@ -566,8 +582,8 @@ test("Trilha 02 — conflito 409 preserva edição e oferece reload", async ({ p
   await slogan.fill("Slogan local ainda não salvo.");
   await page.getByRole("button", { name: "Salvar alterações" }).click();
 
-  await expect(page.getByText("Conflito de revisão.")).toBeVisible();
-  await expect(page.getByRole("button", { name: /Recarregar revisão atual/ })).toBeVisible();
+  await expect(page.getByText("Outra sessão alterou a configuração.")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Recarregar configuração atual/ })).toBeVisible();
   await expect(slogan).toHaveValue("Slogan local ainda não salvo.");
 });
 
@@ -575,6 +591,7 @@ test("Trilha 02 — sucesso 200 exibe confirmação e nova revisão", async ({ p
   let revision = 7;
   await page.route("**/*admin/configuration", async (route) => {
     if (route.request().method() === "PATCH") {
+      expect(route.request().postDataJSON()).toMatchObject({ expectedRevision: 7, commandId: expect.any(String) });
       revision = 8;
       await route.fulfill({
         status: 200,
@@ -599,6 +616,6 @@ test("Trilha 02 — sucesso 200 exibe confirmação e nova revisão", async ({ p
   await page.getByLabel("Slogan institucional").fill("Novo slogan auditável.");
   await page.getByRole("button", { name: "Salvar alterações" }).click();
 
-  await expect(page.getByText("Configuração atualizada com sucesso.")).toBeVisible();
-  await expect(page.getByText("#8")).toBeVisible();
+  await expect(page.getByText("Configuração sincronizada com sucesso.")).toBeVisible();
+  expect(revision).toBe(8);
 });

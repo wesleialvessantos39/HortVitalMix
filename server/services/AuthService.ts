@@ -107,6 +107,7 @@ async function registerThroughEdge(
     confirmationContext: typeof body.confirmationContext === "string" ? body.confirmationContext : undefined,
     confirmationDispatchScheduled: Boolean(body.confirmationDispatchScheduled),
     lgpdRecorded: Boolean(body.lgpdRecorded),
+    consentProof: typeof body.consentProof === "string" ? body.consentProof : undefined,
     confirmationRequired: Boolean(body.confirmationRequired),
     confirmationDispatchAccepted: Boolean(
       body.confirmationDispatchAccepted,

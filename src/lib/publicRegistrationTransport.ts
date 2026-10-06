@@ -16,6 +16,7 @@ export type PublicRegistrationResult = {
   confirmationContext?: string;
   confirmationDispatchScheduled?: boolean;
   lgpdRecorded?: boolean;
+  consentProof?: string;
 };
 
 const CANONICAL_SUPABASE_URL =

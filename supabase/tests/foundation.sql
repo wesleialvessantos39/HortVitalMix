@@ -1,6 +1,7 @@
 BEGIN;
 DO $$DECLARE n integer;BEGIN
- SELECT count(*) INTO n FROM public.v_rls_audit WHERE rls_enabled AND rls_forced;IF n<>9 THEN RAISE EXCEPTION 'RLS_TABLE_COUNT';END IF;
+ SELECT count(*) INTO n FROM public.v_rls_audit WHERE rls_enabled AND rls_forced;
+ IF n<9 OR n<>(SELECT count(*) FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' AND relname LIKE 'app\_%' ESCAPE '\') THEN RAISE EXCEPTION 'RLS_TABLE_COUNT';END IF;
  IF (SELECT count(*) FROM public.app_global_config)<>1 THEN RAISE EXCEPTION 'CONFIG_SINGLETON';END IF;
  IF (SELECT count(*) FROM public.app_roles)<>4 THEN RAISE EXCEPTION 'CANONICAL_ROLES';END IF;
  IF has_column_privilege('authenticated','public.app_users','status','UPDATE') OR has_column_privilege('authenticated','public.app_producer_profiles','trust_level','UPDATE') OR has_column_privilege('authenticated','public.app_producer_profiles','verification_status','UPDATE') THEN RAISE EXCEPTION 'SENSITIVE_COLUMN_WRITABLE';END IF;
@@ -31,10 +32,10 @@ SELECT public.complete_public_registration(
   'Sítio RPC',
   'misto'
 );
-DO $BEGIN
- IF has_function_privilege('anon','public.complete_public_registration(uuid,text,text,text,text,text,text,text)','EXECUTE') THEN RAISE EXCEPTION 'RPC_ANON_EXECUTE_ALLOWED';END IF;
- IF has_function_privilege('authenticated','public.complete_public_registration(uuid,text,text,text,text,text,text,text)','EXECUTE') THEN RAISE EXCEPTION 'RPC_AUTHENTICATED_EXECUTE_ALLOWED';END IF;
- IF NOT has_function_privilege('service_role','public.complete_public_registration(uuid,text,text,text,text,text,text,text)','EXECUTE') THEN RAISE EXCEPTION 'RPC_SERVICE_ROLE_EXECUTE_MISSING';END IF;
+DO $$BEGIN
+ IF has_function_privilege('anon','public.complete_public_registration(uuid,text,text,text,text,text,text,text,text,text)','EXECUTE') THEN RAISE EXCEPTION 'RPC_ANON_EXECUTE_ALLOWED';END IF;
+ IF has_function_privilege('authenticated','public.complete_public_registration(uuid,text,text,text,text,text,text,text,text,text)','EXECUTE') THEN RAISE EXCEPTION 'RPC_AUTHENTICATED_EXECUTE_ALLOWED';END IF;
+ IF NOT has_function_privilege('service_role','public.complete_public_registration(uuid,text,text,text,text,text,text,text,text,text)','EXECUTE') THEN RAISE EXCEPTION 'RPC_SERVICE_ROLE_EXECUTE_MISSING';END IF;
  IF NOT EXISTS(
    SELECT 1
    FROM public.app_people p
@@ -49,10 +50,10 @@ DO $BEGIN
    JOIN public.app_producer_profiles pp ON pp.person_id=p.id
    WHERE p.user_id=current_setting('hvm.test_rpc_producer')::uuid
      AND r.role_code='producer'
-     AND pp.property_name='Sítio RPC'
-     AND pp.rural_activity_type='misto'
+     AND pp.verification_status='declared' AND pp.trust_level=0
+     AND pp.property_name IS NULL AND pp.rural_activity_type IS NULL
  ) THEN RAISE EXCEPTION 'RPC_PRODUCER_CHAIN_FAILED';END IF;
-END;$;
+END;$$;
 SELECT set_config('hvm.test_a',gen_random_uuid()::text,true),set_config('hvm.test_b',gen_random_uuid()::text,true);
 INSERT INTO auth.users(id,email) VALUES(current_setting('hvm.test_a')::uuid,'hvm-a-'||current_setting('hvm.test_a')||'@example.com'),(current_setting('hvm.test_b')::uuid,'hvm-b-'||current_setting('hvm.test_b')||'@example.com');
 INSERT INTO public.app_people(user_id,full_name,cpf_normalized,email_normalized,phone_e164) VALUES(current_setting('hvm.test_a')::uuid,'Fixture A','52998224725','hvm-a-'||current_setting('hvm.test_a')||'@example.com','+5569999999999'),(current_setting('hvm.test_b')::uuid,'Fixture B','11144477735','hvm-b-'||current_setting('hvm.test_b')||'@example.com','+5569999999998');
@@ -69,7 +70,7 @@ DO $$BEGIN
  UPDATE public.app_people SET full_name='Fixture editada' WHERE user_id=auth.uid();
 END;$$;
 RESET ROLE;
-DO $DECLARE audit_test_id uuid:=gen_random_uuid();old_revision int;duplicate_command uuid:=gen_random_uuid();BEGIN
+DO $$DECLARE audit_test_id uuid:=gen_random_uuid();old_revision int;duplicate_command uuid:=gen_random_uuid();BEGIN
  INSERT INTO public.app_audit_events(id,request_id,action,target_entity,client_ip_hash) VALUES(audit_test_id,gen_random_uuid(),'test.assertion','fixture',repeat('a',64));
  BEGIN UPDATE public.app_audit_events SET action='test.changed' WHERE app_audit_events.id=audit_test_id;RAISE EXCEPTION 'AUDIT_UPDATE_ALLOWED';EXCEPTION WHEN insufficient_privilege THEN NULL;END;
  BEGIN DELETE FROM public.app_audit_events WHERE app_audit_events.id=audit_test_id;RAISE EXCEPTION 'AUDIT_DELETE_ALLOWED';EXCEPTION WHEN insufficient_privilege THEN NULL;END;
@@ -89,7 +90,7 @@ DO $DECLARE audit_test_id uuid:=gen_random_uuid();old_revision int;duplicate_com
  UPDATE public.app_global_config SET slogan='Slogan temporário de teste';
  IF (SELECT revision FROM public.app_global_config)<>old_revision+1 THEN RAISE EXCEPTION 'REVISION_NOT_INCREMENTED';END IF;
  DELETE FROM auth.users WHERE auth.users.id=current_setting('hvm.test_a')::uuid;
- IF NOT EXISTS(SELECT 1 FROM public.app_users WHERE app_users.id=current_setting('hvm.test_a')::uuid AND status='suspended') THEN RAISE EXCEPTION 'DELETE_MIRROR_FAILED';END IF;
+ IF EXISTS(SELECT 1 FROM public.app_users WHERE app_users.id=current_setting('hvm.test_a')::uuid) THEN RAISE EXCEPTION 'DELETE_MIRROR_FAILED';END IF;
 END;$$;
 SELECT 'foundation_sql_assertions_passed' AS result;
 ROLLBACK;

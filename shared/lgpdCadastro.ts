@@ -10,6 +10,7 @@ export const LgpdCadastroAcceptanceSchema = z
     email: z.string().trim().toLowerCase().max(255).pipe(z.email()),
     userId: z.uuid(),
     policyVersion: z.literal(LGPD_CADASTRO_POLICY_VERSION),
+    consentProof: z.string().min(1).max(2048).optional(),
   })
   .strict();
 

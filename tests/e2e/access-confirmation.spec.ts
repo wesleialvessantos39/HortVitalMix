@@ -130,7 +130,7 @@ test("super admin can block public identities", async ({
   await expect(page.getByLabel("Término",{exact:true})).toBeVisible();
   await page.screenshot({path:"/tmp/hvm-account-block-form.png",fullPage:true});
 });
-test("submitted properties are visible and review uses revision and command id", async ({
+test("property alias uses the canonical queue and archives approvals as read only", async ({
   page,
 }) => {
   await base(page);
@@ -144,42 +144,70 @@ test("submitted properties are visible and review uses revision and command id",
       },
     }),
   );
-  let verified = false;
-  await page.route("**/v1/admin/rural-properties", (r) =>
-    r.fulfill({
-      json: {
-        properties: [
-          {
-            id: "22222222-2222-4222-8222-222222222222",
-            revision: 3,
-            status: verified ? "verified" : "submitted",
-            property_name: "Imóvel enviado",
-            producer_name: "Produtor",
-            municipality: "Ariquemes",
-            line_vicinal: "Linha 1",
-            total_area_hectares: "10",
-            cultivated_area_hectares: "4",
-            water_source: "poco_artesiano",
-            irrigation_system: "gotejamento",
-            activity: null,
-          },
-        ],
-      },
-    }),
-  );
-  await page.route("**/rural-properties/*/review", (r) => {
-    expect(r.request().postDataJSON()).toMatchObject({
-      decision: "verified",
-      expectedRevision: 3,
-      commandId: expect.any(String),
-    });
-    verified = true;
-    return r.fulfill({ json: { status: "verified" } });
+  const id = "22222222-2222-4222-8222-222222222222";
+  const opinion = "Documentos e checklists conferidos nesta análise.";
+  const commandIds: string[] = [];
+  const visitedTabs: string[] = [];
+  let status = "pending";
+  await page.route("**/v1/admin/verification-queue**", (r) => {
+    const url = new URL(r.request().url());
+    if (r.request().method() === "GET") {
+      const tab = url.searchParams.get("tab")!;
+      visitedTabs.push(tab);
+      expect(tab).toBe(
+        status === "approved" ? "archived" : status === "pending" ? "pending" : "in_review",
+      );
+      return r.fulfill({ json: { requests: [{
+        id, status, property_name: "Imóvel enviado", producer_name: "Produtor",
+        municipality: "Ariquemes", line_vicinal: "Linha 1",
+        total_area_hectares: "10", cultivated_area_hectares: "4",
+        latitude_sede: null, longitude_sede: null, draft_data: null,
+        perimeter: null, documents: [], extraction: null,
+        last_decision: status === "approved" ? {
+          decision: "approved", technical_opinion: opinion,
+          decided_at: "2026-10-06T10:00:00Z", checklist_environmental_ok: true,
+          checklist_land_tenure_ok: true, checklist_water_quality_ok: true,
+        } : null,
+      }] } });
+    }
+    expect(r.request().method()).toBe("POST");
+    const body = r.request().postDataJSON();
+    expect(body.commandId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+    commandIds.push(body.commandId);
+    if (url.pathname.endsWith(`/${id}/claim`)) {
+      expect(status).toBe("pending");
+      expect(Object.keys(body)).toEqual(["commandId"]);
+      status = "in_review";
+    } else {
+      expect(url.pathname.replace(/^\/(?:api|_hvm_api)/, "")).toBe(`/v1/admin/verification-queue/${id}/decide`);
+      expect(status).toBe("in_review");
+      expect(body).toEqual({
+        commandId: expect.any(String), decision: "approved", technicalOpinion: opinion,
+        assignedTrustLevel: 3, checklistEnvironmentalOk: true,
+        checklistLandTenureOk: true, checklistWaterQualityOk: true,
+      });
+      status = "approved";
+    }
+    return r.fulfill({ json: { status } });
   });
   await page.goto("/admin/imoveis");
-  await expect(page.getByText("Imóvel enviado")).toBeVisible();
-  await page.getByRole("button", { name: "Validar imóvel" }).click();
-  await expect(
-    page.getByText("Imóvel validado.", { exact: true }),
-  ).toBeVisible();
+  await page.getByRole("button", { name: /Imóvel enviado/ }).click();
+  await page.getByRole("button", { name: "Colocar em análise", exact: true }).click();
+  const approve = page.getByRole("button", { name: "Aprovar imóvel", exact: true });
+  await expect(approve).toBeDisabled();
+  await page.getByLabel("CAR regular sem sobreposições").check();
+  await page.getByLabel("Posse ou CCIR regular").check();
+  await page.getByLabel("Laudo de água potável / irrigação").check();
+  await expect(approve).toBeDisabled();
+  await page.getByLabel("Parecer técnico para o produtor").fill(opinion);
+  await approve.click();
+  await expect(page.getByText(/Imóvel aprovado e arquivado em modo somente leitura/)).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Arquivados" })).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("button", { name: /Imóvel enviado/ }).click();
+  await expect(page.getByText("Aprovado · somente leitura", { exact: true })).toBeVisible();
+  await expect(page.getByText(opinion, { exact: true })).toBeVisible();
+  await expect(approve).toHaveCount(0);
+  expect(commandIds).toHaveLength(2);
+  expect(new Set(commandIds).size).toBe(2);
+  expect(visitedTabs).toEqual(expect.arrayContaining(["pending", "in_review", "archived"]));
 });

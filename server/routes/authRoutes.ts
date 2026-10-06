@@ -44,6 +44,7 @@ import { authEmailRetryAfter } from "../security/authEmailRateLimit.ts";
 import { issueRecentAuthProof, RECENT_AUTH_WINDOW_MS } from "../security/recentAuth.ts";
 
 import { issueConfirmationContext } from "../security/confirmationContext.ts";
+import { issueRegistrationConsentProof, verifyRegistrationConsentProof } from "../security/registrationConsent.ts";
 import {
   LOCALITY_DISABLED_MESSAGE,
   LOCALITY_NOT_COVERED_MESSAGE,
@@ -1127,12 +1128,18 @@ authRouter.post("/change-password", async (req, res, next) => {
   }
 });
 
-authRouter.post("/lgpd-acceptance", async (req, res) => {
+authRouter.post("/lgpd-acceptance", async (req, res, next) => {
   const parsed = LgpdCadastroAcceptanceSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(422).json({ error: "VALIDATION_ERROR", requestId: res.locals.requestId });
     return;
   }
+  if (req.actor?.userId !== parsed.data.userId &&
+      !verifyRegistrationConsentProof(parsed.data.consentProof, parsed.data)) {
+    res.status(401).json({ error: "CONSENT_PROOF_REQUIRED", requestId: res.locals.requestId });
+    return;
+  }
+  try {
   const result = await recordLgpdCadastroAcceptance({
     userId: parsed.data.userId,
     email: parsed.data.email,
@@ -1144,6 +1151,7 @@ authRouter.post("/lgpd-acceptance", async (req, res) => {
     return;
   }
   res.status(204).end();
+  } catch (error) { next(error); }
 });
 
 for (const role of ["consumer", "producer"] as const)
@@ -1203,6 +1211,11 @@ for (const role of ["consumer", "producer"] as const)
       res.setHeader("Server-Timing", "auth-register;dur=" + Math.max(0, Date.now() - startedAt));
       res.status(201).json({
         ...result,
+        ...(consent && runtime.serviceKey && result.userId && !result.reviewRequired ? {
+          consentProof: issueRegistrationConsentProof({
+            userId: result.userId, email: registrationData.email, policyVersion: consent.policyVersion,
+          }),
+        } : {}),
         confirmationContext,
         confirmationDispatchAccepted,
         confirmationDispatchDeferred:

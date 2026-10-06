@@ -485,13 +485,14 @@ export function Account({
           publicRegistrationPayload ?? (form as Record<string, unknown>),
           { policyVersion: LGPD_CADASTRO_POLICY_VERSION },
         );
-        if (result.userId && !result.lgpdRecorded) {
+        if (result.userId && !result.lgpdRecorded && result.consentProof) {
           void api("/v1/auth/lgpd-acceptance", {
             method: "POST",
             body: JSON.stringify({
               email: String(form.email ?? ""),
               userId: result.userId,
               policyVersion: LGPD_CADASTRO_POLICY_VERSION,
+              consentProof: result.consentProof,
             }),
           }).catch(() => undefined);
         }
@@ -1254,7 +1255,10 @@ export function Account({
         }
         onInputCapture={(event) => {
           const name = (event.target as HTMLInputElement).name;
-          if (name) clearFieldError(name);
+          // Os campos controlados limpam o erro junto com o novo valor no
+          // próprio onChange. Atualizar antes disso restaura o valor anterior.
+          if (name && name !== "password" && name !== "confirmPassword")
+            clearFieldError(name);
         }}
       >
         {(mode === "consumer" || mode === "producer") && (

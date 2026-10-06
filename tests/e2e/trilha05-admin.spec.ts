@@ -8,8 +8,12 @@ for (const width of [320, 390, 430, 768, 1024, 1440]) {
       page.getByRole("heading", { name: "Gestão segura da plataforma." }),
     ).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "Entrar na administração" }),
+      page.getByRole("heading", { name: "Escolha o acesso" }),
     ).toBeVisible();
+    await page.getByRole("button", { name: "Entrar como Administrador", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Entrar como Administrador", exact: true, level: 2 })).toBeVisible();
+    await expect(page.getByLabel("E-mail")).toBeVisible();
+    await expect(page.getByLabel("Senha", { exact: true })).toBeVisible();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
     ).toBe(true);
@@ -32,7 +36,7 @@ test("Trilha 05 — convite inválido não exibe ativação", async ({ page }) =
 
 
 test("Trilha 05 — ajuda de governança abre, fecha por backdrop e Escape", async ({ page }) => {
-  await page.goto("/admin/entrar");
+  await page.goto("/entrar/administrador");
   await page.getByRole("button", { name: "Saiba mais" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.keyboard.press("Escape");
@@ -97,7 +101,7 @@ test("Trilha 05 — seletor administrativo conduz a telas de entrada distintas",
   await expect(
     page.getByRole("heading", { name: "Entrar como Super administrador." }),
   ).toBeVisible();
-  await expect(page.getByLabel("Senha")).toBeVisible();
+  await expect(page.getByLabel("Senha", { exact: true })).toBeVisible();
   await expect(
     page.getByRole("button", { name: /Mostrar senha/i }),
   ).toBeVisible();
@@ -112,6 +116,7 @@ test("Trilha 05 — seletor administrativo conduz a telas de entrada distintas",
 });
 
 test("Trilha 05 — seletor administrativo expõe o estado protegido do bootstrap", async ({ page }) => {
+  await page.route("**/v1/admin/bootstrap/status", (route) => route.fulfill({ json: { status: "open", reason: null } }));
   await page.goto("/administracao");
   await expect(page.locator(".admin-bootstrap-discovery")).toBeVisible();
   await expect(
@@ -121,6 +126,7 @@ test("Trilha 05 — seletor administrativo expõe o estado protegido do bootstra
 
 
 test("Trilha 05 — seletor sempre oferece diagnóstico do bootstrap enquanto não estiver fechado", async ({ page }) => {
+  await page.route("**/v1/admin/bootstrap/status", (route) => route.fulfill({ json: { status: "open", reason: null } }));
   await page.goto("/administracao");
   const bootstrapCard = page.locator(".admin-bootstrap-discovery");
   await expect(bootstrapCard).toBeVisible();

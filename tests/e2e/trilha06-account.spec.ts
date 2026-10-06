@@ -129,7 +129,9 @@ for (const viewport of [
     await mockAccount(page);
     await page.goto("/conta");
     await expect(page.getByText("Minha conta").first()).toBeVisible();
-    await expect(page.locator(".account-delivery-card").getByText("Centro · Ariquemes/RO", { exact: true })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+    await page.getByRole("button", { name: /^Endereços/ }).click();
+    await expect(page.getByText("Centro · Ariquemes/RO · CEP 76870-000", { exact: true })).toBeVisible();
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > window.innerWidth,
     );
@@ -141,12 +143,12 @@ test("T06 expõe as quatro áreas da conta", async ({ page }) => {
   await mockAccount(page);
   for (const [route, heading] of [
     ["/conta/perfil", "Perfil"],
-    ["/conta/enderecos", "Endereços"],
+    ["/conta/enderecos", "Seus locais de entrega"],
     ["/conta/preferencias", "Preferências"],
     ["/conta/privacidade", "Privacidade"],
   ]) {
     await page.goto(route);
-    await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: heading, exact: true, level: 1 })).toBeVisible();
   }
 });
 
@@ -197,7 +199,7 @@ test("conta antiga oferece acesso às quatro seções e retorno à segurança", 
   await mockAccount(page);
   await page.goto("/minha-conta");
   const navigation = page.getByRole("navigation", { name: "Dados da minha conta" });
-  for (const label of ["Perfil", "Endereços", "Preferências", "Privacidade"]) {
+  for (const label of ["Perfil", "Locais de entrega", "Preferências", "Privacidade"]) {
     await expect(navigation.getByRole("button", { name: new RegExp(label) })).toBeVisible();
   }
   await navigation.getByRole("button", { name: /Privacidade/ }).click();

@@ -237,7 +237,7 @@ describe.skipIf(!enabled)("Supabase real e JWTs reais", () => {
 
       const actor = await request(app)
         .get("/v1/auth/session")
-        .set("Authorization", `Bearer ${accessToken}`);
+        .set("Cookie", `hvm_access=${encodeURIComponent(accessToken)}; hvm_portal_role=consumer`);
       expect(actor.status).toBe(200);
       expect(actor.body.userId).toBe(id);
       expect(actor.body.roles).toEqual(["consumer"]);
@@ -262,18 +262,19 @@ describe.skipIf(!enabled)("Supabase real e JWTs reais", () => {
 
       const revoked = await request(app)
         .get("/v1/auth/session")
-        .set("Authorization", `Bearer ${accessToken}`);
+        .set("Cookie", `hvm_access=${encodeURIComponent(accessToken)}; hvm_portal_role=consumer`);
       expect(revoked.status).toBe(401);
     } finally {
       if (id) {
         const deleted = await supabaseAdmin!.auth.admin.deleteUser(id);
         expect(deleted.error).toBeNull();
 
-        const tombstone = await dbPool!.query(
+        const mirror = await dbPool!.query(
           "SELECT status FROM public.app_users WHERE id=$1",
           [id],
         );
-        expect(tombstone.rows[0]?.status).toBe("suspended");
+        // A exclusão operacional canônica v46 remove o espelho do Auth.
+        expect(mirror.rows).toHaveLength(0);
 
         await dbPool!.query("DELETE FROM public.app_users WHERE id=$1", [id]);
       }
@@ -336,7 +337,7 @@ describe.skipIf(!enabled)("Supabase real e JWTs reais", () => {
         .set("Origin", "http://localhost:3000")
         .send(payload);
       expect(second.status).toBe(409);
-      expect(second.body.error).toBe("IDENTITY_CONFLICT");
+      expect(second.body.error).toBe("EXISTING_ACCOUNT_CONFIRM_REQUIRED");
 
       const people = await dbPool!.query<{ n: number }>(
         "SELECT count(*)::int n FROM public.app_people WHERE email_normalized=$1",
@@ -348,7 +349,7 @@ describe.skipIf(!enabled)("Supabase real e JWTs reais", () => {
     }
   });
 
-  it("falha no domínio remove a identidade criada no GoTrue", async () => {
+  it("CPF de outra identidade é rejeitado antes de criar usuário no GoTrue", async () => {
     assertIsolatedDevelopment();
     const blocker = registration();
     let blockerId: string | undefined;
@@ -372,7 +373,7 @@ describe.skipIf(!enabled)("Supabase real e JWTs reais", () => {
         .send(failing);
 
       expect(second.status).toBe(409);
-      expect(second.body.error).toBe("IDENTITY_CONFLICT");
+      expect(second.body.error).toBe("CPF_LINKED_TO_EXISTING_ACCOUNT");
 
       const authRows = await dbPool!.query<{ n: number }>(
         "SELECT count(*)::int n FROM auth.users WHERE lower(email)=lower($1)",

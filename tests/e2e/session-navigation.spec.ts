@@ -82,7 +82,7 @@ for(const role of ['consumer','producer'] as const) {
     await page.getByRole('button',{name:'Segurança e sair da conta'}).click();
     await page.getByRole('button',{name:'Sair da conta',exact:true}).click();
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByRole('button',{name:/Conheça as opções de cadastro/})).toBeVisible();
+    await expect(page.getByRole('button',{name:'Faça parte',exact:true})).toBeVisible();
     expect(mocked.logoutCount()).toBe(1);
   });
 }

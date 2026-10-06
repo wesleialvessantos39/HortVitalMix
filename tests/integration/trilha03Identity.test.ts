@@ -25,11 +25,11 @@ describe.skipIf(!enabled)("Trilha 03 — identidade canônica real", () => {
   it("login público bloqueia administrador sem cookie", async () => {
     const r=await request(app).post("/v1/auth/login").set("Origin","http://localhost:3000")
       .send({email:"naoexiste@example.com",password:"SenhaInvalida#2026",portalRole:"platform_admin"});
-    expect(r.status).toBe(403); expect(r.body.error).toBe("ADMIN_PORTAL_REQUIRED"); expect(r.headers["set-cookie"]).toBeUndefined();
+    expect(r.status).toBe(403); expect(r.body.error).toBe("ADMIN_GOVERNANCE_LOGIN_REQUIRED"); expect(r.headers["set-cookie"]).toBeUndefined();
   });
-  it("login administrativo bloqueia papel público", async () => {
+  it("alias administrativo legado exige o login da governança sem emitir sessão", async () => {
     const r=await request(app).post("/v1/auth/admin-login").set("Origin","http://localhost:3000")
       .send({email:"naoexiste@example.com",password:"SenhaInvalida#2026",portalRole:"consumer"});
-    expect(r.status).toBe(403); expect(r.body.error).toBe("PUBLIC_PORTAL_REQUIRED"); expect(r.headers["set-cookie"]).toBeUndefined();
+    expect(r.status).toBe(409); expect(r.body.error).toBe("ADMIN_GOVERNANCE_LOGIN_REQUIRED"); expect(r.body.redirectTo).toBe("/admin/entrar"); expect(r.headers["set-cookie"]).toBeUndefined();
   });
 });

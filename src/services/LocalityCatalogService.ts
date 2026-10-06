@@ -5,6 +5,7 @@ import type {
   MunicipalityList,
   ProducerDeliveryScope,
 } from "../../shared/contracts/locality";
+import { MunicipalityListSchema } from "../../shared/contracts/locality";
 
 export type { LocalityCoverage, Municipality, ProducerDeliveryScope };
 
@@ -13,7 +14,7 @@ export type { LocalityCoverage, Municipality, ProducerDeliveryScope };
  * O endpoint é aberto: a tela global consulta antes de qualquer login.
  */
 export async function fetchMunicipalities(): Promise<MunicipalityList> {
-  return api<MunicipalityList>("/v1/localities");
+  return MunicipalityListSchema.parse(await api<unknown>("/v1/localities"));
 }
 
 export type CoverageResult = {

@@ -237,6 +237,18 @@ type ExistingPerson = {
   email_normalized: string;
 };
 
+async function registrationConsentProof(userId: string, email: string, policyVersion: string, secret: string) {
+  const now = Date.now();
+  const bytes = new TextEncoder().encode(JSON.stringify({
+    uid: userId, email: email.trim().toLowerCase(), policy: policyVersion,
+    iat: now, exp: now + 10 * 60_000,
+  }));
+  const value = btoa(String.fromCharCode(...bytes)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode("hvm:registration-consent:v1:" + value));
+  return value + "." + Array.from(new Uint8Array(mac), b => b.toString(16).padStart(2, "0")).join("");
+}
+
 Deno.serve(async (req) => {
   const startedAt = performance.now();
   const origin = req.headers.get("origin");
@@ -520,6 +532,9 @@ Deno.serve(async (req) => {
           confirmationDispatchDeferred: false,
           existingIdentity: true,
           roleAdded: true,
+          ...(envelope.data.consent ? {
+            consentProof: await registrationConsentProof(existing.user_id, data.email, envelope.data.consent.policyVersion, serviceRole),
+          } : {}),
           role,
           requestId,
           transport: "supabase_edge",
@@ -709,6 +724,7 @@ Deno.serve(async (req) => {
       confirmationDispatchScheduled,
       confirmationContext: context,
       lgpdRecorded: Boolean(consent),
+      ...(consent ? { consentProof: await registrationConsentProof(userId, data.email, consent.policyVersion, serviceRole) } : {}),
       existingIdentity: false,
       roleAdded: true,
       role,

@@ -271,7 +271,7 @@ describe.runIf(Boolean(process.env.HVM_T14_LOCAL_DATABASE_URL))(
             exact: true,
           }),
         ).toBeVisible();
-        await browserExpect(publicPage.getByText(/15,90/)).toBeVisible();
+        await browserExpect(publicPage.getByLabel("Catálogo de alimentos").getByText(/15,90/)).toBeVisible();
         await publicPage.screenshot({
           path: "/workspace/scratch/t14-public-story-desktop.png",
           fullPage: true,
