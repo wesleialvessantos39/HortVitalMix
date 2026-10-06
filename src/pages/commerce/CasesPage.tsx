@@ -862,14 +862,14 @@ export default function CasesPage({
               )}
             </article>
           </div>
-          {!isAdmin && kind === "refund" && (
-            <RefundPolicy onNavigate={onNavigate} />
-          )}
           <p className="commerce-form-help">
             Dificuldade de acesso? Fale com hortivitalmix@gmail.com. Não envie
             dados completos do cartão ou senhas.
           </p>
         </>
+      )}
+      {!isAdmin && kind === "refund" && (
+        <RefundPolicy onNavigate={onNavigate} />
       )}
     </section>
   );

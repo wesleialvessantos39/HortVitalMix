@@ -436,6 +436,32 @@ for (const width of [320, 390, 768, 1440]) {
     expect(state.errors).toEqual([]);
   });
 }
+for (const width of [390, 1440]) {
+  test(`política de reembolso acessível antes do login em ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 950 });
+    const state = await mock(page, "consumer", false);
+    await page.goto("/reembolsos");
+    await expect(
+      page.getByRole("heading", {
+        name: "Sua compra tem proteção",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("7 dias após receber os produtos", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("7 dias após a entrega", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Entrar", exact: true }),
+    ).toBeVisible();
+    await noOverflow(page);
+    expect(state.errors).toEqual([]);
+  });
+}
 for (const width of [390, 1440])
   for (const role of [
     "consumer",
