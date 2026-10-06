@@ -23,6 +23,7 @@ import { deliveryRouter } from "./routes/deliveryRoutes.ts";
 import { productRouter } from "./routes/productRoutes.ts";
 import { discoveryRouter } from "./routes/discoveryRoutes.ts";
 import { cartRouter } from "./routes/cartRoutes.ts";
+import { checkoutRouter } from "./routes/checkoutRoutes.ts";
 export const app = express();
 app.disable("x-powered-by");
 
@@ -48,7 +49,7 @@ app.use((req, res, next) => {
       "Access-Control-Allow-Origin": origin,
       "Access-Control-Allow-Credentials": "true",
       "Access-Control-Allow-Methods": "GET,HEAD,POST,PATCH,OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, X-Requested-With, Authorization, X-HVM-Request",
+      "Access-Control-Allow-Headers": "Content-Type, X-Requested-With, Authorization, X-HVM-Request, X-Command-Id",
       Vary: "Origin",
     });
     if (req.method === "OPTIONS") {
@@ -106,6 +107,7 @@ for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
   app.use(prefix, deliveryRouter);
   app.use(prefix, discoveryRouter);
   app.use(prefix, cartRouter);
+  app.use(prefix, checkoutRouter);
 }
 for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
   app.use(prefix + "/producer/documents", documentRouter);

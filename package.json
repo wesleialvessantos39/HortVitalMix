@@ -99,7 +99,11 @@
     "test:t18:unit": "vitest run tests/unit/cartContracts.test.ts tests/unit/cartSession.test.ts tests/unit/mediaCache.test.ts tests/integration/cartRoutes.test.ts",
     "test:t18:postgres": "vitest run tests/integration/cartPostgres.test.ts",
     "test:t18:story": "vitest run tests/integration/cartBrowserPostgres.test.ts",
-    "test:t18:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha18-cart.spec.ts"
+    "test:t18:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha18-cart.spec.ts",
+    "test:t19:unit": "vitest run tests/unit/checkoutContracts.test.ts tests/integration/checkoutRoutes.test.ts",
+    "test:t19:postgres": "vitest run tests/integration/checkoutPostgres.test.ts",
+    "test:t19:story": "vitest run tests/integration/checkoutBrowserPostgres.test.ts",
+    "test:t19:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha19-checkout.spec.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",
