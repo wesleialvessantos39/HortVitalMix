@@ -1421,7 +1421,7 @@
       "commerceNew": 22
     },
     "browser": {
-      "commerce": 32,
+      "commerce": 34,
       "regressions": 52
     },
     "realStories": [
@@ -1431,5 +1431,681 @@
     "schema": 58,
     "migrationCount": 64,
     "migrationHistoryHash": "d18736b84cc19ccfc547f262843f1e5f048c4129086c6a091a568b14cd61b06e"
+  },
+  "afterProduction": {
+    "recordedAt": "2026-10-06T21:28:35.286Z",
+    "snapshotRecordedAt": "2026-10-06T21:25:42.226Z",
+    "deployment": {
+      "id": "dpl_FHAohFUX1FWtBKD7dyLTBdeiTrt6",
+      "state": "READY",
+      "commitSha": "788cea45dd8cb4603f5cea76b988b7d82bc9d9ed",
+      "branch": "main",
+      "regions": [
+        "pdx1"
+      ],
+      "canonicalDomain": "https://hortvitalmix.vercel.app",
+      "target": "production",
+      "releaseTag": "t20-prepared-v58-788cea4"
+    },
+    "pullRequests": [
+      83,
+      84
+    ],
+    "cli": {
+      "health": true,
+      "ready": true,
+      "config": true,
+      "exactSha": true,
+      "schema": 58
+    },
+    "api": [
+      {
+        "path": "/api/health",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "path": "/api/ready",
+        "status": 200,
+        "expected": 200,
+        "release": "t20-prepared-v58-788cea4",
+        "schema": 58
+      },
+      {
+        "path": "/api/v1/commerce/policy",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "path": "/api/v1/commerce/purchases",
+        "status": 401,
+        "expected": 401
+      },
+      {
+        "path": "/api/v1/producer/pos",
+        "status": 401,
+        "expected": 401
+      },
+      {
+        "path": "/api/v1/admin/commerce/settings",
+        "status": 401,
+        "expected": 401
+      },
+      {
+        "path": "/api/v1/commerce/refunds",
+        "status": 401,
+        "expected": 401
+      },
+      {
+        "path": "/api/v1/commerce/complaints",
+        "status": 401,
+        "expected": 401
+      },
+      {
+        "path": "/api/v1/payments/webhook",
+        "status": 503,
+        "expected": 503,
+        "error": "GATEWAY_NOT_CONFIGURED"
+      }
+    ],
+    "publicPages": [
+      {
+        "path": "/reembolsos",
+        "width": 390,
+        "status": 200,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "path": "/denuncias",
+        "width": 390,
+        "status": 200,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "path": "/reembolsos",
+        "width": 1440,
+        "status": 200,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "path": "/denuncias",
+        "width": 1440,
+        "status": 200,
+        "overflow": false,
+        "errors": []
+      }
+    ],
+    "media": [
+      {
+        "width": 390,
+        "firstVisiblePhotoMs": 2119,
+        "allVisiblePhotosMs": 2546,
+        "reloadVisiblePhotosMs": 953,
+        "visiblePhotos": [
+          {
+            "loaded": true,
+            "bucket": "product-media"
+          },
+          {
+            "loaded": true,
+            "bucket": "store-media"
+          }
+        ],
+        "cacheEntries": [
+          "hvm:media-signatures:v1"
+        ],
+        "cachedResponses": 2,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "width": 1440,
+        "firstVisiblePhotoMs": 1188,
+        "allVisiblePhotosMs": 1189,
+        "reloadVisiblePhotosMs": 917,
+        "visiblePhotos": [
+          {
+            "loaded": true,
+            "bucket": "product-media"
+          },
+          {
+            "loaded": true,
+            "bucket": "store-media"
+          }
+        ],
+        "cacheEntries": [
+          "hvm:media-signatures:v1"
+        ],
+        "cachedResponses": 2,
+        "overflow": false,
+        "errors": []
+      }
+    ],
+    "mediaPages": [
+      {
+        "path": "/produtos",
+        "width": 390,
+        "status": 200,
+        "photos": [
+          {
+            "bucket": "product-media",
+            "loaded": true
+          }
+        ],
+        "loadedMs": 823,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "path": "/produtores/loja-f2f6b8d26a6345ae8aebe1a1bfaec6fc",
+        "width": 390,
+        "status": 200,
+        "photos": [
+          {
+            "bucket": "store-media",
+            "loaded": true
+          },
+          {
+            "bucket": "product-media",
+            "loaded": true
+          }
+        ],
+        "loadedMs": 1413,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "path": "/produtos",
+        "width": 1440,
+        "status": 200,
+        "photos": [
+          {
+            "bucket": "product-media",
+            "loaded": true
+          }
+        ],
+        "loadedMs": 764,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "path": "/produtores/loja-f2f6b8d26a6345ae8aebe1a1bfaec6fc",
+        "width": 1440,
+        "status": 200,
+        "photos": [
+          {
+            "bucket": "store-media",
+            "loaded": true
+          },
+          {
+            "bucket": "product-media",
+            "loaded": true
+          }
+        ],
+        "loadedMs": 1354,
+        "overflow": false,
+        "errors": []
+      }
+    ],
+    "runtime": {
+      "window": "10m",
+      "deploymentId": "dpl_FHAohFUX1FWtBKD7dyLTBdeiTrt6",
+      "errorFatalGroups": [],
+      "scope": "Vercel runtime log grouped counts"
+    },
+    "snapshot": [
+      {
+        "relation": "auth.sessions",
+        "rows": 27,
+        "digest": "18e7d3eff9a758d023e2c0fa0abb354e"
+      },
+      {
+        "relation": "auth.users",
+        "rows": 5,
+        "digest": "b8e36c8f3cbd0703a493022dcd1dba4a"
+      },
+      {
+        "relation": "public.app_access_partial_block_municipalities",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_access_partial_block_properties",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_access_partial_blocks",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_account_deletions",
+        "rows": 1,
+        "digest": "a220e73eb7acce29b432a2cc693eeb8a"
+      },
+      {
+        "relation": "public.app_admin_auth_attempts",
+        "rows": 186,
+        "digest": "16cceaa4f485d21bd91a3cfe4289977e"
+      },
+      {
+        "relation": "public.app_admin_invite_sectors",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_admin_invites",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_admin_mfa_challenges",
+        "rows": 6,
+        "digest": "08564817e87e82b6a0f5396f5b2148cb"
+      },
+      {
+        "relation": "public.app_admin_principals",
+        "rows": 1,
+        "digest": "41bd774ab91d9894cedb1866a986cd18"
+      },
+      {
+        "relation": "public.app_admin_sector_members",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_admin_sectors",
+        "rows": 6,
+        "digest": "e8efb213a73c59b715e85a2a663a3096"
+      },
+      {
+        "relation": "public.app_audit_events",
+        "rows": 442,
+        "digest": "e68daf5d52a75603fdada6a7ff49045e"
+      },
+      {
+        "relation": "public.app_car_validations",
+        "rows": 2,
+        "digest": "46d6966041019b18470ba4f8dae596a9"
+      },
+      {
+        "relation": "public.app_cart_items",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_carts",
+        "rows": 3,
+        "digest": "78011d613aecfa0c7e6c3220ecba5907"
+      },
+      {
+        "relation": "public.app_categories",
+        "rows": 5,
+        "digest": "6232bd95b5b99620cf2c86a1fea8e087"
+      },
+      {
+        "relation": "public.app_checkout_quotes",
+        "rows": 2,
+        "digest": "f7e313abd4785b84d9827cc816b0e482"
+      },
+      {
+        "relation": "public.app_command_receipts",
+        "rows": 2,
+        "digest": "2f1e4329b24e00852e99a0dd1b5dbc60"
+      },
+      {
+        "relation": "public.app_consent_records",
+        "rows": 1,
+        "digest": "50c1f6ebee95b797b8dbe80526c1f30b"
+      },
+      {
+        "relation": "public.app_contact_verification_challenges",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_attempts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_quotes",
+        "rows": 2,
+        "digest": "9e9b16c6487a24f7305f39cdd8dd919d"
+      },
+      {
+        "relation": "public.app_delivery_rules",
+        "rows": 1,
+        "digest": "7987584211506e4d9c31e39de4a72ad1"
+      },
+      {
+        "relation": "public.app_document_extractions",
+        "rows": 2,
+        "digest": "71e802d4698ea7db1ec79bf61d230bd1"
+      },
+      {
+        "relation": "public.app_document_jobs",
+        "rows": 5,
+        "digest": "041ab5e97fd8964ea33990dcebcb29c7"
+      },
+      {
+        "relation": "public.app_document_reviews",
+        "rows": 30,
+        "digest": "57d9c5647221dd50a40ca7adb067417d"
+      },
+      {
+        "relation": "public.app_document_scans",
+        "rows": 8,
+        "digest": "3d48e378f89af233d958207161c16360"
+      },
+      {
+        "relation": "public.app_documents",
+        "rows": 8,
+        "digest": "500df0830d0039b6e7476fa72b44c8a9"
+      },
+      {
+        "relation": "public.app_favorites",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_global_config",
+        "rows": 1,
+        "digest": "fae25bf4fed8daa8c5e56310bd486779"
+      },
+      {
+        "relation": "public.app_inventory_lots",
+        "rows": 1,
+        "digest": "53bb48f7cb1dd1e1b6ca16b630c53a31"
+      },
+      {
+        "relation": "public.app_inventory_movements",
+        "rows": 1,
+        "digest": "2f442969d278d38b30bbff814fb1cf06"
+      },
+      {
+        "relation": "public.app_inventory_reservations",
+        "rows": 2,
+        "digest": "4823fb2a4df8600b8f7a0e968744b6c5"
+      },
+      {
+        "relation": "public.app_locality_user_impacts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_municipalities",
+        "rows": 7,
+        "digest": "afc2d298dfb5346d5bc762b0dc15aebd"
+      },
+      {
+        "relation": "public.app_outbox_events",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_password_recovery_requests",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_payment_intents",
+        "rows": 2,
+        "digest": "f298afc0b1a04ccc5b7c74d85e78cd92"
+      },
+      {
+        "relation": "public.app_people",
+        "rows": 4,
+        "digest": "ff3fc2bc0ef2683312f94c40b6828576"
+      },
+      {
+        "relation": "public.app_price_versions",
+        "rows": 1,
+        "digest": "3cc1357c6e414b4b1639a3c473a1dbf0"
+      },
+      {
+        "relation": "public.app_producer_delivery_municipalities",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_producer_delivery_scopes",
+        "rows": 1,
+        "digest": "0f7bf78a48601cae06f36eb5892afa03"
+      },
+      {
+        "relation": "public.app_producer_profiles",
+        "rows": 3,
+        "digest": "5a2e2412117ced214e43deca4dbd7b5c"
+      },
+      {
+        "relation": "public.app_producer_stores",
+        "rows": 2,
+        "digest": "550999faaafceda645a149577d343b8b"
+      },
+      {
+        "relation": "public.app_product_media",
+        "rows": 1,
+        "digest": "a49a2749ce1af93f6c656072bfe35484"
+      },
+      {
+        "relation": "public.app_products",
+        "rows": 1,
+        "digest": "655b68977610b47e8e56d9b34a3ecd3d"
+      },
+      {
+        "relation": "public.app_properties",
+        "rows": 2,
+        "digest": "dc66da54b905a9d2885b6acb66e9d7cc"
+      },
+      {
+        "relation": "public.app_property_boundaries",
+        "rows": 2,
+        "digest": "0a0a4d750a39e17ef12d0c9487cf9e18"
+      },
+      {
+        "relation": "public.app_property_deletion_archive",
+        "rows": 2,
+        "digest": "919c5bd2c477a3ba4c56349805e47f0e"
+      },
+      {
+        "relation": "public.app_registration_reviews",
+        "rows": 1,
+        "digest": "3024ed3a40072c778e6a4c771ce4e9b3"
+      },
+      {
+        "relation": "public.app_role_security_challenges",
+        "rows": 3,
+        "digest": "707c7a45584212e2e333ddec360ba41a"
+      },
+      {
+        "relation": "public.app_roles",
+        "rows": 4,
+        "digest": "7c50f04f7699aa9850938206d4fdaa46"
+      },
+      {
+        "relation": "public.app_rural_activities",
+        "rows": 2,
+        "digest": "7a3da9e65dfbc7ae1fbc08913dd6854a"
+      },
+      {
+        "relation": "public.app_service_areas",
+        "rows": 1,
+        "digest": "0493906500496e54f90caea3f9368fb0"
+      },
+      {
+        "relation": "public.app_storage_deletion_queue",
+        "rows": 10,
+        "digest": "78aca1f25e07821dc1f87d76b7664798"
+      },
+      {
+        "relation": "public.app_store_media",
+        "rows": 1,
+        "digest": "2a5cc574d8b215c468003f982973d2a7"
+      },
+      {
+        "relation": "public.app_store_operating_hours",
+        "rows": 14,
+        "digest": "eae5d86e5bd7ae5ae2a02a9e19d98250"
+      },
+      {
+        "relation": "public.app_user_addresses",
+        "rows": 1,
+        "digest": "275a5c3fa5e7d9e1f571c877f11b7765"
+      },
+      {
+        "relation": "public.app_user_preferences",
+        "rows": 1,
+        "digest": "2860877d8b880981ed1769cdeb7f4549"
+      },
+      {
+        "relation": "public.app_user_role_assignments",
+        "rows": 6,
+        "digest": "cedef5b0e7996f7b89411ef2304740de"
+      },
+      {
+        "relation": "public.app_users",
+        "rows": 5,
+        "digest": "96ac7856b9ce4c66d5442b8598495f91"
+      },
+      {
+        "relation": "public.app_verification_decisions",
+        "rows": 3,
+        "digest": "6b6cb4097ea2528b338b0327c49156b3"
+      },
+      {
+        "relation": "public.app_verification_requests",
+        "rows": 3,
+        "digest": "10b3033bce9350ea7bcef13d75df8c49"
+      },
+      {
+        "relation": "storage.buckets",
+        "rows": 4,
+        "digest": "87d01be5cb8ee0aa7286ac83f255e209"
+      },
+      {
+        "relation": "storage.objects",
+        "rows": 10,
+        "digest": "1916d2c81bfdb9f48a75f355d300dda5"
+      }
+    ],
+    "changesSinceMigration": [
+      {
+        "relation": "auth.users",
+        "beforeRows": 5,
+        "afterRows": 5,
+        "digestChanged": true
+      },
+      {
+        "relation": "public.app_audit_events",
+        "beforeRows": 438,
+        "afterRows": 442,
+        "digestChanged": true
+      },
+      {
+        "relation": "public.app_cart_items",
+        "beforeRows": 1,
+        "afterRows": 0,
+        "digestChanged": true
+      },
+      {
+        "relation": "public.app_carts",
+        "beforeRows": 3,
+        "afterRows": 3,
+        "digestChanged": true
+      },
+      {
+        "relation": "public.app_checkout_quotes",
+        "beforeRows": 1,
+        "afterRows": 2,
+        "digestChanged": true
+      },
+      {
+        "relation": "public.app_command_receipts",
+        "beforeRows": 1,
+        "afterRows": 2,
+        "digestChanged": true
+      },
+      {
+        "relation": "public.app_delivery_quotes",
+        "beforeRows": 1,
+        "afterRows": 2,
+        "digestChanged": true
+      },
+      {
+        "relation": "public.app_inventory_lots",
+        "beforeRows": 1,
+        "afterRows": 1,
+        "digestChanged": true
+      },
+      {
+        "relation": "public.app_inventory_reservations",
+        "beforeRows": 1,
+        "afterRows": 2,
+        "digestChanged": true
+      },
+      {
+        "relation": "public.app_payment_intents",
+        "beforeRows": 1,
+        "afterRows": 2,
+        "digestChanged": true
+      }
+    ],
+    "integrity": {
+      "pos_count": 0,
+      "holds_count": 0,
+      "orders_count": 0,
+      "rls_failures": 0,
+      "all_app_tables": 76,
+      "migration_count": 64,
+      "client_dml_grants": 0,
+      "audit_since_baseline": [
+        {
+          "count": 1,
+          "action": "cart.remove",
+          "last_at": "2026-10-06T21:24:50.833124+00:00",
+          "first_at": "2026-10-06T21:24:50.833124+00:00"
+        },
+        {
+          "count": 1,
+          "action": "checkout.confirmed",
+          "last_at": "2026-10-06T21:24:07.734295+00:00",
+          "first_at": "2026-10-06T21:24:07.734295+00:00"
+        },
+        {
+          "count": 1,
+          "action": "checkout.quoted",
+          "last_at": "2026-10-06T21:23:50.889534+00:00",
+          "first_at": "2026-10-06T21:23:50.889534+00:00"
+        },
+        {
+          "count": 1,
+          "action": "payment.policy_accepted",
+          "last_at": "2026-10-06T21:24:22.531787+00:00",
+          "first_at": "2026-10-06T21:24:22.531787+00:00"
+        }
+      ],
+      "new_evidence_objects": 0,
+      "payment_events_count": 0,
+      "intents_since_baseline": [
+        {
+          "count": 1,
+          "status": "pending",
+          "last_at": "2026-10-06T21:24:07.716683+00:00",
+          "first_at": "2026-10-06T21:24:07.716683+00:00"
+        }
+      ]
+    },
+    "interpretation": "Immediately after migration all 67 prior relations preserved count/digest. Later authenticated concurrent use is evidenced by checkout.quoted/checkout.confirmed/payment.policy_accepted/cart.remove audit events. Final digests are not claimed equal to baseline. Production verification only read public pages/APIs and submitted a rejected untrusted webhook; it did not create users, purchases or test evidence.",
+    "limits": [
+      "Gateway account, contract, credentials and provider adapter still absent; no real charges, payouts, custody or bank refunds activated.",
+      "Authenticated UI and permission flows verified locally with real API/PostgreSQL; no authenticated production account test asserted.",
+      "Latency measurements are samples through the executor network proxy; not an instant-load guarantee or statistical benchmark.",
+      "Supabase Preview skipped; feature Vercel previews canceled by existing main-only filter; CodeRabbit review skipped."
+    ]
   }
 }
