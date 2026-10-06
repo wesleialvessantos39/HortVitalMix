@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { randomUUID } from "node:crypto";
+import sanitizeHtml from "sanitize-html";
 import {
   OperatingHoursSchema,
   SaveStoreSettingsSchema,
@@ -66,6 +67,38 @@ describe("T12 contratos e apresentação", () => {
       "Terra & cuidado <3",
     );
     expect(sanitizeStoreBio("<script>alert(1)</script>")).toBe("");
+  });
+  it.each(["textarea", "xmp"])(
+    "não reabre imagem por fechamento com barra de %s (GHSA-jxwj-j7wr-gfrw)",
+    (tag) => {
+      const cleaned = sanitizeHtml(
+        `<${tag}></${tag}/><img src=x onerror=alert(1)>`,
+        { allowedTags: [tag], allowedAttributes: {} },
+      );
+      expect(cleaned).not.toContain("<img");
+      expect(cleaned).not.toContain(`</${tag}/>`);
+      expect(cleaned).toContain("&lt;");
+    },
+  );
+  it("remove destinos javascript em ações e animação SVG com parser compatível", () => {
+    expect(
+      sanitizeHtml(
+        "<form action=javascript:alert(1)></form><button formaction=javascript:alert(1)>Texto</button>",
+        {
+          allowedTags: ["form", "button"],
+          allowedAttributes: { form: ["action"], button: ["formaction"] },
+        },
+      ),
+    ).toBe("<form></form><button>Texto</button>");
+    expect(
+      sanitizeHtml(
+        '<svg><a><animate attributeName="href" values="#safe;javascript:alert(1)"></animate><text>Texto</text></a></svg>',
+        {
+          allowedTags: ["svg", "a", "animate", "text"],
+          allowedAttributes: { animate: ["attributename", "values"] },
+        },
+      ),
+    ).toBe("<svg><a><text>Texto</text></a></svg>");
   });
   it("não admite campos pessoais ou chaves privadas na resposta pública", () => {
     const publicStore = {
