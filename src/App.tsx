@@ -50,6 +50,7 @@ const PublicProducerStorePage = lazy(() => import("./pages/public/PublicProducer
 const RegionalHighlights = lazy(() => import("./components/catalog/RegionalHighlights"));
 const HomeDiscoveryPage = lazy(() => import("./pages/public/HomeDiscoveryPage"));
 const CartPage = lazy(() => import("./pages/public/CartPage"));
+const CheckoutReviewPage = lazy(() => import("./pages/public/CheckoutReviewPage"));
 const fallback = {
   platformName: "HortiVitalMix",
   slogan: "Tudo fresco. Tudo da sua região.",
@@ -366,7 +367,7 @@ export default function App() {
           onOpen={openLocality}
         />
       </header>
-      <main id="conteudo" className={isAdminRoute || publicLoginRole ? "layout admin-route-layout" : isProducerPropertyRoute ? "layout producer-route-layout rural-property-layout" : isProducerScopeRoute || isProducerStoreRoute || isProducerProductRoute || path === "/carrinho" ? "layout producer-route-layout" : "layout"}>
+      <main id="conteudo" className={isAdminRoute || publicLoginRole ? "layout admin-route-layout" : isProducerPropertyRoute ? "layout producer-route-layout rural-property-layout" : isProducerScopeRoute || isProducerStoreRoute || isProducerProductRoute || path === "/carrinho" || path === "/checkout" ? "layout producer-route-layout" : "layout"}>
         {shellSession?.localityWarning && !isAdminRoute && (
           <p className="account-notice locality-blocked" role="alert">
             {shellSession.localityWarning}
@@ -394,6 +395,10 @@ export default function App() {
           />
         ) : path === "/cadastro" ? (
           <ChoosePortalPage onNavigate={go} />
+        ) : path === "/checkout" ? (
+          <Suspense fallback={<p role="status">Preparando a revisão do pedido…</p>}>
+            {sessionLoading ? <p role="status">Preparando a revisão do pedido…</p> : <CheckoutReviewPage key={shellSession?.userId ?? "guest"} userId={publicPortalSession ? shellSession?.userId ?? null : null} onNavigate={go}/>}
+          </Suspense>
         ) : path === "/carrinho" ? (
           <Suspense fallback={<p role="status">Carregando sua cesta…</p>}>
             {sessionLoading ? <p role="status">Carregando sua cesta…</p> : <CartPage key={shellSession?.userId ?? "guest"} signedIn={!!shellSession} onNavigate={go}/>}

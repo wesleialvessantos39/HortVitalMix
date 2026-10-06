@@ -263,6 +263,13 @@ export default function CartPage({
                   <strong>{formatProductPrice(cart.subtotalCents)}</strong>
                   <p>Total dos alimentos disponíveis. Frete não incluído.</p>
                   <button
+                    className="primary"
+                    disabled={locked || !cart.stores.every((s) => s.meetsMinOrder && s.items.every((i) => i.available))}
+                    onClick={() => onNavigate("/checkout")}
+                  >
+                    Revisar pedido
+                  </button>
+                  <button
                     className="secondary"
                     onClick={() => onNavigate("/produtos")}
                   >
