@@ -475,7 +475,7 @@ export function Account({
           },
         );
         onSessionAdopt(authenticated);
-        navigate("/conta");
+        navigate("/");
         return;
       }
 

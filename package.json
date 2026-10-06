@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 3000",
-    "build": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t02:unit && npm run verify:t02:evidence && npm run test:t03:unit && npm run verify:t03:evidence && npm run test:t04:unit && npm run verify:t04:evidence && npm run test:t05:unit && npm run verify:t05:evidence && npm run test:t06:unit && npm run verify:t06:evidence && npm run test:t12:unit && npm run verify:t12:evidence && npm run test:t17:unit && vite build && node --import tsx scripts/check-bundle.ts",
+    "build": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t02:unit && npm run verify:t02:evidence && npm run test:t03:unit && npm run verify:t03:evidence && npm run test:t04:unit && npm run verify:t04:evidence && npm run test:t05:unit && npm run verify:t05:evidence && npm run test:t06:unit && npm run verify:t06:evidence && npm run test:t12:unit && npm run verify:t12:evidence && npm run test:t17:unit && npm run test:t20:unit && vite build && node --import tsx scripts/check-bundle.ts",
     "preview": "vite preview --host 0.0.0.0",
     "typecheck": "tsc --noEmit",
     "lint": "npm run typecheck && npm run security:check",
@@ -103,7 +103,11 @@
     "test:t19:unit": "vitest run tests/unit/checkoutContracts.test.ts tests/integration/checkoutRoutes.test.ts",
     "test:t19:postgres": "vitest run tests/integration/checkoutPostgres.test.ts",
     "test:t19:story": "vitest run tests/integration/checkoutBrowserPostgres.test.ts",
-    "test:t19:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha19-checkout.spec.ts"
+    "test:t19:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha19-checkout.spec.ts",
+    "test:t20:unit": "vitest run tests/unit/commerceContracts.test.ts tests/integration/commerceRoutes.test.ts tests/unit/mediaCachePersistence.test.ts",
+    "test:t20:postgres": "vitest run tests/integration/commercePostgres.test.ts",
+    "test:t20:story": "vitest run tests/integration/commerceBrowserPostgres.test.ts",
+    "test:t20:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha20-commerce.spec.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",

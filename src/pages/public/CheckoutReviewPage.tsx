@@ -1,3 +1,4 @@
+import { RefundPolicy } from "../../components/commerce/RefundPolicy";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -55,7 +56,7 @@ export default function CheckoutReviewPage({
     [addresses, setAddresses] = useState<AddressAdvancedView[]>([]),
     [addressId, setAddressId] = useState(""),
     [quote, setQuote] = useState<CheckoutQuote | null>(null),
-    [method, setMethod] = useState<"pix" | "credit_card">("pix"),
+    [method, setMethod] = useState<"pix" | "credit_card" | "debit_card">("pix"),
     [confirmed, setConfirmed] = useState<CheckoutConfirmation | null>(null),
     [pending, setPending] = useState<PendingCheckout | null>(null),
     [uncertain, setUncertain] = useState(false),
@@ -371,6 +372,7 @@ export default function CheckoutReviewPage({
                     : `Estoque reservado por mais ${countdown(Date.parse(confirmed.expiresAt) - now)}.`}
                 </p>
                 <small>Referência: {confirmed.paymentIntentId}</small>
+                {!reservationExpired&&<button className="primary" onClick={()=>onNavigate("/pagamentos/"+confirmed.paymentIntentId)}>Ver opções de pagamento e proteção</button>}
                 {reservationExpired && (
                   <button className="secondary" onClick={newSelection}>
                     Revisar nova seleção
@@ -553,6 +555,7 @@ export default function CheckoutReviewPage({
                     )}
                     {!confirmed && (
                       <>
+                        <RefundPolicy onNavigate={onNavigate}/>
                         <fieldset disabled={locked || expired}>
                           <legend>Forma de pagamento</legend>
                           <label>
@@ -573,6 +576,7 @@ export default function CheckoutReviewPage({
                             />{" "}
                             Cartão de crédito
                           </label>
+                          <label><input type="radio" name="checkout-payment" checked={method==="debit_card"} onChange={()=>setMethod("debit_card")}/> Cartão de débito</label>
                         </fieldset>
                         <p>
                           A confirmação reserva os alimentos por 15 minutos. O

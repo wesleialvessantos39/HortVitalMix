@@ -38,7 +38,7 @@ export function PublicLoginPage({ role, onNavigate, onSessionAdopt }: {
         method: "POST", body: JSON.stringify({ email: email.trim(), password, portalRole: role }),
       });
       onSessionAdopt(session);
-      onNavigate("/conta");
+      onNavigate("/");
     } catch (failure) {
       const e = failure as ApiFailure;
       const messages: Record<string, string> = {

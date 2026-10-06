@@ -9,7 +9,7 @@ export const CheckoutCommandIdSchema = z
     /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/,
   )
   .transform((v) => v.toLowerCase());
-export const PaymentMethodEnum = z.enum(["pix", "credit_card"]);
+export const PaymentMethodEnum = z.enum(["pix", "credit_card", "debit_card"]);
 export const CreateQuoteSchema = z
   .object({
     cartId: z.uuid().transform((v) => v.toLowerCase()),

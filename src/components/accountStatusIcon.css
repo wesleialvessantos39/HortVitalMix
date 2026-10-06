@@ -1,0 +1,50 @@
+.account-status-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: inherit;
+}
+.account-status-icon.is-connected {
+  background: #e4f1d9;
+  color: #275b31;
+  outline: 1px solid #bad8ab;
+}
+.account-status-icon.is-administrative {
+  background: #f8edcc;
+  color: #805c16;
+  outline-color: #e2cc83;
+}
+.account-connected-mark {
+  position: absolute;
+  right: -2px;
+  bottom: -1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #34793d;
+  color: white;
+  width: 14px;
+  height: 14px;
+  border: 2px solid white;
+  border-radius: 50%;
+}
+.is-administrative .account-connected-mark {
+  background: #8b681d;
+}
+.admin-nav-item .account-status-icon,
+.admin-bottom-nav .account-status-icon {
+  width: 25px;
+  height: 25px;
+}
+.admin-mobile-bar .account-status-icon {
+  width: 30px;
+  height: 30px;
+}
+.commerce-account-card svg {
+  flex-shrink: 0;
+}

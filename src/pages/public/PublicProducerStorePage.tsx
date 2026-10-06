@@ -44,7 +44,7 @@ export default function PublicProducerStorePage({
     })
       .then(async (response) => {
         const result = StorePublicResponseSchema.parse(response);
-        await prepareMediaUrls(
+        void prepareMediaUrls(
           [result.avatarUrl, result.coverImages[0]?.url ?? result.bannerUrl],
           { signal: controller.signal },
         );
@@ -148,6 +148,7 @@ export default function PublicProducerStorePage({
         <div>
           <span className="eyebrow">Conheça quem cultiva</span>
           <h1>{store.name}</h1>
+          <div className="commerce-actions"><button className="text-button" onClick={()=>onNavigate(`/denuncias?targetType=store&storeSlug=${encodeURIComponent(store.slug)}&search=${encodeURIComponent(store.name)}`)}>Denunciar loja</button><button className="text-button" onClick={()=>onNavigate(`/denuncias?targetType=producer&storeSlug=${encodeURIComponent(store.slug)}&search=${encodeURIComponent(store.name)}`)}>Denunciar produtor</button></div>
           {store.publicProducerName && (
             <p className="hvm-store-producer-name">
               {store.publicProducerName}
