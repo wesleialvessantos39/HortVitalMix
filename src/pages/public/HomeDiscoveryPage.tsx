@@ -24,6 +24,7 @@ import {
 } from "../../../shared/contracts/discovery";
 import "./discovery.css";
 import { MediaImage } from "../../components/catalog/MediaImage";
+import { prepareMediaUrls } from "../../lib/prepareMedia";
 
 function StorePhoto({
   name,
@@ -133,9 +134,17 @@ export default function HomeDiscoveryPage({
       params.set("longitude", String(coordinates.longitude));
     }
     api(`/v1/discovery/stores?${params}`, { signal: abort.signal })
-      .then((raw) => {
+      .then(async (raw) => {
         if (abort.signal.aborted) return;
-        setResult(SearchStoresResponseSchema.parse(raw));
+        const result = SearchStoresResponseSchema.parse(raw);
+        await prepareMediaUrls(
+          result.stores.slice(0, 3).map((store) => store.avatarUrl),
+          {
+            signal: abort.signal,
+          },
+        );
+        if (abort.signal.aborted) return;
+        setResult(result);
         setError(false);
       })
       .catch(() => {
@@ -399,13 +408,13 @@ export default function HomeDiscoveryPage({
         </div>
       ) : (
         <div className="hvm-discovery-grid" aria-label="Produtores encontrados">
-          {result.stores.map((store,index) => (
+          {result.stores.map((store, index) => (
             <article className="hvm-discovery-card" key={store.id}>
               <div className="hvm-discovery-photo">
                 <StorePhoto
                   key={store.avatarUrl}
                   name={store.name}
-                  priority={index<3}
+                  priority={index < 3}
                   avatarUrl={store.avatarUrl}
                 />
                 <button

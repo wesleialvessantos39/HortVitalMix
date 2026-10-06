@@ -64,6 +64,7 @@ test("Trilha 03 — portal administrativo usa ponto de entrada independente", as
 
 test("Trilha 03 — seleção pública nunca oferece papel administrativo", async ({ page }) => {
   await page.goto("/cadastro");
+  await expect(page.locator("main")).toContainText("Cadastrar como Consumidor");
   const text = await page.locator("main").innerText();
 
   expect(text).toContain("Cadastrar como Consumidor");

@@ -9,6 +9,7 @@ import {
   Sprout,
 } from "lucide-react";
 import { api, type ApiFailure } from "../../lib/api";
+import { prepareMediaUrls } from "../../lib/prepareMedia";
 import {
   StorePublicResponseSchema,
   STORE_DAY_LABELS,
@@ -41,9 +42,14 @@ export default function PublicProducerStorePage({
     api(`/v1/stores/${encodeURIComponent(slug)}?media=1`, {
       signal: controller.signal,
     })
-      .then((response) => {
+      .then(async (response) => {
+        const result = StorePublicResponseSchema.parse(response);
+        await prepareMediaUrls(
+          [result.avatarUrl, result.coverImages[0]?.url ?? result.bannerUrl],
+          { signal: controller.signal },
+        );
         if (!controller.signal.aborted) {
-          setStore(StorePublicResponseSchema.parse(response));
+          setStore(result);
           setState("ready");
         }
       })
@@ -53,7 +59,7 @@ export default function PublicProducerStorePage({
       });
     return () => controller.abort();
   }, [slug, attempt]);
-  if (state === "loading")
+  if (state === "loading" || (state === "ready" && catalog.loading))
     return (
       <section className="hvm-store">
         <p role="status" className="account-notice">

@@ -296,6 +296,262 @@ async function noOverflow(page: Page) {
     ),
   ).toBe(true);
 }
+test("destaque prepara produto e retrato juntos, sem clique ou rolagem", async ({
+  page,
+}) => {
+  await mock(page);
+  let release!: () => void;
+  const portrait = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const requested = new Set<string>();
+  await page.route(`${origin}/**`, async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    requested.add(path);
+    if (path.includes("store-media")) await portrait;
+    await route.fulfill({ contentType: "image/png", body: png });
+  });
+  try {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect
+      .poll(() => [...requested].some((p) => p.includes("product-media")))
+      .toBe(true);
+    await expect
+      .poll(() => [...requested].some((p) => p.includes("store-media")))
+      .toBe(true);
+    const carousel = page.getByRole("region", {
+      name: "Produtos da região",
+      exact: true,
+    });
+    await expect(carousel).toHaveCount(0);
+    release();
+    await expect(carousel).toBeVisible();
+    await expect
+      .poll(() =>
+        carousel
+          .locator(".hvm-carousel-surface img")
+          .evaluateAll((images) =>
+            images.every(
+              (image) =>
+                (image as HTMLImageElement).complete &&
+                (image as HTMLImageElement).naturalWidth > 0,
+            ),
+          ),
+      )
+      .toBe(true);
+  } finally {
+    release();
+  }
+});
+
+test("vitrine prepara capa, retrato e produtos antes de apresentar a loja", async ({
+  page,
+}) => {
+  await mock(page);
+  let release!: () => void;
+  const product = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const requested = new Set<string>();
+  await page.route(`${origin}/**`, async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    requested.add(path);
+    if (path.includes("product-media")) await product;
+    await route.fulfill({ contentType: "image/png", body: png });
+  });
+  try {
+    await page.goto("/produtores/loja-0", { waitUntil: "domcontentloaded" });
+    await expect
+      .poll(() => [...requested].some((p) => p.includes("product-media")))
+      .toBe(true);
+    await expect
+      .poll(() => [...requested].some((p) => p.includes("store-media")))
+      .toBe(true);
+    await expect(page.locator(".hvm-store-public")).toHaveCount(0);
+    release();
+    await expect(page.locator(".hvm-store-public")).toBeVisible();
+    await expect
+      .poll(() =>
+        page
+          .locator(
+            ".hvm-store-public .hvm-carousel-surface>img, .hvm-store-avatar img",
+          )
+          .evaluateAll(
+            (images) =>
+              images.length >= 3 &&
+              images.every(
+                (image) =>
+                  (image as HTMLImageElement).complete &&
+                  (image as HTMLImageElement).naturalWidth > 0,
+              ),
+          ),
+      )
+      .toBe(true);
+    await noOverflow(page);
+  } finally {
+    release();
+  }
+});
+
+test("imagem inválida libera a vitrine e mantém indicação honesta da falha", async ({
+  page,
+}) => {
+  await mock(page);
+  await page.route(
+    `${origin}/storage/v1/object/sign/product-media/**`,
+    (route) =>
+      route.fulfill({
+        contentType: "application/json",
+        body: '{"error":"not-an-image"}',
+      }),
+  );
+  await page.goto("/produtores/loja-0");
+  await expect(page.locator(".hvm-store-public")).toBeVisible();
+  const product = page.getByRole("region", {
+    name: "Fotos de Couve fresca",
+    exact: true,
+  });
+  await expect(product.getByText("Foto indisponível")).toBeVisible();
+  await expect
+    .poll(() =>
+      page
+        .locator(".hvm-store-avatar img")
+        .evaluate((image) => (image as HTMLImageElement).naturalWidth > 0),
+    )
+    .toBe(true);
+  await noOverflow(page);
+});
+
+test("foto sem resposta não deixa a vitrine esperando indefinidamente", async ({
+  page,
+}) => {
+  await mock(page);
+  await page.clock.install();
+  let release!: () => void;
+  const stalled = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let requested = false;
+  await page.route(
+    `${origin}/storage/v1/object/sign/product-media/**`,
+    async (route) => {
+      requested = true;
+      await stalled;
+      await route.fulfill({ contentType: "image/png", body: png });
+    },
+  );
+  try {
+    await page.goto("/produtores/loja-0", { waitUntil: "domcontentloaded" });
+    await expect.poll(() => requested).toBe(true);
+    await expect(page.locator(".hvm-store-public")).toHaveCount(0);
+    await page.clock.runFor(8100);
+    await expect(page.locator(".hvm-store-public")).toBeVisible();
+    await expect(
+      page
+        .getByRole("region", { name: "Fotos de Couve fresca", exact: true })
+        .getByRole("status"),
+    ).toHaveText("Carregando foto…");
+    release();
+    await expect
+      .poll(() =>
+        page
+          .getByRole("region", { name: "Fotos de Couve fresca", exact: true })
+          .locator(".hvm-carousel-surface>img")
+          .evaluate((image) => (image as HTMLImageElement).naturalWidth > 0),
+      )
+      .toBe(true);
+  } finally {
+    release();
+  }
+});
+
+test("assinatura renovada mantém foto carregada sem indicador permanente nem novo download", async ({
+  page,
+}) => {
+  await mock(page);
+  let version = 0;
+  let reads = 0;
+  const downloads: string[] = [];
+  const signed = (value: string) =>
+    value.replace(
+      "token=local",
+      "token=header." +
+        Buffer.from(
+          JSON.stringify({ exp: Date.now() / 1000 + 900, version }),
+        ).toString("base64url") +
+        ".signature",
+    );
+  await page.route("**/*", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.hostname === "xipbsazvymkqqfmfegwu.supabase.co") {
+      downloads.push(url.pathname);
+      return route.fulfill({ contentType: "image/png", body: png });
+    }
+    if (!url.pathname.endsWith("/v1/discovery/highlights"))
+      return route.fallback();
+    reads++;
+    return route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        page: 1,
+        hasMore: false,
+        products: [
+          {
+            ...publicProducts[0],
+            media: publicProducts[0].media.map((media) => ({
+              ...media,
+              url: signed(media.url),
+            })),
+            producerName: "Produtor 0",
+            producerAvatarUrl: signed(photo(100, "store-media")),
+            municipalityId: regions[0].id,
+            municipality: regions[0].name,
+          },
+        ],
+      }),
+    });
+  });
+  await page.goto("/");
+  const carousel = page.getByRole("region", {
+    name: "Produtos da região",
+    exact: true,
+  });
+  const image = carousel.locator(".hvm-carousel-surface>img");
+  await expect
+    .poll(() =>
+      image.evaluate(
+        (element) => (element as HTMLImageElement).naturalWidth > 0,
+      ),
+    )
+    .toBe(true);
+  await expect(carousel.getByRole("status")).toHaveCount(0);
+  const original = await image.getAttribute("src");
+  const count = downloads.length;
+  version++;
+  await page.clock.install();
+  await page.clock.fastForward(31000);
+  await expect.poll(() => reads).toBeGreaterThan(1);
+  await expect(image).toHaveAttribute("src", original!);
+  await expect(carousel.getByRole("status")).toHaveCount(0);
+  expect(downloads).toHaveLength(count);
+});
+
+test("carrossel antecipa duas próximas fotos sem abrir os slides", async ({
+  page,
+}) => {
+  await mock(page);
+  const requested = new Set<string>();
+  await page.route(`${origin}/**`, async (route) => {
+    requested.add(new URL(route.request().url()).pathname);
+    await route.fulfill({ contentType: "image/png", body: png });
+  });
+  await page.goto("/");
+  await expect(
+    page.getByRole("region", { name: "Produtos da região", exact: true }),
+  ).toBeVisible();
+  await expect.poll(() => requested.has(new URL(photo(4)).pathname)).toBe(true);
+});
+
 for (const width of [320, 390, 768, 1440]) {
   test(`destaques e busca única adaptados a ${width}px`, async ({ page }) => {
     const m = await mock(page);

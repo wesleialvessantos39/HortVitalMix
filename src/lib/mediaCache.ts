@@ -31,6 +31,9 @@ function expiresAt(value: string) {
     return 0;
   }
 }
+export function mediaUrlCacheUntil(value: string) {
+  return keyOf(value) ? Math.min(expiresAt(value), Date.now() + 5 * 60000) : 0;
+}
 // Immutable Storage paths can receive a new signature at every API refresh or
 // server cold start. Reuse the same still-valid image URL across page views so
 // the browser reuses its download/decoded image. Never cache domain data, auth
@@ -41,7 +44,7 @@ export function stableMediaUrl(value: string) {
   const current = entries.get(key);
   if (current && current.until > Date.now()) return current.url;
   entries.delete(key);
-  const until = Math.min(expiresAt(value), Date.now() + 5 * 60000);
+  const until = mediaUrlCacheUntil(value);
   if (until > Date.now()) entries.set(key, { url: value, until });
   while (entries.size > MAX_ENTRIES)
     entries.delete(entries.keys().next().value!);

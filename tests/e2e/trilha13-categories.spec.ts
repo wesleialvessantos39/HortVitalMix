@@ -323,6 +323,7 @@ test("T13 estado vazio e erro com nova tentativa", async ({ page }) => {
   ).toBeVisible();
   mockApi.recover();
   await page
+    .locator(".hvm-category-nav")
     .getByRole("button", { name: "Tentar novamente", exact: true })
     .click();
   await expect(

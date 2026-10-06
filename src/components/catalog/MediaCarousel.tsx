@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, ImageOff, Pause, Play } from "lucide-react";
 import "./mediaCarousel.css";
 import { MediaImage } from "./MediaImage";
+import { prepareMediaUrls } from "../../lib/prepareMedia";
+import { stableMediaUrl } from "../../lib/mediaCache";
 
 export type MediaSlide = {
   id: string;
@@ -34,6 +36,7 @@ export function MediaCarousel({
     [reduced, setReduced] = useState(
       () => matchMedia("(prefers-reduced-motion: reduce)").matches,
     ),
+    [loadedImage, setLoadedImage] = useState<string | null>(null),
     [failed, setFailed] = useState<Set<string>>(new Set()),
     [boundary, setBoundary] = useState(false);
   const root = useRef<HTMLElement | null>(null),
@@ -44,8 +47,23 @@ export function MediaCarousel({
     slides.findIndex((slide) => slide.id === activeId),
   );
   const slide = slides[index],
-    next = slides[(index + 1) % slides.length];
+    next = slides[(index + 1) % slides.length],
+    following = slides[(index + 2) % slides.length];
+  const imageSource = slide?.imageUrl
+    ? new URL(stableMediaUrl(slide.imageUrl), location.href).href
+    : null;
   const signature = slides.map((item) => item.id).join("|");
+  useEffect(() => {
+    if (!visible && !priority) return;
+    const controller = new AbortController();
+    void prepareMediaUrls(
+      [next?.imageUrl, following?.imageUrl].filter(
+        (url) => url !== slide?.imageUrl,
+      ),
+      { signal: controller.signal, priority: "low" },
+    );
+    return () => controller.abort();
+  }, [visible, priority, slide?.imageUrl, next?.imageUrl, following?.imageUrl]);
   useEffect(() => {
     const node = root.current;
     if (!node) return;
@@ -117,17 +135,29 @@ export function MediaCarousel({
   const content = (
     <>
       {slide.imageUrl && !failed.has(slide.imageUrl) ? (
-        <MediaImage
-          src={slide.imageUrl}
-          alt={slide.alt}
-          loading={visible || priority ? "eager" : "lazy"}
-          decoding="async"
-          fetchPriority={priority || visible ? "high" : "auto"}
-          priority={priority || visible}
-          onError={() =>
-            setFailed((previous) => new Set(previous).add(slide.imageUrl!))
-          }
-        />
+        <>
+          <MediaImage
+            src={slide.imageUrl}
+            alt={slide.alt}
+            loading={visible || priority ? "eager" : "lazy"}
+            decoding="async"
+            fetchPriority={priority || visible ? "high" : "auto"}
+            priority={priority || visible}
+            onLoad={(event) =>
+              setLoadedImage(
+                event.currentTarget.currentSrc || event.currentTarget.src,
+              )
+            }
+            onError={() =>
+              setFailed((previous) => new Set(previous).add(slide.imageUrl!))
+            }
+          />
+          {loadedImage !== imageSource && (
+            <span className="hvm-carousel-loading" role="status">
+              Carregando foto…
+            </span>
+          )}
+        </>
       ) : (
         <span className="hvm-carousel-fallback">
           <ImageOff size={32} aria-hidden="true" />
@@ -199,16 +229,6 @@ export function MediaCarousel({
         </a>
       ) : (
         <div className="hvm-carousel-surface">{content}</div>
-      )}
-      {visible && next?.imageUrl && next.imageUrl !== slide.imageUrl && (
-        <MediaImage
-          className="hvm-carousel-preload"
-          src={next.imageUrl}
-          alt=""
-          aria-hidden="true"
-          loading="eager"
-          fetchPriority="low"
-        />
       )}
       {(slides.length > 1 || onEnd) && (
         <div className="hvm-carousel-controls">

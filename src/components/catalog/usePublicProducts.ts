@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../lib/api";
+import { prepareMediaUrls } from "../../lib/prepareMedia";
 import {
   PublicProductsResponseSchema,
   type PublicProduct,
@@ -35,6 +36,17 @@ export function usePublicProducts({
         const result = PublicProductsResponseSchema.parse(
           await api(`/v1/products?${params}`, { signal: controller.signal }),
         );
+        if (initial)
+          await prepareMediaUrls(
+            result.products
+              .slice(0, 3)
+              .map(
+                (product) =>
+                  product.media.find((media) => media.isPrimary)?.url ??
+                  product.media[0]?.url,
+              ),
+            { signal: controller.signal },
+          );
         if (!controller.signal.aborted) {
           setProducts(result.products);
           setError(false);

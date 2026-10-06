@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Sprout } from "lucide-react";
 import { api } from "../../lib/api";
+import { prepareMediaUrls } from "../../lib/prepareMedia";
 import {
   HighlightsResponseSchema,
   type HighlightProduct,
@@ -50,6 +51,15 @@ export default function RegionalHighlights({
                 AbortSignal.timeout(15000),
               ]),
             }),
+          );
+          const first = result.products[0];
+          await prepareMediaUrls(
+            [
+              first?.media.find((media) => media.isPrimary)?.url ??
+                first?.media[0]?.url,
+              first?.producerAvatarUrl,
+            ],
+            { signal: abort.signal },
           );
           if (!abort.signal.aborted) {
             setProducts(result.products);
