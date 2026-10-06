@@ -1014,5 +1014,340 @@
     }
   ],
   "logLocation": "/workspace/scratch",
-  "note": "Snapshot of verified functional implementation before documentation-only publication. No credentials, full tokens or Vercel bypass URLs included. Local real services do not prove private production functionality."
+  "note": "Snapshot of verified functional implementation before documentation-only publication. No credentials, full tokens or Vercel bypass URLs included. Local real services do not prove private production functionality.",
+  "imageLoadingFollowup": {
+    "at": "2026-10-06T16:42:12.288Z",
+    "repository": "wesleialvessantos39/HortVitalMix",
+    "branch": "main",
+    "functionalCommit": "e8f179c9afb9279436e8c0140015b32e67fb5d4b",
+    "tree": "a49683ea0c7e661ed3afa08c508b022af66f2412",
+    "deployment": "dpl_2GdgA9p2doPCC9XVgh3ZhFBw2md9",
+    "state": "READY",
+    "domain": "hortvitalmix.vercel.app",
+    "canonical": {
+      "physical_migrations": 63,
+      "auth_users": 5,
+      "storage_objects": 10,
+      "carts": 3,
+      "cart_items": 0,
+      "public_tables": 64,
+      "forced_rls_tables": 64,
+      "buckets": [
+        {
+          "id": "documents",
+          "public": false,
+          "fileSizeLimit": null
+        },
+        {
+          "id": "documents_private",
+          "public": false,
+          "fileSizeLimit": 15728640
+        },
+        {
+          "id": "product-media",
+          "public": false,
+          "fileSizeLimit": 2097152
+        },
+        {
+          "id": "store-media",
+          "public": false,
+          "fileSizeLimit": 2097152
+        }
+      ],
+      "current_release": {
+        "tag": "photos-v57-e8f179c",
+        "hash": "614027ef88c383fb30dbf14fcf670104cf2fb7025cfa801253059bca67014b25",
+        "commit": "e8f179c9afb9279436e8c0140015b32e67fb5d4b",
+        "schemaVersion": 57
+      }
+    },
+    "actualBundle": {
+      "asset": "/assets/index-D4ND3k6G.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "characters": 573091,
+      "loadingPhotoMessage": true,
+      "containsCanonicalStorage": true,
+      "utf8Bytes": 575469
+    },
+    "remoteSmoke": {
+      "health": 200,
+      "ready": 200,
+      "config": 200,
+      "html": 200,
+      "bundle": 200,
+      "source": "Vercel connector real HTTP"
+    },
+    "postDeployBrowser": {
+      "status": "PENDING_JUSTIFIED",
+      "cause": "Executor HTTPS proxy returns 503 text/plain: upstream connect error; remote address envoy://cloudflare_https_tunnel/. Independent Vercel connector returns 200. No successful post-deploy visual measurement is claimed."
+    },
+    "initialCommit": "4b3e3b76b710600b753bb86690add700dea1dc57",
+    "initialDeployment": "dpl_H47eEE8SdpgVEkQEKfQSbHfVFy5J",
+    "priority": "P2",
+    "storageBytes": {
+      "product": 50574,
+      "store": 316108
+    },
+    "beforeProductionFrames": [
+      {
+        "path": "/",
+        "width": 390,
+        "firstDomMs": 1459,
+        "readyMs": 1861.7,
+        "visibleWaitingMs": 402.7,
+        "partialImageGapMs": 70.7
+      },
+      {
+        "path": "/produtos",
+        "width": 390,
+        "firstDomMs": 1310.3,
+        "readyMs": 1764.4,
+        "visibleWaitingMs": 454.1,
+        "partialImageGapMs": 0
+      },
+      {
+        "path": "store",
+        "width": 390,
+        "firstDomMs": 1084.3,
+        "readyMs": 1240.2,
+        "visibleWaitingMs": 155.9,
+        "partialImageGapMs": 0
+      },
+      {
+        "path": "/",
+        "width": 1440,
+        "firstDomMs": 1549.9,
+        "readyMs": 2548.8,
+        "visibleWaitingMs": 998.9,
+        "partialImageGapMs": 913.0
+      },
+      {
+        "path": "/produtos",
+        "width": 1440,
+        "firstDomMs": 833.7,
+        "readyMs": 973.2,
+        "visibleWaitingMs": 139.5,
+        "partialImageGapMs": 0
+      },
+      {
+        "path": "store",
+        "width": 1440,
+        "firstDomMs": 711.8,
+        "readyMs": 1527.1,
+        "visibleWaitingMs": 815.3,
+        "partialImageGapMs": 463.9
+      }
+    ],
+    "afterLocalWithRealReadOnlyProductionApi": [
+      {
+        "route": "/",
+        "width": 390,
+        "firstFrame": {
+          "total": 2,
+          "loaded": 2,
+          "pending": 0,
+          "failed": 0
+        },
+        "allReadyOnFirstFrame": true,
+        "pendingFrames": 0
+      },
+      {
+        "route": "/produtos",
+        "width": 390,
+        "firstFrame": {
+          "total": 1,
+          "loaded": 1,
+          "pending": 0,
+          "failed": 0
+        },
+        "allReadyOnFirstFrame": true,
+        "pendingFrames": 0
+      },
+      {
+        "route": "store",
+        "width": 390,
+        "firstFrame": {
+          "total": 2,
+          "loaded": 2,
+          "pending": 0,
+          "failed": 0
+        },
+        "allReadyOnFirstFrame": true,
+        "pendingFrames": 0
+      },
+      {
+        "route": "/",
+        "width": 1440,
+        "firstFrame": {
+          "total": 2,
+          "loaded": 2,
+          "pending": 0,
+          "failed": 0
+        },
+        "allReadyOnFirstFrame": true,
+        "pendingFrames": 0
+      },
+      {
+        "route": "/produtos",
+        "width": 1440,
+        "firstFrame": {
+          "total": 1,
+          "loaded": 1,
+          "pending": 0,
+          "failed": 0
+        },
+        "allReadyOnFirstFrame": true,
+        "pendingFrames": 0
+      },
+      {
+        "route": "store",
+        "width": 1440,
+        "firstFrame": {
+          "total": 2,
+          "loaded": 2,
+          "pending": 0,
+          "failed": 0
+        },
+        "allReadyOnFirstFrame": true,
+        "pendingFrames": 0
+      }
+    ],
+    "tests": {
+      "default": {
+        "passed": 737,
+        "skipped": 260,
+        "total": 997,
+        "filesPassed": 80
+      },
+      "preloaderDirected": {
+        "passed": 21
+      },
+      "baselineBrowserImages": 18,
+      "negativeReproductionsBefore": 3,
+      "negativeReproductionsAfter": 3,
+      "completeBrowserRun": {
+        "passed": 319,
+        "failed": 2,
+        "total": 321,
+        "duration": "7.6m"
+      },
+      "correctedExistingCases": {
+        "passed": 2,
+        "assertionsRemoved": 0,
+        "timeoutsIncreased": 0
+      },
+      "affectedBrowserFinal": {
+        "passed": 70,
+        "newCases": 6
+      },
+      "uniqueBrowserCasesProven": 322,
+      "realLocalPostgresMedia": 16,
+      "build": "passed Node 22.23.3",
+      "lint": "passed",
+      "coldStart": "API_COLD_START_OK_WITHOUT_REQUIRE_ESM"
+    },
+    "preservation": {
+      "backendSharedSqlDependenciesConfigUnchanged": true,
+      "migrationsAdded": 0,
+      "storageObjectsChanged": 0,
+      "authUsersChanged": 0,
+      "privateBuckets": 4,
+      "rlsEnabledAndForcedTables": 64
+    },
+    "reproductionLogs": [
+      {
+        "path": "/workspace/scratch/hvm-image-baseline-unit.log",
+        "bytes": 273,
+        "sha256": "0d599effa81864fb77730ab6e3609b0fde5cac19b3188386315aeb749485842a"
+      },
+      {
+        "path": "/workspace/scratch/hvm-image-baseline-routes.log",
+        "bytes": 261,
+        "sha256": "82bb5c04145934d1041aecce210fc42a0256a5cbf851e19fdea08cac5656e1a4"
+      },
+      {
+        "path": "/workspace/scratch/hvm-image-baseline-e2e.log",
+        "bytes": 2480,
+        "sha256": "0758bb338e4124323d95b9d9eba96356609a91dc19f3cd7d5b7592b669a6dc2a"
+      },
+      {
+        "path": "/workspace/scratch/hvm-image-reproduction.log",
+        "bytes": 5264,
+        "sha256": "bb3a6460a1d73d9cb80b27980e897692edbef01ef1bbbcad25f4a953c399da26"
+      },
+      {
+        "path": "/workspace/scratch/hvm-image-final-directed-unit.log",
+        "bytes": 275,
+        "sha256": "578364c5c6178b87d20e578eb8ce4542db9b3514ddf7484011fd3cc33a83ab3a"
+      },
+      {
+        "path": "/workspace/scratch/hvm-image-final-all-tests.log",
+        "bytes": 147320,
+        "sha256": "0cd1c78363a9a8c74969c6a82e1c3231197c4aed44659a49aae19306abb10bee"
+      },
+      {
+        "path": "/workspace/scratch/hvm-image-full-regression-e2e.log",
+        "bytes": 41959,
+        "sha256": "3d4cd0d7d701f905e34d4ee853798636ca70ab56109808df74c9a905cc933b50"
+      },
+      {
+        "path": "/workspace/scratch/hvm-image-final-relevant-e2e.log",
+        "bytes": 8994,
+        "sha256": "62858b6babd18da2e14d07431bd08fbc63800dadaeca41fe30f70c2954eb42d8"
+      },
+      {
+        "path": "/workspace/scratch/hvm-image-full-regression-retry.log",
+        "bytes": 449,
+        "sha256": "8d20bfd1761094ff07601e585601ce9b3e7cc3a614602e2c6cfe8cda1edafc5f"
+      },
+      {
+        "path": "/workspace/scratch/hvm-image-final-real-postgres.log",
+        "bytes": 3333,
+        "sha256": "67999e95c341e19a185ac5aa241ebce94600f4b30177d935407a291451c3a777"
+      },
+      {
+        "path": "/workspace/scratch/hvm-image-build-release.log",
+        "bytes": 11008,
+        "sha256": "691acccfa6a97ef08903d08893727a7d8b1516fd4088be0c721d395a0b5c7973"
+      },
+      {
+        "path": "/workspace/scratch/hvm-image-lint-release.log",
+        "bytes": 258,
+        "sha256": "c9a8ff86e97fc677478148f5d02f8ce526cc7621f49bf96a323007f1562cd1e2"
+      },
+      {
+        "path": "/workspace/scratch/hvm-image-final-cold-start.log",
+        "bytes": 69,
+        "sha256": "9d985428001b1e0392b6b43443ba5925d6864a2046ddc4e6fbec859b94929f9f"
+      },
+      {
+        "path": "/workspace/scratch/hvm-image-before.json",
+        "bytes": 78271,
+        "sha256": "f542a9150a502318cb5291191639287a2f56e969836d2205a082d65a1a2d7d41"
+      },
+      {
+        "path": "/workspace/scratch/hvm-image-before-sync.json",
+        "bytes": 91782,
+        "sha256": "fdff3fb4fcca245d60a7bde77231d57f918dbb1aac13d55bd483f9ccb258b14a"
+      },
+      {
+        "path": "/workspace/scratch/hvm-image-local-real-data.json",
+        "bytes": 57024,
+        "sha256": "921c8482ebb25e6874771601c906dc76fdb77f0861168618dc5de31b2b582ade"
+      },
+      {
+        "path": "/workspace/scratch/hvm-image-health-exact.headers",
+        "bytes": 185,
+        "sha256": "7e15ef2b99a4f375a251eff931511517b1544a0a2c4f1337cad29415cf769bcf"
+      },
+      {
+        "path": "/workspace/scratch/hvm-image-health-exact.txt",
+        "bytes": 215,
+        "sha256": "971f01aae81a63c435e602a1a728c8894b1527150a621d70d735aaca6ff930ea"
+      }
+    ],
+    "productionSignedUrlsPublished": false,
+    "closure": "Functional SHA verified; subsequent documentary SHA is confirmed in publication closure artifact."
+  }
 }

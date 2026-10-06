@@ -8,9 +8,9 @@ Data: **2026-10-06, UTC**. Repositório: **wesleialvessantos39/HortVitalMix**. B
 
 | Elemento | Inicial | Final da implementação auditada |
 |---|---|---|
-| Commit | b3cb8532a1349c1f1a14d7b150f1e9e76d1f6079 | **1fafc77de3358ccfb66af1fe4eb5578857b59c66** |
-| Deploy funcional | dpl_DKsMqw2mrEe7zdRjssoU65t7exGw | **dpl_7qT6hyE2sas4CX5mf84VbPPhs1XP**, READY; SHA e domínio principal confirmados |
-| Release funcional | t19-v56-b3cb853 | **audit-v57-1fafc77** |
+| Commit | b3cb8532a1349c1f1a14d7b150f1e9e76d1f6079 | **e8f179c9afb9279436e8c0140015b32e67fb5d4b** |
+| Deploy funcional | dpl_DKsMqw2mrEe7zdRjssoU65t7exGw | **dpl_2GdgA9p2doPCC9XVgh3ZhFBw2md9**, READY; SHA e domínio principal confirmados |
+| Release funcional | t19-v56-b3cb853 | **photos-v57-e8f179c** |
 | Schema lógico / migrations físicas | 56 / 62 | **57 / 63** |
 | Última migration física | 20261006015914_trilha19_checkout_quotes | **20261006120330_audit_sessions_and_client_privileges** |
 | Arquivo canônico correspondente | 20261006012938_trilha19_checkout_quotes.sql | **20261006023915_audit_sessions_and_client_privileges.sql** |
@@ -19,6 +19,8 @@ Data: **2026-10-06, UTC**. Repositório: **wesleialvessantos39/HortVitalMix**. B
 | Vercel / Node | Hobby, produção pdx1, Node 22.x | Preservados; validação local adicional em Node 22.23.3 |
 
 O SHA final acima identifica o **código auditado e testado em produção**, antes do fechamento exclusivamente documental. O commit que contém este relatório identifica o fechamento no histórico Git; a release corrente acompanha o SHA efetivamente ativo da main depois de seu deploy. A confirmação final é exportada em /workspace/scratch/hvm-publication-final.json, sem segredos. Essa distinção evita atribuir ao arquivo seu próprio SHA antes da criação do commit.
+
+A primeira etapa foi publicada em **1fafc77de3358ccfb66af1fe4eb5578857b59c66**, seguida do fechamento **4b3e3b76b710600b753bb86690add700dea1dc57**. A continuação solicitada para fotos foi publicada em **e8f179c**. Health/ready/config, HTML e bundle foram confirmados por HTTP real pelo conector Vercel; a checagem visual completa após essa última publicação permanece **⚠️ PENDENTE JUSTIFICADO**, por falha comprovada do túnel HTTPS do executor. As medições locais com API real não são apresentadas como navegador pós-deploy.
 
 Checkpoint preservado: audit/hortvitalmix-20261006, SHA ccb0539f9b6bb2f390de5a6309207bf30386987c. A retomada recuperou os logs e concluiu correções após a indisponibilidade inicial do ambiente. A branch temporária não substitui main.
 
@@ -31,15 +33,15 @@ A descoberta precedeu alterações. Checkout inicial limpo; inventário de 548 a
 | TypeScript / lint | TS2322 em registrationBackground, modo transform; lint parava no mesmo erro | **✅ VERIFICADO E CORRETO**, Node 22; fixture usa strip compatível com os tipos instalados |
 | Build / gates de segurança | Aprovados | **✅ VERIFICADO E CORRETO**, build completo em Node 22, sem reduzir gates |
 | Contrato de configuração | Aprovado | 9 testes aprovados |
-| Suíte padrão | 707 aprovados, 237 condicionais ignorados, total 944 | **729 aprovados**, 260 condicionais ignorados, total 989; 79 arquivos aprovados/29 condicionais |
+| Suíte padrão | 707 aprovados, 237 condicionais ignorados, total 944 | **737 aprovados**, 260 condicionais ignorados, total 997; 80 arquivos aprovados/29 condicionais |
 | PostgreSQL | 191 aprovados, 1 falha de locator, 15 ignorados; outra preparação exigia banco vazio | **214 cenários** de 19 suítes comprovados em bancos locais isolados; um caso de tempo passou na reexecução inalterada |
 | Integração Supabase atual | Condicionada à infraestrutura | **26/26**, Auth/PostgREST/PostgreSQL reais locais |
 | Novos fluxos e negativos reais | Ausentes | **16/16**, GoTrue, PostgreSQL, Storage e Edge Deno reais locais |
-| Navegador existente | 277 aprovados / 39 falhas / 316 | 311 aprovados / 5 timeouts conjuntos; os mesmos cinco passaram isolados, sem alteração: **316 cenários comprovados** |
+| Navegador existente | 277 aprovados / 39 falhas / 316 | Primeira etapa: 316 comprovados, incluindo cinco reexecuções. Continuação: 319/321 na rodada completa; dois testes corrigidos passaram 2/2; suíte final afetada 70/70, incluindo sexto caso novo: **322 cenários comprovados entre rodadas**, sem alegar uma execução única integralmente verde |
 | Produção health / ready | 200 / 200, schema 56 | **200 / 200, schema 57**, release do SHA publicado |
 | Verificador original de deploy | Baseline público confirmado | Health, ready e config aprovados pelo proxy do ambiente de auditoria |
-| Negativos HTTP de produção | 13 esperados | **14/14**, incluindo consentimento sem prova |
-| Navegador real de produção | Login consumidor verificado | **40/40**, oito rotas em 320/390/768/1024/1440 px |
+| Negativos HTTP de produção | 13 esperados | **14/14 na primeira etapa**, incluindo consentimento sem prova; backend preservado na continuação; reexecução após fotos pendente pelo túnel do executor |
+| Navegador real de produção | Login consumidor verificado | **40/40 na primeira etapa**, oito rotas em 320/390/768/1024/1440 px; pós-fotos pendente pelo túnel do executor |
 
 Os 260 testes condicionais foram exercitados separadamente: 214 PostgreSQL, 16 novos de serviços reais, 26 de integração atual e quatro de comunicação legada. Destes quatro últimos, um passou e três falharam também no **checkout original inalterado**: SUPABASE_AUTH_ONLY_DELIVERY. A arquitetura atual usa Supabase Auth/SMTP; outbox desativado não foi reintroduzido para satisfazer testes obsoletos.
 
@@ -75,6 +77,22 @@ Bundle local inicial → final: main **573,75 → 573,89 kB**, gzip **162,47 →
 Carga exclusivamente local: **180 leituras**, três rotas, concorrências 1/2/4, vinte amostras por cenário, **0 erros**. Em concorrência 4, p95 produtos/categorias/lojas: 18,9/5,4/8,7 ms. Produtos/lojas retornaram conjuntos vazios de 15/84 bytes; categorias 1.446 bytes. Valida estabilidade nesse cenário, **não capacidade representativa de produção**.
 
 **⚠️ PENDENTE JUSTIFICADO:** benchmark autenticado e com massa representativa, planos dirigidos às consultas relevantes, custo de sessão por camada e análise quantitativa de renderizações/bundle. Usuários cadastrados não equivalem a simultâneos.
+
+## Fotos de produtos, identidade e capas — continuação solicitada
+
+**🔧 PROBLEMA ENCONTRADO E CORRIGIDO — P2:** a interface liberava o conteúdo antes do download/decodificação das fotos; o carrossel antecipava somente um próximo slide. Dependências rastreadas: MediaImage/mediaCache, usePublicProducts, RegionalHighlights, HomeDiscoveryPage, PublicProducerStorePage, MediaCarousel e configurações de capa do produtor. API, ownership, assinatura em lote e buckets privados já funcionavam e foram preservados.
+
+**Evidência anterior:** fotos reais HTTP 200, produto **50.574 bytes / 1000×1000**, loja **316.108 bytes / 1195×896**, ambas WebP. Primeira coleta da home mostrou diferença de **489,3 ms em 390 px** e **673,2 ms em 1440 px** entre término das fotos do produto/retrato. Outra coleta por frames confirmou espera visível de 402,7/998,9 ms na home; 454,1/139,5 ms no catálogo e 155,9/815,3 ms na loja, respectivamente em 390/1440 px. São amostras individuais pela rede/proxy deste ambiente, sem p95 ou porcentagem generalizável.
+
+**Correção mínima:** preparo paralelo das fotos principais já autorizadas pela API; produto e retrato do primeiro destaque juntos; fotos dos três primeiros produtos/lojas; capa/retrato e produtos preparados antes de apresentar a vitrine. As demais fotos conservam carregamento automático ao aproximar da área visível. Duas próximas fotos do carrossel são antecipadas em prioridade baixa, sem clique. Não se força o download de cem produtos de uma vez. Reuso de URL assinada, decodificação, deduplicação entre seções, limite de 128 preparos, margem de expiração e cancelamento da espera da página preservam cache/autorização. Espera limitada a **8 segundos**; imagem ainda pendente indica **“Carregando foto…”** e imagem inválida indica **“Foto indisponível”**. A revisão corrigiu também o indicador em uma URL renovada cuja imagem física já estava em cache; esse defeito intermediário não foi publicado.
+
+**Teste específico:** três novos cenários falharam no código anterior e passaram após a correção. Seis casos finais cobrem preparo conjunto, capa/produtos, próximas fotos automáticas, imagem inválida, download sem resposta e assinatura renovada sem indicador permanente ou download extra. **21 testes dirigidos**, **737 testes ativos**, **70/70 navegador afetado** e **16/16 PostgreSQL real local de mídias** aprovados. Rodada completa 319/321; a leitura imediata durante lazy loading e o seletor global que encontrava três botões foram corrigidos somente nos testes, mantendo assertions/timeouts; reexecução 2/2. Ao incluir o sexto cenário novo, **322 casos distintos comprovados entre execuções**.
+
+**Comparação comprovada:** na interface local corrigida, usando respostas reais de leitura da API de produção e arquivos reais do Storage, **6/6 páginas** (home/catálogo/loja × 390/1440 px) apresentaram todas as fotos principais prontas no primeiro frame em que a seção apareceu, **0 frames com foto principal pendente**. O adapter só encaminha GET público e não fabrica respostas. A comparação demonstra apresentação conjunta nesse escopo; não demonstra redução do tamanho dos arquivos nem da latência total de rede. Build final local main **575,42 kB / gzip 163,06 kB**, contra 573,89/162,51 kB na etapa anterior; bundle real novo **575.469 bytes**, asset index-D4ND3k6G.js, HTTP 200. Não foi declarada redução de bundle.
+
+**Publicação:** GitHub/main e Vercel READY no SHA **e8f179c9afb9279436e8c0140015b32e67fb5d4b**, deployment **dpl_2GdgA9p2doPCC9XVgh3ZhFBw2md9**, domínio principal e release **photos-v57-e8f179c** confirmados. **Zero migrations novas nesta continuação**; schema 57/63 físicas, 64 tabelas com ENABLE/FORCE RLS, quatro buckets privados, cinco usuários Auth, dez objetos Storage e três cestas/zero itens preservados. Diff confirma server/shared/supabase/api/dependências/configuração idênticos ao SHA 4b3e3b7. Rollback de código para esse SHA preserva dados e schema; histórico das releases foi mantido.
+
+**⚠️ PENDENTE JUSTIFICADO — pós-deploy:** curl/Node/Chromium do executor passaram a receber HTTP 503 text/plain com `upstream connect error` e `remote address:envoy://cloudflare_https_tunnel/`; ausência de x-vercel-id nessas respostas. Mesmo erro ocorreu no fetch GitHub e na conexão Supabase. Política do ambiente foi conferida: unrestricted/enforced/current, sem mudanças para contornar controles. Pelo conector Vercel independente, **health/ready/config/HTML/bundle = 200**, ready schema 57/release correta e artefato novo confirmado. Endpoints com queries estritas não foram homologados pelo link temporário do conector, que retornou VALIDATION_ERROR; contratos não foram relaxados. Nova rodada real de navegador, negativos HTTP e verificador CLI após fotos aguardam o transporte do executor. A coleta pós-deploy interrompida não é tratada como melhoria de 0 ms nem como sucesso de fotos. Pendências anteriores da auditoria permanecem.
 
 # Segurança
 
@@ -172,6 +190,8 @@ Referências brasileiras: [ANPD — perguntas frequentes](https://www.gov.br/anp
 | PostgreSQL locator/preparação | Um teste/uma preparação | Locator delimitado ao catálogo; bancos isolados preservam fixtures; 214 cenários comprovados |
 | TypeScript/lint | Uma causa | Corrigida; aprovados |
 | Runtime introduzido | **1** | **1 corrigida**, rollback + parser compatível + cold start corrigido |
+| Fotos — revisão local | **1 intermediária** | Indicador ligado à URL assinada em vez da imagem em cache corrigido antes de publicar; caso específico aprovado |
+| Navegador — continuação | **2 testes** | Espera do conteúdo lazy e seletor restrito a categorias corrigidos; reexecução 2/2 e suíte afetada 70/70 |
 | Introduzidas conhecidas abertas | **0** | No escopo testado; sem declaração de homologação privada integral |
 | Cobertura | Globais/específicos | **⚠️ PENDENTE JUSTIFICADO**, anterior |
 | Comunicação legada | Três de quatro | **⚠️ PENDENTE JUSTIFICADO**, reprodução igual no SHA original |
@@ -185,9 +205,9 @@ Assertions preservadas, sem desativar testes ou ampliar timeouts. Fixtures segue
 
 | Elemento | SIM/NÃO | Evidência |
 |---|---|---|
-| GitHub | **SIM** | Correções main; SHA funcional final 1fafc77de3358ccfb66af1fe4eb5578857b59c66; fechamento exclusivamente documental |
+| GitHub | **SIM** | Correções main; SHA funcional final e8f179c9afb9279436e8c0140015b32e67fb5d4b; fechamento exclusivamente documental |
 | Supabase | **SIM** | Migration 20261006120330, 63/schema 57/hash, grants/RPC/Storage verificados; Edge v11 fonte equivalente |
-| Vercel | **SIM** | dpl_7qT6hyE2sas4CX5mf84VbPPhs1XP READY, SHA/alias principal, health/ready/config e negativos aprovados |
+| Vercel | **SIM** | dpl_2GdgA9p2doPCC9XVgh3ZhFBw2md9 READY, SHA/alias principal, health/ready/config/HTML/bundle 200 pelo conector; navegador/negativos após fotos pendentes pelo túnel do executor |
 | Livro Raiz | **SIM** | Entrada sincronizada neste fechamento com implementação comprovada/pendências; histórico preservado |
 
 Depois do deploy documental, SHA ativo/release e smoke são reconfirmados e exportados no registro de encerramento. Alterações de release são rastreáveis; registros anteriores permanecem. Nenhum workflow GitHub Actions, serviço pago, branch Supabase, stack paralela ou banco substituto criado.
@@ -197,5 +217,5 @@ Evidências: [evidencias.json](docs/auditoria/2026-10-06/evidencias.json), [prot
 # Resultado
 
 - **✅ VERIFICADO E CORRETO:** arquitetura preservada; build/typecheck/lint; compressão; RLS/grants/RPC/buckets no escopo verificado; smoke/negativos/responsividade descritos.
-- **🔧 PROBLEMA ENCONTRADO E CORRIGIDO:** autoria de consentimento, janela administrativa, validade/erro de sessão, privilégios destrutivos, localidades/edição de senha, dependências/incompatibilidade de runtime; publicadas e testadas.
-- **⚠️ PENDENTE JUSTIFICADO:** cobertura, legado inativo, operação Storage, benchmark representativo, homologação privada de produção, senha condicionada a plano e revisão jurídica. Nenhuma conformidade integral ou melhoria percentual declarada sem prova.
+- **🔧 PROBLEMA ENCONTRADO E CORRIGIDO:** autoria de consentimento, janela administrativa, validade/erro de sessão, privilégios destrutivos, localidades/edição de senha, dependências/incompatibilidade de runtime e preparo automático conjunto das fotos principais; correções publicadas, com o escopo dos testes distinguido acima.
+- **⚠️ PENDENTE JUSTIFICADO:** checagem visual/negativos/verificador CLI após fotos, bloqueados pelo túnel do executor; cobertura, legado inativo, operação Storage, benchmark representativo, homologação privada de produção, senha condicionada a plano e revisão jurídica. Nenhuma conformidade integral ou melhoria percentual declarada sem prova.

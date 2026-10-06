@@ -44,6 +44,24 @@ Quatro casos de outbox foram executados adicionalmente com chave sintética: um 
 
 Scripts e dados privados dessa execução ficam em /workspace/scratch. A reprodução de infraestrutura exige bootstrap local correspondente; a lista de comandos acima não afirma que containers são iniciados automaticamente pelo npm test. Não versionar configuração privada, .env, passwords ou tokens.
 
+## Continuação: fotos de produtos, lojas e capas
+
+Código funcional publicado: main/e8f179c9afb9279436e8c0140015b32e67fb5d4b, deployment dpl_2GdgA9p2doPCC9XVgh3ZhFBw2md9, release photos-v57-e8f179c; schema 57/63 sem nova migration. Fontes backend/SQL/dependências e buckets privados preservados.
+
+```sh
+npx vitest run tests/unit/prepareMedia.test.ts tests/unit/mediaCache.test.ts \
+  tests/unit/signedMedia.test.ts tests/integration/storefrontMediaRoutes.test.ts
+HVM_PORTABLE_CHROMIUM=1 npx playwright test \
+  tests/e2e/storefront-media.spec.ts tests/e2e/trilha14-products.spec.ts \
+  tests/e2e/trilha17-discovery.spec.ts tests/e2e/trilha18-cart.spec.ts --workers=2
+```
+
+Resultados: 21 testes dirigidos, 737 ativos/260 condicionais, build/lint/cold start Node 22 aprovados. Seis novos casos browser: preparo conjunto de produto/retrato; capa/produtos; MIME/conteúdo inválido; espera limitada quando a rede não responde; duas próximas fotos solicitadas automaticamente; assinatura renovada sem novo download/indicador permanente. Suíte afetada final 70/70. Rodada completa 319/321; dois testes corrigidos por leitura antes do lazy loading e seletor global ambíguo, reexecução 2/2. Ao incluir o sexto caso, 322 cenários únicos comprovados entre rodadas; nenhuma execução única integralmente verde de 322 é alegada.
+
+16/16 mídias PostgreSQL real local reexecutados em banco baseado no template canônico já aplicado; banco anterior preservado. SDK/Auth de alguns testes de rota são mocks e não são declarados como infraestrutura real. O browser desses testes usa fixtures. Distintamente, a medição da interface local usa transportador GET restrito para respostas reais públicas de produção e imagens reais do Storage: home/catálogo/loja × 390/1440 px, seis primeiras apresentações com todas as fotos principais prontas. Latências totais de transporte local não são comparadas como melhora de produção.
+
+Pós-deploy, curl/Node/Chromium do executor recebem 503 text/plain de `envoy://cloudflare_https_tunnel/`; política cloud confirmada unrestricted/enforced/current. Sem alteração de proxy/política para contornar controles. Conector Vercel independente confirma 200 para health/ready/config/HTML/bundle e tag/schema. Links temporários do conector não substituem requisições normais em endpoints com queries estritas (VALIDATION_ERROR observado); validação final de navegador/negativos/CLI após fotos é **⚠️ PENDENTE JUSTIFICADO** pelo transporte. Não interpretar JSON vazio da coleta interrompida como zero tempo ou sucesso. Arquivos e tokens assinados não são publicados nas evidências.
+
 ## Produção
 
 Vercel API confirmou deployment READY, main/SHA e domínio principal. Após promover o código e registrar sua release, foram feitos health/ready/config, 14 negativos HTTP e 40 navegações reais. Nenhuma API do navegador foi mockada; 401 de sessão para visitante é uma resposta esperada e é registrada separadamente de pageerror. Larguras 320/390/768/1024/1440; quatro logins/aliases e catálogo, sem submits autenticados ou mutação de cesta.
