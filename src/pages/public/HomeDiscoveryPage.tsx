@@ -137,7 +137,7 @@ export default function HomeDiscoveryPage({
       .then(async (raw) => {
         if (abort.signal.aborted) return;
         const result = SearchStoresResponseSchema.parse(raw);
-        await prepareMediaUrls(
+        void prepareMediaUrls(
           result.stores.slice(0, 3).map((store) => store.avatarUrl),
           {
             signal: abort.signal,

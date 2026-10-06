@@ -34,6 +34,7 @@ import { RecoverPasswordPage } from "./pages/auth/RecoverPasswordPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 import { useSession } from "./hooks/useSession";
 import { PublicLoginPage } from "./pages/auth/PublicLoginPage";
+import { AccountStatusIcon, accountSessionLabel } from "./components/AccountStatusIcon";
 import { ProducerPropertiesPage } from "./pages/producer/ProducerPropertiesPage";
 import { DeliveryScopePage } from "./pages/producer/DeliveryScopePage";
 import { DocumentsPanel } from "./pages/documents/DocumentsPanel";
@@ -51,6 +52,11 @@ const RegionalHighlights = lazy(() => import("./components/catalog/RegionalHighl
 const HomeDiscoveryPage = lazy(() => import("./pages/public/HomeDiscoveryPage"));
 const CartPage = lazy(() => import("./pages/public/CartPage"));
 const CheckoutReviewPage = lazy(() => import("./pages/public/CheckoutReviewPage"));
+const PaymentPreparedPage = lazy(() => import("./pages/commerce/PaymentPreparedPage"));
+const ProducerPosPage = lazy(() => import("./pages/commerce/ProducerPosPage"));
+const PurchasesPage = lazy(() => import("./pages/commerce/PurchasesPage"));
+const PosSaleReviewPage = lazy(() => import("./pages/commerce/PosSaleReviewPage"));
+const CasesPage = lazy(() => import("./pages/commerce/CasesPage"));
 const fallback = {
   platformName: "HortiVitalMix",
   slogan: "Tudo fresco. Tudo da sua região.",
@@ -121,13 +127,15 @@ export default function App() {
     path === "/entrar/super-administrador" ||
     path === "/acesso/administracao" ||
     path === "/acesso/super-administracao";
-  const accountTarget = "/conta";
   const publicLoginRole = path === "/entrar/produtor" ? "producer" : path === "/entrar/consumidor" ? "consumer" : null;
   const guestAccessRoute = path === "/entrar" || path.startsWith("/entrar/") || path === "/cadastro" || path.startsWith("/cadastro/") || path === "/administracao" || path === "/admin/entrar" || path.startsWith("/acesso/");
   const administrativeSession = shellSession?.activeRole === "platform_admin" || shellSession?.activeRole === "platform_super_admin";
+  const accountTarget = administrativeSession ? "/admin/conta" : "/conta";
+  const paymentId = path.match(/^\/pagamentos\/([^/]+)$/)?.[1] ?? path.match(/^\/pedidos\/([^/]+)\/pagamento$/)?.[1];
+  const posCode = path.match(/^\/pos\/venda\/([a-f0-9]{32})$/)?.[1];
   useEffect(() => {
     if (!shellSession || !guestAccessRoute) return;
-    const destination = administrativeSession ? "/admin/painel" : "/conta";
+    const destination = administrativeSession ? "/admin/painel" : "/";
     history.replaceState({}, "", destination);
     setPath(destination);
   }, [shellSession, guestAccessRoute, administrativeSession]);
@@ -313,10 +321,11 @@ export default function App() {
             <button
               className="icon"
               aria-label="Conta"
-              title="Conta"
-              onClick={() => go("/conta")}
+              aria-description={accountSessionLabel(shellSession)}
+              title={accountSessionLabel(shellSession)}
+              onClick={() => go(accountTarget)}
             >
-              <UserRound />
+              <AccountStatusIcon session={shellSession}/>
             </button>
             <button
               className="icon"
@@ -395,6 +404,26 @@ export default function App() {
           />
         ) : path === "/cadastro" ? (
           <ChoosePortalPage onNavigate={go} />
+        ) : paymentId ? (
+          <Suspense fallback={<p role="status">Carregando pagamento…</p>}>
+            {sessionLoading ? <p role="status">Conferindo sua conta…</p> : <PaymentPreparedPage key={shellSession?.userId+":"+paymentId} id={paymentId} userId={publicPortalSession?shellSession?.userId??null:null} onNavigate={go}/>}
+          </Suspense>
+        ) : posCode ? (
+          <Suspense fallback={<p role="status">Carregando revisão presencial…</p>}>
+            {sessionLoading ? <p role="status">Conferindo sua conta…</p> : <PosSaleReviewPage key={shellSession?.userId+":"+posCode} code={posCode} userId={publicPortalSession?shellSession?.userId??null:null} onNavigate={go}/>}
+          </Suspense>
+        ) : path === "/compras" || path === "/pedidos" ? (
+          <Suspense fallback={<p role="status">Carregando suas compras…</p>}>
+            {sessionLoading ? <p role="status">Conferindo sua conta…</p> : <PurchasesPage key={shellSession?.userId??"guest"} userId={publicPortalSession?shellSession?.userId??null:null} onNavigate={go}/>}
+          </Suspense>
+        ) : path === "/denuncias" || path === "/reembolsos" ? (
+          <Suspense fallback={<p role="status">Carregando solicitações…</p>}>
+            {sessionLoading ? <p role="status">Conferindo sua conta…</p> : <CasesPage key={(shellSession?.userId??"guest")+path} kind={path==="/reembolsos"?"refund":"complaint"} session={publicPortalSession?shellSession:null} onNavigate={go}/>}
+          </Suspense>
+        ) : path === "/produtor/caixa" ? (
+          <Suspense fallback={<p role="status">Abrindo seu caixa…</p>}>
+            {sessionLoading?<p role="status">Conferindo sua conta…</p>:shellSession?.activeRole==="producer"?<ProducerPosPage key={shellSession.userId} userId={shellSession.userId} onNavigate={go}/>:<section className="account-notice"><p>Entre como produtor para acessar o caixa da sua loja.</p><button className="primary" onClick={()=>go("/entrar/produtor")}>Entrar como produtor</button></section>}
+          </Suspense>
         ) : path === "/checkout" ? (
           <Suspense fallback={<p role="status">Preparando a revisão do pedido…</p>}>
             {sessionLoading ? <p role="status">Preparando a revisão do pedido…</p> : <CheckoutReviewPage key={shellSession?.userId ?? "guest"} userId={publicPortalSession ? shellSession?.userId ?? null : null} onNavigate={go}/>}
@@ -596,6 +625,8 @@ export default function App() {
         <strong>{display.platformName}</strong>
         <span>Conectando produtores e consumidores.</span>
         <span>{display.slogan}</span>
+        <a href="/reembolsos" onClick={event=>{event.preventDefault();go("/reembolsos");}}>Política de reembolso</a>
+        <a href="/denuncias" onClick={event=>{event.preventDefault();go("/denuncias");}}>Denúncias e segurança</a>
       </footer>
       <nav className="bottom-nav" aria-label="Navegação mobile">
         {[
@@ -606,12 +637,13 @@ export default function App() {
             href={to}
             key={to}
             aria-current={path === to ? "page" : undefined}
+            aria-description={to===accountTarget?accountSessionLabel(shellSession):undefined}
             onClick={(e) => {
               e.preventDefault();
               go(to);
             }}
           >
-            <Icon size={20} />
+            {to===accountTarget?<AccountStatusIcon session={shellSession} size={20}/>:<Icon size={20} />}
             <span>{label}</span>
           </a>
         ))}

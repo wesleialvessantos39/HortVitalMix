@@ -68,7 +68,8 @@ function prepare(value: string, priority: "high" | "low") {
 
 // Prepare only the public image URLs already authorized by the API. Downloads
 // start together and reuse the existing signature cache; no data/auth is cached.
-// Failures and slow images release the loading state within eight seconds.
+// Callers prefetch without awaiting: a slow image must never hold up a view.
+// Failures and slow images release only their preparation entry within eight seconds.
 // A cancelled view stops waiting without cancelling another view's shared image.
 export async function prepareMediaUrls(
   values: (string | null | undefined)[],

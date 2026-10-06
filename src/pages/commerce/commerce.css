@@ -1,0 +1,328 @@
+.hvm-commerce {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 20px 48px;
+  color: var(--text, #21392b);
+}
+.hvm-commerce h1 {
+  font-size: clamp(1.7rem, 4vw, 2.4rem);
+  margin: 16px 0 10px;
+}
+.hvm-commerce h2 {
+  font-size: 1.35rem;
+}
+.hvm-commerce h3 {
+  font-size: 1.1rem;
+}
+.hvm-commerce p {
+  line-height: 1.65;
+}
+.hvm-commerce label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-weight: 600;
+  margin: 12px 0;
+}
+.hvm-commerce input,
+.hvm-commerce select,
+.hvm-commerce textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 11px;
+  border: 1px solid #d0dacf;
+  border-radius: 10px;
+  background: #fff;
+  color: #183c2a;
+  font: inherit;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.hvm-commerce textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+.hvm-commerce fieldset {
+  border: 1px solid #d0dacf;
+  border-radius: 12px;
+  min-width: 0;
+  padding: 12px;
+}
+.hvm-commerce input:disabled,
+.hvm-commerce textarea:disabled {
+  background: #f1f4f0;
+  color: #68746c;
+}
+.hvm-commerce button {
+  min-height: 42px;
+}
+.commerce-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  align-items: start;
+}
+.commerce-card,
+.commerce-policy {
+  border: 1px solid #dae3d7;
+  border-radius: 18px;
+  background: white;
+  padding: 22px;
+  margin: 16px 0;
+  min-width: 0;
+  box-shadow: 0 4px 16px #153a2310;
+}
+.commerce-policy {
+  background: #f0f6ec;
+  color: #26412d;
+}
+.commerce-policy h3,
+.commerce-payment-slot h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.commerce-policy p {
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.commerce-policy small {
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.commerce-policy button {
+  padding: 8px;
+}
+.commerce-deadline {
+  background: #dcecd2;
+  padding: 10px;
+  border-radius: 9px;
+}
+.commerce-prewrap {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.commerce-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 14px 0;
+}
+.commerce-actions > * {
+  max-width: 100%;
+}
+.commerce-tag {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #edf4e5;
+  color: #2b5634;
+}
+.commerce-error {
+  background: #fff0ed;
+  color: #842d22;
+  padding: 14px;
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+.commerce-success {
+  background: #ebf5e9;
+  padding: 14px;
+  border-radius: 12px;
+  color: #285533;
+}
+.commerce-qr-placeholder {
+  min-height: 195px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  flex-direction: column;
+  color: #79877c;
+  border: 2px dashed #c7d7c1;
+  border-radius: 16px;
+  background: #f5f8f2;
+  margin: 14px 0;
+}
+.commerce-payment-slot img {
+  display: block;
+  max-width: 240px;
+  width: 100%;
+  height: auto;
+  margin: 14px auto;
+}
+.commerce-checkbox {
+  flex-direction: row !important;
+  align-items: start;
+}
+.commerce-checkbox input {
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  flex-shrink: 0;
+  margin: 3px 0;
+}
+.commerce-checkbox span {
+  font-weight: 400;
+  line-height: 1.5;
+}
+.commerce-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.commerce-items li {
+  padding: 12px 0;
+  border-bottom: 1px solid #edf1eb;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.commerce-items li > span {
+  min-width: 0;
+  flex: 1;
+}
+.commerce-items small {
+  display: block;
+  color: #65726a;
+}
+.commerce-items input[type="number"] {
+  max-width: 90px;
+}
+.commerce-items label {
+  margin: 0;
+  font-weight: 400;
+}
+.commerce-case-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.commerce-case-list button {
+  padding: 16px;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid #d5dfd0;
+  border-radius: 12px;
+  background: #fff;
+  color: #24432e;
+  flex-wrap: wrap;
+}
+.commerce-case-list button[aria-pressed="true"] {
+  border-color: #367448;
+  background: #f0f7ed;
+}
+.commerce-case-list strong {
+  display: block;
+}
+.commerce-case-list small,
+.commerce-case-list .commerce-reference {
+  display: block;
+  margin-top: 4px;
+}
+.commerce-history {
+  padding-left: 22px;
+  line-height: 1.6;
+}
+.commerce-history li {
+  padding: 8px 0;
+}
+.commerce-history small {
+  display: block;
+  color: #65726a;
+}
+.commerce-reference {
+  font-family: monospace;
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+.commerce-form-help {
+  font-size: 0.85rem;
+  color: #65726a;
+}
+.commerce-balances {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.commerce-balances strong {
+  display: block;
+  font-size: 1.2rem;
+}
+.commerce-balances span {
+  font-size: 0.8rem;
+}
+.commerce-policy a {
+  color: inherit;
+  text-decoration: underline;
+}
+.commerce-section-links {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.commerce-note {
+  border-left: 3px solid #558942;
+  padding: 12px 15px;
+  background: #f4f7ef;
+}
+.commerce-message {
+  border-radius: 12px;
+  padding: 12px;
+  background: #f3f6ef;
+  margin: 10px 0;
+}
+.commerce-message small {
+  font-size: 0.8rem;
+  color: #647467;
+}
+.commerce-modal {
+  max-width: min(650px, 92vw);
+  width: 100%;
+  border: 0;
+  border-radius: 18px;
+  padding: 22px;
+}
+.commerce-modal::backdrop {
+  background: #0b231a88;
+}
+.commerce-subtle {
+  color: #68776b;
+  font-size: 0.9rem;
+}
+@media (max-width: 720px) {
+  .hvm-commerce {
+    padding: 20px 14px 40px;
+  }
+  .commerce-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .commerce-card,
+  .commerce-policy {
+    padding: 17px;
+    margin: 12px 0;
+  }
+  .commerce-balances {
+    gap: 6px;
+  }
+  .commerce-balances strong {
+    font-size: 1rem;
+  }
+  .commerce-actions .primary,
+  .commerce-actions .secondary {
+    flex: 1 1 170px;
+  }
+  .commerce-case-list button {
+    width: 100%;
+  }
+  .commerce-items li > span {
+    flex-basis: 60%;
+  }
+}

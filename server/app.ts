@@ -24,6 +24,7 @@ import { productRouter } from "./routes/productRoutes.ts";
 import { discoveryRouter } from "./routes/discoveryRoutes.ts";
 import { cartRouter } from "./routes/cartRoutes.ts";
 import { checkoutRouter } from "./routes/checkoutRoutes.ts";
+import { commerceRouter, adminCommerceRouter } from "./routes/commerceRoutes.ts";
 export const app = express();
 app.disable("x-powered-by");
 
@@ -59,6 +60,7 @@ app.use((req, res, next) => {
   }
   if (
     !["GET", "HEAD"].includes(req.method) &&
+    !/^\/(?:api\/|_hvm_api\/)?v1\/payments\/webhook\/?$/.test(req.path) &&
     !/^\/(?:api\/|_hvm_api\/)?v1\/admin(?:\/|$)/.test(req.path) &&
     !(runtime.appEnv !== "production" && req.headers["x-hvm-request"] === "1") &&
     !isAllowedRequestOrigin(req)
@@ -82,7 +84,10 @@ app.use((req, _res, next) => {
   }
   next();
 });
-app.use(express.json({ limit: "32kb" }));
+app.use((req,res,next)=> {
+  const evidence=/^\/(?:api\/|_hvm_api\/)?v1\/(?:admin\/)?commerce\/evidence\/?$/.test(req.path);
+  return express.json({limit:evidence?"3mb":"32kb"})(req,res,next);
+});
 app.use(sessionMiddleware);
 app.use(foundationRouter);
 app.use("/api", foundationRouter);
@@ -108,6 +113,8 @@ for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
   app.use(prefix, discoveryRouter);
   app.use(prefix, cartRouter);
   app.use(prefix, checkoutRouter);
+  app.use(prefix, commerceRouter);
+  app.use(prefix + "/admin", adminCommerceRouter);
 }
 for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
   app.use(prefix + "/producer/documents", documentRouter);

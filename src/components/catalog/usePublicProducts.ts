@@ -37,7 +37,7 @@ export function usePublicProducts({
           await api(`/v1/products?${params}`, { signal: controller.signal }),
         );
         if (initial)
-          await prepareMediaUrls(
+          void prepareMediaUrls(
             result.products
               .slice(0, 3)
               .map(

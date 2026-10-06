@@ -149,6 +149,7 @@ export function PublicProductGrid({
                 </button>
               )}
               <ProductCartActions productId={product.id} available={product.inStock}/>
+              <button className="text-button" onClick={()=>onNavigate(`/denuncias?targetType=product&targetId=${product.id}`)}>Denunciar produto</button>
             </div>
           </article>
         );

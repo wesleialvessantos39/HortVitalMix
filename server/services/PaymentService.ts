@@ -1,0 +1,423 @@
+import { z } from "zod";
+import type { PoolClient } from "pg";
+import { InventoryService } from "./InventoryService.ts";
+import {
+  CommercePolicySchema,
+  type PaymentView,
+  type PosItem,
+} from "../../shared/contracts/commerce.ts";
+import {
+  getPaymentGateway,
+  type VerifiedPayment,
+} from "../payments/gateway.ts";
+import {
+  CommerceError,
+  commerceIdentity,
+  commerceTransaction,
+  commerceAudit,
+  type CommerceAudit,
+} from "./CommerceSupport.ts";
+import type { CheckoutStoreSnapshot } from "../../shared/contracts/checkout.ts";
+
+const verifiedSchema = z
+  .object({
+    provider: z.string().min(1).max(32),
+    eventId: z.string().min(1).max(128),
+    paymentReference: z.string().min(1).max(128),
+    intentId: z.uuid(),
+    status: z.literal("approved"),
+    amountCents: z.number().int().positive().max(2147483647),
+    currency: z.literal("BRL"),
+    method: z.enum(["pix", "credit_card", "debit_card"]),
+    paidAt: z.iso.datetime(),
+  })
+  .strict();
+export async function settleVerifiedPayment(
+  client: PoolClient,
+  input: VerifiedPayment,
+  context: CommerceAudit,
+) {
+  const payment = verifiedSchema.parse(input);
+  await client.query("SELECT pg_advisory_xact_lock(20,hashtext($1))", [
+    "payment:" + payment.intentId,
+  ]);
+  const intent = (
+    await client.query(
+      `SELECT *,expires_at<=clock_timestamp() AS expired FROM public.app_payment_intents WHERE id=$1 FOR UPDATE`,
+      [payment.intentId],
+    )
+  ).rows[0];
+  if (!intent) throw new CommerceError("PAYMENT_NOT_FOUND", 404);
+  const prior = (
+    await client.query(
+      "SELECT * FROM public.app_payment_transactions WHERE provider=$1 AND gateway_event_id=$2",
+      [payment.provider, payment.eventId],
+    )
+  ).rows[0];
+  if (prior) {
+    if (
+      prior.payment_intent_id !== intent.id ||
+      prior.amount_received_cents !== payment.amountCents ||
+      prior.event_type !== "approved"
+    )
+      throw new CommerceError("PAYMENT_EVENT_CONFLICT");
+    return { status: "approved", replayed: true };
+  }
+  if (
+    intent.amount_cents !== payment.amountCents ||
+    intent.method !== payment.method
+  )
+    throw new CommerceError("PAYMENT_VALUES_MISMATCH");
+  if (!intent.gateway_reference) throw new CommerceError("PAYMENT_REFERENCE_MISSING");
+  if (intent.gateway_reference !== payment.paymentReference)
+    throw new CommerceError("PAYMENT_REFERENCE_MISMATCH");
+  if (intent.status !== "pending") {
+    if (
+      intent.status === "approved" &&
+      intent.gateway_reference === payment.paymentReference
+    )
+      return { status: "approved", replayed: true };
+    throw new CommerceError("PAYMENT_STATE_CONFLICT");
+  }
+  if (
+    intent.expired ||
+    Date.parse(payment.paidAt) > Date.now() + 30000 ||
+    Date.parse(payment.paidAt) > new Date(intent.expires_at).getTime()
+  )
+    throw new CommerceError("PAYMENT_EXPIRED");
+  await commerceIdentity(client, intent.user_id);
+  // The same lock used by T18/T19 serializes a settlement with cart mutations.
+  await client.query("SELECT pg_advisory_xact_lock(18,hashtext($1))", [
+    "user:" + intent.user_id,
+  ]);
+  const acceptance = (
+    await client.query(
+      "SELECT policy_snapshot FROM public.app_payment_policy_acceptances WHERE payment_intent_id=$1 AND user_id=$2",
+      [intent.id, intent.user_id],
+    )
+  ).rows[0];
+  if (!acceptance) throw new CommerceError("POLICY_ACCEPTANCE_REQUIRED");
+  const policy = CommercePolicySchema.parse(acceptance.policy_snapshot);
+  let stores: Array<{
+      storeId: string;
+      storeName: string;
+      storeSlug: string;
+      subtotalCents: number;
+      deliveryFeeCents: number;
+      items: PosItem[];
+    }>,
+    reservationIds: string[],
+    address: unknown = null;
+  let cartId: string | null = null;
+  if (intent.quote_id) {
+    const quote = (
+      await client.query(
+        "SELECT * FROM public.app_checkout_quotes WHERE id=$1 AND user_id=$2 FOR UPDATE",
+        [intent.quote_id, intent.user_id],
+      )
+    ).rows[0];
+    if (
+      !quote?.is_consumed ||
+      quote.total_cents !== intent.amount_cents ||
+      quote.discount_cents !== 0
+    )
+      throw new CommerceError("PAYMENT_QUOTE_INVALID");
+    stores = (quote.items_snapshot as CheckoutStoreSnapshot[]).map((store) => ({
+      ...store,
+      items: store.items.map((item) => ({
+        productId: item.productId,
+        title: item.title,
+        quantity: item.quantity,
+        unitType: item.unitType,
+        unitPriceCents: item.unitPriceCents,
+        totalPriceCents: item.totalPriceCents,
+        priceVersionId: item.priceVersionId,
+      })),
+    }));
+    reservationIds = quote.reservation_ids;
+    address = quote.address_snapshot;
+    cartId = quote.cart_id;
+  } else {
+    const sale = (
+      await client.query(
+        "SELECT * FROM public.app_pos_sales WHERE id=$1 AND customer_user_id=$2 FOR UPDATE",
+        [intent.pos_sale_id, intent.user_id],
+      )
+    ).rows[0];
+    if (
+      !sale ||
+      sale.status !== "accepted" ||
+      sale.total_cents !== intent.amount_cents
+    )
+      throw new CommerceError("POS_SALE_INVALID");
+    stores = [
+      {
+        storeId: sale.store_id,
+        storeName: sale.store_snapshot.name,
+        storeSlug: sale.store_snapshot.slug,
+        subtotalCents: sale.total_cents,
+        deliveryFeeCents: 0,
+        items: sale.items_snapshot,
+      },
+    ];
+    reservationIds = sale.reservation_ids;
+  }
+  if (
+    !reservationIds.length ||
+    new Set(reservationIds).size !== reservationIds.length
+  )
+    throw new CommerceError("PAYMENT_RESERVATIONS_INVALID");
+  // Global lots-first locking follows T15 and prevents deadlocks with expiry.
+  const held = (
+    await client.query(
+      `SELECT r.*,l.product_id FROM public.app_inventory_reservations r JOIN public.app_inventory_lots l ON l.id=r.lot_id WHERE r.id=ANY($1::uuid[]) ORDER BY l.id,r.id`,
+      [reservationIds],
+    )
+  ).rows;
+  await client.query(
+    "SELECT id FROM public.app_inventory_lots WHERE id=ANY($1::uuid[]) ORDER BY id FOR UPDATE",
+    [[...new Set(held.map((row) => row.lot_id))]],
+  );
+  if (held.length !== reservationIds.length)
+    throw new CommerceError("PAYMENT_RESERVATIONS_INVALID");
+  const expected = new Map<string, number>();
+  for (const item of stores.flatMap((store) => store.items))
+    expected.set(
+      item.productId,
+      (expected.get(item.productId) ?? 0) + item.quantity,
+    );
+  for (const reservation of held) {
+    const left = expected.get(reservation.product_id);
+    if (left === undefined || left < reservation.quantity)
+      throw new CommerceError("PAYMENT_RESERVATIONS_INVALID");
+    expected.set(reservation.product_id, left - reservation.quantity);
+  }
+  if ([...expected.values()].some((q) => q !== 0))
+    throw new CommerceError("PAYMENT_RESERVATIONS_INVALID");
+  const orderIds: string[] = [];
+  for (const store of stores) {
+    const owner = (
+      await client.query(
+        `SELECT pe.user_id FROM public.app_producer_stores s JOIN public.app_producer_profiles pp ON pp.id=s.producer_profile_id JOIN public.app_people pe ON pe.id=pp.person_id WHERE s.id=$1`,
+        [store.storeId],
+      )
+    ).rows[0];
+    if (!owner) throw new CommerceError("PAYMENT_STORE_UNAVAILABLE");
+    const order = (
+      await client.query(
+        `INSERT INTO public.app_orders(payment_intent_id,customer_user_id,producer_user_id,store_id,store_snapshot,source,items_snapshot,address_snapshot,subtotal_cents,delivery_fee_cents,total_cents,policy_snapshot,status,received_at)
+      VALUES($1,$2,$3,$4,$5,$6::varchar,$7,$8,$9,$10,$11,$12,$13,CASE WHEN $6::varchar='pos' THEN clock_timestamp() ELSE NULL END) RETURNING id,received_at`,
+        [
+          intent.id,
+          intent.user_id,
+          owner.user_id,
+          store.storeId,
+          JSON.stringify({ name: store.storeName, slug: store.storeSlug }),
+          intent.pos_sale_id ? "pos" : "online",
+          JSON.stringify(store.items),
+          address ? JSON.stringify(address) : null,
+          store.subtotalCents,
+          store.deliveryFeeCents,
+          store.subtotalCents + store.deliveryFeeCents,
+          JSON.stringify(policy),
+          intent.pos_sale_id ? "received" : "confirmed",
+        ],
+      )
+    ).rows[0];
+    orderIds.push(order.id);
+    const products = new Set(store.items.map((item) => item.productId));
+    for (const reservation of held.filter((row) =>
+      products.has(row.product_id),
+    ))
+      await InventoryService.consumeReservation(
+        reservation.id,
+        order.id,
+        intent.user_id,
+        client,
+      );
+    const days = Math.max(
+      policy.holdingDays,
+      intent.pos_sale_id
+        ? policy.inPersonReturnDays
+        : policy.onlineWithdrawalDays,
+    );
+    await client.query(
+      `INSERT INTO public.app_financial_holds(order_id,amount_cents,release_after) VALUES($1,$2,CASE WHEN $3::timestamptz IS NULL THEN NULL ELSE $3::timestamptz+make_interval(days=>$4) END)`,
+      [
+        order.id,
+        store.subtotalCents + store.deliveryFeeCents,
+        order.received_at,
+        days,
+      ],
+    );
+  }
+  await client.query(
+    `UPDATE public.app_payment_intents SET status='approved',gateway_reference=$2,updated_at=clock_timestamp() WHERE id=$1`,
+    [intent.id, payment.paymentReference],
+  );
+  await client.query(
+    "INSERT INTO public.app_payment_transactions(provider,gateway_event_id,payment_intent_id,event_type,amount_received_cents,raw_payload) VALUES($1,$2,$3,'approved',$4,$5)",
+    [payment.provider, payment.eventId, intent.id, payment.amountCents,JSON.stringify(payment)],
+  );
+  if (intent.pos_sale_id)
+    await client.query(
+      "UPDATE public.app_pos_sales SET status='paid' WHERE id=$1",
+      [intent.pos_sale_id],
+    );
+  if (cartId) {
+    const quote = (
+      await client.query(
+        "SELECT items_snapshot FROM public.app_checkout_quotes WHERE id=$1",
+        [intent.quote_id],
+      )
+    ).rows[0];
+    // Remove only the purchased snapshot quantities; preserve additions T18.
+    for (const item of (
+      quote.items_snapshot as CheckoutStoreSnapshot[]
+    ).flatMap((store) => store.items)) {
+      await client.query(
+        "DELETE FROM public.app_cart_items WHERE id=$1 AND cart_id=$2 AND quantity<=$3",
+        [item.cartItemId, cartId, item.quantity],
+      );
+      await client.query(
+        "UPDATE public.app_cart_items SET quantity=quantity-$3 WHERE id=$1 AND cart_id=$2 AND quantity>$3",
+        [item.cartItemId, cartId, item.quantity],
+      );
+    }
+  }
+  await commerceAudit(
+    client,
+    intent.user_id,
+    "consumer",
+    "payment.approved",
+    "app_payment_intents",
+    intent.id,
+    { orderIds, amountCents: payment.amountCents, provider: payment.provider },
+    context,
+  );
+  return { status: "approved", replayed: false, orderIds };
+}
+export const PaymentService = {
+  async view(userId: string, id: string): Promise<PaymentView> {
+    return commerceTransaction(async (client) => {
+      await commerceIdentity(client, userId);
+      z.uuid().parse(id);
+      const intent = (
+        await client.query(
+          "SELECT * FROM public.app_payment_intents WHERE id=$1 AND user_id=$2",
+          [id, userId],
+        )
+      ).rows[0];
+      if (!intent) throw new CommerceError("PAYMENT_NOT_FOUND", 404);
+      const acceptance = (
+        await client.query(
+          "SELECT policy_snapshot FROM public.app_payment_policy_acceptances WHERE payment_intent_id=$1",
+          [id],
+        )
+      ).rows[0];
+      const settings = (
+        await client.query(
+          "SELECT policy FROM public.app_commerce_settings WHERE id=true",
+        )
+      ).rows[0];
+      return {
+        id: intent.id,
+        method: intent.method,
+        status: intent.status,
+        amountCents: intent.amount_cents,
+        expiresAt: intent.expires_at.toISOString(),
+        gatewayAvailable: !!getPaymentGateway(),
+        pixCopyPaste: intent.pix_copy_paste,
+        pixQrCodeBase64: intent.pix_qr_code_base64,
+        orderIds: (
+          await client.query(
+            "SELECT id FROM public.app_orders WHERE payment_intent_id=$1 AND customer_user_id=$2",
+            [id, userId],
+          )
+        ).rows.map((row) => row.id),
+        policy: CommercePolicySchema.parse(
+          acceptance?.policy_snapshot ?? settings.policy,
+        ),
+      };
+    });
+  },
+  async acceptPolicy(
+    userId: string,
+    id: string,
+    version: number,
+    context: CommerceAudit,
+  ) {
+    return commerceTransaction(async (client) => {
+      await commerceIdentity(client, userId);
+      z.uuid().parse(id);
+      await client.query("SELECT pg_advisory_xact_lock(20,hashtext($1))", [
+        "payment:" + id,
+      ]);
+      const intent = (
+        await client.query(
+          "SELECT * FROM public.app_payment_intents WHERE id=$1 AND user_id=$2 FOR UPDATE",
+          [id, userId],
+        )
+      ).rows[0];
+      if (!intent) throw new CommerceError("PAYMENT_NOT_FOUND", 404);
+      const accepted = (
+        await client.query(
+          "SELECT policy_snapshot FROM public.app_payment_policy_acceptances WHERE payment_intent_id=$1",
+          [id],
+        )
+      ).rows[0];
+      if (accepted)
+        return { accepted: true, version: accepted.policy_snapshot.version };
+      if (
+        intent.status !== "pending" ||
+        new Date(intent.expires_at).getTime() <= Date.now()
+      )
+        throw new CommerceError("PAYMENT_EXPIRED");
+      const policy = CommercePolicySchema.parse(
+        (
+          await client.query(
+            "SELECT policy FROM public.app_commerce_settings WHERE id=true FOR SHARE",
+          )
+        ).rows[0].policy,
+      );
+      if (policy.version !== version) throw new CommerceError("POLICY_CHANGED");
+      await client.query(
+        "INSERT INTO public.app_payment_policy_acceptances(payment_intent_id,user_id,policy_snapshot) VALUES($1,$2,$3)",
+        [id, userId, JSON.stringify(policy)],
+      );
+      await commerceAudit(
+        client,
+        userId,
+        "consumer",
+        "payment.policy_accepted",
+        "app_payment_intents",
+        id,
+        { version },
+        context,
+      );
+      return { accepted: true, version };
+    });
+  },
+  async webhook(
+    input: {
+      body: unknown;
+      headers: Record<string, unknown>;
+      query: Record<string, unknown>;
+    },
+    context: CommerceAudit,
+  ) {
+    const gateway = getPaymentGateway();
+    if (!gateway) throw new CommerceError("GATEWAY_NOT_CONFIGURED", 503);
+    let verified: VerifiedPayment;
+    try {
+      verified = await gateway.verifyAndRetrievePayment(input);
+    } catch {
+      throw new CommerceError("WEBHOOK_UNVERIFIED", 401);
+    }
+    if (verified.provider !== gateway.provider)
+      throw new CommerceError("WEBHOOK_UNVERIFIED", 401);
+    return commerceTransaction((client) =>
+      settleVerifiedPayment(client, verified, context),
+    );
+  },
+};

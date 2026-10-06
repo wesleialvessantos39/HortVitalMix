@@ -296,7 +296,7 @@ async function noOverflow(page: Page) {
     ),
   ).toBe(true);
 }
-test("destaque prepara produto e retrato juntos, sem clique ou rolagem", async ({
+test("destaque aparece enquanto retrato lento carrega em paralelo", async ({
   page,
 }) => {
   await mock(page);
@@ -323,7 +323,7 @@ test("destaque prepara produto e retrato juntos, sem clique ou rolagem", async (
       name: "Produtos da região",
       exact: true,
     });
-    await expect(carousel).toHaveCount(0);
+    await expect(carousel).toBeVisible();
     release();
     await expect(carousel).toBeVisible();
     await expect
@@ -344,7 +344,7 @@ test("destaque prepara produto e retrato juntos, sem clique ou rolagem", async (
   }
 });
 
-test("vitrine prepara capa, retrato e produtos antes de apresentar a loja", async ({
+test("vitrine aparece sem esperar fotos lentas dos produtos", async ({
   page,
 }) => {
   await mock(page);
@@ -367,7 +367,7 @@ test("vitrine prepara capa, retrato e produtos antes de apresentar a loja", asyn
     await expect
       .poll(() => [...requested].some((p) => p.includes("store-media")))
       .toBe(true);
-    await expect(page.locator(".hvm-store-public")).toHaveCount(0);
+    await expect(page.locator(".hvm-store-public")).toBeVisible();
     release();
     await expect(page.locator(".hvm-store-public")).toBeVisible();
     await expect
@@ -443,8 +443,8 @@ test("foto sem resposta não deixa a vitrine esperando indefinidamente", async (
   try {
     await page.goto("/produtores/loja-0", { waitUntil: "domcontentloaded" });
     await expect.poll(() => requested).toBe(true);
-    await expect(page.locator(".hvm-store-public")).toHaveCount(0);
-    await page.clock.runFor(8100);
+    await expect(page.locator(".hvm-store-public")).toBeVisible();
+    await page.clock.runFor(50);
     await expect(page.locator(".hvm-store-public")).toBeVisible();
     await expect(
       page

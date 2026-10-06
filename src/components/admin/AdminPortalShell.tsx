@@ -14,6 +14,7 @@ import { useState, type ReactNode } from "react";
 import type { AdminVerifySessionResponse } from "../../../shared/contracts/adminGovernance";
 import { clearAdminSession } from "../../lib/adminSessionStore";
 import { api } from "../../lib/api";
+import { AccountStatusIcon,accountSessionLabel } from "../AccountStatusIcon";
 
 type Props = {
   access: AdminVerifySessionResponse;
@@ -32,6 +33,10 @@ const items = [
   ["/admin/bloqueios", "Bloqueios", Ban],
   ["/admin/configuracao", "Configuração", Settings],
   ["/admin/categorias", "Categorias", ListTree],
+  ["/admin/reembolsos", "Reembolsos", ShieldCheck],
+  ["/admin/politica-reembolso", "Política de reembolso", Settings],
+  ["/admin/denuncias", "Denúncias", Ban],
+  ["/admin/pagamentos", "Pagamentos", Settings],
   ["/admin/conta", "Conta", UserRound],
 ] as const;
 
@@ -45,6 +50,9 @@ export function AdminPortalShell({
   const visible = items.filter(([to]) => {
     if (access.role === "platform_super_admin") return true;
     if (to === "/admin/categorias") return false;
+    if(to==="/admin/reembolsos"||to==="/admin/politica-reembolso")return access.sectors.includes("refund_management");
+    if(to==="/admin/denuncias")return access.sectors.includes("complaint_management");
+    if(to==="/admin/pagamentos")return access.sectors.includes("payment_configuration");
     if (to === "/admin/configuracao")
       return access.sectors.includes("platform_configuration");
     if (to === "/admin/documentos/fila")
@@ -87,7 +95,7 @@ export function AdminPortalShell({
               className={"admin-nav-item " + (currentPath === to || currentPath.startsWith(to + "/") ? "is-active" : "")}
               onClick={() => onNavigate(to)}
             >
-              <Icon size={18} />
+              {to==="/admin/conta"?<AccountStatusIcon session={{activeRole:access.role}} size={18}/>:<Icon size={18} />}
               <span>{label}</span>
             </button>
           ))}
@@ -104,6 +112,7 @@ export function AdminPortalShell({
             <span className="admin-brand-mark"><Leaf /></span>
             <strong>Horti<span>Vital</span>Mix</strong>
           </button>
+          <button className="icon" aria-label="Conta" title={accountSessionLabel({activeRole:access.role})} onClick={()=>onNavigate("/admin/conta")}><AccountStatusIcon session={{activeRole:access.role}}/></button>
           <button className="admin-logout icon-only" onClick={logout} disabled={leaving} aria-label="Sair">
             <LogOut size={18} />
           </button>
@@ -118,7 +127,7 @@ export function AdminPortalShell({
               aria-label={label}
               onClick={() => onNavigate(to)}
             >
-              <Icon size={19} /><span>{label}</span>
+              {to==="/admin/conta"?<AccountStatusIcon session={{activeRole:access.role}} size={19}/>:<Icon size={19} />}<span>{label}</span>
             </button>
           ))}
         </nav>

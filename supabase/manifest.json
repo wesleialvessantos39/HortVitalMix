@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 57,
+  "schemaVersion": 58,
   "migrations": [
     {
       "version": "20260919030126",
@@ -315,7 +315,12 @@
       "version": "20261006023915",
       "name": "audit_sessions_and_client_privileges",
       "file": "20261006023915_audit_sessions_and_client_privileges.sql"
+    },
+    {
+      "version": "20261006180831",
+      "name": "trilha20_commerce_protection_prepared",
+      "file": "20261006180831_trilha20_commerce_protection_prepared.sql"
     }
   ],
-  "migrationHistoryHash": "614027ef88c383fb30dbf14fcf670104cf2fb7025cfa801253059bca67014b25"
+  "migrationHistoryHash": "d18736b84cc19ccfc547f262843f1e5f048c4129086c6a091a568b14cd61b06e"
 }

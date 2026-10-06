@@ -28,6 +28,7 @@ export function AdminUsersPage({
   access: AdminVerifySessionResponse;
 }) {
   const [users, setUsers] = useState<UserRow[]>([]);
+  const [focusUserId,setFocusUserId]=useState(()=>{const value=new URLSearchParams(location.search).get("userId");return value&&/^[a-f0-9-]{36}$/i.test(value)?value:null;});
   const [busy, setBusy] = useState<string | null>(null),
     [error, setError] = useState("");
   const [selected, setSelected] = useState<UserRow | null>(null);
@@ -279,7 +280,8 @@ export function AdminUsersPage({
         ) : users.length === 0 ? (
           <p className="admin-empty">Nenhum usuário encontrado.</p>
         ) : (
-          <div className="admin-table-wrap">
+          <>{focusUserId&&<p className="admin-alert">Conta vinculada à denúncia. <button className="admin-secondary" onClick={()=>setFocusUserId(null)}>Mostrar todos os usuários</button></p>}
+      <div className="admin-table-wrap">
             <table className="admin-table admin-users-table">
               <thead>
                 <tr>
@@ -292,7 +294,7 @@ export function AdminUsersPage({
                 </tr>
               </thead>
               <tbody>
-                {users.map((u) => (
+                {users.filter(user=>!focusUserId||user.id===focusUserId).map((u) => (
                   <tr key={u.id + "-" + u.role_code}>
                     <td data-label="Usuário">
                       <strong>{u.full_name}</strong>
@@ -411,7 +413,7 @@ export function AdminUsersPage({
                 ))}
               </tbody>
             </table>
-          </div>
+          </div></>
         )}
       </section>
     </section>

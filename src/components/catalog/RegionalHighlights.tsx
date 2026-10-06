@@ -53,7 +53,7 @@ export default function RegionalHighlights({
             }),
           );
           const first = result.products[0];
-          await prepareMediaUrls(
+          void prepareMediaUrls(
             [
               first?.media.find((media) => media.isPrimary)?.url ??
                 first?.media[0]?.url,

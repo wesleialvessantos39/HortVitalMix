@@ -225,7 +225,7 @@ describe.runIf(Boolean(process.env.HVM_T19_LOCAL_DATABASE_URL))(
           .getByLabel("Senha", { exact: true })
           .fill("local-password-only");
         await page.getByRole("button", { name: "Entrar", exact: true }).tap();
-        await check(page).toHaveURL(/\/conta$/);
+        await check(page).toHaveURL(/\/$/);
         expect(
           (await context.cookies()).find((c) => c.name === "hvm_access")
             ?.httpOnly,
