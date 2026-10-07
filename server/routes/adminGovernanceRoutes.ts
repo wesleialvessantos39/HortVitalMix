@@ -1,3 +1,6 @@
+import { AdminPermissionService } from "../services/AdminPermissionService.ts";
+import { CommerceError } from "../services/CommerceSupport.ts";
+import { hasAdminPermission } from "../../shared/adminPermissions.ts";
 import type { PoolClient } from "pg";
 import { reportFailure } from "../config/reportFailure.ts";
 import { Router, type Request, type Response } from "express";
@@ -6,6 +9,8 @@ import { originProtection } from "../security/originProtection.ts";
 import {
   adminSessionMiddleware,
   requireRecentAuth,
+  requireSuperAdmin,
+  requireAdminSector,
 } from "../middleware/adminSession.ts";
 import { AdminGovernanceService } from "../services/AdminGovernanceService.ts";
 import {
@@ -27,8 +32,7 @@ export const adminGovernanceRouter = Router();
 
 function requireAccountGovernance(req: Request,res: Response,next: any) {
   if (
-    req.adminActor?.isSuperAdmin ||
-    req.adminActor?.sectors.includes("account_governance")
+    hasAdminPermission(req.adminActor, "account_governance")
   ) {
     next();
     return;
@@ -45,6 +49,23 @@ adminGovernanceRouter.use((req,res,next)=>{
 adminGovernanceRouter.use((req,res,next) => {
   if (req.path === "/rural-properties" || req.path.startsWith("/rural-properties/")) adminRuralPropertyRouter(req,res,next);
   else next();
+});
+
+
+function respectGovernanceRevocation(req: Request,res: Response,next: import("express").NextFunction) {
+  if (req.adminActor?.deniedSectors?.includes("account_governance")) {
+    res.status(403).json({error:"FORBIDDEN",requestId:req.requestId}); return;
+  }
+  next();
+}
+
+adminGovernanceRouter.get("/users/:userId/permissions",adminSessionMiddleware,requireSuperAdmin,requireAdminSector("account_governance"),async(req,res)=>{
+  try { const id=z.uuid().parse(req.params.userId); res.json(await AdminPermissionService.get(id,req.adminActor!)); }
+  catch(error) { res.status(error instanceof CommerceError ? error.status : error instanceof z.ZodError ? 422 : 503).json({error:error instanceof CommerceError ? error.code : "UNAVAILABLE"}); }
+});
+adminGovernanceRouter.patch("/users/:userId/permissions",originProtection,adminSessionMiddleware,requireSuperAdmin,requireAdminSector("account_governance"),requireRecentAuth,async(req,res)=>{
+  try { const id=z.uuid().parse(req.params.userId); res.json(await AdminPermissionService.update(id,req.adminActor!,req.body,{requestId:req.requestId,ipHash:req.clientIpHash})); }
+  catch(error) { res.status(error instanceof CommerceError ? error.status : error instanceof z.ZodError ? 422 : 503).json({error:error instanceof CommerceError ? error.code : "VALIDATION_FAILED"}); }
 });
 
 function setAdminSession(
@@ -217,6 +238,7 @@ adminGovernanceRouter.post(
         status: result.status,
         role: result.role,
         sectors: result.sectors,
+        deniedSectors: result.deniedSectors,
         accessToken: result.accessToken,
         refreshToken: result.refreshToken,
         expiresIn: result.expiresIn,
@@ -267,10 +289,10 @@ adminGovernanceRouter.get(
   async (req: Request, res: Response) => {
     if (!req.adminActor) return;
     // The middleware has just validated identity, active account, role and sectors.
-    const { role, sectors, sessionIssuedAt } = req.adminActor;
+    const { role, sectors, deniedSectors, sessionIssuedAt } = req.adminActor;
     const issued = new Date(sessionIssuedAt).getTime();
     res.status(200).json({
-      authorized: true, role, sectors,
+      authorized: true, role, sectors, deniedSectors,
       requiresReauth: !Number.isFinite(issued) || Date.now() - issued > 15 * 60_000,
     });
   },
@@ -279,6 +301,7 @@ adminGovernanceRouter.get(
 adminGovernanceRouter.get(
   "/invites",
   adminSessionMiddleware,
+  respectGovernanceRevocation,
   async (req: Request, res: Response) => {
     if (!req.adminActor) return;
     res.status(200).json({
@@ -294,6 +317,7 @@ adminGovernanceRouter.post(
   "/invites",
   originProtection,
   adminSessionMiddleware,
+  respectGovernanceRevocation,
   requireRecentAuth,
   async (req: Request, res: Response) => {
     const parsed = CreateInviteSchema.safeParse(req.body);
@@ -409,6 +433,7 @@ adminGovernanceRouter.get(
 adminGovernanceRouter.get(
   "/identities/lookup",
   adminSessionMiddleware,
+  respectGovernanceRevocation,
   async (req: Request, res: Response) => {
     if (!dbPool || !req.adminActor) {
       res.status(503).json({ error: "UNAVAILABLE" });
@@ -477,6 +502,7 @@ adminGovernanceRouter.get(
 adminGovernanceRouter.get(
   "/users",
   adminSessionMiddleware,
+  respectGovernanceRevocation,
   async (req: Request, res: Response) => {
     if (!dbPool || !req.adminActor) {
       res.status(503).json({ error: "UNAVAILABLE" });
@@ -486,8 +512,7 @@ adminGovernanceRouter.get(
     const params: unknown[] = [];
     let scope = "";
     if (
-      !req.adminActor.isSuperAdmin &&
-      !req.adminActor.sectors.includes("account_governance")
+      !hasAdminPermission(req.adminActor, "account_governance")
     ) {
       params.push(req.adminActor.userId);
       scope = `
@@ -507,12 +532,14 @@ adminGovernanceRouter.get(
     }
 
     const result = await dbPool.query(
-      `SELECT u.id,public.effective_account_status(u.status,u.block_starts_at,u.block_ends_at) AS status,u.block_starts_at,u.block_ends_at,u.status AS stored_status,p.full_name,ap.admin_email AS email_normalized,
+      `SELECT u.id,public.effective_account_status(u.status,u.block_starts_at,u.block_ends_at) AS status,u.block_starts_at,u.block_ends_at,u.status AS stored_status,coalesce(profile.full_name,p.full_name) AS full_name,ap.admin_email AS email_normalized,
               ar.role_code, 'administrative'::text AS account_kind,
               (ap.email_verified_at IS NOT NULL) AS email_confirmed,
-              COALESCE(array_agg(DISTINCT m.sector_code) FILTER (
-                WHERE m.sector_code IS NOT NULL
-              ),'{}') AS sectors,
+              ARRAY(SELECT s.code FROM public.app_admin_sectors s WHERE s.is_active
+                AND NOT EXISTS(SELECT 1 FROM public.app_admin_permission_overrides o WHERE o.user_id=u.id AND o.sector_code=s.code AND NOT o.allowed)
+                AND (ar.role_code='platform_super_admin' OR EXISTS(SELECT 1 FROM public.app_admin_sector_members membership
+                  WHERE membership.user_id=u.id AND membership.sector_code=s.code AND membership.revoked_at IS NULL
+                  AND (membership.expires_at IS NULL OR membership.expires_at>now()))) ORDER BY s.code) AS sectors,
               COALESCE(array_agg(DISTINCT pr.role_code) FILTER (
                 WHERE pr.role_code IN ('consumer','producer')
                   AND pr.revoked_at IS NULL
@@ -521,6 +548,7 @@ adminGovernanceRouter.get(
          FROM public.app_users u
          JOIN public.app_admin_principals ap ON ap.admin_user_id=u.id
          JOIN public.app_people p ON p.id=ap.person_id
+         LEFT JOIN public.app_account_profiles profile ON profile.user_id=u.id AND profile.role_code=ap.portal_role
          JOIN public.app_user_role_assignments ar ON ar.user_id=u.id
            AND ar.revoked_at IS NULL
            AND (ar.expires_at IS NULL OR ar.expires_at>now())
@@ -531,10 +559,10 @@ adminGovernanceRouter.get(
            AND m.revoked_at IS NULL
            AND (m.expires_at IS NULL OR m.expires_at>now())
         WHERE 1=1 ${scope}
-        GROUP BY u.id,p.full_name,ap.admin_email,ap.email_verified_at,ar.role_code
+        GROUP BY u.id,p.full_name,profile.full_name,ap.admin_email,ap.email_verified_at,ar.role_code
         UNION ALL
-        SELECT u.id,public.effective_account_status(u.status,u.block_starts_at,u.block_ends_at) AS status,u.block_starts_at,u.block_ends_at,u.status AS stored_status,p.full_name,p.email_normalized,
-               NULL::varchar AS role_code,'public'::text AS account_kind,
+        SELECT u.id,public.effective_account_status(u.status,u.block_starts_at,u.block_ends_at) AS status,u.block_starts_at,u.block_ends_at,u.status AS stored_status,coalesce(profile.full_name,p.full_name) AS full_name,p.email_normalized,
+               r.role_code AS role_code,'public'::text AS account_kind,
                (au.email_confirmed_at IS NOT NULL) AS email_confirmed,
                ARRAY[]::varchar[] AS sectors,
                array_agg(DISTINCT r.role_code) AS public_roles
@@ -544,7 +572,8 @@ adminGovernanceRouter.get(
           JOIN public.app_user_role_assignments r ON r.user_id=u.id
             AND r.role_code IN ('consumer','producer')
             AND r.revoked_at IS NULL AND (r.expires_at IS NULL OR r.expires_at>now())
-         GROUP BY u.id,p.full_name,p.email_normalized,au.email_confirmed_at
+          LEFT JOIN public.app_account_profiles profile ON profile.user_id=u.id AND profile.role_code=r.role_code
+         GROUP BY u.id,p.full_name,profile.full_name,p.email_normalized,au.email_confirmed_at,r.role_code
          ORDER BY full_name LIMIT 500`,
       params,
     );
@@ -579,7 +608,7 @@ adminGovernanceRouter.patch("/users/:userId/status",originProtection,adminSessio
   if(v.status==="blocked"){
    // One unscheduled active super admin must remain available across the entire future interval.
    const protectedRole=await client.query(`SELECT public.fn_is_last_active_super_admin($1) AS last_active, EXISTS(SELECT 1 FROM public.app_user_role_assignments WHERE user_id=$1 AND role_code='platform_super_admin' AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at>now())) AS is_super,
-   EXISTS(SELECT 1 FROM public.app_users u JOIN public.app_user_role_assignments r ON r.user_id=u.id WHERE u.id<>$1 AND r.role_code='platform_super_admin' AND r.revoked_at IS NULL AND r.expires_at IS NULL AND (u.status='active' OR (u.status='blocked' AND u.block_ends_at<=now()))) AS other_available`,[id.data]);
+   EXISTS(SELECT 1 FROM public.app_users u JOIN public.app_user_role_assignments r ON r.user_id=u.id WHERE u.id<>$1 AND r.role_code='platform_super_admin' AND r.revoked_at IS NULL AND r.expires_at IS NULL AND hvm_governance_private.has_permission(u.id,'account_governance') AND (u.status='active' OR (u.status='blocked' AND u.block_ends_at<=now()))) AS other_available`,[id.data]);
    if(protectedRole.rows[0].last_active || (protectedRole.rows[0].is_super && !protectedRole.rows[0].other_available)){await client.query("ROLLBACK");res.status(409).json({error:"LAST_SUPER_ADMIN_PROTECTED"});return;}
   }
   const starts=v.status==='blocked' ? (v.mode==='custom'?v.startsAt:new Date().toISOString()):null;

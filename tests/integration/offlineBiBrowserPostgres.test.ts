@@ -464,7 +464,7 @@ describe.runIf(!!process.env.HVM_T25_LOCAL_DATABASE_URL)(
           .toBe(3);
         await check.poll(async () => (await queued(producer)).length).toBe(1);
         await check(
-          producer.getByText(/Conectado — 0 ações pendentes/),
+          producer.getByText(/Ações aguardando confirmação — 0 ações pendentes/),
         ).toBeVisible();
         const remaining = await queued(producer);
         expect(remaining[0].result).toMatchObject({
@@ -512,9 +512,8 @@ describe.runIf(!!process.env.HVM_T25_LOCAL_DATABASE_URL)(
         // or cached orders are rendered or sent by the new producer.
         await cookies(producer.context(), f.catalog.b.userId, "producer");
         await producer.goto(baseURL + "/produtor/pedidos");
-        await check(
-          producer.getByText(/Conectado — 0 ações pendentes/),
-        ).toBeVisible();
+        await check(producer.getByRole("complementary",{name:"Conexão e ações do produtor"})).toHaveCount(0);
+        await check(producer.getByRole("complementary",{name:"Ações aguardando confirmação"})).toHaveCount(0);
         expect(
           await producer
             .getByRole("button", { name: "Revisar ações", exact: true })

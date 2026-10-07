@@ -1,3 +1,4 @@
+import { hasAdminPermission } from "../../shared/adminPermissions.ts";
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import type { PoolClient } from "pg";
@@ -109,7 +110,7 @@ export const CommerceService = {
       await commerceAdmin(
         client,
         actor,
-        actor.isSuperAdmin || actor.sectors.includes("refund_management")
+        hasAdminPermission(actor, "refund_management")
           ? "refund_management"
           : "payment_configuration",
       );
@@ -136,7 +137,7 @@ export const CommerceService = {
       await commerceAdmin(
         client,
         actor,
-        actor.isSuperAdmin || actor.sectors.includes("refund_management")
+        hasAdminPermission(actor, "refund_management")
           ? "refund_management"
           : "payment_configuration",
       );

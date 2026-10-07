@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   adminSessionMiddleware,
   requireSuperAdmin,
+  requireAdminSector,
   requireRecentAuth,
 } from "../middleware/adminSession.ts";
 import { originProtection } from "../security/originProtection.ts";
@@ -39,6 +40,7 @@ categoryRouter.use(
   "/admin/categories",
   adminSessionMiddleware,
   requireSuperAdmin,
+  requireAdminSector("catalog_moderation"),
 );
 categoryRouter.get("/admin/categories", async (req, res) => {
   try {

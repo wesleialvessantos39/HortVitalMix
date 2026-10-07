@@ -5,7 +5,7 @@ import {
   type FormEvent,
   type CSSProperties,
 } from "react";
-import { Wifi, WifiOff, RefreshCw } from "lucide-react";
+import { WifiOff, RefreshCw } from "lucide-react";
 import type { ShellSession } from "../../hooks/useSession";
 import { api } from "../../lib/api";
 import {
@@ -202,29 +202,32 @@ function ProducerOfflineStatus({
       setBusy(false);
     }
   }
+  if (online && entries.length === 0 && !reauth && !error) return null;
   return (
     <aside
       className={"hvm-offline-banner " + (!online ? "is-offline" : "")}
-      aria-label="Conexão e ações do produtor"
+      aria-label={
+        online ? "Ações aguardando confirmação" : "Conexão e ações do produtor"
+      }
       style={{ "--hvm-offline-top": headerHeight + "px" } as CSSProperties}
     >
       <div className="hvm-offline-summary">
-        {online ? (
-          <Wifi size={19} aria-hidden="true" />
-        ) : (
-          <WifiOff size={19} aria-hidden="true" />
-        )}
+        {!online && <WifiOff size={19} aria-hidden="true" />}
         <div>
           <strong aria-live="polite" aria-atomic="true">
-            {!online ? "Modo offline" : busy ? "Sincronizando" : "Conectado"} —{" "}
-            {count} {count === 1 ? "ação pendente" : "ações pendentes"}
+            {!online
+              ? "Modo offline"
+              : busy
+                ? "Sincronizando ações"
+                : "Ações aguardando confirmação"}{" "}
+            — {count} {count === 1 ? "ação pendente" : "ações pendentes"}
           </strong>
           <small>
             {!online
-              ? "Você pode lançar colheitas e atualizar pedidos nas telas já consultadas. A confirmação depende da reconexão."
-              : ready
-                ? "Telas preparadas para uso no campo. Dados consultados ficam disponíveis neste aparelho por até 24 horas."
-                : "Consulte seus produtos, lotes e pedidos antes de sair para o campo."}
+              ? ready
+                ? "Você está sem conexão. As ações ficam salvas neste aparelho e serão enviadas ao reconectar."
+                : "Você está sem conexão. Consulte as telas disponíveis e mantenha o aparelho aberto para preservar suas ações."
+              : "Confira as ações salvas neste aparelho que ainda precisam de confirmação."}
           </small>
         </div>
         {count > 0 && (

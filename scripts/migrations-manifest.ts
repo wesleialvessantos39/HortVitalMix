@@ -44,6 +44,10 @@ export function assertManifestHash() {
 }
 
 const remoteVersionAliases: Readonly<Record<string, string>> = {
+  // Revogação dos quatro grants antigos por coluna, timestamp físico Supabase.
+  "20261007214554": "20261007214314",
+  // Perfis individuais e poderes aplicados com timestamp físico do Supabase.
+  "20261007214025": "20261007205812",
   // Offline/BI T25 aplicados com timestamp físico próprio do Supabase.
   "20261007183835": "20261007174202",
   // Papéis, vendas e notificações aplicados com timestamp físico do Supabase.

@@ -62,6 +62,7 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
   onNavigate={onNavigate}
   requiredRole={path === "/admin/categorias" || path === "/admin/bi" ? "platform_super_admin" : undefined}
    requiredSector={
+    path === "/admin/categorias" ? "catalog_moderation" : path === "/admin/bi" ? "platform_configuration" :
    path==="/admin/reembolsos" || path==="/admin/politica-reembolso"
     ? "refund_management"
     : path==="/admin/denuncias" || path==="/admin/avaliacoes"

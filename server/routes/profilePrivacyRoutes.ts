@@ -31,6 +31,9 @@ function currentActor(req: Request, res: Response) {
     return null;
   }
   const selectedRole = readCookie(req, "hvm_portal_role");
+  if(selectedRole && !req.actor.roles.includes(selectedRole)) {
+    res.status(403).json({error:"PROFILE_SCOPE_CHANGED",requestId:req.requestId}); return null;
+  }
   const role = req.actor.roles.includes(selectedRole) ? selectedRole :
     req.actor.roles.includes("producer")
       ? "producer"
@@ -116,12 +119,12 @@ profilePrivacyRouter.get(
         if (!requireRecentAuth(req, res, actor.userId)) return;
         res
           .status(200)
-          .json(await ProfilePrivacyService.exportData(actor.userId));
+          .json(await ProfilePrivacyService.exportData(actor.userId, actor.role));
         return;
       }
       res
         .status(200)
-        .json(await ProfilePrivacyService.getProfile(actor.userId));
+        .json(await ProfilePrivacyService.getProfile(actor.userId, actor.role));
     } catch (error) {
       sendError(res, error);
     }

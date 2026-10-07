@@ -1,3 +1,4 @@
+import { hasAdminPermission } from "../../shared/adminPermissions.ts";
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import {
@@ -18,8 +19,7 @@ function actor(req: Request, auditor: boolean): DocumentActor {
   if (auditor) {
     if (
       !req.adminActor ||
-      (!req.adminActor.isSuperAdmin &&
-        !req.adminActor.sectors.includes("document_verification"))
+      (!hasAdminPermission(req.adminActor, "document_verification"))
     )
       throw new DocumentError("FORBIDDEN", 403);
     return {

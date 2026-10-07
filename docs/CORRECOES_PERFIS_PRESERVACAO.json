@@ -1,0 +1,2508 @@
+{
+  "date": "2026-10-07T21:51:15.919Z",
+  "baseSha": "be095e5ef9de9a53295046055b8466b5af7cdda5",
+  "project": "xipbsazvymkqqfmfegwu",
+  "schemaVersion": 65,
+  "migrationCount": 72,
+  "migrationHistoryHash": "654a6a62c736a81b32941d3e5badd395f723f3b0d1e011902a52836025968525",
+  "migrations": [
+    {
+      "local": "20261007205812_independent_profiles_admin_permissions.sql",
+      "physical": "20261007214025_independent_profiles_admin_permissions"
+    },
+    {
+      "local": "20261007214314_revoke_profile_client_column_mutations.sql",
+      "physical": "20261007214554_revoke_profile_client_column_mutations"
+    }
+  ],
+  "oldMigrationsByteIdentical": 70,
+  "preservation": {
+    "beforeAt": "2026-10-07T21:40:23.575Z",
+    "afterAt": "2026-10-07T21:41:18.404Z",
+    "relations": 99,
+    "identicalAfterFirstMigration": 99,
+    "before": [
+      {
+        "relation": "auth.sessions",
+        "rows": 32,
+        "digest": "6592510986a23f77dae8072234806978"
+      },
+      {
+        "relation": "auth.users",
+        "rows": 7,
+        "digest": "3331d875a9d2d75ab2c2b102c523bd64"
+      },
+      {
+        "relation": "public.app_access_partial_block_municipalities",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_access_partial_block_properties",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_access_partial_blocks",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_account_deletions",
+        "rows": 1,
+        "digest": "90f56a4983a5d45d4de69ca04726d44c"
+      },
+      {
+        "relation": "public.app_admin_auth_attempts",
+        "rows": 200,
+        "digest": "5e705ca3f936d51c288b31998a79c2bd"
+      },
+      {
+        "relation": "public.app_admin_invite_sectors",
+        "rows": 11,
+        "digest": "c97d5bab701723c9f86e8f54697e0933"
+      },
+      {
+        "relation": "public.app_admin_invites",
+        "rows": 2,
+        "digest": "acf6b84336478fae27e8758efa48b3e6"
+      },
+      {
+        "relation": "public.app_admin_mfa_challenges",
+        "rows": 6,
+        "digest": "653dba5fb3839c4c9aebaf3270cfe461"
+      },
+      {
+        "relation": "public.app_admin_principals",
+        "rows": 1,
+        "digest": "a73e95820a11f9d71280e5764e2686ff"
+      },
+      {
+        "relation": "public.app_admin_sector_members",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_admin_sectors",
+        "rows": 9,
+        "digest": "469279ff0a7ddd98bd45f83fe23d24cc"
+      },
+      {
+        "relation": "public.app_audit_events",
+        "rows": 452,
+        "digest": "fa89544ad6e60418d2d2741d230e5b66"
+      },
+      {
+        "relation": "public.app_billing_cycles",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_car_validations",
+        "rows": 2,
+        "digest": "77c565cc3b4f31c857dda0ad64ca6b6c"
+      },
+      {
+        "relation": "public.app_cart_items",
+        "rows": 1,
+        "digest": "77612b3cfb93724fc6ed60023b10326c"
+      },
+      {
+        "relation": "public.app_carts",
+        "rows": 4,
+        "digest": "97ab29e801429991529b9d9af19c0596"
+      },
+      {
+        "relation": "public.app_case_evidence",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_case_history",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_case_messages",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_categories",
+        "rows": 5,
+        "digest": "d2291cd307479b03966a934c25a19573"
+      },
+      {
+        "relation": "public.app_checkout_quotes",
+        "rows": 3,
+        "digest": "c385f308c7a0feb75a39fb68ddb7ebee"
+      },
+      {
+        "relation": "public.app_command_receipts",
+        "rows": 3,
+        "digest": "5bc7ac8317a3c945e5de0cdbff269be4"
+      },
+      {
+        "relation": "public.app_commerce_receipts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_commerce_settings",
+        "rows": 1,
+        "digest": "23f91fa9dcfb96ce654ca58ddf0bcf82"
+      },
+      {
+        "relation": "public.app_complaints",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_consent_records",
+        "rows": 1,
+        "digest": "65e91ba1151fcc0c5b63b89b3efa728f"
+      },
+      {
+        "relation": "public.app_contact_verification_challenges",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_allocations",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_attempts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_proofs",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_quotes",
+        "rows": 3,
+        "digest": "08dd58f49ced8d8e6f83873685ef1227"
+      },
+      {
+        "relation": "public.app_delivery_rules",
+        "rows": 1,
+        "digest": "a329636a0ed024c4b4e4846fe52953d6"
+      },
+      {
+        "relation": "public.app_delivery_windows",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_document_extractions",
+        "rows": 2,
+        "digest": "4d377021ccaa459814deb9c88b2e8bd1"
+      },
+      {
+        "relation": "public.app_document_jobs",
+        "rows": 5,
+        "digest": "15dc948923b0e0f44f8ec51b9e01ce75"
+      },
+      {
+        "relation": "public.app_document_reviews",
+        "rows": 30,
+        "digest": "a8f2319cb71e8cf12db236285d93bbf1"
+      },
+      {
+        "relation": "public.app_document_scans",
+        "rows": 8,
+        "digest": "42f4a20fa41f4194a7d0622f5de21ba9"
+      },
+      {
+        "relation": "public.app_documents",
+        "rows": 8,
+        "digest": "563bd163373b9f3feec074a0d73e6878"
+      },
+      {
+        "relation": "public.app_favorites",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_financial_holds",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_global_config",
+        "rows": 1,
+        "digest": "9ec3935e8e5024e8dbf3e2705456f76b"
+      },
+      {
+        "relation": "public.app_inventory_lots",
+        "rows": 1,
+        "digest": "34fb124216d19547bdecad68fe908a05"
+      },
+      {
+        "relation": "public.app_inventory_movements",
+        "rows": 1,
+        "digest": "a4f87aa2fa9c32773e3e14a56d7c35d4"
+      },
+      {
+        "relation": "public.app_inventory_reservations",
+        "rows": 3,
+        "digest": "5b4cff4b021a859cd0e86d1f3b985011"
+      },
+      {
+        "relation": "public.app_kpi_definitions",
+        "rows": 8,
+        "digest": "d7a6413a140b846b7b999814a54574bd"
+      },
+      {
+        "relation": "public.app_kpi_metrics",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_locality_user_impacts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_municipalities",
+        "rows": 7,
+        "digest": "180caf43f1ebf22d1ed2c458dd0281b0"
+      },
+      {
+        "relation": "public.app_notifications",
+        "rows": 3,
+        "digest": "b04236ef0b4bdc4367c7bfd215303fe9"
+      },
+      {
+        "relation": "public.app_order_events",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_order_fulfillment",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_order_items",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_order_stock_returns",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_orders",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_outbox_events",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_password_recovery_requests",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_payment_intents",
+        "rows": 3,
+        "digest": "14c4ff0a509e53028b9f47928a4676f8"
+      },
+      {
+        "relation": "public.app_payment_policy_acceptances",
+        "rows": 2,
+        "digest": "7d980b0ee745916b24272b0fe7015eed"
+      },
+      {
+        "relation": "public.app_payment_transactions",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_people",
+        "rows": 4,
+        "digest": "ed74e332abbf16b57996d5a48592dd81"
+      },
+      {
+        "relation": "public.app_plans",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_pos_sales",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_price_versions",
+        "rows": 1,
+        "digest": "fc1d5d81f82eda0d3408493e8b96d718"
+      },
+      {
+        "relation": "public.app_producer_delivery_municipalities",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_producer_delivery_scopes",
+        "rows": 1,
+        "digest": "bd0d831558020c1333d81f3146dc5578"
+      },
+      {
+        "relation": "public.app_producer_profiles",
+        "rows": 3,
+        "digest": "72f8b21155aace616ca8379b823605c7"
+      },
+      {
+        "relation": "public.app_producer_stores",
+        "rows": 2,
+        "digest": "d6f67fe99ae6a4ae7bf7bfc99d2386f5"
+      },
+      {
+        "relation": "public.app_product_media",
+        "rows": 1,
+        "digest": "d0c8c151e3a3ff65a23037dfe5746efa"
+      },
+      {
+        "relation": "public.app_products",
+        "rows": 1,
+        "digest": "5f073e3cc1784f7c38df9c2a7edc4fed"
+      },
+      {
+        "relation": "public.app_properties",
+        "rows": 2,
+        "digest": "fc9a2430346965cce128381585353b5f"
+      },
+      {
+        "relation": "public.app_property_boundaries",
+        "rows": 2,
+        "digest": "bdc5ecb7ed4425b77f91edc17b1cd1ed"
+      },
+      {
+        "relation": "public.app_property_deletion_archive",
+        "rows": 2,
+        "digest": "74b18a79feeec1471c0837b93e59ce74"
+      },
+      {
+        "relation": "public.app_recurrence_schedules",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_refund_requests",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_refund_seller_contacts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_registration_reviews",
+        "rows": 1,
+        "digest": "a4b1692c4dbaf90f7e9fa062b481b27e"
+      },
+      {
+        "relation": "public.app_releases",
+        "rows": 101,
+        "digest": "74754f56588ee6e04717c10f7ff3f004"
+      },
+      {
+        "relation": "public.app_reputation_projections",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_reviews",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_role_security_challenges",
+        "rows": 3,
+        "digest": "5659555a1f8a16e55a37de5208701357"
+      },
+      {
+        "relation": "public.app_roles",
+        "rows": 4,
+        "digest": "eb12fdea3e58a51d00cba1d19d0ff932"
+      },
+      {
+        "relation": "public.app_rural_activities",
+        "rows": 2,
+        "digest": "228e60ecf8709963431107040119cb5d"
+      },
+      {
+        "relation": "public.app_service_areas",
+        "rows": 1,
+        "digest": "290675fd4c8ef99c60c1feb4363cf667"
+      },
+      {
+        "relation": "public.app_storage_deletion_queue",
+        "rows": 10,
+        "digest": "a41c92f70e9827e37cea56fefa2f3f0e"
+      },
+      {
+        "relation": "public.app_store_media",
+        "rows": 1,
+        "digest": "be6a5c39aad9b1d334011766d05eb48b"
+      },
+      {
+        "relation": "public.app_store_operating_hours",
+        "rows": 14,
+        "digest": "efc2439086711f022bcec9d5e63035ce"
+      },
+      {
+        "relation": "public.app_subscriptions",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_sync_command_journal",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_trial_grants",
+        "rows": 3,
+        "digest": "c5e53711c0ef4b1d6adb4e6aac226235"
+      },
+      {
+        "relation": "public.app_user_addresses",
+        "rows": 1,
+        "digest": "a9b4f7aefadd58578c93ab17b90cc98e"
+      },
+      {
+        "relation": "public.app_user_preferences",
+        "rows": 1,
+        "digest": "13504828152f07a439bc83c8ffe2fa57"
+      },
+      {
+        "relation": "public.app_user_role_assignments",
+        "rows": 6,
+        "digest": "b03fd131bbf438da1c0380c7eeb9937c"
+      },
+      {
+        "relation": "public.app_users",
+        "rows": 7,
+        "digest": "b2259afafdf0e29a83b93b38ea538ecf"
+      },
+      {
+        "relation": "public.app_verification_decisions",
+        "rows": 3,
+        "digest": "6c411d0a2d034963c908188b54cb2cd4"
+      },
+      {
+        "relation": "public.app_verification_requests",
+        "rows": 3,
+        "digest": "ba29858bb18f82497318c12c82fb4f5e"
+      },
+      {
+        "relation": "storage.buckets",
+        "rows": 5,
+        "digest": "3fb45a19872f18df8967fa9f59e9ef1b"
+      },
+      {
+        "relation": "storage.objects",
+        "rows": 10,
+        "digest": "e1f784e942bbf22a24f07f72521e8a86"
+      }
+    ],
+    "afterFirstMigration": [
+      {
+        "relation": "auth.sessions",
+        "rows": 32,
+        "digest": "6592510986a23f77dae8072234806978"
+      },
+      {
+        "relation": "auth.users",
+        "rows": 7,
+        "digest": "3331d875a9d2d75ab2c2b102c523bd64"
+      },
+      {
+        "relation": "public.app_access_partial_block_municipalities",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_access_partial_block_properties",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_access_partial_blocks",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_account_deletions",
+        "rows": 1,
+        "digest": "90f56a4983a5d45d4de69ca04726d44c"
+      },
+      {
+        "relation": "public.app_admin_auth_attempts",
+        "rows": 200,
+        "digest": "5e705ca3f936d51c288b31998a79c2bd"
+      },
+      {
+        "relation": "public.app_admin_invite_sectors",
+        "rows": 11,
+        "digest": "c97d5bab701723c9f86e8f54697e0933"
+      },
+      {
+        "relation": "public.app_admin_invites",
+        "rows": 2,
+        "digest": "acf6b84336478fae27e8758efa48b3e6"
+      },
+      {
+        "relation": "public.app_admin_mfa_challenges",
+        "rows": 6,
+        "digest": "653dba5fb3839c4c9aebaf3270cfe461"
+      },
+      {
+        "relation": "public.app_admin_principals",
+        "rows": 1,
+        "digest": "a73e95820a11f9d71280e5764e2686ff"
+      },
+      {
+        "relation": "public.app_admin_sector_members",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_admin_sectors",
+        "rows": 9,
+        "digest": "469279ff0a7ddd98bd45f83fe23d24cc"
+      },
+      {
+        "relation": "public.app_audit_events",
+        "rows": 452,
+        "digest": "fa89544ad6e60418d2d2741d230e5b66"
+      },
+      {
+        "relation": "public.app_billing_cycles",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_car_validations",
+        "rows": 2,
+        "digest": "77c565cc3b4f31c857dda0ad64ca6b6c"
+      },
+      {
+        "relation": "public.app_cart_items",
+        "rows": 1,
+        "digest": "77612b3cfb93724fc6ed60023b10326c"
+      },
+      {
+        "relation": "public.app_carts",
+        "rows": 4,
+        "digest": "97ab29e801429991529b9d9af19c0596"
+      },
+      {
+        "relation": "public.app_case_evidence",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_case_history",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_case_messages",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_categories",
+        "rows": 5,
+        "digest": "d2291cd307479b03966a934c25a19573"
+      },
+      {
+        "relation": "public.app_checkout_quotes",
+        "rows": 3,
+        "digest": "c385f308c7a0feb75a39fb68ddb7ebee"
+      },
+      {
+        "relation": "public.app_command_receipts",
+        "rows": 3,
+        "digest": "5bc7ac8317a3c945e5de0cdbff269be4"
+      },
+      {
+        "relation": "public.app_commerce_receipts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_commerce_settings",
+        "rows": 1,
+        "digest": "23f91fa9dcfb96ce654ca58ddf0bcf82"
+      },
+      {
+        "relation": "public.app_complaints",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_consent_records",
+        "rows": 1,
+        "digest": "65e91ba1151fcc0c5b63b89b3efa728f"
+      },
+      {
+        "relation": "public.app_contact_verification_challenges",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_allocations",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_attempts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_proofs",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_quotes",
+        "rows": 3,
+        "digest": "08dd58f49ced8d8e6f83873685ef1227"
+      },
+      {
+        "relation": "public.app_delivery_rules",
+        "rows": 1,
+        "digest": "a329636a0ed024c4b4e4846fe52953d6"
+      },
+      {
+        "relation": "public.app_delivery_windows",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_document_extractions",
+        "rows": 2,
+        "digest": "4d377021ccaa459814deb9c88b2e8bd1"
+      },
+      {
+        "relation": "public.app_document_jobs",
+        "rows": 5,
+        "digest": "15dc948923b0e0f44f8ec51b9e01ce75"
+      },
+      {
+        "relation": "public.app_document_reviews",
+        "rows": 30,
+        "digest": "a8f2319cb71e8cf12db236285d93bbf1"
+      },
+      {
+        "relation": "public.app_document_scans",
+        "rows": 8,
+        "digest": "42f4a20fa41f4194a7d0622f5de21ba9"
+      },
+      {
+        "relation": "public.app_documents",
+        "rows": 8,
+        "digest": "563bd163373b9f3feec074a0d73e6878"
+      },
+      {
+        "relation": "public.app_favorites",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_financial_holds",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_global_config",
+        "rows": 1,
+        "digest": "9ec3935e8e5024e8dbf3e2705456f76b"
+      },
+      {
+        "relation": "public.app_inventory_lots",
+        "rows": 1,
+        "digest": "34fb124216d19547bdecad68fe908a05"
+      },
+      {
+        "relation": "public.app_inventory_movements",
+        "rows": 1,
+        "digest": "a4f87aa2fa9c32773e3e14a56d7c35d4"
+      },
+      {
+        "relation": "public.app_inventory_reservations",
+        "rows": 3,
+        "digest": "5b4cff4b021a859cd0e86d1f3b985011"
+      },
+      {
+        "relation": "public.app_kpi_definitions",
+        "rows": 8,
+        "digest": "d7a6413a140b846b7b999814a54574bd"
+      },
+      {
+        "relation": "public.app_kpi_metrics",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_locality_user_impacts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_municipalities",
+        "rows": 7,
+        "digest": "180caf43f1ebf22d1ed2c458dd0281b0"
+      },
+      {
+        "relation": "public.app_notifications",
+        "rows": 3,
+        "digest": "b04236ef0b4bdc4367c7bfd215303fe9"
+      },
+      {
+        "relation": "public.app_order_events",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_order_fulfillment",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_order_items",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_order_stock_returns",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_orders",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_outbox_events",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_password_recovery_requests",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_payment_intents",
+        "rows": 3,
+        "digest": "14c4ff0a509e53028b9f47928a4676f8"
+      },
+      {
+        "relation": "public.app_payment_policy_acceptances",
+        "rows": 2,
+        "digest": "7d980b0ee745916b24272b0fe7015eed"
+      },
+      {
+        "relation": "public.app_payment_transactions",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_people",
+        "rows": 4,
+        "digest": "ed74e332abbf16b57996d5a48592dd81"
+      },
+      {
+        "relation": "public.app_plans",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_pos_sales",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_price_versions",
+        "rows": 1,
+        "digest": "fc1d5d81f82eda0d3408493e8b96d718"
+      },
+      {
+        "relation": "public.app_producer_delivery_municipalities",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_producer_delivery_scopes",
+        "rows": 1,
+        "digest": "bd0d831558020c1333d81f3146dc5578"
+      },
+      {
+        "relation": "public.app_producer_profiles",
+        "rows": 3,
+        "digest": "72f8b21155aace616ca8379b823605c7"
+      },
+      {
+        "relation": "public.app_producer_stores",
+        "rows": 2,
+        "digest": "d6f67fe99ae6a4ae7bf7bfc99d2386f5"
+      },
+      {
+        "relation": "public.app_product_media",
+        "rows": 1,
+        "digest": "d0c8c151e3a3ff65a23037dfe5746efa"
+      },
+      {
+        "relation": "public.app_products",
+        "rows": 1,
+        "digest": "5f073e3cc1784f7c38df9c2a7edc4fed"
+      },
+      {
+        "relation": "public.app_properties",
+        "rows": 2,
+        "digest": "fc9a2430346965cce128381585353b5f"
+      },
+      {
+        "relation": "public.app_property_boundaries",
+        "rows": 2,
+        "digest": "bdc5ecb7ed4425b77f91edc17b1cd1ed"
+      },
+      {
+        "relation": "public.app_property_deletion_archive",
+        "rows": 2,
+        "digest": "74b18a79feeec1471c0837b93e59ce74"
+      },
+      {
+        "relation": "public.app_recurrence_schedules",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_refund_requests",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_refund_seller_contacts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_registration_reviews",
+        "rows": 1,
+        "digest": "a4b1692c4dbaf90f7e9fa062b481b27e"
+      },
+      {
+        "relation": "public.app_releases",
+        "rows": 101,
+        "digest": "74754f56588ee6e04717c10f7ff3f004"
+      },
+      {
+        "relation": "public.app_reputation_projections",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_reviews",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_role_security_challenges",
+        "rows": 3,
+        "digest": "5659555a1f8a16e55a37de5208701357"
+      },
+      {
+        "relation": "public.app_roles",
+        "rows": 4,
+        "digest": "eb12fdea3e58a51d00cba1d19d0ff932"
+      },
+      {
+        "relation": "public.app_rural_activities",
+        "rows": 2,
+        "digest": "228e60ecf8709963431107040119cb5d"
+      },
+      {
+        "relation": "public.app_service_areas",
+        "rows": 1,
+        "digest": "290675fd4c8ef99c60c1feb4363cf667"
+      },
+      {
+        "relation": "public.app_storage_deletion_queue",
+        "rows": 10,
+        "digest": "a41c92f70e9827e37cea56fefa2f3f0e"
+      },
+      {
+        "relation": "public.app_store_media",
+        "rows": 1,
+        "digest": "be6a5c39aad9b1d334011766d05eb48b"
+      },
+      {
+        "relation": "public.app_store_operating_hours",
+        "rows": 14,
+        "digest": "efc2439086711f022bcec9d5e63035ce"
+      },
+      {
+        "relation": "public.app_subscriptions",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_sync_command_journal",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_trial_grants",
+        "rows": 3,
+        "digest": "c5e53711c0ef4b1d6adb4e6aac226235"
+      },
+      {
+        "relation": "public.app_user_addresses",
+        "rows": 1,
+        "digest": "a9b4f7aefadd58578c93ab17b90cc98e"
+      },
+      {
+        "relation": "public.app_user_preferences",
+        "rows": 1,
+        "digest": "13504828152f07a439bc83c8ffe2fa57"
+      },
+      {
+        "relation": "public.app_user_role_assignments",
+        "rows": 6,
+        "digest": "b03fd131bbf438da1c0380c7eeb9937c"
+      },
+      {
+        "relation": "public.app_users",
+        "rows": 7,
+        "digest": "b2259afafdf0e29a83b93b38ea538ecf"
+      },
+      {
+        "relation": "public.app_verification_decisions",
+        "rows": 3,
+        "digest": "6c411d0a2d034963c908188b54cb2cd4"
+      },
+      {
+        "relation": "public.app_verification_requests",
+        "rows": 3,
+        "digest": "ba29858bb18f82497318c12c82fb4f5e"
+      },
+      {
+        "relation": "storage.buckets",
+        "rows": 5,
+        "digest": "3fb45a19872f18df8967fa9f59e9ef1b"
+      },
+      {
+        "relation": "storage.objects",
+        "rows": 10,
+        "digest": "e1f784e942bbf22a24f07f72521e8a86"
+      }
+    ],
+    "secondBeforeAt": "2026-10-07T21:45:51.250Z",
+    "secondAfterAt": "2026-10-07T21:45:56.099Z",
+    "identicalAfterSecondMigration": 99,
+    "beforeSecondMigration": [
+      {
+        "relation": "auth.sessions",
+        "rows": 32,
+        "digest": "6592510986a23f77dae8072234806978"
+      },
+      {
+        "relation": "auth.users",
+        "rows": 7,
+        "digest": "3331d875a9d2d75ab2c2b102c523bd64"
+      },
+      {
+        "relation": "public.app_access_partial_block_municipalities",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_access_partial_block_properties",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_access_partial_blocks",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_account_deletions",
+        "rows": 1,
+        "digest": "90f56a4983a5d45d4de69ca04726d44c"
+      },
+      {
+        "relation": "public.app_admin_auth_attempts",
+        "rows": 200,
+        "digest": "5e705ca3f936d51c288b31998a79c2bd"
+      },
+      {
+        "relation": "public.app_admin_invite_sectors",
+        "rows": 11,
+        "digest": "c97d5bab701723c9f86e8f54697e0933"
+      },
+      {
+        "relation": "public.app_admin_invites",
+        "rows": 2,
+        "digest": "acf6b84336478fae27e8758efa48b3e6"
+      },
+      {
+        "relation": "public.app_admin_mfa_challenges",
+        "rows": 6,
+        "digest": "653dba5fb3839c4c9aebaf3270cfe461"
+      },
+      {
+        "relation": "public.app_admin_principals",
+        "rows": 1,
+        "digest": "a73e95820a11f9d71280e5764e2686ff"
+      },
+      {
+        "relation": "public.app_admin_sector_members",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_admin_sectors",
+        "rows": 9,
+        "digest": "469279ff0a7ddd98bd45f83fe23d24cc"
+      },
+      {
+        "relation": "public.app_audit_events",
+        "rows": 452,
+        "digest": "fa89544ad6e60418d2d2741d230e5b66"
+      },
+      {
+        "relation": "public.app_billing_cycles",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_car_validations",
+        "rows": 2,
+        "digest": "77c565cc3b4f31c857dda0ad64ca6b6c"
+      },
+      {
+        "relation": "public.app_cart_items",
+        "rows": 1,
+        "digest": "77612b3cfb93724fc6ed60023b10326c"
+      },
+      {
+        "relation": "public.app_carts",
+        "rows": 4,
+        "digest": "97ab29e801429991529b9d9af19c0596"
+      },
+      {
+        "relation": "public.app_case_evidence",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_case_history",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_case_messages",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_categories",
+        "rows": 5,
+        "digest": "d2291cd307479b03966a934c25a19573"
+      },
+      {
+        "relation": "public.app_checkout_quotes",
+        "rows": 3,
+        "digest": "c385f308c7a0feb75a39fb68ddb7ebee"
+      },
+      {
+        "relation": "public.app_command_receipts",
+        "rows": 3,
+        "digest": "5bc7ac8317a3c945e5de0cdbff269be4"
+      },
+      {
+        "relation": "public.app_commerce_receipts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_commerce_settings",
+        "rows": 1,
+        "digest": "23f91fa9dcfb96ce654ca58ddf0bcf82"
+      },
+      {
+        "relation": "public.app_complaints",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_consent_records",
+        "rows": 1,
+        "digest": "65e91ba1151fcc0c5b63b89b3efa728f"
+      },
+      {
+        "relation": "public.app_contact_verification_challenges",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_allocations",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_attempts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_proofs",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_quotes",
+        "rows": 3,
+        "digest": "08dd58f49ced8d8e6f83873685ef1227"
+      },
+      {
+        "relation": "public.app_delivery_rules",
+        "rows": 1,
+        "digest": "a329636a0ed024c4b4e4846fe52953d6"
+      },
+      {
+        "relation": "public.app_delivery_windows",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_document_extractions",
+        "rows": 2,
+        "digest": "4d377021ccaa459814deb9c88b2e8bd1"
+      },
+      {
+        "relation": "public.app_document_jobs",
+        "rows": 5,
+        "digest": "15dc948923b0e0f44f8ec51b9e01ce75"
+      },
+      {
+        "relation": "public.app_document_reviews",
+        "rows": 30,
+        "digest": "a8f2319cb71e8cf12db236285d93bbf1"
+      },
+      {
+        "relation": "public.app_document_scans",
+        "rows": 8,
+        "digest": "42f4a20fa41f4194a7d0622f5de21ba9"
+      },
+      {
+        "relation": "public.app_documents",
+        "rows": 8,
+        "digest": "563bd163373b9f3feec074a0d73e6878"
+      },
+      {
+        "relation": "public.app_favorites",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_financial_holds",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_global_config",
+        "rows": 1,
+        "digest": "9ec3935e8e5024e8dbf3e2705456f76b"
+      },
+      {
+        "relation": "public.app_inventory_lots",
+        "rows": 1,
+        "digest": "34fb124216d19547bdecad68fe908a05"
+      },
+      {
+        "relation": "public.app_inventory_movements",
+        "rows": 1,
+        "digest": "a4f87aa2fa9c32773e3e14a56d7c35d4"
+      },
+      {
+        "relation": "public.app_inventory_reservations",
+        "rows": 3,
+        "digest": "5b4cff4b021a859cd0e86d1f3b985011"
+      },
+      {
+        "relation": "public.app_kpi_definitions",
+        "rows": 8,
+        "digest": "d7a6413a140b846b7b999814a54574bd"
+      },
+      {
+        "relation": "public.app_kpi_metrics",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_locality_user_impacts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_municipalities",
+        "rows": 7,
+        "digest": "180caf43f1ebf22d1ed2c458dd0281b0"
+      },
+      {
+        "relation": "public.app_notifications",
+        "rows": 3,
+        "digest": "b04236ef0b4bdc4367c7bfd215303fe9"
+      },
+      {
+        "relation": "public.app_order_events",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_order_fulfillment",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_order_items",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_order_stock_returns",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_orders",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_outbox_events",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_password_recovery_requests",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_payment_intents",
+        "rows": 3,
+        "digest": "14c4ff0a509e53028b9f47928a4676f8"
+      },
+      {
+        "relation": "public.app_payment_policy_acceptances",
+        "rows": 2,
+        "digest": "7d980b0ee745916b24272b0fe7015eed"
+      },
+      {
+        "relation": "public.app_payment_transactions",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_people",
+        "rows": 4,
+        "digest": "ed74e332abbf16b57996d5a48592dd81"
+      },
+      {
+        "relation": "public.app_plans",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_pos_sales",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_price_versions",
+        "rows": 1,
+        "digest": "fc1d5d81f82eda0d3408493e8b96d718"
+      },
+      {
+        "relation": "public.app_producer_delivery_municipalities",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_producer_delivery_scopes",
+        "rows": 1,
+        "digest": "bd0d831558020c1333d81f3146dc5578"
+      },
+      {
+        "relation": "public.app_producer_profiles",
+        "rows": 3,
+        "digest": "72f8b21155aace616ca8379b823605c7"
+      },
+      {
+        "relation": "public.app_producer_stores",
+        "rows": 2,
+        "digest": "d6f67fe99ae6a4ae7bf7bfc99d2386f5"
+      },
+      {
+        "relation": "public.app_product_media",
+        "rows": 1,
+        "digest": "d0c8c151e3a3ff65a23037dfe5746efa"
+      },
+      {
+        "relation": "public.app_products",
+        "rows": 1,
+        "digest": "5f073e3cc1784f7c38df9c2a7edc4fed"
+      },
+      {
+        "relation": "public.app_properties",
+        "rows": 2,
+        "digest": "fc9a2430346965cce128381585353b5f"
+      },
+      {
+        "relation": "public.app_property_boundaries",
+        "rows": 2,
+        "digest": "bdc5ecb7ed4425b77f91edc17b1cd1ed"
+      },
+      {
+        "relation": "public.app_property_deletion_archive",
+        "rows": 2,
+        "digest": "74b18a79feeec1471c0837b93e59ce74"
+      },
+      {
+        "relation": "public.app_recurrence_schedules",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_refund_requests",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_refund_seller_contacts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_registration_reviews",
+        "rows": 1,
+        "digest": "a4b1692c4dbaf90f7e9fa062b481b27e"
+      },
+      {
+        "relation": "public.app_releases",
+        "rows": 101,
+        "digest": "74754f56588ee6e04717c10f7ff3f004"
+      },
+      {
+        "relation": "public.app_reputation_projections",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_reviews",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_role_security_challenges",
+        "rows": 3,
+        "digest": "5659555a1f8a16e55a37de5208701357"
+      },
+      {
+        "relation": "public.app_roles",
+        "rows": 4,
+        "digest": "eb12fdea3e58a51d00cba1d19d0ff932"
+      },
+      {
+        "relation": "public.app_rural_activities",
+        "rows": 2,
+        "digest": "228e60ecf8709963431107040119cb5d"
+      },
+      {
+        "relation": "public.app_service_areas",
+        "rows": 1,
+        "digest": "290675fd4c8ef99c60c1feb4363cf667"
+      },
+      {
+        "relation": "public.app_storage_deletion_queue",
+        "rows": 10,
+        "digest": "a41c92f70e9827e37cea56fefa2f3f0e"
+      },
+      {
+        "relation": "public.app_store_media",
+        "rows": 1,
+        "digest": "be6a5c39aad9b1d334011766d05eb48b"
+      },
+      {
+        "relation": "public.app_store_operating_hours",
+        "rows": 14,
+        "digest": "efc2439086711f022bcec9d5e63035ce"
+      },
+      {
+        "relation": "public.app_subscriptions",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_sync_command_journal",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_trial_grants",
+        "rows": 3,
+        "digest": "c5e53711c0ef4b1d6adb4e6aac226235"
+      },
+      {
+        "relation": "public.app_user_addresses",
+        "rows": 1,
+        "digest": "a9b4f7aefadd58578c93ab17b90cc98e"
+      },
+      {
+        "relation": "public.app_user_preferences",
+        "rows": 1,
+        "digest": "13504828152f07a439bc83c8ffe2fa57"
+      },
+      {
+        "relation": "public.app_user_role_assignments",
+        "rows": 6,
+        "digest": "b03fd131bbf438da1c0380c7eeb9937c"
+      },
+      {
+        "relation": "public.app_users",
+        "rows": 7,
+        "digest": "b2259afafdf0e29a83b93b38ea538ecf"
+      },
+      {
+        "relation": "public.app_verification_decisions",
+        "rows": 3,
+        "digest": "6c411d0a2d034963c908188b54cb2cd4"
+      },
+      {
+        "relation": "public.app_verification_requests",
+        "rows": 3,
+        "digest": "ba29858bb18f82497318c12c82fb4f5e"
+      },
+      {
+        "relation": "storage.buckets",
+        "rows": 5,
+        "digest": "3fb45a19872f18df8967fa9f59e9ef1b"
+      },
+      {
+        "relation": "storage.objects",
+        "rows": 10,
+        "digest": "e1f784e942bbf22a24f07f72521e8a86"
+      }
+    ],
+    "afterSecondMigration": [
+      {
+        "relation": "auth.sessions",
+        "rows": 32,
+        "digest": "6592510986a23f77dae8072234806978"
+      },
+      {
+        "relation": "auth.users",
+        "rows": 7,
+        "digest": "3331d875a9d2d75ab2c2b102c523bd64"
+      },
+      {
+        "relation": "public.app_access_partial_block_municipalities",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_access_partial_block_properties",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_access_partial_blocks",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_account_deletions",
+        "rows": 1,
+        "digest": "90f56a4983a5d45d4de69ca04726d44c"
+      },
+      {
+        "relation": "public.app_admin_auth_attempts",
+        "rows": 200,
+        "digest": "5e705ca3f936d51c288b31998a79c2bd"
+      },
+      {
+        "relation": "public.app_admin_invite_sectors",
+        "rows": 11,
+        "digest": "c97d5bab701723c9f86e8f54697e0933"
+      },
+      {
+        "relation": "public.app_admin_invites",
+        "rows": 2,
+        "digest": "acf6b84336478fae27e8758efa48b3e6"
+      },
+      {
+        "relation": "public.app_admin_mfa_challenges",
+        "rows": 6,
+        "digest": "653dba5fb3839c4c9aebaf3270cfe461"
+      },
+      {
+        "relation": "public.app_admin_principals",
+        "rows": 1,
+        "digest": "a73e95820a11f9d71280e5764e2686ff"
+      },
+      {
+        "relation": "public.app_admin_sector_members",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_admin_sectors",
+        "rows": 9,
+        "digest": "469279ff0a7ddd98bd45f83fe23d24cc"
+      },
+      {
+        "relation": "public.app_audit_events",
+        "rows": 452,
+        "digest": "fa89544ad6e60418d2d2741d230e5b66"
+      },
+      {
+        "relation": "public.app_billing_cycles",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_car_validations",
+        "rows": 2,
+        "digest": "77c565cc3b4f31c857dda0ad64ca6b6c"
+      },
+      {
+        "relation": "public.app_cart_items",
+        "rows": 1,
+        "digest": "77612b3cfb93724fc6ed60023b10326c"
+      },
+      {
+        "relation": "public.app_carts",
+        "rows": 4,
+        "digest": "97ab29e801429991529b9d9af19c0596"
+      },
+      {
+        "relation": "public.app_case_evidence",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_case_history",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_case_messages",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_categories",
+        "rows": 5,
+        "digest": "d2291cd307479b03966a934c25a19573"
+      },
+      {
+        "relation": "public.app_checkout_quotes",
+        "rows": 3,
+        "digest": "c385f308c7a0feb75a39fb68ddb7ebee"
+      },
+      {
+        "relation": "public.app_command_receipts",
+        "rows": 3,
+        "digest": "5bc7ac8317a3c945e5de0cdbff269be4"
+      },
+      {
+        "relation": "public.app_commerce_receipts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_commerce_settings",
+        "rows": 1,
+        "digest": "23f91fa9dcfb96ce654ca58ddf0bcf82"
+      },
+      {
+        "relation": "public.app_complaints",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_consent_records",
+        "rows": 1,
+        "digest": "65e91ba1151fcc0c5b63b89b3efa728f"
+      },
+      {
+        "relation": "public.app_contact_verification_challenges",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_allocations",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_attempts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_proofs",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_quotes",
+        "rows": 3,
+        "digest": "08dd58f49ced8d8e6f83873685ef1227"
+      },
+      {
+        "relation": "public.app_delivery_rules",
+        "rows": 1,
+        "digest": "a329636a0ed024c4b4e4846fe52953d6"
+      },
+      {
+        "relation": "public.app_delivery_windows",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_document_extractions",
+        "rows": 2,
+        "digest": "4d377021ccaa459814deb9c88b2e8bd1"
+      },
+      {
+        "relation": "public.app_document_jobs",
+        "rows": 5,
+        "digest": "15dc948923b0e0f44f8ec51b9e01ce75"
+      },
+      {
+        "relation": "public.app_document_reviews",
+        "rows": 30,
+        "digest": "a8f2319cb71e8cf12db236285d93bbf1"
+      },
+      {
+        "relation": "public.app_document_scans",
+        "rows": 8,
+        "digest": "42f4a20fa41f4194a7d0622f5de21ba9"
+      },
+      {
+        "relation": "public.app_documents",
+        "rows": 8,
+        "digest": "563bd163373b9f3feec074a0d73e6878"
+      },
+      {
+        "relation": "public.app_favorites",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_financial_holds",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_global_config",
+        "rows": 1,
+        "digest": "9ec3935e8e5024e8dbf3e2705456f76b"
+      },
+      {
+        "relation": "public.app_inventory_lots",
+        "rows": 1,
+        "digest": "34fb124216d19547bdecad68fe908a05"
+      },
+      {
+        "relation": "public.app_inventory_movements",
+        "rows": 1,
+        "digest": "a4f87aa2fa9c32773e3e14a56d7c35d4"
+      },
+      {
+        "relation": "public.app_inventory_reservations",
+        "rows": 3,
+        "digest": "5b4cff4b021a859cd0e86d1f3b985011"
+      },
+      {
+        "relation": "public.app_kpi_definitions",
+        "rows": 8,
+        "digest": "d7a6413a140b846b7b999814a54574bd"
+      },
+      {
+        "relation": "public.app_kpi_metrics",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_locality_user_impacts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_municipalities",
+        "rows": 7,
+        "digest": "180caf43f1ebf22d1ed2c458dd0281b0"
+      },
+      {
+        "relation": "public.app_notifications",
+        "rows": 3,
+        "digest": "b04236ef0b4bdc4367c7bfd215303fe9"
+      },
+      {
+        "relation": "public.app_order_events",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_order_fulfillment",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_order_items",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_order_stock_returns",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_orders",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_outbox_events",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_password_recovery_requests",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_payment_intents",
+        "rows": 3,
+        "digest": "14c4ff0a509e53028b9f47928a4676f8"
+      },
+      {
+        "relation": "public.app_payment_policy_acceptances",
+        "rows": 2,
+        "digest": "7d980b0ee745916b24272b0fe7015eed"
+      },
+      {
+        "relation": "public.app_payment_transactions",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_people",
+        "rows": 4,
+        "digest": "ed74e332abbf16b57996d5a48592dd81"
+      },
+      {
+        "relation": "public.app_plans",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_pos_sales",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_price_versions",
+        "rows": 1,
+        "digest": "fc1d5d81f82eda0d3408493e8b96d718"
+      },
+      {
+        "relation": "public.app_producer_delivery_municipalities",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_producer_delivery_scopes",
+        "rows": 1,
+        "digest": "bd0d831558020c1333d81f3146dc5578"
+      },
+      {
+        "relation": "public.app_producer_profiles",
+        "rows": 3,
+        "digest": "72f8b21155aace616ca8379b823605c7"
+      },
+      {
+        "relation": "public.app_producer_stores",
+        "rows": 2,
+        "digest": "d6f67fe99ae6a4ae7bf7bfc99d2386f5"
+      },
+      {
+        "relation": "public.app_product_media",
+        "rows": 1,
+        "digest": "d0c8c151e3a3ff65a23037dfe5746efa"
+      },
+      {
+        "relation": "public.app_products",
+        "rows": 1,
+        "digest": "5f073e3cc1784f7c38df9c2a7edc4fed"
+      },
+      {
+        "relation": "public.app_properties",
+        "rows": 2,
+        "digest": "fc9a2430346965cce128381585353b5f"
+      },
+      {
+        "relation": "public.app_property_boundaries",
+        "rows": 2,
+        "digest": "bdc5ecb7ed4425b77f91edc17b1cd1ed"
+      },
+      {
+        "relation": "public.app_property_deletion_archive",
+        "rows": 2,
+        "digest": "74b18a79feeec1471c0837b93e59ce74"
+      },
+      {
+        "relation": "public.app_recurrence_schedules",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_refund_requests",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_refund_seller_contacts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_registration_reviews",
+        "rows": 1,
+        "digest": "a4b1692c4dbaf90f7e9fa062b481b27e"
+      },
+      {
+        "relation": "public.app_releases",
+        "rows": 101,
+        "digest": "74754f56588ee6e04717c10f7ff3f004"
+      },
+      {
+        "relation": "public.app_reputation_projections",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_reviews",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_role_security_challenges",
+        "rows": 3,
+        "digest": "5659555a1f8a16e55a37de5208701357"
+      },
+      {
+        "relation": "public.app_roles",
+        "rows": 4,
+        "digest": "eb12fdea3e58a51d00cba1d19d0ff932"
+      },
+      {
+        "relation": "public.app_rural_activities",
+        "rows": 2,
+        "digest": "228e60ecf8709963431107040119cb5d"
+      },
+      {
+        "relation": "public.app_service_areas",
+        "rows": 1,
+        "digest": "290675fd4c8ef99c60c1feb4363cf667"
+      },
+      {
+        "relation": "public.app_storage_deletion_queue",
+        "rows": 10,
+        "digest": "a41c92f70e9827e37cea56fefa2f3f0e"
+      },
+      {
+        "relation": "public.app_store_media",
+        "rows": 1,
+        "digest": "be6a5c39aad9b1d334011766d05eb48b"
+      },
+      {
+        "relation": "public.app_store_operating_hours",
+        "rows": 14,
+        "digest": "efc2439086711f022bcec9d5e63035ce"
+      },
+      {
+        "relation": "public.app_subscriptions",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_sync_command_journal",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_trial_grants",
+        "rows": 3,
+        "digest": "c5e53711c0ef4b1d6adb4e6aac226235"
+      },
+      {
+        "relation": "public.app_user_addresses",
+        "rows": 1,
+        "digest": "a9b4f7aefadd58578c93ab17b90cc98e"
+      },
+      {
+        "relation": "public.app_user_preferences",
+        "rows": 1,
+        "digest": "13504828152f07a439bc83c8ffe2fa57"
+      },
+      {
+        "relation": "public.app_user_role_assignments",
+        "rows": 6,
+        "digest": "b03fd131bbf438da1c0380c7eeb9937c"
+      },
+      {
+        "relation": "public.app_users",
+        "rows": 7,
+        "digest": "b2259afafdf0e29a83b93b38ea538ecf"
+      },
+      {
+        "relation": "public.app_verification_decisions",
+        "rows": 3,
+        "digest": "6c411d0a2d034963c908188b54cb2cd4"
+      },
+      {
+        "relation": "public.app_verification_requests",
+        "rows": 3,
+        "digest": "ba29858bb18f82497318c12c82fb4f5e"
+      },
+      {
+        "relation": "storage.buckets",
+        "rows": 5,
+        "digest": "3fb45a19872f18df8967fa9f59e9ef1b"
+      },
+      {
+        "relation": "storage.objects",
+        "rows": 10,
+        "digest": "e1f784e942bbf22a24f07f72521e8a86"
+      }
+    ]
+  },
+  "grants": {
+    "tableGrantsUnchanged": true,
+    "removedColumnGrants": [
+      {
+        "table_name": "app_people",
+        "column_name": "full_name",
+        "grantee": "authenticated",
+        "privilege_type": "UPDATE"
+      },
+      {
+        "table_name": "app_people",
+        "column_name": "phone_e164",
+        "grantee": "authenticated",
+        "privilege_type": "UPDATE"
+      },
+      {
+        "table_name": "app_producer_profiles",
+        "column_name": "property_name",
+        "grantee": "authenticated",
+        "privilege_type": "UPDATE"
+      },
+      {
+        "table_name": "app_producer_profiles",
+        "column_name": "rural_activity_type",
+        "grantee": "authenticated",
+        "privilege_type": "UPDATE"
+      }
+    ],
+    "addedColumnGrants": []
+  },
+  "database": {
+    "appTables": 97,
+    "forcedTables": 97,
+    "clientDmlTable": 0,
+    "clientDmlColumn": 0,
+    "profiles": 6,
+    "permissionExceptions": 0,
+    "missingActiveProfiles": 0,
+    "unsafePrivateExec": 0,
+    "unsafeRegistrationExec": 0
+  },
+  "profiles": {
+    "legacyEditsAfterBackfill": 0
+  },
+  "advisors": {
+    "securityBefore": [
+      {
+        "name": "rls_enabled_no_policy",
+        "level": "INFO",
+        "count": 23,
+        "keys": [
+          "Table \\`public.app_account_deletions\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_cart_items\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_carts\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_case_evidence\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_command_receipts\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_commerce_receipts\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_commerce_settings\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_delivery_rules\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_document_jobs\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_inventory_lots\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_inventory_movements\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_inventory_reservations\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_kpi_definitions\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_kpi_metrics\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_locality_user_impacts\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_order_stock_returns\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_payment_transactions\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_property_deletion_archive\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_registration_reviews\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_role_security_challenges\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_service_areas\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_storage_deletion_queue\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_sync_command_journal\\` has RLS enabled, but no policies exist"
+        ]
+      },
+      {
+        "name": "authenticated_security_definer_function_executable",
+        "level": "WARN",
+        "count": 4,
+        "keys": [
+          "Function `public.current_person_id()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/current_person_id`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "Function `public.has_role(required_role text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/has_role`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "Function `public.is_any_platform_admin()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/is_any_platform_admin`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "Function `public.is_platform_super_admin()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/is_platform_super_admin`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional."
+        ]
+      },
+      {
+        "name": "auth_leaked_password_protection",
+        "level": "WARN",
+        "count": 1,
+        "keys": [
+          "Supabase Auth prevents the use of compromised passwords by checking against HaveIBeenPwned.org. Enable this feature to enhance security."
+        ]
+      }
+    ],
+    "securityAfter": [
+      {
+        "name": "rls_enabled_no_policy",
+        "level": "INFO",
+        "count": 25,
+        "keys": [
+          "Table \\`public.app_account_deletions\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_account_profiles\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_admin_permission_overrides\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_cart_items\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_carts\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_case_evidence\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_command_receipts\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_commerce_receipts\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_commerce_settings\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_delivery_rules\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_document_jobs\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_inventory_lots\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_inventory_movements\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_inventory_reservations\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_kpi_definitions\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_kpi_metrics\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_locality_user_impacts\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_order_stock_returns\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_payment_transactions\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_property_deletion_archive\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_registration_reviews\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_role_security_challenges\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_service_areas\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_storage_deletion_queue\\` has RLS enabled, but no policies exist",
+          "Table \\`public.app_sync_command_journal\\` has RLS enabled, but no policies exist"
+        ]
+      },
+      {
+        "name": "authenticated_security_definer_function_executable",
+        "level": "WARN",
+        "count": 4,
+        "keys": [
+          "Function `public.current_person_id()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/current_person_id`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "Function `public.has_role(required_role text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/has_role`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "Function `public.is_any_platform_admin()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/is_any_platform_admin`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "Function `public.is_platform_super_admin()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/is_platform_super_admin`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional."
+        ]
+      },
+      {
+        "name": "auth_leaked_password_protection",
+        "level": "WARN",
+        "count": 1,
+        "keys": [
+          "Supabase Auth prevents the use of compromised passwords by checking against HaveIBeenPwned.org. Enable this feature to enhance security."
+        ]
+      }
+    ],
+    "performanceBefore": [
+      {
+        "name": "unindexed_foreign_keys",
+        "level": "INFO",
+        "count": 5,
+        "keys": [
+          "Table \\`public.app_access_partial_block_municipalities\\` has a foreign key \\`app_access_partial_block_municipalities_municipality_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+          "Table \\`public.app_access_partial_block_properties\\` has a foreign key \\`app_access_partial_block_properties_property_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+          "Table \\`public.app_access_partial_blocks\\` has a foreign key \\`app_access_partial_blocks_created_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+          "Table \\`public.app_access_partial_blocks\\` has a foreign key \\`app_access_partial_blocks_revoked_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+          "Table \\`public.app_producer_delivery_scopes\\` has a foreign key \\`app_producer_delivery_scopes_updated_by_fkey\\` without a covering index. This can lead to suboptimal query performance."
+        ]
+      },
+      {
+        "name": "unused_index",
+        "level": "INFO",
+        "count": 100,
+        "keys": [
+          "Index \\`ix_app_people_email_lower\\` on table \\`public.app_people\\` has not been used",
+          "Index \\`ix_app_user_roles_granted_at\\` on table \\`public.app_user_role_assignments\\` has not been used",
+          "Index \\`ix_app_producer_profiles_pending\\` on table \\`public.app_producer_profiles\\` has not been used",
+          "Index \\`ix_app_audit_events_config_target\\` on table \\`public.app_audit_events\\` has not been used",
+          "Index \\`ix_app_people_email_login\\` on table \\`public.app_people\\` has not been used",
+          "Index \\`ix_app_challenges_user_channel_active\\` on table \\`public.app_contact_verification_challenges\\` has not been used",
+          "Index \\`ix_app_challenges_expires\\` on table \\`public.app_contact_verification_challenges\\` has not been used",
+          "Index \\`ix_app_recovery_user_active\\` on table \\`public.app_password_recovery_requests\\` has not been used",
+          "Index \\`ix_app_outbox_dispatch\\` on table \\`public.app_outbox_events\\` has not been used",
+          "Index \\`ix_app_admin_sector_members_expires\\` on table \\`public.app_admin_sector_members\\` has not been used",
+          "Index \\`ix_app_challenges_request\\` on table \\`public.app_contact_verification_challenges\\` has not been used",
+          "Index \\`ix_app_recovery_request\\` on table \\`public.app_password_recovery_requests\\` has not been used",
+          "Index \\`ix_app_outbox_request\\` on table \\`public.app_outbox_events\\` has not been used",
+          "Index \\`ix_app_admin_invite_sectors_sector_code\\` on table \\`public.app_admin_invite_sectors\\` has not been used",
+          "Index \\`ix_app_admin_invites_target_role\\` on table \\`public.app_admin_invites\\` has not been used",
+          "Index \\`ix_app_admin_sector_members_sector_code\\` on table \\`public.app_admin_sector_members\\` has not been used",
+          "Index \\`ix_app_role_security_challenges_role_code\\` on table \\`public.app_role_security_challenges\\` has not been used",
+          "Index \\`ix_app_admin_principals_unverified_email\\` on table \\`public.app_admin_principals\\` has not been used",
+          "Index \\`ix_app_admin_principals_login\\` on table \\`public.app_admin_principals\\` has not been used",
+          "Index \\`ix_app_properties_location\\` on table \\`public.app_properties\\` has not been used",
+          "Index \\`ix_app_documents_property_producer\\` on table \\`public.app_documents\\` has not been used",
+          "Index \\`ix_registration_reviews_reviewed_by\\` on table \\`public.app_registration_reviews\\` has not been used",
+          "Index \\`ix_verification_decisions_auditor\\` on table \\`public.app_verification_decisions\\` has not been used",
+          "Index \\`ix_account_deletions_deleted_by\\` on table \\`public.app_account_deletions\\` has not been used",
+          "Index \\`ix_account_deletions_user\\` on table \\`public.app_account_deletions\\` has not been used",
+          "Index \\`ix_verification_requests_archive\\` on table \\`public.app_verification_requests\\` has not been used",
+          "Index \\`ix_verification_requests_superseded\\` on table \\`public.app_verification_requests\\` has not been used",
+          "Index \\`ix_verification_requests_superseded_by_request\\` on table \\`public.app_verification_requests\\` has not been used",
+          "Index \\`ix_verification_requests_claimed_by\\` on table \\`public.app_verification_requests\\` has not been used",
+          "Index \\`ix_app_admin_principals_created_by\\` on table \\`public.app_admin_principals\\` has not been used",
+          "Index \\`ix_document_reviews_user\\` on table \\`public.app_document_reviews\\` has not been used",
+          "Index \\`ix_app_documents_uploaded_by\\` on table \\`public.app_documents\\` has not been used",
+          "Index \\`ix_app_municipalities_active\\` on table \\`public.app_municipalities\\` has not been used",
+          "Index \\`ix_app_people_municipality\\` on table \\`public.app_people\\` has not been used",
+          "Index \\`ix_app_municipalities_created_by\\` on table \\`public.app_municipalities\\` has not been used",
+          "Index \\`ix_app_municipalities_updated_by\\` on table \\`public.app_municipalities\\` has not been used",
+          "Index \\`ix_app_municipalities_deactivated_by\\` on table \\`public.app_municipalities\\` has not been used",
+          "Index \\`ix_app_account_deletions_email\\` on table \\`public.app_account_deletions\\` has not been used",
+          "Index \\`ix_app_locality_user_impacts_lookup\\` on table \\`public.app_locality_user_impacts\\` has not been used",
+          "Index \\`account_deletions_email\\` on table \\`public.app_account_deletions\\` has not been used",
+          "Index \\`ix_app_producer_stores_property\\` on table \\`public.app_producer_stores\\` has not been used",
+          "Index \\`ix_app_categories_display\\` on table \\`public.app_categories\\` has not been used",
+          "Index \\`ix_app_categories_parent\\` on table \\`public.app_categories\\` has not been used",
+          "Index \\`ix_app_price_versions_actor\\` on table \\`public.app_price_versions\\` has not been used",
+          "Index \\`ix_app_inventory_reservations_expiry\\` on table \\`public.app_inventory_reservations\\` has not been used",
+          "Index \\`ix_inventory_movements_actor\\` on table \\`public.app_inventory_movements\\` has not been used",
+          "Index \\`ix_delivery_quotes_store\\` on table \\`public.app_delivery_quotes\\` has not been used",
+          "Index \\`ix_delivery_quotes_owner_address\\` on table \\`public.app_delivery_quotes\\` has not been used",
+          "Index \\`ix_delivery_quotes_expiry\\` on table \\`public.app_delivery_quotes\\` has not been used",
+          "Index \\`ix_app_products_title_trgm\\` on table \\`public.app_products\\` has not been used",
+          "Index \\`ix_app_stores_name_trgm\\` on table \\`public.app_producer_stores\\` has not been used",
+          "Index \\`ix_app_favorites_person_time\\` on table \\`public.app_favorites\\` has not been used",
+          "Index \\`ix_app_cart_items_product\\` on table \\`public.app_cart_items\\` has not been used",
+          "Index \\`ix_app_cart_items_store\\` on table \\`public.app_cart_items\\` has not been used",
+          "Index \\`ix_recurrences_window\\` on table \\`public.app_recurrence_schedules\\` has not been used",
+          "Index \\`ix_checkout_quotes_person\\` on table \\`public.app_checkout_quotes\\` has not been used",
+          "Index \\`ix_checkout_quotes_address\\` on table \\`public.app_checkout_quotes\\` has not been used",
+          "Index \\`ix_command_receipts_user_history\\` on table \\`public.app_command_receipts\\` has not been used",
+          "Index \\`ix_commerce_receipts_user\\` on table \\`public.app_commerce_receipts\\` has not been used",
+          "Index \\`ix_pos_sales_store\\` on table \\`public.app_pos_sales\\` has not been used",
+          "Index \\`ix_payment_acceptances_user\\` on table \\`public.app_payment_policy_acceptances\\` has not been used",
+          "Index \\`ix_orders_store\\` on table \\`public.app_orders\\` has not been used",
+          "Index \\`ix_payment_events_intent\\` on table \\`public.app_payment_transactions\\` has not been used",
+          "Index \\`ix_refunds_order\\` on table \\`public.app_refund_requests\\` has not been used",
+          "Index \\`ix_complaints_subject\\` on table \\`public.app_complaints\\` has not been used",
+          "Index \\`ix_complaints_order\\` on table \\`public.app_complaints\\` has not been used",
+          "Index \\`ix_complaints_queue\\` on table \\`public.app_complaints\\` has not been used",
+          "Index \\`ix_complaints_target\\` on table \\`public.app_complaints\\` has not been used",
+          "Index \\`ix_case_messages_refund\\` on table \\`public.app_case_messages\\` has not been used",
+          "Index \\`ix_case_messages_complaint\\` on table \\`public.app_case_messages\\` has not been used",
+          "Index \\`ix_case_messages_author\\` on table \\`public.app_case_messages\\` has not been used",
+          "Index \\`ix_case_history_refund\\` on table \\`public.app_case_history\\` has not been used",
+          "Index \\`ix_case_history_complaint\\` on table \\`public.app_case_history\\` has not been used",
+          "Index \\`ix_case_history_actor\\` on table \\`public.app_case_history\\` has not been used",
+          "Index \\`ix_case_evidence_refund\\` on table \\`public.app_case_evidence\\` has not been used",
+          "Index \\`ix_case_evidence_complaint\\` on table \\`public.app_case_evidence\\` has not been used",
+          "Index \\`ix_case_evidence_uploader\\` on table \\`public.app_case_evidence\\` has not been used",
+          "Index \\`ix_commerce_settings_actor\\` on table \\`public.app_commerce_settings\\` has not been used",
+          "Index \\`ix_order_fulfillment_queue\\` on table \\`public.app_order_fulfillment\\` has not been used",
+          "Index \\`ix_order_items_product\\` on table \\`public.app_order_items\\` has not been used",
+          "Index \\`ix_order_events_actor\\` on table \\`public.app_order_events\\` has not been used",
+          "Index \\`ix_order_stock_returns_order\\` on table \\`public.app_order_stock_returns\\` has not been used",
+          "Index \\`ix_order_stock_returns_lot\\` on table \\`public.app_order_stock_returns\\` has not been used",
+          "Index \\`ix_reservations_consumed_order\\` on table \\`public.app_inventory_reservations\\` has not been used",
+          "Index \\`ix_delivery_allocations_capacity\\` on table \\`public.app_delivery_allocations\\` has not been used",
+          "Index \\`ix_delivery_proofs_actor\\` on table \\`public.app_delivery_proofs\\` has not been used",
+          "Index \\`ix_subscriptions_person\\` on table \\`public.app_subscriptions\\` has not been used",
+          "Index \\`ix_subscriptions_plan\\` on table \\`public.app_subscriptions\\` has not been used",
+          "Index \\`ix_subscriptions_producer\\` on table \\`public.app_subscriptions\\` has not been used",
+          "Index \\`ix_subscriptions_address\\` on table \\`public.app_subscriptions\\` has not been used",
+          "Index \\`ix_plans_store\\` on table \\`public.app_plans\\` has not been used",
+          "Index \\`ix_reviews_customer\\` on table \\`public.app_reviews\\` has not been used",
+          "Index \\`ix_reviews_moderator\\` on table \\`public.app_reviews\\` has not been used",
+          "Index \\`ix_notifications_sector\\` on table \\`public.app_notifications\\` has not been used",
+          "Index \\`ix_refund_seller_contacts_refund\\` on table \\`public.app_refund_seller_contacts\\` has not been used",
+          "Index \\`ix_refund_seller_contacts_author\\` on table \\`public.app_refund_seller_contacts\\` has not been used",
+          "Index \\`ix_t25_delivered_events_date\\` on table \\`public.app_order_events\\` has not been used",
+          "Index \\`ix_t25_quotes_created\\` on table \\`public.app_checkout_quotes\\` has not been used",
+          "Index \\`ix_t25_payments_approved_date\\` on table \\`public.app_payment_transactions\\` has not been used",
+          "Index \\`ix_sync_journal_user\\` on table \\`public.app_sync_command_journal\\` has not been used"
+        ]
+      },
+      {
+        "name": "multiple_permissive_policies",
+        "level": "WARN",
+        "count": 25,
+        "keys": [
+          "Table \\`public.app_access_partial_block_municipalities\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{partial_block_municipalities_admin_read,partial_block_municipalities_self_read}\\`",
+          "Table \\`public.app_access_partial_block_properties\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{partial_block_properties_admin_read,partial_block_properties_self_read}\\`",
+          "Table \\`public.app_access_partial_blocks\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{partial_blocks_admin_read,partial_blocks_self_read}\\`",
+          "Table \\`public.app_admin_principals\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{admin_principals_self_read,admin_principals_super_admin_read}\\`",
+          "Table \\`public.app_document_scans\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{app_document_scans_admin_read,app_document_scans_self_read}\\`",
+          "Table \\`public.app_documents\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{app_documents_admin_read,app_documents_self_read}\\`",
+          "Table \\`public.app_order_events\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{order_customer_read,order_producer_read}\\`",
+          "Table \\`public.app_order_fulfillment\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{order_customer_read,order_producer_read}\\`",
+          "Table \\`public.app_order_items\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{order_customer_read,order_producer_read}\\`",
+          "Table \\`public.app_people\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{people_self_read,people_super_admin_read}\\`",
+          "Table \\`public.app_price_versions\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{price_owner_read,price_public_read}\\`",
+          "Table \\`public.app_producer_delivery_municipalities\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{delivery_municipalities_admin_read,delivery_municipalities_owner_read}\\`",
+          "Table \\`public.app_producer_delivery_scopes\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{delivery_scope_admin_read,delivery_scope_owner_read}\\`",
+          "Table \\`public.app_producer_profiles\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{producer_profiles_admin_read,producer_profiles_self_read}\\`",
+          "Table \\`public.app_producer_stores\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{store_owner_read,store_public_read}\\`",
+          "Table \\`public.app_product_media\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{media_owner_read,media_public_read}\\`",
+          "Table \\`public.app_products\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{products_owner_read,products_public_read}\\`",
+          "Table \\`public.app_properties\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{properties_admin_read,properties_self_read}\\`",
+          "Table \\`public.app_property_boundaries\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{property_boundaries_admin_read,property_boundaries_self_read}\\`",
+          "Table \\`public.app_rural_activities\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{rural_activities_admin_read,rural_activities_self_read}\\`",
+          "Table \\`public.app_store_operating_hours\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{hours_owner_read,hours_public_read}\\`",
+          "Table \\`public.app_user_role_assignments\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{user_roles_self_read,user_roles_super_admin_read}\\`",
+          "Table \\`public.app_users\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{users_self_read,users_super_admin_read}\\`",
+          "Table \\`public.app_verification_decisions\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{verification_decisions_admin_read,verification_decisions_producer_final_read}\\`",
+          "Table \\`public.app_verification_requests\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{verification_requests_admin_read,verification_requests_producer_read}\\`"
+        ]
+      }
+    ],
+    "performanceAfter": [
+      {
+        "name": "unindexed_foreign_keys",
+        "level": "INFO",
+        "count": 5,
+        "keys": [
+          "Table \\`public.app_access_partial_block_municipalities\\` has a foreign key \\`app_access_partial_block_municipalities_municipality_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+          "Table \\`public.app_access_partial_block_properties\\` has a foreign key \\`app_access_partial_block_properties_property_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+          "Table \\`public.app_access_partial_blocks\\` has a foreign key \\`app_access_partial_blocks_created_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+          "Table \\`public.app_access_partial_blocks\\` has a foreign key \\`app_access_partial_blocks_revoked_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+          "Table \\`public.app_producer_delivery_scopes\\` has a foreign key \\`app_producer_delivery_scopes_updated_by_fkey\\` without a covering index. This can lead to suboptimal query performance."
+        ]
+      },
+      {
+        "name": "unused_index",
+        "level": "INFO",
+        "count": 102,
+        "keys": [
+          "Index \\`ix_app_people_email_lower\\` on table \\`public.app_people\\` has not been used",
+          "Index \\`ix_app_user_roles_granted_at\\` on table \\`public.app_user_role_assignments\\` has not been used",
+          "Index \\`ix_app_producer_profiles_pending\\` on table \\`public.app_producer_profiles\\` has not been used",
+          "Index \\`ix_app_audit_events_config_target\\` on table \\`public.app_audit_events\\` has not been used",
+          "Index \\`ix_app_people_email_login\\` on table \\`public.app_people\\` has not been used",
+          "Index \\`ix_app_challenges_user_channel_active\\` on table \\`public.app_contact_verification_challenges\\` has not been used",
+          "Index \\`ix_app_challenges_expires\\` on table \\`public.app_contact_verification_challenges\\` has not been used",
+          "Index \\`ix_app_recovery_user_active\\` on table \\`public.app_password_recovery_requests\\` has not been used",
+          "Index \\`ix_app_outbox_dispatch\\` on table \\`public.app_outbox_events\\` has not been used",
+          "Index \\`ix_app_admin_sector_members_expires\\` on table \\`public.app_admin_sector_members\\` has not been used",
+          "Index \\`ix_app_challenges_request\\` on table \\`public.app_contact_verification_challenges\\` has not been used",
+          "Index \\`ix_app_recovery_request\\` on table \\`public.app_password_recovery_requests\\` has not been used",
+          "Index \\`ix_app_outbox_request\\` on table \\`public.app_outbox_events\\` has not been used",
+          "Index \\`ix_app_admin_invite_sectors_sector_code\\` on table \\`public.app_admin_invite_sectors\\` has not been used",
+          "Index \\`ix_app_admin_invites_target_role\\` on table \\`public.app_admin_invites\\` has not been used",
+          "Index \\`ix_app_admin_sector_members_sector_code\\` on table \\`public.app_admin_sector_members\\` has not been used",
+          "Index \\`ix_app_role_security_challenges_role_code\\` on table \\`public.app_role_security_challenges\\` has not been used",
+          "Index \\`ix_app_admin_principals_unverified_email\\` on table \\`public.app_admin_principals\\` has not been used",
+          "Index \\`ix_app_admin_principals_login\\` on table \\`public.app_admin_principals\\` has not been used",
+          "Index \\`ix_app_properties_location\\` on table \\`public.app_properties\\` has not been used",
+          "Index \\`ix_app_documents_property_producer\\` on table \\`public.app_documents\\` has not been used",
+          "Index \\`ix_registration_reviews_reviewed_by\\` on table \\`public.app_registration_reviews\\` has not been used",
+          "Index \\`ix_verification_decisions_auditor\\` on table \\`public.app_verification_decisions\\` has not been used",
+          "Index \\`ix_account_deletions_deleted_by\\` on table \\`public.app_account_deletions\\` has not been used",
+          "Index \\`ix_account_deletions_user\\` on table \\`public.app_account_deletions\\` has not been used",
+          "Index \\`ix_verification_requests_archive\\` on table \\`public.app_verification_requests\\` has not been used",
+          "Index \\`ix_verification_requests_superseded\\` on table \\`public.app_verification_requests\\` has not been used",
+          "Index \\`ix_verification_requests_superseded_by_request\\` on table \\`public.app_verification_requests\\` has not been used",
+          "Index \\`ix_verification_requests_claimed_by\\` on table \\`public.app_verification_requests\\` has not been used",
+          "Index \\`ix_app_admin_principals_created_by\\` on table \\`public.app_admin_principals\\` has not been used",
+          "Index \\`ix_document_reviews_user\\` on table \\`public.app_document_reviews\\` has not been used",
+          "Index \\`ix_app_documents_uploaded_by\\` on table \\`public.app_documents\\` has not been used",
+          "Index \\`ix_app_municipalities_active\\` on table \\`public.app_municipalities\\` has not been used",
+          "Index \\`ix_app_people_municipality\\` on table \\`public.app_people\\` has not been used",
+          "Index \\`ix_app_municipalities_created_by\\` on table \\`public.app_municipalities\\` has not been used",
+          "Index \\`ix_app_municipalities_updated_by\\` on table \\`public.app_municipalities\\` has not been used",
+          "Index \\`ix_app_municipalities_deactivated_by\\` on table \\`public.app_municipalities\\` has not been used",
+          "Index \\`ix_app_account_deletions_email\\` on table \\`public.app_account_deletions\\` has not been used",
+          "Index \\`ix_app_locality_user_impacts_lookup\\` on table \\`public.app_locality_user_impacts\\` has not been used",
+          "Index \\`account_deletions_email\\` on table \\`public.app_account_deletions\\` has not been used",
+          "Index \\`ix_app_producer_stores_property\\` on table \\`public.app_producer_stores\\` has not been used",
+          "Index \\`ix_app_categories_display\\` on table \\`public.app_categories\\` has not been used",
+          "Index \\`ix_app_categories_parent\\` on table \\`public.app_categories\\` has not been used",
+          "Index \\`ix_app_price_versions_actor\\` on table \\`public.app_price_versions\\` has not been used",
+          "Index \\`ix_app_inventory_reservations_expiry\\` on table \\`public.app_inventory_reservations\\` has not been used",
+          "Index \\`ix_inventory_movements_actor\\` on table \\`public.app_inventory_movements\\` has not been used",
+          "Index \\`ix_delivery_quotes_store\\` on table \\`public.app_delivery_quotes\\` has not been used",
+          "Index \\`ix_delivery_quotes_owner_address\\` on table \\`public.app_delivery_quotes\\` has not been used",
+          "Index \\`ix_delivery_quotes_expiry\\` on table \\`public.app_delivery_quotes\\` has not been used",
+          "Index \\`ix_app_products_title_trgm\\` on table \\`public.app_products\\` has not been used",
+          "Index \\`ix_app_stores_name_trgm\\` on table \\`public.app_producer_stores\\` has not been used",
+          "Index \\`ix_app_favorites_person_time\\` on table \\`public.app_favorites\\` has not been used",
+          "Index \\`ix_app_cart_items_product\\` on table \\`public.app_cart_items\\` has not been used",
+          "Index \\`ix_app_cart_items_store\\` on table \\`public.app_cart_items\\` has not been used",
+          "Index \\`ix_recurrences_window\\` on table \\`public.app_recurrence_schedules\\` has not been used",
+          "Index \\`ix_checkout_quotes_person\\` on table \\`public.app_checkout_quotes\\` has not been used",
+          "Index \\`ix_checkout_quotes_address\\` on table \\`public.app_checkout_quotes\\` has not been used",
+          "Index \\`ix_command_receipts_user_history\\` on table \\`public.app_command_receipts\\` has not been used",
+          "Index \\`ix_commerce_receipts_user\\` on table \\`public.app_commerce_receipts\\` has not been used",
+          "Index \\`ix_pos_sales_store\\` on table \\`public.app_pos_sales\\` has not been used",
+          "Index \\`ix_payment_acceptances_user\\` on table \\`public.app_payment_policy_acceptances\\` has not been used",
+          "Index \\`ix_orders_store\\` on table \\`public.app_orders\\` has not been used",
+          "Index \\`ix_payment_events_intent\\` on table \\`public.app_payment_transactions\\` has not been used",
+          "Index \\`ix_refunds_order\\` on table \\`public.app_refund_requests\\` has not been used",
+          "Index \\`ix_complaints_subject\\` on table \\`public.app_complaints\\` has not been used",
+          "Index \\`ix_complaints_order\\` on table \\`public.app_complaints\\` has not been used",
+          "Index \\`ix_complaints_queue\\` on table \\`public.app_complaints\\` has not been used",
+          "Index \\`ix_complaints_target\\` on table \\`public.app_complaints\\` has not been used",
+          "Index \\`ix_case_messages_refund\\` on table \\`public.app_case_messages\\` has not been used",
+          "Index \\`ix_case_messages_complaint\\` on table \\`public.app_case_messages\\` has not been used",
+          "Index \\`ix_case_messages_author\\` on table \\`public.app_case_messages\\` has not been used",
+          "Index \\`ix_case_history_refund\\` on table \\`public.app_case_history\\` has not been used",
+          "Index \\`ix_case_history_complaint\\` on table \\`public.app_case_history\\` has not been used",
+          "Index \\`ix_case_history_actor\\` on table \\`public.app_case_history\\` has not been used",
+          "Index \\`ix_case_evidence_refund\\` on table \\`public.app_case_evidence\\` has not been used",
+          "Index \\`ix_case_evidence_complaint\\` on table \\`public.app_case_evidence\\` has not been used",
+          "Index \\`ix_case_evidence_uploader\\` on table \\`public.app_case_evidence\\` has not been used",
+          "Index \\`ix_commerce_settings_actor\\` on table \\`public.app_commerce_settings\\` has not been used",
+          "Index \\`ix_order_fulfillment_queue\\` on table \\`public.app_order_fulfillment\\` has not been used",
+          "Index \\`ix_order_items_product\\` on table \\`public.app_order_items\\` has not been used",
+          "Index \\`ix_order_events_actor\\` on table \\`public.app_order_events\\` has not been used",
+          "Index \\`ix_order_stock_returns_order\\` on table \\`public.app_order_stock_returns\\` has not been used",
+          "Index \\`ix_order_stock_returns_lot\\` on table \\`public.app_order_stock_returns\\` has not been used",
+          "Index \\`ix_reservations_consumed_order\\` on table \\`public.app_inventory_reservations\\` has not been used",
+          "Index \\`ix_delivery_allocations_capacity\\` on table \\`public.app_delivery_allocations\\` has not been used",
+          "Index \\`ix_delivery_proofs_actor\\` on table \\`public.app_delivery_proofs\\` has not been used",
+          "Index \\`ix_subscriptions_person\\` on table \\`public.app_subscriptions\\` has not been used",
+          "Index \\`ix_subscriptions_plan\\` on table \\`public.app_subscriptions\\` has not been used",
+          "Index \\`ix_subscriptions_producer\\` on table \\`public.app_subscriptions\\` has not been used",
+          "Index \\`ix_subscriptions_address\\` on table \\`public.app_subscriptions\\` has not been used",
+          "Index \\`ix_plans_store\\` on table \\`public.app_plans\\` has not been used",
+          "Index \\`ix_reviews_customer\\` on table \\`public.app_reviews\\` has not been used",
+          "Index \\`ix_reviews_moderator\\` on table \\`public.app_reviews\\` has not been used",
+          "Index \\`ix_notifications_sector\\` on table \\`public.app_notifications\\` has not been used",
+          "Index \\`ix_refund_seller_contacts_refund\\` on table \\`public.app_refund_seller_contacts\\` has not been used",
+          "Index \\`ix_refund_seller_contacts_author\\` on table \\`public.app_refund_seller_contacts\\` has not been used",
+          "Index \\`ix_t25_delivered_events_date\\` on table \\`public.app_order_events\\` has not been used",
+          "Index \\`ix_t25_quotes_created\\` on table \\`public.app_checkout_quotes\\` has not been used",
+          "Index \\`ix_t25_payments_approved_date\\` on table \\`public.app_payment_transactions\\` has not been used",
+          "Index \\`ix_sync_journal_user\\` on table \\`public.app_sync_command_journal\\` has not been used",
+          "Index \\`ix_permission_overrides_sector\\` on table \\`public.app_admin_permission_overrides\\` has not been used",
+          "Index \\`ix_permission_overrides_actor\\` on table \\`public.app_admin_permission_overrides\\` has not been used"
+        ]
+      },
+      {
+        "name": "multiple_permissive_policies",
+        "level": "WARN",
+        "count": 25,
+        "keys": [
+          "Table \\`public.app_access_partial_block_municipalities\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{partial_block_municipalities_admin_read,partial_block_municipalities_self_read}\\`",
+          "Table \\`public.app_access_partial_block_properties\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{partial_block_properties_admin_read,partial_block_properties_self_read}\\`",
+          "Table \\`public.app_access_partial_blocks\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{partial_blocks_admin_read,partial_blocks_self_read}\\`",
+          "Table \\`public.app_admin_principals\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{admin_principals_self_read,admin_principals_super_admin_read}\\`",
+          "Table \\`public.app_document_scans\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{app_document_scans_admin_read,app_document_scans_self_read}\\`",
+          "Table \\`public.app_documents\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{app_documents_admin_read,app_documents_self_read}\\`",
+          "Table \\`public.app_order_events\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{order_customer_read,order_producer_read}\\`",
+          "Table \\`public.app_order_fulfillment\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{order_customer_read,order_producer_read}\\`",
+          "Table \\`public.app_order_items\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{order_customer_read,order_producer_read}\\`",
+          "Table \\`public.app_people\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{people_self_read,people_super_admin_read}\\`",
+          "Table \\`public.app_price_versions\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{price_owner_read,price_public_read}\\`",
+          "Table \\`public.app_producer_delivery_municipalities\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{delivery_municipalities_admin_read,delivery_municipalities_owner_read}\\`",
+          "Table \\`public.app_producer_delivery_scopes\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{delivery_scope_admin_read,delivery_scope_owner_read}\\`",
+          "Table \\`public.app_producer_profiles\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{producer_profiles_admin_read,producer_profiles_self_read}\\`",
+          "Table \\`public.app_producer_stores\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{store_owner_read,store_public_read}\\`",
+          "Table \\`public.app_product_media\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{media_owner_read,media_public_read}\\`",
+          "Table \\`public.app_products\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{products_owner_read,products_public_read}\\`",
+          "Table \\`public.app_properties\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{properties_admin_read,properties_self_read}\\`",
+          "Table \\`public.app_property_boundaries\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{property_boundaries_admin_read,property_boundaries_self_read}\\`",
+          "Table \\`public.app_rural_activities\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{rural_activities_admin_read,rural_activities_self_read}\\`",
+          "Table \\`public.app_store_operating_hours\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{hours_owner_read,hours_public_read}\\`",
+          "Table \\`public.app_user_role_assignments\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{user_roles_self_read,user_roles_super_admin_read}\\`",
+          "Table \\`public.app_users\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{users_self_read,users_super_admin_read}\\`",
+          "Table \\`public.app_verification_decisions\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{verification_decisions_admin_read,verification_decisions_producer_final_read}\\`",
+          "Table \\`public.app_verification_requests\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{verification_requests_admin_read,verification_requests_producer_read}\\`"
+        ]
+      }
+    ],
+    "newWarnings": 0
+  },
+  "validation": {
+    "generalPassed": 873,
+    "generalConditionalSkipped": 424,
+    "newPostgresHttpBrowserPassed": 27,
+    "previousPostgresPassed": 337,
+    "previousFullBrowserStories": 7,
+    "previousUiPassed": 63,
+    "afterColumnRevokePreviousPostgresPassed": 31,
+    "viewports": [
+      320,
+      390,
+      768,
+      1440
+    ],
+    "typescript": "passed",
+    "build": "passed",
+    "runtimeColdStart": "passed",
+    "migrationManifest": "passed",
+    "bundleSecrets": "passed",
+    "productionDependencyVulnerabilities": 0
+  },
+  "noProductionFixtures": true,
+  "infra": {
+    "free": true,
+    "canonicalOnly": true,
+    "branch": "main",
+    "target": "production",
+    "region": "pdx1"
+  },
+  "publication": {
+    "status": "pending-main-ready",
+    "canonical": "https://hortvitalmix.vercel.app"
+  }
+}

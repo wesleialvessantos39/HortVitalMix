@@ -1,3 +1,4 @@
+import { hasAdminPermission } from "../../shared/adminPermissions.ts";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import { adminSessionMiddleware } from "../middleware/adminSession.ts";
 import { originProtection } from "../security/originProtection.ts";
@@ -17,8 +18,7 @@ function requirePlatformConfiguration(
   next: NextFunction,
 ) {
   if (
-    req.adminActor?.isSuperAdmin ||
-    req.adminActor?.sectors.includes("platform_configuration")
+    hasAdminPermission(req.adminActor, "platform_configuration")
   ) {
     next();
     return;

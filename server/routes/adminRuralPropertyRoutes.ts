@@ -1,3 +1,4 @@
+import { hasAdminPermission } from "../../shared/adminPermissions.ts";
 import { Router } from "express";
 import { z } from "zod";
 import { dbPool } from "../db/pool.ts";
@@ -11,8 +12,7 @@ export const adminRuralPropertyRouter = Router();
 adminRuralPropertyRouter.use(adminSessionMiddleware);
 adminRuralPropertyRouter.use((req, res, next) => {
   if (
-    !req.adminActor?.isSuperAdmin &&
-    !req.adminActor?.sectors.includes("document_verification")
+    !hasAdminPermission(req.adminActor, "document_verification")
   ) {
     res.status(403).json({ error: "FORBIDDEN" });
     return;
@@ -25,7 +25,7 @@ adminRuralPropertyRouter.get("/rural-properties", async (_req, res) => {
     return;
   }
   try {
-    const result = await dbPool.query(`SELECT p.*,pe.full_name AS producer_name,
+    const result = await dbPool.query(`SELECT p.*,coalesce((SELECT profile.full_name FROM public.app_account_profiles profile WHERE profile.user_id=pe.user_id AND profile.role_code='producer'),pe.full_name) AS producer_name,
   COALESCE((SELECT jsonb_agg(b) FROM public.app_property_boundaries b WHERE b.property_id=p.id),'[]') AS boundaries,
   (SELECT to_jsonb(a) FROM public.app_rural_activities a WHERE a.property_id=p.id) AS activity
   FROM public.app_properties p JOIN public.app_producer_profiles pp ON pp.id=p.producer_id

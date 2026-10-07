@@ -14,6 +14,7 @@ export type IdentityAccessSnapshot = {
   roles: string[];
   personId: string | null;
   fullName: string | null;
+  profileNames?: Record<string, string>;
   liveSession: boolean;
 };
 
@@ -32,6 +33,7 @@ async function resolveViaDataApi(
     { data: roles, error: rolesError },
     principal,
     person,
+    profiles,
   ] = await Promise.all([
     dataClient
       .from("app_users")
@@ -53,6 +55,10 @@ async function resolveViaDataApi(
       .select("id,full_name")
       .eq("user_id", userId)
       .maybeSingle(),
+    dataClient
+      .from("app_account_profiles")
+      .select("role_code,full_name")
+      .eq("user_id", userId),
   ]);
 
   if (userError || rolesError || !user) return null;
@@ -76,6 +82,12 @@ async function resolveViaDataApi(
     roles: activeRoles,
     personId,
     fullName: person.data?.full_name ?? null,
+    profileNames: Object.fromEntries(
+      (Array.isArray(profiles.data) ? profiles.data : []).map((row) => [
+        row.role_code,
+        row.full_name,
+      ]),
+    ),
     // Login recém-validado não tem sessionId nesta chamada; sessões existentes
     // mantêm o controle de validade mesmo sem conexão direta com o Pooler.
     liveSession: !sessionId || session?.status === "active",
@@ -100,11 +112,13 @@ export async function resolveIdentityAccess(
         status: string;
         person_id: string | null;
         full_name: string | null;
+        profile_names: Record<string, string>;
         live_session: boolean;
         roles: string[] | null;
       }>(
         `SELECT
            u.status,u.block_starts_at,u.block_ends_at,
+           coalesce((SELECT jsonb_object_agg(p.role_code,p.full_name) FROM public.app_account_profiles p WHERE p.user_id=u.id),'{}'::jsonb) AS profile_names,
            COALESCE(public_person.id, admin_person.id)::text AS person_id,
            COALESCE(public_person.full_name, admin_person.full_name) AS full_name,
            CASE
@@ -150,6 +164,7 @@ export async function resolveIdentityAccess(
           roles: row.roles ?? [],
           personId: row.person_id ?? null,
           fullName: row.full_name ?? null,
+          profileNames: row.profile_names ?? {},
           liveSession: row.live_session,
         };
     } catch {

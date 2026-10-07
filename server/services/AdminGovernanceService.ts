@@ -1,3 +1,4 @@
+import { resolveDeniedAdminSectors } from "../security/adminPermissions.ts";
 import { effectiveAccountStatus, accountBlockCode, type AccountBlock } from "../../shared/accountBlock.ts";
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import type { PoolClient } from "pg";
@@ -894,6 +895,7 @@ export class AdminGovernanceService {
       expiresIn: signed.data.session.expires_in,
       role: role.role_code,
       sectors,
+      deniedSectors: await resolveDeniedAdminSectors(signed.data.user.id),
     };
   }
 
@@ -1048,6 +1050,7 @@ export class AdminGovernanceService {
       expiresIn: verified.data.session.expires_in,
       role: "platform_super_admin",
       sectors: [],
+      deniedSectors: await resolveDeniedAdminSectors(verified.data.user.id),
     };
   }
 
@@ -1655,6 +1658,13 @@ export class AdminGovernanceService {
         [targetUserId, invite.target_role, invite.invited_by],
       );
 
+      // Cada convite cria o perfil deste portal, sem editar a pessoa de outros cadastros.
+      await client.query(
+        `UPDATE public.app_account_profiles SET full_name=coalesce($3,full_name),phone_e164=coalesce($4,phone_e164),updated_at=clock_timestamp()
+         WHERE user_id=$1 AND role_code=$2`,
+        [targetUserId,invite.target_role,input.fullName ?? null,input.phone ?? null],
+      );
+
       if (invite.target_role === "platform_super_admin") {
         await client.query(
           `UPDATE public.app_user_role_assignments
@@ -1761,7 +1771,7 @@ export class AdminGovernanceService {
       authorized: true,
       role,
       sectors,
-      requiresReauth: !Number.isFinite(issued) || Date.now() - issued > 15 * 60_000,
+      deniedSectors: await resolveDeniedAdminSectors(userId),      requiresReauth: !Number.isFinite(issued) || Date.now() - issued > 15 * 60_000,
     };
   }
 }

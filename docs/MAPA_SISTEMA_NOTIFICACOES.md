@@ -88,3 +88,11 @@ Testes e evidências de publicação/preservação estão registrados em `CORREC
 A Trilha 25, schema 64/70 migrations, mantém esta central como único mecanismo de avisos. Colheitas, transições e provas enfileiradas no IndexedDB passam pelos mesmos serviços/emissores após a reconciliação transacional. Uma confirmação produz os avisos de estoque/pedido já previstos para cada papel; repetição por commandId recupera o resultado sem novo aviso. Conflito/rejeição reverte a tentativa e fica no banner de revisão do aparelho, sem inventar uma venda, entrega ou notificação persistente.
 
 O BI é exclusivo do Super administrador, lê métricas diárias salvas e confirma o cálculo na própria tela. Leitura/agregação técnica não gera aviso comercial para consumidores, produtores ou administradores setoriais. Journal, definições e métricas são backend-only; o mapa de papéis, vendas, reembolsos privados e badge por opção continua acima. Detalhes: [TRILHA25_OFFLINE_E_BI.md](TRILHA25_OFFLINE_E_BI.md).
+
+## Correções de cadastros e poderes após T25
+
+Cada cadastro usa seu próprio perfil por usuário e papel em `app_account_profiles`. A edição do nome não altera os demais perfis nem a identidade legal vinculada aos pedidos/documentos anteriores. A central continua limitada ao papel selecionado.
+
+`AdminPermissionService` registra a retirada/devolução de poderes, incrementa a revisão de autorização e emite uma única notificação ao administrador ou Super administrador afetado, na mesma transação. A chave do comando impede avisos e auditorias duplicados. Super administradores começam com todos os poderes; as exceções de `app_admin_permission_overrides` prevalecem sobre essa regra. O feed e os destinos administrativos verificam os poderes atuais, inclusive para notificações antigas. Categorias exigem moderação do catálogo; BI exige configuração da plataforma além da hierarquia de Super administrador.
+
+O aviso de conexão do produtor aparece ao perder a conexão. Estando online sem pendências, a faixa permanece oculta. Pendências, conflitos e reconfirmação de acesso continuam acessíveis em “Ações aguardando confirmação”, conservando a fila e a sincronização T25.

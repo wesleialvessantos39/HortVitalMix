@@ -8,6 +8,7 @@ import { verifyRecentAuthProof } from "../security/recentAuth.ts";
 import {
   adminSessionMiddleware,
   requireSuperAdmin,
+  requireAdminSector,
   requireRecentAuth,
 } from "../middleware/adminSession.ts";
 import { CommerceError } from "../services/CommerceSupport.ts";
@@ -73,7 +74,7 @@ offlineRouter.post("/producer/sync", originProtection, (req, res) =>
     );
   }),
 );
-adminBiRouter.use("/bi", adminSessionMiddleware, requireSuperAdmin);
+adminBiRouter.use("/bi", adminSessionMiddleware, requireSuperAdmin, requireAdminSector("platform_configuration"));
 adminBiRouter.get("/bi", (req, res) =>
   run(req, res, () => {
     const input = { ...req.query };

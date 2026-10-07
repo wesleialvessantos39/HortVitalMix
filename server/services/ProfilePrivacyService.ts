@@ -1,3 +1,4 @@
+import { PortalRoleSchema } from "../../shared/contracts/auth.ts";
 import { ACCOUNT_PERSON_SCOPE } from "./accountPersonScope.ts";
 import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
@@ -38,21 +39,22 @@ function maskCpf(cpf: string) {
     : "***.***.***-**";
 }
 
-
-async function getPersonId(
-  client: PoolClient,
-  userId: string,
-  lock = false,
-) {
+async function getPersonId(client: PoolClient, userId: string, lock = false) {
   const sql =
-    "SELECT id FROM public.app_people WHERE " + ACCOUNT_PERSON_SCOPE +
+    "SELECT id FROM public.app_people WHERE " +
+    ACCOUNT_PERSON_SCOPE +
     (lock ? " FOR UPDATE" : "");
   const result = await client.query<{ id: string }>(sql, [userId]);
   if (!result.rows[0]) throw new ProfilePrivacyError("PERSON_NOT_FOUND", 404);
   return result.rows[0].id;
 }
 
-async function findReplayTarget(client: PoolClient, commandId: string, userId: string, action: string) {
+async function findReplayTarget(
+  client: PoolClient,
+  commandId: string,
+  userId: string,
+  action: string,
+) {
   const result = await client.query<{ target_id: string | null }>(
     "SELECT target_id FROM public.app_audit_events WHERE command_id=$1 AND actor_id=$2 AND action=$3 LIMIT 1",
     [commandId, userId, action],
@@ -98,7 +100,10 @@ async function writeAudit(
 }
 
 export class ProfilePrivacyService {
-  static async getProfile(userId: string): Promise<ProfileView> {
+  static async getProfile(
+    userId: string,
+    role = "consumer",
+  ): Promise<ProfileView> {
     const result = await requirePool().query<{
       full_name: string;
       cpf_normalized: string;
@@ -106,13 +111,16 @@ export class ProfilePrivacyService {
       phone_e164: string;
       revision: number;
     }>(
-      "SELECT full_name,cpf_normalized,email_normalized,phone_e164,revision FROM public.app_people WHERE " + ACCOUNT_PERSON_SCOPE,
-      [userId],
+      `SELECT ap.full_name,ap.cpf_normalized,ap.email_normalized,ap.phone_e164,ap.revision
+       FROM public.app_account_profiles ap JOIN public.app_user_role_assignments ra ON ra.user_id=ap.user_id AND ra.role_code=ap.role_code
+       WHERE ap.user_id=$1 AND ap.role_code=$2 AND ra.revoked_at IS NULL AND (ra.expires_at IS NULL OR ra.expires_at>now())`,
+      [userId, role],
     );
     const row = result.rows[0];
     if (!row) throw new ProfilePrivacyError("PERSON_NOT_FOUND", 404);
     return {
       fullName: row.full_name,
+      profileRole: PortalRoleSchema.parse(role),
       cpfMasked: maskCpf(row.cpf_normalized),
       email: row.email_normalized,
       phone: row.phone_e164,
@@ -127,20 +135,32 @@ export class ProfilePrivacyService {
     requestId: string,
     ipHash: string,
   ) {
+    if(input.profileRole && input.profileRole!==role) throw new ProfilePrivacyError("PROFILE_SCOPE_CHANGED",409);
     const client = await requirePool().connect();
     try {
       await client.query("BEGIN");
-      const personId = await getPersonId(client, userId, true);
-      if (await findReplayTarget(client, input.commandId, userId, "profile.updated")) {
+      const current = (
+        await client.query<{ id: string; full_name: string; revision: number }>(
+          `SELECT ap.id,ap.full_name,ap.revision FROM public.app_account_profiles ap
+         JOIN public.app_user_role_assignments ra ON ra.user_id=ap.user_id AND ra.role_code=ap.role_code
+         WHERE ap.user_id=$1 AND ap.role_code=$2 AND ra.revoked_at IS NULL AND (ra.expires_at IS NULL OR ra.expires_at>now()) FOR UPDATE OF ap`,
+          [userId, role],
+        )
+      ).rows[0];
+      if (!current) throw new ProfilePrivacyError("PROFILE_NOT_FOUND", 404);
+      const personId = current.id;
+      const replay = await findReplayTarget(
+        client,
+        input.commandId,
+        userId,
+        "profile.updated",
+      );
+      if (replay && replay !== personId)
+        throw new ProfilePrivacyError("COMMAND_SCOPE_MISMATCH", 409);
+      if (replay) {
         await client.query("COMMIT");
         return { status: "idempotent_replay" as const };
       }
-      const current = (
-        await client.query<{ full_name: string; revision: number }>(
-          "SELECT full_name,revision FROM public.app_people WHERE id=$1 FOR UPDATE",
-          [personId],
-        )
-      ).rows[0];
       if (current.revision !== input.expectedRevision) {
         await client.query("ROLLBACK");
         return {
@@ -149,7 +169,7 @@ export class ProfilePrivacyService {
         };
       }
       await client.query(
-        "UPDATE public.app_people SET full_name=$1,revision=revision+1,updated_at=clock_timestamp() WHERE id=$2",
+        "UPDATE public.app_account_profiles SET full_name=$1,revision=revision+1,updated_at=clock_timestamp() WHERE id=$2",
         [input.fullName, personId],
       );
       await writeAudit(client, {
@@ -157,7 +177,7 @@ export class ProfilePrivacyService {
         userId,
         role,
         action: "profile.updated",
-        entity: "app_people",
+        entity: "app_account_profiles",
         targetId: personId,
         before: { changedFields: ["fullName"], revision: current.revision },
         after: { changedFields: ["fullName"], revision: current.revision + 1 },
@@ -185,8 +205,7 @@ export class ProfilePrivacyService {
       "SELECT id FROM public.app_people WHERE " + ACCOUNT_PERSON_SCOPE,
       [userId],
     );
-    if (!person.rows[0])
-      throw new ProfilePrivacyError("PERSON_NOT_FOUND", 404);
+    if (!person.rows[0]) throw new ProfilePrivacyError("PERSON_NOT_FOUND", 404);
     const personId = person.rows[0].id;
     const [preferencesResult, consentsResult] = await Promise.all([
       pool.query<Record<string, any>>(
@@ -194,7 +213,8 @@ export class ProfilePrivacyService {
         [personId],
       ),
       pool.query<Record<string, any>>(
-        "SELECT id,consent_type,is_granted,policy_version,registered_at FROM public.app_consent_records WHERE person_id=$1 ORDER BY registered_at DESC,id DESC" + (completeHistory ? "" : " LIMIT 100"),
+        "SELECT id,consent_type,is_granted,policy_version,registered_at FROM public.app_consent_records WHERE person_id=$1 ORDER BY registered_at DESC,id DESC" +
+          (completeHistory ? "" : " LIMIT 100"),
         [personId],
       ),
     ]);
@@ -247,7 +267,14 @@ export class ProfilePrivacyService {
     try {
       await client.query("BEGIN");
       const personId = await getPersonId(client, userId, true);
-      if (await findReplayTarget(client, input.commandId, userId, "preferences.updated")) {
+      if (
+        await findReplayTarget(
+          client,
+          input.commandId,
+          userId,
+          "preferences.updated",
+        )
+      ) {
         await client.query("COMMIT");
         return { status: "idempotent_replay" as const };
       }
@@ -280,8 +307,7 @@ export class ProfilePrivacyService {
       }
 
       const next = {
-        marketingConsent:
-          input.marketingConsent ?? current.marketing_consent,
+        marketingConsent: input.marketingConsent ?? current.marketing_consent,
         orderUpdatesChannel:
           input.orderUpdatesChannel ?? current.order_updates_channel,
         quietHoursEnabled:
@@ -360,8 +386,8 @@ export class ProfilePrivacyService {
     }
   }
 
-  static async exportData(userId: string) {
-    const profile = await this.getProfile(userId);
+  static async exportData(userId: string, role = "consumer") {
+    const profile = await this.getProfile(userId, role);
     const [addresses, data] = await Promise.all([
       AddressManagementService.listAddresses(userId, { includeInactive: true }),
       this.getPreferences(userId, true),

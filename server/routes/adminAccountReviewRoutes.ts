@@ -79,7 +79,12 @@ adminAccountReviewRouter.post(
         res.status(404).json({ error: "USER_NOT_FOUND" });
         return;
       }
-      if (row.is_super || id.data === req.adminActor.userId) {
+      const protectedSuper = row.is_super && (req.adminActor.role !== "platform_super_admin" || !(await client.query(
+        `SELECT 1 FROM public.app_users u JOIN public.app_admin_principals ap ON ap.admin_user_id=u.id
+         JOIN public.app_user_role_assignments r ON r.user_id=u.id AND r.role_code='platform_super_admin'
+         WHERE u.id<>$1 AND ap.portal_role='platform_super_admin' AND u.status='active'
+         AND r.revoked_at IS NULL AND r.expires_at IS NULL AND hvm_governance_private.has_permission(u.id,'account_governance')`,[id.data])).rowCount);
+      if (protectedSuper || id.data === req.adminActor.userId) {
         await client.query("ROLLBACK");
         res.status(409).json({ error: "SUPER_ADMIN_PROTECTED" });
         return;
