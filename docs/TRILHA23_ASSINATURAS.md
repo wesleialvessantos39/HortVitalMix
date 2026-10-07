@@ -60,6 +60,14 @@ Advisors após migration: **5 WARN de segurança e 25 WARN de desempenho anterio
 
 ## Publicação
 
-A migration foi aplicada e as verificações locais e de preservação foram concluídas. A publicação usa somente `main/production/pdx1`; a release da SHA exata é selada após READY e verificação de health/ready/config/schema. Os resultados reais de publicação serão registrados no fechamento da entrega, sem fabricar contas, pedidos ou pagamentos em produção.
+[PR 90](https://github.com/wesleialvessantos39/HortVitalMix/pull/90) integrado: **main/b124ea576e16dbec6e28d9c3ec4409bf360b622e**, deployment **dpl_BVhyAMLpVhF91sk39E1sXt8Nsq9f**, **READY/main/production/pdx1**, domínio **https://hortvitalmix.vercel.app**. Release **t23-v61-b124ea5** registrada somente depois de READY/alias/health 200. CLI de health/ready/config/SHA/schema aprovado; **18 verificações HTTP**: públicos 200, privados sem sessão 401, origem externa 403 e webhook com gateway ausente 503 sem lançamento.
+
+**20 combinações página/largura** de `/assinaturas`, `/planos`, `/produtor/assinaturas`, `/assinaturas/minhas` e entrada administrativa em **320/390/768/1440 px**, sem overflow/pageerror. Catálogos exibem a preparação de planos, como escolhido pelo usuário; a entrada administrativa redireciona o visitante ao login. Os fluxos autenticados completos foram comprovados no banco descartável, sem autenticar contas reais em produção.
+
+Fotos T22 reais: produto **15.966 bytes** e retrato da loja **69.254 bytes** a 640 px, exatamente os tamanhos anteriores. WebP e ETag/304 mantidos, cache público por cinco minutos e nenhum Set-Cookie. Nenhuma alteração adicional no carregamento de mídia, nos originais ou nos buckets. Logs de produção sem grupos error/fatal na janela consultada de cinco minutos.
+
+Depois da publicação funcional, **83/87 relações inteiramente idênticas**. Diferenças restritas ao selo intencional de `app_releases` e atividade de autenticação: uma nova sessão, um novo registro administrativo de login e metadados de `auth.users` atualizados. Os **27 registros de sessão e 190 tentativas administrativas anteriores conservam o digest**; os cinco usuários Auth e os dados de negócio/Storage anteriores permanecem. Foi observado login bem-sucedido e atualização de `last_sign_in_at` no período; essa atividade não foi usada como teste privado nem modificada para ajustar a comparação. Nenhuma conta, pedido ou cobrança de teste foi criada.
+
+Este fechamento documental conserva integralmente código/schema/preços/gateway e recebe seu próprio deploy/selo da SHA corrente após READY. A consulta da release atual identifica a SHA efetivamente ativa, inclusive depois do fechamento; os dados acima registram a publicação funcional verificada.
 
 Evidência consolidada: [TRILHA23_PRESERVACAO.json](TRILHA23_PRESERVACAO.json). **T24 deve partir do schema 61**, preservando T01–T23 e as fotos/logística T22.
