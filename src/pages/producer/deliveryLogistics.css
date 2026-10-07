@@ -1,0 +1,77 @@
+.hvm-logistics {
+  max-width: 1180px;
+  margin: auto;
+}
+.logistics-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 380px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.logistics-form {
+  display: grid;
+  gap: 14px;
+}
+.logistics-form label,
+.logistics-date {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+}
+.logistics-form input:not([type="checkbox"]),
+.logistics-form select,
+.logistics-form textarea,
+.logistics-date input {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px solid #b8cdbc;
+  border-radius: 8px;
+  font: inherit;
+  background: #fff;
+}
+.logistics-form .logistics-check {
+  display: flex;
+  align-items: center;
+  font-weight: 400;
+}
+.logistics-window {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid #e1eae3;
+}
+.logistics-window small {
+  display: block;
+  line-height: 1.6;
+}
+.logistics-dialog {
+  box-sizing: border-box;
+  width: min(520px, calc(100vw - 24px));
+  max-height: 90dvh;
+  overflow: auto;
+}
+.logistics-form textarea {
+  min-height: 80px;
+}
+.logistics-window button {
+  flex-shrink: 0;
+}
+@media (max-width: 640px) {
+  .logistics-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .logistics-window {
+    flex-wrap: wrap;
+  }
+  .logistics-dialog {
+    padding: 16px;
+  }
+  .logistics-form .commerce-actions {
+    flex-wrap: wrap;
+  }
+}

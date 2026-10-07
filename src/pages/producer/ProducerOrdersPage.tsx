@@ -27,6 +27,8 @@ import { money, date } from "../../lib/commerce";
 import type { ApiFailure } from "../../lib/api";
 import "../commerce/commerce.css";
 import "../public/orders.css";
+import { DeliveryProofModal } from "./DeliveryProofModal";
+import { DeliveryAllocationModal } from "./DeliveryAllocationModal";
 const actionLabels: Partial<Record<OrderStatus, string>> = {
   in_preparation: "Iniciar preparo",
   ready_for_dispatch: "Marcar como pronto",
@@ -49,7 +51,9 @@ export default function ProducerOrdersPage({
       readPendingTransition(userId),
     ),
     [cancelling, setCancelling] = useState<OrderSummary | null>(null),
-    [reason, setReason] = useState("");
+    [reason, setReason] = useState(""),
+    [proofOrder,setProofOrder]=useState<OrderSummary|null>(null),
+    [allocationOrder,setAllocationOrder]=useState<OrderSummary|null>(null);
   const flight = useRef(false),
     dialog = useRef<HTMLDialogElement>(null);
   const {
@@ -98,11 +102,7 @@ export default function ProducerOrdersPage({
   }
   function advance(order: OrderSummary, toStatus: OrderStatus) {
     if (flight.current || pending) return;
-    if (
-      toStatus === "delivered" &&
-      !window.confirm("A entrega deste pedido foi concluída?")
-    )
-      return;
+    if (toStatus === "delivered") { setProofOrder(order); return; }
     void send(
       prepareTransition(userId, order.id, {
         expectedRevision: order.revision,
@@ -152,6 +152,7 @@ export default function ProducerOrdersPage({
           Caixa e vendas presenciais
         </button>
       </nav>
+      <button className="text-button" onClick={()=>onNavigate("/produtor/loja/janelas")}>Janelas de entrega</button>
       <div className="order-statistics">
         <article>
           <PackageCheck aria-hidden="true" />
@@ -306,7 +307,8 @@ export default function ProducerOrdersPage({
                           >
                             Ver pedido
                           </button>
-                          {order.allowedTransitions.includes("cancelled") && (
+                          {order.status==="ready_for_dispatch"&&<button className="secondary" disabled={busy||!!pending} onClick={()=>setAllocationOrder(order)}>Agendar entrega</button>}
+                  {order.allowedTransitions.includes("cancelled") && (
                             <button
                               className="text-button order-danger"
                               disabled={busy || !!pending}
@@ -393,6 +395,8 @@ export default function ProducerOrdersPage({
           </div>
         </form>
       </dialog>
+      {proofOrder&&<DeliveryProofModal key={proofOrder.id} order={proofOrder} onClose={()=>setProofOrder(null)} onSaved={()=>{setProofOrder(null);setSuccess("Entrega confirmada com prova de recebimento.");refresh();}}/>}
+      {allocationOrder&&<DeliveryAllocationModal key={allocationOrder.id} userId={userId} order={allocationOrder} onClose={()=>{setAllocationOrder(null);refresh();}}/>}
     </section>
   );
 }

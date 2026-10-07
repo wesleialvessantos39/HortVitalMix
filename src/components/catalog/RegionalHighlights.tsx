@@ -57,10 +57,10 @@ export default function RegionalHighlights({
             [
               first?.media.find((media) => media.isPrimary)?.url ??
                 first?.media[0]?.url,
-              first?.producerAvatarUrl,
             ],
-            { signal: abort.signal },
+            { signal: abort.signal, sizes:"100vw" },
           );
+          void prepareMediaUrls([first?.producerAvatarUrl],{signal:abort.signal,sizes:"52px"});
           if (!abort.signal.aborted) {
             setProducts(result.products);
             setPagination({ page: result.page, hasMore: result.hasMore });
@@ -111,7 +111,7 @@ export default function RegionalHighlights({
         <small>{regionLabel ?? "Todas as regiões"}</small>
       </div>
       {products.length ? (
-        <MediaCarousel
+        <MediaCarousel imageSizes="100vw"
           priority
           label="Produtos da região"
           onNavigate={onNavigate}

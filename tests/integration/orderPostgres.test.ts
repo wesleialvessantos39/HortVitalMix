@@ -48,6 +48,7 @@ import {
   CommerceError,
   commerceTransaction,
 } from "../../server/services/CommerceSupport.ts";
+import { DeliveryLogisticsService } from "../../server/services/DeliveryLogisticsService.ts";
 import { OrderService } from "../../server/services/OrderService.ts";
 import {
   checkoutAudit,
@@ -117,21 +118,20 @@ describe.runIf(!!process.env.HVM_T21_LOCAL_DATABASE_URL)(
         id: result.orderIds![0],
       };
     }
-    const transition = (
-      id: string,
-      status: OrderStatus,
-      revision: number,
-      userId = catalog.a.userId,
-      commandId = randomUUID(),
-    ) =>
-      OrderService.transitionStatus(
-        id,
-        userId,
-        "producer",
-        { toStatus: status, expectedRevision: revision },
-        commandId,
-        checkoutAudit(),
-      );
+    const transition = async (
+      id: string, status: OrderStatus, revision: number, userId=catalog.a.userId, commandId=randomUUID(),
+    ) => {
+      // T22 adds required logistics facts; retain all T21 assertions.
+      if (status === "out_for_delivery" && revision===3) {
+        const date=(await pool().query("SELECT ((clock_timestamp() AT TIME ZONE timezone)::date+1)::text date FROM app_global_config WHERE singleton_guard")).rows[0].date;
+        const day=new Date(date+"T12:00:00Z").getUTCDay();
+        const existing=(await DeliveryLogisticsService.listWindows(userId,date)).windows.find(w=>w.dayOfWeek===day);
+        const w=existing??await DeliveryLogisticsService.saveWindow(userId,null,{dayOfWeek:day,startTime:"08:00",endTime:"12:00",maxOrdersCapacity:50,isActive:true},randomUUID(),checkoutAudit());
+        await DeliveryLogisticsService.allocateOrderToWindow(id,userId,{windowId:w.id,scheduledDate:date,expectedRevision:revision},randomUUID(),checkoutAudit());
+      }
+      if(status === "delivered" && revision===4)return DeliveryLogisticsService.registerDeliveryProof(id,userId,{expectedRevision:revision,receivedByName:"Recebedor sintético T21"},commandId,checkoutAudit());
+      return OrderService.transitionStatus(id,userId,"producer",{toStatus:status,expectedRevision:revision},commandId,checkoutAudit());
+    };
     const balance = async (id: string) =>
       (
         await pool().query(

@@ -3,7 +3,6 @@ import { ChevronLeft, ChevronRight, ImageOff, Pause, Play } from "lucide-react";
 import "./mediaCarousel.css";
 import { MediaImage } from "./MediaImage";
 import { prepareMediaUrls } from "../../lib/prepareMedia";
-import { stableMediaUrl } from "../../lib/mediaCache";
 
 export type MediaSlide = {
   id: string;
@@ -19,6 +18,7 @@ export function MediaCarousel({
   priority = false,
   className = "",
   onEnd,
+  imageSizes = "(max-width: 600px) 100vw, 480px",
 }: {
   slides: MediaSlide[];
   label: string;
@@ -26,6 +26,7 @@ export function MediaCarousel({
   priority?: boolean;
   className?: string;
   onEnd?: () => Promise<void>;
+  imageSizes?: string;
 }) {
   const [activeId, setActiveId] = useState<string | null>(null),
     [paused, setPaused] = useState(false),
@@ -49,9 +50,7 @@ export function MediaCarousel({
   const slide = slides[index],
     next = slides[(index + 1) % slides.length],
     following = slides[(index + 2) % slides.length];
-  const imageSource = slide?.imageUrl
-    ? new URL(stableMediaUrl(slide.imageUrl), location.href).href
-    : null;
+  const imageSource = slide?.imageUrl ? slide.imageUrl : null;
   const signature = slides.map((item) => item.id).join("|");
   useEffect(() => {
     if (!visible && !priority) return;
@@ -60,10 +59,17 @@ export function MediaCarousel({
       [next?.imageUrl, following?.imageUrl].filter(
         (url) => url !== slide?.imageUrl,
       ),
-      { signal: controller.signal, priority: "low" },
+      { signal: controller.signal, priority: "low", sizes: imageSizes },
     );
     return () => controller.abort();
-  }, [visible, priority, slide?.imageUrl, next?.imageUrl, following?.imageUrl]);
+  }, [
+    visible,
+    priority,
+    slide?.imageUrl,
+    next?.imageUrl,
+    following?.imageUrl,
+    imageSizes,
+  ]);
   useEffect(() => {
     const node = root.current;
     if (!node) return;
@@ -143,11 +149,8 @@ export function MediaCarousel({
             decoding="async"
             fetchPriority={priority || visible ? "high" : "auto"}
             priority={priority || visible}
-            onLoad={(event) =>
-              setLoadedImage(
-                event.currentTarget.currentSrc || event.currentTarget.src,
-              )
-            }
+            sizes={imageSizes}
+            onReady={() => setLoadedImage(imageSource)}
             onError={() =>
               setFailed((previous) => new Set(previous).add(slide.imageUrl!))
             }

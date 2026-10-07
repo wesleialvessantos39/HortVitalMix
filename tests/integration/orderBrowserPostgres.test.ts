@@ -270,6 +270,17 @@ describe.runIf(!!process.env.HVM_T21_LOCAL_DATABASE_URL)(
         const orderId = await purchase(),
           producer = await context(catalog.a.userId, "producer", 1440),
           customer = await context(buyer.userId, "consumer", 390);
+        const schedule=(await pool().query("SELECT ((clock_timestamp() AT TIME ZONE timezone)::date+1)::text date FROM app_global_config WHERE singleton_guard")).rows[0].date;
+        await producer.page.goto(baseURL+"/produtor/loja/janelas");
+        await check(producer.page.getByRole("heading",{name:"Janelas de entrega",exact:true})).toBeVisible();
+        for(const width of [320,390,768,1440]) {
+          await producer.page.setViewportSize({width,height:950});
+          expect(await producer.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+        }
+        await producer.page.getByLabel("Dia da semana").selectOption(String(new Date(schedule+"T12:00:00Z").getUTCDay()));
+        await producer.page.getByLabel("Capacidade por data").fill("1");
+        await producer.page.getByRole("button",{name:"Salvar janela",exact:true}).click();
+        await check(producer.page.getByText("Janela criada.",{exact:true})).toBeVisible();
         await producer.page.goto(baseURL + "/produtor/pedidos");
         await customer.page.goto(baseURL + "/pedidos/" + orderId);
         await check(
@@ -302,13 +313,24 @@ describe.runIf(!!process.env.HVM_T21_LOCAL_DATABASE_URL)(
         await producer.page
           .getByRole("button", { name: "Marcar como pronto", exact: true })
           .click();
+        await producer.page.getByRole("button",{name:"Agendar entrega",exact:true}).click();
+        await producer.page.getByLabel("Data da entrega").fill(schedule);
+        await check(producer.page.getByLabel("Janela disponível").locator("option")).toHaveCount(2);
+        const value=await producer.page.getByLabel("Janela disponível").locator("option").nth(1).getAttribute("value");
+        await producer.page.getByLabel("Janela disponível").selectOption(value!);
+        await producer.page.getByRole("button",{name:"Reservar vaga",exact:true}).click();
+        await check(producer.page.locator("dialog[open]")).toHaveCount(0);
         await producer.page
           .getByRole("button", { name: "Saiu para entrega", exact: true })
           .click();
-        producer.page.once("dialog", (d) => d.accept());
         await producer.page
           .getByRole("button", { name: "Confirmar entrega", exact: true })
           .click();
+        await check(producer.page.getByLabel("Nome de quem recebeu")).toBeVisible();
+        for(const width of [320,390,768,1440]){await producer.page.setViewportSize({width,height:950});expect(await producer.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);}
+        await check(producer.page.locator("dialog[open]").getByRole("button",{name:"Confirmar entrega",exact:true})).toBeDisabled();
+        await producer.page.getByLabel("Nome de quem recebeu").fill("Recebedora sintética T22");
+        await producer.page.locator("dialog[open]").getByRole("button",{name:"Confirmar entrega",exact:true}).click();
         await check(
           producer.page.locator(".order-card .order-status-delivered"),
         ).toBeVisible();
@@ -318,6 +340,9 @@ describe.runIf(!!process.env.HVM_T21_LOCAL_DATABASE_URL)(
         await check(
           customer.page.locator('.order-timeline [aria-current="step"]'),
         ).toContainText("Entregue");
+        await check(customer.page.getByRole("heading",{name:"Prova de recebimento",exact:true})).toBeVisible();
+        await check(customer.page.getByText(/Recebido por Recebedora sintética T22/)).toBeVisible();
+        expect((await pool().query("SELECT received_by_name FROM app_delivery_proofs WHERE order_id=$1",[orderId])).rows[0].received_by_name).toBe("Recebedora sintética T22");
         const events = (
           await pool().query(
             "SELECT from_status,to_status,revision FROM app_order_events WHERE order_id=$1 ORDER BY revision",
@@ -411,6 +436,24 @@ describe.runIf(!!process.env.HVM_T21_LOCAL_DATABASE_URL)(
             exact: true,
           }),
         ).toHaveCount(0);
+        // The reserved last slot is visibly disabled for the next ready order.
+        await CartService.addItem({sessionId:buyer.sessionId,userId:buyer.userId},{productId:catalog.pa,quantity:2,commandId:randomUUID()},checkoutAudit());
+        const fullId=await purchase();
+        await producer.page.bringToFront();
+        await producer.page.goto(baseURL+"/produtor/pedidos");
+        await check(producer.page.getByRole("heading",{name:"Pedidos da minha loja",exact:true})).toBeVisible();
+        await producer.page.getByRole("button",{name:"Atualizar",exact:true}).click();
+        await producer.page.getByRole("button",{name:"Iniciar preparo",exact:true}).click();
+        await producer.page.getByRole("button",{name:"Marcar como pronto",exact:true}).click();
+        await producer.page.getByRole("button",{name:"Agendar entrega",exact:true}).click();
+        await producer.page.getByLabel("Data da entrega").fill(schedule);
+        await check(producer.page.getByLabel("Janela disponível").locator("option").nth(1)).toHaveAttribute("disabled", "");
+        await check(producer.page.getByRole("button",{name:"Reservar vaga",exact:true})).toBeDisabled();
+        expect((await pool().query("SELECT id FROM app_delivery_allocations WHERE order_id=$1",[fullId])).rowCount).toBe(0);
+        await producer.page.getByRole("button",{name:"Voltar",exact:true}).click();
+        await producer.page.goto(baseURL+"/produtor/loja/janelas");
+        await producer.page.getByLabel("Consultar vagas na data").fill(schedule);
+        await check(producer.page.getByText(/Lotada · 1 reservadas/)).toBeVisible();
         expect(errors).toEqual([]);
       } finally {
         await browser.close();

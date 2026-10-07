@@ -57,6 +57,7 @@ const ProducerPosPage = lazy(() => import("./pages/commerce/ProducerPosPage"));
 const PurchasesPage = lazy(() => import("./pages/commerce/PurchasesPage"));
 const PosSaleReviewPage = lazy(() => import("./pages/commerce/PosSaleReviewPage"));
 const CasesPage = lazy(() => import("./pages/commerce/CasesPage"));
+const DeliveryWindowsPage = lazy(() => import("./pages/producer/DeliveryWindowsPage"));
 const ProducerOrdersPage = lazy(() => import("./pages/producer/ProducerOrdersPage"));
 const OrderTrackingPage = lazy(() => import("./pages/public/OrderTrackingPage"));
 const fallback = {
@@ -419,6 +420,8 @@ export default function App() {
           <Suspense fallback={<p role="status">Carregando pedidos…</p>}>
             {sessionLoading ? <p role="status">Conferindo sua conta…</p> : <OrderTrackingPage key={(shellSession?.userId??"guest")+":"+(trackingId??"list")} id={trackingId} userId={publicPortalSession?shellSession?.userId??null:null} onNavigate={go}/>}
           </Suspense>
+        ) : path === "/produtor/loja/janelas" ? (
+          <Suspense fallback={<p role="status">Carregando janelas…</p>}>{sessionLoading ? <p role="status">Conferindo sua conta…</p> : shellSession?.activeRole === "producer" ? <DeliveryWindowsPage key={shellSession.userId} userId={shellSession.userId} onNavigate={go}/> : <section className="account-notice"><h1>Janelas de entrega</h1><p>Entre como produtor para configurar as janelas da loja.</p><button className="primary" onClick={()=>go("/entrar/produtor")}>Entrar como produtor</button></section>}</Suspense>
         ) : path === "/produtor/pedidos" ? (
           <Suspense fallback={<p role="status">Carregando pedidos da loja…</p>}>
             {sessionLoading ? <p role="status">Conferindo sua conta…</p> : shellSession?.activeRole === "producer" ? <ProducerOrdersPage key={shellSession.userId} userId={shellSession.userId} onNavigate={go}/> : <section className="account-notice"><h1>Pedidos da minha loja</h1><p>Entre como produtor para gerenciar os pedidos da sua loja.</p><button className="primary" onClick={()=>go("/entrar/produtor")}>Entrar como produtor</button></section>}

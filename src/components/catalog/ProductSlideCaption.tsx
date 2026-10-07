@@ -18,7 +18,7 @@ export function ProducerPortrait({
   return (
     <span className="hvm-slide-portrait">
       {url && failed !== url ? (
-        <MediaImage
+        <MediaImage sizes="52px"
           src={url}
           alt={`Foto de ${name}`}
           loading="eager"

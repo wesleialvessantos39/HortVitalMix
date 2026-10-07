@@ -5,7 +5,8 @@ import {
 } from "./mediaCache";
 
 const WAIT_MS = 8000;
-const MAX_ENTRIES = 128;
+import { mediaPreview, mediaPreviewWidth } from "./mediaPreview";
+const MAX_ENTRIES = 24;
 type Entry = {
   promise: Promise<void>;
   until: number;
@@ -13,8 +14,9 @@ type Entry = {
 };
 const entries = new Map<string, Entry>();
 
-function prepare(value: string, priority: "high" | "low") {
-  const src = stableMediaUrl(value);
+function prepare(value: string, priority: "high" | "low", sizes?: string) {
+  const variant = mediaPreview(value, mediaPreviewWidth(sizes));
+  const src = variant ?? stableMediaUrl(value);
   const previous = entries.get(src);
   if (previous && previous.until > Date.now()) {
     if (priority === "high" && previous.image)
@@ -43,8 +45,26 @@ function prepare(value: string, priority: "high" | "low") {
     clearTimeout(timer);
     image.onload = null;
     image.onerror = null;
-    delete entry.image;
-    const until = loaded ? mediaUrlCacheUntil(src) : 0;
+    if (!loaded) delete entry.image;
+    // Keep decoded previews within a phone-friendly 16 MiB budget.
+    if (loaded) {
+      let bytes = 0;
+      for (const e of entries.values())
+        if (e.image?.complete)
+          bytes += e.image.naturalWidth * e.image.naturalHeight * 4;
+      for (const e of entries.values()) {
+        if (bytes <= 16 * 1024 * 1024) break;
+        if (e.image?.complete) {
+          bytes -= e.image.naturalWidth * e.image.naturalHeight * 4;
+          delete e.image;
+        }
+      }
+    }
+    const until = loaded
+      ? variant
+        ? Date.now() + 300000
+        : mediaUrlCacheUntil(src)
+      : 0;
     if (entries.get(src) === entry) {
       if (until > Date.now()) entry.until = until;
       else entries.delete(src);
@@ -62,6 +82,12 @@ function prepare(value: string, priority: "high" | "low") {
     else finish(true);
   };
   image.onerror = () => finish(false);
+  if (variant) {
+    image.srcset = [320, 640, 1280]
+      .map((w) => `${mediaPreview(value, w as 320 | 640 | 1280)} ${w}w`)
+      .join(", ");
+    image.sizes = sizes ?? "(max-width: 600px) 100vw, 480px";
+  }
   image.src = src;
   return entry.promise;
 }
@@ -76,15 +102,17 @@ export async function prepareMediaUrls(
   {
     signal,
     priority = "high",
+    sizes,
   }: {
     signal?: AbortSignal;
     priority?: "high" | "low";
+    sizes?: string;
   } = {},
 ) {
   if (signal?.aborted || typeof Image === "undefined") return;
   const downloads = Promise.all(
     [...new Set(values.filter((value): value is string => Boolean(value)))].map(
-      (value) => prepare(value, priority),
+      (value) => prepare(value, priority, sizes),
     ),
   );
   if (!signal) {
@@ -102,3 +130,6 @@ export async function prepareMediaUrls(
     signal.removeEventListener("abort", cancel);
   }
 }
+
+if (typeof window !== "undefined")
+  window.addEventListener("hvm:session-cleared", () => entries.clear());

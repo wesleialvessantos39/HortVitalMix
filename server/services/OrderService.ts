@@ -90,6 +90,8 @@ async function transaction<T>(
           ORDER_PAYMENT_NOT_APPROVED: 422,
           ORDER_STOCK_RETURN_REQUIRED: 409,
           ORDER_REFUND_REQUEST_REQUIRED: 409,
+          DELIVERY_ALLOCATION_REQUIRED: 422,
+          DELIVERY_PROOF_REQUIRED: 422,
         };
         if (errors[e.message])
           throw new CommerceError(e.message, errors[e.message]);
@@ -345,10 +347,11 @@ export const OrderService = {
     input: unknown,
     commandId: string,
     context: CommerceAudit,
+    suppliedClient?: PoolClient,
   ) {
     const id = OrderIdSchema.parse(orderId),
       body = TransitionOrderSchema.parse(input);
-    return transaction(async (client) => {
+    const run = async (client: PoolClient) => {
       const actor = await commerceIdentity(client, actorUserId);
       if (actorRole !== "producer" || !actor.roles.includes("producer"))
         throw new CommerceError("PRODUCER_REQUIRED", 403);
@@ -413,7 +416,8 @@ export const OrderService = {
           return detail(client, id, actorUserId);
         },
       );
-    });
+    };
+    return suppliedClient ? run(suppliedClient) : transaction(run);
   },
   async cancelOrder(
     orderId: string,

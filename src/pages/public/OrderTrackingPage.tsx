@@ -19,6 +19,7 @@ import { money, date, statusLabels } from "../../lib/commerce";
 import "../commerce/commerce.css";
 import "./orders.css";
 
+import { DeliveryTrackingResponseSchema } from "../../../shared/contracts/deliveryLogistics";
 const steps: OrderStatus[] = [
   "confirmed",
   "in_preparation",
@@ -76,13 +77,14 @@ function Detail({
     error,
     refresh,
   } = useOrderQuery("/v1/orders/" + id, userId, OrderResponseSchema);
+  const {data:delivery,error:deliveryError,refresh:refreshDelivery}=useOrderQuery(`/v1/orders/${id}/delivery`,userId,DeliveryTrackingResponseSchema);
   return (
     <>
       <div className="commerce-actions">
         <button className="text-button" onClick={() => onNavigate("/pedidos")}>
           ← Meus pedidos
         </button>
-        <button className="secondary" onClick={refresh}>
+        <button className="secondary" onClick={()=>{refresh();refreshDelivery();}}>
           <RefreshCw size={16} aria-hidden="true" /> Atualizar
         </button>
       </div>
@@ -133,6 +135,9 @@ function Detail({
           <div className="order-detail-grid">
             <div>
               <Timeline order={order} />
+              {deliveryError&&<p role="alert" className="commerce-error">Não foi possível consultar o agendamento da entrega. Tente atualizar.</p>}
+              {delivery?.allocation&&<article className="commerce-card"><h2>Entrega agendada</h2><p>{delivery.allocation.scheduledDate.split("-").reverse().join("/")} · {delivery.allocation.startTime}–{delivery.allocation.endTime}</p><small>Horário de {delivery.allocation.timezone}.</small></article>}
+              {delivery?.proof&&<article className="commerce-card"><h2>Prova de recebimento</h2><p>Recebido por {delivery.proof.receivedByName} em {date(delivery.proof.deliveredAt)}.</p>{delivery.proof.receiverDocumentMasked&&<p>Documento: {delivery.proof.receiverDocumentMasked}</p>}{delivery.proof.notes&&<p className="commerce-prewrap">{delivery.proof.notes}</p>}</article>}
               <article className="commerce-card">
                 <h2>Histórico do pedido</h2>
                 <ol className="order-history">

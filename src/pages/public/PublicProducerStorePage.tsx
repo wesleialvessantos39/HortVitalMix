@@ -45,9 +45,10 @@ export default function PublicProducerStorePage({
       .then(async (response) => {
         const result = StorePublicResponseSchema.parse(response);
         void prepareMediaUrls(
-          [result.avatarUrl, result.coverImages[0]?.url ?? result.bannerUrl],
-          { signal: controller.signal },
+          [result.coverImages[0]?.url ?? result.bannerUrl],
+          { signal: controller.signal, sizes:"100vw" },
         );
+        void prepareMediaUrls([result.avatarUrl],{signal:controller.signal,sizes:"52px"});
         if (!controller.signal.aborted) {
           setStore(result);
           setState("ready");
@@ -59,7 +60,7 @@ export default function PublicProducerStorePage({
       });
     return () => controller.abort();
   }, [slug, attempt]);
-  if (state === "loading" || (state === "ready" && catalog.loading))
+  if (state === "loading")
     return (
       <section className="hvm-store">
         <p role="status" className="account-notice">
@@ -113,7 +114,7 @@ export default function PublicProducerStorePage({
   return (
     <article className="hvm-store hvm-store-public">
       {covers.length ? (
-        <MediaCarousel
+        <MediaCarousel imageSizes="100vw"
           className="hvm-store-cover"
           priority
           label="Capa da loja"

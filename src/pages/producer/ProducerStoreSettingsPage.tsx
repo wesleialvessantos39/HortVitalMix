@@ -342,6 +342,7 @@ export default function ProducerStoreSettingsPage({
           >
             Área de entrega e frete
           </button>
+          <button className="secondary" onClick={()=>onNavigate("/produtor/loja/janelas")}>Janelas de entrega</button>
           <div
             role="tablist"
             aria-label="Configurações da loja"

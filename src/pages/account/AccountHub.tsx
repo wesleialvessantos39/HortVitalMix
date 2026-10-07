@@ -220,6 +220,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
                 <span><strong>Minha loja</strong><small>Prepare sua vitrine, configure horários e acompanhe a abertura</small></span>
               </button>
               <button className="account-hub-card" onClick={()=>onNavigate("/produtor/caixa")}><CreditCard/><span><strong>Caixa do produtor</strong><small>Prepare vendas presenciais com Pix do sistema ou maquininha</small></span></button>
+              <button className="account-hub-card" onClick={()=>onNavigate("/produtor/loja/janelas")}><PackageCheck/><span><strong>Janelas de entrega</strong><small>Horários e vagas para agendar entregas</small></span></button>
               <button className="account-hub-card" onClick={()=>onNavigate("/produtor/pedidos")}><PackageCheck/><span><strong>Pedidos da minha loja</strong><small>Organize o preparo e acompanhe cada entrega</small></span></button>
               <button className="account-hub-card" onClick={() => onNavigate("/produtor/produtos")}>
                 <Salad />
