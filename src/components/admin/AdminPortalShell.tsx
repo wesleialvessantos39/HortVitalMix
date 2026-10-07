@@ -12,6 +12,7 @@ import {
   ListTree,
   Star,
   Bell,
+  BarChart3,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import type { AdminVerifySessionResponse } from "../../../shared/contracts/adminGovernance";
@@ -30,6 +31,7 @@ type Props = {
 const items = [
   ["/admin/notificacoes", "Notificações", Bell],
   ["/admin/painel", "Painel", LayoutDashboard],
+  ["/admin/bi", "BI executivo", BarChart3],
   ["/admin/governanca", "Governança", ShieldCheck],
   ["/admin/usuarios", "Usuários", UsersRound],
   ["/admin/documentos/fila", "Auditoria", ShieldCheck],
@@ -55,7 +57,7 @@ export function AdminPortalShell({
 }: Props) {
   const visible = items.filter(([to]) => {
     if (access.role === "platform_super_admin") return true;
-    if (to === "/admin/categorias") return false;
+    if (to === "/admin/categorias" || to === "/admin/bi") return false;
     if(to==="/admin/reembolsos"||to==="/admin/politica-reembolso")return access.sectors.includes("refund_management");
     if(to==="/admin/denuncias"||to==="/admin/avaliacoes")return access.sectors.includes("complaint_management");
     if(to==="/admin/pagamentos"||to==="/admin/assinaturas")return access.sectors.includes("payment_configuration");

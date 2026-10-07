@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { z } from "zod";
 import { api, type ApiFailure } from "../lib/api";
 import { orderMessage } from "../lib/orders";
+import { producerRead } from "../lib/offlineDb";
 
 /** Sequential polling while visible; aborts on logout, route change and unmount. */
 export function useOrderQuery<T>(
@@ -35,12 +36,10 @@ export function useOrderQuery<T>(
       clearTimeout(timer);
       loading = true;
       try {
-        const value = schema.parse(
+        const signal=AbortSignal.any([controller.signal,AbortSignal.timeout(20000)]);
+        const value = path.startsWith("/v1/producer/orders") ? await producerRead(userId!,path,schema,signal) : schema.parse(
           await api<unknown>(path, {
-            signal: AbortSignal.any([
-              controller.signal,
-              AbortSignal.timeout(20000),
-            ]),
+            signal,
           }),
         );
         if (controller.signal.aborted) return;
@@ -57,7 +56,7 @@ export function useOrderQuery<T>(
         }
       } finally {
         loading = false;
-        if (!stopped && !controller.signal.aborted && visibleNow())
+        if (!stopped && !controller.signal.aborted && visibleNow() && navigator.onLine)
           timer = setTimeout(() => void load(), 15000);
       }
     }
@@ -70,6 +69,9 @@ export function useOrderQuery<T>(
     window.addEventListener("focus", visible);
     window.addEventListener("hvm:notifications-changed", visible);
     window.addEventListener("hvm:notifications-updated", visible);
+    window.addEventListener("hvm:offline-synchronized",visible);
+    window.addEventListener("online",visible);
+    window.addEventListener("offline",visible);
     return () => {
       controller.abort();
       clearTimeout(timer);
@@ -77,6 +79,9 @@ export function useOrderQuery<T>(
       window.removeEventListener("focus", visible);
       window.removeEventListener("hvm:notifications-changed", visible);
       window.removeEventListener("hvm:notifications-updated", visible);
+      window.removeEventListener("hvm:offline-synchronized",visible);
+      window.removeEventListener("online",visible);
+      window.removeEventListener("offline",visible);
     };
   }, [path, userId, schema, version]);
   return { data, error, refresh };

@@ -7,6 +7,7 @@ import {
 } from "react";
 import { ArrowLeft, ArrowRight, Package, Wheat, History } from "lucide-react";
 import { api, type ApiFailure } from "../../lib/api";
+import { enqueueCommand,offlineTransport,producerRead } from "../../lib/offlineDb";
 import type { ShellSession } from "../../hooks/useSession";
 import {
   RegisterHarvestCommandSchema,
@@ -36,6 +37,8 @@ const messages: Record<string, string> = {
   VALIDATION_ERROR: "Revise código, datas e quantidade da colheita.",
   PRODUCER_PROFILE_REQUIRED:
     "Entre com a conta de produtor titular deste produto.",
+  OFFLINE_SNAPSHOT_MISSING:"Abra os lotes deste produto com conexão antes de lançar colheitas no campo.",
+  OFFLINE_STORAGE_UNAVAILABLE:"Não foi possível salvar neste aparelho. Seus dados permanecem no formulário; libere espaço e tente novamente.",
 };
 function message(error: unknown) {
   return (
@@ -81,11 +84,9 @@ export default function InventoryLotsPage({
       setLoading(true);
       setLoadError("");
       try {
-        const result = InventoryResponseSchema.parse(
-          await api(
+        const result = await producerRead(session.userId,
             `/v1/producer/products/${id}/lots?lotsPage=${lotsPage}&movementsPage=${movementsPage}`,
-            { signal },
-          ),
+            InventoryResponseSchema,signal,
         );
         if (signal?.aborted) return;
         setInventory(result);
@@ -106,18 +107,27 @@ export default function InventoryLotsPage({
         if (!signal?.aborted) setLoading(false);
       }
     },
-    [id, lotsPage, movementsPage],
+    [id, lotsPage, movementsPage,session.userId],
   );
   useEffect(() => {
     const abort = new AbortController();
     void load(abort.signal);
     return () => abort.abort();
   }, [load, session.userId]);
+  useEffect(()=> {const refresh=()=>void load();window.addEventListener("hvm:offline-synchronized",refresh);window.addEventListener("offline",refresh);return()=>{window.removeEventListener("hvm:offline-synchronized",refresh);window.removeEventListener("offline",refresh);};},[load]);
+  async function queue(input:RegisterHarvest) {
+    if(!inventory?.product.revision)throw new Error("OFFLINE_SNAPSHOT_MISSING");
+    const {commandId,...harvest}=input;
+    await enqueueCommand(session.userId,{commandId,commandType:"inventory.harvest",baseRevision:inventory.product.revision,payload:{productId:id,harvest}});
+    pending.current=null;command.current=null;setReauth(false);setPassword("");
+    setDraft(current=>({...current,lotCode:"",quantity:""}));setNotice("Colheita salva neste aparelho; aguardando sincronização e confirmação do servidor.");
+  }
   async function execute(input: RegisterHarvest) {
     setBusy(true);
     setError("");
     setNotice("");
     try {
+      if(!navigator.onLine){await queue(input);return;}
       const result = HarvestResponseSchema.parse(
         await api(`/v1/producer/products/${id}/lots`, {
           method: "POST",
@@ -136,6 +146,10 @@ export default function InventoryLotsPage({
         "Colheita registrada. O lote e a entrada no histórico foram salvos.",
       );
     } catch (failure) {
+      if(offlineTransport(failure)) {
+        try{await queue(input);}catch(storageError){setError(message(storageError));}
+        return;
+      }
       const fault = failure as ApiFailure;
       if (["AUTH_REQUIRED", "RECENT_AUTH_REQUIRED"].includes(fault.message)) {
         pending.current = input;
@@ -157,7 +171,7 @@ export default function InventoryLotsPage({
     });
     if (
       !input.success ||
-      (inventory && fields.harvestDate > inventory.businessDate)
+      (inventory && fields.harvestDate > (navigator.onLine?inventory.businessDate:new Date().toISOString().slice(0,10)))
     ) {
       setError(
         "Informe um código, uma colheita até hoje, validade igual ou posterior à colheita e quantidade inteira positiva.",
@@ -372,7 +386,7 @@ export default function InventoryLotsPage({
                   <input
                     type="date"
                     required
-                    max={inventory.businessDate}
+                    max={navigator.onLine?inventory.businessDate:new Date().toISOString().slice(0,10)}
                     value={draft.harvestDate}
                     onChange={(e) =>
                       setDraft((current) => ({

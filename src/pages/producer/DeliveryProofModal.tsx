@@ -6,15 +6,18 @@ import {
 } from "../../../shared/contracts/order";
 import { api, type ApiFailure } from "../../lib/api";
 import { deliveryMessage } from "../../lib/deliveryLogistics";
+import { enqueueCommand,offlineTransport } from "../../lib/offlineDb";
 import "./deliveryLogistics.css";
 export function DeliveryProofModal({
   order,
   onClose,
   onSaved,
+  userId,
 }: {
   order: OrderSummary;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (queued?:boolean) => void;
+  userId: string;
 }) {
   const dialog = useRef<HTMLDialogElement>(null),
     flight = useRef(false),
@@ -61,7 +64,12 @@ export function DeliveryProofModal({
     flight.current = true;
     setBusy(true);
     setError("");
+    async function queue() {
+      await enqueueCommand(userId,{commandId:pending.current!.id,commandType:"delivery.proof",baseRevision:order.revision,payload:{orderId:order.id,proof:value.data!}});
+      pending.current=null;onSaved(true);
+    }
     try {
+      if(!navigator.onLine){await queue();return;}
       OrderResponseSchema.parse(
         await api(`/v1/producer/orders/${order.id}/delivery-proof`, {
           method: "POST",
@@ -72,6 +80,7 @@ export function DeliveryProofModal({
       pending.current = null;
       onSaved();
     } catch (e) {
+      if(offlineTransport(e)){try{await queue();}catch{setError("Não foi possível salvar a confirmação neste aparelho. Seus dados permanecem no formulário.");}return;}
       setError(deliveryMessage(e));
       const status = (e as ApiFailure).status ?? 0;
       if (status >= 400 && status < 500 && status !== 401 && status !== 429)

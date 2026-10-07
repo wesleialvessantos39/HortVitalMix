@@ -78,6 +78,7 @@ export const InventoryResponseSchema = z
     product: z
       .object({
         id: z.uuid(),
+        revision: z.number().int().positive().optional(),
         title: z.string(),
         unitType: UnitTypeEnum,
         shelfLifeDays: quantity,

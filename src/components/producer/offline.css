@@ -1,0 +1,117 @@
+.hvm-offline-banner {
+  margin: 16px auto 0;
+  width: calc(100% - 32px);
+  position: sticky;
+  top: var(--hvm-offline-top, 80px);
+  z-index: 19;
+  align-self: start;
+  max-width: 1280px;
+  background: #eef6ef;
+  border: 1px solid #c7dfcb;
+  border-radius: 16px;
+  padding: 15px 18px;
+  color: #254a30;
+  overflow-wrap: anywhere;
+}
+.hvm-offline-banner.is-offline {
+  background: #fff7e6;
+  border-color: #eddaaa;
+  color: #71521e;
+}
+.hvm-offline-banner + .subscription-trial {
+  width: calc(100% - 32px);
+  max-width: 1280px;
+  margin: 18px auto 0;
+  overflow-wrap: anywhere;
+}
+.hvm-offline-banner + .subscription-trial > div {
+  min-width: 0;
+}
+.hvm-offline-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.hvm-offline-summary > div {
+  flex: 1;
+  min-width: 180px;
+}
+.hvm-offline-summary strong,
+.hvm-offline-summary small {
+  display: block;
+}
+.hvm-offline-summary small {
+  margin-top: 4px;
+  line-height: 1.5;
+}
+.hvm-offline-list {
+  max-height: min(45vh, 480px);
+  overflow: auto;
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 0;
+  display: grid;
+  gap: 12px;
+}
+.hvm-offline-list li {
+  background: #fff;
+  border: 1px solid #e1e7df;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.hvm-offline-list li > div:first-child {
+  flex: 1;
+  min-width: 180px;
+}
+.hvm-offline-list time {
+  display: block;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.hvm-offline-list p {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.hvm-offline-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.hvm-offline-reauth {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.hvm-offline-reauth label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.hvm-offline-reauth input {
+  max-width: 100%;
+  border: 1px solid #c6d6c7;
+  border-radius: 8px;
+  padding: 10px;
+}
+@media (max-width: 480px) {
+  .hvm-offline-banner {
+    padding: 12px;
+  }
+  .hvm-offline-summary > div {
+    min-width: 160px;
+  }
+  .hvm-offline-actions {
+    width: 100%;
+  }
+  .hvm-offline-reauth input {
+    width: 100%;
+  }
+}

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { MediaImage } from "../../components/catalog/MediaImage";
 import { ArrowLeft, Plus, Salad, Pencil, Store } from "lucide-react";
-import { api } from "../../lib/api";
+import { producerRead } from "../../lib/offlineDb";
 import type { ShellSession } from "../../hooks/useSession";
 import {
   ProducerCatalogResponseSchema,
@@ -41,16 +41,14 @@ export default function ProducerCatalogPage({
     setLoading(true);
     setError("");
     try {
-      const result = ProducerCatalogResponseSchema.parse(
-        await api("/v1/producer/products", { signal }),
-      );
+      const result = await producerRead(session.userId,"/v1/producer/products",ProducerCatalogResponseSchema,signal);
       if (!signal?.aborted) setCatalog(result);
     } catch (failure) {
       if (!signal?.aborted) setError(productErrorMessage(failure));
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
-  }, []);
+  }, [session.userId]);
   useEffect(() => {
     const abort = new AbortController();
     void load(abort.signal);

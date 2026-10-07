@@ -77,7 +77,7 @@ test("Trilha 03 — seleção pública nunca oferece papel administrativo", asyn
 test("Trilha 03 — home acessa cadastro pela Conta e admin/entrar mostra somente Administração", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  await page.getByRole("link", { name: "Conta", exact: true }).click();
+  await page.getByRole("navigation", { name: "Navegação mobile" }).locator('a[href="/conta"]').click();
   await page.getByRole("button", { name: "Criar cadastro", exact: true }).click();
   await expect(page).toHaveURL(/\/cadastro$/);
   await expect(page.getByRole("heading", { name: "Como você quer participar?" })).toBeVisible();

@@ -41,6 +41,7 @@ import { ProducerTrialBanner } from "./pages/producer/ProducerTrialBanner";
 import { CategoryNavSection } from "./components/catalog/CategoryNavSection";
 import type { Category } from "../shared/contracts/category";
 import { PublicProductCatalog } from "./components/catalog/PublicProductCatalog";
+import { OfflineStatusBanner } from "./components/producer/OfflineStatusBanner";
 import { ConsumerAccessNotice } from "./components/ConsumerAccessNotice";
 import { NotificationProvider, NotificationBell } from "./components/notifications/NotificationProvider";
 import { LocationSelector } from "./components/LocationSelector";
@@ -378,13 +379,14 @@ export default function App() {
           onOpen={openLocality}
         />
       </header>
+      <OfflineStatusBanner session={shellSession} onNavigate={go}/>
+      {shellSession?.activeRole === "producer" && (path.startsWith("/produtor/") || path === "/conta") && <ProducerTrialBanner key={shellSession.userId} userId={shellSession.userId} onNavigate={go}/>}
       <main id="conteudo" className={isAdminRoute || publicLoginRole ? "layout admin-route-layout" : isProducerPropertyRoute ? "layout producer-route-layout rural-property-layout" : isProducerScopeRoute || isProducerStoreRoute || isProducerProductRoute || path === "/carrinho" || path === "/checkout" ? "layout producer-route-layout" : "layout"}>
         {shellSession?.localityWarning && !isAdminRoute && (
           <p className="account-notice locality-blocked" role="alert">
             {shellSession.localityWarning}
           </p>
         )}
-        {shellSession?.activeRole === "producer" && (path.startsWith("/produtor/") || path === "/conta") && <ProducerTrialBanner key={shellSession.userId} userId={shellSession.userId} onNavigate={go}/>}
         {(sessionLoading && (guestAccessRoute || isAccountDataRoute || isProducerPropertyRoute || isProducerStoreRoute || isProducerProductRoute || path === "/minha-conta")) || (shellSession && guestAccessRoute) ? <p role="status" className="account-notice">Carregando sua conta…</p> : publicLoginRole ? (
           <PublicLoginPage key={publicLoginRole} role={publicLoginRole} onNavigate={go} onSessionAdopt={adoptSession}/>
         ) : isAdminRoute ? (

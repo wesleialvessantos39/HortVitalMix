@@ -75,6 +75,7 @@ async function transaction<T>(
 }
 type OwnedProduct = {
   id: string;
+  revision: number;
   title: string;
   unit_type: Inventory["product"]["unitType"];
   shelf_life_days: number;
@@ -108,7 +109,7 @@ async function ownerProduct(
   if (!store.rows[0])
     throw new InventoryError("INVENTORY_PRODUCT_NOT_FOUND", 404);
   const result = await client.query<Omit<OwnedProduct, "eligible">>(
-    `SELECT id,title,unit_type,shelf_life_days FROM public.app_products
+    `SELECT id,revision,title,unit_type,shelf_life_days FROM public.app_products
      WHERE id=$1 AND store_id=$2 ${lock ? "FOR SHARE" : ""}`,
     [productId, store.rows[0].id],
   );
@@ -179,6 +180,7 @@ async function readInventory(
   return InventoryResponseSchema.parse({
     product: {
       id: product.id,
+      revision: product.revision,
       title: product.title,
       unitType: product.unit_type,
       shelfLifeDays: product.shelf_life_days,
@@ -270,6 +272,8 @@ export const InventoryService = {
     value: RegisterHarvest,
     userId: string,
     context: InventoryAuditContext,
+    existing?: PoolClient,
+    expectedRevision?: number,
   ) {
     const parsed = RegisterHarvestCommandSchema.parse(value);
     const input = RegisterHarvestCommandSchema.parse({
@@ -320,6 +324,8 @@ export const InventoryService = {
       }
       if (!product.eligible)
         throw new InventoryError("INVENTORY_STORE_INELIGIBLE", 403);
+      if (expectedRevision !== undefined && product.revision !== expectedRevision)
+        throw new InventoryError("REVISION_CONFLICT",409);
       const today = (
         await client.query<{ today: string }>(
           "SELECT CURRENT_DATE::text AS today",
@@ -374,7 +380,7 @@ export const InventoryService = {
           movementsPage: 1,
         }),
       };
-    });
+    }, existing);
   },
   async reserveStock(
     productId: string,

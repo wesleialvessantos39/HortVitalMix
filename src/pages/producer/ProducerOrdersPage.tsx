@@ -29,6 +29,7 @@ import "../commerce/commerce.css";
 import "../public/orders.css";
 import { DeliveryProofModal } from "./DeliveryProofModal";
 import { DeliveryAllocationModal } from "./DeliveryAllocationModal";
+import { useOfflineCommands } from "../../components/producer/OfflineStatusBanner";
 const actionLabels: Partial<Record<OrderStatus, string>> = {
   in_preparation: "Iniciar preparo",
   ready_for_dispatch: "Marcar como pronto",
@@ -42,6 +43,8 @@ export default function ProducerOrdersPage({
   userId: string;
   onNavigate: (path: string) => void;
 }) {
+  const queued=useOfflineCommands(userId);
+  const waiting=new Set(queued.map(row=>row.command.payload.orderId));
   const [filter, setFilter] = useState<OrderStatus | "all">("all"),
     [page, setPage] = useState(1),
     [busy, setBusy] = useState(false),
@@ -82,7 +85,7 @@ export default function ProducerOrdersPage({
       setCancelling(null);
       setReason("");
       setSuccess(
-        `${order.orderNumber}: ${ORDER_STATUS_LABELS[order.status].toLowerCase()}.`,
+        order?`${order.orderNumber}: ${ORDER_STATUS_LABELS[order.status].toLowerCase()}.`:"Atualização salva neste aparelho; aguardando sincronização e confirmação do servidor.",
       );
       refresh();
     } catch (e) {
@@ -284,6 +287,7 @@ export default function ProducerOrdersPage({
                           <strong>{money(order.totalCents)}</strong>
                         </p>
                         <small>{date(order.createdAt)}</small>
+                        {waiting.has(order.id)&&<p role="status">Este pedido possui uma ação na fila. Consulte o indicador de conexão para acompanhar a confirmação ou revisar o conflito.</p>}
                         {order.commercialStatus === "refunded" && (
                           <p>Reembolso confirmado. Preparo encerrado.</p>
                         )}
@@ -296,7 +300,7 @@ export default function ProducerOrdersPage({
                           {next && (
                             <button
                               className="primary"
-                              disabled={busy || !!pending}
+                              disabled={busy || !!pending || waiting.has(order.id)}
                               onClick={() => advance(order, next)}
                             >
                               {actionLabels[next]}
@@ -313,7 +317,7 @@ export default function ProducerOrdersPage({
                   {order.allowedTransitions.includes("cancelled") && (
                             <button
                               className="text-button order-danger"
-                              disabled={busy || !!pending}
+                              disabled={busy || !!pending || waiting.has(order.id)}
                               onClick={() => {
                                 setReason("");
                                 setCancelling(order);
@@ -397,7 +401,7 @@ export default function ProducerOrdersPage({
           </div>
         </form>
       </dialog>
-      {proofOrder&&<DeliveryProofModal key={proofOrder.id} order={proofOrder} onClose={()=>setProofOrder(null)} onSaved={()=>{setProofOrder(null);setSuccess("Entrega confirmada com prova de recebimento.");refresh();}}/>}
+      {proofOrder&&<DeliveryProofModal key={proofOrder.id} userId={userId} order={proofOrder} onClose={()=>setProofOrder(null)} onSaved={queued=>{setProofOrder(null);setSuccess(queued?"Confirmação de entrega salva neste aparelho; aguardando sincronização.":"Entrega confirmada com prova de recebimento.");refresh();}}/>}
       {allocationOrder&&<DeliveryAllocationModal key={allocationOrder.id} userId={userId} order={allocationOrder} onClose={()=>{setAllocationOrder(null);refresh();}}/>}
     </section>
   );

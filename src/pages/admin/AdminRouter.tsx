@@ -19,6 +19,7 @@ const AdminCommercePage = lazy(() => import("../commerce/AdminCommercePage"));
 const AdminSubscriptionPlansPage = lazy(() => import("./AdminSubscriptionPlansPage"));
 const NotificationsPage = lazy(() => import("../account/NotificationsPage"));
 const AdminReviewsPage = lazy(() => import("./AdminReviewsPage"));
+const ExecutiveBiDashboardPage = lazy(() => import("./ExecutiveBiDashboardPage"));
 
 type Props={
  path:string;
@@ -59,7 +60,7 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
   path.startsWith("/admin/bloqueios/");
  return <AdminAccessGate
   onNavigate={onNavigate}
-  requiredRole={path === "/admin/categorias" ? "platform_super_admin" : undefined}
+  requiredRole={path === "/admin/categorias" || path === "/admin/bi" ? "platform_super_admin" : undefined}
    requiredSector={
    path==="/admin/reembolsos" || path==="/admin/politica-reembolso"
     ? "refund_management"
@@ -83,7 +84,7 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
     onNavigate={onNavigate}
     onSessionRefresh={onSessionRefresh}
    >
-    {path==="/admin/notificacoes" ? <Suspense fallback={<p role="status">Carregando notificações…</p>}><NotificationsPage onNavigate={onNavigate}/></Suspense> : path==="/admin/avaliacoes" ? <Suspense fallback={<p role="status">Carregando avaliações…</p>}><AdminReviewsPage/></Suspense> : path==="/admin/assinaturas" ? <Suspense fallback={<p role="status">Carregando planos…</p>}><AdminSubscriptionPlansPage/></Suspense> : ["/admin/reembolsos","/admin/denuncias","/admin/pagamentos","/admin/politica-reembolso"].includes(path)
+    {path==="/admin/bi" ? <Suspense fallback={<p role="status">Carregando BI executivo…</p>}><ExecutiveBiDashboardPage/></Suspense> : path==="/admin/notificacoes" ? <Suspense fallback={<p role="status">Carregando notificações…</p>}><NotificationsPage onNavigate={onNavigate}/></Suspense> : path==="/admin/avaliacoes" ? <Suspense fallback={<p role="status">Carregando avaliações…</p>}><AdminReviewsPage/></Suspense> : path==="/admin/assinaturas" ? <Suspense fallback={<p role="status">Carregando planos…</p>}><AdminSubscriptionPlansPage/></Suspense> : ["/admin/reembolsos","/admin/denuncias","/admin/pagamentos","/admin/politica-reembolso"].includes(path)
       ? <Suspense fallback={<p role="status">Carregando gestão da compra…</p>}><AdminCommercePage key={path} path={path} access={access} onNavigate={onNavigate}/></Suspense>
       : path === "/admin/categorias"
       ? <Suspense fallback={<p role="status">Carregando categorias…</p>}><AdminCategoriesPage access={access} onNavigate={onNavigate}/></Suspense>
