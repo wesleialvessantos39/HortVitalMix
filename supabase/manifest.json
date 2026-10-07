@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 63,
+  "schemaVersion": 64,
   "migrations": [
     {
       "version": "20260919030126",
@@ -345,7 +345,12 @@
       "version": "20261007140032",
       "name": "roles_sales_notifications",
       "file": "20261007140032_roles_sales_notifications.sql"
+    },
+    {
+      "version": "20261007174202",
+      "name": "trilha25_offline_sync_bi",
+      "file": "20261007174202_trilha25_offline_sync_bi.sql"
     }
   ],
-  "migrationHistoryHash": "3363f83f98ec91afabc8043d9f75ecee680842b1e4a5b63fe809c889b945e379"
+  "migrationHistoryHash": "4225db3b2142e83837e7d8620c3935e52cbf6a6b5c2b263e0885f0149dba9739"
 }

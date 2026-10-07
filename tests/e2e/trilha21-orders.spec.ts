@@ -104,12 +104,14 @@ async function mock(
       initial === "cancelled" ? 2 : stages.indexOf(initial) + 1,
     ),
     failOnce = false,
+    syncPaused = false,
     conflictOnce = false,
     inaccessible = false,
     reads = 0;
   const errors: string[] = [],
     posts: Array<{ body: any; command: string | undefined }> = [],
-    receipts = new Map<string, unknown>();
+    receipts = new Map<string, ReturnType<typeof detail>>(),
+    synchronized: any[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.route("**/*", async (route) => {
     const request = route.request(),
@@ -155,6 +157,19 @@ async function mock(
       });
     if (path === "/v1/localities") return json({ municipalities: [] });
     if (path === "/v1/categories") return json({ categories: [] });
+    if (path === "/v1/producer/sync") {
+      if (syncPaused) return json({ error: "DEPENDENCY_UNAVAILABLE" }, 503);
+      const batch = request.postDataJSON();
+      synchronized.push(batch);
+      return json({ results: batch.commands.map((command: any) => {
+        const receipt = receipts.get(command.commandId);
+        if (!receipt) throw Error("Existing online receipt required");
+        return {
+          commandId: command.commandId, status: "confirmed", code: "CONFIRMED",
+          entityId: receipt.id, revision: receipt.revision, conflictDetails: null,
+        };
+      }) });
+    }
     if (path === "/v1/orders" || path === "/v1/producer/orders") {
       const counts = {
         confirmed: 0,
@@ -208,12 +223,16 @@ async function mock(
   return {
     errors,
     posts,
+    synchronized,
+    get revision() { return current.revision; },
     get reads() {
       return reads;
     },
     dropNext: () => {
       failOnce = true;
+      syncPaused = true;
     },
+    reconnect: () => { syncPaused = false; },
     conflictNext: () => {
       conflictOnce = true;
     },
@@ -335,21 +354,25 @@ test("resposta perdida conserva commandId após reload e recupera o resultado", 
   await page
     .getByRole("button", { name: "Iniciar preparo", exact: true })
     .click();
-  await expect(
-    page.getByRole("button", {
-      name: "Reenviar atualização pendente",
-      exact: true,
-    }),
-  ).toBeVisible();
+  await expect(page.getByText(/Conectado — 1 ação pendente/)).toBeVisible();
   await page.reload();
-  await page
-    .getByRole("button", { name: "Reenviar atualização pendente", exact: true })
-    .click();
+  await expect(page.getByText(/Conectado — 1 ação pendente/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sincronizar", exact: true })).toBeEnabled();
+  state.reconnect();
+  await page.getByRole("button", { name: "Sincronizar", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Marcar como pronto", exact: true }),
-  ).toBeVisible();
-  expect(state.posts).toHaveLength(2);
-  expect(state.posts[0]).toEqual(state.posts[1]);
+  ).toBeEnabled();
+  await expect(page.getByText(/Conectado — 0 ações pendentes/)).toBeVisible();
+  expect(state.posts).toHaveLength(1);
+  expect(state.synchronized).toHaveLength(1);
+  expect(state.synchronized[0].commands).toEqual([{
+    commandId: state.posts[0].command,
+    commandType: "order.transition",
+    baseRevision: state.posts[0].body.expectedRevision,
+    payload: { orderId: id(5), transition: state.posts[0].body },
+  }]);
+  expect(state.revision).toBe(2);
   await layout(page, state.errors);
 });
 test("HTTP 409 atualiza o painel sem avançar uma segunda etapa", async ({

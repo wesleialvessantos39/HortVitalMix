@@ -82,3 +82,9 @@ Conteúdo da notificação é imutável; somente a primeira leitura pode definir
 As **68 migrations anteriores permanecem byte a byte preservadas**. O snapshot de contagem/digest das 94 relações anteriores de negócio/Auth/Storage foi capturado antes da alteração. Sem reset ou fixtures na produção. Supabase canônico único `xipbsazvymkqqfmfegwu`, Vercel `main`/`pdx1`, dependências e infraestrutura gratuitas preservados. Nomes e preços de planos continuam configuráveis no painel administrativo, conforme decisão anterior do usuário. Gateway continua sujeito à configuração real já prevista; avisos não simulam pagamentos.
 
 Testes e evidências de publicação/preservação estão registrados em `CORRECOES_PAPEIS_NOTIFICACOES.md` e no Livro-Raiz.
+
+## Atualização T25 — ações do campo e BI
+
+A Trilha 25, schema 64/70 migrations, mantém esta central como único mecanismo de avisos. Colheitas, transições e provas enfileiradas no IndexedDB passam pelos mesmos serviços/emissores após a reconciliação transacional. Uma confirmação produz os avisos de estoque/pedido já previstos para cada papel; repetição por commandId recupera o resultado sem novo aviso. Conflito/rejeição reverte a tentativa e fica no banner de revisão do aparelho, sem inventar uma venda, entrega ou notificação persistente.
+
+O BI é exclusivo do Super administrador, lê métricas diárias salvas e confirma o cálculo na própria tela. Leitura/agregação técnica não gera aviso comercial para consumidores, produtores ou administradores setoriais. Journal, definições e métricas são backend-only; o mapa de papéis, vendas, reembolsos privados e badge por opção continua acima. Detalhes: [TRILHA25_OFFLINE_E_BI.md](TRILHA25_OFFLINE_E_BI.md).

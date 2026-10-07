@@ -253,10 +253,11 @@ export const DeliveryLogisticsService = {
     input: unknown,
     commandId: string,
     context: CommerceAudit,
+    suppliedClient?: PoolClient,
   ) {
     const id = OrderIdSchema.parse(orderId),
       body = DeliveryProofSchema.parse(input);
-    return transaction(async (c) => {
+    const run = async (c: PoolClient) => {
       const state = await lockOrder(c, id, userId);
       return commerceCommand(
         c,
@@ -310,7 +311,8 @@ export const DeliveryLogisticsService = {
           return order;
         },
       );
-    });
+    };
+    return suppliedClient ? run(suppliedClient) : transaction(run);
   },
   async tracking(orderId: string, userId: string) {
     const id = OrderIdSchema.parse(orderId);

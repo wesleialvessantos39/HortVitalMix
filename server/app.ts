@@ -32,6 +32,7 @@ import { subscriptionRouter,adminSubscriptionRouter } from "./routes/subscriptio
 import { reviewRouter,adminReviewRouter } from "./routes/reviewRoutes.ts";
 import { notificationRouter,adminNotificationRouter } from "./routes/notificationRoutes.ts";
 import { producerSalesRouter } from "./routes/producerSalesRoutes.ts";
+import { offlineRouter,adminBiRouter } from "./routes/offlineBiRoutes.ts";
 export const app = express();
 app.disable("x-powered-by");
 
@@ -130,6 +131,8 @@ for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
   app.use(prefix, reviewRouter);
   app.use(prefix, notificationRouter);
   app.use(prefix, producerSalesRouter);
+  app.use(prefix, offlineRouter);
+  app.use(prefix + "/admin", adminBiRouter);
   app.use(prefix + "/admin", adminNotificationRouter);
   app.use(prefix + "/admin", adminReviewRouter);
   app.use(prefix + "/admin", adminSubscriptionRouter);

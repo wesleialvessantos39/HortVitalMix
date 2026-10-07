@@ -69,13 +69,15 @@ for(const role of ['consumer','producer'] as const) {
     await page.getByLabel('E-mail').fill('teste@example.com');
     await page.getByLabel('Senha',{exact:true}).fill('SenhaTeste#2026');
     await page.getByRole('button',{name:'Entrar',exact:true}).click();
-    await expect(page).toHaveURL(/\/conta$/);
+    await expect(page).toHaveURL(/\/$/);
     for(const path of ['/','/produtos','/planos','/entrar','/cadastro','/cadastro/produtor','/cadastro/consumidor']) {
       await page.goto(path);
-      if(path.startsWith('/cadastro')||path==='/entrar') await expect(page).toHaveURL(/\/conta$/);
+      if(path.startsWith('/cadastro')||path==='/entrar') await expect(page).toHaveURL(/\/$/);
       else await expect(page.getByRole('link',{name:'Início',exact:true}).first()).toBeVisible();
       await expect(page.getByRole('button',{name:/Entrar|cadastro|Faça parte/i})).toHaveCount(0);
     }
+    await page.goto('/conta');
+    await expect(page.locator('.account-hub')).toBeVisible();
     mocked.outage();
     await page.evaluate(()=>window.dispatchEvent(new Event('hvm:session-changed')));
     await expect(page.locator('.account-hub')).toBeVisible();
