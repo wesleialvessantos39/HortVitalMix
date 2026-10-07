@@ -44,6 +44,8 @@ export function assertManifestHash() {
 }
 
 const remoteVersionAliases: Readonly<Record<string, string>> = {
+  // Logística T22 aplicada com timestamp físico próprio do Supabase.
+  "20261007025750": "20261007023213",
   // Máquina de estados T21 aplicada com timestamp físico próprio do Supabase.
   "20261007015514": "20261007012246",
   // Preparação T20 aplicada com timestamp físico próprio do Supabase.

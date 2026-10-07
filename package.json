@@ -111,7 +111,10 @@
     "test:t21:unit": "vitest run tests/unit/orderContracts.test.ts tests/integration/orderRoutes.test.ts",
     "test:t21:postgres": "vitest run tests/integration/orderPostgres.test.ts",
     "test:t21:story": "vitest run tests/integration/orderBrowserPostgres.test.ts",
-    "test:t21:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha21-orders.spec.ts"
+    "test:t21:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha21-orders.spec.ts",
+    "test:t22:unit": "vitest run tests/unit/deliveryLogisticsContracts.test.ts tests/integration/deliveryLogisticsRoutes.test.ts tests/unit/mediaPreview.test.ts",
+    "test:t22:postgres": "vitest run tests/integration/deliveryLogisticsPostgres.test.ts",
+    "test:t22:story": "vitest run tests/integration/orderBrowserPostgres.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",
@@ -123,6 +126,7 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "sanitize-html": "2.18.0",
+    "sharp": "0.35.5",
     "zod": "4.6.5"
   },
   "overrides": {

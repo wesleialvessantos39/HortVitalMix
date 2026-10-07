@@ -511,6 +511,8 @@ test("assinatura renovada mantém foto carregada sem indicador permanente nem no
       }),
     });
   });
+  // Install before mounting so the existing refresh interval is controlled.
+  await page.clock.install();
   await page.goto("/");
   const carousel = page.getByRole("region", {
     name: "Produtos da região",
@@ -528,7 +530,6 @@ test("assinatura renovada mantém foto carregada sem indicador permanente nem no
   const original = await image.getAttribute("src");
   const count = downloads.length;
   version++;
-  await page.clock.install();
   await page.clock.fastForward(31000);
   await expect.poll(() => reads).toBeGreaterThan(1);
   await expect(image).toHaveAttribute("src", original!);

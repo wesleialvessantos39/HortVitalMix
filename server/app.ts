@@ -26,6 +26,8 @@ import { cartRouter } from "./routes/cartRoutes.ts";
 import { checkoutRouter } from "./routes/checkoutRoutes.ts";
 import { commerceRouter, adminCommerceRouter } from "./routes/commerceRoutes.ts";
 import { orderRouter } from "./routes/orderRoutes.ts";
+import { deliveryLogisticsRouter } from "./routes/deliveryLogisticsRoutes.ts";
+import { publicMediaRouter } from "./routes/publicMediaRoutes.ts";
 export const app = express();
 app.disable("x-powered-by");
 
@@ -89,6 +91,9 @@ app.use((req,res,next)=> {
   const evidence=/^\/(?:api\/|_hvm_api\/)?v1\/(?:admin\/)?commerce\/evidence\/?$/.test(req.path);
   return express.json({limit:evidence?"3mb":"32kb"})(req,res,next);
 });
+// Public immutable photo variants have their own SQL visibility gate.
+// Serve before sessions to avoid auth refresh cookies on shared CDN images.
+for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) app.use(prefix, publicMediaRouter);
 app.use(sessionMiddleware);
 app.use(foundationRouter);
 app.use("/api", foundationRouter);
@@ -116,6 +121,7 @@ for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
   app.use(prefix, checkoutRouter);
   app.use(prefix, commerceRouter);
   app.use(prefix, orderRouter);
+  app.use(prefix, deliveryLogisticsRouter);
   app.use(prefix + "/admin", adminCommerceRouter);
 }
 for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {

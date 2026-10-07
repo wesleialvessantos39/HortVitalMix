@@ -1,10 +1,12 @@
 import {
   useEffect,
   useMemo,
+  useLayoutEffect,
   useRef,
   useState,
   type ImgHTMLAttributes,
 } from "react";
+import { mediaPreview, mediaPreviewWidth } from "../../lib/mediaPreview";
 import { stableMediaUrl, invalidateMediaUrl } from "../../lib/mediaCache";
 
 export function MediaImage({
@@ -12,16 +14,24 @@ export function MediaImage({
   priority = false,
   loading,
   onError,
+  onLoad,
+  onReady,
+  sizes = "(max-width: 600px) 100vw, 480px",
   ...props
 }: Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
   src: string;
   priority?: boolean;
+  onReady?: () => void;
 }) {
   const preferred = useMemo(() => stableMediaUrl(src), [src]),
     [retry, setRetry] = useState<string | null>(null),
     [near, setNear] = useState(priority),
     node = useRef<HTMLImageElement>(null);
-  const source = retry === src ? src : preferred;
+  const variant = mediaPreview(src, mediaPreviewWidth(sizes));
+  const source = retry === src ? src : (variant ?? preferred);
+  useLayoutEffect(() => {
+    if (node.current?.complete && node.current.naturalWidth > 0) onReady?.();
+  }, [source, onReady]);
   useEffect(() => {
     if (
       priority ||
@@ -46,6 +56,18 @@ export function MediaImage({
       {...props}
       ref={node}
       src={source}
+      srcSet={
+        variant && retry !== src
+          ? [320, 640, 1280]
+              .map((w) => `${mediaPreview(src, w as 320 | 640 | 1280)} ${w}w`)
+              .join(", ")
+          : undefined
+      }
+      sizes={sizes}
+      onLoad={(event) => {
+        onReady?.();
+        onLoad?.(event);
+      }}
       loading={loading ?? (near || priority ? "eager" : "lazy")}
       decoding="async"
       fetchPriority={
