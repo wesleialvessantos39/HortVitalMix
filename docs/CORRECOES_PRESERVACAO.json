@@ -38,7 +38,8 @@
     "manifestPassed": true,
     "securityAndBundlePassed": true,
     "coldStartPassed": true,
-    "productionDependencyAdvisories": 0
+    "productionDependencyAdvisories": 0,
+    "remoteMigrationHistoryPassed": true
   },
   "database": {
     "unforced": [],
@@ -607,6 +608,187 @@
     "priorDomainMutations": 0
   },
   "publication": {
-    "status": "pending"
+    "status": "published",
+    "implementationPullRequest": 95,
+    "implementationMainSha": "4bbade19b34fd6ad687f2629dde8b1ded54edf92",
+    "implementationDeployment": "dpl_2h6x1HEWevXNkE9rZkSXHMSBBNo3",
+    "deploymentReady": true,
+    "branch": "main",
+    "region": "pdx1",
+    "canonicalUrl": "https://hortvitalmix.vercel.app",
+    "schemaVersion": 63,
+    "releaseTagAtImplementationVerification": "corrections-v63-4bbade1",
+    "healthReadyConfigPassed": true,
+    "guestUi": {
+      "canonical": "https://hortvitalmix.vercel.app",
+      "at": "2026-10-07T16:45:10.686Z",
+      "guest": true,
+      "noAuthenticatedUsersOrFixturesCreated": true,
+      "businessMutationsBlocked": true,
+      "results": [
+        {
+          "path": "/produtor/vendas",
+          "guestEntryRendered": true,
+          "widths": [
+            320,
+            390,
+            768,
+            1440
+          ]
+        },
+        {
+          "path": "/produtor/reembolsos",
+          "guestEntryRendered": true,
+          "widths": [
+            320,
+            390,
+            768,
+            1440
+          ]
+        },
+        {
+          "path": "/notificacoes",
+          "guestEntryRendered": true,
+          "widths": [
+            320,
+            390,
+            768,
+            1440
+          ]
+        },
+        {
+          "path": "/admin/notificacoes",
+          "guestEntryRendered": true,
+          "widths": [
+            320,
+            390,
+            768,
+            1440
+          ]
+        }
+      ],
+      "pageErrors": []
+    },
+    "httpSmoke": {
+      "canonical": "https://hortvitalmix.vercel.app",
+      "at": "2026-10-07T16:47:05.222Z",
+      "checks": [
+        {
+          "path": "/api/health",
+          "status": 200,
+          "private": false,
+          "requestIdPresent": true,
+          "cacheControl": "no-store, max-age=0",
+          "error": null
+        },
+        {
+          "path": "/api/ready",
+          "status": 200,
+          "private": false,
+          "requestIdPresent": true,
+          "cacheControl": "no-store, max-age=0",
+          "error": null
+        },
+        {
+          "path": "/api/v1/config",
+          "status": 200,
+          "private": false,
+          "requestIdPresent": true,
+          "cacheControl": "no-store, max-age=0",
+          "error": null
+        },
+        {
+          "path": "/api/v1/categories",
+          "status": 200,
+          "private": false,
+          "requestIdPresent": true,
+          "cacheControl": "no-store",
+          "error": null
+        },
+        {
+          "path": "/api/v1/localities",
+          "status": 200,
+          "private": false,
+          "requestIdPresent": true,
+          "cacheControl": "no-store, max-age=0",
+          "error": null
+        },
+        {
+          "path": "/api/v1/notifications",
+          "status": 401,
+          "private": true,
+          "requestIdPresent": true,
+          "cacheControl": "private, no-store",
+          "error": "AUTH_REQUIRED"
+        },
+        {
+          "path": "/api/v1/admin/notifications",
+          "status": 401,
+          "private": true,
+          "requestIdPresent": true,
+          "cacheControl": "no-store, max-age=0",
+          "error": "UNAUTHORIZED"
+        },
+        {
+          "path": "/api/v1/producer/sales",
+          "status": 401,
+          "private": true,
+          "requestIdPresent": true,
+          "cacheControl": "private, no-store",
+          "error": "AUTH_REQUIRED"
+        },
+        {
+          "path": "/api/v1/producer/refunds",
+          "status": 401,
+          "private": true,
+          "requestIdPresent": true,
+          "cacheControl": "private, no-store",
+          "error": "AUTH_REQUIRED"
+        },
+        {
+          "path": "/api/v1/notifications?page=1&path=ignored&__hvm_path=ignored",
+          "status": 401,
+          "private": true,
+          "requestIdPresent": true,
+          "cacheControl": "private, no-store",
+          "error": "AUTH_REQUIRED"
+        },
+        {
+          "path": "/api/v1/producer/sales?source=all",
+          "status": 401,
+          "private": true,
+          "requestIdPresent": true,
+          "cacheControl": "private, no-store",
+          "error": "AUTH_REQUIRED"
+        },
+        {
+          "path": "/api/v1/commerce/purchases",
+          "status": 401,
+          "private": true,
+          "requestIdPresent": true,
+          "cacheControl": "no-store, max-age=0",
+          "error": "AUTH_REQUIRED"
+        },
+        {
+          "path": "/api/v1/commerce/refunds",
+          "status": 401,
+          "private": true,
+          "requestIdPresent": true,
+          "cacheControl": "no-store, max-age=0",
+          "error": "AUTH_REQUIRED"
+        }
+      ]
+    },
+    "runtimeErrorGroups": 0,
+    "releaseTracksSubsequentDocumentaryMainSha": true
+  },
+  "preservationAfterImplementation": {
+    "relationsCompared": 94,
+    "businessAuthStorageIdentical": 93,
+    "onlyChangedRelation": "public.app_releases",
+    "reason": "Uma release de implementação acrescentada; release anterior preservada com is_current=false.",
+    "authUsers": 5,
+    "storageObjects": 10,
+    "productionFixturesCreated": 0
   }
 }
