@@ -24,12 +24,13 @@
     "publicColumnsExcludePersonalAndModerationData": true
   },
   "verification": {
-    "generalPassed": 827,
+    "generalPassed": 830,
     "generalRuns": {
       "unit": 508,
-      "integrationRoutes": 319
+      "integrationRoutes": 319,
+      "additionalRewriteRoutes": 3
     },
-    "t24UnitAndRoutesPassed": 21,
+    "t24UnitAndRoutesPassed": 24,
     "t24PostgresPassed": 21,
     "fullBrowserApiPostgresStoriesPassed": 1,
     "previousPostgresPassed": 134,
@@ -45,7 +46,9 @@
     "buildPassed": true,
     "secretsAndBundlePassed": true,
     "coldStartPassed": true,
-    "productionDependencyAdvisories": 0
+    "productionDependencyAdvisories": 0,
+    "previousT23FullStoryPassed": 1,
+    "vercelRewriteQueriesPassed": true
   },
   "preservationAfterMigration": {
     "relations": 92,
@@ -1034,6 +1037,373 @@
     }
   ],
   "publication": {
-    "status": "Awaiting main deployment; release seal only after exact SHA READY"
-  }
+    "status": "READY and production checks passed",
+    "implementationPr": 92,
+    "transportPr": 93,
+    "commitSha": "984e7b97179308acb8caa215c38567edf64bc9b3",
+    "deploymentId": "dpl_ENg1m4SfXgET2xZxEH3a2mc6cabT",
+    "target": "production",
+    "branch": "main",
+    "regions": [
+      "pdx1"
+    ],
+    "url": "https://hortvitalmix.vercel.app",
+    "releaseTag": "t24-v62-984e7b9",
+    "releaseRegisteredAfterReady": true,
+    "healthReadyConfigShaSchemaPassed": true,
+    "apiChecks": [
+      {
+        "method": "GET",
+        "path": "/api/health",
+        "status": 200,
+        "expected": 200,
+        "requestId": true,
+        "error": null,
+        "cacheControl": "no-store, max-age=0"
+      },
+      {
+        "method": "GET",
+        "path": "/api/ready",
+        "status": 200,
+        "expected": 200,
+        "requestId": true,
+        "error": null,
+        "cacheControl": "no-store, max-age=0",
+        "schemaVersion": 62,
+        "releaseTag": "t24-v62-984e7b9"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/config",
+        "status": 200,
+        "expected": 200,
+        "requestId": true,
+        "error": null,
+        "cacheControl": "no-store, max-age=0"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/stores/loja-f2f6b8d26a6345ae8aebe1a1bfaec6fc/reviews",
+        "status": 200,
+        "expected": 200,
+        "requestId": true,
+        "error": null,
+        "cacheControl": "no-store"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/stores/loja-f2f6b8d26a6345ae8aebe1a1bfaec6fc/reviews?page=1",
+        "status": 200,
+        "expected": 200,
+        "requestId": true,
+        "error": null,
+        "cacheControl": "no-store"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/stores/loja-f2f6b8d26a6345ae8aebe1a1bfaec6fc/reviews?page=0",
+        "status": 422,
+        "expected": 422,
+        "requestId": true,
+        "error": "VALIDATION_ERROR",
+        "cacheControl": "no-store"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/stores/loja-f2f6b8d26a6345ae8aebe1a1bfaec6fc/reviews?customerPersonId=00000000-0000-4000-8000-000000000024",
+        "status": 422,
+        "expected": 422,
+        "requestId": true,
+        "error": "VALIDATION_ERROR",
+        "cacheControl": "no-store"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/stores/UPPER/reviews",
+        "status": 422,
+        "expected": 422,
+        "requestId": true,
+        "error": "VALIDATION_ERROR",
+        "cacheControl": "no-store"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/stores/missing-t24-store/reviews",
+        "status": 404,
+        "expected": 404,
+        "requestId": true,
+        "error": "STORE_NOT_FOUND",
+        "cacheControl": "no-store"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/orders/00000000-0000-4000-8000-000000000024/review",
+        "status": 401,
+        "expected": 401,
+        "requestId": true,
+        "error": "AUTH_REQUIRED",
+        "cacheControl": "private, no-store"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/reviews",
+        "status": 401,
+        "expected": 401,
+        "requestId": true,
+        "error": "AUTH_REQUIRED",
+        "cacheControl": "private, no-store"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/reviews",
+        "status": 403,
+        "expected": 403,
+        "requestId": true,
+        "error": "ORIGIN_NOT_ALLOWED",
+        "cacheControl": "no-store, max-age=0"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/admin/reviews",
+        "status": 401,
+        "expected": 401,
+        "requestId": true,
+        "error": "UNAUTHORIZED",
+        "cacheControl": "no-store, max-age=0"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/admin/reviews/00000000-0000-4000-8000-000000000024/moderate",
+        "status": 401,
+        "expected": 401,
+        "requestId": true,
+        "error": "UNAUTHORIZED",
+        "cacheControl": "no-store, max-age=0"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/subscription-plans?audience=consumer",
+        "status": 200,
+        "expected": 200,
+        "requestId": true,
+        "error": null,
+        "cacheControl": "no-store",
+        "plans": 0,
+        "gatewayAvailable": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/subscription-plans?audience=producer",
+        "status": 200,
+        "expected": 200,
+        "requestId": true,
+        "error": null,
+        "cacheControl": "no-store",
+        "plans": 0,
+        "gatewayAvailable": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/subscriptions",
+        "status": 401,
+        "expected": 401,
+        "requestId": true,
+        "error": "AUTH_REQUIRED",
+        "cacheControl": "private, no-store"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/orders",
+        "status": 401,
+        "expected": 401,
+        "requestId": true,
+        "error": "AUTH_REQUIRED",
+        "cacheControl": "private, no-store"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/producer/delivery-windows",
+        "status": 401,
+        "expected": 401,
+        "requestId": true,
+        "error": "AUTH_REQUIRED",
+        "cacheControl": "private, no-store"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/commerce/purchases",
+        "status": 401,
+        "expected": 401,
+        "requestId": true,
+        "error": "AUTH_REQUIRED",
+        "cacheControl": "no-store, max-age=0"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/payments/webhook",
+        "status": 503,
+        "expected": 503,
+        "requestId": true,
+        "error": "GATEWAY_NOT_CONFIGURED",
+        "cacheControl": "no-store, max-age=0"
+      }
+    ],
+    "browserChecks": [
+      {
+        "width": 320,
+        "path": "/produtores/loja-f2f6b8d26a6345ae8aebe1a1bfaec6fc",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": [],
+        "landedPath": "/produtores/loja-f2f6b8d26a6345ae8aebe1a1bfaec6fc"
+      },
+      {
+        "width": 320,
+        "path": "/pedidos",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": [],
+        "landedPath": "/pedidos"
+      },
+      {
+        "width": 320,
+        "path": "/admin/avaliacoes",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": [],
+        "landedPath": "/admin/entrar"
+      },
+      {
+        "width": 390,
+        "path": "/produtores/loja-f2f6b8d26a6345ae8aebe1a1bfaec6fc",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": [],
+        "landedPath": "/produtores/loja-f2f6b8d26a6345ae8aebe1a1bfaec6fc"
+      },
+      {
+        "width": 390,
+        "path": "/pedidos",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": [],
+        "landedPath": "/pedidos"
+      },
+      {
+        "width": 390,
+        "path": "/admin/avaliacoes",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": [],
+        "landedPath": "/admin/entrar"
+      },
+      {
+        "width": 768,
+        "path": "/produtores/loja-f2f6b8d26a6345ae8aebe1a1bfaec6fc",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": [],
+        "landedPath": "/produtores/loja-f2f6b8d26a6345ae8aebe1a1bfaec6fc"
+      },
+      {
+        "width": 768,
+        "path": "/pedidos",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": [],
+        "landedPath": "/pedidos"
+      },
+      {
+        "width": 768,
+        "path": "/admin/avaliacoes",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": [],
+        "landedPath": "/admin/entrar"
+      },
+      {
+        "width": 1440,
+        "path": "/produtores/loja-f2f6b8d26a6345ae8aebe1a1bfaec6fc",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": [],
+        "landedPath": "/produtores/loja-f2f6b8d26a6345ae8aebe1a1bfaec6fc"
+      },
+      {
+        "width": 1440,
+        "path": "/pedidos",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": [],
+        "landedPath": "/pedidos"
+      },
+      {
+        "width": 1440,
+        "path": "/admin/avaliacoes",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": [],
+        "landedPath": "/admin/entrar"
+      }
+    ],
+    "photoChecks": [
+      {
+        "kind": "product",
+        "path": "/api/v1/public-media/product/9f7e2673-927f-487c-bd7e-04bfe559c19f?width=640",
+        "status": 200,
+        "contentType": "image/webp",
+        "bytes": 15966,
+        "etag": "\"b57b5f6f1d18d1d3a58a442b26e0d4f169343ce4e4b3ca3fed0757a231c6c696\"",
+        "cacheControl": "public, max-age=300",
+        "cdnCache": "MISS",
+        "setCookie": false
+      },
+      {
+        "kind": "product",
+        "conditionalStatus": 304
+      },
+      {
+        "kind": "store",
+        "path": "/api/v1/public-media/store/a7700be9-259b-43aa-813e-12a932718c69?width=640",
+        "status": 200,
+        "contentType": "image/webp",
+        "bytes": 69254,
+        "etag": "\"572968dcfb420a49ce886d7d67c74c486d9f50a4677584d588cfb6f8dbf0c69c\"",
+        "cacheControl": "public, max-age=300",
+        "cdnCache": "MISS",
+        "setCookie": false
+      },
+      {
+        "kind": "store",
+        "conditionalStatus": 304
+      }
+    ],
+    "runtimeErrorFatalGroups": 0,
+    "runtimeLogsWindow": "5 minutes"
+  },
+  "preservationAfterPublication": {
+    "relations": 92,
+    "identical": 90,
+    "differences": [
+      {
+        "relation": "auth.sessions",
+        "row_count": 27,
+        "row_digest": "636640114678df10364ec06f67b0cfd0",
+        "beforeRowCount": 28
+      },
+      {
+        "relation": "public.app_releases",
+        "row_count": 96,
+        "row_digest": "50d6a0a0944d4bcb85487573deced46a",
+        "beforeRowCount": 94
+      }
+    ],
+    "interpretation": "Release seals intentionally added; one ephemeral Auth session no longer exists (28 to 27), cause not confirmed, no Auth mutation in production tests. The 27-session cohort recorded before the previous T23 login has identical digest. Other 90 business/Auth identity/Storage relations remain identical.",
+    "previousT23SessionCohort": {
+      "rowCount": 27,
+      "rowDigest": "636640114678df10364ec06f67b0cfd0",
+      "identical": true
+    }
+  },
+  "testContainerRemoved": true
 }
