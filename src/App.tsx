@@ -57,6 +57,8 @@ const ProducerPosPage = lazy(() => import("./pages/commerce/ProducerPosPage"));
 const PurchasesPage = lazy(() => import("./pages/commerce/PurchasesPage"));
 const PosSaleReviewPage = lazy(() => import("./pages/commerce/PosSaleReviewPage"));
 const CasesPage = lazy(() => import("./pages/commerce/CasesPage"));
+const ProducerOrdersPage = lazy(() => import("./pages/producer/ProducerOrdersPage"));
+const OrderTrackingPage = lazy(() => import("./pages/public/OrderTrackingPage"));
 const fallback = {
   platformName: "HortiVitalMix",
   slogan: "Tudo fresco. Tudo da sua região.",
@@ -133,6 +135,7 @@ export default function App() {
   const accountTarget = administrativeSession ? "/admin/conta" : "/conta";
   const paymentId = path.match(/^\/pagamentos\/([^/]+)$/)?.[1] ?? path.match(/^\/pedidos\/([^/]+)\/pagamento$/)?.[1];
   const posCode = path.match(/^\/pos\/venda\/([a-f0-9]{32})$/)?.[1];
+  const trackingId = path.match(/^\/pedidos\/([^/]+)$/)?.[1];
   useEffect(() => {
     if (!shellSession || !guestAccessRoute) return;
     const destination = administrativeSession ? "/admin/painel" : "/";
@@ -412,7 +415,15 @@ export default function App() {
           <Suspense fallback={<p role="status">Carregando revisão presencial…</p>}>
             {sessionLoading ? <p role="status">Conferindo sua conta…</p> : <PosSaleReviewPage key={shellSession?.userId+":"+posCode} code={posCode} userId={publicPortalSession?shellSession?.userId??null:null} onNavigate={go}/>}
           </Suspense>
-        ) : path === "/compras" || path === "/pedidos" ? (
+        ) : path === "/pedidos" || trackingId ? (
+          <Suspense fallback={<p role="status">Carregando pedidos…</p>}>
+            {sessionLoading ? <p role="status">Conferindo sua conta…</p> : <OrderTrackingPage key={(shellSession?.userId??"guest")+":"+(trackingId??"list")} id={trackingId} userId={publicPortalSession?shellSession?.userId??null:null} onNavigate={go}/>}
+          </Suspense>
+        ) : path === "/produtor/pedidos" ? (
+          <Suspense fallback={<p role="status">Carregando pedidos da loja…</p>}>
+            {sessionLoading ? <p role="status">Conferindo sua conta…</p> : shellSession?.activeRole === "producer" ? <ProducerOrdersPage key={shellSession.userId} userId={shellSession.userId} onNavigate={go}/> : <section className="account-notice"><h1>Pedidos da minha loja</h1><p>Entre como produtor para gerenciar os pedidos da sua loja.</p><button className="primary" onClick={()=>go("/entrar/produtor")}>Entrar como produtor</button></section>}
+          </Suspense>
+        ) : path === "/compras" ? (
           <Suspense fallback={<p role="status">Carregando suas compras…</p>}>
             {sessionLoading ? <p role="status">Conferindo sua conta…</p> : <PurchasesPage key={shellSession?.userId??"guest"} userId={publicPortalSession?shellSession?.userId??null:null} onNavigate={go}/>}
           </Suspense>

@@ -80,6 +80,7 @@ export default function PurchasesPage({
     <section className="hvm-commerce">
       <h1>Minhas compras</h1>
       <div className="commerce-section-links">
+        <button className="text-button" onClick={() => onNavigate("/pedidos")}>Acompanhar pedidos</button>
         <button
           className="text-button"
           onClick={() => onNavigate("/reembolsos")}
@@ -177,6 +178,7 @@ export default function PurchasesPage({
                 <article className="commerce-card" key={order.id}>
                   <span className="commerce-tag">
                     {statusLabels[order.status]}
+                    {order.fulfillmentStatus === "cancelled" && " · Pedido cancelado"}
                   </span>
                   <h2>
                     {order.orderNumber} · {order.storeName}
@@ -209,7 +211,8 @@ export default function PurchasesPage({
                   </ul>
                   <h3>Total {money(order.totalCents)}</h3>
                   <div className="commerce-actions">
-                    {!order.receivedAt && order.status !== "refunded" && (
+                    {order.source === "online" && <button className="secondary" onClick={() => onNavigate("/pedidos/" + order.id)}>Acompanhar pedido</button>}
+                    {!order.receivedAt && order.status !== "refunded" && order.fulfillmentStatus !== "cancelled" && (
                       <button
                         className="primary"
                         disabled={busy}

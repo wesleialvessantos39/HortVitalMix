@@ -32,6 +32,9 @@ export async function commerceTransaction<T>(
     if (error instanceof CommerceError) throw error;
     if (error instanceof z.ZodError)
       throw new CommerceError("VALIDATION_ERROR", 422);
+    if ((error as { code?: string; message?: string }).code === "23514" &&
+      (error as Error).message === "ORDER_CANCELLED")
+      throw new CommerceError("ORDER_CANCELLED", 409);
     if ((error as { code?: string }).code === "23505")
       throw new CommerceError("CONFLICT", 409);
     if (error instanceof Error && "status" in error && "code" in error)

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CheckoutCommandIdSchema, PaymentMethodEnum } from "./checkout.ts";
+import type { OrderStatus } from "./order.ts";
 
 const uuid = z.uuid().transform((value) => value.toLowerCase());
 const note = z.string().trim().min(10).max(4000);
@@ -196,6 +197,7 @@ export type OrderView = {
   storeName: string;
   source: "online" | "pos";
   status: "confirmed" | "received" | "refunded";
+  fulfillmentStatus?: OrderStatus;
   totalCents: number;
   items: PosItem[];
   createdAt: string;
