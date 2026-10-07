@@ -20,6 +20,7 @@ import "../commerce/commerce.css";
 import "./orders.css";
 
 import { DeliveryTrackingResponseSchema } from "../../../shared/contracts/deliveryLogistics";
+import { OrderReviewPanel } from "./OrderReviewModal";
 const steps: OrderStatus[] = [
   "confirmed",
   "in_preparation",
@@ -135,6 +136,7 @@ function Detail({
           <div className="order-detail-grid">
             <div>
               <Timeline order={order} />
+              {order.status === "delivered" && <OrderReviewPanel key={userId+":"+order.id} orderId={order.id}/>}
               {deliveryError&&<p role="alert" className="commerce-error">Não foi possível consultar o agendamento da entrega. Tente atualizar.</p>}
               {delivery?.allocation&&<article className="commerce-card"><h2>Entrega agendada</h2><p>{delivery.allocation.scheduledDate.split("-").reverse().join("/")} · {delivery.allocation.startTime}–{delivery.allocation.endTime}</p><small>Horário de {delivery.allocation.timezone}.</small></article>}
               {delivery?.proof&&<article className="commerce-card"><h2>Prova de recebimento</h2><p>Recebido por {delivery.proof.receivedByName} em {date(delivery.proof.deliveredAt)}.</p>{delivery.proof.receiverDocumentMasked&&<p>Documento: {delivery.proof.receiverDocumentMasked}</p>}{delivery.proof.notes&&<p className="commerce-prewrap">{delivery.proof.notes}</p>}</article>}

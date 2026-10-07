@@ -9,6 +9,7 @@ import {
   Ban,
   UserRound,
   ListTree,
+  Star,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import type { AdminVerifySessionResponse } from "../../../shared/contracts/adminGovernance";
@@ -36,6 +37,7 @@ const items = [
   ["/admin/reembolsos", "Reembolsos", ShieldCheck],
   ["/admin/politica-reembolso", "Política de reembolso", Settings],
   ["/admin/denuncias", "Denúncias", Ban],
+  ["/admin/avaliacoes", "Avaliações", Star],
   ["/admin/pagamentos", "Pagamentos", Settings],
   ["/admin/assinaturas", "Assinaturas", Leaf],
   ["/admin/conta", "Conta", UserRound],
@@ -52,7 +54,7 @@ export function AdminPortalShell({
     if (access.role === "platform_super_admin") return true;
     if (to === "/admin/categorias") return false;
     if(to==="/admin/reembolsos"||to==="/admin/politica-reembolso")return access.sectors.includes("refund_management");
-    if(to==="/admin/denuncias")return access.sectors.includes("complaint_management");
+    if(to==="/admin/denuncias"||to==="/admin/avaliacoes")return access.sectors.includes("complaint_management");
     if(to==="/admin/pagamentos"||to==="/admin/assinaturas")return access.sectors.includes("payment_configuration");
     if (to === "/admin/configuracao")
       return access.sectors.includes("platform_configuration");

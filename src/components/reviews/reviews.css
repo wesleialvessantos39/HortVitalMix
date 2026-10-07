@@ -1,0 +1,222 @@
+.review-reputation {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  border: 1px solid #dce6dd;
+  border-radius: 18px;
+  background: #fff;
+  min-width: 0;
+}
+.review-reputation h2,
+.review-dialog h2 {
+  margin: 0 0 1rem;
+}
+.review-stars {
+  display: inline-flex;
+  gap: 3px;
+  color: #a66a12;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+.review-summary,
+.review-meta,
+.review-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.review-muted,
+.review-meta {
+  color: #66756a;
+  font-size: 0.9rem;
+}
+.review-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+.review-list li {
+  padding: 1rem 0;
+  border-top: 1px solid #e3ebe4;
+}
+.review-comment {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+.review-dialog {
+  width: min(560px, calc(100% - 24px));
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  border: 1px solid #dae5dc;
+  border-radius: 18px;
+  padding: 24px;
+  color: #263e2d;
+  background: #fff;
+}
+.review-dialog::backdrop {
+  background: #10291db3;
+}
+.review-dialog form fieldset {
+  border: 0;
+  padding: 0;
+  margin: 1rem 0;
+}
+.review-dialog legend {
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.review-rating {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 20px;
+}
+.review-rating label {
+  position: relative;
+  cursor: pointer;
+  min-width: 0;
+}
+.review-rating input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+.review-rating span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 44px;
+  min-height: 48px;
+  border: 1px solid #cbdacf;
+  border-radius: 10px;
+  color: #a66a12;
+  padding: 6px;
+}
+.review-rating input:checked + span {
+  background: #fff4d9;
+  border-color: #a66a12;
+}
+.review-rating input:focus-visible + span {
+  outline: 3px solid #1d5134;
+  outline-offset: 2px;
+}
+.review-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 1rem 0;
+  font-weight: 600;
+}
+.review-field textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #cbdacf;
+  border-radius: 10px;
+  padding: 12px;
+  font: inherit;
+  resize: vertical;
+}
+.review-actions {
+  margin-top: 1rem;
+}
+.review-actions button,
+.review-reputation button,
+.review-owner button {
+  min-height: 44px;
+}
+.review-error {
+  background: #fff0ed;
+  color: #883a2c;
+  padding: 12px;
+  border-radius: 10px;
+  overflow-wrap: anywhere;
+}
+.review-admin {
+  max-width: 1100px;
+  margin: auto;
+  min-width: 0;
+}
+.review-admin-card {
+  padding: 1.25rem;
+  background: #fff;
+  border: 1px solid #dce6dd;
+  border-radius: 14px;
+  margin: 1rem 0;
+  min-width: 0;
+}
+.review-admin-card h2 {
+  overflow-wrap: anywhere;
+  font-size: 1.15rem;
+}
+.review-admin-card .review-field {
+  max-width: 680px;
+}
+.review-filter,
+.review-moderation-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 1rem 0;
+}
+.review-filter select {
+  max-width: 240px;
+  min-height: 44px;
+  font: inherit;
+  padding: 8px;
+}
+.review-moderation-form textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #cbdacf;
+  border-radius: 10px;
+  font: inherit;
+}
+.review-admin button {
+  min-height: 44px;
+  white-space: normal;
+}
+.review-moderation-record {
+  margin-top: 1rem;
+  border-left: 3px solid #a66a12;
+  padding-left: 1rem;
+  overflow-wrap: anywhere;
+}
+.review-notice {
+  padding: 12px;
+  border-radius: 10px;
+  background: #eaf4ec;
+  color: #1d5134;
+}
+.review-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+@media (max-width: 480px) {
+  .review-reputation {
+    padding: 1rem;
+  }
+  .review-dialog {
+    padding: 18px;
+  }
+  .review-rating {
+    gap: 6px;
+  }
+  .review-rating span {
+    min-width: 44px;
+  }
+  .review-summary {
+    gap: 9px;
+  }
+  .review-actions button {
+    flex: 1;
+  }
+}

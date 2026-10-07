@@ -22,6 +22,7 @@ import { MediaCarousel } from "../../components/catalog/MediaCarousel";
 import { storeCoverSlides } from "../../components/catalog/storeCoverSlides";
 import { ProducerPortrait } from "../../components/catalog/ProductSlideCaption";
 import "../../components/catalog/storefrontMedia.css";
+import { StoreReputationBlock } from "../../components/reviews/StoreReputationBlock";
 
 export default function PublicProducerStorePage({
   slug,
@@ -166,6 +167,7 @@ export default function PublicProducerStorePage({
           </p>
         </div>
       </header>
+      <StoreReputationBlock key={store.slug} storeSlug={store.slug}/>
       <section className="hvm-store-story">
         <h2>Uma história cultivada com cuidado</h2>
         <p>{store.bio}</p>

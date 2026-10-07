@@ -17,6 +17,7 @@ import { lazy, Suspense } from "react";
 const AdminCategoriesPage = lazy(() => import("./AdminCategoriesPage"));
 const AdminCommercePage = lazy(() => import("../commerce/AdminCommercePage"));
 const AdminSubscriptionPlansPage = lazy(() => import("./AdminSubscriptionPlansPage"));
+const AdminReviewsPage = lazy(() => import("./AdminReviewsPage"));
 
 type Props={
  path:string;
@@ -61,7 +62,7 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
    requiredSector={
    path==="/admin/reembolsos" || path==="/admin/politica-reembolso"
     ? "refund_management"
-    : path==="/admin/denuncias"
+    : path==="/admin/denuncias" || path==="/admin/avaliacoes"
     ? "complaint_management"
     : path==="/admin/pagamentos" || path==="/admin/assinaturas"
     ? "payment_configuration"
@@ -81,7 +82,7 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
     onNavigate={onNavigate}
     onSessionRefresh={onSessionRefresh}
    >
-    {path==="/admin/assinaturas" ? <Suspense fallback={<p role="status">Carregando planos…</p>}><AdminSubscriptionPlansPage/></Suspense> : ["/admin/reembolsos","/admin/denuncias","/admin/pagamentos","/admin/politica-reembolso"].includes(path)
+    {path==="/admin/avaliacoes" ? <Suspense fallback={<p role="status">Carregando avaliações…</p>}><AdminReviewsPage/></Suspense> : path==="/admin/assinaturas" ? <Suspense fallback={<p role="status">Carregando planos…</p>}><AdminSubscriptionPlansPage/></Suspense> : ["/admin/reembolsos","/admin/denuncias","/admin/pagamentos","/admin/politica-reembolso"].includes(path)
       ? <Suspense fallback={<p role="status">Carregando gestão da compra…</p>}><AdminCommercePage key={path} path={path} access={access} onNavigate={onNavigate}/></Suspense>
       : path === "/admin/categorias"
       ? <Suspense fallback={<p role="status">Carregando categorias…</p>}><AdminCategoriesPage access={access} onNavigate={onNavigate}/></Suspense>
