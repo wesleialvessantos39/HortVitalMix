@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { PoolClient } from "pg";
 import { InventoryService } from "./InventoryService.ts";
+import { OrderService } from "./OrderService.ts";
 import {
   CommercePolicySchema,
   type PaymentView,
@@ -255,6 +256,7 @@ export async function settleVerifiedPayment(
     `UPDATE public.app_payment_intents SET status='approved',gateway_reference=$2,updated_at=clock_timestamp() WHERE id=$1`,
     [intent.id, payment.paymentReference],
   );
+  await OrderService.createFromApprovedIntent(intent.id, client);
   await client.query(
     "INSERT INTO public.app_payment_transactions(provider,gateway_event_id,payment_intent_id,event_type,amount_received_cents,raw_payload) VALUES($1,$2,$3,'approved',$4,$5)",
     [payment.provider, payment.eventId, intent.id, payment.amountCents,JSON.stringify(payment)],

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 58,
+  "schemaVersion": 59,
   "migrations": [
     {
       "version": "20260919030126",
@@ -320,7 +320,12 @@
       "version": "20261006180831",
       "name": "trilha20_commerce_protection_prepared",
       "file": "20261006180831_trilha20_commerce_protection_prepared.sql"
+    },
+    {
+      "version": "20261007012246",
+      "name": "trilha21_orders_state_machine",
+      "file": "20261007012246_trilha21_orders_state_machine.sql"
     }
   ],
-  "migrationHistoryHash": "d18736b84cc19ccfc547f262843f1e5f048c4129086c6a091a568b14cd61b06e"
+  "migrationHistoryHash": "1db093de8e3fda956dc955b9001b73b20cd1e5f402e77b27f25550f88cf02b9d"
 }

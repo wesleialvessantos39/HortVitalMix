@@ -54,6 +54,7 @@ export function orderView(
     storeName: row.store_snapshot.name,
     source: row.source,
     status: row.status,
+    ...(row.fulfillment_status ? { fulfillmentStatus: row.fulfillment_status } : {}),
     totalCents: row.total_cents,
     items: row.items_snapshot,
     createdAt: new Date(row.created_at).toISOString(),
@@ -484,7 +485,7 @@ export const CommerceService = {
       return {
         orders: (
           await client.query(
-            "SELECT o.*,h.state AS hold_state FROM public.app_orders o JOIN public.app_financial_holds h ON h.order_id=o.id WHERE o.customer_user_id=$1 ORDER BY o.created_at DESC LIMIT 100",
+            "SELECT o.*,h.state AS hold_state,(SELECT f.status FROM public.app_order_fulfillment f WHERE f.order_id=o.id) AS fulfillment_status FROM public.app_orders o JOIN public.app_financial_holds h ON h.order_id=o.id WHERE o.customer_user_id=$1 ORDER BY o.created_at DESC LIMIT 100",
             [userId],
           )
         ).rows.map((row) => orderView(row)),

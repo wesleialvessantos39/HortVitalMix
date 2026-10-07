@@ -1,0 +1,1052 @@
+{
+  "projectRef": "xipbsazvymkqqfmfegwu",
+  "baseSha": "fd02e63a27f11d7315130bc3f178b614fc29acf9",
+  "schemaBefore": 58,
+  "schemaAfter": 59,
+  "migration": {
+    "canonicalVersion": "20261007012246",
+    "physicalVersion": "20261007015514",
+    "name": "trilha21_orders_state_machine",
+    "count": 65,
+    "hash": "1db093de8e3fda956dc955b9001b73b20cd1e5f402e77b27f25550f88cf02b9d"
+  },
+  "beforeCapturedAt": "2026-10-07T01:55:11.946Z",
+  "before": [
+    {
+      "relation": "auth.sessions",
+      "count": 27,
+      "digest": "636640114678df10364ec06f67b0cfd0"
+    },
+    {
+      "relation": "auth.users",
+      "count": 5,
+      "digest": "f03049af3c1eebc50295dd5ed2751eb2"
+    },
+    {
+      "relation": "public.app_access_partial_block_municipalities",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_access_partial_block_properties",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_access_partial_blocks",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_account_deletions",
+      "count": 1,
+      "digest": "90f56a4983a5d45d4de69ca04726d44c"
+    },
+    {
+      "relation": "public.app_admin_auth_attempts",
+      "count": 189,
+      "digest": "f968724d490ba9200df4a18b6eaf194d"
+    },
+    {
+      "relation": "public.app_admin_invite_sectors",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_admin_invites",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_admin_mfa_challenges",
+      "count": 6,
+      "digest": "653dba5fb3839c4c9aebaf3270cfe461"
+    },
+    {
+      "relation": "public.app_admin_principals",
+      "count": 1,
+      "digest": "a73e95820a11f9d71280e5764e2686ff"
+    },
+    {
+      "relation": "public.app_admin_sector_members",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_admin_sectors",
+      "count": 9,
+      "digest": "469279ff0a7ddd98bd45f83fe23d24cc"
+    },
+    {
+      "relation": "public.app_audit_events",
+      "count": 442,
+      "digest": "43e1030a22142a44b256e904b80dfcf2"
+    },
+    {
+      "relation": "public.app_car_validations",
+      "count": 2,
+      "digest": "77c565cc3b4f31c857dda0ad64ca6b6c"
+    },
+    {
+      "relation": "public.app_cart_items",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_carts",
+      "count": 3,
+      "digest": "9764ab6c4ffd5006a043e17b2da4527b"
+    },
+    {
+      "relation": "public.app_case_evidence",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_case_history",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_case_messages",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_categories",
+      "count": 5,
+      "digest": "d2291cd307479b03966a934c25a19573"
+    },
+    {
+      "relation": "public.app_checkout_quotes",
+      "count": 2,
+      "digest": "46a306178a1868de52274e87a2ffd53f"
+    },
+    {
+      "relation": "public.app_command_receipts",
+      "count": 2,
+      "digest": "c3e04e2ad2d87813b78d6e6f3da2fca4"
+    },
+    {
+      "relation": "public.app_commerce_receipts",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_commerce_settings",
+      "count": 1,
+      "digest": "23f91fa9dcfb96ce654ca58ddf0bcf82"
+    },
+    {
+      "relation": "public.app_complaints",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_consent_records",
+      "count": 1,
+      "digest": "65e91ba1151fcc0c5b63b89b3efa728f"
+    },
+    {
+      "relation": "public.app_contact_verification_challenges",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_delivery_attempts",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_delivery_quotes",
+      "count": 2,
+      "digest": "dab8ef578d3ddb5e7c3d71b18662fb40"
+    },
+    {
+      "relation": "public.app_delivery_rules",
+      "count": 1,
+      "digest": "a329636a0ed024c4b4e4846fe52953d6"
+    },
+    {
+      "relation": "public.app_document_extractions",
+      "count": 2,
+      "digest": "4d377021ccaa459814deb9c88b2e8bd1"
+    },
+    {
+      "relation": "public.app_document_jobs",
+      "count": 5,
+      "digest": "15dc948923b0e0f44f8ec51b9e01ce75"
+    },
+    {
+      "relation": "public.app_document_reviews",
+      "count": 30,
+      "digest": "a8f2319cb71e8cf12db236285d93bbf1"
+    },
+    {
+      "relation": "public.app_document_scans",
+      "count": 8,
+      "digest": "42f4a20fa41f4194a7d0622f5de21ba9"
+    },
+    {
+      "relation": "public.app_documents",
+      "count": 8,
+      "digest": "563bd163373b9f3feec074a0d73e6878"
+    },
+    {
+      "relation": "public.app_favorites",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_financial_holds",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_global_config",
+      "count": 1,
+      "digest": "9ec3935e8e5024e8dbf3e2705456f76b"
+    },
+    {
+      "relation": "public.app_inventory_lots",
+      "count": 1,
+      "digest": "34fb124216d19547bdecad68fe908a05"
+    },
+    {
+      "relation": "public.app_inventory_movements",
+      "count": 1,
+      "digest": "a4f87aa2fa9c32773e3e14a56d7c35d4"
+    },
+    {
+      "relation": "public.app_inventory_reservations",
+      "count": 2,
+      "digest": "ec1d52f88d6ab3ff58febafd3a9a6a2e"
+    },
+    {
+      "relation": "public.app_locality_user_impacts",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_municipalities",
+      "count": 7,
+      "digest": "180caf43f1ebf22d1ed2c458dd0281b0"
+    },
+    {
+      "relation": "public.app_orders",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_outbox_events",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_password_recovery_requests",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_payment_intents",
+      "count": 2,
+      "digest": "a8ddea0578aea91aa1840a856ca8e28d"
+    },
+    {
+      "relation": "public.app_payment_policy_acceptances",
+      "count": 1,
+      "digest": "ef8fd9133259dbb8512587d0d3244f8a"
+    },
+    {
+      "relation": "public.app_payment_transactions",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_people",
+      "count": 4,
+      "digest": "4c5e5bfeb1251fd07fbd66ec2c0b4112"
+    },
+    {
+      "relation": "public.app_pos_sales",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_price_versions",
+      "count": 1,
+      "digest": "fc1d5d81f82eda0d3408493e8b96d718"
+    },
+    {
+      "relation": "public.app_producer_delivery_municipalities",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_producer_delivery_scopes",
+      "count": 1,
+      "digest": "bd0d831558020c1333d81f3146dc5578"
+    },
+    {
+      "relation": "public.app_producer_profiles",
+      "count": 3,
+      "digest": "72f8b21155aace616ca8379b823605c7"
+    },
+    {
+      "relation": "public.app_producer_stores",
+      "count": 2,
+      "digest": "d6f67fe99ae6a4ae7bf7bfc99d2386f5"
+    },
+    {
+      "relation": "public.app_product_media",
+      "count": 1,
+      "digest": "d0c8c151e3a3ff65a23037dfe5746efa"
+    },
+    {
+      "relation": "public.app_products",
+      "count": 1,
+      "digest": "5f073e3cc1784f7c38df9c2a7edc4fed"
+    },
+    {
+      "relation": "public.app_properties",
+      "count": 2,
+      "digest": "fc9a2430346965cce128381585353b5f"
+    },
+    {
+      "relation": "public.app_property_boundaries",
+      "count": 2,
+      "digest": "bdc5ecb7ed4425b77f91edc17b1cd1ed"
+    },
+    {
+      "relation": "public.app_property_deletion_archive",
+      "count": 2,
+      "digest": "74b18a79feeec1471c0837b93e59ce74"
+    },
+    {
+      "relation": "public.app_refund_requests",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_registration_reviews",
+      "count": 1,
+      "digest": "a4b1692c4dbaf90f7e9fa062b481b27e"
+    },
+    {
+      "relation": "public.app_releases",
+      "count": 88,
+      "digest": "bebcf2cf816b7549e426343896052444"
+    },
+    {
+      "relation": "public.app_role_security_challenges",
+      "count": 3,
+      "digest": "5659555a1f8a16e55a37de5208701357"
+    },
+    {
+      "relation": "public.app_roles",
+      "count": 4,
+      "digest": "eb12fdea3e58a51d00cba1d19d0ff932"
+    },
+    {
+      "relation": "public.app_rural_activities",
+      "count": 2,
+      "digest": "228e60ecf8709963431107040119cb5d"
+    },
+    {
+      "relation": "public.app_service_areas",
+      "count": 1,
+      "digest": "290675fd4c8ef99c60c1feb4363cf667"
+    },
+    {
+      "relation": "public.app_storage_deletion_queue",
+      "count": 10,
+      "digest": "a41c92f70e9827e37cea56fefa2f3f0e"
+    },
+    {
+      "relation": "public.app_store_media",
+      "count": 1,
+      "digest": "be6a5c39aad9b1d334011766d05eb48b"
+    },
+    {
+      "relation": "public.app_store_operating_hours",
+      "count": 14,
+      "digest": "efc2439086711f022bcec9d5e63035ce"
+    },
+    {
+      "relation": "public.app_user_addresses",
+      "count": 1,
+      "digest": "a9b4f7aefadd58578c93ab17b90cc98e"
+    },
+    {
+      "relation": "public.app_user_preferences",
+      "count": 1,
+      "digest": "13504828152f07a439bc83c8ffe2fa57"
+    },
+    {
+      "relation": "public.app_user_role_assignments",
+      "count": 6,
+      "digest": "b03fd131bbf438da1c0380c7eeb9937c"
+    },
+    {
+      "relation": "public.app_users",
+      "count": 5,
+      "digest": "8bf5cecc2850173d15770c243fa745db"
+    },
+    {
+      "relation": "public.app_verification_decisions",
+      "count": 3,
+      "digest": "6c411d0a2d034963c908188b54cb2cd4"
+    },
+    {
+      "relation": "public.app_verification_requests",
+      "count": 3,
+      "digest": "ba29858bb18f82497318c12c82fb4f5e"
+    },
+    {
+      "relation": "storage.buckets",
+      "count": 5,
+      "digest": "3fb45a19872f18df8967fa9f59e9ef1b"
+    },
+    {
+      "relation": "storage.objects",
+      "count": 10,
+      "digest": "e1f784e942bbf22a24f07f72521e8a86"
+    }
+  ],
+  "afterMigration": [
+    {
+      "relation": "auth.sessions",
+      "count": 27,
+      "digest": "636640114678df10364ec06f67b0cfd0"
+    },
+    {
+      "relation": "auth.users",
+      "count": 5,
+      "digest": "f03049af3c1eebc50295dd5ed2751eb2"
+    },
+    {
+      "relation": "public.app_access_partial_block_municipalities",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_access_partial_block_properties",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_access_partial_blocks",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_account_deletions",
+      "count": 1,
+      "digest": "90f56a4983a5d45d4de69ca04726d44c"
+    },
+    {
+      "relation": "public.app_admin_auth_attempts",
+      "count": 189,
+      "digest": "f968724d490ba9200df4a18b6eaf194d"
+    },
+    {
+      "relation": "public.app_admin_invite_sectors",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_admin_invites",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_admin_mfa_challenges",
+      "count": 6,
+      "digest": "653dba5fb3839c4c9aebaf3270cfe461"
+    },
+    {
+      "relation": "public.app_admin_principals",
+      "count": 1,
+      "digest": "a73e95820a11f9d71280e5764e2686ff"
+    },
+    {
+      "relation": "public.app_admin_sector_members",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_admin_sectors",
+      "count": 9,
+      "digest": "469279ff0a7ddd98bd45f83fe23d24cc"
+    },
+    {
+      "relation": "public.app_audit_events",
+      "count": 442,
+      "digest": "43e1030a22142a44b256e904b80dfcf2"
+    },
+    {
+      "relation": "public.app_car_validations",
+      "count": 2,
+      "digest": "77c565cc3b4f31c857dda0ad64ca6b6c"
+    },
+    {
+      "relation": "public.app_cart_items",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_carts",
+      "count": 3,
+      "digest": "9764ab6c4ffd5006a043e17b2da4527b"
+    },
+    {
+      "relation": "public.app_case_evidence",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_case_history",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_case_messages",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_categories",
+      "count": 5,
+      "digest": "d2291cd307479b03966a934c25a19573"
+    },
+    {
+      "relation": "public.app_checkout_quotes",
+      "count": 2,
+      "digest": "46a306178a1868de52274e87a2ffd53f"
+    },
+    {
+      "relation": "public.app_command_receipts",
+      "count": 2,
+      "digest": "c3e04e2ad2d87813b78d6e6f3da2fca4"
+    },
+    {
+      "relation": "public.app_commerce_receipts",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_commerce_settings",
+      "count": 1,
+      "digest": "23f91fa9dcfb96ce654ca58ddf0bcf82"
+    },
+    {
+      "relation": "public.app_complaints",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_consent_records",
+      "count": 1,
+      "digest": "65e91ba1151fcc0c5b63b89b3efa728f"
+    },
+    {
+      "relation": "public.app_contact_verification_challenges",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_delivery_attempts",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_delivery_quotes",
+      "count": 2,
+      "digest": "dab8ef578d3ddb5e7c3d71b18662fb40"
+    },
+    {
+      "relation": "public.app_delivery_rules",
+      "count": 1,
+      "digest": "a329636a0ed024c4b4e4846fe52953d6"
+    },
+    {
+      "relation": "public.app_document_extractions",
+      "count": 2,
+      "digest": "4d377021ccaa459814deb9c88b2e8bd1"
+    },
+    {
+      "relation": "public.app_document_jobs",
+      "count": 5,
+      "digest": "15dc948923b0e0f44f8ec51b9e01ce75"
+    },
+    {
+      "relation": "public.app_document_reviews",
+      "count": 30,
+      "digest": "a8f2319cb71e8cf12db236285d93bbf1"
+    },
+    {
+      "relation": "public.app_document_scans",
+      "count": 8,
+      "digest": "42f4a20fa41f4194a7d0622f5de21ba9"
+    },
+    {
+      "relation": "public.app_documents",
+      "count": 8,
+      "digest": "563bd163373b9f3feec074a0d73e6878"
+    },
+    {
+      "relation": "public.app_favorites",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_financial_holds",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_global_config",
+      "count": 1,
+      "digest": "9ec3935e8e5024e8dbf3e2705456f76b"
+    },
+    {
+      "relation": "public.app_inventory_lots",
+      "count": 1,
+      "digest": "34fb124216d19547bdecad68fe908a05"
+    },
+    {
+      "relation": "public.app_inventory_movements",
+      "count": 1,
+      "digest": "a4f87aa2fa9c32773e3e14a56d7c35d4"
+    },
+    {
+      "relation": "public.app_inventory_reservations",
+      "count": 2,
+      "digest": "ec1d52f88d6ab3ff58febafd3a9a6a2e"
+    },
+    {
+      "relation": "public.app_locality_user_impacts",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_municipalities",
+      "count": 7,
+      "digest": "180caf43f1ebf22d1ed2c458dd0281b0"
+    },
+    {
+      "relation": "public.app_orders",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_outbox_events",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_password_recovery_requests",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_payment_intents",
+      "count": 2,
+      "digest": "a8ddea0578aea91aa1840a856ca8e28d"
+    },
+    {
+      "relation": "public.app_payment_policy_acceptances",
+      "count": 1,
+      "digest": "ef8fd9133259dbb8512587d0d3244f8a"
+    },
+    {
+      "relation": "public.app_payment_transactions",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_people",
+      "count": 4,
+      "digest": "4c5e5bfeb1251fd07fbd66ec2c0b4112"
+    },
+    {
+      "relation": "public.app_pos_sales",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_price_versions",
+      "count": 1,
+      "digest": "fc1d5d81f82eda0d3408493e8b96d718"
+    },
+    {
+      "relation": "public.app_producer_delivery_municipalities",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_producer_delivery_scopes",
+      "count": 1,
+      "digest": "bd0d831558020c1333d81f3146dc5578"
+    },
+    {
+      "relation": "public.app_producer_profiles",
+      "count": 3,
+      "digest": "72f8b21155aace616ca8379b823605c7"
+    },
+    {
+      "relation": "public.app_producer_stores",
+      "count": 2,
+      "digest": "d6f67fe99ae6a4ae7bf7bfc99d2386f5"
+    },
+    {
+      "relation": "public.app_product_media",
+      "count": 1,
+      "digest": "d0c8c151e3a3ff65a23037dfe5746efa"
+    },
+    {
+      "relation": "public.app_products",
+      "count": 1,
+      "digest": "5f073e3cc1784f7c38df9c2a7edc4fed"
+    },
+    {
+      "relation": "public.app_properties",
+      "count": 2,
+      "digest": "fc9a2430346965cce128381585353b5f"
+    },
+    {
+      "relation": "public.app_property_boundaries",
+      "count": 2,
+      "digest": "bdc5ecb7ed4425b77f91edc17b1cd1ed"
+    },
+    {
+      "relation": "public.app_property_deletion_archive",
+      "count": 2,
+      "digest": "74b18a79feeec1471c0837b93e59ce74"
+    },
+    {
+      "relation": "public.app_refund_requests",
+      "count": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "public.app_registration_reviews",
+      "count": 1,
+      "digest": "a4b1692c4dbaf90f7e9fa062b481b27e"
+    },
+    {
+      "relation": "public.app_releases",
+      "count": 88,
+      "digest": "bebcf2cf816b7549e426343896052444"
+    },
+    {
+      "relation": "public.app_role_security_challenges",
+      "count": 3,
+      "digest": "5659555a1f8a16e55a37de5208701357"
+    },
+    {
+      "relation": "public.app_roles",
+      "count": 4,
+      "digest": "eb12fdea3e58a51d00cba1d19d0ff932"
+    },
+    {
+      "relation": "public.app_rural_activities",
+      "count": 2,
+      "digest": "228e60ecf8709963431107040119cb5d"
+    },
+    {
+      "relation": "public.app_service_areas",
+      "count": 1,
+      "digest": "290675fd4c8ef99c60c1feb4363cf667"
+    },
+    {
+      "relation": "public.app_storage_deletion_queue",
+      "count": 10,
+      "digest": "a41c92f70e9827e37cea56fefa2f3f0e"
+    },
+    {
+      "relation": "public.app_store_media",
+      "count": 1,
+      "digest": "be6a5c39aad9b1d334011766d05eb48b"
+    },
+    {
+      "relation": "public.app_store_operating_hours",
+      "count": 14,
+      "digest": "efc2439086711f022bcec9d5e63035ce"
+    },
+    {
+      "relation": "public.app_user_addresses",
+      "count": 1,
+      "digest": "a9b4f7aefadd58578c93ab17b90cc98e"
+    },
+    {
+      "relation": "public.app_user_preferences",
+      "count": 1,
+      "digest": "13504828152f07a439bc83c8ffe2fa57"
+    },
+    {
+      "relation": "public.app_user_role_assignments",
+      "count": 6,
+      "digest": "b03fd131bbf438da1c0380c7eeb9937c"
+    },
+    {
+      "relation": "public.app_users",
+      "count": 5,
+      "digest": "8bf5cecc2850173d15770c243fa745db"
+    },
+    {
+      "relation": "public.app_verification_decisions",
+      "count": 3,
+      "digest": "6c411d0a2d034963c908188b54cb2cd4"
+    },
+    {
+      "relation": "public.app_verification_requests",
+      "count": 3,
+      "digest": "ba29858bb18f82497318c12c82fb4f5e"
+    },
+    {
+      "relation": "storage.buckets",
+      "count": 5,
+      "digest": "3fb45a19872f18df8967fa9f59e9ef1b"
+    },
+    {
+      "relation": "storage.objects",
+      "count": 10,
+      "digest": "e1f784e942bbf22a24f07f72521e8a86"
+    }
+  ],
+  "migrationComparison": {
+    "compared": 80,
+    "equal": 80,
+    "changed": []
+  },
+  "databaseChecks": {
+    "appTables": 80,
+    "newTables": {
+      "items": 0,
+      "events": 0,
+      "returns": 0,
+      "fulfillment": 0
+    },
+    "selectPolicies": [
+      {
+        "name": "order_customer_read",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "app_order_events",
+        "command": "SELECT"
+      },
+      {
+        "name": "order_producer_read",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "app_order_events",
+        "command": "SELECT"
+      },
+      {
+        "name": "order_customer_read",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "app_order_fulfillment",
+        "command": "SELECT"
+      },
+      {
+        "name": "order_producer_read",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "app_order_fulfillment",
+        "command": "SELECT"
+      },
+      {
+        "name": "order_customer_read",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "app_order_items",
+        "command": "SELECT"
+      },
+      {
+        "name": "order_producer_read",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "app_order_items",
+        "command": "SELECT"
+      }
+    ],
+    "clientDmlGrants": 0,
+    "protectedTables": 80,
+    "privateClientExecute": 0
+  },
+  "advisorCountsBefore": {
+    "security": {
+      "INFO": 19,
+      "WARN": 5
+    },
+    "performance": {
+      "INFO": 83,
+      "WARN": 22
+    }
+  },
+  "advisorCountsAfter": {
+    "security": {
+      "INFO": 20,
+      "WARN": 5
+    },
+    "performance": {
+      "INFO": 89,
+      "WARN": 25
+    }
+  },
+  "newAdvisorFindings": {
+    "security": [
+      {
+        "detail": "Table \\`public.app_order_stock_returns\\` has RLS enabled, but no policies exist",
+        "metadata": {
+          "name": "app_order_stock_returns",
+          "type": "table",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-07T01:55:41.425Z",
+        "name": "rls_enabled_no_policy",
+        "level": "INFO",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+      }
+    ],
+    "performance": [
+      {
+        "detail": "Index \\`ix_order_fulfillment_queue\\` on table \\`public.app_order_fulfillment\\` has not been used",
+        "metadata": {
+          "name": "app_order_fulfillment",
+          "type": "table",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-07T01:55:44.840Z",
+        "name": "unused_index",
+        "level": "INFO",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index"
+      },
+      {
+        "detail": "Index \\`ix_order_items_product\\` on table \\`public.app_order_items\\` has not been used",
+        "metadata": {
+          "name": "app_order_items",
+          "type": "table",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-07T01:55:44.840Z",
+        "name": "unused_index",
+        "level": "INFO",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index"
+      },
+      {
+        "detail": "Index \\`ix_order_events_actor\\` on table \\`public.app_order_events\\` has not been used",
+        "metadata": {
+          "name": "app_order_events",
+          "type": "table",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-07T01:55:44.840Z",
+        "name": "unused_index",
+        "level": "INFO",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index"
+      },
+      {
+        "detail": "Index \\`ix_order_stock_returns_order\\` on table \\`public.app_order_stock_returns\\` has not been used",
+        "metadata": {
+          "name": "app_order_stock_returns",
+          "type": "table",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-07T01:55:44.840Z",
+        "name": "unused_index",
+        "level": "INFO",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index"
+      },
+      {
+        "detail": "Index \\`ix_order_stock_returns_lot\\` on table \\`public.app_order_stock_returns\\` has not been used",
+        "metadata": {
+          "name": "app_order_stock_returns",
+          "type": "table",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-07T01:55:44.840Z",
+        "name": "unused_index",
+        "level": "INFO",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index"
+      },
+      {
+        "detail": "Index \\`ix_reservations_consumed_order\\` on table \\`public.app_inventory_reservations\\` has not been used",
+        "metadata": {
+          "name": "app_inventory_reservations",
+          "type": "table",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-07T01:55:44.840Z",
+        "name": "unused_index",
+        "level": "INFO",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index"
+      },
+      {
+        "detail": "Table \\`public.app_order_events\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{order_customer_read,order_producer_read}\\`",
+        "metadata": {
+          "name": "app_order_events",
+          "type": "table",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-07T01:55:44.840Z",
+        "name": "multiple_permissive_policies",
+        "level": "WARN",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies"
+      },
+      {
+        "detail": "Table \\`public.app_order_fulfillment\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{order_customer_read,order_producer_read}\\`",
+        "metadata": {
+          "name": "app_order_fulfillment",
+          "type": "table",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-07T01:55:44.840Z",
+        "name": "multiple_permissive_policies",
+        "level": "WARN",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies"
+      },
+      {
+        "detail": "Table \\`public.app_order_items\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{order_customer_read,order_producer_read}\\`",
+        "metadata": {
+          "name": "app_order_items",
+          "type": "table",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-07T01:55:44.840Z",
+        "name": "multiple_permissive_policies",
+        "level": "WARN",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies"
+      }
+    ]
+  },
+  "localChecks": {
+    "general": {
+      "passed": 776,
+      "conditionalSkipped": 303
+    },
+    "postgres": {
+      "priorSuitesPassed": 196,
+      "t21Passed": 19,
+      "t21FullStoryPassed": 1
+    },
+    "browser": {
+      "t21Passed": 21,
+      "priorCompiledPassed": 61,
+      "priorSourceImportTest": "checked separately against dev server"
+    },
+    "build": true,
+    "typecheck": true,
+    "originalMigrationsUnchanged": 64,
+    "infraAndLockfileUnchanged": true,
+    "productionFixturesCreated": false
+  }
+}

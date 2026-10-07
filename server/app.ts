@@ -25,6 +25,7 @@ import { discoveryRouter } from "./routes/discoveryRoutes.ts";
 import { cartRouter } from "./routes/cartRoutes.ts";
 import { checkoutRouter } from "./routes/checkoutRoutes.ts";
 import { commerceRouter, adminCommerceRouter } from "./routes/commerceRoutes.ts";
+import { orderRouter } from "./routes/orderRoutes.ts";
 export const app = express();
 app.disable("x-powered-by");
 
@@ -114,6 +115,7 @@ for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
   app.use(prefix, cartRouter);
   app.use(prefix, checkoutRouter);
   app.use(prefix, commerceRouter);
+  app.use(prefix, orderRouter);
   app.use(prefix + "/admin", adminCommerceRouter);
 }
 for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {

@@ -107,7 +107,11 @@
     "test:t20:unit": "vitest run tests/unit/commerceContracts.test.ts tests/integration/commerceRoutes.test.ts tests/unit/mediaCachePersistence.test.ts",
     "test:t20:postgres": "vitest run tests/integration/commercePostgres.test.ts",
     "test:t20:story": "vitest run tests/integration/commerceBrowserPostgres.test.ts",
-    "test:t20:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha20-commerce.spec.ts"
+    "test:t20:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha20-commerce.spec.ts",
+    "test:t21:unit": "vitest run tests/unit/orderContracts.test.ts tests/integration/orderRoutes.test.ts",
+    "test:t21:postgres": "vitest run tests/integration/orderPostgres.test.ts",
+    "test:t21:story": "vitest run tests/integration/orderBrowserPostgres.test.ts",
+    "test:t21:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha21-orders.spec.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",
