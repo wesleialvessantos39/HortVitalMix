@@ -13,6 +13,24 @@ type Entry = {
   image?: HTMLImageElement;
 };
 const entries = new Map<string, Entry>();
+function decodedBytes(image: HTMLImageElement) {
+  if (!image.naturalWidth) return 0;
+  // naturalWidth is density-corrected by srcset. Use the requested variant
+  // width as an upper bound, including previews that were not enlarged.
+  let width = image.naturalWidth;
+  try {
+    const url = new URL(image.currentSrc || image.src, location.href);
+    const requested = Number(url.searchParams.get("width"));
+    if (
+      url.pathname.includes("/v1/public-media/") &&
+      [320, 640, 1280].includes(requested)
+    )
+      width = Math.max(width, requested);
+  } catch {
+    /* Legacy URL keeps its full intrinsic dimensions. */
+  }
+  return width * width * (image.naturalHeight / image.naturalWidth) * 4;
+}
 
 function prepare(value: string, priority: "high" | "low", sizes?: string) {
   const variant = mediaPreview(value, mediaPreviewWidth(sizes));
@@ -50,12 +68,11 @@ function prepare(value: string, priority: "high" | "low", sizes?: string) {
     if (loaded) {
       let bytes = 0;
       for (const e of entries.values())
-        if (e.image?.complete)
-          bytes += e.image.naturalWidth * e.image.naturalHeight * 4;
+        if (e.image?.complete) bytes += decodedBytes(e.image);
       for (const e of entries.values()) {
         if (bytes <= 16 * 1024 * 1024) break;
         if (e.image?.complete) {
-          bytes -= e.image.naturalWidth * e.image.naturalHeight * 4;
+          bytes -= decodedBytes(e.image);
           delete e.image;
         }
       }
