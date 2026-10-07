@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 60,
+  "schemaVersion": 61,
   "migrations": [
     {
       "version": "20260919030126",
@@ -330,7 +330,12 @@
       "version": "20261007023213",
       "name": "trilha22_delivery_logistics",
       "file": "20261007023213_trilha22_delivery_logistics.sql"
+    },
+    {
+      "version": "20261007104345",
+      "name": "trilha23_subscriptions",
+      "file": "20261007104345_trilha23_subscriptions.sql"
     }
   ],
-  "migrationHistoryHash": "f51d324f8310a1b60e19fd59e93dfc12605bf4dabc2cfb4f9b1d8183c0434096"
+  "migrationHistoryHash": "c8f8ddd88a2d037dbe28d83c6266f756eafeeed9c4a98e405f1f800dc051ee7d"
 }

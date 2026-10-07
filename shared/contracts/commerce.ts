@@ -210,6 +210,7 @@ export type OrderView = {
   customerUserId?: string;
 };
 export type PaymentView = {
+  subscriptionId?: string;
   id: string;
   method: z.infer<typeof PaymentMethodEnum>;
   status: "pending" | "approved" | "failed" | "refunded";

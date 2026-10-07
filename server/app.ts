@@ -28,6 +28,7 @@ import { commerceRouter, adminCommerceRouter } from "./routes/commerceRoutes.ts"
 import { orderRouter } from "./routes/orderRoutes.ts";
 import { deliveryLogisticsRouter } from "./routes/deliveryLogisticsRoutes.ts";
 import { publicMediaRouter } from "./routes/publicMediaRoutes.ts";
+import { subscriptionRouter,adminSubscriptionRouter } from "./routes/subscriptionRoutes.ts";
 export const app = express();
 app.disable("x-powered-by");
 
@@ -122,6 +123,8 @@ for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
   app.use(prefix, commerceRouter);
   app.use(prefix, orderRouter);
   app.use(prefix, deliveryLogisticsRouter);
+  app.use(prefix, subscriptionRouter);
+  app.use(prefix + "/admin", adminSubscriptionRouter);
   app.use(prefix + "/admin", adminCommerceRouter);
 }
 for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {

@@ -38,6 +38,7 @@ import { AccountStatusIcon, accountSessionLabel } from "./components/AccountStat
 import { ProducerPropertiesPage } from "./pages/producer/ProducerPropertiesPage";
 import { DeliveryScopePage } from "./pages/producer/DeliveryScopePage";
 import { DocumentsPanel } from "./pages/documents/DocumentsPanel";
+import { ProducerTrialBanner } from "./pages/producer/ProducerTrialBanner";
 import { CategoryNavSection } from "./components/catalog/CategoryNavSection";
 import type { Category } from "../shared/contracts/category";
 import { PublicProductCatalog } from "./components/catalog/PublicProductCatalog";
@@ -53,6 +54,7 @@ const HomeDiscoveryPage = lazy(() => import("./pages/public/HomeDiscoveryPage"))
 const CartPage = lazy(() => import("./pages/public/CartPage"));
 const CheckoutReviewPage = lazy(() => import("./pages/public/CheckoutReviewPage"));
 const PaymentPreparedPage = lazy(() => import("./pages/commerce/PaymentPreparedPage"));
+const SubscriptionPlansPage = lazy(() => import("./pages/public/SubscriptionPlansPage"));
 const ProducerPosPage = lazy(() => import("./pages/commerce/ProducerPosPage"));
 const PurchasesPage = lazy(() => import("./pages/commerce/PurchasesPage"));
 const PosSaleReviewPage = lazy(() => import("./pages/commerce/PosSaleReviewPage"));
@@ -386,6 +388,7 @@ export default function App() {
             {shellSession.localityWarning}
           </p>
         )}
+        {shellSession?.activeRole === "producer" && (path.startsWith("/produtor/") || path === "/conta") && <ProducerTrialBanner key={shellSession.userId} userId={shellSession.userId} onNavigate={go}/>}
         {(sessionLoading && (guestAccessRoute || isAccountDataRoute || isProducerPropertyRoute || isProducerStoreRoute || isProducerProductRoute || path === "/minha-conta")) || (shellSession && guestAccessRoute) ? <p role="status" className="account-notice">Carregando sua conta…</p> : publicLoginRole ? (
           <PublicLoginPage key={publicLoginRole} role={publicLoginRole} onNavigate={go} onSessionAdopt={adoptSession}/>
         ) : isAdminRoute ? (
@@ -408,6 +411,8 @@ export default function App() {
           />
         ) : path === "/cadastro" ? (
           <ChoosePortalPage onNavigate={go} />
+        ) : ["/assinaturas","/planos","/assinaturas/minhas","/produtor/assinaturas"].includes(path) ? (
+          <Suspense fallback={<p role="status">Carregando assinaturas…</p>}>{sessionLoading ? <p role="status">Conferindo sua conta…</p> : <SubscriptionPlansPage key={(shellSession?.userId??"guest")+":"+path} audience={path.startsWith("/produtor/") || (path === "/assinaturas/minhas" && shellSession?.activeRole === "producer") ? "producer":"consumer"} session={publicPortalSession?shellSession:null} onlyMine={path === "/assinaturas/minhas"} onNavigate={go}/>}</Suspense>
         ) : paymentId ? (
           <Suspense fallback={<p role="status">Carregando pagamento…</p>}>
             {sessionLoading ? <p role="status">Conferindo sua conta…</p> : <PaymentPreparedPage key={shellSession?.userId+":"+paymentId} id={paymentId} userId={publicPortalSession?shellSession?.userId??null:null} onNavigate={go}/>}
