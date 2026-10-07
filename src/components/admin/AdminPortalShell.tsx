@@ -37,6 +37,7 @@ const items = [
   ["/admin/politica-reembolso", "Política de reembolso", Settings],
   ["/admin/denuncias", "Denúncias", Ban],
   ["/admin/pagamentos", "Pagamentos", Settings],
+  ["/admin/assinaturas", "Assinaturas", Leaf],
   ["/admin/conta", "Conta", UserRound],
 ] as const;
 
@@ -52,7 +53,7 @@ export function AdminPortalShell({
     if (to === "/admin/categorias") return false;
     if(to==="/admin/reembolsos"||to==="/admin/politica-reembolso")return access.sectors.includes("refund_management");
     if(to==="/admin/denuncias")return access.sectors.includes("complaint_management");
-    if(to==="/admin/pagamentos")return access.sectors.includes("payment_configuration");
+    if(to==="/admin/pagamentos"||to==="/admin/assinaturas")return access.sectors.includes("payment_configuration");
     if (to === "/admin/configuracao")
       return access.sectors.includes("platform_configuration");
     if (to === "/admin/documentos/fila")

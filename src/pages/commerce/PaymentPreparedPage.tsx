@@ -51,7 +51,7 @@ export default function PaymentPreparedPage({
         .then((value) => {
           if (!controller.signal.aborted) {
             setPayment(value);
-            if (value.status === "approved") onNavigate("/compras");
+            if (value.status === "approved") onNavigate(value.subscriptionId ? "/assinaturas/minhas" : "/compras");
           }
         })
         .catch(() => {})
@@ -85,10 +85,10 @@ export default function PaymentPreparedPage({
     : 0;
   return (
     <section className="hvm-commerce">
-      <button className="text-button" onClick={() => onNavigate("/checkout")}>
-        ← Voltar à revisão
+      <button className="text-button" onClick={() => onNavigate(payment?.subscriptionId ? "/assinaturas/minhas" : "/checkout")}>
+        {payment?.subscriptionId ? "← Voltar às assinaturas" : "← Voltar à revisão"}
       </button>
-      <h1>Pagamento da compra</h1>
+      <h1>{payment?.subscriptionId ? "Pagamento do ciclo da assinatura" : "Pagamento da compra"}</h1>
       {!userId ? (
         <div className="commerce-card">
           <p>
@@ -124,8 +124,8 @@ export default function PaymentPreparedPage({
                     <p>
                       <Clock3 size={17} />{" "}
                       {seconds
-                        ? `Reserva: ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`
-                        : "O prazo desta reserva terminou. Revise sua seleção no checkout."}
+                        ? `${payment.subscriptionId ? "Prazo do Pix" : "Reserva"}: ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`
+                        : payment.subscriptionId ? "O prazo deste Pix terminou. Consulte o ciclo nas suas assinaturas." : "O prazo desta reserva terminou. Revise sua seleção no checkout."}
                     </p>
                   ) : (
                     <p role="status">

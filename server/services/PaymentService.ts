@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { createHash } from "node:crypto";
 import type { PoolClient } from "pg";
 import { InventoryService } from "./InventoryService.ts";
 import { OrderService } from "./OrderService.ts";
@@ -99,6 +100,22 @@ export async function settleVerifiedPayment(
   ).rows[0];
   if (!acceptance) throw new CommerceError("POLICY_ACCEPTANCE_REQUIRED");
   const policy = CommercePolicySchema.parse(acceptance.policy_snapshot);
+  // T23 explicit billing source: membership billing never consumes T18 stock,
+  // creates delivery facts, or releases T20 order holds.
+  if (intent.billing_cycle_id) {
+    const cycle = (await client.query(`SELECT b.*,s.user_id,s.status AS subscription_status,s.producer_profile_id
+      FROM public.app_billing_cycles b JOIN public.app_subscriptions s ON s.id=b.subscription_id
+      WHERE b.id=$1 FOR UPDATE OF s,b`, [intent.billing_cycle_id])).rows[0];
+    if (!cycle || cycle.user_id !== intent.user_id || cycle.payment_intent_id !== intent.id || cycle.amount_cents !== intent.amount_cents || cycle.status !== "pending")
+      throw new CommerceError("BILLING_CYCLE_INVALID", 409);
+    await client.query("UPDATE public.app_billing_cycles SET status='paid' WHERE id=$1", [cycle.id]);
+    await client.query(`UPDATE public.app_subscriptions SET status=CASE WHEN status='cancelled' THEN 'cancelled' WHEN status='paused' AND pause_until>clock_timestamp() THEN 'paused' ELSE 'active' END,revision=revision+1,updated_at=clock_timestamp() WHERE id=$1`, [cycle.subscription_id]);
+    if (cycle.producer_profile_id) await client.query("UPDATE public.app_trial_grants SET is_converted=true WHERE producer_profile_id=$1", [cycle.producer_profile_id]);
+    await client.query("UPDATE public.app_payment_intents SET status='approved',updated_at=clock_timestamp() WHERE id=$1", [intent.id]);
+    await client.query("INSERT INTO public.app_payment_transactions(provider,gateway_event_id,payment_intent_id,event_type,amount_received_cents,raw_payload) VALUES($1,$2,$3,'approved',$4,$5)", [payment.provider,payment.eventId,intent.id,payment.amountCents,JSON.stringify(payment)]);
+    await commerceAudit(client,intent.user_id,cycle.producer_profile_id?"producer":"consumer","subscription.cycle_paid","app_billing_cycles",cycle.id,{subscriptionId:cycle.subscription_id,cycleIndex:cycle.cycle_index,amountCents:payment.amountCents},context);
+    return {status:"approved",replayed:false,orderIds:[] as string[],subscriptionId:cycle.subscription_id};
+  }
   let stores: Array<{
       storeId: string;
       storeName: string;
@@ -300,6 +317,46 @@ export async function settleVerifiedPayment(
   return { status: "approved", replayed: false, orderIds };
 }
 export const PaymentService = {
+  // Added T23 adapter around the SAME T20 gateway. Each durable cycle has one
+  // intent and one provider attempt; uncertain attempts require reconciliation.
+  async createPixIntent(userId:string,cycleId:string,context:CommerceAudit):Promise<PaymentView> {
+    z.uuid().parse(cycleId);
+    const gateway=getPaymentGateway();
+    if(!gateway)throw new CommerceError("GATEWAY_NOT_CONFIGURED",503);
+    const uuid=(label:string)=>{const hex=createHash("sha256").update(label+":"+cycleId).digest("hex");return `${hex.slice(0,8)}-${hex.slice(8,12)}-5${hex.slice(13,16)}-a${hex.slice(17,20)}-${hex.slice(20,32)}`;};
+    const intentId=uuid("t23-pix-intent"),commandId=uuid("t23-pix-receipt");
+    const claim=await commerceTransaction(async client=>{
+      await commerceIdentity(client,userId);
+      await client.query("SELECT pg_advisory_xact_lock(20,hashtext($1))",["payment:"+intentId]);
+      const cycle=(await client.query(`SELECT b.*,s.user_id,s.plan_snapshot->>'targetAudience' AS actor_role FROM public.app_billing_cycles b JOIN public.app_subscriptions s ON s.id=b.subscription_id WHERE b.id=$1 AND s.user_id=$2 FOR UPDATE OF b`,[cycleId,userId])).rows[0];
+      if(!cycle)throw new CommerceError("BILLING_CYCLE_NOT_FOUND",404);
+      if(cycle.payment_creation_state==="uncertain")throw new CommerceError("PIX_RECONCILIATION_REQUIRED",409);
+      if(cycle.payment_creation_state!=="waiting"||cycle.status!=="pending")return {attempt:false,amountCents:cycle.amount_cents,expiresAt:""};
+      if(cycle.amount_cents<=0)throw new CommerceError("BILLING_CYCLE_INVALID",422);
+      const expiresAt=new Date(Date.now()+15*60000).toISOString();
+      const payload={cycleId,amountCents:cycle.amount_cents,method:"pix"};
+      await client.query(`INSERT INTO public.app_command_receipts(command_id,user_id,endpoint,payload_hash,status_code,response_body) VALUES($1,$2,'/v1/subscriptions/billing/pix',$3,201,$4)`,[commandId,userId,createHash("sha256").update(JSON.stringify(payload)).digest("hex"),JSON.stringify({paymentIntentId:intentId,...payload})]);
+      await client.query("INSERT INTO public.app_payment_intents(id,command_id,user_id,method,amount_cents,expires_at,billing_cycle_id) VALUES($1,$2,$3,'pix',$4,$5,$6)",[intentId,commandId,userId,cycle.amount_cents,expiresAt,cycleId]);
+      await client.query("UPDATE public.app_billing_cycles SET payment_intent_id=$2,payment_creation_state='requested' WHERE id=$1",[cycleId,intentId]);
+      await commerceAudit(client,userId,cycle.actor_role,"subscription.pix_requested","app_payment_intents",intentId,{cycleId,amountCents:cycle.amount_cents},context);
+      return {attempt:true,amountCents:cycle.amount_cents,expiresAt};
+    });
+    if(claim.attempt) {
+      try {
+        const result=await gateway.createPayment({intentId,amountCents:claim.amountCents,method:"pix",expiresAt:claim.expiresAt,channel:"online"});
+        const reference=z.string().min(1).max(128).parse(result.reference);
+        await commerceTransaction(async client=>{
+          await client.query("SELECT pg_advisory_xact_lock(20,hashtext($1))",["payment:"+intentId]);
+          await client.query("UPDATE public.app_payment_intents SET gateway_reference=$2,pix_copy_paste=$3,pix_qr_code_base64=$4,updated_at=clock_timestamp() WHERE id=$1 AND gateway_reference IS NULL",[intentId,reference,result.pixCopyPaste,result.pixQrCodeBase64]);
+          await client.query("UPDATE public.app_billing_cycles SET payment_creation_state='ready' WHERE id=$1",[cycleId]);
+        });
+      } catch {
+        await commerceTransaction(async client=>{await client.query("UPDATE public.app_billing_cycles SET payment_creation_state='uncertain' WHERE id=$1 AND payment_creation_state='requested'",[cycleId]);}).catch(()=>{});
+        throw new CommerceError("PIX_CREATION_UNCERTAIN",503);
+      }
+    }
+    return this.view(userId,intentId);
+  },
   async view(userId: string, id: string): Promise<PaymentView> {
     return commerceTransaction(async (client) => {
       await commerceIdentity(client, userId);
@@ -331,6 +388,7 @@ export const PaymentService = {
         gatewayAvailable: !!getPaymentGateway(),
         pixCopyPaste: intent.pix_copy_paste,
         pixQrCodeBase64: intent.pix_qr_code_base64,
+        ...(intent.billing_cycle_id ? {subscriptionId:(await client.query("SELECT subscription_id FROM public.app_billing_cycles WHERE id=$1",[intent.billing_cycle_id])).rows[0]?.subscription_id} : {}),
         orderIds: (
           await client.query(
             "SELECT id FROM public.app_orders WHERE payment_intent_id=$1 AND customer_user_id=$2",

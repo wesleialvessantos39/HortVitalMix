@@ -114,7 +114,10 @@
     "test:t21:e2e": "HVM_PORTABLE_CHROMIUM=1 playwright test tests/e2e/trilha21-orders.spec.ts",
     "test:t22:unit": "vitest run tests/unit/deliveryLogisticsContracts.test.ts tests/integration/deliveryLogisticsRoutes.test.ts tests/unit/mediaPreview.test.ts",
     "test:t22:postgres": "vitest run tests/integration/deliveryLogisticsPostgres.test.ts",
-    "test:t22:story": "vitest run tests/integration/orderBrowserPostgres.test.ts"
+    "test:t22:story": "vitest run tests/integration/orderBrowserPostgres.test.ts",
+    "test:t23:unit": "vitest run tests/unit/subscriptionContracts.test.ts tests/integration/subscriptionRoutes.test.ts",
+    "test:t23:postgres": "vitest run tests/integration/subscriptionPostgres.test.ts",
+    "test:t23:story": "vitest run tests/integration/subscriptionBrowserPostgres.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",

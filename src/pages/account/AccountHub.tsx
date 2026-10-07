@@ -185,6 +185,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
           {!administrative&&<>
             <button className="account-hub-card" onClick={()=>onNavigate("/compras")}><ReceiptText/><span><strong>Minhas compras</strong><small>Revisões, pagamentos e comprovantes da compra</small></span></button>
             <button className="account-hub-card" onClick={()=>onNavigate("/pedidos")}><Truck/><span><strong>Acompanhar pedidos</strong><small>Do preparo na horta até a entrega</small></span></button>
+            <button className="account-hub-card" onClick={()=>onNavigate("/assinaturas")}><Salad/><span><strong>Clube de hortifrúti</strong><small>Planos e entregas recorrentes</small></span></button>
             <button className="account-hub-card" onClick={()=>onNavigate("/reembolsos")}><ShieldCheck/><span><strong>Reembolsos</strong><small>Confira a política e acompanhe suas solicitações</small></span></button>
             <button className="account-hub-card" onClick={()=>onNavigate("/denuncias")}><Flag/><span><strong>Denúncias e segurança</strong><small>Relate problemas e converse com a equipe responsável</small></span></button>
           </>}
@@ -222,6 +223,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
               <button className="account-hub-card" onClick={()=>onNavigate("/produtor/caixa")}><CreditCard/><span><strong>Caixa do produtor</strong><small>Prepare vendas presenciais com Pix do sistema ou maquininha</small></span></button>
               <button className="account-hub-card" onClick={()=>onNavigate("/produtor/loja/janelas")}><PackageCheck/><span><strong>Janelas de entrega</strong><small>Horários e vagas para agendar entregas</small></span></button>
               <button className="account-hub-card" onClick={()=>onNavigate("/produtor/pedidos")}><PackageCheck/><span><strong>Pedidos da minha loja</strong><small>Organize o preparo e acompanhe cada entrega</small></span></button>
+              <button className="account-hub-card" onClick={()=>onNavigate("/produtor/assinaturas")}><Sprout/><span><strong>Plano do produtor</strong><small>Trial e assinatura do clube</small></span></button>
               <button className="account-hub-card" onClick={() => onNavigate("/produtor/produtos")}>
                 <Salad />
                 <span><strong>Meus produtos</strong><small>Cadastre alimentos, fotos, embalagens e preços de venda</small></span>
