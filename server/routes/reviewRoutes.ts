@@ -21,6 +21,14 @@ const context = (req: Request) => ({
   requestId: req.requestId,
   ipHash: req.clientIpHash,
 });
+function listQuery(req: Request) {
+  const query = { ...req.query };
+  // Vercel may populate query before the dispatcher restores req.url.
+  // Match the homologated list routes; keep all business fields strict.
+  delete query.path;
+  delete query.__hvm_path;
+  return query;
+}
 async function run(
   req: Request,
   res: Response,
@@ -52,7 +60,7 @@ async function run(
 }
 reviewRouter.get("/stores/:storeSlug/reviews", (req, res) =>
   run(req, res, false, () =>
-    service.publicStoreReviews(req.params.storeSlug, req.query),
+    service.publicStoreReviews(req.params.storeSlug, listQuery(req)),
   ),
 );
 reviewRouter.get("/orders/:id/review", (req, res) =>
@@ -70,7 +78,7 @@ adminReviewRouter.use(
   requireAdminSector("complaint_management"),
 );
 adminReviewRouter.get("/reviews", (req, res) =>
-  run(req, res, true, () => service.adminList(req.adminActor!, req.query)),
+  run(req, res, true, () => service.adminList(req.adminActor!, listQuery(req))),
 );
 adminReviewRouter.post(
   "/reviews/:id/moderate",

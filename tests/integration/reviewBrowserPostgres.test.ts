@@ -239,10 +239,33 @@ describe.runIf(!!process.env.HVM_T24_LOCAL_DATABASE_URL)(
         expect(
           await guest.p.evaluate(() => (window as any).t24Injected),
         ).toBeUndefined();
+        const publicTransport = await guest.p.evaluate(async (slug) => {
+          const routing = new URLSearchParams({
+            page: "1",
+            path: `v1/stores/${slug}/reviews`,
+            __hvm_path: `v1/stores/${slug}/reviews`,
+          });
+          const r = await fetch(`/api/v1/stores/${slug}/reviews?${routing}`);
+          return { status: r.status, body: await r.json() };
+        }, f.catalog.a.store.storeSlug);
+        expect(publicTransport).toMatchObject({
+          status: 200,
+          body: { total: 1, reputation: { averageRating: 5, totalReviews: 1 } },
+        });
         await moderator.p.goto(baseURL + "/admin/avaliacoes");
         await check(
           moderator.p.getByRole("heading", { name: "Moderação de avaliações" }),
         ).toBeVisible();
+        const adminTransport = await moderator.p.evaluate(async () => {
+          const r = await fetch(
+            "/api/v1/admin/reviews?state=published&page=1&path=v1/admin/reviews&__hvm_path=v1/admin/reviews",
+          );
+          return { status: r.status, body: await r.json() };
+        });
+        expect(adminTransport).toMatchObject({
+          status: 200,
+          body: { total: 1 },
+        });
         await moderator.p
           .getByRole("button", { name: /Moderar avaliação do pedido/ })
           .click();
