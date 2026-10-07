@@ -14,7 +14,7 @@
   "validation": {
     "generalPassed": 797,
     "conditionalNotExecuted": 317,
-    "postgresT22MediaPassed": 14,
+    "postgresT22MediaPassed": 15,
     "postgresPriorPassed": 99,
     "fullBrowserStoryPassed": 1,
     "responsiveWidths": [
@@ -24,7 +24,9 @@
       1440
     ],
     "priorBrowserDistinctPassed": 79,
-    "productionDependencyAdvisories": 0
+    "productionDependencyAdvisories": 0,
+    "finalCacheTestsPassed": 19,
+    "finalMediaTestsPassed": 4
   },
   "preservation": {
     "before": [
@@ -880,7 +882,11 @@
       "attribution": "not confirmed; not changed or deleted"
     },
     "authUsers": 5,
-    "storageObjects": 10
+    "storageObjects": 10,
+    "finalComparedRelations": 84,
+    "finalUnchangedRelations": 82,
+    "businessAuthStoragePreserved": 83,
+    "intentionalChange": "app_releases seal"
   },
   "advisors": {
     "security": {
@@ -2272,6 +2278,1304 @@
     }
   },
   "production": {
-    "status": "migration applied; publication pending"
+    "status": "functional release verified; closure SHA to be sealed after its READY",
+    "functionalSha": "53e394c47a66ec87af2c1662d0de3d39436de282",
+    "functionalTree": "829a653e92b21cbdeb1a1c151abe2de921401030",
+    "deploymentId": "dpl_AbaSSE67tsNGo5XjCFArsrLZAb45",
+    "state": "READY",
+    "branch": "main",
+    "region": "pdx1",
+    "url": "https://hortvitalmix.vercel.app",
+    "releaseTag": "t22-v60-53e394c",
+    "apiChecks": [
+      {
+        "path": "/api/health",
+        "method": "GET",
+        "status": 200,
+        "expected": 200,
+        "body": {
+          "status": "ok",
+          "time": "2026-10-07T03:02:37.611Z",
+          "environment": "production",
+          "requestId": "9e6abf82-1b6e-479c-b697-d1008468aca0"
+        },
+        "cacheControl": "no-store, max-age=0"
+      },
+      {
+        "path": "/api/ready",
+        "method": "GET",
+        "status": 200,
+        "expected": 200,
+        "body": {
+          "status": "ready",
+          "databaseConnected": true,
+          "schemaVersion": 60,
+          "releaseTag": "t22-v60-53e394c",
+          "requestId": "fc055ac8-597e-464e-9b43-157aefbf2583"
+        },
+        "cacheControl": "no-store, max-age=0"
+      },
+      {
+        "path": "/api/v1/config",
+        "method": "GET",
+        "status": 200,
+        "expected": 200,
+        "body": {
+          "platformName": "HortiVitalMix",
+          "slogan": "Tudo fresco. Tudo da sua região.",
+          "defaultMunicipality": "Ariquemes",
+          "defaultState": "RO",
+          "currency": "BRL",
+          "timezone": "America/Porto_Velho",
+          "supportEmail": "hortivitalmix@gmail.com",
+          "supportPhone": null,
+          "revision": 1
+        },
+        "cacheControl": "no-store, max-age=0"
+      },
+      {
+        "path": "/api/v1/producer/delivery-windows",
+        "method": "GET",
+        "status": 401,
+        "expected": 401,
+        "body": {
+          "error": "AUTH_REQUIRED",
+          "requestId": "08461ab6-c1c0-4040-b8d5-c6ee2ee3cc70"
+        },
+        "cacheControl": "private, no-store"
+      },
+      {
+        "path": "/api/v1/orders/00000000-0000-4000-8000-000000000022/delivery",
+        "method": "GET",
+        "status": 401,
+        "expected": 401,
+        "body": {
+          "error": "AUTH_REQUIRED",
+          "requestId": "e2aa8e8a-16a6-40b1-af25-98c98e52c491"
+        },
+        "cacheControl": "private, no-store"
+      },
+      {
+        "path": "/api/v1/producer/orders/00000000-0000-4000-8000-000000000022/delivery-allocation",
+        "method": "POST",
+        "status": 401,
+        "expected": 401,
+        "body": {
+          "error": "AUTH_REQUIRED",
+          "requestId": "9c41c46d-dc82-4ba4-b08c-8e0f29c80c36"
+        },
+        "cacheControl": "private, no-store"
+      },
+      {
+        "path": "/api/v1/producer/orders/00000000-0000-4000-8000-000000000022/delivery-proof",
+        "method": "POST",
+        "status": 401,
+        "expected": 401,
+        "body": {
+          "error": "AUTH_REQUIRED",
+          "requestId": "893928e0-d9d1-4427-8d2c-d133b649b298"
+        },
+        "cacheControl": "private, no-store"
+      },
+      {
+        "path": "/api/v1/producer/orders/00000000-0000-4000-8000-000000000022/delivery-proof",
+        "method": "CSRF",
+        "status": 403,
+        "expected": 403,
+        "body": {
+          "error": "ORIGIN_NOT_ALLOWED",
+          "requestId": "f9651e2f-383f-4dcf-a11e-f8be423d5ad5"
+        },
+        "cacheControl": "no-store, max-age=0"
+      }
+    ],
+    "browserChecks": [
+      {
+        "width": 320,
+        "path": "/produtor/loja/janelas",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "width": 320,
+        "path": "/produtor/pedidos",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "width": 320,
+        "path": "/pedidos",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "width": 320,
+        "path": "/pedidos/00000000-0000-4000-8000-000000000021",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "width": 390,
+        "path": "/produtor/loja/janelas",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "width": 390,
+        "path": "/produtor/pedidos",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "width": 390,
+        "path": "/pedidos",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "width": 390,
+        "path": "/pedidos/00000000-0000-4000-8000-000000000021",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "width": 768,
+        "path": "/produtor/loja/janelas",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "width": 768,
+        "path": "/produtor/pedidos",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "width": 768,
+        "path": "/pedidos",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "width": 768,
+        "path": "/pedidos/00000000-0000-4000-8000-000000000021",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "width": 1440,
+        "path": "/produtor/loja/janelas",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "width": 1440,
+        "path": "/produtor/pedidos",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "width": 1440,
+        "path": "/pedidos",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": []
+      },
+      {
+        "width": 1440,
+        "path": "/pedidos/00000000-0000-4000-8000-000000000021",
+        "httpStatus": 200,
+        "overflow": false,
+        "errors": []
+      }
+    ],
+    "runtimeErrorFatalGroups": 0
+  },
+  "photos": {
+    "variants": [
+      {
+        "kind": "product",
+        "id": "9f7e2673-927f-487c-bd7e-04bfe559c19f",
+        "width": 320,
+        "mode": "cold",
+        "status": 200,
+        "milliseconds": 887.3,
+        "originalBytes": 50574,
+        "previewBytes": 5298,
+        "reductionPercent": 89.5,
+        "contentType": "image/webp",
+        "cacheControl": "public, max-age=300",
+        "cdnCache": "MISS",
+        "etag": "\"3291fa7d2d4ed0cb376382a45f5a054b8ad54d00a8427fd7754660f223ce13bd\"",
+        "setCookie": false
+      },
+      {
+        "kind": "product",
+        "id": "9f7e2673-927f-487c-bd7e-04bfe559c19f",
+        "width": 320,
+        "mode": "warm",
+        "status": 200,
+        "milliseconds": 188.7,
+        "originalBytes": 50574,
+        "previewBytes": 5298,
+        "reductionPercent": 89.5,
+        "contentType": "image/webp",
+        "cacheControl": "public, max-age=300",
+        "cdnCache": "HIT",
+        "etag": "\"3291fa7d2d4ed0cb376382a45f5a054b8ad54d00a8427fd7754660f223ce13bd\"",
+        "setCookie": false
+      },
+      {
+        "kind": "product",
+        "id": "9f7e2673-927f-487c-bd7e-04bfe559c19f",
+        "width": 320,
+        "mode": "conditional",
+        "status": 304
+      },
+      {
+        "kind": "product",
+        "id": "9f7e2673-927f-487c-bd7e-04bfe559c19f",
+        "width": 640,
+        "mode": "cold",
+        "status": 200,
+        "milliseconds": 637,
+        "originalBytes": 50574,
+        "previewBytes": 15966,
+        "reductionPercent": 68.4,
+        "contentType": "image/webp",
+        "cacheControl": "public, max-age=300",
+        "cdnCache": "MISS",
+        "etag": "\"b57b5f6f1d18d1d3a58a442b26e0d4f169343ce4e4b3ca3fed0757a231c6c696\"",
+        "setCookie": false
+      },
+      {
+        "kind": "product",
+        "id": "9f7e2673-927f-487c-bd7e-04bfe559c19f",
+        "width": 640,
+        "mode": "warm",
+        "status": 200,
+        "milliseconds": 157.2,
+        "originalBytes": 50574,
+        "previewBytes": 15966,
+        "reductionPercent": 68.4,
+        "contentType": "image/webp",
+        "cacheControl": "public, max-age=300",
+        "cdnCache": "HIT",
+        "etag": "\"b57b5f6f1d18d1d3a58a442b26e0d4f169343ce4e4b3ca3fed0757a231c6c696\"",
+        "setCookie": false
+      },
+      {
+        "kind": "product",
+        "id": "9f7e2673-927f-487c-bd7e-04bfe559c19f",
+        "width": 640,
+        "mode": "conditional",
+        "status": 304
+      },
+      {
+        "kind": "product",
+        "id": "9f7e2673-927f-487c-bd7e-04bfe559c19f",
+        "width": 1280,
+        "mode": "cold",
+        "status": 200,
+        "milliseconds": 496,
+        "originalBytes": 50574,
+        "previewBytes": 39360,
+        "reductionPercent": 22.2,
+        "contentType": "image/webp",
+        "cacheControl": "public, max-age=300",
+        "cdnCache": "MISS",
+        "etag": "\"0e9a9176b9d5aad950d917f868b61ada42cb43b496673db31db1965a72ce5e30\"",
+        "setCookie": false
+      },
+      {
+        "kind": "product",
+        "id": "9f7e2673-927f-487c-bd7e-04bfe559c19f",
+        "width": 1280,
+        "mode": "warm",
+        "status": 200,
+        "milliseconds": 487.5,
+        "originalBytes": 50574,
+        "previewBytes": 39360,
+        "reductionPercent": 22.2,
+        "contentType": "image/webp",
+        "cacheControl": "public, max-age=300",
+        "cdnCache": "HIT",
+        "etag": "\"0e9a9176b9d5aad950d917f868b61ada42cb43b496673db31db1965a72ce5e30\"",
+        "setCookie": false
+      },
+      {
+        "kind": "product",
+        "id": "9f7e2673-927f-487c-bd7e-04bfe559c19f",
+        "width": 1280,
+        "mode": "conditional",
+        "status": 304
+      },
+      {
+        "kind": "store",
+        "id": "a7700be9-259b-43aa-813e-12a932718c69",
+        "width": 320,
+        "mode": "cold",
+        "status": 200,
+        "milliseconds": 939.9,
+        "originalBytes": 316108,
+        "previewBytes": 18360,
+        "reductionPercent": 94.2,
+        "contentType": "image/webp",
+        "cacheControl": "public, max-age=300",
+        "cdnCache": "MISS",
+        "etag": "\"15b1f2ca085f6edd9e85e3e0a85abf4bb01bc7bf8f39c2c931b1ca7a3b724a7d\"",
+        "setCookie": false
+      },
+      {
+        "kind": "store",
+        "id": "a7700be9-259b-43aa-813e-12a932718c69",
+        "width": 320,
+        "mode": "warm",
+        "status": 200,
+        "milliseconds": 104.2,
+        "originalBytes": 316108,
+        "previewBytes": 18360,
+        "reductionPercent": 94.2,
+        "contentType": "image/webp",
+        "cacheControl": "public, max-age=300",
+        "cdnCache": "HIT",
+        "etag": "\"15b1f2ca085f6edd9e85e3e0a85abf4bb01bc7bf8f39c2c931b1ca7a3b724a7d\"",
+        "setCookie": false
+      },
+      {
+        "kind": "store",
+        "id": "a7700be9-259b-43aa-813e-12a932718c69",
+        "width": 320,
+        "mode": "conditional",
+        "status": 304
+      },
+      {
+        "kind": "store",
+        "id": "a7700be9-259b-43aa-813e-12a932718c69",
+        "width": 640,
+        "mode": "cold",
+        "status": 200,
+        "milliseconds": 634.7,
+        "originalBytes": 316108,
+        "previewBytes": 69254,
+        "reductionPercent": 78.1,
+        "contentType": "image/webp",
+        "cacheControl": "public, max-age=300",
+        "cdnCache": "MISS",
+        "etag": "\"572968dcfb420a49ce886d7d67c74c486d9f50a4677584d588cfb6f8dbf0c69c\"",
+        "setCookie": false
+      },
+      {
+        "kind": "store",
+        "id": "a7700be9-259b-43aa-813e-12a932718c69",
+        "width": 640,
+        "mode": "warm",
+        "status": 200,
+        "milliseconds": 281.3,
+        "originalBytes": 316108,
+        "previewBytes": 69254,
+        "reductionPercent": 78.1,
+        "contentType": "image/webp",
+        "cacheControl": "public, max-age=300",
+        "cdnCache": "HIT",
+        "etag": "\"572968dcfb420a49ce886d7d67c74c486d9f50a4677584d588cfb6f8dbf0c69c\"",
+        "setCookie": false
+      },
+      {
+        "kind": "store",
+        "id": "a7700be9-259b-43aa-813e-12a932718c69",
+        "width": 640,
+        "mode": "conditional",
+        "status": 304
+      },
+      {
+        "kind": "store",
+        "id": "a7700be9-259b-43aa-813e-12a932718c69",
+        "width": 1280,
+        "mode": "cold",
+        "status": 200,
+        "milliseconds": 782.1,
+        "originalBytes": 316108,
+        "previewBytes": 257470,
+        "reductionPercent": 18.5,
+        "contentType": "image/webp",
+        "cacheControl": "public, max-age=300",
+        "cdnCache": "MISS",
+        "etag": "\"a4d0c84aef2e6d84a94c8f9699294cbc337d5c05b341366518134dfaaa76f92b\"",
+        "setCookie": false
+      },
+      {
+        "kind": "store",
+        "id": "a7700be9-259b-43aa-813e-12a932718c69",
+        "width": 1280,
+        "mode": "warm",
+        "status": 200,
+        "milliseconds": 192.5,
+        "originalBytes": 316108,
+        "previewBytes": 257470,
+        "reductionPercent": 18.5,
+        "contentType": "image/webp",
+        "cacheControl": "public, max-age=300",
+        "cdnCache": "HIT",
+        "etag": "\"a4d0c84aef2e6d84a94c8f9699294cbc337d5c05b341366518134dfaaa76f92b\"",
+        "setCookie": false
+      },
+      {
+        "kind": "store",
+        "id": "a7700be9-259b-43aa-813e-12a932718c69",
+        "width": 1280,
+        "mode": "conditional",
+        "status": 304
+      },
+      {
+        "kind": "invalid",
+        "path": "product/00000000-0000-4000-8000-000000000000?width=640",
+        "status": 404,
+        "cacheControl": "no-store"
+      },
+      {
+        "kind": "invalid",
+        "path": "documents/00000000-0000-4000-8000-000000000000?width=640",
+        "status": 404,
+        "cacheControl": "no-store"
+      },
+      {
+        "kind": "invalid",
+        "path": "product/00000000-0000-4000-8000-000000000000?width=500",
+        "status": 422,
+        "cacheControl": "no-store"
+      }
+    ],
+    "browserWithNormalCache": [
+      {
+        "width": 390,
+        "mode": "cold",
+        "path": "/",
+        "status": 200,
+        "photos": [
+          {
+            "src": "https://hortvitalmix.vercel.app/api/v1/public-media/product/9f7e2673-927f-487c-bd7e-04bfe559c19f",
+            "mountedAt": 1637.7000000001863,
+            "readyAt": 1745.5,
+            "width": 390,
+            "height": 390
+          },
+          {
+            "src": "https://hortvitalmix.vercel.app/api/v1/public-media/store/a7700be9-259b-43aa-813e-12a932718c69",
+            "mountedAt": 1637.7000000001863,
+            "readyAt": 1792.1000000005588,
+            "width": 52,
+            "height": 39
+          },
+          {
+            "src": "https://hortvitalmix.vercel.app/api/v1/public-media/store/a7700be9-259b-43aa-813e-12a932718c69",
+            "mountedAt": 1623.9000000003725,
+            "readyAt": 2033.7999999998137,
+            "width": 390,
+            "height": 292
+          }
+        ],
+        "resources": [
+          {
+            "path": "/api/v1/categories",
+            "duration": 299.6000000005588,
+            "startTime": 1031.5,
+            "transferSize": 994,
+            "encodedBodySize": 694
+          },
+          {
+            "path": "/api/v1/auth/session",
+            "duration": 336.90000000037253,
+            "startTime": 1032.7999999998137,
+            "transferSize": 328,
+            "encodedBodySize": 28
+          },
+          {
+            "path": "/api/v1/localities",
+            "duration": 340.29999999981374,
+            "startTime": 1035.9000000003725,
+            "transferSize": 720,
+            "encodedBodySize": 420
+          },
+          {
+            "path": "/api/v1/config",
+            "duration": 488.20000000018626,
+            "startTime": 1036.7000000001863,
+            "transferSize": 555,
+            "encodedBodySize": 255
+          },
+          {
+            "path": "/api/v1/categories",
+            "duration": 398.40000000037253,
+            "startTime": 1254.5,
+            "transferSize": 994,
+            "encodedBodySize": 694
+          },
+          {
+            "path": "/api/v1/discovery/stores",
+            "duration": 349.20000000018626,
+            "startTime": 1255.9000000003725,
+            "transferSize": 1293,
+            "encodedBodySize": 993
+          },
+          {
+            "path": "/api/v1/discovery/highlights",
+            "duration": 239.79999999981374,
+            "startTime": 1376.9000000003725,
+            "transferSize": 1849,
+            "encodedBodySize": 1549
+          },
+          {
+            "path": "/api/v1/public-media/store/a7700be9-259b-43aa-813e-12a932718c69",
+            "duration": 423.59999999962747,
+            "startTime": 1608.2000000001863,
+            "transferSize": 69554,
+            "encodedBodySize": 69254
+          },
+          {
+            "path": "/api/v1/public-media/product/9f7e2673-927f-487c-bd7e-04bfe559c19f",
+            "duration": 108.20000000018626,
+            "startTime": 1634.7999999998137,
+            "transferSize": 16266,
+            "encodedBodySize": 15966
+          },
+          {
+            "path": "/api/v1/public-media/store/a7700be9-259b-43aa-813e-12a932718c69",
+            "duration": 155.8999999994412,
+            "startTime": 1634.9000000003725,
+            "transferSize": 18660,
+            "encodedBodySize": 18360
+          }
+        ],
+        "loadingOverlays": 0,
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "mode": "warm",
+        "path": "/",
+        "status": 200,
+        "photos": [
+          {
+            "src": "https://hortvitalmix.vercel.app/api/v1/public-media/store/a7700be9-259b-43aa-813e-12a932718c69",
+            "mountedAt": 982,
+            "readyAt": 982,
+            "width": 390,
+            "height": 292
+          },
+          {
+            "src": "https://hortvitalmix.vercel.app/api/v1/public-media/product/9f7e2673-927f-487c-bd7e-04bfe559c19f",
+            "mountedAt": 1073.7000000001863,
+            "readyAt": 1073.7999999998137,
+            "width": 390,
+            "height": 390
+          },
+          {
+            "src": "https://hortvitalmix.vercel.app/api/v1/public-media/store/a7700be9-259b-43aa-813e-12a932718c69",
+            "mountedAt": 1073.7999999998137,
+            "readyAt": 1073.7999999998137,
+            "width": 52,
+            "height": 39
+          }
+        ],
+        "resources": [
+          {
+            "path": "/api/v1/categories",
+            "duration": 316.19999999925494,
+            "startTime": 458.90000000037253,
+            "transferSize": 994,
+            "encodedBodySize": 694
+          },
+          {
+            "path": "/api/v1/auth/session",
+            "duration": 348.79999999981374,
+            "startTime": 459.20000000018626,
+            "transferSize": 328,
+            "encodedBodySize": 28
+          },
+          {
+            "path": "/api/v1/localities",
+            "duration": 394.09999999962747,
+            "startTime": 459.5,
+            "transferSize": 720,
+            "encodedBodySize": 420
+          },
+          {
+            "path": "/api/v1/config",
+            "duration": 445.90000000037253,
+            "startTime": 459.59999999962747,
+            "transferSize": 555,
+            "encodedBodySize": 255
+          },
+          {
+            "path": "/api/v1/categories",
+            "duration": 234.8999999994412,
+            "startTime": 759.2000000001863,
+            "transferSize": 994,
+            "encodedBodySize": 694
+          },
+          {
+            "path": "/api/v1/discovery/stores",
+            "duration": 216.20000000018626,
+            "startTime": 760,
+            "transferSize": 1293,
+            "encodedBodySize": 993
+          },
+          {
+            "path": "/api/v1/discovery/highlights",
+            "duration": 205.20000000018626,
+            "startTime": 862.2000000001863,
+            "transferSize": 1836,
+            "encodedBodySize": 1536
+          },
+          {
+            "path": "/api/v1/public-media/store/a7700be9-259b-43aa-813e-12a932718c69",
+            "duration": 0,
+            "startTime": 979.0999999996275,
+            "transferSize": 0,
+            "encodedBodySize": 69254
+          },
+          {
+            "path": "/api/v1/public-media/product/9f7e2673-927f-487c-bd7e-04bfe559c19f",
+            "duration": 0,
+            "startTime": 1070.2000000001863,
+            "transferSize": 0,
+            "encodedBodySize": 15966
+          }
+        ],
+        "loadingOverlays": 0,
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "mode": "store",
+        "path": "/produtores/loja-f2f6b8d26a6345ae8aebe1a1bfaec6fc",
+        "status": 200,
+        "photos": [
+          {
+            "src": "https://hortvitalmix.vercel.app/api/v1/public-media/store/a7700be9-259b-43aa-813e-12a932718c69",
+            "mountedAt": 967.3999999994412,
+            "readyAt": 967.3999999994412,
+            "width": 52,
+            "height": 39
+          },
+          {
+            "src": "https://hortvitalmix.vercel.app/api/v1/public-media/product/9f7e2673-927f-487c-bd7e-04bfe559c19f",
+            "mountedAt": 967.3999999994412,
+            "readyAt": 967.3999999994412,
+            "width": 390,
+            "height": 390
+          }
+        ],
+        "resources": [
+          {
+            "path": "/api/v1/auth/session",
+            "duration": 282.40000000037253,
+            "startTime": 370.3999999994412,
+            "transferSize": 328,
+            "encodedBodySize": 28
+          },
+          {
+            "path": "/api/v1/localities",
+            "duration": 311.90000000037253,
+            "startTime": 372.09999999962747,
+            "transferSize": 720,
+            "encodedBodySize": 420
+          },
+          {
+            "path": "/api/v1/config",
+            "duration": 345.09999999962747,
+            "startTime": 372.29999999981374,
+            "transferSize": 555,
+            "encodedBodySize": 255
+          },
+          {
+            "path": "/api/v1/products",
+            "duration": 201.8999999994412,
+            "startTime": 744.7000000001863,
+            "transferSize": 1394,
+            "encodedBodySize": 1094
+          },
+          {
+            "path": "/api/v1/stores/loja-f2f6b8d26a6345ae8aebe1a1bfaec6fc",
+            "duration": 211.29999999981374,
+            "startTime": 745.0999999996275,
+            "transferSize": 1201,
+            "encodedBodySize": 901
+          },
+          {
+            "path": "/api/v1/public-media/product/9f7e2673-927f-487c-bd7e-04bfe559c19f",
+            "duration": 0,
+            "startTime": 949.3999999994412,
+            "transferSize": 0,
+            "encodedBodySize": 15966
+          },
+          {
+            "path": "/api/v1/public-media/store/a7700be9-259b-43aa-813e-12a932718c69",
+            "duration": 0,
+            "startTime": 957.8999999994412,
+            "transferSize": 0,
+            "encodedBodySize": 69254
+          }
+        ],
+        "loadingOverlays": 0,
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "mode": "cold",
+        "path": "/",
+        "status": 200,
+        "photos": [
+          {
+            "src": "https://hortvitalmix.vercel.app/api/v1/public-media/store/a7700be9-259b-43aa-813e-12a932718c69",
+            "mountedAt": 1759,
+            "readyAt": 1946.4000000003725,
+            "width": 52,
+            "height": 39
+          },
+          {
+            "src": "https://hortvitalmix.vercel.app/api/v1/public-media/product/9f7e2673-927f-487c-bd7e-04bfe559c19f",
+            "mountedAt": 1759,
+            "readyAt": 2091.5,
+            "width": 1125,
+            "height": 1125
+          },
+          {
+            "src": "https://hortvitalmix.vercel.app/api/v1/public-media/store/a7700be9-259b-43aa-813e-12a932718c69",
+            "mountedAt": 2029,
+            "readyAt": 2341.600000000559,
+            "width": 480,
+            "height": 360
+          }
+        ],
+        "resources": [
+          {
+            "path": "/api/v1/categories",
+            "duration": 205.09999999962747,
+            "startTime": 1286.7000000001863,
+            "transferSize": 994,
+            "encodedBodySize": 694
+          },
+          {
+            "path": "/api/v1/auth/session",
+            "duration": 527.7000000001863,
+            "startTime": 1293.7000000001863,
+            "transferSize": 328,
+            "encodedBodySize": 28
+          },
+          {
+            "path": "/api/v1/localities",
+            "duration": 477.6000000005588,
+            "startTime": 1294.2999999998137,
+            "transferSize": 720,
+            "encodedBodySize": 420
+          },
+          {
+            "path": "/api/v1/config",
+            "duration": 606.5,
+            "startTime": 1295.2999999998137,
+            "transferSize": 555,
+            "encodedBodySize": 255
+          },
+          {
+            "path": "/api/v1/discovery/highlights",
+            "duration": 231.59999999962747,
+            "startTime": 1504.1000000005588,
+            "transferSize": 1849,
+            "encodedBodySize": 1549
+          },
+          {
+            "path": "/api/v1/public-media/product/9f7e2673-927f-487c-bd7e-04bfe559c19f",
+            "duration": 349.69999999925494,
+            "startTime": 1741.1000000005588,
+            "transferSize": 39660,
+            "encodedBodySize": 39360
+          },
+          {
+            "path": "/api/v1/public-media/store/a7700be9-259b-43aa-813e-12a932718c69",
+            "duration": 203.30000000074506,
+            "startTime": 1741.2999999998137,
+            "transferSize": 18660,
+            "encodedBodySize": 18360
+          },
+          {
+            "path": "/api/v1/categories",
+            "duration": 391.70000000018626,
+            "startTime": 1789.2999999998137,
+            "transferSize": 994,
+            "encodedBodySize": 694
+          },
+          {
+            "path": "/api/v1/discovery/stores",
+            "duration": 234.09999999962747,
+            "startTime": 1789.7000000001863,
+            "transferSize": 1293,
+            "encodedBodySize": 993
+          },
+          {
+            "path": "/api/v1/public-media/store/a7700be9-259b-43aa-813e-12a932718c69",
+            "duration": 314.79999999981374,
+            "startTime": 2025.9000000003725,
+            "transferSize": 69554,
+            "encodedBodySize": 69254
+          }
+        ],
+        "loadingOverlays": 0,
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "mode": "warm",
+        "path": "/",
+        "status": 200,
+        "photos": [
+          {
+            "src": "https://hortvitalmix.vercel.app/api/v1/public-media/product/9f7e2673-927f-487c-bd7e-04bfe559c19f",
+            "mountedAt": 1182,
+            "readyAt": 1182,
+            "width": 1125,
+            "height": 1125
+          },
+          {
+            "src": "https://hortvitalmix.vercel.app/api/v1/public-media/store/a7700be9-259b-43aa-813e-12a932718c69",
+            "mountedAt": 1182,
+            "readyAt": 1182,
+            "width": 52,
+            "height": 39
+          },
+          {
+            "src": "https://hortvitalmix.vercel.app/api/v1/public-media/store/a7700be9-259b-43aa-813e-12a932718c69",
+            "mountedAt": 1350.7000000001863,
+            "readyAt": 1350.7000000001863,
+            "width": 480,
+            "height": 360
+          }
+        ],
+        "resources": [
+          {
+            "path": "/api/v1/categories",
+            "duration": 333.29999999981374,
+            "startTime": 639.9000000003725,
+            "transferSize": 994,
+            "encodedBodySize": 694
+          },
+          {
+            "path": "/api/v1/auth/session",
+            "duration": 311.79999999981374,
+            "startTime": 640.2000000001863,
+            "transferSize": 328,
+            "encodedBodySize": 28
+          },
+          {
+            "path": "/api/v1/localities",
+            "duration": 329.59999999962747,
+            "startTime": 640.2000000001863,
+            "transferSize": 720,
+            "encodedBodySize": 420
+          },
+          {
+            "path": "/api/v1/config",
+            "duration": 506.70000000018626,
+            "startTime": 640.4000000003725,
+            "transferSize": 555,
+            "encodedBodySize": 255
+          },
+          {
+            "path": "/api/v1/discovery/highlights",
+            "duration": 202.40000000037253,
+            "startTime": 946.7999999998137,
+            "transferSize": 1849,
+            "encodedBodySize": 1549
+          },
+          {
+            "path": "/api/v1/categories",
+            "duration": 170.90000000037253,
+            "startTime": 1157.2000000001863,
+            "transferSize": 994,
+            "encodedBodySize": 694
+          },
+          {
+            "path": "/api/v1/discovery/stores",
+            "duration": 190,
+            "startTime": 1157.6000000005588,
+            "transferSize": 1293,
+            "encodedBodySize": 993
+          },
+          {
+            "path": "/api/v1/public-media/product/9f7e2673-927f-487c-bd7e-04bfe559c19f",
+            "duration": 0,
+            "startTime": 1158.9000000003725,
+            "transferSize": 0,
+            "encodedBodySize": 39360
+          },
+          {
+            "path": "/api/v1/public-media/store/a7700be9-259b-43aa-813e-12a932718c69",
+            "duration": 0,
+            "startTime": 1159.2000000001863,
+            "transferSize": 0,
+            "encodedBodySize": 69254
+          }
+        ],
+        "loadingOverlays": 0,
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "mode": "store",
+        "path": "/produtores/loja-f2f6b8d26a6345ae8aebe1a1bfaec6fc",
+        "status": 200,
+        "photos": [
+          {
+            "src": "https://hortvitalmix.vercel.app/api/v1/public-media/store/a7700be9-259b-43aa-813e-12a932718c69",
+            "mountedAt": 1123.2000000001863,
+            "readyAt": 1123.2000000001863,
+            "width": 52,
+            "height": 39
+          },
+          {
+            "src": "https://hortvitalmix.vercel.app/api/v1/public-media/product/9f7e2673-927f-487c-bd7e-04bfe559c19f",
+            "mountedAt": 1293.9000000003725,
+            "readyAt": 1294.1000000005588,
+            "width": 375,
+            "height": 375
+          }
+        ],
+        "resources": [
+          {
+            "path": "/api/v1/auth/session",
+            "duration": 279,
+            "startTime": 567.9000000003725,
+            "transferSize": 328,
+            "encodedBodySize": 28
+          },
+          {
+            "path": "/api/v1/localities",
+            "duration": 382.90000000037253,
+            "startTime": 568.2000000001863,
+            "transferSize": 720,
+            "encodedBodySize": 420
+          },
+          {
+            "path": "/api/v1/config",
+            "duration": 441.79999999981374,
+            "startTime": 568.3000000007451,
+            "transferSize": 555,
+            "encodedBodySize": 255
+          },
+          {
+            "path": "/api/v1/products",
+            "duration": 374.20000000018626,
+            "startTime": 910.7000000001863,
+            "transferSize": 1394,
+            "encodedBodySize": 1094
+          },
+          {
+            "path": "/api/v1/stores/loja-f2f6b8d26a6345ae8aebe1a1bfaec6fc",
+            "duration": 198.69999999925494,
+            "startTime": 911.8000000007451,
+            "transferSize": 1201,
+            "encodedBodySize": 901
+          },
+          {
+            "path": "/api/v1/public-media/store/a7700be9-259b-43aa-813e-12a932718c69",
+            "duration": 0,
+            "startTime": 1115.2000000001863,
+            "transferSize": 0,
+            "encodedBodySize": 69254
+          },
+          {
+            "path": "/api/v1/public-media/product/9f7e2673-927f-487c-bd7e-04bfe559c19f",
+            "duration": 0,
+            "startTime": 1288,
+            "transferSize": 0,
+            "encodedBodySize": 39360
+          }
+        ],
+        "loadingOverlays": 0,
+        "overflow": false
+      }
+    ],
+    "baselineInterceptedNetwork": [
+      {
+        "width": 390,
+        "mode": "cold",
+        "path": "/",
+        "status": 200,
+        "photos": [
+          {
+            "src": "https://xipbsazvymkqqfmfegwu.supabase.co/storage/v1/object/sign/product-media/fb350363-e455-4d42-8b7d-f242c5c7de7a/2e0f9335-a0e9-4435-95b9-bfa7d2cc0c1d/9f7e2673-927f-487c-bd7e-04bfe559c19f-de0f6c6a54c05083d0368596974be5896b414f3c401adc3b41675d3617e876ac.webp",
+            "mountedAt": 2999.300000000745,
+            "readyAt": 3418.7000000001863,
+            "width": 1000,
+            "height": 1000
+          },
+          {
+            "src": "https://xipbsazvymkqqfmfegwu.supabase.co/storage/v1/object/sign/store-media/fb350363-e455-4d42-8b7d-f242c5c7de7a/a7700be9-259b-43aa-813e-12a932718c69-2a1ee2324b99d6fc79594d62e7d53f8805ddb1bd6edfec670da807c595ce99bc.webp",
+            "mountedAt": 2970.600000000559,
+            "readyAt": 3708.800000000745,
+            "width": 1195,
+            "height": 896
+          },
+          {
+            "src": "https://xipbsazvymkqqfmfegwu.supabase.co/storage/v1/object/sign/store-media/fb350363-e455-4d42-8b7d-f242c5c7de7a/a7700be9-259b-43aa-813e-12a932718c69-2a1ee2324b99d6fc79594d62e7d53f8805ddb1bd6edfec670da807c595ce99bc.webp",
+            "mountedAt": 2999.300000000745,
+            "readyAt": 3709.5,
+            "width": 1195,
+            "height": 896
+          }
+        ],
+        "resources": [
+          {
+            "path": "/api/v1/categories",
+            "duration": 501.29999999981374,
+            "startTime": 1362.1000000005588,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/api/v1/auth/session",
+            "duration": 297.20000000018626,
+            "startTime": 1362.5,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/api/v1/localities",
+            "duration": 608.6000000005588,
+            "startTime": 1363,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/api/v1/config",
+            "duration": 2325.899999999441,
+            "startTime": 1363.1000000005588,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/api/v1/discovery/highlights",
+            "duration": 945.1000000005588,
+            "startTime": 2005.2000000001863,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/api/v1/categories",
+            "duration": 210.29999999981374,
+            "startTime": 2005.7000000001863,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/api/v1/discovery/stores",
+            "duration": 941.5,
+            "startTime": 2006.300000000745,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/storage/v1/object/sign/store-media/fb350363-e455-4d42-8b7d-f242c5c7de7a/a7700be9-259b-43aa-813e-12a932718c69-2a1ee2324b99d6fc79594d62e7d53f8805ddb1bd6edfec670da807c595ce99bc.webp",
+            "duration": 746.2000000001863,
+            "startTime": 2952.2000000001863,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/storage/v1/object/sign/product-media/fb350363-e455-4d42-8b7d-f242c5c7de7a/2e0f9335-a0e9-4435-95b9-bfa7d2cc0c1d/9f7e2673-927f-487c-bd7e-04bfe559c19f-de0f6c6a54c05083d0368596974be5896b414f3c401adc3b41675d3617e876ac.webp",
+            "duration": 411,
+            "startTime": 2995.9000000003725,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          }
+        ],
+        "loadingOverlays": 0
+      },
+      {
+        "width": 390,
+        "mode": "warm",
+        "path": "/",
+        "status": 200,
+        "photos": [
+          {
+            "src": "https://xipbsazvymkqqfmfegwu.supabase.co/storage/v1/object/sign/store-media/fb350363-e455-4d42-8b7d-f242c5c7de7a/a7700be9-259b-43aa-813e-12a932718c69-2a1ee2324b99d6fc79594d62e7d53f8805ddb1bd6edfec670da807c595ce99bc.webp",
+            "mountedAt": 2260.800000000745,
+            "readyAt": 2307.300000000745,
+            "width": 1195,
+            "height": 896
+          },
+          {
+            "src": "https://xipbsazvymkqqfmfegwu.supabase.co/storage/v1/object/sign/store-media/fb350363-e455-4d42-8b7d-f242c5c7de7a/a7700be9-259b-43aa-813e-12a932718c69-2a1ee2324b99d6fc79594d62e7d53f8805ddb1bd6edfec670da807c595ce99bc.webp",
+            "mountedAt": 2174.5,
+            "readyAt": 2307.300000000745,
+            "width": 1195,
+            "height": 896
+          },
+          {
+            "src": "https://xipbsazvymkqqfmfegwu.supabase.co/storage/v1/object/sign/product-media/fb350363-e455-4d42-8b7d-f242c5c7de7a/2e0f9335-a0e9-4435-95b9-bfa7d2cc0c1d/9f7e2673-927f-487c-bd7e-04bfe559c19f-de0f6c6a54c05083d0368596974be5896b414f3c401adc3b41675d3617e876ac.webp",
+            "mountedAt": 2174.5,
+            "readyAt": 2337.2000000001863,
+            "width": 1000,
+            "height": 1000
+          }
+        ],
+        "resources": [
+          {
+            "path": "/api/v1/categories",
+            "duration": 202.09999999962747,
+            "startTime": 1031.4000000003725,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/api/v1/auth/session",
+            "duration": 201.70000000018626,
+            "startTime": 1031.9000000003725,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/api/v1/localities",
+            "duration": 228.70000000018626,
+            "startTime": 1034.5,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/api/v1/config",
+            "duration": 582.9000000003725,
+            "startTime": 1034.7000000001863,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/api/v1/discovery/highlights",
+            "duration": 339.40000000037253,
+            "startTime": 1830.4000000003725,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/api/v1/categories",
+            "duration": 199.70000000018626,
+            "startTime": 1836.2000000001863,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/api/v1/discovery/stores",
+            "duration": 417.1000000005588,
+            "startTime": 1839,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/storage/v1/object/sign/product-media/fb350363-e455-4d42-8b7d-f242c5c7de7a/2e0f9335-a0e9-4435-95b9-bfa7d2cc0c1d/9f7e2673-927f-487c-bd7e-04bfe559c19f-de0f6c6a54c05083d0368596974be5896b414f3c401adc3b41675d3617e876ac.webp",
+            "duration": 160,
+            "startTime": 2172.800000000745,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/storage/v1/object/sign/store-media/fb350363-e455-4d42-8b7d-f242c5c7de7a/a7700be9-259b-43aa-813e-12a932718c69-2a1ee2324b99d6fc79594d62e7d53f8805ddb1bd6edfec670da807c595ce99bc.webp",
+            "duration": 107,
+            "startTime": 2172.9000000003725,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          }
+        ],
+        "loadingOverlays": 0
+      },
+      {
+        "width": 390,
+        "mode": "store",
+        "path": "/produtores/loja-f2f6b8d26a6345ae8aebe1a1bfaec6fc",
+        "status": 200,
+        "photos": [
+          {
+            "src": "https://xipbsazvymkqqfmfegwu.supabase.co/storage/v1/object/sign/product-media/fb350363-e455-4d42-8b7d-f242c5c7de7a/2e0f9335-a0e9-4435-95b9-bfa7d2cc0c1d/9f7e2673-927f-487c-bd7e-04bfe559c19f-de0f6c6a54c05083d0368596974be5896b414f3c401adc3b41675d3617e876ac.webp",
+            "mountedAt": 1939.0999999996275,
+            "readyAt": 2143.2000000001863,
+            "width": 1000,
+            "height": 1000
+          },
+          {
+            "src": "https://xipbsazvymkqqfmfegwu.supabase.co/storage/v1/object/sign/store-media/fb350363-e455-4d42-8b7d-f242c5c7de7a/a7700be9-259b-43aa-813e-12a932718c69-2a1ee2324b99d6fc79594d62e7d53f8805ddb1bd6edfec670da807c595ce99bc.webp",
+            "mountedAt": 1939,
+            "readyAt": 2143.2999999998137,
+            "width": 1195,
+            "height": 896
+          }
+        ],
+        "resources": [
+          {
+            "path": "/api/v1/auth/session",
+            "duration": 226.90000000037253,
+            "startTime": 959.7999999998137,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/api/v1/localities",
+            "duration": 291.19999999925494,
+            "startTime": 961.9000000003725,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/api/v1/config",
+            "duration": 584.2999999998137,
+            "startTime": 962.5,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/api/v1/products",
+            "duration": 226.90000000037253,
+            "startTime": 1693.2999999998137,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/api/v1/stores/loja-f2f6b8d26a6345ae8aebe1a1bfaec6fc",
+            "duration": 236.09999999962747,
+            "startTime": 1693.9000000003725,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/storage/v1/object/sign/product-media/fb350363-e455-4d42-8b7d-f242c5c7de7a/2e0f9335-a0e9-4435-95b9-bfa7d2cc0c1d/9f7e2673-927f-487c-bd7e-04bfe559c19f-de0f6c6a54c05083d0368596974be5896b414f3c401adc3b41675d3617e876ac.webp",
+            "duration": 68.5,
+            "startTime": 1923,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          },
+          {
+            "path": "/storage/v1/object/sign/store-media/fb350363-e455-4d42-8b7d-f242c5c7de7a/a7700be9-259b-43aa-813e-12a932718c69-2a1ee2324b99d6fc79594d62e7d53f8805ddb1bd6edfec670da807c595ce99bc.webp",
+            "duration": 142.3999999994412,
+            "startTime": 1931.7000000001863,
+            "transferSize": 0,
+            "encodedBodySize": 0
+          }
+        ],
+        "loadingOverlays": 0
+      }
+    ],
+    "note": "All photo/catalog traffic was real; only the automatic cart GET was substituted. Normal cache used fetch substitution, without network interception. The real store sample is the producer portrait; no cover was uploaded in that store. Values are sample timings, not a universal guarantee."
   }
 }

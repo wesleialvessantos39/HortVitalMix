@@ -119,6 +119,24 @@ describe.runIf(!!process.env.HVM_T22_LOCAL_DATABASE_URL)(
       ).rejects.toMatchObject({ code: "MEDIA_NOT_FOUND", status: 404 });
       expect(storage.downloads).toBe(n);
     });
+    it("capa pública real recebe variante; retirada não reutiliza bytes na origem", async () => {
+      const cover = randomUUID();
+      await pool().query(
+        "INSERT INTO app_store_media(id,store_id,purpose,media_url,display_order) VALUES($1,$2,'cover',$3,0)",
+        [
+          cover,
+          owner.store.id,
+          `https://xipbsazvymkqqfmfegwu.supabase.co/storage/v1/object/store-media/${owner.store.id}/${cover}-${"b".repeat(64)}.png`,
+        ],
+      );
+      const image = await PublicMediaService.image("store", cover, 640);
+      expect((await sharp(image.bytes).metadata()).width).toBe(640);
+      expect(image.bytes.length).toBeLessThan(storage.buffer.length);
+      await pool().query("DELETE FROM app_store_media WHERE id=$1", [cover]);
+      await expect(
+        PublicMediaService.image("store", cover, 640),
+      ).rejects.toMatchObject({ status: 404 });
+    });
     it("documentos privados e ID inexistente não chegam ao Storage", async () => {
       const n = storage.downloads;
       await expect(
