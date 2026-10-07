@@ -2011,6 +2011,507 @@
         "rows": 10,
         "digest": "e1f784e942bbf22a24f07f72521e8a86"
       }
+    ],
+    "afterFunctionalPublication": [
+      {
+        "relation": "auth.sessions",
+        "rows": 32,
+        "digest": "6592510986a23f77dae8072234806978"
+      },
+      {
+        "relation": "auth.users",
+        "rows": 7,
+        "digest": "3331d875a9d2d75ab2c2b102c523bd64"
+      },
+      {
+        "relation": "public.app_access_partial_block_municipalities",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_access_partial_block_properties",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_access_partial_blocks",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_account_deletions",
+        "rows": 1,
+        "digest": "90f56a4983a5d45d4de69ca04726d44c"
+      },
+      {
+        "relation": "public.app_admin_auth_attempts",
+        "rows": 200,
+        "digest": "5e705ca3f936d51c288b31998a79c2bd"
+      },
+      {
+        "relation": "public.app_admin_invite_sectors",
+        "rows": 11,
+        "digest": "c97d5bab701723c9f86e8f54697e0933"
+      },
+      {
+        "relation": "public.app_admin_invites",
+        "rows": 2,
+        "digest": "acf6b84336478fae27e8758efa48b3e6"
+      },
+      {
+        "relation": "public.app_admin_mfa_challenges",
+        "rows": 6,
+        "digest": "653dba5fb3839c4c9aebaf3270cfe461"
+      },
+      {
+        "relation": "public.app_admin_principals",
+        "rows": 1,
+        "digest": "a73e95820a11f9d71280e5764e2686ff"
+      },
+      {
+        "relation": "public.app_admin_sector_members",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_admin_sectors",
+        "rows": 9,
+        "digest": "469279ff0a7ddd98bd45f83fe23d24cc"
+      },
+      {
+        "relation": "public.app_audit_events",
+        "rows": 452,
+        "digest": "fa89544ad6e60418d2d2741d230e5b66"
+      },
+      {
+        "relation": "public.app_billing_cycles",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_car_validations",
+        "rows": 2,
+        "digest": "77c565cc3b4f31c857dda0ad64ca6b6c"
+      },
+      {
+        "relation": "public.app_cart_items",
+        "rows": 1,
+        "digest": "77612b3cfb93724fc6ed60023b10326c"
+      },
+      {
+        "relation": "public.app_carts",
+        "rows": 4,
+        "digest": "97ab29e801429991529b9d9af19c0596"
+      },
+      {
+        "relation": "public.app_case_evidence",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_case_history",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_case_messages",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_categories",
+        "rows": 5,
+        "digest": "d2291cd307479b03966a934c25a19573"
+      },
+      {
+        "relation": "public.app_checkout_quotes",
+        "rows": 3,
+        "digest": "c385f308c7a0feb75a39fb68ddb7ebee"
+      },
+      {
+        "relation": "public.app_command_receipts",
+        "rows": 3,
+        "digest": "5bc7ac8317a3c945e5de0cdbff269be4"
+      },
+      {
+        "relation": "public.app_commerce_receipts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_commerce_settings",
+        "rows": 1,
+        "digest": "23f91fa9dcfb96ce654ca58ddf0bcf82"
+      },
+      {
+        "relation": "public.app_complaints",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_consent_records",
+        "rows": 1,
+        "digest": "65e91ba1151fcc0c5b63b89b3efa728f"
+      },
+      {
+        "relation": "public.app_contact_verification_challenges",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_allocations",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_attempts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_proofs",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_delivery_quotes",
+        "rows": 3,
+        "digest": "08dd58f49ced8d8e6f83873685ef1227"
+      },
+      {
+        "relation": "public.app_delivery_rules",
+        "rows": 1,
+        "digest": "a329636a0ed024c4b4e4846fe52953d6"
+      },
+      {
+        "relation": "public.app_delivery_windows",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_document_extractions",
+        "rows": 2,
+        "digest": "4d377021ccaa459814deb9c88b2e8bd1"
+      },
+      {
+        "relation": "public.app_document_jobs",
+        "rows": 5,
+        "digest": "15dc948923b0e0f44f8ec51b9e01ce75"
+      },
+      {
+        "relation": "public.app_document_reviews",
+        "rows": 30,
+        "digest": "a8f2319cb71e8cf12db236285d93bbf1"
+      },
+      {
+        "relation": "public.app_document_scans",
+        "rows": 8,
+        "digest": "42f4a20fa41f4194a7d0622f5de21ba9"
+      },
+      {
+        "relation": "public.app_documents",
+        "rows": 8,
+        "digest": "563bd163373b9f3feec074a0d73e6878"
+      },
+      {
+        "relation": "public.app_favorites",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_financial_holds",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_global_config",
+        "rows": 1,
+        "digest": "9ec3935e8e5024e8dbf3e2705456f76b"
+      },
+      {
+        "relation": "public.app_inventory_lots",
+        "rows": 1,
+        "digest": "34fb124216d19547bdecad68fe908a05"
+      },
+      {
+        "relation": "public.app_inventory_movements",
+        "rows": 1,
+        "digest": "a4f87aa2fa9c32773e3e14a56d7c35d4"
+      },
+      {
+        "relation": "public.app_inventory_reservations",
+        "rows": 3,
+        "digest": "5b4cff4b021a859cd0e86d1f3b985011"
+      },
+      {
+        "relation": "public.app_kpi_definitions",
+        "rows": 8,
+        "digest": "d7a6413a140b846b7b999814a54574bd"
+      },
+      {
+        "relation": "public.app_kpi_metrics",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_locality_user_impacts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_municipalities",
+        "rows": 7,
+        "digest": "180caf43f1ebf22d1ed2c458dd0281b0"
+      },
+      {
+        "relation": "public.app_notifications",
+        "rows": 3,
+        "digest": "b04236ef0b4bdc4367c7bfd215303fe9"
+      },
+      {
+        "relation": "public.app_order_events",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_order_fulfillment",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_order_items",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_order_stock_returns",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_orders",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_outbox_events",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_password_recovery_requests",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_payment_intents",
+        "rows": 3,
+        "digest": "14c4ff0a509e53028b9f47928a4676f8"
+      },
+      {
+        "relation": "public.app_payment_policy_acceptances",
+        "rows": 2,
+        "digest": "7d980b0ee745916b24272b0fe7015eed"
+      },
+      {
+        "relation": "public.app_payment_transactions",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_people",
+        "rows": 4,
+        "digest": "ed74e332abbf16b57996d5a48592dd81"
+      },
+      {
+        "relation": "public.app_plans",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_pos_sales",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_price_versions",
+        "rows": 1,
+        "digest": "fc1d5d81f82eda0d3408493e8b96d718"
+      },
+      {
+        "relation": "public.app_producer_delivery_municipalities",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_producer_delivery_scopes",
+        "rows": 1,
+        "digest": "bd0d831558020c1333d81f3146dc5578"
+      },
+      {
+        "relation": "public.app_producer_profiles",
+        "rows": 3,
+        "digest": "72f8b21155aace616ca8379b823605c7"
+      },
+      {
+        "relation": "public.app_producer_stores",
+        "rows": 2,
+        "digest": "d6f67fe99ae6a4ae7bf7bfc99d2386f5"
+      },
+      {
+        "relation": "public.app_product_media",
+        "rows": 1,
+        "digest": "d0c8c151e3a3ff65a23037dfe5746efa"
+      },
+      {
+        "relation": "public.app_products",
+        "rows": 1,
+        "digest": "5f073e3cc1784f7c38df9c2a7edc4fed"
+      },
+      {
+        "relation": "public.app_properties",
+        "rows": 2,
+        "digest": "fc9a2430346965cce128381585353b5f"
+      },
+      {
+        "relation": "public.app_property_boundaries",
+        "rows": 2,
+        "digest": "bdc5ecb7ed4425b77f91edc17b1cd1ed"
+      },
+      {
+        "relation": "public.app_property_deletion_archive",
+        "rows": 2,
+        "digest": "74b18a79feeec1471c0837b93e59ce74"
+      },
+      {
+        "relation": "public.app_recurrence_schedules",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_refund_requests",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_refund_seller_contacts",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_registration_reviews",
+        "rows": 1,
+        "digest": "a4b1692c4dbaf90f7e9fa062b481b27e"
+      },
+      {
+        "relation": "public.app_releases",
+        "rows": 102,
+        "digest": "6c30c4906cb1332bfbc21170fa1ef542"
+      },
+      {
+        "relation": "public.app_reputation_projections",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_reviews",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_role_security_challenges",
+        "rows": 3,
+        "digest": "5659555a1f8a16e55a37de5208701357"
+      },
+      {
+        "relation": "public.app_roles",
+        "rows": 4,
+        "digest": "eb12fdea3e58a51d00cba1d19d0ff932"
+      },
+      {
+        "relation": "public.app_rural_activities",
+        "rows": 2,
+        "digest": "228e60ecf8709963431107040119cb5d"
+      },
+      {
+        "relation": "public.app_service_areas",
+        "rows": 1,
+        "digest": "290675fd4c8ef99c60c1feb4363cf667"
+      },
+      {
+        "relation": "public.app_storage_deletion_queue",
+        "rows": 10,
+        "digest": "a41c92f70e9827e37cea56fefa2f3f0e"
+      },
+      {
+        "relation": "public.app_store_media",
+        "rows": 1,
+        "digest": "be6a5c39aad9b1d334011766d05eb48b"
+      },
+      {
+        "relation": "public.app_store_operating_hours",
+        "rows": 14,
+        "digest": "efc2439086711f022bcec9d5e63035ce"
+      },
+      {
+        "relation": "public.app_subscriptions",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_sync_command_journal",
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "relation": "public.app_trial_grants",
+        "rows": 3,
+        "digest": "c5e53711c0ef4b1d6adb4e6aac226235"
+      },
+      {
+        "relation": "public.app_user_addresses",
+        "rows": 1,
+        "digest": "a9b4f7aefadd58578c93ab17b90cc98e"
+      },
+      {
+        "relation": "public.app_user_preferences",
+        "rows": 1,
+        "digest": "13504828152f07a439bc83c8ffe2fa57"
+      },
+      {
+        "relation": "public.app_user_role_assignments",
+        "rows": 6,
+        "digest": "b03fd131bbf438da1c0380c7eeb9937c"
+      },
+      {
+        "relation": "public.app_users",
+        "rows": 7,
+        "digest": "b2259afafdf0e29a83b93b38ea538ecf"
+      },
+      {
+        "relation": "public.app_verification_decisions",
+        "rows": 3,
+        "digest": "6c411d0a2d034963c908188b54cb2cd4"
+      },
+      {
+        "relation": "public.app_verification_requests",
+        "rows": 3,
+        "digest": "ba29858bb18f82497318c12c82fb4f5e"
+      },
+      {
+        "relation": "storage.buckets",
+        "rows": 5,
+        "digest": "3fb45a19872f18df8967fa9f59e9ef1b"
+      },
+      {
+        "relation": "storage.objects",
+        "rows": 10,
+        "digest": "e1f784e942bbf22a24f07f72521e8a86"
+      }
+    ],
+    "identicalAfterFunctionalPublication": 98,
+    "intentionalPublicationDifferences": [
+      "public.app_releases"
     ]
   },
   "grants": {
@@ -2502,7 +3003,469 @@
     "region": "pdx1"
   },
   "publication": {
-    "status": "pending-main-ready",
-    "canonical": "https://hortvitalmix.vercel.app"
+    "status": "functional-ready-sealed-verified",
+    "canonical": "https://hortvitalmix.vercel.app",
+    "pr": 99,
+    "sha": "6c483d202308d6933dd691136764829257b12025",
+    "tree": "834a3652d70cbf796715b1cf631aaa7a19c47271",
+    "deployment": "dpl_4UQ6LvsEApvyYVMJ2bQB5mXEtfCv",
+    "ready": "READY",
+    "branch": "main",
+    "target": "production",
+    "regions": [
+      "pdx1"
+    ],
+    "releaseTag": "fix-profiles-v65-6c483d2",
+    "healthReadyConfig": "passed",
+    "httpChecks": 22,
+    "privateAuthAndExternalOrigin": "401/no-store and 403 before business action",
+    "browserRoutes": 8,
+    "browserViewportCombinations": 32,
+    "browserPageErrors": [],
+    "worker": {
+      "status": 200,
+      "cacheName": "hvm-rural-assets-0e5b8496e376a10e",
+      "staticAssets": 72,
+      "totalStaticBytes": 1586832,
+      "apiOrAuthCached": false,
+      "assets": [
+        {
+          "path": "/assets/AdminCategoriesPage-3oq77AoA.js",
+          "status": 200,
+          "bytes": 12146,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/AdminReauthentication-BSk5ma0S.js",
+          "status": 200,
+          "bytes": 1534,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/AdminCategoriesPage-C1S2FQ74.css",
+          "status": 200,
+          "bytes": 3353,
+          "contentType": "text/css; charset=utf-8"
+        },
+        {
+          "path": "/assets/AdminCommercePage-CuJ92k25.js",
+          "status": 200,
+          "bytes": 9623,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/AdminReviewsPage-Doa-eJ_C.js",
+          "status": 200,
+          "bytes": 5188,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/AdminSubscriptionPlansPage-C_VK0Huw.js",
+          "status": 200,
+          "bytes": 8350,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/CartPage-BriAwtps.js",
+          "status": 200,
+          "bytes": 6213,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/CartPage-BR4N1sd2.css",
+          "status": 200,
+          "bytes": 2844,
+          "contentType": "text/css; charset=utf-8"
+        },
+        {
+          "path": "/assets/CheckoutReviewPage-BQvydXN2.js",
+          "status": 200,
+          "bytes": 14510,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/CheckoutReviewPage-CkeUIbrs.css",
+          "status": 200,
+          "bytes": 4009,
+          "contentType": "text/css; charset=utf-8"
+        },
+        {
+          "path": "/assets/DeliveryWindowsPage-vUEzx8vQ.js",
+          "status": 200,
+          "bytes": 4730,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/CasesPage-DLyjKvST.js",
+          "status": 200,
+          "bytes": 18156,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/ExecutiveBiDashboardPage-U5SVmLwM.js",
+          "status": 200,
+          "bytes": 7856,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/HomeDiscoveryPage-CpqbFj0U.css",
+          "status": 200,
+          "bytes": 3701,
+          "contentType": "text/css; charset=utf-8"
+        },
+        {
+          "path": "/assets/ExecutiveBiDashboardPage-DhXQHaiu.css",
+          "status": 200,
+          "bytes": 1825,
+          "contentType": "text/css; charset=utf-8"
+        },
+        {
+          "path": "/assets/HomeDiscoveryPage-DE6JeHKt.js",
+          "status": 200,
+          "bytes": 9175,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/InventoryLotsPage-Dl4OqIHm.css",
+          "status": 200,
+          "bytes": 2423,
+          "contentType": "text/css; charset=utf-8"
+        },
+        {
+          "path": "/assets/NotificationsPage-BW5CCPGK.js",
+          "status": 200,
+          "bytes": 3809,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/PaymentPreparedPage-DXXJjnhU.js",
+          "status": 200,
+          "bytes": 6316,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/InventoryLotsPage-DzdBZeyO.js",
+          "status": 200,
+          "bytes": 12853,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/OrderTrackingPage-D7wpNLpN.js",
+          "status": 200,
+          "bytes": 13386,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/PosSaleReviewPage-4XIF6D1P.js",
+          "status": 200,
+          "bytes": 3406,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/ProducerDeliveryAreaPage-ec3awBsS.css",
+          "status": 200,
+          "bytes": 2822,
+          "contentType": "text/css; charset=utf-8"
+        },
+        {
+          "path": "/assets/ProducerDeliveryAreaPage-Dk09DDZf.js",
+          "status": 200,
+          "bytes": 12392,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/ProducerCatalogPage-eTuRpPnf.js",
+          "status": 200,
+          "bytes": 3943,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/ProducerPosPage-lU3LmVe5.js",
+          "status": 200,
+          "bytes": 7987,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/ProducerOrdersPage-C7WGPEXe.js",
+          "status": 200,
+          "bytes": 14953,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/ProducerRefundsPage-BMTSQqv-.js",
+          "status": 200,
+          "bytes": 4038,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/ProducerSalesPage-Ddw6uxbW.js",
+          "status": 200,
+          "bytes": 5244,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/ProducerStoreSettingsPage-DGtCPPz4.js",
+          "status": 200,
+          "bytes": 23093,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/ProductEditorPage-CUDxVbMJ.js",
+          "status": 200,
+          "bytes": 9748,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/ProductCommandFeedback-CMDfriRy.js",
+          "status": 200,
+          "bytes": 4218,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/ProducerStoreSettingsPage-Dth3neKG.css",
+          "status": 200,
+          "bytes": 4083,
+          "contentType": "text/css; charset=utf-8"
+        },
+        {
+          "path": "/assets/PublicProducerStorePage-C9q25RAM.js",
+          "status": 200,
+          "bytes": 7969,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/PurchasesPage-DQkfdC0H.js",
+          "status": 200,
+          "bytes": 5320,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/RefundPolicy-CMPBm2nJ.js",
+          "status": 200,
+          "bytes": 3153,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/RegionalHighlights-lgWSENGH.js",
+          "status": 200,
+          "bytes": 3513,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/SubscriptionPlansPage-B0bcHIcQ.js",
+          "status": 200,
+          "bytes": 10931,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/cart-B-rwyd3_.js",
+          "status": 200,
+          "bytes": 1140,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/arrow-right-BFiwj5V0.js",
+          "status": 200,
+          "bytes": 205,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/coerce-4Z-yISZy.js",
+          "status": 200,
+          "bytes": 92,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/clock-3-Dlk2SZSl.js",
+          "status": 200,
+          "bytes": 209,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/createLucideIcon-CDY9UlVd.js",
+          "status": 200,
+          "bytes": 3100,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/commerce-DdxNSa6j.css",
+          "status": 200,
+          "bytes": 4730,
+          "contentType": "text/css; charset=utf-8"
+        },
+        {
+          "path": "/assets/commerce-C2y9Ch7c.js",
+          "status": 200,
+          "bytes": 3755,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/deliveryLogistics-DeLcB3dq.js",
+          "status": 200,
+          "bytes": 1475,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/deliveryLogistics-Dl5a3fwn.css",
+          "status": 200,
+          "bytes": 1149,
+          "contentType": "text/css; charset=utf-8"
+        },
+        {
+          "path": "/assets/index-FVxBvfIz.css",
+          "status": 200,
+          "bytes": 137122,
+          "contentType": "text/css; charset=utf-8"
+        },
+        {
+          "path": "/assets/index-Ba5LMQLL.js",
+          "status": 200,
+          "bytes": 626478,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/discovery-DIWC5imz.js",
+          "status": 200,
+          "bytes": 1321,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/iso-BoSNZNLv.js",
+          "status": 200,
+          "bytes": 141,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/jsx-runtime-xVcXnlgX.js",
+          "status": 200,
+          "bytes": 12582,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/notifications-BNSGFB73.css",
+          "status": 200,
+          "bytes": 2871,
+          "contentType": "text/css; charset=utf-8"
+        },
+        {
+          "path": "/assets/optimizeImage-2qQLzYqz.js",
+          "status": 200,
+          "bytes": 2164,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/orders-l2I2UcHi.css",
+          "status": 200,
+          "bytes": 4464,
+          "contentType": "text/css; charset=utf-8"
+        },
+        {
+          "path": "/assets/producerSales-DjQJSqsl.js",
+          "status": 200,
+          "bytes": 1598,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/producerStore-BJAzyfCE.js",
+          "status": 200,
+          "bytes": 2286,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/pdf-DsooAVnx.js",
+          "status": 200,
+          "bytes": 373598,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/product-CuqDMtmc.js",
+          "status": 200,
+          "bytes": 2473,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/reviews-96HUUSZ4.js",
+          "status": 200,
+          "bytes": 1304,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/qr-code-Bt2T3NiM.js",
+          "status": 200,
+          "bytes": 690,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/reviews-B4HwxJmN.css",
+          "status": 200,
+          "bytes": 3126,
+          "contentType": "text/css; charset=utf-8"
+        },
+        {
+          "path": "/assets/schemas-DlOyAbQU.js",
+          "status": 200,
+          "bytes": 95482,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/reviews-DXgC44lK.js",
+          "status": 200,
+          "bytes": 1660,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/shopping-basket-s1VrWQQK.js",
+          "status": 200,
+          "bytes": 450,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/storeCoverSlides-BjtU43_K.css",
+          "status": 200,
+          "bytes": 9478,
+          "contentType": "text/css; charset=utf-8"
+        },
+        {
+          "path": "/assets/storeCoverSlides-F1fHOw4t.js",
+          "status": 200,
+          "bytes": 1130,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/storefrontMedia-CfA3hnfX.js",
+          "status": 200,
+          "bytes": 1159,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/storefrontMedia-Cwsbetye.css",
+          "status": 200,
+          "bytes": 2896,
+          "contentType": "text/css; charset=utf-8"
+        },
+        {
+          "path": "/assets/subscriptions-DZj6A2XA.js",
+          "status": 200,
+          "bytes": 2234,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/assets/useOrderQuery-BF_uYjMt.js",
+          "status": 200,
+          "bytes": 4162,
+          "contentType": "application/javascript; charset=utf-8"
+        },
+        {
+          "path": "/index.html",
+          "status": 200,
+          "bytes": 1295,
+          "contentType": "text/html; charset=utf-8"
+        }
+      ]
+    },
+    "runtimeErrorFatalGroupsInFiveMinutes": 0,
+    "noProductionFixtures": true,
+    "functionalVerifiedAt": "2026-10-07T21:58:13.812Z",
+    "documentaryClosure": "This documentation preserves the functional code and is sealed on its own exact main SHA after READY."
   }
 }
