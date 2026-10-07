@@ -53,7 +53,7 @@ export default function CasesPage({
     query = new URLSearchParams(location.search);
   const [cases, setCases] = useState<CaseView[]>([]),
     [selected, setSelected] = useState<CaseView | null>(null),
-    [selectedId, setSelectedId] = useState<string | null>(null),
+    [selectedId, setSelectedId] = useState<string | null>(query.get("caseId")),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
@@ -69,6 +69,7 @@ export default function CasesPage({
     [targets, setTargets] = useState<Target[]>([]),
     [targetSearch, setTargetSearch] = useState(query.get("search") ?? ""),
     [message, setMessage] = useState(""),
+    [sellerMessage, setSellerMessage] = useState(""),
     [decision, setDecision] = useState("review"),
     [notes, setNotes] = useState(""),
     [approvedAmount, setApprovedAmount] = useState(""),
@@ -163,6 +164,29 @@ export default function CasesPage({
     return () => controller.abort();
   }, [userId, base, plural, selectedId]);
   useEffect(() => {
+    if (!userId) return;
+    const controller=new AbortController();let running=false;
+    async function update() {
+      if(running||controller.signal.aborted||document.visibilityState==="hidden"||navigator.onLine===false)return;
+      running=true;
+      try {
+        const value=await api<{cases:CaseView[];pages:number}>(`${base}/${plural}?page=${page}&filter=${filter}`,{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(20000)])});
+        if(controller.signal.aborted)return;
+        setCases(value.cases);setPages(value.pages??1);
+        if(selectedId) {
+          const detail=await api<CaseView>(`${base}/${plural}/${selectedId}`,{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(20000)])});
+          if(!controller.signal.aborted)setSelected(detail);
+        }
+      } catch(e) {
+        if(!controller.signal.aborted){setError(commerceMessage(e));if([401,403,404].includes((e as ApiFailure).status??0))setSelected(null);}
+      } finally {running=false;}
+    }
+    const sync=()=>void update(),timer=setInterval(sync,30000);
+    window.addEventListener("hvm:notifications-updated",sync);
+    window.addEventListener("focus",sync);window.addEventListener("online",sync);document.addEventListener("visibilitychange",sync);
+    return()=>{controller.abort();clearInterval(timer);window.removeEventListener("hvm:notifications-updated",sync);window.removeEventListener("focus",sync);window.removeEventListener("online",sync);document.removeEventListener("visibilitychange",sync);};
+  }, [userId,base,plural,page,filter,selectedId]);
+  useEffect(() => {
     const order = orders.find((value) => value.id === orderId);
     if (order) setAmount((order.totalCents / 100).toFixed(2));
   }, [orders, orderId]);
@@ -253,6 +277,14 @@ export default function CasesPage({
       );
       setMessage("");
       setNotice("Mensagem enviada à solicitação.");
+    });
+  }
+  async function contactSeller(event: FormEvent) {
+    event.preventDefault();
+    if(!isAdmin||kind!=="refund"||!selected||!userId)return;
+    await execute(async()=>{
+      setSelected(await commerceMutation<CaseView>(`${base}/refunds/${selected.id}/seller-contacts`,{message:sellerMessage},userId));
+      setSellerMessage("");setNotice("Contato registrado para o vendedor acompanhar.");
     });
   }
   async function decide(event: FormEvent) {
@@ -718,6 +750,10 @@ export default function CasesPage({
                       </button>
                     </form>
                   )}
+                  {isAdmin&&kind==="refund"&&<section aria-label="Contato com vendedor"><h3>Contato com o vendedor</h3><p>{selected.seller?.storeName} · {selected.seller?.orderNumber}</p><p>As orientações desta seção ficam disponíveis ao produtor titular da venda. A conversa com o consumidor permanece no atendimento privado.</p>
+                    {selected.sellerContacts?.map(c=><div className="commerce-message" key={c.id}><p className="commerce-prewrap">{c.message}</p><small>{date(c.createdAt)}</small></div>)}
+                    {!closed&&<form className="hvm-seller-contact-form" onSubmit={event=>void contactSeller(event)}><label>Orientação ao vendedor<textarea value={sellerMessage} required minLength={10} maxLength={4000} onChange={event=>setSellerMessage(event.target.value)}/></label><button className="secondary" disabled={busy}>Enviar ao vendedor</button></form>}
+                  </section>}
                   <h3>Anexos privados</h3>
                   {selected.evidence.map((value) => (
                     <button

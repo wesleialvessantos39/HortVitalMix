@@ -48,7 +48,7 @@ export async function commerceTransaction<T>(
     client.release();
   }
 }
-export async function commerceIdentity(client: PoolClient, userId: string) {
+export async function commerceIdentity(client: PoolClient, userId: string, required?: "consumer" | "producer") {
   z.uuid().parse(userId);
   const result = await client.query<{ person_id: string; roles: string[] }>(
     `SELECT pe.id AS person_id,
@@ -65,6 +65,8 @@ export async function commerceIdentity(client: PoolClient, userId: string) {
     !actor.roles.some((role) => role === "consumer" || role === "producer")
   )
     throw new CommerceError("AUTH_REQUIRED", 401);
+  if (required && !actor.roles.includes(required))
+    throw new CommerceError(required === "consumer" ? "CONSUMER_REQUIRED" : "PRODUCER_REQUIRED", 403);
   return actor;
 }
 export async function commerceAdmin(

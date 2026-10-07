@@ -54,7 +54,7 @@ describe("T19: HTTP Auth, origem, header e contratos", () => {
     expect(String(r.headers["set-cookie"])).toContain("HttpOnly");
     expect(
       (
-        await request(app("producer")).get(
+        await request(app("consumer")).get(
           "/v1/checkout/context?userId=" + randomUUID(),
         )
       ).status,

@@ -68,11 +68,15 @@ export function useOrderQuery<T>(
     void load();
     document.addEventListener("visibilitychange", visible);
     window.addEventListener("focus", visible);
+    window.addEventListener("hvm:notifications-changed", visible);
+    window.addEventListener("hvm:notifications-updated", visible);
     return () => {
       controller.abort();
       clearTimeout(timer);
       document.removeEventListener("visibilitychange", visible);
       window.removeEventListener("focus", visible);
+      window.removeEventListener("hvm:notifications-changed", visible);
+      window.removeEventListener("hvm:notifications-updated", visible);
     };
   }, [path, userId, schema, version]);
   return { data, error, refresh };

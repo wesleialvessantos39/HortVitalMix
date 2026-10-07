@@ -246,5 +246,7 @@ export async function api<T>(
       requestId,
     });
 
+  if ((requestInit.method??"GET").toUpperCase()!=="GET" && !path.includes("/notifications/") && typeof window!=="undefined")
+    window.dispatchEvent(new Event("hvm:notifications-changed"));
   return json as T;
 }

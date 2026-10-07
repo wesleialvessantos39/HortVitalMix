@@ -364,7 +364,7 @@ async function handlePublicLoginRequest(
       return;
     }
 
-    await mergeLoginCart(req, data.user.id);
+    if (portalRole === "consumer") await mergeLoginCart(req, data.user.id);
     setSession(res, data, portalRole);
     setRecentAuth(res, data.user.id, data.access_token);
     resetLoginRateLimit(req.clientIpHash);
@@ -547,7 +547,7 @@ authRouter.post("/import-session", async (req, res, next) => {
       return;
     }
 
-    await mergeLoginCart(req, restored.data.session.user.id);
+    if ((input.data.portalRole ?? access.roles[0]) === "consumer") await mergeLoginCart(req, restored.data.session.user.id);
     setSession(res, restored.data.session, input.data.portalRole ?? null);
     res.json({
       status: "imported",

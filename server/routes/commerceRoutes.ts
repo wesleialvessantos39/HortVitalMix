@@ -1,3 +1,4 @@
+import { publicRole, publicUser } from "../security/publicRole.ts";
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import { CommerceService } from "../services/CommerceService.ts";
@@ -48,14 +49,9 @@ async function run(
       });
   }
 }
-function user(req: Request) {
-  if (
-    !req.actor ||
-    !req.actor.roles.some((role) => role === "consumer" || role === "producer")
-  )
-    throw new CommerceError("AUTH_REQUIRED", 401);
-  return req.actor.userId;
-}
+const user = (req: Request) => publicUser(req);
+const consumer = (req: Request) => publicUser(req, "consumer");
+const producer = (req: Request) => publicUser(req, "producer");
 const id = (value: unknown) => z.uuid().parse(value);
 const command = z.object({ commandId: CheckoutCommandIdSchema }).strict();
 const pageQuery = (req: Request) =>
@@ -67,11 +63,12 @@ const pageQuery = (req: Request) =>
     .parse(req.query.page ?? 1);
 const filterQuery = (req: Request) =>
   z.enum(["all", "open", "closed"]).parse(req.query.filter ?? "all");
+commerceRouter.use("/commerce/refunds",(req,res,next)=>{try{consumer(req);next();}catch(e){res.status((e as CommerceError).status??403).json({error:(e as CommerceError).code,requestId:req.requestId});}});
 commerceRouter.get("/commerce/policy", (req, res) =>
   run(req, res, () => CommerceService.policy()),
 );
 commerceRouter.get("/commerce/purchases", (req, res) =>
-  run(req, res, () => CommerceService.purchases(user(req))),
+  run(req, res, () => CommerceService.purchases(consumer(req))),
 );
 commerceRouter.get("/commerce/report-targets", (req, res) =>
   run(req, res, () =>
@@ -94,7 +91,7 @@ commerceRouter.post(
   (req, res) =>
     run(req, res, () =>
       CommerceService.received(
-        user(req),
+        consumer(req),
         id(req.params.id),
         command.parse(req.body).commandId,
         context(req),
@@ -102,7 +99,7 @@ commerceRouter.post(
     ),
 );
 commerceRouter.get("/payments/:id", (req, res) =>
-  run(req, res, () => PaymentService.view(user(req), id(req.params.id))),
+  run(req, res, () => PaymentService.view(user(req), id(req.params.id), publicRole(req))),
 );
 commerceRouter.post("/payments/:id/policy", originProtection, (req, res) =>
   run(req, res, () =>
@@ -114,13 +111,14 @@ commerceRouter.post("/payments/:id/policy", originProtection, (req, res) =>
         .strict()
         .parse(req.body).policyVersion,
       context(req),
+      publicRole(req),
     ),
   ),
 );
 commerceRouter.post("/payments/:id/start", originProtection, (req, res) =>
   run(req, res, async () => {
     z.object({}).strict().parse(req.body);
-    await PaymentService.view(user(req), id(req.params.id));
+    await PaymentService.view(user(req), id(req.params.id), publicRole(req));
     throw new CommerceError("GATEWAY_NOT_CONFIGURED", 503);
   }),
 );
@@ -133,13 +131,13 @@ commerceRouter.post("/payments/webhook", (req, res) =>
   ),
 );
 commerceRouter.get("/producer/pos", (req, res) =>
-  run(req, res, () => CommerceService.posContext(user(req))),
+  run(req, res, () => CommerceService.posContext(producer(req))),
 );
 commerceRouter.post("/producer/pos/sales", originProtection, (req, res) =>
   run(
     req,
     res,
-    () => CommerceService.createPosSale(user(req), req.body, context(req)),
+    () => CommerceService.createPosSale(producer(req), req.body, context(req)),
     201,
   ),
 );
@@ -149,7 +147,7 @@ commerceRouter.post(
   (req, res) =>
     run(req, res, () =>
       CommerceService.cancelPosSale(
-        user(req),
+        producer(req),
         id(req.params.id),
         command.parse(req.body).commandId,
         context(req),
@@ -158,7 +156,7 @@ commerceRouter.post(
 );
 commerceRouter.get("/commerce/pos/:code", (req, res) =>
   run(req, res, () =>
-    CommerceService.posSale(user(req), String(req.params.code)),
+    CommerceService.posSale(consumer(req), String(req.params.code)),
   ),
 );
 commerceRouter.post(
@@ -167,7 +165,7 @@ commerceRouter.post(
   (req, res) =>
     run(req, res, () =>
       CommerceService.acceptPosSale(
-        user(req),
+        consumer(req),
         String(req.params.code),
         req.body,
         context(req),
@@ -186,15 +184,16 @@ for (const [kind, path, create] of [
         undefined,
         pageQuery(req),
         filterQuery(req),
+        publicRole(req),
       ),
     ),
   );
   commerceRouter.post("/commerce/" + path, originProtection, (req, res) =>
-    run(req, res, () => create(user(req), req.body, context(req)), 201),
+    run(req, res, () => kind === "refund" ? create(consumer(req), req.body, context(req)) : AfterSalesService.createComplaint(user(req),req.body,context(req),publicRole(req)), 201),
   );
   commerceRouter.get("/commerce/" + path + "/:id", (req, res) =>
     run(req, res, () =>
-      AfterSalesService.detail(user(req), kind, id(req.params.id)),
+      AfterSalesService.detail(user(req), kind, id(req.params.id), undefined, publicRole(req)),
     ),
   );
   commerceRouter.post(
@@ -208,6 +207,8 @@ for (const [kind, path, create] of [
           id(req.params.id),
           req.body,
           context(req),
+          undefined,
+          publicRole(req),
         ),
       ),
   );
@@ -216,14 +217,16 @@ commerceRouter.post("/commerce/evidence", originProtection, (req, res) =>
   run(
     req,
     res,
-    () => AfterSalesService.uploadEvidence(user(req), req.body, context(req)),
+    () => AfterSalesService.uploadEvidence(user(req), req.body, context(req),undefined,publicRole(req)),
     201,
   ),
 );
 commerceRouter.get("/commerce/evidence/:id", (req, res) =>
-  run(req, res, () => AfterSalesService.evidence(user(req), id(req.params.id))),
+  run(req, res, () => AfterSalesService.evidence(user(req), id(req.params.id),undefined,publicRole(req))),
 );
 adminCommerceRouter.use("/commerce", adminSessionMiddleware);
+adminCommerceRouter.post("/commerce/refunds/:id/seller-contacts",originProtection,requireAdminSector("refund_management"),requireRecentAuth,(req,res)=>
+  run(req,res,()=>AfterSalesService.contactSeller(req.adminActor!,id(req.params.id),req.body,context(req))));
 adminCommerceRouter.get("/commerce/settings", (req, res) =>
   run(req, res, () => CommerceService.settings(req.adminActor!)),
 );

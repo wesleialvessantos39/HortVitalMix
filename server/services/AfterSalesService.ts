@@ -40,17 +40,18 @@ async function ownCase(
   id: string,
   admin?: AdminActorContext,
   lock = false,
+  portalRole?: "consumer"|"producer",
 ) {
   z.uuid().parse(id);
   if (admin) await commerceAdmin(client, admin, sector(kind));
-  else await commerceIdentity(client, userId);
+  else await commerceIdentity(client, userId, kind === "refund" ? "consumer" : undefined);
   const row = (
     await client.query(
       `SELECT * FROM public.${table(kind)} WHERE id=$1 ${admin ? "" : `AND ${kind === "refund" ? "requester_user_id" : "reporter_user_id"}=$2`} ${lock ? "FOR UPDATE" : ""}`,
       admin ? [id] : [id, userId],
     )
   ).rows[0];
-  if (!row) throw new CommerceError("CASE_NOT_FOUND", 404);
+  if (!row || (!admin && portalRole && (kind === "refund" ? portalRole!=="consumer" : row.reporter_role!==portalRole))) throw new CommerceError("CASE_NOT_FOUND", 404);
   return row;
 }
 async function history(
@@ -125,9 +126,30 @@ async function caseView(
       id: value.id,
       fileName: value.file_name,
     })),
+    ...(admin && kind === "refund" ? {
+      sellerContacts: (await client.query("SELECT id,message,created_at FROM public.app_refund_seller_contacts WHERE refund_id=$1 ORDER BY created_at,id",params)).rows.map(v=>({id:v.id,message:v.message,createdAt:v.created_at.toISOString()})),
+      seller: await (async()=>{const order=(await client.query("SELECT store_snapshot,order_number,created_at FROM public.app_orders WHERE id=$1",[row.order_id])).rows[0];return {storeName:order.store_snapshot.name,orderNumber:`#HVM-${new Date(order.created_at).getFullYear()}-${String(order.order_number).padStart(5,"0")}`};})(),
+    } : {}),
   };
 }
 export const AfterSalesService = {
+  async contactSeller(actor:AdminActorContext,id:string,raw:unknown,context:CommerceAudit) {
+    const input=CaseMessageSchema.parse(raw);
+    return commerceTransaction(async c=>{
+      await commerceAdmin(c,actor,"refund_management");
+      return commerceCommand(c,actor.userId,input.commandId,"refund.seller_contact:"+id,input,async()=>{
+        const row=await ownCase(c,actor.userId,"refund",id,actor,true);
+        if(["rejected","refunded"].includes(row.status))throw new CommerceError("CASE_CLOSED");
+        const order=(await c.query("SELECT producer_user_id FROM public.app_orders WHERE id=$1",[row.order_id])).rows[0];
+        if(!order?.producer_user_id)throw new CommerceError("SELLER_UNAVAILABLE",409);
+        const count=(await c.query("SELECT count(*)::int AS n FROM public.app_refund_seller_contacts WHERE refund_id=$1",[id])).rows[0].n;
+        if(count>=100)throw new CommerceError("CASE_MESSAGE_LIMIT",429);
+        await c.query("INSERT INTO public.app_refund_seller_contacts(refund_id,author_user_id,message) VALUES($1,$2,$3)",[id,actor.userId,input.message]);
+        await commerceAudit(c,actor.userId,actor.role,"refund.seller_contacted","app_refund_requests",id,{},context,input.commandId);
+        return caseView(c,"refund",row,true);
+      });
+    });
+  },
   async targets(
     userId: string,
     type: "store" | "producer" | "product" | "customer",
@@ -182,10 +204,11 @@ export const AfterSalesService = {
     admin?: AdminActorContext,
     page = 1,
     filter: "all" | "open" | "closed" = "all",
+    portalRole?: "consumer"|"producer",
   ) {
     return commerceTransaction(async (client) => {
       if (admin) await commerceAdmin(client, admin, sector(kind));
-      else await commerceIdentity(client, userId);
+      else await commerceIdentity(client, userId, kind === "refund" ? "consumer" : undefined);
       const closed =
         kind === "refund"
           ? ["rejected", "refunded"]
@@ -198,7 +221,8 @@ export const AfterSalesService = {
         filter === "all"
           ? ""
           : `AND status ${filter === "open" ? "<> ALL" : "= ANY"}($${params.push(closed)}::varchar[])`;
-      const where = `WHERE ${owner} ${stateFilter}`;
+      const portalFilter = !admin&&portalRole ? (kind === "refund" ? (portalRole === "consumer" ? "" : "AND false") : `AND reporter_role=$${params.push(portalRole)}`) : "";
+      const where = `WHERE ${owner} ${stateFilter} ${portalFilter}`;
       const total = (
         await client.query(
           `SELECT count(*)::int AS n FROM public.${table(kind)} ${where}`,
@@ -249,12 +273,13 @@ export const AfterSalesService = {
     kind: Kind,
     id: string,
     admin?: AdminActorContext,
+    portalRole?: "consumer"|"producer",
   ) {
     return commerceTransaction(async (client) =>
       caseView(
         client,
         kind,
-        await ownCase(client, userId, kind, id, admin),
+        await ownCase(client, userId, kind, id, admin, false, portalRole),
         !!admin,
       ),
     );
@@ -262,7 +287,7 @@ export const AfterSalesService = {
   async requestRefund(userId: string, raw: unknown, context: CommerceAudit) {
     const input = CreateRefundSchema.parse(raw);
     return commerceTransaction(async (client) => {
-      await commerceIdentity(client, userId);
+      await commerceIdentity(client, userId, "consumer");
       return commerceCommand(
         client,
         userId,
@@ -517,7 +542,7 @@ export const AfterSalesService = {
       ),
     );
   },
-  async createComplaint(userId: string, raw: unknown, context: CommerceAudit) {
+  async createComplaint(userId: string, raw: unknown, context: CommerceAudit, portalRole?: "consumer"|"producer") {
     const input = CreateComplaintSchema.parse(raw);
     return commerceTransaction(async (client) => {
       const actor = await commerceIdentity(client, userId);
@@ -529,7 +554,8 @@ export const AfterSalesService = {
         input,
         async () => {
           let subject: string | null = null;
-          let reporterRole = "consumer";
+          let reporterRole = portalRole ?? (actor.roles.includes("consumer") ? "consumer" : "producer");
+          if(!actor.roles.includes(reporterRole))throw new CommerceError("FORBIDDEN",403);
           const order = input.orderId
             ? (
                 await client.query(
@@ -775,10 +801,11 @@ export const AfterSalesService = {
     raw: unknown,
     context: CommerceAudit,
     admin?: AdminActorContext,
+    portalRole?: "consumer"|"producer",
   ) {
     const input = CaseMessageSchema.parse(raw);
     return commerceTransaction(async (client) => {
-      await ownCase(client, userId, kind, id, admin);
+      await ownCase(client, userId, kind, id, admin, false, portalRole);
       return commerceCommand(
         client,
         userId,
@@ -786,7 +813,7 @@ export const AfterSalesService = {
         kind + ".message:" + id,
         input,
         async () => {
-          const row = await ownCase(client, userId, kind, id, admin, true);
+          const row = await ownCase(client, userId, kind, id, admin, true, portalRole);
           if (
             ["resolved", "dismissed", "rejected", "refunded"].includes(
               row.status,
@@ -832,6 +859,7 @@ export const AfterSalesService = {
     raw: unknown,
     context: CommerceAudit,
     admin?: AdminActorContext,
+    portalRole?: "consumer"|"producer",
   ) {
     const input = CaseEvidenceSchema.parse(raw),
       bytes = Buffer.from(input.base64, "base64");
@@ -849,7 +877,7 @@ export const AfterSalesService = {
     if (!magic || bytes.length < 12 || bytes.length > 2097152)
       throw new CommerceError("EVIDENCE_INVALID", 422);
     const existing = await commerceTransaction(async (client) => {
-      await ownCase(client, userId, input.caseType, input.caseId, admin);
+      await ownCase(client, userId, input.caseType, input.caseId, admin, false, portalRole);
       const receipt = (
         await client.query(
           "SELECT response_body FROM public.app_commerce_receipts WHERE command_id=$1 AND user_id=$2 AND operation=$3",
@@ -893,7 +921,7 @@ export const AfterSalesService = {
         uploaded = true;
       }
       const value = await commerceTransaction(async (client) => {
-        await ownCase(client, userId, input.caseType, input.caseId, admin);
+        await ownCase(client, userId, input.caseType, input.caseId, admin, false, portalRole);
         return commerceCommand(
           client,
           userId,
@@ -908,6 +936,7 @@ export const AfterSalesService = {
               input.caseId,
               admin,
               true,
+              portalRole,
             );
             if (
               ["resolved", "dismissed", "rejected", "refunded"].includes(
@@ -981,7 +1010,7 @@ export const AfterSalesService = {
       throw error;
     }
   },
-  async evidence(userId: string, id: string, admin?: AdminActorContext) {
+  async evidence(userId: string, id: string, admin?: AdminActorContext, portalRole?: "consumer"|"producer") {
     return commerceTransaction(async (client) => {
       z.uuid().parse(id);
       const row = (
@@ -997,6 +1026,8 @@ export const AfterSalesService = {
         row.refund_id ? "refund" : "complaint",
         row.refund_id ?? row.complaint_id,
         admin,
+        false,
+        portalRole,
       );
       if (!supabaseAdmin)
         throw new CommerceError("DEPENDENCY_UNAVAILABLE", 503);

@@ -125,6 +125,7 @@ export default function ProducerPosPage({
         ← Minha conta
       </button>
       <h1>Caixa do produtor</h1>
+      <nav className="commerce-section-links" aria-label="Gestão das vendas"><button className="secondary" onClick={()=>onNavigate("/produtor/vendas")}>Minhas vendas</button><button className="secondary" onClick={()=>onNavigate("/produtor/pedidos")}>Pedidos da minha loja</button></nav>
       <p>
         Monte a compra presencial, escolha o meio de recebimento e compartilhe a
         revisão com o cliente.

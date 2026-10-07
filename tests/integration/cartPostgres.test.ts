@@ -87,6 +87,8 @@ describe.runIf(Boolean(process.env.HVM_T18_LOCAL_DATABASE_URL))(
     beforeAll(async () => {
       a = await productFixture(pool());
       b = await productFixture(pool());
+      // These identities explicitly register as consumers for basket ownership.
+      await pool().query("INSERT INTO app_user_role_assignments(user_id,role_code) VALUES($1,'consumer'),($2,'consumer')",[a.userId,b.userId]);
       categoryId = randomUUID();
       await pool().query(
         "INSERT INTO app_categories(id,name,slug,icon_name) VALUES($1,'Teste T18',$2,'leaf')",
@@ -162,9 +164,13 @@ describe.runIf(Boolean(process.env.HVM_T18_LOCAL_DATABASE_URL))(
     it("limita soma a 99 e rejeita quantidade 100 antes de mutação", async () => {
       const s = scope();
       await add(s, pa, 98);
-      expect((await add(s, pa, 5)).itemCount).toBe(99);
+      const capped=await add(s,pa,5);
+      expect(capped.itemCount).toBe(1);
+      expect(capped.stores[0].items[0].quantity).toBe(99);
       await expect(add(s, pa, 100)).rejects.toThrow();
-      expect((await CartService.getCartGroupedByStore(s)).itemCount).toBe(99);
+      const recovered=await CartService.getCartGroupedByStore(s);
+      expect(recovered.itemCount).toBe(1);
+      expect(recovered.stores[0].items[0].quantity).toBe(99);
     });
     it("preço permanece vigente e futuro não substitui preço atual", async () => {
       const s = scope();
@@ -244,7 +250,9 @@ describe.runIf(Boolean(process.env.HVM_T18_LOCAL_DATABASE_URL))(
       const s = scope(),
         key = randomUUID();
       await add(s, pa, 2, null, key);
-      expect((await add(s, pa, 2, null, key)).itemCount).toBe(2);
+      const replay=await add(s,pa,2,null,key);
+      expect(replay.itemCount).toBe(1);
+      expect(replay.stores[0].items[0].quantity).toBe(2);
       const mix = {
         items: [
           { productId: pa, quantity: 2, cutType: "cubos" as const },
@@ -254,7 +262,7 @@ describe.runIf(Boolean(process.env.HVM_T18_LOCAL_DATABASE_URL))(
       };
       await CartService.addHortiMix(s, mix, context());
       expect((await CartService.addHortiMix(s, mix, context())).itemCount).toBe(
-        5,
+        3,
       );
       await expect(add(s, pb, 1, null, key)).rejects.toMatchObject({
         status: 409,
@@ -281,7 +289,9 @@ describe.runIf(Boolean(process.env.HVM_T18_LOCAL_DATABASE_URL))(
     it("concorrência não perde incrementos", async () => {
       const s = scope();
       await Promise.all(Array.from({ length: 8 }, () => add(s)));
-      expect((await CartService.getCartGroupedByStore(s)).itemCount).toBe(8);
+      const concurrent=await CartService.getCartGroupedByStore(s);
+      expect(concurrent.itemCount).toBe(1);
+      expect(concurrent.stores[0].items[0].quantity).toBe(8);
     });
     it("associa a cesta anônima à conta e a recupera em outro aparelho", async () => {
       const guest = scope();
@@ -308,7 +318,7 @@ describe.runIf(Boolean(process.env.HVM_T18_LOCAL_DATABASE_URL))(
           .flatMap((s) => s.items)
           .find((i) => i.productId === pa && i.cutType === null)?.quantity,
       ).toBe(3);
-      expect(cart.itemCount).toBe(6);
+      expect(cart.itemCount).toBe(2);
       await CartService.mergeCartOnLogin(guest.sessionId, a.userId);
       expect(
         (
@@ -317,7 +327,7 @@ describe.runIf(Boolean(process.env.HVM_T18_LOCAL_DATABASE_URL))(
             userId: a.userId,
           })
         ).itemCount,
-      ).toBe(6);
+      ).toBe(2);
       expect(
         (
           await pool().query(
@@ -338,7 +348,7 @@ describe.runIf(Boolean(process.env.HVM_T18_LOCAL_DATABASE_URL))(
       ]);
       expect(
         (await CartService.getCartGroupedByStore(scope(b.userId))).itemCount,
-      ).toBe(3);
+      ).toBe(2);
     });
     it("outra sessão/conta não lê nem altera os itens do titular", async () => {
       const s = scope();
@@ -383,7 +393,8 @@ describe.runIf(Boolean(process.env.HVM_T18_LOCAL_DATABASE_URL))(
       await CartService.updateItem(s, id, update, context());
       expect(
         (await CartService.updateItem(s, id, update, context())).itemCount,
-      ).toBe(4);
+      ).toBe(1);
+      expect((await CartService.getCartGroupedByStore(s)).stores[0].items[0].quantity).toBe(4);
       const remove = { commandId: randomUUID() };
       expect(
         (await CartService.removeItem(s, id, remove, context())).itemCount,

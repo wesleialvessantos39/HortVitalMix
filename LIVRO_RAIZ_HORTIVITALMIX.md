@@ -4593,3 +4593,22 @@ Relatório: [TRILHA24_AVALIACOES_REPUTACAO.md](docs/TRILHA24_AVALIACOES_REPUTACA
 - Entrega T24 concluída: avaliação única de compra entregue, reputação nativa concorrente e moderação com histórico. Fotos/logística, pagamentos preparados, trial/planos/assinaturas e exclusão T06 preservados. Gateway real T20 continua inativo; nomes/preços T23 ficam para configuração do operador. **T25 não iniciada e deve partir do schema 62**.
 
 O fechamento documental conserva esse código e recebe seu próprio deploy/selo da SHA exata após READY, sem migration nova. A release corrente identifica sempre a SHA efetivamente ativa. Relatório/evidências: [TRILHA24_AVALIACOES_REPUTACAO.md](docs/TRILHA24_AVALIACOES_REPUTACAO.md), [TRILHA24_PRESERVACAO.json](docs/TRILHA24_PRESERVACAO.json).
+
+
+## 2026-10-07 — Correções de papéis, vendas, reembolsos e central integrada de notificações — schema 63
+
+Correção estritamente aditiva sobre T24/schema 62, base `e53b712ef30c08ca07dc79ad71830a75922b3027`. **Schema 63, 69 migrations**, hash `3363f83f98ec91afabc8043d9f75ecee680842b1e4a5b63fe809c889b945e379`. As **68 migrations anteriores permanecem byte a byte preservadas**. Nova migration `20261007140032_roles_sales_notifications.sql`; novas tabelas `app_notifications` e `app_refund_seller_contacts`, ambas ENABLE/FORCE e authenticated apenas SELECT.
+
+- Produtor usa **Minhas vendas**, caixa e pedidos da loja. Compras e acompanhamento de compra exigem cadastro e acesso ao portal consumidor, inclusive para identidade com os dois papéis. Login produtor não importa cesta.
+- Minhas vendas integra vendas confirmadas online/presenciais e estados financeiros reais, com links filtrados para caixa, pedidos e reembolsos da loja.
+- Reembolso do produtor é **somente acompanhamento**: etapas genéricas e contato iniciado pelo Admin autorizado a reembolsos ou Super administrador. Descrição, mensagens, anexos e notas privadas entre consumidor/admin não são expostos ao vendedor. Contato separado tem idempotência, autenticação recente e histórico imutável.
+- Central/sino de notificações para consumidor, produtor, Admin e Super administrador, com permissões atuais por setor, leitura idempotente, filtros, paginação e destinos de cada papel. Triggers transacionais integram todos os módulos de domínio; alteração abortada não deixa aviso e repetição não duplica.
+- Badge da cesta conta **opções adicionadas**, preservando quantidade/subtotal. Aumentar uma opção de 1 para 8 unidades mantém badge 1; outra opção passa a 2.
+
+Mapa funcional completo em [docs/MAPA_SISTEMA_NOTIFICACOES.md](docs/MAPA_SISTEMA_NOTIFICACOES.md). Detalhes e evidências em [docs/CORRECOES_PAPEIS_NOTIFICACOES.md](docs/CORRECOES_PAPEIS_NOTIFICACOES.md).
+
+Homologação: **850 contratos/rotas**, **17 novos SQL**, **136 regressões SQL**, história real nova dos quatro papéis, histórias anteriores T23/T24 e **83 cenários de interface** aprovados entre rodada e rechecagem dirigida. Telas novas em 320/390/768/1440px, sem overflow nem erros JavaScript. TypeScript, build, manifesto, segredos/bundle e cold start aprovados. Snapshot de **94 relações** anteriores capturado, com 5 usuários Auth e 10 objetos Storage. Nenhum teste/fixture/reset de produção; imagens, dependências, infraestrutura gratuita, planos a configurar e gateway anterior preservados. Publicação e selo final ainda em andamento nesta entrada.
+
+### Aplicação e preservação no Supabase
+
+Migration física **20261007163252_roles_sales_notifications** aplicada com sucesso no projeto canônico. **94/94 relações anteriores** mantêm contagem/digest, inclusive Auth/Storage. **92/92 app_* ENABLE/FORCE**, zero INSERT/UPDATE/DELETE/TRUNCATE de clientes e zero EXECUTE do emissor por authenticated. Nenhuma fixture, conta, venda, cobrança ou notificação fictícia na produção. Advisories mantêm os 5 WARN de segurança e 25 WARN de performance anteriores; cinco índices novos ainda sem uso acrescentam apenas INFO. O código de produção segue na base T24 enquanto a integração testada em main é concluída.

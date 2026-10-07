@@ -1,3 +1,4 @@
+import { NotificationBell } from "../notifications/NotificationProvider";
 import {
   LayoutDashboard,
   ShieldCheck,
@@ -10,6 +11,7 @@ import {
   UserRound,
   ListTree,
   Star,
+  Bell,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import type { AdminVerifySessionResponse } from "../../../shared/contracts/adminGovernance";
@@ -26,6 +28,7 @@ type Props = {
 };
 
 const items = [
+  ["/admin/notificacoes", "Notificações", Bell],
   ["/admin/painel", "Painel", LayoutDashboard],
   ["/admin/governanca", "Governança", ShieldCheck],
   ["/admin/usuarios", "Usuários", UsersRound],
@@ -115,6 +118,7 @@ export function AdminPortalShell({
             <span className="admin-brand-mark"><Leaf /></span>
             <strong>Horti<span>Vital</span>Mix</strong>
           </button>
+          <NotificationBell onClick={()=>onNavigate("/admin/notificacoes")}/>
           <button className="icon" aria-label="Conta" title={accountSessionLabel({activeRole:access.role})} onClick={()=>onNavigate("/admin/conta")}><AccountStatusIcon session={{activeRole:access.role}}/></button>
           <button className="admin-logout icon-only" onClick={logout} disabled={leaving} aria-label="Sair">
             <LogOut size={18} />

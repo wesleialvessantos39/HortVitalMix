@@ -49,6 +49,7 @@ export const OrderListQuerySchema = z
   .object({
     page: z.coerce.number().int().min(1).max(100000).default(1),
     status: z.union([OrderStatusEnum, z.literal("all")]).default("all"),
+    orderId: z.uuid().optional(),
   })
   .strict();
 const cents = z.number().int().nonnegative().max(2147483647);

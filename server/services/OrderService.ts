@@ -289,7 +289,7 @@ export const OrderService = {
   async list(userId: string, scope: "customer" | "producer", input: unknown) {
     const query = OrderListQuerySchema.parse(input);
     return transaction(async (client) => {
-      const actor = await commerceIdentity(client, userId);
+      const actor = await commerceIdentity(client, userId, scope === "producer" ? "producer" : "consumer");
       if (scope === "producer" && !actor.roles.includes("producer"))
         throw new CommerceError("PRODUCER_REQUIRED", 403);
       const ownership =
@@ -306,8 +306,8 @@ export const OrderService = {
       };
       for (const row of (
         await client.query<{ status: OrderStatus; count: string }>(
-          `SELECT f.status,count(*)::text FROM public.app_orders o JOIN public.app_order_fulfillment f ON f.order_id=o.id WHERE ${ownership} GROUP BY f.status`,
-          [userId],
+          `SELECT f.status,count(*)::text FROM public.app_orders o JOIN public.app_order_fulfillment f ON f.order_id=o.id WHERE ${ownership} AND ($2::uuid IS NULL OR o.id=$2) GROUP BY f.status`,
+          [userId,query.orderId??null],
         )
       ).rows)
         counts[row.status] = Number(row.count);
@@ -320,8 +320,8 @@ export const OrderService = {
       const rows = (
         await client.query<OrderRow>(
           `SELECT ${fields} FROM public.app_orders o JOIN public.app_order_fulfillment f ON f.order_id=o.id
-         WHERE ${ownership} AND ($2='all' OR f.status=$2) ORDER BY o.created_at DESC,o.id DESC LIMIT $3 OFFSET $4`,
-          [userId, query.status, pageSize, (page - 1) * pageSize],
+         WHERE ${ownership} AND ($2='all' OR f.status=$2) AND ($5::uuid IS NULL OR o.id=$5) ORDER BY o.created_at DESC,o.id DESC LIMIT $3 OFFSET $4`,
+          [userId, query.status, pageSize, (page - 1) * pageSize,query.orderId??null],
         )
       ).rows;
       return OrderListResponseSchema.parse({
@@ -333,10 +333,13 @@ export const OrderService = {
       });
     });
   },
-  async get(orderId: string, userId: string) {
+  async get(orderId: string, userId: string, scope?: "customer" | "producer") {
     const id = OrderIdSchema.parse(orderId);
     return transaction(async (client) => {
-      await commerceIdentity(client, userId);
+      const actor = await commerceIdentity(client, userId, scope === "producer" ? "producer" : scope === "customer" ? "consumer" : undefined);
+      const row = (await client.query("SELECT customer_user_id,producer_user_id FROM public.app_orders WHERE id=$1", [id])).rows[0];
+      if (!row || !(scope === "producer" ? row.producer_user_id === userId : scope === "customer" ? row.customer_user_id === userId : (row.producer_user_id === userId && actor.roles.includes("producer")) || (row.customer_user_id === userId && actor.roles.includes("consumer"))))
+        throw new CommerceError("ORDER_NOT_FOUND",404);
       return detail(client, id, userId);
     });
   },

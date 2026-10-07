@@ -21,6 +21,13 @@ import {
 } from "./CommerceSupport.ts";
 import type { CheckoutStoreSnapshot } from "../../shared/contracts/checkout.ts";
 
+async function paymentRole(client: PoolClient, billingCycleId: string | null): Promise<"consumer" | "producer"> {
+  if (!billingCycleId) return "consumer";
+  const role = (await client.query("SELECT s.plan_snapshot->>'targetAudience' AS role FROM public.app_billing_cycles c JOIN public.app_subscriptions s ON s.id=c.subscription_id WHERE c.id=$1", [billingCycleId])).rows[0]?.role;
+  if (role !== "consumer" && role !== "producer") throw new CommerceError("PAYMENT_NOT_FOUND", 404);
+  return role;
+}
+
 const verifiedSchema = z
   .object({
     provider: z.string().min(1).max(32),
@@ -87,7 +94,7 @@ export async function settleVerifiedPayment(
     Date.parse(payment.paidAt) > new Date(intent.expires_at).getTime()
   )
     throw new CommerceError("PAYMENT_EXPIRED");
-  await commerceIdentity(client, intent.user_id);
+  await commerceIdentity(client, intent.user_id, intent.billing_cycle_id ? undefined : "consumer");
   // The same lock used by T18/T19 serializes a settlement with cart mutations.
   await client.query("SELECT pg_advisory_xact_lock(18,hashtext($1))", [
     "user:" + intent.user_id,
@@ -357,7 +364,7 @@ export const PaymentService = {
     }
     return this.view(userId,intentId);
   },
-  async view(userId: string, id: string): Promise<PaymentView> {
+  async view(userId: string, id: string, selectedRole?: "consumer"|"producer"): Promise<PaymentView> {
     return commerceTransaction(async (client) => {
       await commerceIdentity(client, userId);
       z.uuid().parse(id);
@@ -368,6 +375,9 @@ export const PaymentService = {
         )
       ).rows[0];
       if (!intent) throw new CommerceError("PAYMENT_NOT_FOUND", 404);
+      const requiredRole = await paymentRole(client, intent.billing_cycle_id);
+      await commerceIdentity(client,userId,requiredRole);
+      if(selectedRole && selectedRole!==requiredRole)throw new CommerceError(requiredRole==="consumer"?"CONSUMER_REQUIRED":"PRODUCER_REQUIRED",403);
       const acceptance = (
         await client.query(
           "SELECT policy_snapshot FROM public.app_payment_policy_acceptances WHERE payment_intent_id=$1",
@@ -406,6 +416,7 @@ export const PaymentService = {
     id: string,
     version: number,
     context: CommerceAudit,
+    selectedRole?: "consumer"|"producer",
   ) {
     return commerceTransaction(async (client) => {
       await commerceIdentity(client, userId);
@@ -420,6 +431,9 @@ export const PaymentService = {
         )
       ).rows[0];
       if (!intent) throw new CommerceError("PAYMENT_NOT_FOUND", 404);
+      const requiredRole = await paymentRole(client, intent.billing_cycle_id);
+      await commerceIdentity(client,userId,requiredRole);
+      if(selectedRole&&selectedRole!==requiredRole)throw new CommerceError(requiredRole==="consumer"?"CONSUMER_REQUIRED":"PRODUCER_REQUIRED",403);
       const accepted = (
         await client.query(
           "SELECT policy_snapshot FROM public.app_payment_policy_acceptances WHERE payment_intent_id=$1",

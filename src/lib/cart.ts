@@ -31,7 +31,8 @@ export const cartErrorMessage = (failure: unknown) => {
         CART_FULL:
           "Sua cesta chegou ao limite de opções. Remova uma opção para incluir outra.",
         CART_OWNER_REQUIRED:
-          "Entre com uma conta de consumidor ou produtor para usar a cesta.",
+          "Cadastre-se e entre como consumidor para usar a cesta.",
+        CONSUMER_REQUIRED: "Cadastre-se e entre como consumidor para comprar.",
         AUTH_REQUIRED: "Entre novamente para carregar sua cesta salva.",
         CART_COMMAND_CONFLICT:
           "Não foi possível confirmar esta alteração. Atualize a cesta.",

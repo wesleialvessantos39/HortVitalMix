@@ -67,6 +67,7 @@ export async function sendOrderTransition(
 }
 export function orderMessage(error: unknown) {
   const messages: Record<string, string> = {
+    CONSUMER_REQUIRED: "Cadastre-se e entre como consumidor para comprar.",
     AUTH_REQUIRED:
       "Sua sessão terminou. Entre novamente para consultar os pedidos.",
     PRODUCER_REQUIRED:

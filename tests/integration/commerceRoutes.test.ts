@@ -81,7 +81,7 @@ describe("T20: HTTP, origem, sessão e preparação financeira", () => {
     expect(
       (await request(app("platform_super_admin")).get("/v1/commerce/purchases"))
         .status,
-    ).toBe(401);
+    ).toBe(403);
   });
   it("origem cruzada bloqueia caixa, denúncias, reembolso e confirmação de recebimento", async () => {
     const pos = vi.spyOn(CommerceService, "createPosSale"),
@@ -158,7 +158,7 @@ describe("T20: HTTP, origem, sessão e preparação financeira", () => {
         )
       ).status,
     ).toBe(200);
-    expect(spy).toHaveBeenCalledWith(userId, "complaint", undefined, 2, "open");
+    expect(spy).toHaveBeenCalledWith(userId, "complaint", undefined, 2, "open", "consumer");
     for (const q of ["page=-1", "page=1%3BDROP%20TABLE", "filter=untrusted"])
       expect(
         (await request(app("consumer")).get("/v1/commerce/complaints?" + q))

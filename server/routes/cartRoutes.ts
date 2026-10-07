@@ -1,3 +1,4 @@
+import { publicRole } from "../security/publicRole.ts";
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import {
@@ -41,12 +42,16 @@ async function run(
   }
   if (
     req.actor &&
-    !req.actor.roles.some((r) => r === "consumer" || r === "producer")
+    !req.actor.roles.includes("consumer")
   ) {
     res
       .status(403)
       .json({ error: "CART_OWNER_REQUIRED", requestId: req.requestId });
     return;
+  }
+  if (req.actor) {
+    try { if (publicRole(req) !== "consumer") throw new Error(); }
+    catch { res.status(403).json({ error: "CONSUMER_REQUIRED", requestId: req.requestId }); return; }
   }
   let sessionId = cartSession(req, res);
   try {

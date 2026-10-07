@@ -1,3 +1,4 @@
+import { publicUser } from "../security/publicRole.ts";
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import { ReviewService as service } from "../services/ReviewService.ts";
@@ -11,10 +12,7 @@ import {
 } from "../middleware/adminSession.ts";
 export const reviewRouter = Router(),
   adminReviewRouter = Router();
-const user = (req: Request) => {
-  if (!req.actor) throw new CommerceError("AUTH_REQUIRED", 401);
-  return req.actor.userId;
-};
+const user = (req: Request) => publicUser(req, "consumer");
 const command = (req: Request) =>
   CheckoutCommandIdSchema.parse(req.headers["x-command-id"]);
 const context = (req: Request) => ({

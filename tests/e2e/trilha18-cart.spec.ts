@@ -83,7 +83,7 @@ async function mock(
       .filter((s) => s.items.length);
     return {
       stores,
-      itemCount: records.reduce((n, i) => n + i.quantity, 0),
+      itemCount: records.length,
       subtotalCents: stores.reduce((n, s) => n + s.subtotalCents, 0),
     };
   };
