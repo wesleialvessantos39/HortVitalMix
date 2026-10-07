@@ -1,3 +1,4 @@
+import { hasAdminPermission } from "../../shared/adminPermissions.ts";
 import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
 import { redactPII } from "../security/redactPII.ts";
@@ -21,7 +22,7 @@ function requirePool() {
 }
 
 function assertAuditor(actor: AdminActor) {
-  if (!actor.isSuperAdmin && !actor.sectors.includes("document_verification")) {
+  if (!hasAdminPermission(actor, "document_verification")) {
     throw new VerificationQueueError("FORBIDDEN", 403);
   }
 }
@@ -43,7 +44,7 @@ SELECT r.id, r.property_id, r.producer_id, r.status, r.priority, r.claimed_by, r
        r.created_at, r.updated_at, r.archived_at, r.superseded_at, r.superseded_by_request_id, p.property_name, p.municipality, p.line_vicinal,
        p.total_area_hectares, p.cultivated_area_hectares, p.latitude_sede, p.longitude_sede,
        p.status AS property_status, p.revision, p.draft_data, p.registration_number,
-       pe.full_name AS producer_name,
+       coalesce((SELECT profile.full_name FROM public.app_account_profiles profile WHERE profile.user_id=pe.user_id AND profile.role_code='producer'),pe.full_name) AS producer_name,
        (SELECT to_jsonb(b) FROM public.app_property_boundaries b
          WHERE b.property_id = p.id AND b.boundary_type = 'perimeter'
          ORDER BY b.created_at DESC LIMIT 1) AS perimeter,

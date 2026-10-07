@@ -97,11 +97,12 @@ const checks = {
     service.includes('input.targetRole !== "platform_admin"') &&
     routes.includes('"/identities/lookup"') &&
     routes.includes("app_admin_principals") &&
-    read("src/pages/admin/AdminAcceptInvitePage.tsx").includes("credencial administrativa separada") &&
+    read("src/pages/admin/AdminAcceptInvitePage.tsx").includes("senha serão independentes dos seus outros cadastros.") &&
     read("src/pages/admin/AdminGovernancePage.tsx").includes("CPF já cadastrado (opcional)") &&
     read("src/pages/admin/AdminUsersPage.tsx").includes("Perfis vinculados") &&
     router.includes('path==="/admin/configuracao"') && router.includes('"platform_configuration"') &&
-    read("src/components/admin/AdminPortalShell.tsx").includes('access.sectors.includes("platform_configuration")') &&
+    read("src/components/admin/AdminPortalShell.tsx").includes('hasAdminPermission(access, "platform_configuration")') &&
+    read("shared/adminPermissions.ts").includes('access.deniedSectors?.includes(sector)') &&
     adminPrincipalMigration.includes("CREATE TABLE public.app_admin_principals") &&
     adminPrincipalMigration.includes("linkedExistingPerson"),
   persistentRateLimit:

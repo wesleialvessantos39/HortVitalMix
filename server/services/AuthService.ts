@@ -458,12 +458,14 @@ async function addRoleToExistingIdentity(
     await assertLocalityActive(data.state, data.municipality, requestId);
 
     const added = await supabaseAdmin.rpc(
-      "add_public_role_to_existing_identity",
+      "add_public_role_with_profile",
       {
         p_user_id: person.user_id,
         p_cpf_normalized: data.cpf,
         p_email_normalized: data.email,
         p_role: role,
+        p_full_name: data.fullName,
+        p_phone_e164: data.phone,
       },
     );
 
@@ -488,6 +490,7 @@ async function addRoleToExistingIdentity(
 
       throw registrationError("REGISTRATION_DATABASE_UNAVAILABLE", 503);
     }
+
 
     return {
       userId: person.user_id,

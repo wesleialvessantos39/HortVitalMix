@@ -34,7 +34,7 @@ async function scope(c: PoolClient, actor: NotificationActor) {
     ).rowCount;
     if (!row) throw new CommerceError("FORBIDDEN", 403);
   }
-  return `recipient_user_id=$1 AND recipient_role=$2 AND (required_sector IS NULL OR $2='platform_super_admin' OR EXISTS(
+  return `recipient_user_id=$1 AND recipient_role=$2 AND (required_sector IS NULL OR NOT EXISTS(SELECT 1 FROM public.app_admin_permission_overrides o WHERE o.user_id=$1 AND o.sector_code=required_sector AND NOT o.allowed)) AND (required_sector IS NULL OR hvm_governance_private.has_permission($1,required_sector) OR EXISTS(
    SELECT 1 FROM public.app_admin_sector_members m JOIN public.app_admin_sectors s ON s.code=m.sector_code AND s.is_active
    WHERE m.user_id=$1 AND m.sector_code=required_sector AND m.revoked_at IS NULL AND (m.expires_at IS NULL OR m.expires_at>clock_timestamp())))`;
 }

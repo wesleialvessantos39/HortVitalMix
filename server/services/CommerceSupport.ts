@@ -80,6 +80,7 @@ export async function commerceAdmin(
     JOIN public.app_user_role_assignments r ON r.user_id=u.id AND r.role_code=ap.portal_role
     WHERE u.id=$1 AND ap.portal_role=$2 AND public.effective_account_status(u.status,u.block_starts_at,u.block_ends_at)='active'
     AND r.revoked_at IS NULL AND (r.expires_at IS NULL OR r.expires_at>clock_timestamp())
+    AND hvm_governance_private.has_permission(u.id,$3)
     AND (ap.portal_role='platform_super_admin' OR EXISTS(SELECT 1 FROM public.app_admin_sector_members m
       JOIN public.app_admin_sectors s ON s.code=m.sector_code AND s.is_active
       WHERE m.user_id=u.id AND m.sector_code=$3 AND m.revoked_at IS NULL AND (m.expires_at IS NULL OR m.expires_at>clock_timestamp())))

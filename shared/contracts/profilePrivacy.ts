@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PortalRoleSchema, type PortalRole } from "./auth.ts";
 
 export const BrazilianStatesEnum = z.enum([
   "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",
@@ -20,6 +21,7 @@ export const CreateAddressSchema = z.object({
 export const SetDefaultAddressSchema = z.object({commandId:CommandIdSchema}).strict();
 export const DeleteAddressSchema = z.object({commandId:CommandIdSchema}).strict();
 export const UpdateProfileSchema = z.object({
+  profileRole: PortalRoleSchema.optional(),
   fullName:z.string().trim().min(3).max(255),
   expectedRevision:z.number().int().positive(),
   commandId:CommandIdSchema,
@@ -40,6 +42,6 @@ export type CreateAddressInput=z.infer<typeof CreateAddressSchema>;
 export type UpdateProfileInput=z.infer<typeof UpdateProfileSchema>;
 export type UpdatePreferencesInput=z.infer<typeof UpdatePreferencesSchema>;
 export type AddressView={id:string;label:string;cep:string;street:string;number:string;complement:string|null;neighborhood:string;city:string;state:string;isDefault:boolean;revision:number;createdAt:string;updatedAt:string};
-export type ProfileView={fullName:string;cpfMasked:string;email:string;phone:string;revision:number};
+export type ProfileView={fullName:string;cpfMasked:string;email:string;phone:string;revision:number;profileRole?:PortalRole};
 export type PreferencesView={marketingConsent:boolean;orderUpdatesChannel:"email"|"sms"|"both";quietHoursEnabled:boolean;quietHoursStart:string|null;quietHoursEnd:string|null;revision:number};
 export type ConsentView={id:string;consentType:string;isGranted:boolean;policyVersion:string;registeredAt:string};

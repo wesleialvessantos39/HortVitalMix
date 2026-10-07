@@ -99,7 +99,7 @@ export async function sessionMiddleware(
       email: data.user.email ?? null,
       roles: access.roles,
       personId: access.personId,
-      fullName: access.fullName,
+      fullName: access.profileNames?.[readCookie(req, "hvm_portal_role") ?? access.roles[0]] ?? access.fullName,
     };
 
     next();

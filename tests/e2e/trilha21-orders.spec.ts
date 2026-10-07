@@ -354,16 +354,17 @@ test("resposta perdida conserva commandId após reload e recupera o resultado", 
   await page
     .getByRole("button", { name: "Iniciar preparo", exact: true })
     .click();
-  await expect(page.getByText(/Conectado — 1 ação pendente/)).toBeVisible();
+  await expect(page.getByText(/Ações aguardando confirmação — 1 ação pendente/)).toBeVisible();
   await page.reload();
-  await expect(page.getByText(/Conectado — 1 ação pendente/)).toBeVisible();
+  await expect(page.getByText(/Ações aguardando confirmação — 1 ação pendente/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Sincronizar", exact: true })).toBeEnabled();
   state.reconnect();
   await page.getByRole("button", { name: "Sincronizar", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Marcar como pronto", exact: true }),
   ).toBeEnabled();
-  await expect(page.getByText(/Conectado — 0 ações pendentes/)).toBeVisible();
+  await expect(page.getByRole("complementary",{name:"Conexão e ações do produtor"})).toHaveCount(0);
+  await expect(page.getByText("Conectado",{exact:true})).toHaveCount(0);
   expect(state.posts).toHaveLength(1);
   expect(state.synchronized).toHaveLength(1);
   expect(state.synchronized[0].commands).toEqual([{

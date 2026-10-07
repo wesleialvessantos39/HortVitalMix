@@ -1,3 +1,4 @@
+import { hasAdminPermission,adminSectorLabel } from "../../../shared/adminPermissions";
 import { AccountGreeting } from "../../components/AccountGreeting";
 import { ShieldCheck, UsersRound, Settings, UserRound, ListTree } from "lucide-react";
 import type { AdminVerifySessionResponse } from "../../../shared/contracts/adminGovernance";
@@ -11,7 +12,7 @@ export function AdminDashboardPage({access,onNavigate}:Props){
 
   </header>
   <div className="admin-stat-grid">
-   <article className="admin-stat-card"><ShieldCheck/><div><strong>{superAdmin?"Acesso global":"Acesso setorial"}</strong><span>{superAdmin?"Acesso a todas as áreas da administração.":access.sectors.join(" • ")}</span></div></article>
+   <article className="admin-stat-card"><ShieldCheck/><div><strong>{superAdmin&&!access.deniedSectors?.length?"Acesso global":"Acesso conforme seus poderes"}</strong><span>{superAdmin?(access.deniedSectors?.length?"Alguns poderes foram retirados pela governança. Consulte as áreas disponíveis no menu.":"Acesso a todas as áreas da administração."):access.sectors.map(adminSectorLabel).join(" • ")}</span></div></article>
    <article className="admin-stat-card"><UsersRound/><div><strong>Equipe administrativa</strong><span>Convide pessoas e gerencie suas permissões.</span></div></article>
    <article className="admin-stat-card"><Settings/><div><strong>Configuração segura</strong><span>Operações sensíveis exigem autenticação recente.</span></div></article>
   </div>
@@ -19,10 +20,10 @@ export function AdminDashboardPage({access,onNavigate}:Props){
    <h2>Atalhos</h2>
    <div className="admin-action-grid">
     <button onClick={()=>onNavigate("/admin/conta")}><UserRound/><span><strong>Minha conta e privacidade</strong><small>Dados pessoais, preferências e privacidade da sua conta administrativa.</small></span></button>
-    <button onClick={()=>onNavigate("/admin/governanca")}><ShieldCheck/><span><strong>Governança</strong><small>{superAdmin?"Criar Administradores ou Super administradores por convite.":"Criar Administradores setoriais dentro dos seus setores."}</small></span></button>
-    <button onClick={()=>onNavigate("/admin/usuarios")}><UsersRound/><span><strong>Usuários</strong><small>Consultar acessos administrativos e perfis vinculados.</small></span></button>
-    {superAdmin&&<button onClick={()=>onNavigate("/admin/configuracao")}><Settings/><span><strong>Configuração</strong><small>Ajustar parâmetros globais da plataforma.</small></span></button>}
-    {superAdmin&&<button onClick={()=>onNavigate("/admin/categorias")}><ListTree/><span><strong>Categorias</strong><small>Organizar o catálogo global e sua ordem na vitrine.</small></span></button>}
+    {!access.deniedSectors?.includes("account_governance")&&<button onClick={()=>onNavigate("/admin/governanca")}><ShieldCheck/><span><strong>Governança</strong><small>{superAdmin?"Criar Administradores ou Super administradores por convite.":"Criar Administradores setoriais dentro dos seus setores."}</small></span></button>}
+    {!access.deniedSectors?.includes("account_governance")&&<button onClick={()=>onNavigate("/admin/usuarios")}><UsersRound/><span><strong>Usuários</strong><small>Consultar acessos administrativos e perfis vinculados.</small></span></button>}
+    {hasAdminPermission(access,"platform_configuration")&&<button onClick={()=>onNavigate("/admin/configuracao")}><Settings/><span><strong>Configuração</strong><small>Ajustar parâmetros globais da plataforma.</small></span></button>}
+    {superAdmin&&hasAdminPermission(access,"catalog_moderation")&&<button onClick={()=>onNavigate("/admin/categorias")}><ListTree/><span><strong>Categorias</strong><small>Organizar o catálogo global e sua ordem na vitrine.</small></span></button>}
    </div>
   </div>
  </section>

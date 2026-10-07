@@ -1,3 +1,4 @@
+import { resolveDeniedAdminSectors } from "../security/adminPermissions.ts";
 import {
   effectiveAccountStatus,
   accountBlockCode,
@@ -18,12 +19,14 @@ import {
   sessionIdFromVerifiedToken,
 } from "../security/liveSession.ts";
 import { verifyRecentAuthProof } from "../security/recentAuth.ts";
+import { hasAdminPermission } from "../../shared/adminPermissions.ts";
 
 export interface AdminActorContext {
   userId: string;
   role: AdminRole;
   sectors: AdminSectorCode[];
   isSuperAdmin: boolean;
+  deniedSectors?: AdminSectorCode[];
   sessionIssuedAt: string;
 }
 
@@ -126,14 +129,12 @@ async function resolveAdminSession(
       return;
     }
     if (!account.data || effectiveAccountStatus(account.data) !== "active") {
-      res
-        .status(403)
-        .json({
-          error: account.data
-            ? accountBlockCode(account.data)
-            : AdminErrorCode.FORBIDDEN,
-          requestId: req.requestId,
-        });
+      res.status(403).json({
+        error: account.data
+          ? accountBlockCode(account.data)
+          : AdminErrorCode.FORBIDDEN,
+        requestId: req.requestId,
+      });
       return;
     }
     if (!principal.error && principal.data) {
@@ -293,11 +294,23 @@ async function resolveAdminSession(
     return;
   }
 
+  let deniedSectors: AdminSectorCode[] = [];
+  try {
+    deniedSectors = await resolveDeniedAdminSectors(userData.user.id);
+  } catch {
+    res
+      .status(503)
+      .json({ error: AdminErrorCode.UNAVAILABLE, requestId: req.requestId });
+    return;
+  }
+  sectors = sectors.filter((sector) => !deniedSectors.includes(sector));
+
   req.adminActor = {
     userId: userData.user.id,
     role,
     sectors,
     isSuperAdmin: role === "platform_super_admin",
+    deniedSectors,
     sessionIssuedAt: verifyRecentAuthProof(
       readCookie(req, "hvm_reauth"),
       userData.user.id,
@@ -355,10 +368,7 @@ export function requireRecentAuth(
 /** Delegated capabilities are granted only through the super administrator. */
 export function requireAdminSector(sector: AdminSectorCode) {
   return (req: Request, res: Response, next: NextFunction): void => {
-    if (
-      !req.adminActor?.isSuperAdmin &&
-      !req.adminActor?.sectors.includes(sector)
-    ) {
+    if (!hasAdminPermission(req.adminActor, sector)) {
       res.status(403).json({ error: "FORBIDDEN", requestId: req.requestId });
       return;
     }

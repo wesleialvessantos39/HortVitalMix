@@ -123,3 +123,32 @@ body:has(.admin-route-layout) .admin-route-layout{min-height:100vh}
 @media(min-width:768px) and (max-width:1000px){.admin-shell{grid-template-columns:190px minmax(0,1fr)}.admin-main{padding:24px 18px}.admin-sidebar{padding-inline:10px}.admin-brand strong{font-size:17px}}
 .admin-table th{white-space:nowrap}
 .admin-badge{font-size:11px;padding:5px 8px}
+
+/* Histórico de convites: largura própria, rótulos humanos e cartões no mobile. */
+.admin-card--table:has(.admin-invites-table){container-name:admin-invites;container-type:inline-size}
+.admin-invites-table{min-width:0;table-layout:fixed}
+.admin-invites-table th,.admin-invites-table td{overflow-wrap:anywhere;word-break:normal}
+.admin-invites-table th:nth-child(1){width:22%}
+.admin-invites-table th:nth-child(2){width:16%}
+.admin-invites-table th:nth-child(3){width:14%}
+.admin-invites-table th:nth-child(4){width:26%}
+.admin-invites-table th:nth-child(5){width:11%}
+.admin-invites-table th:nth-child(6){width:11%}
+.admin-invites-table time{display:grid;gap:3px;font-size:12px}
+.admin-invites-table time span,.admin-invites-table .admin-badge{white-space:nowrap;overflow-wrap:normal}
+.admin-sector-tag{display:inline-block;padding:4px 7px;margin:0 4px 4px 0;background:#eef4ed;border:1px solid #dce6da;border-radius:8px;line-height:1.4}
+.admin-permissions-form{max-width:900px}
+.admin-permissions-form .admin-sectors-fieldset{grid-template-columns:repeat(2,minmax(0,1fr))}
+.admin-permissions-form .admin-sector-checkbox span{min-width:0;overflow-wrap:anywhere}
+@container admin-invites (max-width:900px){
+ .admin-invites-table,.admin-invites-table tbody{display:block}
+ .admin-invites-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+ .admin-invites-table tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:16px;border-bottom:1px solid var(--admin-line)}
+ .admin-invites-table td{display:block;border:0;padding:0}
+ .admin-invites-table td:first-child,.admin-invites-table td:nth-child(4){grid-column:1/-1}
+ .admin-invites-table td::before{content:attr(data-label);display:block;font-size:11px;font-weight:800;color:var(--admin-muted);margin-bottom:6px}
+}
+@media(max-width:480px){
+ .admin-invites-table tr,.admin-permissions-form .admin-sectors-fieldset{grid-template-columns:1fr}
+ .admin-invites-table td{grid-column:1/-1}
+}

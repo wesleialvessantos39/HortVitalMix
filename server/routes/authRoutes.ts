@@ -374,7 +374,7 @@ async function handlePublicLoginRequest(
       status: "authenticated",
       userId: data.user.id,
       email: data.user.email ?? null,
-      fullName: access.fullName,
+      fullName: access.profileNames?.[portalRole] ?? access.fullName,
       roles: access.roles,
       activeRole: portalRole,
       portalKind: portalKindForRole(portalRole),
@@ -628,7 +628,7 @@ authRouter.get("/session", async (req, res, next) => {
     res.json({
       userId: id,
       email: result.data.user.email,
-      fullName: access.fullName,
+      fullName: access.profileNames?.[activeRole ?? ""] ?? access.fullName,
       roles: access.roles,
       activeRole,
       portalKind: portalKindForRole(activeRole),

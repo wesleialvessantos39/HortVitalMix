@@ -1,19 +1,10 @@
 import { z } from "zod";
 import { PROVIDER_OTP_PATTERN } from "../securityCodes.ts";
-import {
-  StrongPasswordSchema,
-  validCpf,
-} from "./auth.ts";
-import {
-  normalizeBrazilMobile,
-  onlyDigits,
-} from "../utils/normalization.ts";
+import { StrongPasswordSchema, validCpf } from "./auth.ts";
+import { normalizeBrazilMobile, onlyDigits } from "../utils/normalization.ts";
 
 const email = z.string().trim().toLowerCase().max(255).pipe(z.email());
-const cpf = z
-  .string()
-  .transform(onlyDigits)
-  .refine(validCpf, "CPF inválido");
+const cpf = z.string().transform(onlyDigits).refine(validCpf, "CPF inválido");
 const phone = z
   .string()
   .transform(normalizeBrazilMobile)
@@ -43,7 +34,9 @@ export const BootstrapStatusResponseSchema = z.object({
   reason: z.string().nullable(),
   authorizedEmailHint: z.string().nullable().optional(),
 });
-export type BootstrapStatusResponse = z.infer<typeof BootstrapStatusResponseSchema>;
+export type BootstrapStatusResponse = z.infer<
+  typeof BootstrapStatusResponseSchema
+>;
 
 export const BootstrapRequestSchema = z
   .object({
@@ -77,7 +70,6 @@ export const AdminLoginSchema = z
   .strict();
 export type AdminLoginInput = z.infer<typeof AdminLoginSchema>;
 
-
 export const AdminEmailConfirmationRequestSchema = z
   .object({ email, portalRole: AdminRoleSchema.optional() })
   .strict();
@@ -91,6 +83,7 @@ export const AdminEmailConfirmationVerifySchema = z
   .strict();
 
 export const AdminSessionPayloadSchema = z.object({
+  deniedSectors: z.array(AdminSectorCodeSchema).optional(),
   accessToken: z.string(),
   userId: z.string().uuid().optional(),
   refreshToken: z.string(),
@@ -107,13 +100,18 @@ export const AdminLoginResultSchema = z.discriminatedUnion("status", [
     maskedDestination: z.string(),
     expiresAt: z.string().datetime(),
   }),
-  z.object({ status: z.literal("session_created") }).merge(AdminSessionPayloadSchema),
+  z
+    .object({ status: z.literal("session_created") })
+    .merge(AdminSessionPayloadSchema),
   z.object({
     status: z.literal("email_confirmation_required"),
     maskedDestination: z.string(),
   }),
   z.object({ status: z.literal("invalid_credentials") }),
-  z.object({ status: z.literal("account_blocked"), error:z.string().optional() }),
+  z.object({
+    status: z.literal("account_blocked"),
+    error: z.string().optional(),
+  }),
   z.object({ status: z.literal("no_admin_role") }),
   z.object({ status: z.literal("portal_required") }),
   z.object({ status: z.literal("wrong_portal_super") }),
@@ -162,10 +160,14 @@ export const CreateInviteSchema = z
   .strict()
   .refine(
     (data) => data.targetRole !== "platform_admin" || data.sectors.length >= 1,
-    { message: "Administrador Setorial precisa de pelo menos 1 setor", path: ["sectors"] },
+    {
+      message: "Administrador Setorial precisa de pelo menos 1 setor",
+      path: ["sectors"],
+    },
   )
   .refine(
-    (data) => data.targetRole !== "platform_super_admin" || data.sectors.length === 0,
+    (data) =>
+      data.targetRole !== "platform_super_admin" || data.sectors.length === 0,
     { message: "Super administrador não recebe setores", path: ["sectors"] },
   );
 export type CreateInviteInput = z.infer<typeof CreateInviteSchema>;
@@ -210,7 +212,9 @@ export const ValidateInviteResponseSchema = z.discriminatedUnion("status", [
   z.object({ status: z.literal("already_accepted") }),
   z.object({ status: z.literal("invalidated") }),
 ]);
-export type ValidateInviteResponse = z.infer<typeof ValidateInviteResponseSchema>;
+export type ValidateInviteResponse = z.infer<
+  typeof ValidateInviteResponseSchema
+>;
 
 export const AcceptInviteSchema = z
   .object({
@@ -239,9 +243,34 @@ export const AdminVerifySessionResponseSchema = z.object({
   authorized: z.boolean(),
   role: AdminRoleSchema.nullable(),
   sectors: z.array(AdminSectorCodeSchema),
+  deniedSectors: z.array(AdminSectorCodeSchema).optional(),
   requiresReauth: z.boolean(),
 });
-export type AdminVerifySessionResponse = z.infer<typeof AdminVerifySessionResponseSchema>;
+export type AdminVerifySessionResponse = z.infer<
+  typeof AdminVerifySessionResponseSchema
+>;
+
+export const UpdateAdminPermissionsSchema = z
+  .object({
+    sectors: z
+      .array(AdminSectorCodeSchema)
+      .max(9)
+      .refine(
+        (values) => new Set(values).size === values.length,
+        "Poder repetido",
+      ),
+    expectedRevision: z.number().int().positive(),
+    commandId: z.uuid(),
+  })
+  .strict();
+
+export type AdminPermissionsView = {
+  userId: string;
+  role: AdminRole;
+  fullName: string;
+  sectors: AdminSectorCode[];
+  revision: number;
+};
 
 export const AdminErrorCode = {
   INVALID_CREDENTIALS: "INVALID_CREDENTIALS",

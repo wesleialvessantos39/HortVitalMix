@@ -93,6 +93,7 @@ async function authorize(
        AND public.effective_account_status(u.status,u.block_starts_at,u.block_ends_at)='active'
        AND ra.role_code='platform_super_admin' AND ra.revoked_at IS NULL
        AND (ra.expires_at IS NULL OR ra.expires_at>clock_timestamp())
+       AND hvm_governance_private.has_permission(u.id,'catalog_moderation')
      ${write ? "FOR SHARE OF ap,u,ra" : ""}`,
     [actor.userId],
   );

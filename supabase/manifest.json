@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 64,
+  "schemaVersion": 65,
   "migrations": [
     {
       "version": "20260919030126",
@@ -350,7 +350,17 @@
       "version": "20261007174202",
       "name": "trilha25_offline_sync_bi",
       "file": "20261007174202_trilha25_offline_sync_bi.sql"
+    },
+    {
+      "version": "20261007205812",
+      "name": "independent_profiles_admin_permissions",
+      "file": "20261007205812_independent_profiles_admin_permissions.sql"
+    },
+    {
+      "version": "20261007214314",
+      "name": "revoke_profile_client_column_mutations",
+      "file": "20261007214314_revoke_profile_client_column_mutations.sql"
     }
   ],
-  "migrationHistoryHash": "4225db3b2142e83837e7d8620c3935e52cbf6a6b5c2b263e0885f0149dba9739"
+  "migrationHistoryHash": "654a6a62c736a81b32941d3e5badd395f723f3b0d1e011902a52836025968525"
 }

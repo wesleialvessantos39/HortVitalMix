@@ -13,7 +13,7 @@ type Props = {
 };
 
 type LoginResponse =
-  | { status: "session_created"; role: string; sectors: string[]; accessToken?: string; refreshToken?: string; expiresIn?: number }
+  | { status: "session_created"; role: string; sectors: string[]; deniedSectors?: import("../../../shared/contracts/adminGovernance").AdminSectorCode[]; accessToken?: string; refreshToken?: string; expiresIn?: number }
   | { status: "email_confirmation_required"; maskedDestination: string }
   | { status: string; retryAfterSeconds?: number };
 
@@ -107,7 +107,7 @@ export function AdminLoginPage({
         // endpoint público /v1/auth/session aqui: credenciais administrativas
         // podem representar uma pessoa cujo user_id público é diferente.
         if ("role" in result && (result.role === "platform_admin" || result.role === "platform_super_admin") && "sectors" in result) {
-          primeAdminAccess({authorized:true,role:result.role,sectors:result.sectors as import("../../../shared/contracts/adminGovernance").AdminSectorCode[],requiresReauth:false});
+          primeAdminAccess({authorized:true,role:result.role,deniedSectors:result.deniedSectors,sectors:result.sectors as import("../../../shared/contracts/adminGovernance").AdminSectorCode[],requiresReauth:false});
         }
         onNavigate("/admin/painel");
         return;

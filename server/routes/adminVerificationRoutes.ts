@@ -1,3 +1,4 @@
+import { hasAdminPermission } from "../../shared/adminPermissions.ts";
 import { Router, type Request } from "express";
 import { z } from "zod";
 import {
@@ -20,8 +21,7 @@ export const adminVerificationRouter = Router();
 adminVerificationRouter.use("/verification-queue", adminSessionMiddleware);
 adminVerificationRouter.use("/verification-queue", (req, res, next) => {
   if (
-    !req.adminActor?.isSuperAdmin &&
-    !req.adminActor?.sectors.includes("document_verification")
+    !hasAdminPermission(req.adminActor, "document_verification")
   ) {
     res.status(403).json({ error: "FORBIDDEN", requestId: req.requestId });
     return;

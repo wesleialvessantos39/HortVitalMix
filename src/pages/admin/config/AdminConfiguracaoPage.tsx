@@ -1,3 +1,4 @@
+import { hasAdminPermission } from "../../../../shared/adminPermissions";
 import { useEffect, useState, type FormEvent } from "react";
 import {
   AlertTriangle,
@@ -41,9 +42,9 @@ export function AdminConfiguracaoPage({
   const [commandId, setCommandId] = useState(() => cryptoRandomUUID());
 
   const isSuper = access.role === "platform_super_admin";
-  const canAccounts = isSuper || access.sectors.includes("account_governance");
-  const canLocalities = isSuper || access.sectors.includes("location_management");
-  const canDocuments = isSuper || access.sectors.includes("document_verification");
+  const canAccounts = hasAdminPermission(access,"account_governance");
+  const canLocalities = hasAdminPermission(access,"location_management");
+  const canDocuments = hasAdminPermission(access,"document_verification");
 
   async function loadOverview() {
     setOverviewError(false);
@@ -196,7 +197,7 @@ export function AdminConfiguracaoPage({
       value: overview ? overview.auditEvents24h + " eventos em 24 h" : "—",
       note: "Rastreabilidade de alterações administrativas",
       icon: History,
-      enabled: isSuper,
+      enabled: isSuper && canAccounts,
       target: "/admin/governanca",
     },
   ];

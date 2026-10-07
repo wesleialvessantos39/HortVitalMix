@@ -85,7 +85,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
     const controller = new AbortController();
     void load(controller.signal);
     return () => controller.abort();
-  }, [session.userId, path]);
+  }, [session.userId,session.activeRole, path]);
 
   useEffect(() => {
     if (path !== "/conta" || session.activeRole !== "producer") return;
@@ -302,6 +302,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
                 method: "PATCH",
                 body: JSON.stringify({
                   fullName: form.get("fullName"),
+                  profileRole: profile.profileRole ?? session.activeRole,
                   expectedRevision: profile.revision,
                   commandId: commandId(),
                 }),
@@ -314,7 +315,8 @@ export function AccountHub({ path, session, onNavigate }: Props) {
                 return;
               }
               await load();
-              setNotice("Perfil atualizado.");
+              setNotice("Perfil atualizado neste cadastro.");
+              window.dispatchEvent(new Event("hvm:session-changed"));
             } catch (error) {
               if ((error as ApiFailure).status === 409) {
                 await load();

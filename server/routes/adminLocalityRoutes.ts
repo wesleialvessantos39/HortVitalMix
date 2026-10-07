@@ -1,3 +1,4 @@
+import { hasAdminPermission } from "../../shared/adminPermissions.ts";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import { z } from "zod";
 import { dbPool } from "../db/pool.ts";
@@ -39,8 +40,7 @@ function requireLocationManagement(
   next: NextFunction,
 ): void {
   if (
-    !req.adminActor?.isSuperAdmin &&
-    !req.adminActor?.sectors.includes("location_management")
+    !hasAdminPermission(req.adminActor, "location_management")
   ) {
     res.status(403).json({
       error: "FORBIDDEN",
