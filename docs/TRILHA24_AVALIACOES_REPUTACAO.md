@@ -1,0 +1,49 @@
+# Trilha 24 — avaliações verificadas, reputação e moderação
+
+Base homologada: **main/8ce95242de643aac65a2d4d23cf4ce5f1ee45125**, T23/schema **61**, 67 migrations. Fonte normativa: **HortiVitalMix — Plano T12–T25, Trilha 24, Volume 5**, junto do Livro-Raiz. Repositório **wesleialvessantos39/HortVitalMix**, único Supabase **xipbsazvymkqqfmfegwu**. Implementação aditiva, sem iniciar offline/BI da T25.
+
+## Banco, segurança e compatibilidade
+
+Schema **62**, **68 migrations**, hash **efa1d2600ff63af3d6225da0535b17aab35f52232013a81c6196edec106b2833**. Migration adicional **20261007122255_trilha24_reviews_reputation.sql**, aplicada como versão física **20261007125921** e reconciliada no verificador de histórico. As **67 migrations anteriores estão byte a byte preservadas**; nenhum dado ou coluna anterior foi alterado pela migration.
+
+Novas tabelas **app_reviews** e **app_reputation_projections**, ambas com **RLS ENABLE/FORCE**. Clientes anon/authenticated recebem somente SELECT. Avaliações públicas revelam apenas ID da avaliação/loja, nota, comentário e data, sob publicação/elegibilidade da vitrine. IDs de pedido/comprador/moderador, motivos e datas de moderação não recebem SELECT dos clientes. A API pública retorna um DTO ainda menor, sem ID da loja. Conteúdo moderado e lojas indisponíveis ficam fora da leitura pública.
+
+O backend deriva a pessoa pela identidade ativa da sessão, verifica a titularidade do pedido e registra auditoria com comando idempotente. `UNIQUE(order_id)` protege contra uma segunda avaliação, inclusive concorrente. Nota inteira de 1–5, comentário opcional até 1000 caracteres e motivo de moderação de 10–500 caracteres são validados por contratos Zod estritos e constraints SQL. Campos de identidade/estado enviados pelo cliente são rejeitados.
+
+Há três adaptações necessárias ao DDL ilustrativo do manual:
+
+- O estado logístico **delivered** fica em **app_order_fulfillment.status**, da T21, enquanto **app_orders.status** conserva os estados financeiros da T20. O domínio e o guard SQL consultam a tabela real da esteira; não mudam máquina, finanças, recebimento, estoque ou provas T22.
+- `RESTRICT` nos vínculos de pessoa/pedido/loja bloquearia a exclusão já homologada na T06. Eles usam **CASCADE**, e o moderador usa **SET NULL**. Moderação normal nunca DELETE; os casos de exclusão de conta/loja e limpeza autorizada continuam possíveis, comprovados no PostgreSQL.
+- O agregado do exemplo com GROUP BY não escreveria nenhuma linha após retirar a última avaliação, conservando uma nota antiga. O trigger agrega sem GROUP BY e grava **0,00 / 0** quando não há notas publicadas. DELETE retorna OLD e não recria a projeção de uma loja apagada. Um advisory lock transacional por loja serializa alterações concorrentes antes da consulta do agregado.
+
+O trigger **trg_reviews_reputation**, AFTER INSERT/UPDATE/DELETE, chama **fn_refresh_store_reputation** na mesma transação. Ele é **SECURITY INVOKER**, com search_path vazio e referências qualificadas; o backend já tem os privilégios necessários. Clientes não executam esse helper nem acessam o schema privado. O serviço lê a projeção, sem recalcular a média manualmente. Não há cron, serviço pago, dependência nova ou upload de mídia adicional.
+
+Conteúdo, nota e vínculos da avaliação são imutáveis após publicação. Moderação é definitiva, registra motivo/autor/data e auditoria, e preserva a linha para consulta administrativa. Excluir a conta do moderador anula somente seu vínculo, conservando motivo/data. `service_role` não recebe DELETE direto em avaliações; cascatas da T06 e limpeza privilegiada seguem as regras anteriores.
+
+## Telas e APIs
+
+- **/pedidos/:id**: bloco aditivo de avaliação aparece somente após delivered. **OrderReviewModal.tsx** oferece cinco estrelas, comentário opcional, validação, foco contido no dialog, retorno de foco e proteção contra envio repetido. Pedido já avaliado mostra o registro, inclusive a informação de ocultação, e não oferece segunda avaliação.
+- **/produtores/:slug**: bloco aditivo na vitrine T12 com média, quantidade, comentários de compras verificadas e paginação de dez itens. Zero avaliações é apresentado sem nota inventada. A consulta usa o slug público existente, sem mudar o contrato da vitrine, e carrega de forma independente de capa/retrato/produtos.
+- **/admin/avaliacoes**: lista publicadas/moderadas/todas, paginação, motivo obrigatório e confirmação de moderação. Usa a capacidade existente **complaint_management**, com revalidação de setor/papel/conta e autenticação recente na ação. Motivo, autor e data ficam disponíveis para auditoria. Não há nova permissão administrativa nem ação automática sobre contas.
+
+Rotas nos três prefixos existentes `/v1`, `/api/v1`, `/_hvm_api/v1`: GET `/stores/:slug/reviews`, GET `/orders/:id/review`, POST `/reviews`, GET `/admin/reviews` e POST `/admin/reviews/:id/moderate`. Mutações usam proteção de origem e `X-Command-Id`; respostas privadas têm `private, no-store`. Middleware administrativo é limitado às rotas novas. A consulta pública combina projeção e página em um único snapshot SQL; textos são renderizados como texto pelo React.
+
+## Verificação e preservação
+
+**21 testes T24 de contratos/rotas**, **21 cenários T24 em PostgreSQL real** e **uma história completa React compilado → HTTP → PostgreSQL → vitrine → moderação** aprovados. Incluem os cinco testes mínimos do manual, titularidade, vínculo forjado, concorrência, replay de comando, projeção zerada no último UPDATE/DELETE, imutabilidade, permissões de coluna, RLS, revogação de setor, loja pausada, paginação e exclusão T06 de comprador/loja/moderador.
+
+A história percorre pagamento isolado e a esteira real T21/T22 com agendamento/prova. Avaliar antes de entregar retorna **422**; depois, a publicação pela UI grava nota 5 e atualiza a vitrine. Moderação com sessão antiga retorna **401**, motivo vazio não altera a linha, e a confirmação válida conserva conteúdo/auditoria e zera a projeção. Um comentário contendo script aparece como texto, sem execução. Modal, vitrine e administração auditados em **320/390/768/1440 px**, sem overflow ou pageerror, com Escape/retorno de foco comprovados.
+
+Regressões: **827 testes unitários/rotas aprovados** (508 unitários + 319 integrações de transporte), **134 SQL anteriores** (18 cesta, 25 checkout, 22 comércio, 15 mídias de vitrine, 19 pedidos, 11 logística, 4 mídias públicas e 20 assinaturas) e **79 interfaces anteriores aprovadas na mesma rodada**, sem modificar testes antigos. Bancos SQL locais descartáveis receberam replay limpo das **68 migrations**. TypeScript global/de produção, build, manifesto/histórico remoto, segredos/bundle e cold start aprovados. Dependências/lockfile/configuração Vercel preservados; **zero advisories de dependências de produção**.
+
+Após a migration, **92/92 relações anteriores de negócio/Auth/Storage conservam contagem e digest**, inclusive as cinco tabelas T23. Há **90 tabelas app_* com ENABLE/FORCE**, zero INSERT/UPDATE/DELETE/TRUNCATE de clientes, zero EXECUTE de cliente no trigger T24 e zero USAGE de cliente no schema privado. **Cinco usuários Auth e dez objetos Storage** preservados. Zero avaliações/projeções fictícias, contas, pedidos ou cobranças de teste em produção.
+
+Advisors: **5 WARN de segurança e 25 WARN de desempenho anteriores**, nenhum WARN novo. Três índices novos ainda sem uso são INFO esperados sem avaliações reais. Avisos anteriores: [helpers executáveis](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), [proteção de senhas](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection), [policies permissivas](https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies). Policies/helpers anteriores não foram alterados.
+
+Fotos, originais, variantes, ETag/cache, buckets, trial/planos/ciclos T23 e gateway T20 permanecem na implementação homologada. Nomes/preços continuam para configuração do operador em **/admin/assinaturas**, conforme sua escolha anterior. O gateway real continua inativo; as confirmações financeiras desta verificação ocorreram somente no banco descartável. Não houve uso de contas reais para fabricar avaliações ou entregas em produção.
+
+## Publicação
+
+Migration aplicada e evidências locais/SQL fechadas. O deploy segue exclusivamente **main/production/pdx1** pela integração Git existente, no plano gratuito e com o runtime já homologado. A SHA, o READY, a validação pública e o selo de release serão registrados após o deploy da main; não se declara publicação antecipadamente.
+
+Evidência consolidada: [TRILHA24_PRESERVACAO.json](TRILHA24_PRESERVACAO.json). **T25 deve partir do schema 62**, mantendo T01–T24.
