@@ -13,7 +13,12 @@ export function offlineWorkerPlugin(): Plugin {
           .filter((p) => p.startsWith("assets/") && /\.(?:js|css)$/.test(p))
           .map((p) => "/" + p),
       ].sort();
+      const template = readFileSync(
+        new URL("../src/lib/offline-worker.js", import.meta.url),
+        "utf8",
+      );
       const revision = createHash("sha256")
+        .update(template)
         .update(assets.join("\n"))
         .update(
           bundle["index.html"]?.type === "asset"
@@ -22,10 +27,7 @@ export function offlineWorkerPlugin(): Plugin {
         )
         .digest("hex")
         .slice(0, 16);
-      const source = readFileSync(
-        new URL("../src/lib/offline-worker.js", import.meta.url),
-        "utf8",
-      )
+      const source = template
         .replace("__HVM_CACHE_NAME__", "hvm-rural-assets-" + revision)
         .replace("__HVM_STATIC_ASSETS__", JSON.stringify(assets));
       this.emitFile({ type: "asset", fileName: "offline-worker.js", source });

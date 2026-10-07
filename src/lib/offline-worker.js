@@ -40,7 +40,7 @@ self.addEventListener("fetch", (event) => {
   const request = event.request,
     url = new URL(request.url);
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
-  if (STATIC_ASSETS.includes(url.pathname) && url.pathname !== "/index.html") {
+  if (/^\/assets\/[^/]+\.(?:js|css)$/.test(url.pathname)) {
     event.respondWith(
       caches.match(request).then((hit) => hit || fetch(request)),
     );

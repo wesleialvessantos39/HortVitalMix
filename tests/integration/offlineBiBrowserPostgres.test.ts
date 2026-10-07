@@ -362,7 +362,18 @@ describe.runIf(!!process.env.HVM_T25_LOCAL_DATABASE_URL)(
               k !== "/index.html" && !/^\/assets\/[^/]+\.(js|css)$/.test(k),
           ),
         ).toBe(false);
+        // An already open tab may still request a chunk from the previous
+        // build after a worker update. Only its cached static asset is served.
+        await producer.evaluate(async () => {
+          const prior = await caches.open("hvm-rural-assets-previous-test");
+          await prior.put("/assets/t25-previous-build.js", new Response(
+            "/* previous static build */", { headers: { "Content-Type": "application/javascript" } },
+          ));
+        });
         await producer.context().setOffline(true);
+        expect(await producer.evaluate(async () => (await fetch(
+          "/assets/t25-previous-build.js",
+        )).text())).toBe("/* previous static build */");
         await check(
           producer.getByText(/Modo offline — 0 ações pendentes/),
         ).toBeVisible();
