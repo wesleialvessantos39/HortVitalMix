@@ -65,7 +65,7 @@ export const ReviewService = {
   async eligibility(userId: string, rawId: string) {
     const id = ReviewIdSchema.parse(rawId);
     return commerceTransaction(async (c) => {
-      await commerceIdentity(c, userId);
+      await commerceIdentity(c, userId, "consumer");
       const o = await ownedOrder(c, userId, id),
         r = (
           await c.query(
@@ -96,7 +96,7 @@ export const ReviewService = {
   ) {
     const input = CreateReviewSchema.parse(raw);
     return commerceTransaction(async (c) => {
-      const actor = await commerceIdentity(c, userId);
+      const actor = await commerceIdentity(c, userId, "consumer");
       return commerceCommand(
         c,
         userId,

@@ -9,6 +9,7 @@ import {
   formatProductPrice,
   type PublicProduct,
 } from "../../../shared/contracts/product";
+import { usePortalSession } from "../notifications/NotificationProvider";
 import { useCartMutation } from "../../lib/cart";
 import "./hortiMix.css";
 
@@ -29,6 +30,8 @@ export function HortiMixBuilder({
     setItems([]);
     setMessage("Seu HortiMix foi adicionado à cesta.");
   });
+  const session=usePortalSession();
+  if(session&&session.activeRole!=="consumer")return <section className="hvm-mix"><h2>HortiMix</h2><p>Cadastre-se e entre como consumidor para montar sua cesta.</p><button className="secondary" onClick={()=>onNavigate("/compras")}>Comprar como consumidor</button></section>;
   const available = products.filter((p) => p.inStock),
     selected = available.find((p) => p.id === productId);
   const total = items.reduce(

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ShoppingCart } from "lucide-react";
 import { useCartMutation } from "../../lib/cart";
+import { usePortalSession } from "../notifications/NotificationProvider";
 export function ProductCartActions({
   productId,
   available,
@@ -10,6 +11,8 @@ export function ProductCartActions({
 }) {
   const command = useCartMutation(),
     [added, setAdded] = useState(false);
+  const session=usePortalSession();
+  if(session&&session.activeRole!=="consumer")return <div className="hvm-product-cart-actions"><a className="secondary" href="/compras">Comprar como consumidor</a></div>;
   return (
     <div className="hvm-product-cart-actions">
       <button

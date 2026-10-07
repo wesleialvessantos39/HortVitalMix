@@ -135,7 +135,7 @@ async function identity(c: PoolClient, userId: string) {
     JOIN public.app_people pe ON pe.user_id=u.id WHERE u.id=$1 AND pe.archived_at IS NULL
     AND public.effective_account_status(u.status,u.block_starts_at,u.block_ends_at)='active'
     AND EXISTS(SELECT 1 FROM public.app_user_role_assignments r WHERE r.user_id=u.id
-      AND r.role_code IN ('consumer','producer') AND r.revoked_at IS NULL
+      AND r.role_code='consumer' AND r.revoked_at IS NULL
       AND (r.expires_at IS NULL OR r.expires_at>clock_timestamp())) FOR SHARE OF u,pe`,
       [userId],
     )

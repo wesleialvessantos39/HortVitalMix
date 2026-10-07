@@ -90,7 +90,8 @@ export const checkoutErrorMessage = (error: unknown) => {
   return (
     (
       {
-        AUTH_REQUIRED:
+        CONSUMER_REQUIRED: "Cadastre-se e entre como consumidor para comprar.",
+    AUTH_REQUIRED:
           "Sua sessão expirou. Entre novamente para recuperar esta confirmação.",
         CHECKOUT_OWNER_REQUIRED:
           "Entre com uma conta de consumidor ou produtor para revisar sua seleção.",

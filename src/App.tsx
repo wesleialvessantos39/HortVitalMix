@@ -2,7 +2,6 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react"
 import {
   Leaf,
   MapPin,
-  Bell,
   UserRound,
   ShoppingCart,
   Search,
@@ -42,6 +41,8 @@ import { ProducerTrialBanner } from "./pages/producer/ProducerTrialBanner";
 import { CategoryNavSection } from "./components/catalog/CategoryNavSection";
 import type { Category } from "../shared/contracts/category";
 import { PublicProductCatalog } from "./components/catalog/PublicProductCatalog";
+import { ConsumerAccessNotice } from "./components/ConsumerAccessNotice";
+import { NotificationProvider, NotificationBell } from "./components/notifications/NotificationProvider";
 import { LocationSelector } from "./components/LocationSelector";
 const ProducerCatalogPage = lazy(() => import("./pages/producer/ProducerCatalogPage"));
 const InventoryLotsPage = lazy(() => import("./pages/producer/InventoryLotsPage"));
@@ -61,6 +62,9 @@ const PosSaleReviewPage = lazy(() => import("./pages/commerce/PosSaleReviewPage"
 const CasesPage = lazy(() => import("./pages/commerce/CasesPage"));
 const DeliveryWindowsPage = lazy(() => import("./pages/producer/DeliveryWindowsPage"));
 const ProducerOrdersPage = lazy(() => import("./pages/producer/ProducerOrdersPage"));
+const NotificationsPage = lazy(() => import("./pages/account/NotificationsPage"));
+const ProducerSalesPage = lazy(() => import("./pages/producer/ProducerSalesPage"));
+const ProducerRefundsPage = lazy(() => import("./pages/producer/ProducerRefundsPage"));
 const OrderTrackingPage = lazy(() => import("./pages/public/OrderTrackingPage"));
 const fallback = {
   platformName: "HortiVitalMix",
@@ -105,6 +109,7 @@ export default function App() {
     [categoryId, setCategoryId] = useState<string | null>(null),
     [deliveryLabel, setDeliveryLabel] = useState<string | null>(null),
     [cartCount, setCartCount] = useState(0);
+  const [,setNavigationRevision] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
   const {
     session: shellSession,
@@ -117,7 +122,7 @@ export default function App() {
     window.addEventListener("hvm:cart-updated",update);
     return () => window.removeEventListener("hvm:cart-updated",update);
   },[]);
-  useEffect(() => setCartCount(0),[shellSession?.userId]);
+  useEffect(() => setCartCount(0),[shellSession?.userId,shellSession?.activeRole]);
   // Item 4: a região da vitrine é escolhida pelo visitante e não depende do
   // login — vale igual para visitante, consumidor, produtor, Administrador e
   // Super administrador.
@@ -135,6 +140,8 @@ export default function App() {
   const publicLoginRole = path === "/entrar/produtor" ? "producer" : path === "/entrar/consumidor" ? "consumer" : null;
   const guestAccessRoute = path === "/entrar" || path.startsWith("/entrar/") || path === "/cadastro" || path.startsWith("/cadastro/") || path === "/administracao" || path === "/admin/entrar" || path.startsWith("/acesso/");
   const administrativeSession = shellSession?.activeRole === "platform_admin" || shellSession?.activeRole === "platform_super_admin";
+  const canShop = !shellSession || shellSession.activeRole === "consumer";
+  const shoppingRoute = ["/compras","/pedidos","/checkout","/carrinho"].includes(path) || /^\/pedidos\/[^/]+(?:\/pagamento)?$/.test(path) || /^\/pos\/venda\//.test(path);
   const accountTarget = administrativeSession ? "/admin/conta" : "/conta";
   const paymentId = path.match(/^\/pagamentos\/([^/]+)$/)?.[1] ?? path.match(/^\/pedidos\/([^/]+)\/pagamento$/)?.[1];
   const posCode = path.match(/^\/pos\/venda\/([a-f0-9]{32})$/)?.[1];
@@ -224,6 +231,7 @@ export default function App() {
     const next = new URL(to, location.origin);
     history.pushState({}, "", next.pathname + next.search + next.hash);
     setPath(next.pathname);
+    setNavigationRevision(n=>n+1);
     window.scrollTo(0, 0);
   }, []);
   const refreshCategorySelection = useCallback((selected: Category | null) => {
@@ -279,7 +287,7 @@ export default function App() {
     </form>
   );
   return (
-    <>
+    <NotificationProvider session={shellSession}>
       <a className="skip" href="#conteudo">
         Ir para conteúdo
       </a>
@@ -307,13 +315,7 @@ export default function App() {
               expanded={modal === "Localização"}
               onOpen={openLocality}
             />
-            <button
-              className="icon"
-              aria-label="Notificações"
-              onClick={() => setModal("Notificações")}
-            >
-              <Bell />
-            </button>
+            <NotificationBell onClick={() => go(administrativeSession ? "/admin/notificacoes" : "/notificacoes")}/>
             {showAdministrationEntry && (
               <button
                 className="icon admin-home-entry"
@@ -333,14 +335,14 @@ export default function App() {
             >
               <AccountStatusIcon session={shellSession}/>
             </button>
-            <button
+            {canShop&&<button
               className="icon"
               aria-label="Carrinho"
               onClick={() => go("/carrinho")}
             >
               <ShoppingCart />
               {cartCount>0&&<span className="hvm-cart-count" aria-hidden="true">{cartCount}</span>}
-            </button>
+            </button>}
           </div>
         </div>
       </header>
@@ -348,13 +350,7 @@ export default function App() {
         <div className="mobile-top">
           {logo}
           <div className="header-actions">
-            <button
-              className="icon"
-              aria-label="Notificações"
-              onClick={() => setModal("Notificações")}
-            >
-              <Bell />
-            </button>
+            <NotificationBell onClick={() => go(administrativeSession ? "/admin/notificacoes" : "/notificacoes")}/>
             {showAdministrationEntry && (
               <button
                 className="icon admin-home-entry"
@@ -365,14 +361,14 @@ export default function App() {
                 <ShieldCheck />
               </button>
             )}
-            <button
+            {canShop&&<button
               className="icon"
               aria-label="Carrinho"
               onClick={() => go("/carrinho")}
             >
               <ShoppingCart />
               {cartCount>0&&<span className="hvm-cart-count" aria-hidden="true">{cartCount}</span>}
-            </button>
+            </button>}
           </div>
         </div>
         {path !== "/" && !isProducerPropertyRoute && !isProducerStoreRoute && !isProducerProductRoute && search}
@@ -413,6 +409,14 @@ export default function App() {
           <ChoosePortalPage onNavigate={go} />
         ) : ["/assinaturas","/planos","/assinaturas/minhas","/produtor/assinaturas"].includes(path) ? (
           <Suspense fallback={<p role="status">Carregando assinaturas…</p>}>{sessionLoading ? <p role="status">Conferindo sua conta…</p> : <SubscriptionPlansPage key={(shellSession?.userId??"guest")+":"+path} audience={path.startsWith("/produtor/") || (path === "/assinaturas/minhas" && shellSession?.activeRole === "producer") ? "producer":"consumer"} session={publicPortalSession?shellSession:null} onlyMine={path === "/assinaturas/minhas"} onNavigate={go}/>}</Suspense>
+        ) : path === "/notificacoes" ? (
+          <Suspense fallback={<p role="status">Carregando notificações…</p>}><NotificationsPage onNavigate={go}/></Suspense>
+        ) : shoppingRoute && shellSession && shellSession.activeRole !== "consumer" ? (
+          <ConsumerAccessNotice session={shellSession} onNavigate={go}/>
+        ) : ["/produtor/vendas","/vendas"].includes(path) ? (
+          <Suspense fallback={<p role="status">Carregando vendas…</p>}>{sessionLoading?<p role="status">Conferindo sua conta…</p>:shellSession?.activeRole==="producer"?<ProducerSalesPage key={shellSession.userId+location.search} userId={shellSession.userId} onNavigate={go}/>:<section className="account-notice"><h1>Minhas vendas</h1><p>Entre como produtor para consultar as vendas da sua loja.</p><button className="primary" onClick={()=>go("/entrar/produtor")}>Entrar como produtor</button></section>}</Suspense>
+        ) : path === "/produtor/reembolsos" || (path === "/reembolsos" && shellSession?.activeRole === "producer") ? (
+          <Suspense fallback={<p role="status">Carregando reembolsos das vendas…</p>}>{sessionLoading?<p role="status">Conferindo sua conta…</p>:shellSession?.activeRole==="producer"?<ProducerRefundsPage key={shellSession.userId+location.search} userId={shellSession.userId} onNavigate={go}/>:<section className="account-notice"><h1>Reembolsos das vendas</h1><p>Entre como produtor para acompanhar os reembolsos da sua loja.</p></section>}</Suspense>
         ) : paymentId ? (
           <Suspense fallback={<p role="status">Carregando pagamento…</p>}>
             {sessionLoading ? <p role="status">Conferindo sua conta…</p> : <PaymentPreparedPage key={shellSession?.userId+":"+paymentId} id={paymentId} userId={publicPortalSession?shellSession?.userId??null:null} onNavigate={go}/>}
@@ -429,7 +433,7 @@ export default function App() {
           <Suspense fallback={<p role="status">Carregando janelas…</p>}>{sessionLoading ? <p role="status">Conferindo sua conta…</p> : shellSession?.activeRole === "producer" ? <DeliveryWindowsPage key={shellSession.userId} userId={shellSession.userId} onNavigate={go}/> : <section className="account-notice"><h1>Janelas de entrega</h1><p>Entre como produtor para configurar as janelas da loja.</p><button className="primary" onClick={()=>go("/entrar/produtor")}>Entrar como produtor</button></section>}</Suspense>
         ) : path === "/produtor/pedidos" ? (
           <Suspense fallback={<p role="status">Carregando pedidos da loja…</p>}>
-            {sessionLoading ? <p role="status">Conferindo sua conta…</p> : shellSession?.activeRole === "producer" ? <ProducerOrdersPage key={shellSession.userId} userId={shellSession.userId} onNavigate={go}/> : <section className="account-notice"><h1>Pedidos da minha loja</h1><p>Entre como produtor para gerenciar os pedidos da sua loja.</p><button className="primary" onClick={()=>go("/entrar/produtor")}>Entrar como produtor</button></section>}
+            {sessionLoading ? <p role="status">Conferindo sua conta…</p> : shellSession?.activeRole === "producer" ? <ProducerOrdersPage key={shellSession.userId+location.search} userId={shellSession.userId} onNavigate={go}/> : <section className="account-notice"><h1>Pedidos da minha loja</h1><p>Entre como produtor para gerenciar os pedidos da sua loja.</p><button className="primary" onClick={()=>go("/entrar/produtor")}>Entrar como produtor</button></section>}
           </Suspense>
         ) : path === "/compras" ? (
           <Suspense fallback={<p role="status">Carregando suas compras…</p>}>
@@ -437,7 +441,7 @@ export default function App() {
           </Suspense>
         ) : path === "/denuncias" || path === "/reembolsos" ? (
           <Suspense fallback={<p role="status">Carregando solicitações…</p>}>
-            {sessionLoading ? <p role="status">Conferindo sua conta…</p> : <CasesPage key={(shellSession?.userId??"guest")+path} kind={path==="/reembolsos"?"refund":"complaint"} session={publicPortalSession?shellSession:null} onNavigate={go}/>}
+            {sessionLoading ? <p role="status">Conferindo sua conta…</p> : <CasesPage key={(shellSession?.userId??"guest")+path+location.search} kind={path==="/reembolsos"?"refund":"complaint"} session={publicPortalSession?shellSession:null} onNavigate={go}/>}
           </Suspense>
         ) : path === "/produtor/caixa" ? (
           <Suspense fallback={<p role="status">Abrindo seu caixa…</p>}>
@@ -761,6 +765,6 @@ export default function App() {
           Entendi
         </button>
       </dialog>
-    </>
+    </NotificationProvider>
   );
 }

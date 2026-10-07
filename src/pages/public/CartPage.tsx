@@ -257,7 +257,7 @@ export default function CartPage({
                 <aside className="hvm-cart-summary">
                   <h2>Sua seleção</h2>
                   <p>
-                    {cart.itemCount} porção(ões) · {cart.stores.length}{" "}
+                    {cart.itemCount} opção(ões) · {cart.stores.length}{" "}
                     produtor(es)
                   </p>
                   <strong>{formatProductPrice(cart.subtotalCents)}</strong>

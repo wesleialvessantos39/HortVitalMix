@@ -61,7 +61,7 @@ export default function ProducerOrdersPage({
     error: readError,
     refresh,
   } = useOrderQuery(
-    `/v1/producer/orders?page=${page}&status=${filter}`,
+    `/v1/producer/orders?page=${page}&status=${filter}${new URLSearchParams(location.search).get("orderId")?"&orderId="+encodeURIComponent(new URLSearchParams(location.search).get("orderId")!):""}`,
     userId,
     OrderListResponseSchema,
   );
@@ -138,6 +138,8 @@ export default function ProducerOrdersPage({
           <RefreshCw size={17} aria-hidden="true" /> Atualizar
         </button>
       </div>
+      <button className="secondary" onClick={()=>onNavigate("/produtor/vendas")}>Minhas vendas</button>
+      {new URLSearchParams(location.search).has("orderId")&&<button className="text-button" onClick={()=>onNavigate("/produtor/pedidos")}>Ver todos os pedidos da loja</button>}
       <nav className="commerce-section-links" aria-label="Gestão da loja">
         <button
           className="text-button"
@@ -149,7 +151,7 @@ export default function ProducerOrdersPage({
           className="text-button"
           onClick={() => onNavigate("/produtor/caixa")}
         >
-          Caixa e vendas presenciais
+          Caixa do produtor
         </button>
       </nav>
       <button className="text-button" onClick={()=>onNavigate("/produtor/loja/janelas")}>Janelas de entrega</button>

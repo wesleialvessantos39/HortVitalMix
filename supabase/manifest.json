@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 62,
+  "schemaVersion": 63,
   "migrations": [
     {
       "version": "20260919030126",
@@ -340,7 +340,12 @@
       "version": "20261007122255",
       "name": "trilha24_reviews_reputation",
       "file": "20261007122255_trilha24_reviews_reputation.sql"
+    },
+    {
+      "version": "20261007140032",
+      "name": "roles_sales_notifications",
+      "file": "20261007140032_roles_sales_notifications.sql"
     }
   ],
-  "migrationHistoryHash": "efa1d2600ff63af3d6225da0535b17aab35f52232013a81c6196edec106b2833"
+  "migrationHistoryHash": "3363f83f98ec91afabc8043d9f75ecee680842b1e4a5b63fe809c889b945e379"
 }

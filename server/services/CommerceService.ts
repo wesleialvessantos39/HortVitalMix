@@ -356,7 +356,7 @@ export const CommerceService = {
   },
   async posSale(userId: string, code: string) {
     return commerceTransaction(async (client) => {
-      await commerceIdentity(client, userId);
+      await commerceIdentity(client, userId, "consumer");
       z.string()
         .regex(/^[a-f0-9]{32}$/)
         .parse(code);
@@ -381,7 +381,7 @@ export const CommerceService = {
       .regex(/^[a-f0-9]{32}$/)
       .parse(code);
     return commerceTransaction(async (client) => {
-      await commerceIdentity(client, userId);
+      await commerceIdentity(client, userId, "consumer");
       return commerceCommand(
         client,
         userId,
@@ -441,7 +441,7 @@ export const CommerceService = {
     context: CommerceAudit,
   ) {
     return commerceTransaction(async (client) => {
-      await commerceIdentity(client, userId);
+      await commerceIdentity(client, userId, "producer");
       z.uuid().parse(id);
       return commerceCommand(
         client,
@@ -481,7 +481,7 @@ export const CommerceService = {
   },
   async purchases(userId: string) {
     return commerceTransaction(async (client) => {
-      await commerceIdentity(client, userId);
+      await commerceIdentity(client, userId, "consumer");
       return {
         orders: (
           await client.query(
@@ -497,7 +497,7 @@ export const CommerceService = {
         ).rows.map(saleView),
         payments: (
           await client.query(
-            "SELECT id,method,amount_cents,status,expires_at FROM public.app_payment_intents WHERE user_id=$1 AND status='pending' AND expires_at>clock_timestamp() ORDER BY created_at DESC LIMIT 50",
+            "SELECT id,method,amount_cents,status,expires_at FROM public.app_payment_intents WHERE user_id=$1 AND billing_cycle_id IS NULL AND status='pending' AND expires_at>clock_timestamp() ORDER BY created_at DESC LIMIT 50",
             [userId],
           )
         ).rows.map((row) => ({
@@ -516,7 +516,7 @@ export const CommerceService = {
     context: CommerceAudit,
   ) {
     return commerceTransaction(async (client) => {
-      await commerceIdentity(client, userId);
+      await commerceIdentity(client, userId, "consumer");
       z.uuid().parse(id);
       return commerceCommand(
         client,

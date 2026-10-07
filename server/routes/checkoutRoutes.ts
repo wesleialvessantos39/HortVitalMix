@@ -1,3 +1,4 @@
+import { publicRole } from "../security/publicRole.ts";
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import { CheckoutService, CheckoutError } from "../services/CheckoutService.ts";
@@ -20,12 +21,14 @@ async function run(
     res.status(401).json({ error: "AUTH_REQUIRED", requestId: req.requestId });
     return;
   }
-  if (!req.actor.roles.some((r) => r === "consumer" || r === "producer")) {
+  if (!req.actor.roles.includes("consumer")) {
     res
       .status(403)
       .json({ error: "CHECKOUT_OWNER_REQUIRED", requestId: req.requestId });
     return;
   }
+  try { if (publicRole(req) !== "consumer") throw new Error(); }
+  catch { res.status(403).json({ error: "CONSUMER_REQUIRED", requestId: req.requestId }); return; }
   const query = new URL(req.url, "http://localhost").searchParams;
   query.delete("path");
   query.delete("__hvm_path");

@@ -30,6 +30,8 @@ import { deliveryLogisticsRouter } from "./routes/deliveryLogisticsRoutes.ts";
 import { publicMediaRouter } from "./routes/publicMediaRoutes.ts";
 import { subscriptionRouter,adminSubscriptionRouter } from "./routes/subscriptionRoutes.ts";
 import { reviewRouter,adminReviewRouter } from "./routes/reviewRoutes.ts";
+import { notificationRouter,adminNotificationRouter } from "./routes/notificationRoutes.ts";
+import { producerSalesRouter } from "./routes/producerSalesRoutes.ts";
 export const app = express();
 app.disable("x-powered-by");
 
@@ -126,6 +128,9 @@ for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
   app.use(prefix, deliveryLogisticsRouter);
   app.use(prefix, subscriptionRouter);
   app.use(prefix, reviewRouter);
+  app.use(prefix, notificationRouter);
+  app.use(prefix, producerSalesRouter);
+  app.use(prefix + "/admin", adminNotificationRouter);
   app.use(prefix + "/admin", adminReviewRouter);
   app.use(prefix + "/admin", adminSubscriptionRouter);
   app.use(prefix + "/admin", adminCommerceRouter);

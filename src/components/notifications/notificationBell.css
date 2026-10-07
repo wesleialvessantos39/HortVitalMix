@@ -1,0 +1,6 @@
+.hvm-notification-bell {
+  position: relative;
+}
+.admin-mobile-bar:has(.hvm-notification-bell) {
+  gap: 6px;
+}

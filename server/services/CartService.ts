@@ -64,7 +64,9 @@ async function resolve(client: PoolClient, scope: Scope): Promise<Owner> {
     z.uuid().parse(scope.userId);
     const owner = await client.query(
       `SELECT id FROM public.app_users
-      WHERE id=$1 AND public.effective_account_status(status,block_starts_at,block_ends_at)='active' FOR SHARE`,
+      WHERE id=$1 AND public.effective_account_status(status,block_starts_at,block_ends_at)='active'
+      AND EXISTS(SELECT 1 FROM public.app_user_role_assignments r WHERE r.user_id=app_users.id
+        AND r.role_code='consumer' AND r.revoked_at IS NULL AND (r.expires_at IS NULL OR r.expires_at>clock_timestamp())) FOR SHARE`,
       [scope.userId],
     );
     if (!owner.rowCount) throw new CartError("CART_OWNER_REQUIRED", 403);
@@ -242,10 +244,7 @@ async function grouped(client: PoolClient, owner: Owner): Promise<Cart> {
   }
   return CartResponseSchema.parse({
     stores,
-    itemCount: stores.reduce(
-      (n, s) => n + s.items.reduce((q, i) => q + i.quantity, 0),
-      0,
-    ),
+    itemCount: stores.reduce((n, s) => n + s.items.length, 0),
     subtotalCents: stores.reduce((n, s) => n + s.subtotalCents, 0),
   });
 }

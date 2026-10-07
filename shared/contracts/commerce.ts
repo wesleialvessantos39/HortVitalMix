@@ -244,4 +244,6 @@ export type CaseView = {
   }>;
   history: Array<{ status: string; notes: string; createdAt: string }>;
   evidence: Array<{ id: string; fileName: string }>;
+  sellerContacts?: Array<{ id: string; message: string; createdAt: string }>;
+  seller?: { storeName: string; orderNumber: string };
 };

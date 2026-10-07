@@ -120,7 +120,10 @@
     "test:t23:story": "vitest run tests/integration/subscriptionBrowserPostgres.test.ts",
     "test:t24:unit": "vitest run tests/unit/reviewContracts.test.ts tests/integration/reviewRoutes.test.ts",
     "test:t24:postgres": "vitest run tests/integration/reviewPostgres.test.ts",
-    "test:t24:story": "vitest run tests/integration/reviewBrowserPostgres.test.ts"
+    "test:t24:story": "vitest run tests/integration/reviewBrowserPostgres.test.ts",
+    "test:notifications:unit": "vitest run tests/unit/notificationContracts.test.ts tests/integration/notificationRoutes.test.ts",
+    "test:notifications:postgres": "vitest run tests/integration/notificationsPostgres.test.ts",
+    "test:notifications:story": "vitest run tests/integration/notificationsBrowserPostgres.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",

@@ -36,6 +36,7 @@ export const statusLabels: Record<string, string> = {
 export function commerceMessage(error: unknown) {
   const code = (error as ApiFailure)?.message;
   const messages: Record<string, string> = {
+    CONSUMER_REQUIRED: "Cadastre-se e entre como consumidor para comprar.",
     AUTH_REQUIRED: "Entre na sua conta para continuar.",
     FORBIDDEN: "Sua conta não tem a permissão necessária.",
     POS_STORE_UNAVAILABLE:

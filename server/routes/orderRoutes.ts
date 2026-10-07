@@ -1,3 +1,4 @@
+import { publicUser, publicRole } from "../security/publicRole.ts";
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import { OrderService } from "../services/OrderService.ts";
@@ -32,7 +33,9 @@ async function run(
     return;
   }
   try {
-    res.json(await operation(req.actor.userId));
+    const userId = publicUser(req, producer ? "producer" : undefined);
+    if (!producer && req.path === "/orders") publicUser(req,"consumer");
+    res.json(await operation(userId));
   } catch (error) {
     res
       .status(
@@ -74,7 +77,7 @@ orderRouter.get("/producer/orders", (req, res) =>
 );
 orderRouter.get("/orders/:id", (req, res) =>
   run(req, res, (userId) =>
-    OrderService.get(OrderIdSchema.parse(req.params.id), userId),
+    OrderService.get(OrderIdSchema.parse(req.params.id), userId, publicRole(req) === "producer" ? "producer" : "customer"),
   ),
 );
 orderRouter.post(
