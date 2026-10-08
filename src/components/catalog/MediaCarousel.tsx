@@ -16,6 +16,7 @@ export function MediaCarousel({
   label,
   onNavigate,
   priority = false,
+  publicPreview = true,
   className = "",
   onEnd,
   imageSizes = "(max-width: 600px) 100vw, 480px",
@@ -24,6 +25,7 @@ export function MediaCarousel({
   label: string;
   onNavigate?: (path: string) => void;
   priority?: boolean;
+  publicPreview?: boolean;
   className?: string;
   onEnd?: () => Promise<void>;
   imageSizes?: string;
@@ -51,15 +53,21 @@ export function MediaCarousel({
     next = slides[(index + 1) % slides.length],
     following = slides[(index + 2) % slides.length];
   const imageSource = slide?.imageUrl ? slide.imageUrl : null;
+  const hasSlide = Boolean(slide);
   const signature = slides.map((item) => item.id).join("|");
   useEffect(() => {
-    if (!visible && !priority) return;
+    if (!visible || loadedImage !== imageSource) return;
     const controller = new AbortController();
     void prepareMediaUrls(
       [next?.imageUrl, following?.imageUrl].filter(
         (url) => url !== slide?.imageUrl,
       ),
-      { signal: controller.signal, priority: "low", sizes: imageSizes },
+      {
+        signal: controller.signal,
+        priority: "low",
+        sizes: imageSizes,
+        publicPreview,
+      },
     );
     return () => controller.abort();
   }, [
@@ -69,17 +77,24 @@ export function MediaCarousel({
     next?.imageUrl,
     following?.imageUrl,
     imageSizes,
+    publicPreview,
+    loadedImage,
+    imageSource,
   ]);
   useEffect(() => {
     const node = root.current;
     if (!node) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setVisible(true);
+      return;
+    }
     const observer = new IntersectionObserver(
       ([entry]) => setVisible(entry.isIntersecting),
       { rootMargin: "120px" },
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, []);
+  }, [hasSlide]);
   useEffect(() => {
     const media = matchMedia("(prefers-reduced-motion: reduce)");
     const motion = () => setReduced(media.matches),
@@ -147,8 +162,9 @@ export function MediaCarousel({
             alt={slide.alt}
             loading={visible || priority ? "eager" : "lazy"}
             decoding="async"
-            fetchPriority={priority || visible ? "high" : "auto"}
-            priority={priority || visible}
+            fetchPriority={priority ? "high" : "auto"}
+            priority={priority}
+            publicPreview={publicPreview}
             sizes={imageSizes}
             onReady={() => setLoadedImage(imageSource)}
             onError={() =>

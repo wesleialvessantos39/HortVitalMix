@@ -1,6 +1,7 @@
 import { adminSectorLabel } from "../../../shared/adminPermissions";
 import { useEffect, useMemo, useState } from "react";
-import { Leaf, UserCheck } from "lucide-react";
+import { Crown, Leaf, ShieldCheck } from "lucide-react";
+import "./adminInvites.css";
 import { api } from "../../lib/api";
 import { cryptoRandomUUID } from "../../lib/uuid";
 import { PasswordInput } from "../../components/forms/PasswordInput";
@@ -64,7 +65,15 @@ export function AdminAcceptInvitePage({ onNavigate }: Props) {
             ? "Acesso administrativo criado. Seus perfis de Consumidor ou Produtor continuam preservados e usam o cadastro público normalmente."
             : "Convite aceito. Seu acesso administrativo está pronto.",
         );
-        setTimeout(() => onNavigate("/admin/entrar"), 900);
+        setTimeout(
+          () =>
+            onNavigate(
+              state.targetRole === "platform_super_admin"
+                ? "/entrar/super-administrador"
+                : "/admin/entrar",
+            ),
+          900,
+        );
       }
     } catch (err) {
       const status = (err as { status?: number }).status;
@@ -82,9 +91,12 @@ export function AdminAcceptInvitePage({ onNavigate }: Props) {
 
   const valid = state.status === "valid";
   const existing = valid && state.identityMode === "existing";
+  const isSuper = state.targetRole === "platform_super_admin";
 
   return (
-    <section className="admin-login-page">
+    <section
+      className={`admin-login-page admin-invite-accept ${isSuper ? "is-super" : ""}`}
+    >
       <header className="admin-login-header">
         <button className="admin-back" onClick={() => onNavigate("/")}>
           ← Voltar ao site
@@ -101,9 +113,15 @@ export function AdminAcceptInvitePage({ onNavigate }: Props) {
       <div className="admin-bootstrap-wrap">
         <div className="admin-login-card admin-login-card--wide">
           <div className="admin-login-icon">
-            <UserCheck />
+            {isSuper ? <Crown /> : <ShieldCheck />}
           </div>
-          <span className="admin-kicker">Convite administrativo</span>
+          <span className="admin-kicker">
+            {valid
+              ? isSuper
+                ? "Convite de super administrador"
+                : "Convite de administrador setorial"
+              : "Convite administrativo"}
+          </span>
           {state.status === "loading" && (
             <p className="admin-muted">Validando convite…</p>
           )}
@@ -134,6 +152,33 @@ export function AdminAcceptInvitePage({ onNavigate }: Props) {
                   ? "Super administrador"
                   : "Administrador setorial"}
               </p>
+              <div
+                className={`admin-invite-role-preview ${isSuper ? "is-super" : ""}`}
+              >
+                {isSuper ? <Crown size={23} /> : <ShieldCheck size={23} />}
+                <div>
+                  <strong>
+                    {isSuper
+                      ? "Gestão da plataforma"
+                      : "Administração por setores"}
+                  </strong>
+                  <p>
+                    {isSuper
+                      ? "Gerencie a plataforma e os acessos administrativos conforme as permissões da governança."
+                      : "Seu acesso se limita aos setores autorizados neste convite."}
+                  </p>
+                </div>
+              </div>
+              {state.expiresAt && (
+                <p className="admin-invite-validity">
+                  Ative até{" "}
+                  {new Date(state.expiresAt).toLocaleString("pt-BR", {
+                    dateStyle: "short",
+                    timeStyle: "short",
+                  })}
+                  . Este convite é pessoal e de uso único.
+                </p>
+              )}
               {(state.sectors?.length ?? 0) > 0 && (
                 <div className="admin-chip-row">
                   {state.sectors!.map((s) => (

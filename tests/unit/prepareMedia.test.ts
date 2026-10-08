@@ -128,6 +128,16 @@ describe("Fotos preparadas em paralelo", () => {
     });
     expect(TestImage.instances).toHaveLength(0);
   });
+  it("foto privada usa a assinatura sem consultar prévia pública", async () => {
+    const { prepareMediaUrls } = await import("../../src/lib/prepareMedia.ts");
+    const id = "00000000-0000-4000-8000-000000000001";
+    const value = photo(`store-media/${id}/${id}-${"a".repeat(64)}.webp`);
+    const task = prepareMediaUrls([value], { publicPreview: false });
+    expect(TestImage.instances).toHaveLength(1);
+    expect(TestImage.instances[0].src).toBe(value);
+    TestImage.instances[0].onload!();
+    await task;
+  });
   it("não persiste URLs de documentos privados ou assinaturas opacas", async () => {
     const { mediaUrlCacheUntil } = await import("../../src/lib/mediaCache.ts");
     expect(mediaUrlCacheUntil(photo("documents_private/private.pdf"))).toBe(0);

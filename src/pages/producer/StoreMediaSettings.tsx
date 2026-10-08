@@ -227,6 +227,7 @@ export function StoreMediaSettings({
     store.storeName,
     store.storeSlug,
     products,
+    false,
   );
   const dirty =
     mode !== store.coverMode ||
@@ -257,6 +258,7 @@ export function StoreMediaSettings({
             </small>
             <div className="hvm-store-media-avatar">
               <ProducerPortrait
+                publicPreview={false}
                 url={store.avatarUrl}
                 name={name || store.storeName}
               />
@@ -356,6 +358,7 @@ export function StoreMediaSettings({
             {store.coverImages.map((image, index) => (
               <figure key={image.id}>
                 <MediaImage
+                  publicPreview={false}
                   src={image.url}
                   alt={`Foto de capa ${index + 1}`}
                   loading="lazy"
@@ -421,6 +424,7 @@ export function StoreMediaSettings({
         <span className="eyebrow">Prévia da sua vitrine</span>
         {slides.length ? (
           <MediaCarousel
+            publicPreview={false}
             className="hvm-store-cover"
             slides={slides.map(({ href: _href, ...slide }) => slide)}
             label="Prévia da capa da loja"

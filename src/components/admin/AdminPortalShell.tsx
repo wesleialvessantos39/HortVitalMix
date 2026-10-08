@@ -14,12 +14,15 @@ import {
   Star,
   Bell,
   BarChart3,
+  Menu,
+  X,
+  Store,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { AdminVerifySessionResponse } from "../../../shared/contracts/adminGovernance";
 import { clearAdminSession } from "../../lib/adminSessionStore";
 import { api } from "../../lib/api";
-import { AccountStatusIcon, accountSessionLabel } from "../AccountStatusIcon";
+import { AccountStatusIcon } from "../AccountStatusIcon";
 
 type Props = {
   access: AdminVerifySessionResponse;
@@ -48,6 +51,18 @@ const items = [
   ["/admin/assinaturas", "Assinaturas", Leaf],
   ["/admin/conta", "Conta", UserRound],
 ] as const;
+function keepMenuFocus(event: React.KeyboardEvent<HTMLDialogElement>) {
+  if (event.key !== "Tab") return;
+  const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>("button:not([disabled]), a[href]"));
+  const first = controls[0], last = controls[controls.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last?.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first?.focus();
+  }
+}
 
 export function AdminPortalShell({
   access,
@@ -86,6 +101,37 @@ export function AdminPortalShell({
 
   const [leaving, setLeaving] = useState(false);
   const [logoutError, setLogoutError] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const drawer = useRef<HTMLDialogElement>(null);
+  const roleLabel = access.role === "platform_super_admin" ? "Super administrador" : "Administrador";
+  const isActive = (to: string) => currentPath === to || currentPath.startsWith(to + "/") || (to === "/admin/documentos/fila" && currentPath === "/admin/imoveis");
+  const primaryItems = visible.filter(([to]) => ["/admin/painel", "/admin/usuarios", "/admin/conta"].includes(to));
+  const navigate = (to: string) => {
+    setMenuOpen(false);
+    onNavigate(to);
+  };
+  useEffect(() => setMenuOpen(false), [currentPath]);
+  useEffect(() => {
+    const menu = drawer.current;
+    if (!menu) return;
+    if (!menuOpen) {
+      menu.close();
+      return;
+    }
+    menu.showModal();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const desktop = matchMedia("(min-width: 768px)");
+    const closeOnDesktop = () => {
+      if (desktop.matches) setMenuOpen(false);
+    };
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      desktop.removeEventListener("change", closeOnDesktop);
+      menu.close();
+    };
+  }, [menuOpen]);
   async function logout() {
     if (leaving) return;
     setLeaving(true);
@@ -102,87 +148,41 @@ export function AdminPortalShell({
     }
   }
 
+  const brand = <button className="admin-brand" onClick={() => navigate("/admin/painel")}>
+    <span className="admin-brand-mark"><Leaf aria-hidden="true" /></span>
+    <span><strong>Horti<span>Vital</span>Mix</strong><small>{roleLabel}</small></span>
+  </button>;
+  const menuItems = <nav className="admin-sidebar-nav" aria-label="Todas as áreas administrativas">
+    {visible.map(([to, label, Icon]) => <button key={to} className={"admin-nav-item" + (isActive(to) ? " is-active" : "")} aria-current={isActive(to) ? "page" : undefined} onClick={() => navigate(to)}>
+      {to === "/admin/conta" ? <AccountStatusIcon session={{ activeRole: access.role }} size={18} /> : <Icon size={18} aria-hidden="true" />}<span>{label}</span>
+    </button>)}
+  </nav>;
+  const menuFooter = <div className="admin-sidebar-footer">
+    <button className="admin-storefront-entry" onClick={() => navigate("/")}><Store size={17} aria-hidden="true" /> Abrir vitrine</button>
+    <button className="admin-logout" onClick={logout} disabled={leaving}><LogOut size={17} aria-hidden="true" /> {leaving ? "Saindo…" : "Sair"}</button>
+  </div>;
+
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar">
-        <button
-          className="admin-brand"
-          onClick={() => window.location.assign("/admin/painel")}
-        >
-          <span className="admin-brand-mark">
-            <Leaf />
-          </span>
-          <span>
-            <strong>
-              Horti<span>Vital</span>Mix
-            </strong>
-            <small>
-              {access.role === "platform_super_admin"
-                ? "Super administrador"
-                : "Administrador"}
-            </small>
-          </span>
-        </button>
-        <nav className="admin-sidebar-nav" aria-label="Administração">
-          {visible.map(([to, label, Icon]) => (
-            <button
-              key={to}
-              className={
-                "admin-nav-item " +
-                (currentPath === to || currentPath.startsWith(to + "/")
-                  ? "is-active"
-                  : "")
-              }
-              onClick={() => onNavigate(to)}
-            >
-              {to === "/admin/conta" ? (
-                <AccountStatusIcon
-                  session={{ activeRole: access.role }}
-                  size={18}
-                />
-              ) : (
-                <Icon size={18} />
-              )}
-              <span>{label}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="admin-sidebar-footer">
-          <button className="admin-logout" onClick={logout} disabled={leaving}>
-            <LogOut size={17} /> Sair
-          </button>
-        </div>
+        {brand}
+        {menuItems}
+        {menuFooter}
       </aside>
-      <main className="admin-main">
+      <div className="admin-main">
         <div className="admin-mobile-bar">
           <button
-            className="admin-brand compact"
-            onClick={() => window.location.assign("/admin/painel")}
-          >
-            <span className="admin-brand-mark">
-              <Leaf />
-            </span>
-            <strong>
-              Horti<span>Vital</span>Mix
-            </strong>
-          </button>
-          <NotificationBell onClick={() => onNavigate("/admin/notificacoes")} />
-          <button
             className="icon"
-            aria-label="Conta"
-            title={accountSessionLabel({ activeRole: access.role })}
-            onClick={() => onNavigate("/admin/conta")}
+            aria-label="Abrir menu administrativo"
+            aria-haspopup="dialog"
+            aria-controls="admin-navigation-dialog"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen(true)}
           >
-            <AccountStatusIcon session={{ activeRole: access.role }} />
+            <Menu aria-hidden="true" />
           </button>
-          <button
-            className="admin-logout icon-only"
-            onClick={logout}
-            disabled={leaving}
-            aria-label="Sair"
-          >
-            <LogOut size={18} />
-          </button>
+          <button className="admin-brand admin-mobile-heading" onClick={() => navigate("/admin/painel")}><strong>Horti<span>Vital</span>Mix</strong><small>{roleLabel}</small></button>
+          <NotificationBell onClick={() => navigate("/admin/notificacoes")} />
         </div>
         {logoutError && (
           <p role="alert" className="admin-alert admin-alert--error">
@@ -191,16 +191,17 @@ export function AdminPortalShell({
         )}
         {children}
         <nav className="admin-bottom-nav" aria-label="Administração mobile">
-          {visible.map(([to, label, Icon]) => (
+          {primaryItems.map(([to, label, Icon]) => (
             <button
               key={to}
               className={
-                currentPath === to || currentPath.startsWith(to + "/")
+                isActive(to)
                   ? "is-active"
                   : ""
               }
               aria-label={label}
-              onClick={() => onNavigate(to)}
+              aria-current={isActive(to) ? "page" : undefined}
+              onClick={() => navigate(to)}
             >
               {to === "/admin/conta" ? (
                 <AccountStatusIcon
@@ -208,13 +209,23 @@ export function AdminPortalShell({
                   size={19}
                 />
               ) : (
-                <Icon size={19} />
+                <Icon size={19} aria-hidden="true" />
               )}
               <span>{label}</span>
             </button>
           ))}
+          <button type="button" aria-label="Mais áreas administrativas" aria-haspopup="dialog" aria-controls="admin-navigation-dialog" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><Menu size={19} aria-hidden="true" /><span>Menu</span></button>
         </nav>
-      </main>
+      </div>
+      <dialog ref={drawer} id="admin-navigation-dialog" className="navigation-drawer admin-navigation-drawer" aria-labelledby="admin-navigation-title" onKeyDown={keepMenuFocus} onCancel={() => setMenuOpen(false)} onClose={() => setMenuOpen(false)} onClick={(event) => {
+        if (event.target !== event.currentTarget) return;
+        const bounds = event.currentTarget.getBoundingClientRect();
+        if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) setMenuOpen(false);
+      }}>
+        <div className="navigation-drawer-header"><div><h2 id="admin-navigation-title">Administração</h2><small>{roleLabel}</small></div><button type="button" className="icon" aria-label="Fechar menu administrativo" autoFocus onClick={() => setMenuOpen(false)}><X aria-hidden="true" /></button></div>
+        {menuItems}
+        {menuFooter}
+      </dialog>
     </div>
   );
 }

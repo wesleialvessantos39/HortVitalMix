@@ -1,0 +1,211 @@
+.admin-invite-governance > .admin-alert {
+  margin-bottom: 14px;
+}
+.admin-invite-governance .admin-governance-grid {
+  grid-template-columns: minmax(300px, 0.78fr) minmax(0, 1.22fr);
+}
+.admin-invite-role-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #cee2d2;
+  background: #f1f8f2;
+  border-radius: 14px;
+  color: #245a34;
+}
+.admin-invite-role-preview > svg {
+  flex: none;
+  margin-top: 2px;
+}
+.admin-invite-role-preview strong {
+  font-size: 14px;
+}
+.admin-invite-role-preview p {
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 5px 0 0;
+  font-weight: 400;
+}
+.admin-invite-role-preview.is-super {
+  border-color: #ddd5f4;
+  background: #f6f3fc;
+  color: #514070;
+}
+.admin-invite-governance .admin-card-heading {
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.admin-invite-filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 16px 0 8px;
+}
+.admin-invite-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1 1 190px;
+  min-width: 0;
+  border: 1px solid #cfdad1;
+  border-radius: 11px;
+  padding: 0 11px;
+  color: #68736b;
+}
+.admin-invite-search input {
+  min-width: 0;
+  width: 100%;
+  min-height: 42px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  color: #203c29;
+}
+.admin-invite-search:focus-within {
+  outline: 2px solid #6aaa78;
+  outline-offset: 2px;
+}
+.admin-invite-filters select {
+  min-height: 42px;
+  max-width: 100%;
+  padding: 0 10px;
+  border: 1px solid #cfdad1;
+  border-radius: 11px;
+  background: white;
+  color: #35513d;
+  font: inherit;
+  font-size: 12px;
+}
+.admin-invite-email {
+  display: block;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  min-width: 0;
+}
+.admin-invite-remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  min-height: 36px;
+  margin-top: 4px;
+  border: 0;
+  background: none;
+  color: #993c35;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+}
+.admin-invite-remove:hover {
+  text-decoration: underline;
+}
+.admin-invite-remove:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.admin-invite-role-tag {
+  display: inline-flex;
+  padding: 5px 8px;
+  border-radius: 8px;
+  color: #285b37;
+  background: #eef6ef;
+  line-height: 1.4;
+  font-weight: 700;
+}
+.admin-invite-role-tag.is-super {
+  background: #f1ecf9;
+  color: #634581;
+}
+.admin-invite-confirmation {
+  width: min(460px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: 24px;
+  border: 1px solid #d6e1d7;
+  border-radius: 18px;
+  color: #193321;
+  background: white;
+  box-shadow: 0 24px 80px #0c291c40;
+}
+.admin-invite-confirmation::backdrop {
+  background: #102b1cd1;
+}
+.admin-invite-confirmation h2 {
+  margin: 0 0 12px;
+  font-size: 21px;
+  line-height: 1.25;
+}
+.admin-invite-confirmation p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #536359;
+  margin: 0 0 16px;
+}
+.admin-invite-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+.admin-invite-accept .admin-login-card {
+  border-top: 5px solid #2d7041;
+  min-width: 0;
+}
+.admin-invite-accept .admin-muted {
+  overflow-wrap: anywhere;
+}
+.admin-invite-accept .admin-form-grid > label {
+  min-width: 0;
+}
+.admin-invite-accept.is-super .admin-login-card {
+  border-top-color: #6b4d97;
+}
+.admin-invite-accept.is-super .admin-login-icon {
+  background: #f1ecf9;
+  color: #634581;
+}
+.admin-invite-accept .admin-invite-role-preview {
+  margin: 18px 0;
+}
+.admin-invite-accept .admin-invite-validity {
+  font-size: 12px;
+  color: #68736b;
+  margin: 12px 0;
+}
+@media (max-width: 1250px) {
+  .admin-invite-governance .admin-governance-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (min-width: 768px) and (max-width: 1250px) {
+  .admin-invite-governance .admin-sectors-fieldset {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 480px) {
+  .admin-invite-governance .admin-card {
+    padding: 16px;
+  }
+  .admin-invite-filters select {
+    flex: 1;
+  }
+  .admin-invite-confirmation {
+    padding: 20px;
+  }
+  .admin-invite-confirm-actions > button {
+    flex: 1;
+  }
+  .admin-invite-role-preview {
+    padding: 12px;
+  }
+  .admin-invite-accept .admin-login-card h1 {
+    font-size: 24px;
+    line-height: 1.2;
+  }
+}

@@ -12,6 +12,7 @@ import { stableMediaUrl, invalidateMediaUrl } from "../../lib/mediaCache";
 export function MediaImage({
   src,
   priority = false,
+  publicPreview = true,
   loading,
   onError,
   onLoad,
@@ -21,13 +22,16 @@ export function MediaImage({
 }: Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
   src: string;
   priority?: boolean;
+  publicPreview?: boolean;
   onReady?: () => void;
 }) {
   const preferred = useMemo(() => stableMediaUrl(src), [src]),
     [retry, setRetry] = useState<string | null>(null),
     [near, setNear] = useState(priority),
     node = useRef<HTMLImageElement>(null);
-  const variant = mediaPreview(src, mediaPreviewWidth(sizes));
+  const variant = publicPreview
+    ? mediaPreview(src, mediaPreviewWidth(sizes))
+    : null;
   const source = retry === src ? src : (variant ?? preferred);
   useLayoutEffect(() => {
     if (node.current?.complete && node.current.naturalWidth > 0) onReady?.();
@@ -70,9 +74,7 @@ export function MediaImage({
       }}
       loading={loading ?? (near || priority ? "eager" : "lazy")}
       decoding="async"
-      fetchPriority={
-        props.fetchPriority ?? (priority || near ? "high" : "auto")
-      }
+      fetchPriority={props.fetchPriority ?? (priority ? "high" : "auto")}
       onError={(event) => {
         if (source !== src) {
           invalidateMediaUrl(src);

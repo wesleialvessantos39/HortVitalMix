@@ -141,7 +141,8 @@ test("falha de config é não bloqueante e mantém navegação", async ({ page }
   await page.setViewportSize({ width: 360, height: 800 });
   await page.goto("/");
 
-  await expect(page.locator(".mobile-header").getByText("Tudo fresco. Tudo da sua região.")).toBeVisible();
+  await expect(page.locator(".mobile-header .brand strong")).toHaveText("HortiVitalMix");
+  await expect(page.locator(".mobile-header .brand strong")).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
   await page
@@ -394,6 +395,7 @@ test("Conta mobile continua separada da Administração", async ({ page }) => {
   ).toBeVisible();
 
   await page.goto("/");
+  await page.getByRole("button", { name: "Abrir menu", exact: true }).click();
   await page.getByRole("button", { name: "Administração" }).click();
   await expect(page).toHaveURL(/\/administracao$/);
   await expect(

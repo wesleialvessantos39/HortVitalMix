@@ -20,6 +20,8 @@ import {
   AdminLoginSchema,
   BootstrapRequestSchema,
   CreateInviteSchema,
+  ClearInviteHistorySchema,
+  RemoveInviteSchema,
 } from "../../shared/contracts/adminGovernance.ts";
 import { dbPool } from "../db/pool.ts";
 import { runtime } from "../config/runtime.ts";
@@ -354,6 +356,66 @@ adminGovernanceRouter.post(
               : 503,
       )
       .json(result);
+  },
+);
+
+adminGovernanceRouter.post(
+  "/invites/clear-history",
+  originProtection,
+  adminSessionMiddleware,
+  respectGovernanceRevocation,
+  requireRecentAuth,
+  async (req: Request, res: Response) => {
+    const parsed = ClearInviteHistorySchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(422).json({ status: "validation_failed" });
+      return;
+    }
+    if (!req.adminActor) return;
+    const result = await AdminGovernanceService.clearInviteHistory(
+      parsed.data,
+      req.adminActor.userId,
+      req.adminActor.role,
+      req.requestId,
+      req.clientIpHash,
+    );
+    res.status(result.status === "cleared" ? 200 : 503).json(result);
+  },
+);
+
+adminGovernanceRouter.delete(
+  "/invites/:inviteId",
+  originProtection,
+  adminSessionMiddleware,
+  respectGovernanceRevocation,
+  requireRecentAuth,
+  async (req: Request, res: Response) => {
+    const parsed = RemoveInviteSchema.safeParse(req.body);
+    const id = z.string().uuid().safeParse(req.params.inviteId);
+    if (!parsed.success || !id.success) {
+      res.status(422).json({ status: "validation_failed" });
+      return;
+    }
+    if (!req.adminActor) return;
+    const result = await AdminGovernanceService.removeInvite(
+      id.data,
+      parsed.data,
+      req.adminActor.userId,
+      req.adminActor.role,
+      req.requestId,
+      req.clientIpHash,
+    );
+    const code =
+      result.status === "deleted"
+        ? 200
+        : result.status === "not_found"
+          ? 404
+          : result.status === "forbidden"
+            ? 403
+            : result.status === "conflict"
+              ? 409
+              : 503;
+    res.status(code).json(result);
   },
 );
 

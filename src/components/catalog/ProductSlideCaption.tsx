@@ -10,15 +10,19 @@ import {
 export function ProducerPortrait({
   url,
   name,
+  publicPreview = true,
 }: {
   url: string | null;
   name: string;
+  publicPreview?: boolean;
 }) {
   const [failed, setFailed] = useState<string | null>(null);
   return (
     <span className="hvm-slide-portrait">
       {url && failed !== url ? (
-        <MediaImage sizes="52px"
+        <MediaImage
+          sizes="52px"
+          publicPreview={publicPreview}
           src={url}
           alt={`Foto de ${name}`}
           loading="eager"
@@ -38,12 +42,14 @@ export function ProductSlideCaption({
   avatarUrl,
   storeName,
   region,
+  publicPreview = true,
 }: {
   product: Pick<PublicProduct, "title" | "currentPrice" | "unitType">;
   producerName: string;
   avatarUrl: string | null;
   storeName: string;
   region?: string;
+  publicPreview?: boolean;
 }) {
   return (
     <div className="hvm-slide-product">
@@ -54,7 +60,11 @@ export function ProductSlideCaption({
         <small>/ {UNIT_LABELS[product.unitType]}</small>
       </span>
       <span className="hvm-slide-producer">
-        <ProducerPortrait url={avatarUrl} name={producerName} />
+        <ProducerPortrait
+          url={avatarUrl}
+          name={producerName}
+          publicPreview={publicPreview}
+        />
         <span>
           <strong>{producerName}</strong>
           <span>{storeName}</span>

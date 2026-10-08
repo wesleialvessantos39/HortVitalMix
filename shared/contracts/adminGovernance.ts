@@ -197,6 +197,14 @@ export const ResendInviteSchema = z
   })
   .strict();
 
+export const RemoveInviteSchema = ResendInviteSchema;
+export type RemoveInviteInput = z.infer<typeof RemoveInviteSchema>;
+
+export const ClearInviteHistorySchema = z
+  .object({ commandId: z.string().uuid() })
+  .strict();
+export type ClearInviteHistoryInput = z.infer<typeof ClearInviteHistorySchema>;
+
 export const ValidateInviteResponseSchema = z.discriminatedUnion("status", [
   z.object({
     status: z.literal("valid"),

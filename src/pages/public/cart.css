@@ -34,6 +34,9 @@
   padding: 24px;
   min-width: 0;
 }
+.hvm-cart-summary {
+  width: 100%;
+}
 .hvm-cart-store-heading {
   display: flex;
   align-items: center;
@@ -168,9 +171,6 @@
 @media (max-width: 900px) {
   .hvm-cart-layout {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .hvm-cart-summary {
-    width: 100%;
   }
 }
 @media (max-width: 600px) {
