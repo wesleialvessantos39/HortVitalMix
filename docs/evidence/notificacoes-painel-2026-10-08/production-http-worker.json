@@ -1,0 +1,120 @@
+{
+  "sha": "8e31858ab452cce022aa4533225d7aee23ad968f",
+  "generatedAt": "2026-10-08T22:21:14.732Z",
+  "results": [
+    {
+      "path": "/health",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/ready",
+      "method": "GET",
+      "status": 200,
+      "schema": 66,
+      "releaseTag": "fix-notifications-v66-8e31858"
+    },
+    {
+      "path": "/v1/config",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/v1/account/profile",
+      "method": "GET",
+      "status": 401,
+      "cache": "no-store, max-age=0"
+    },
+    {
+      "path": "/v1/admin/invites",
+      "method": "GET",
+      "status": 401,
+      "cache": "no-store, max-age=0"
+    },
+    {
+      "path": "/v1/admin/users",
+      "method": "GET",
+      "status": 401,
+      "cache": "no-store, max-age=0"
+    },
+    {
+      "path": "/v1/notifications",
+      "method": "GET",
+      "status": 401,
+      "cache": "private, no-store"
+    },
+    {
+      "path": "/v1/producer/orders",
+      "method": "GET",
+      "status": 401,
+      "cache": "private, no-store"
+    },
+    {
+      "path": "/v1/producer/sales",
+      "method": "GET",
+      "status": 401,
+      "cache": "private, no-store"
+    },
+    {
+      "path": "/v1/producer/refunds",
+      "method": "GET",
+      "status": 401,
+      "cache": "private, no-store"
+    },
+    {
+      "path": "/v1/admin/bi",
+      "method": "GET",
+      "status": 401,
+      "cache": "no-store, max-age=0"
+    },
+    {
+      "path": "/v1/admin/dashboard",
+      "method": "GET",
+      "status": 401,
+      "cache": "no-store, max-age=0"
+    },
+    {
+      "path": "/v1/admin/configuration/overview",
+      "method": "GET",
+      "status": 401,
+      "cache": "no-store, max-age=0"
+    },
+    {
+      "path": "/v1/notifications/11111111-1111-4111-8111-111111111111",
+      "method": "GET",
+      "status": 401,
+      "cache": "private, no-store"
+    },
+    {
+      "path": "/v1/admin/notifications/11111111-1111-4111-8111-111111111111",
+      "method": "GET",
+      "status": 401,
+      "cache": "no-store, max-age=0"
+    },
+    {
+      "path": "/v1/admin/invites/11111111-1111-4111-8111-111111111111",
+      "method": "DELETE",
+      "status": 401,
+      "cache": "no-store, max-age=0"
+    },
+    {
+      "path": "/v1/admin/invites/clear-history",
+      "method": "POST",
+      "status": 401,
+      "cache": "no-store, max-age=0"
+    },
+    {
+      "path": "/v1/admin/invites/clear-history",
+      "method": "POST",
+      "origin": "external",
+      "status": 403
+    },
+    {
+      "path": "/offline-worker.js",
+      "method": "GET",
+      "status": 200,
+      "staticAssetCount": 72,
+      "noApiOrAuthCached": true
+    }
+  ]
+}

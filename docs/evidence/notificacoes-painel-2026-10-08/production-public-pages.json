@@ -1,0 +1,785 @@
+{
+  "sha": "8e31858ab452cce022aa4533225d7aee23ad968f",
+  "generatedAt": "2026-10-08T22:22:01.497Z",
+  "results": [
+    {
+      "path": "/",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Conectamos produtores da nossa região com você e sua família!",
+        "width": 320,
+        "height": 844,
+        "scrollWidth": 320,
+        "scrollHeight": 1909,
+        "brokenImages": 0
+      },
+      "pageErrors": [],
+      "appDownloads": {
+        "android": "Em breve",
+        "ios": "Em breve",
+        "fakeLinks": 0
+      }
+    },
+    {
+      "path": "/entrar/consumidor",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Entrar como Consumidor.",
+        "width": 320,
+        "height": 844,
+        "scrollWidth": 320,
+        "scrollHeight": 845,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/entrar/produtor",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Entrar como Produtor.",
+        "width": 320,
+        "height": 844,
+        "scrollWidth": 320,
+        "scrollHeight": 844,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/entrar/administrador",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Entrar como Administrador.",
+        "width": 320,
+        "height": 844,
+        "scrollWidth": 320,
+        "scrollHeight": 866,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/entrar/super-administrador",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Entrar como Super administrador.",
+        "width": 320,
+        "height": 844,
+        "scrollWidth": 320,
+        "scrollHeight": 882,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/administracao",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Administração",
+        "width": 320,
+        "height": 844,
+        "scrollWidth": 320,
+        "scrollHeight": 844,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/produtos",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "width": 320,
+        "height": 844,
+        "scrollWidth": 320,
+        "scrollHeight": 1252,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/produtores",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "width": 320,
+        "height": 844,
+        "scrollWidth": 320,
+        "scrollHeight": 1218,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/planos",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Clube de hortifrúti",
+        "width": 320,
+        "height": 844,
+        "scrollWidth": 320,
+        "scrollHeight": 1152,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/carrinho",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "width": 320,
+        "height": 844,
+        "scrollWidth": 320,
+        "scrollHeight": 844,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/sobre",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Mais perto de quem produz.",
+        "width": 320,
+        "height": 844,
+        "scrollWidth": 320,
+        "scrollHeight": 844,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Conectamos produtores da nossa região com você e sua família!",
+        "width": 390,
+        "height": 844,
+        "scrollWidth": 390,
+        "scrollHeight": 2053,
+        "brokenImages": 0
+      },
+      "pageErrors": [],
+      "screenshot": "inicio-390-publicado.png",
+      "appDownloads": {
+        "android": "Em breve",
+        "ios": "Em breve",
+        "fakeLinks": 0
+      }
+    },
+    {
+      "path": "/entrar/consumidor",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Entrar como Consumidor.",
+        "width": 390,
+        "height": 844,
+        "scrollWidth": 390,
+        "scrollHeight": 844,
+        "brokenImages": 0
+      },
+      "pageErrors": [],
+      "screenshot": "entrar-consumidor-390-publicado.png"
+    },
+    {
+      "path": "/entrar/produtor",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Entrar como Produtor.",
+        "width": 390,
+        "height": 844,
+        "scrollWidth": 390,
+        "scrollHeight": 844,
+        "brokenImages": 0
+      },
+      "pageErrors": [],
+      "screenshot": "entrar-produtor-390-publicado.png"
+    },
+    {
+      "path": "/entrar/administrador",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Entrar como Administrador.",
+        "width": 390,
+        "height": 844,
+        "scrollWidth": 390,
+        "scrollHeight": 844,
+        "brokenImages": 0
+      },
+      "pageErrors": [],
+      "screenshot": "entrar-administrador-390-publicado.png"
+    },
+    {
+      "path": "/entrar/super-administrador",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Entrar como Super administrador.",
+        "width": 390,
+        "height": 844,
+        "scrollWidth": 390,
+        "scrollHeight": 844,
+        "brokenImages": 0
+      },
+      "pageErrors": [],
+      "screenshot": "entrar-super-administrador-390-publicado.png"
+    },
+    {
+      "path": "/administracao",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Administração",
+        "width": 390,
+        "height": 844,
+        "scrollWidth": 390,
+        "scrollHeight": 844,
+        "brokenImages": 0
+      },
+      "pageErrors": [],
+      "screenshot": "administracao-390-publicado.png"
+    },
+    {
+      "path": "/produtos",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "width": 390,
+        "height": 844,
+        "scrollWidth": 390,
+        "scrollHeight": 1304,
+        "brokenImages": 0
+      },
+      "pageErrors": [],
+      "screenshot": "produtos-390-publicado.png"
+    },
+    {
+      "path": "/produtores",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "width": 390,
+        "height": 844,
+        "scrollWidth": 390,
+        "scrollHeight": 1199,
+        "brokenImages": 0
+      },
+      "pageErrors": [],
+      "screenshot": "produtores-390-publicado.png"
+    },
+    {
+      "path": "/planos",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Clube de hortifrúti",
+        "width": 390,
+        "height": 844,
+        "scrollWidth": 390,
+        "scrollHeight": 1012,
+        "brokenImages": 0
+      },
+      "pageErrors": [],
+      "screenshot": "planos-390-publicado.png"
+    },
+    {
+      "path": "/carrinho",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Minha cesta",
+        "width": 390,
+        "height": 844,
+        "scrollWidth": 390,
+        "scrollHeight": 844,
+        "brokenImages": 0
+      },
+      "pageErrors": [],
+      "screenshot": "carrinho-390-publicado.png"
+    },
+    {
+      "path": "/sobre",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Mais perto de quem produz.",
+        "width": 390,
+        "height": 844,
+        "scrollWidth": 390,
+        "scrollHeight": 844,
+        "brokenImages": 0
+      },
+      "pageErrors": [],
+      "screenshot": "sobre-390-publicado.png"
+    },
+    {
+      "path": "navigation-drawer",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "linkCount": 8,
+      "escapeCloses": true
+    },
+    {
+      "path": "/",
+      "viewport": {
+        "width": 768,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Conectamos produtores da nossa região com você e sua família!",
+        "width": 768,
+        "height": 900,
+        "scrollWidth": 768,
+        "scrollHeight": 1601,
+        "brokenImages": 0
+      },
+      "pageErrors": [],
+      "appDownloads": {
+        "android": "Em breve",
+        "ios": "Em breve",
+        "fakeLinks": 0
+      }
+    },
+    {
+      "path": "/entrar/consumidor",
+      "viewport": {
+        "width": 768,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Entrar como Consumidor.",
+        "width": 768,
+        "height": 900,
+        "scrollWidth": 768,
+        "scrollHeight": 900,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/entrar/produtor",
+      "viewport": {
+        "width": 768,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Entrar como Produtor.",
+        "width": 768,
+        "height": 900,
+        "scrollWidth": 768,
+        "scrollHeight": 900,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/entrar/administrador",
+      "viewport": {
+        "width": 768,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Entrar como Administrador.",
+        "width": 768,
+        "height": 900,
+        "scrollWidth": 768,
+        "scrollHeight": 900,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/entrar/super-administrador",
+      "viewport": {
+        "width": 768,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Entrar como Super administrador.",
+        "width": 768,
+        "height": 900,
+        "scrollWidth": 768,
+        "scrollHeight": 900,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/administracao",
+      "viewport": {
+        "width": 768,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Administração",
+        "width": 768,
+        "height": 900,
+        "scrollWidth": 768,
+        "scrollHeight": 900,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/produtos",
+      "viewport": {
+        "width": 768,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "width": 768,
+        "height": 900,
+        "scrollWidth": 768,
+        "scrollHeight": 1188,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/produtores",
+      "viewport": {
+        "width": 768,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "width": 768,
+        "height": 900,
+        "scrollWidth": 768,
+        "scrollHeight": 900,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/planos",
+      "viewport": {
+        "width": 768,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Clube de hortifrúti",
+        "width": 768,
+        "height": 900,
+        "scrollWidth": 768,
+        "scrollHeight": 1052,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/carrinho",
+      "viewport": {
+        "width": 768,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Minha cesta",
+        "width": 768,
+        "height": 900,
+        "scrollWidth": 768,
+        "scrollHeight": 900,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/sobre",
+      "viewport": {
+        "width": 768,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Mais perto de quem produz.",
+        "width": 768,
+        "height": 900,
+        "scrollWidth": 768,
+        "scrollHeight": 900,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Conectamos produtores da nossa região com você e sua família!",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 1539,
+        "brokenImages": 0
+      },
+      "pageErrors": [],
+      "appDownloads": {
+        "android": "Em breve",
+        "ios": "Em breve",
+        "fakeLinks": 0
+      }
+    },
+    {
+      "path": "/entrar/consumidor",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Entrar como Consumidor.",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/entrar/produtor",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Entrar como Produtor.",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/entrar/administrador",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Entrar como Administrador.",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/entrar/super-administrador",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Entrar como Super administrador.",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/administracao",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Administração",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/produtos",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 916,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/produtores",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/planos",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Clube de hortifrúti",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 951,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/carrinho",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Minha cesta",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "path": "/sobre",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "metrics": {
+        "heading": "Mais perto de quem produz.",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "brokenImages": 0
+      },
+      "pageErrors": []
+    }
+  ]
+}
