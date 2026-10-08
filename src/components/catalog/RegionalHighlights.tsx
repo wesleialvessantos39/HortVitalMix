@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Sprout } from "lucide-react";
+import { PageLoading } from "../PageLoading";
 import { api } from "../../lib/api";
 import { prepareMediaUrls } from "../../lib/prepareMedia";
 import {
@@ -137,24 +138,23 @@ export default function RegionalHighlights({
             ),
           }))}
         />
+      ) : loading ? (
+        <PageLoading label="Preparando os destaques…" compact />
       ) : (
         <div
           className="hvm-highlight-empty"
-          role={error ? "alert" : loading ? "status" : undefined}
+          role={error ? "alert" : undefined}
         >
           <Sprout size={36} />
           <strong>
-            {loading
-              ? "Preparando os destaques…"
-              : error
-                ? "Não foi possível carregar os destaques"
-                : blocked
-                  ? "Região indisponível"
-                  : "O próximo frescor vem do campo"}
+            {error
+              ? "Não foi possível carregar os destaques"
+              : blocked
+                ? "Região indisponível"
+                : "O próximo frescor vem do campo"}
           </strong>
           <p>
-            {!loading &&
-              !error &&
+            {!error &&
               (blocked
                 ? "Selecione uma região atendida para conhecer os produtos."
                 : "Assim que os produtores publicarem alimentos nesta região, eles aparecerão aqui.")}

@@ -1,4 +1,5 @@
 import { Leaf, Salad } from "lucide-react";
+import { PageLoading } from "../PageLoading";
 import {
   PACKAGING_LABELS,
   UNIT_LABELS,
@@ -56,11 +57,7 @@ export function PublicProductGrid({
   emptyTitle?: string;
 }) {
   if (loading)
-    return (
-      <p className="hvm-product-notice" role="status">
-        Carregando os alimentos…
-      </p>
-    );
+    return <PageLoading label="Carregando os alimentos…" compact />;
   if (error)
     return (
       <div className="hvm-product-notice hvm-product-error" role="alert">

@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useSession } from "../../hooks/useSession";
 import { AccountHub } from "../account/AccountHub";
 import type { AdminVerifySessionResponse } from "../../../shared/contracts/adminGovernance";
@@ -8,7 +9,7 @@ export function AdminAccountPage({ path, access, onNavigate }: {
   onNavigate: (to: string) => void;
 }) {
   const { session, loading, refresh } = useSession();
-  if (loading) return <p role="status">Carregando sua conta administrativa…</p>;
+  if (loading && !session) return <PageLoading label="Carregando sua conta administrativa…" />;
   if (!session || session.activeRole !== access.role)
     return <section className="admin-card"><p>Não foi possível confirmar os dados desta conta administrativa.</p><button className="admin-primary" onClick={() => void refresh()}>Tentar novamente</button></section>;
   return <AccountHub

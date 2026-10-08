@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import {
   useCallback,
   useEffect,
@@ -231,10 +232,8 @@ export default function ProductEditorPage({
         </div>
         <Leaf className="hvm-product-emblem" size={38} />
       </header>
-      {loading ? (
-        <p role="status" className="hvm-product-notice">
-          Carregando o produto…
-        </p>
+      {loading && (!product || product.id !== id) ? (
+        <PageLoading label="Carregando o produto…" />
       ) : loadError ? (
         <div role="alert" className="hvm-product-notice hvm-product-error">
           <p>{loadError}</p>

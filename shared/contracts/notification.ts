@@ -56,6 +56,30 @@ export const NotificationSchema = z
     readAt: z.iso.datetime().nullable(),
   })
   .strict();
+export const NotificationRecipientRoleSchema = z.enum([
+  "consumer",
+  "producer",
+  "platform_admin",
+  "platform_super_admin",
+]);
+export const NotificationDetailSchema = NotificationSchema.extend({
+  recipientRole: NotificationRecipientRoleSchema,
+  context: z
+    .object({
+      categoryLabel: z.string().min(1).max(80),
+      audienceLabel: z.string().min(1).max(80),
+      why: z.string().min(1).max(500),
+      nextStep: z.string().min(1).max(500),
+    })
+    .strict(),
+  action: z
+    .object({
+      label: z.string().min(1).max(100),
+      path: NotificationSchema.shape.actionPath,
+    })
+    .strict()
+    .nullable(),
+}).strict();
 export const NotificationListSchema = z
   .object({
     notifications: z.array(NotificationSchema),
@@ -64,10 +88,16 @@ export const NotificationListSchema = z
     page: z.number().int().positive(),
     pages: z.number().int().positive(),
     asOf: z.iso.datetime(),
+    availableCategories: z.array(NotificationCategorySchema).optional(),
   })
   .strict();
 export const ReadNotificationsSchema = z
   .object({ through: z.iso.datetime() })
   .strict();
 export type Notification = z.infer<typeof NotificationSchema>;
+export type NotificationDetail = z.infer<typeof NotificationDetailSchema>;
+export type NotificationRecipientRole = z.infer<
+  typeof NotificationRecipientRoleSchema
+>;
+export type NotificationCategory = z.infer<typeof NotificationCategorySchema>;
 export type NotificationList = z.infer<typeof NotificationListSchema>;

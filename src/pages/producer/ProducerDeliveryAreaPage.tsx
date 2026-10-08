@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import {
   useCallback,
   useEffect,
@@ -227,8 +228,8 @@ export default function ProducerDeliveryAreaPage({
         </div>
         <Truck size={34} aria-hidden="true" />
       </header>
-      {loading ? (
-        <p role="status">Carregando a área de entrega…</p>
+      {loading && !settings ? (
+        <PageLoading label="Carregando a área de entrega…" />
       ) : loadError ? (
         <div className="delivery-notice" role="alert">
           <p>{loadError}</p>

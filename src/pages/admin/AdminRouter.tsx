@@ -14,10 +14,12 @@ import { AdminAccountPage } from "./AdminAccountPage";
 import { AdminLocalitiesPage } from "./locality/AdminLocalitiesPage";
 import { AdminAccessBlocksPage } from "./AdminAccessBlocksPage";
 import { lazy, Suspense } from "react";
+import { PageLoading } from "../../components/PageLoading";
 const AdminCategoriesPage = lazy(() => import("./AdminCategoriesPage"));
 const AdminCommercePage = lazy(() => import("../commerce/AdminCommercePage"));
 const AdminSubscriptionPlansPage = lazy(() => import("./AdminSubscriptionPlansPage"));
 const NotificationsPage = lazy(() => import("../account/NotificationsPage"));
+const NotificationDetailPage = lazy(() => import("../account/NotificationDetailPage"));
 const AdminReviewsPage = lazy(() => import("./AdminReviewsPage"));
 const ExecutiveBiDashboardPage = lazy(() => import("./ExecutiveBiDashboardPage"));
 
@@ -85,10 +87,10 @@ export function AdminRouter({path,onNavigate,onSessionRefresh}:Props){
     onNavigate={onNavigate}
     onSessionRefresh={onSessionRefresh}
    >
-    {path==="/admin/bi" ? <Suspense fallback={<p role="status">Carregando BI executivo…</p>}><ExecutiveBiDashboardPage/></Suspense> : path==="/admin/notificacoes" ? <Suspense fallback={<p role="status">Carregando notificações…</p>}><NotificationsPage onNavigate={onNavigate}/></Suspense> : path==="/admin/avaliacoes" ? <Suspense fallback={<p role="status">Carregando avaliações…</p>}><AdminReviewsPage/></Suspense> : path==="/admin/assinaturas" ? <Suspense fallback={<p role="status">Carregando planos…</p>}><AdminSubscriptionPlansPage/></Suspense> : ["/admin/reembolsos","/admin/denuncias","/admin/pagamentos","/admin/politica-reembolso"].includes(path)
-      ? <Suspense fallback={<p role="status">Carregando gestão da compra…</p>}><AdminCommercePage key={path} path={path} access={access} onNavigate={onNavigate}/></Suspense>
+    {path.startsWith("/admin/notificacoes/") ? <Suspense fallback={<PageLoading label="Carregando notificação…" />}><NotificationDetailPage id={path.slice("/admin/notificacoes/".length)} onNavigate={onNavigate}/></Suspense> : path==="/admin/bi" ? <Suspense fallback={<PageLoading label="Carregando BI executivo…" />}><ExecutiveBiDashboardPage/></Suspense> : path==="/admin/notificacoes" ? <Suspense fallback={<PageLoading label="Carregando notificações…" />}><NotificationsPage onNavigate={onNavigate}/></Suspense> : path==="/admin/avaliacoes" ? <Suspense fallback={<PageLoading label="Carregando avaliações…" />}><AdminReviewsPage/></Suspense> : path==="/admin/assinaturas" ? <Suspense fallback={<PageLoading label="Carregando planos…" />}><AdminSubscriptionPlansPage/></Suspense> : ["/admin/reembolsos","/admin/denuncias","/admin/pagamentos","/admin/politica-reembolso"].includes(path)
+      ? <Suspense fallback={<PageLoading label="Carregando gestão da compra…" />}><AdminCommercePage key={path} path={path} access={access} onNavigate={onNavigate}/></Suspense>
       : path === "/admin/categorias"
-      ? <Suspense fallback={<p role="status">Carregando categorias…</p>}><AdminCategoriesPage access={access} onNavigate={onNavigate}/></Suspense>
+      ? <Suspense fallback={<PageLoading label="Carregando categorias…" />}><AdminCategoriesPage access={access} onNavigate={onNavigate}/></Suspense>
       : path==="/admin/conta" || path.startsWith("/admin/conta/")
       ? <AdminAccountPage path={path} access={access} onNavigate={onNavigate}/>
       : path==="/admin/governanca"

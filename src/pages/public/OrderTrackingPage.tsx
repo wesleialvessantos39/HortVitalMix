@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import {
   Check,
   Clock3,
@@ -94,7 +95,7 @@ function Detail({
           {error}
         </p>
       )}
-      {!order && !error && <p role="status">Carregando o acompanhamento…</p>}
+      {!order && !error && <PageLoading label="Carregando o acompanhamento…" />}
       {order && (
         <>
           <div className="order-heading">
@@ -280,7 +281,7 @@ function List({
           {error}
         </p>
       )}
-      {!data && !error && <p role="status">Carregando seus pedidos…</p>}
+      {!data && !error && <PageLoading label="Carregando seus pedidos…" />}
       {data && !data.orders.length && (
         <article className="commerce-card order-empty">
           <Leaf aria-hidden="true" />

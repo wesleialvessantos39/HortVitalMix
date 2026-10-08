@@ -44,6 +44,8 @@ import { ReviewService } from "../../server/services/ReviewService.ts";
 import { OrderService } from "../../server/services/OrderService.ts";
 import { SubscriptionService } from "../../server/services/SubscriptionService.ts";
 import type { AdminActorContext } from "../../server/middleware/adminSession.ts";
+import { AdminSectorCodeSchema } from "../../shared/contracts/adminGovernance.ts";
+import { ADMIN_NOTIFICATION_ROUTE_SECTORS } from "../../server/services/NotificationPresentation.ts";
 const own = (
   userId: string,
   role: "consumer" | "producer",
@@ -61,6 +63,25 @@ describe.runIf(!!process.env.HVM_NOTIFICATIONS_LOCAL_DATABASE_URL)(
       refundAdmin: AdminActorContext,
       complaintAdmin: AdminActorContext;
     const p = () => dbPool as Pool;
+    async function authenticatedIds(userId: string, ids: string[]) {
+      const c = await p().connect();
+      try {
+        await c.query("BEGIN");
+        await c.query("SET LOCAL ROLE authenticated");
+        await c.query("SELECT set_config('request.jwt.claim.sub',$1,true)", [
+          userId,
+        ]);
+        return (
+          await c.query(
+            "SELECT id FROM public.app_notifications WHERE id=ANY($1::uuid[]) ORDER BY id",
+            [ids],
+          )
+        ).rows.map((row) => row.id);
+      } finally {
+        await c.query("ROLLBACK");
+        c.release();
+      }
+    }
     beforeAll(async () => {
       f = await reviewFixtures(p());
       root = await f.admin();
@@ -402,6 +423,391 @@ describe.runIf(!!process.env.HVM_NOTIFICATIONS_LOCAL_DATABASE_URL)(
         ),
       ).toBe(false);
     });
+    it("detalhe explica o evento para quatro perfis e o GET não marca a notificação como lida", async () => {
+      const buyer = await f.buyer([]);
+      const recipients = [
+        [own(buyer.userId, "consumer"), "purchases", "/compras", "Consumidor"],
+        [
+          own(f.catalog.a.userId, "producer"),
+          "sales",
+          "/produtor/vendas",
+          "Produtor",
+        ],
+        [
+          administrative(refundAdmin),
+          "refunds",
+          "/admin/reembolsos",
+          "Administrador",
+        ],
+        [
+          administrative(root),
+          "refunds",
+          "/admin/reembolsos",
+          "Super administrador",
+        ],
+      ] as const;
+      for (const [actor, category, path, label] of recipients) {
+        const event = randomUUID();
+        await p().query(
+          "SELECT hvm_notifications_private.emit($1,$2,$3,$4,'Atualização de teste','Informação exata registrada no evento.',$5,$6)",
+          [
+            actor.userId,
+            actor.role,
+            event,
+            category,
+            path,
+            category === "refunds" ? "refund_management" : null,
+          ],
+        );
+        const id = (
+          await p().query(
+            "SELECT id FROM app_notifications WHERE event_key=$1 AND recipient_user_id=$2",
+            [event, actor.userId],
+          )
+        ).rows[0].id;
+        const detail = await notices.detail(actor, id);
+        expect(detail).toMatchObject({
+          id,
+          recipientRole: actor.role,
+          message: "Informação exata registrada no evento.",
+          readAt: null,
+          context: { audienceLabel: label },
+          action: { path },
+        });
+        expect(detail.context.why.length).toBeGreaterThan(20);
+        expect(detail.context.nextStep.length).toBeGreaterThan(20);
+        expect(
+          (
+            await p().query(
+              "SELECT read_at FROM app_notifications WHERE id=$1",
+              [id],
+            )
+          ).rows[0].read_at,
+        ).toBeNull();
+        expect(await authenticatedIds(actor.userId, [id])).toEqual([id]);
+        const other = await f.buyer([]);
+        expect(await authenticatedIds(other.userId, [id])).toEqual([]);
+        await expect(
+          notices.detail(own(other.userId, "consumer"), id),
+        ).rejects.toMatchObject({ status: 404 });
+      }
+    });
+    it("contador global permanece correto ao filtrar categorias, lidas e páginas", async () => {
+      const buyer = await f.buyer([]),
+        actor = own(buyer.userId, "consumer");
+      const event = randomUUID();
+      await p().query(
+        "SELECT hvm_notifications_private.emit($1,'consumer',$2||':'||n,'account','Conta atualizada','Atualização de teste para paginação.','/conta') FROM generate_series(1,35) n",
+        [buyer.userId, event],
+      );
+      await p().query(
+        "SELECT hvm_notifications_private.emit($1,'consumer',$2,'refunds','Reembolso atualizado','Atualização do atendimento de teste.','/reembolsos')",
+        [buyer.userId, randomUUID()],
+      );
+      const all = await notices.list(actor, {}),
+        category = await notices.list(actor, { category: "refunds" }),
+        later = await notices.list(actor, {
+          page: 2,
+          category: "account",
+          filter: "unread",
+        });
+      expect(all.unreadCount).toBeGreaterThan(35);
+      expect(category.total).toBe(1);
+      expect(category.unreadCount).toBe(all.unreadCount);
+      expect(later.unreadCount).toBe(all.unreadCount);
+      expect(later.page).toBe(2);
+      expect(later.notifications.length).toBeGreaterThan(0);
+      await notices.read(actor, later.notifications[0].id);
+      expect(
+        (await notices.list(actor, { category: "refunds" })).unreadCount,
+      ).toBe(all.unreadCount - 1);
+      await notices.readAll(actor, { through: all.asOf });
+      expect(
+        (await notices.list(actor, { category: "refunds" })).unreadCount,
+      ).toBe(0);
+    });
+    it("revogação explícita também bloqueia detalhe e contador do super administrador", async () => {
+      const actor = administrative(root),
+        event = randomUUID();
+      await p().query(
+        "SELECT hvm_notifications_private.emit($1,'platform_super_admin',$2,'refunds','Reembolso restrito','Evento do setor de reembolsos.','/admin/reembolsos','refund_management')",
+        [root.userId, event],
+      );
+      const id = (
+        await p().query(
+          "SELECT id FROM app_notifications WHERE event_key=$1 AND recipient_user_id=$2",
+          [event, root.userId],
+        )
+      ).rows[0].id;
+      expect((await notices.detail(actor, id)).action?.path).toBe(
+        "/admin/reembolsos",
+      );
+      const before = await notices.list(actor, {}),
+        refunds = await notices.list(actor, {
+          category: "refunds",
+          filter: "unread",
+        });
+      await p().query(
+        "INSERT INTO app_admin_permission_overrides(user_id,sector_code,allowed) VALUES($1,'refund_management',false)",
+        [root.userId],
+      );
+      try {
+        const after = await notices.list(actor, {});
+        expect(after.unreadCount).toBe(before.unreadCount - refunds.total);
+        expect(after.availableCategories).not.toContain("refunds");
+        await expect(notices.detail(actor, id)).rejects.toMatchObject({
+          status: 404,
+        });
+        await expect(notices.read(actor, id)).rejects.toMatchObject({
+          status: 404,
+        });
+      } finally {
+        await p().query(
+          "DELETE FROM app_admin_permission_overrides WHERE user_id=$1 AND sector_code='refund_management'",
+          [root.userId],
+        );
+      }
+    });
+    it("notificação pessoal pode ser lida mas não oferece um destino que não é reconhecido", async () => {
+      const actor = administrative(refundAdmin),
+        event = randomUUID();
+      await p().query(
+        "SELECT hvm_notifications_private.emit($1,'platform_admin',$2,'administration','Orientação administrativa','Aviso pessoal destinado ao acesso.','/admin/area-indisponivel')",
+        [refundAdmin.userId, event],
+      );
+      const id = (
+        await p().query(
+          "SELECT id FROM app_notifications WHERE event_key=$1 AND recipient_user_id=$2",
+          [event, refundAdmin.userId],
+        )
+      ).rows[0].id;
+      expect((await notices.detail(actor, id)).action).toBeNull();
+      expect((await notices.list(actor, {})).availableCategories).not.toContain(
+        "complaints",
+      );
+    });
+    it("broadcasts antigos sem setor respeitam a revogação da origem, inclusive contador e leitura em lote", async () => {
+      const actor = administrative(root);
+      const paths = ["/admin/categorias", "/admin/governanca"];
+      const auditIds: string[] = [];
+      for (const action of ["category.updated", "admin.invite.archived"]) {
+        const id = randomUUID();
+        auditIds.push(id);
+        await p().query(
+          "INSERT INTO app_audit_events(id,request_id,actor_id,actor_role,action,target_entity,target_id,client_ip_hash) VALUES($1,$2,$3,'platform_super_admin',$4,'synthetic_notification_origin',$5,$6)",
+          [id, randomUUID(), root.userId, action, randomUUID(), "a".repeat(64)],
+        );
+      }
+      const legacy = (
+        await p().query(
+          "SELECT id,required_sector,action_path FROM app_notifications WHERE recipient_user_id=$1 AND event_key=ANY($2::text[])",
+          [root.userId, auditIds.map((id) => "audit:" + id)],
+        )
+      ).rows;
+      expect(legacy).toHaveLength(2);
+      expect(
+        legacy.every(
+          (row) =>
+            row.required_sector === null && paths.includes(row.action_path),
+        ),
+      ).toBe(true);
+      for (const row of legacy)
+        expect((await notices.detail(actor, row.id)).action?.path).toBe(
+          row.action_path,
+        );
+      const personalEvent = randomUUID();
+      await p().query(
+        "SELECT hvm_notifications_private.emit($1,'platform_super_admin',$2,'account','Conta atualizada','Atualização da própria conta administrativa.','/admin/conta')",
+        [root.userId, personalEvent],
+      );
+      const personal = (
+        await p().query(
+          "SELECT id FROM app_notifications WHERE recipient_user_id=$1 AND event_key=$2",
+          [root.userId, personalEvent],
+        )
+      ).rows[0];
+      const before = await notices.list(actor, {});
+      await p().query(
+        "INSERT INTO app_admin_permission_overrides(user_id,sector_code,allowed) VALUES($1,'catalog_moderation',false),($1,'account_governance',false)",
+        [root.userId],
+      );
+      try {
+        const hiddenUnread = (
+          await p().query(
+            "SELECT count(*)::int n FROM app_notifications WHERE recipient_user_id=$1 AND recipient_role='platform_super_admin' AND read_at IS NULL AND (required_sector IN ('catalog_moderation','account_governance') OR (required_sector IS NULL AND action_path=ANY($2::text[])))",
+            [root.userId, [...paths, "/admin/usuarios"]],
+          )
+        ).rows[0].n;
+        const after = await notices.list(actor, {});
+        expect(after.unreadCount).toBe(before.unreadCount - hiddenUnread);
+        expect(
+          after.notifications.some((row) => paths.includes(row.actionPath)),
+        ).toBe(false);
+        for (const row of legacy) {
+          expect(await authenticatedIds(root.userId, [row.id])).toEqual([]);
+          await expect(notices.detail(actor, row.id)).rejects.toMatchObject({
+            status: 404,
+          });
+          await expect(notices.read(actor, row.id)).rejects.toMatchObject({
+            status: 404,
+          });
+        }
+        expect((await notices.detail(actor, personal.id)).action?.path).toBe(
+          "/admin/conta",
+        );
+        expect(await authenticatedIds(root.userId, [personal.id])).toEqual([
+          personal.id,
+        ]);
+        await notices.readAll(actor, { through: after.asOf });
+        expect((await notices.list(actor, {})).unreadCount).toBe(0);
+        expect(
+          (
+            await p().query(
+              "SELECT count(*)::int n FROM app_notifications WHERE id=ANY($1::uuid[]) AND read_at IS NULL",
+              [legacy.map((row) => row.id)],
+            )
+          ).rows[0].n,
+        ).toBe(2);
+        const welcome = (
+          await p().query(
+            "SELECT id FROM app_notifications WHERE recipient_user_id=$1 AND action_path='/admin/painel' LIMIT 1",
+            [root.userId],
+          )
+        ).rows[0];
+        expect((await notices.detail(actor, welcome.id)).action?.path).toBe(
+          "/admin/painel",
+        );
+      } finally {
+        await p().query(
+          "DELETE FROM app_admin_permission_overrides WHERE user_id=$1 AND sector_code IN ('catalog_moderation','account_governance')",
+          [root.userId],
+        );
+      }
+    });
+    it("mesmo mapa canônico em API e RLS: quatro perfis, nove setores, revogações e prefixos desconhecidos", async () => {
+      for (const { prefix, sector } of ADMIN_NOTIFICATION_ROUTE_SECTORS) {
+        for (const suffix of [
+          "",
+          "/registro",
+          "?id=local#detalhe",
+          "#resumo",
+        ]) {
+          const mapped = (
+            await p().query(
+              "SELECT hvm_notifications_private.origin_sector(NULL,'platform_super_admin',$1) AS sector",
+              [prefix + suffix],
+            )
+          ).rows[0].sector;
+          expect(mapped).toBe(sector);
+        }
+      }
+      for (const path of [
+        "/admin/categorias-malicioso",
+        "/admin/categorias_fora",
+        "/admin/governanca-extra",
+        "/admin/conta",
+        "/admin/painel",
+      ]) {
+        expect(
+          (
+            await p().query(
+              "SELECT hvm_notifications_private.origin_sector(NULL,'platform_super_admin',$1) AS sector",
+              [path],
+            )
+          ).rows[0].sector,
+        ).toBeNull();
+      }
+      const admin = await f.admin("platform_admin", false),
+        superAdmin = await f.admin();
+      await p().query(
+        "INSERT INTO app_admin_sector_members(user_id,sector_code) SELECT $1,code FROM app_admin_sectors WHERE is_active",
+        [admin.userId],
+      );
+      const routes: Record<string, string> = {
+        document_verification: "/admin/documentos/fila",
+        catalog_moderation: "/admin/categorias",
+        finance_ops: "/admin/operacoes-financeiras",
+        location_management: "/admin/localidades",
+        account_governance: "/admin/governanca",
+        platform_configuration: "/admin/configuracao",
+        refund_management: "/admin/reembolsos",
+        complaint_management: "/admin/denuncias",
+        payment_configuration: "/admin/pagamentos",
+      };
+      for (const context of [admin, superAdmin]) {
+        const actor = administrative(context),
+          ids: string[] = [];
+        for (const sector of AdminSectorCodeSchema.options) {
+          const event = randomUUID();
+          await p().query(
+            "SELECT hvm_notifications_private.emit($1,$2,$3,'administration','Atualização setorial','Aviso do departamento de teste.',$4,$5)",
+            [context.userId, context.role, event, routes[sector], sector],
+          );
+          const id = (
+            await p().query(
+              "SELECT id FROM app_notifications WHERE recipient_user_id=$1 AND event_key=$2",
+              [context.userId, event],
+            )
+          ).rows[0].id;
+          ids.push(id);
+          expect((await notices.detail(actor, id)).id).toBe(id);
+          expect(await authenticatedIds(context.userId, [id])).toEqual([id]);
+          await p().query(
+            "INSERT INTO app_admin_permission_overrides(user_id,sector_code,allowed) VALUES($1,$2,false)",
+            [context.userId, sector],
+          );
+          await expect(notices.detail(actor, id)).rejects.toMatchObject({
+            status: 404,
+          });
+          await expect(notices.read(actor, id)).rejects.toMatchObject({
+            status: 404,
+          });
+          expect(await authenticatedIds(context.userId, [id])).toEqual([]);
+        }
+        const unknownEvent = randomUUID();
+        await p().query(
+          "SELECT hvm_notifications_private.emit($1,$2,$3,'account','Aviso pessoal','Atualização destinada à própria conta.','/admin/categorias-malicioso')",
+          [context.userId, context.role, unknownEvent],
+        );
+        const personal = (
+          await p().query(
+            "SELECT id FROM app_notifications WHERE recipient_user_id=$1 AND event_key=$2",
+            [context.userId, unknownEvent],
+          )
+        ).rows[0].id;
+        expect((await notices.detail(actor, personal)).action).toBeNull();
+        expect(await authenticatedIds(context.userId, [personal])).toEqual([
+          personal,
+        ]);
+        const feed = await notices.list(actor, {});
+        expect(feed.notifications.some((row) => ids.includes(row.id))).toBe(
+          false,
+        );
+        await notices.readAll(actor, { through: feed.asOf });
+        expect(
+          (
+            await p().query(
+              "SELECT count(*)::int n FROM app_notifications WHERE id=ANY($1::uuid[]) AND read_at IS NULL",
+              [ids],
+            )
+          ).rows[0].n,
+        ).toBe(9);
+        await p().query(
+          "DELETE FROM app_admin_permission_overrides WHERE user_id=$1",
+          [context.userId],
+        );
+      }
+      const privileges = (
+        await p().query(
+          "SELECT has_function_privilege('anon','hvm_notifications_private.origin_readable(text,text,text)','EXECUTE') AS anonymous,has_function_privilege('authenticated','hvm_notifications_private.origin_readable(text,text,text)','EXECUTE') AS authenticated,has_table_privilege('authenticated','public.app_notifications','UPDATE') AS can_mutate",
+        )
+      ).rows[0];
+      expect(privileges).toEqual({
+        anonymous: false,
+        authenticated: true,
+        can_mutate: false,
+      });
+    });
     it("marcar todas respeita o instante observado e mantém novos avisos não lidos", async () => {
       const b = await f.buyer([]),
         a = own(b.userId, "consumer"),
@@ -439,6 +845,13 @@ describe.runIf(!!process.env.HVM_NOTIFICATIONS_LOCAL_DATABASE_URL)(
         await expect(
           notices.read(administrative(refundAdmin), id),
         ).rejects.toMatchObject({ status: 404 });
+        await expect(
+          notices.detail(administrative(refundAdmin), id),
+        ).rejects.toMatchObject({ status: 404 });
+        expect(
+          (await notices.list(administrative(refundAdmin), {}))
+            .availableCategories,
+        ).not.toContain("refunds");
       } finally {
         await p().query(
           "UPDATE app_admin_sector_members SET revoked_at=NULL WHERE user_id=$1 AND sector_code='refund_management'",

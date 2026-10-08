@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { AdminPermissionEditor } from "./AdminPermissionEditor";
 import {
   adminSectorLabel,
@@ -300,9 +301,7 @@ export function AdminUsersPage({
       )}
       <section className="admin-card admin-card--table">
         {refreshing && users.length === 0 ? (
-          <p className="admin-empty" role="status">
-            Carregando usuários…
-          </p>
+          <PageLoading label="Carregando usuários…" compact />
         ) : users.length === 0 ? (
           <p className="admin-empty">Nenhum usuário encontrado.</p>
         ) : (

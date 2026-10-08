@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, type ApiFailure } from "../../lib/api";
 import { cryptoRandomUUID } from "../../lib/uuid";
@@ -286,7 +287,7 @@ export default function AdminCategoriesPage({ access, onNavigate }: Props) {
       />
       <section className="admin-card" aria-busy={state === "loading"}>
         <h2>Catálogo global</h2>
-        {state === "loading" && <p role="status">Carregando categorias…</p>}
+        {state === "loading" && !categories.length && <PageLoading label="Carregando categorias…" compact />}
         {state === "ready" && categories.length === 0 && (
           <p>Nenhuma categoria cadastrada.</p>
         )}

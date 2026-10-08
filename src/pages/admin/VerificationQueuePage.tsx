@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api";
 import { readAdminAccessToken } from "../../lib/adminSessionStore";
@@ -171,7 +172,7 @@ export function VerificationQueuePage() {
           <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? "is-active" : ""} onClick={() => { setTab(id); setActive(null); }}>{label}</button>
         ))}
       </div>
-      {loading ? <p role="status">Carregando fila…</p> : (
+      {loading ? <PageLoading label="Carregando fila…" /> : (
         <div className="verification-layout">
           <aside className="admin-card verification-list">
             {rows.length === 0 ? <p className="admin-empty">Nenhum chamado nesta aba.</p> : rows.map((row) => (

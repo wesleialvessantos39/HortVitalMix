@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useState } from "react";
 import { CreditCard, QrCode, ShieldCheck, Clock3 } from "lucide-react";
 import type { PaymentView } from "../../../shared/contracts/commerce";
@@ -109,7 +110,7 @@ export default function PaymentPreparedPage({
               {error}
             </p>
           )}
-          {!payment && !error && <p role="status">Carregando sua compra…</p>}
+          {!payment && !error && <PageLoading label="Carregando sua compra…" />}
           {payment && (
             <>
               <div className="commerce-grid">

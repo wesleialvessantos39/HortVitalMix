@@ -1,0 +1,67 @@
+{
+  "project": "xipbsazvymkqqfmfegwu",
+  "canonicalMigration": "20261008220225_notification_origin_permissions.sql",
+  "remoteVersion": "20261008220740",
+  "schemaVersion": 66,
+  "migrationCount": 73,
+  "migrationHistoryHash": "11cfaf481196044d3a52bb078413c507285d6a112cc74bc37813ce57ee6bd8b9",
+  "businessDataUnchanged": true,
+  "before": [
+    {
+      "relation": "app_notifications",
+      "rows": 6,
+      "digest": "d17f59bf4fbc949e2897a431f65979da"
+    },
+    {
+      "relation": "app_admin_permission_overrides",
+      "rows": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "app_user_role_assignments",
+      "rows": 6,
+      "digest": "1b9855714e88a5cfe33f65322ddfc708"
+    }
+  ],
+  "after": [
+    {
+      "relation": "app_notifications",
+      "rows": 6,
+      "digest": "d17f59bf4fbc949e2897a431f65979da"
+    },
+    {
+      "relation": "app_admin_permission_overrides",
+      "rows": 0,
+      "digest": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "relation": "app_user_role_assignments",
+      "rows": 6,
+      "digest": "1b9855714e88a5cfe33f65322ddfc708"
+    }
+  ],
+  "grants": [
+    {
+      "anon_exec": false,
+      "auth_mutate": false
+    }
+  ],
+  "advisors": {
+    "security": {
+      "warningGroupsBefore": 2,
+      "warningGroupsAfter": 2,
+      "newWarnings": 0,
+      "newErrors": 0,
+      "warningFindingsBefore": 5,
+      "warningFindingsAfter": 5
+    },
+    "performance": {
+      "warningGroupsBefore": 1,
+      "warningGroupsAfter": 1,
+      "newWarnings": 0,
+      "newErrors": 0,
+      "warningFindingsBefore": 25,
+      "warningFindingsAfter": 25
+    }
+  }
+}

@@ -1,3 +1,4 @@
+import { PageLoading } from "../../../components/PageLoading";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { MapPin, Plus, Power, RefreshCw, Trash2 } from "lucide-react";
 import { api, type ApiFailure } from "../../../lib/api";
@@ -347,10 +348,8 @@ export function AdminLocalitiesPage({ access, onNavigate }: Props) {
         <h2>
           <MapPin size={17} /> Municípios cadastrados
         </h2>
-        {state === "loading" ? (
-          <p className="admin-empty" role="status">
-            Carregando localidades…
-          </p>
+        {state === "loading" && municipalities.length === 0 ? (
+          <PageLoading label="Carregando localidades…" compact />
         ) : municipalities.length === 0 ? (
           <p className="admin-empty">
             Nenhum município cadastrado. Sem localidade ativa a plataforma não

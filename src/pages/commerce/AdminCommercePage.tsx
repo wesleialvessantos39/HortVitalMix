@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { CreditCard, Settings, ShieldCheck } from "lucide-react";
 import { z } from "zod";
@@ -93,7 +94,7 @@ export default function AdminCommercePage({
       setBusy(false);
     }
   }
-  if (loading) return <p role="status">Conferindo sua conta administrativa…</p>;
+  if (loading && !session) return <PageLoading label="Conferindo sua conta administrativa…" />;
   if (!session)
     return (
       <p role="alert">
@@ -141,7 +142,7 @@ export default function AdminCommercePage({
           }}
         />
       )}
-      {!settings && !error && <p role="status">Carregando configuração…</p>}
+      {!settings && !error && <PageLoading label="Carregando configuração…" />}
       {settings && (
         <form onSubmit={(event) => void save(event)}>
           <div className="commerce-grid">

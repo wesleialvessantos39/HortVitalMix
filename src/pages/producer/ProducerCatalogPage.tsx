@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useCallback, useEffect, useState } from "react";
 import { MediaImage } from "../../components/catalog/MediaImage";
 import { ArrowLeft, Plus, Salad, Pencil, Store } from "lucide-react";
@@ -73,10 +74,8 @@ export default function ProducerCatalogPage({
           <Plus size={18} /> Novo produto
         </button>
       </header>
-      {loading ? (
-        <p role="status" className="hvm-product-notice">
-          Carregando seus produtos…
-        </p>
+      {loading && !catalog ? (
+        <PageLoading label="Carregando seus produtos…" />
       ) : error ? (
         <div role="alert" className="hvm-product-notice hvm-product-error">
           <p>{error}</p>

@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useEffect,useState } from "react";
 import { Leaf,ShieldPlus } from "lucide-react";
 import { api, type ApiFailure } from "../../lib/api";
@@ -153,7 +154,7 @@ export function AdminBootstrapPage({onNavigate}:Props){
     <span className="admin-kicker">Configuração protegida</span>
     <h1>Primeiro acesso administrativo</h1>
     <p className="admin-muted">Esta etapa abre somente enquanto ainda não existe um Super administrador ativo e aceita apenas o e-mail autorizado no servidor.</p>
-    {status==="loading"&&<p className="admin-muted">Consultando disponibilidade…</p>}
+    {status==="loading"&&<PageLoading label="Consultando disponibilidade…" compact />}
     {status!=="loading"&&status!=="open"&&<div className="admin-alert">{reason??"Configuração inicial indisponível."}</div>}
     {message&&<div className="admin-alert">{message}</div>}
 

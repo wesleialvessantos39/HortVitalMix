@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import {
   useEffect,
   useMemo,
@@ -479,15 +480,7 @@ function PropertyList({
 
       {listNotice && <p className="account-notice" role="alert">{listNotice}</p>}
       {state === "loading" && (
-        <div className="rural-properties-grid" aria-busy="true">
-          {[0, 1].map((item) => (
-            <div className="rural-property-card rural-card-skeleton" key={item}>
-              <span />
-              <span />
-              <span />
-            </div>
-          ))}
-        </div>
+        <PageLoading label="Carregando seus imóveis…" />
       )}
 
       {state === "error" && (
@@ -1193,7 +1186,7 @@ function RuralPropertyWizard({
   if (state === "loading") {
     return (
       <section className="rural-wizard-page rural-wizard-reference" aria-busy="true">
-        <p className="account-notice">Carregando o rascunho do imóvel…</p>
+        <PageLoading label="Carregando o rascunho do imóvel…" />
       </section>
     );
   }

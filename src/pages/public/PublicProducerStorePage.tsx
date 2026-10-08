@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -64,9 +65,7 @@ export default function PublicProducerStorePage({
   if (state === "loading")
     return (
       <section className="hvm-store">
-        <p role="status" className="account-notice">
-          Carregando a vitrine…
-        </p>
+        <PageLoading label="Carregando a vitrine…" />
       </section>
     );
   if (state !== "ready" || !store)

@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Camera, FileText, FileUp } from "lucide-react";
 import { api, apiBase } from "../../lib/api";
@@ -801,7 +802,7 @@ export function DocumentsPanel({
         )}
         {busy && <p role="status">Processando… Mantenha esta tela aberta.</p>}
         {loading ? (
-          <p role="status">Carregando documentos…</p>
+          <PageLoading label="Carregando documentos…" compact />
         ) : docs.length === 0 ? (
           <p>Nenhum documento enviado para este imóvel.</p>
         ) : (

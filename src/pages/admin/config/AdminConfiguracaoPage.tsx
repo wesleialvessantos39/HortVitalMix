@@ -1,20 +1,19 @@
-import { hasAdminPermission } from "../../../../shared/adminPermissions";
 import { useEffect, useState, type FormEvent } from "react";
 import {
   AlertTriangle,
-  Ban,
   CheckCircle2,
-  FileCheck2,
-  History,
   MapPin,
   RefreshCw,
   Settings2,
   ShieldCheck,
-  UsersRound,
+  Mail,
+  Palette,
+  Phone,
+  Clock3,
 } from "lucide-react";
-import { api } from "../../../lib/api.ts";
 import type { AdminVerifySessionResponse } from "../../../../shared/contracts/adminGovernance.ts";
-import type { GlobalConfigOverview } from "../../../../shared/contracts/adminConfig.ts";
+import { UpdateGlobalConfigPayloadSchema } from "../../../../shared/contracts/adminConfig.ts";
+import { PageLoading } from "../../../components/PageLoading";
 import { useConfigAdmin } from "./useConfigAdmin.ts";
 import { useConfigUpdate } from "./useConfigUpdate.ts";
 import { cryptoRandomUUID } from "../../../lib/uuid.ts";
@@ -27,10 +26,10 @@ export function AdminConfiguracaoPage({
   access: AdminVerifySessionResponse;
   onNavigate?: (to: string) => void;
 }) {
-  const { state, reload } = useConfigAdmin();
+  const { state, reload, refreshing } = useConfigAdmin();
   const { outcome, submit, reset } = useConfigUpdate();
-  const [overview, setOverview] = useState<GlobalConfigOverview | null>(null);
-  const [overviewError, setOverviewError] = useState(false);
+  const [activeTab, setActiveTab] = useState<ConfigTab>("identity");
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [platformName, setPlatformName] = useState("");
   const [slogan, setSlogan] = useState("");
   const [municipality, setMunicipality] = useState("");
@@ -40,24 +39,6 @@ export function AdminConfiguracaoPage({
   const [currency, setCurrency] = useState("BRL");
   const [timezone, setTimezone] = useState("America/Porto_Velho");
   const [commandId, setCommandId] = useState(() => cryptoRandomUUID());
-
-  const isSuper = access.role === "platform_super_admin";
-  const canAccounts = hasAdminPermission(access,"account_governance");
-  const canLocalities = hasAdminPermission(access,"location_management");
-  const canDocuments = hasAdminPermission(access,"document_verification");
-
-  async function loadOverview() {
-    setOverviewError(false);
-    try {
-      setOverview(await api<GlobalConfigOverview>("/v1/admin/configuration/overview"));
-    } catch {
-      setOverviewError(true);
-    }
-  }
-
-  useEffect(() => {
-    void loadOverview();
-  }, []);
 
   useEffect(() => {
     if (state.status === "ready" && state.config) {
@@ -75,7 +56,6 @@ export function AdminConfiguracaoPage({
   useEffect(() => {
     if (outcome.kind !== "success") return;
     setCommandId(cryptoRandomUUID());
-    void loadOverview();
     const timer = window.setTimeout(() => reset(), 4500);
     return () => window.clearTimeout(timer);
   }, [outcome.kind, reset]);
@@ -93,7 +73,7 @@ export function AdminConfiguracaoPage({
     return () => window.clearTimeout(timer);
   }, [outcome.kind, onNavigate, access.role]);
 
-  if (state.status === "loading") return <LoadingSkeleton />;
+  if (state.status === "loading" && !state.config) return <PageLoading label="Carregando configuração" />;
   if (state.status === "error")
     return (
       <ErrorCard
@@ -118,6 +98,7 @@ export function AdminConfiguracaoPage({
 
   const canSubmit =
     hasChanges &&
+    !refreshing &&
     outcome.kind !== "submitting" &&
     outcome.kind !== "conflict";
 
@@ -137,7 +118,15 @@ export function AdminConfiguracaoPage({
     if (currency !== state.config.currency) payload.currency = currency;
     if (timezone !== state.config.timezone) payload.timezone = timezone;
 
-    const result = await submit(payload, state.config.revision, commandId);
+    const validated = UpdateGlobalConfigPayloadSchema.safeParse(payload);
+    if (!validated.success) {
+      const field = String(validated.error.issues[0]?.path[0] ?? "");
+      setActiveTab(field === "supportEmail" || field === "supportPhone" ? "support" : field === "platformName" || field === "slogan" ? "identity" : "operation");
+      setValidationError("Revise os campos informados. Use uma moeda de três letras e o telefone no formato internacional, quando preenchido.");
+      return;
+    }
+    setValidationError(null);
+    const result = await submit(validated.data, state.config.revision, commandId);
     if (result.kind === "success") await reload();
   }
 
@@ -146,63 +135,9 @@ export function AdminConfiguracaoPage({
       ? "Salvando alterações…"
       : hasChanges
         ? "Alterações prontas para salvar"
-        : "Tudo sincronizado — nenhuma alteração pendente";
-
-  const cards = [
-    {
-      key: "users",
-      title: "Contas e aprovações",
-      value: overview
-        ? overview.activeUsers + " ativas · " + overview.pendingRegistrationReviews + " em análise"
-        : "—",
-      note: overview ? overview.blockedUsers + " bloqueadas agora" : "Carregando indicadores",
-      icon: UsersRound,
-      enabled: canAccounts,
-      target: "/admin/usuarios",
-    },
-    {
-      key: "localities",
-      title: "Cobertura regional",
-      value: overview
-        ? overview.activeMunicipalities + " ativas · " + overview.blockedMunicipalities + " bloqueadas"
-        : "—",
-      note: "Cadastro, exclusão, bloqueio e retomada de municípios",
-      icon: MapPin,
-      enabled: canLocalities,
-      target: "/admin/localidades",
-    },
-    {
-      key: "verification",
-      title: "Imóveis e auditoria",
-      value: overview
-        ? overview.approvedProperties + " aprovados · " + overview.verificationQueue + " na fila"
-        : "—",
-      note: "Documentos, análise e aprovação rural",
-      icon: FileCheck2,
-      enabled: canDocuments,
-      target: "/admin/documentos/fila",
-    },
-    {
-      key: "blocks",
-      title: "Bloqueios operacionais",
-      value: overview ? overview.activeAccessBlocks + " ativos" : "—",
-      note: "Compra, publicação e escopos por região",
-      icon: Ban,
-      enabled: canLocalities,
-      target: "/admin/bloqueios",
-    },
-    {
-      key: "audit",
-      title: "Atividade de governança",
-      value: overview ? overview.auditEvents24h + " eventos em 24 h" : "—",
-      note: "Rastreabilidade de alterações administrativas",
-      icon: History,
-      enabled: isSuper && canAccounts,
-      target: "/admin/governanca",
-    },
-  ];
-
-  const visibleCards = cards.filter((card) => card.enabled);
+        : state.errorMessage
+          ? "Última configuração recebida — atualização não confirmada"
+          : "Tudo sincronizado — nenhuma alteração pendente";
 
   return (
     <section className="admin-config-page" aria-labelledby="admin-config-title">
@@ -213,9 +148,7 @@ export function AdminConfiguracaoPage({
           </span>
           <h1 id="admin-config-title">Configuração Global</h1>
           <p className="admin-config-subtitle">
-            Controle institucional e visão operacional da plataforma em um único
-            lugar. As permissões abaixo respeitam os poderes delegados pelo Super
-            administrador.
+            Defina a identidade da plataforma, a referência regional e os canais de suporte. As alterações são auditadas e sincronizadas com o sistema.
           </p>
         </div>
         <button
@@ -223,45 +156,21 @@ export function AdminConfiguracaoPage({
           className="admin-config-refresh"
           onClick={() => {
             void reload();
-            void loadOverview();
           }}
-          disabled={outcome.kind === "submitting"}
+          disabled={refreshing || hasChanges || outcome.kind === "submitting"}
+          aria-label="Atualizar configuração"
         >
-          <RefreshCw size={16} />
-          Atualizar painel
+          <RefreshCw size={16} className={refreshing ? "hvm-sync-spinning" : undefined} />
+          {refreshing ? "Atualizando…" : "Atualizar configuração"}
         </button>
       </header>
 
-      <section className="admin-config-overview" aria-label="Visão geral do sistema">
-        <div className="admin-config-section-heading">
-          <div>
-            <span className="admin-config-eyebrow">Visão operacional</span>
-            <h2>Administração do sistema</h2>
-          </div>
-          {overviewError && (
-            <button type="button" className="admin-config-link" onClick={() => void loadOverview()}>
-              Recarregar indicadores
-            </button>
-          )}
-        </div>
-        <div className="admin-config-metrics">
-          {visibleCards.map(({ key, title, value, note, icon: Icon, target }) => (
-            <button
-              type="button"
-              className="admin-config-metric"
-              key={key}
-              onClick={() => onNavigate?.(target)}
-            >
-              <span className="admin-config-metric-icon"><Icon size={19} /></span>
-              <span>
-                <strong>{title}</strong>
-                <b>{value}</b>
-                <small>{note}</small>
-              </span>
-            </button>
-          ))}
-        </div>
-      </section>
+      <div className="admin-config-summary" aria-label="Configuração vigente">
+        <span><Palette size={15} /><strong>{state.config.platformName}</strong></span>
+        <span><MapPin size={15} />{state.config.defaultMunicipality} / {state.config.defaultState}</span>
+        <span><ShieldCheck size={15} />Revisão {state.config.revision}</span>
+        <time dateTime={state.config.updatedAt}>Atualizada em {configUpdatedAt(state.config.updatedAt, state.config.timezone)}</time>
+      </div>
 
       {outcome.kind === "conflict" && (
         <div className="admin-config-banner admin-config-banner--warning" role="alert">
@@ -313,116 +222,60 @@ export function AdminConfiguracaoPage({
         </div>
       )}
 
+      {state.errorMessage && <div className="admin-config-banner admin-config-banner--warning" role="alert"><AlertTriangle size={18}/><p>{state.errorMessage} A configuração carregada foi preservada.</p></div>}
+      {validationError && <div className="admin-config-banner admin-config-banner--danger" role="alert"><AlertTriangle size={18}/><p>{validationError}</p></div>}
       <form className="admin-config-form" onSubmit={onSubmit}>
         <div className="admin-config-section-heading">
-          <div>
-            <span className="admin-config-eyebrow">Identidade e operação</span>
-            <h2>Parâmetros globais</h2>
-          </div>
-          <div className={"admin-config-status " + (hasChanges ? "is-dirty" : "is-synced")} aria-live="polite">
-            {statusText}
-          </div>
+          <div><span className="admin-config-eyebrow">Identidade e operação</span><h2>Parâmetros globais</h2></div>
+          <div className={"admin-config-status " + (hasChanges ? "is-dirty" : "is-synced")} aria-live="polite">{statusText}</div>
         </div>
-
-        <fieldset disabled={outcome.kind === "submitting" || outcome.kind === "conflict"}>
-          <div className="admin-config-grid">
-            <div className="admin-config-field">
-              <label htmlFor="cfg-platform">Nome da plataforma</label>
-              <input
-                id="cfg-platform"
-                value={platformName}
-                onChange={(event) => setPlatformName(event.target.value)}
-                minLength={2}
-                maxLength={80}
-                required
-              />
-              <small>Nome exibido nas áreas públicas e administrativas.</small>
+        <div className="admin-config-tabs" role="tablist" aria-label="Grupos de configuração">
+          {CONFIG_TABS.map(({ key, label, icon: Icon }, index) => <button type="button" key={key} id={"cfg-tab-" + key}
+            role="tab" aria-selected={activeTab === key} aria-controls={"cfg-panel-" + key} tabIndex={activeTab === key ? 0 : -1}
+            onClick={() => setActiveTab(key)} onKeyDown={event => {
+              const next = event.key === "ArrowRight" ? (index + 1) % CONFIG_TABS.length : event.key === "ArrowLeft" ? (index + CONFIG_TABS.length - 1) % CONFIG_TABS.length : event.key === "Home" ? 0 : event.key === "End" ? CONFIG_TABS.length - 1 : null;
+              if (next === null) return;
+              event.preventDefault(); setActiveTab(CONFIG_TABS[next].key);
+              document.getElementById("cfg-tab-" + CONFIG_TABS[next].key)?.focus();
+            }}><Icon size={16}/><span>{label}</span></button>)}
+        </div>
+        <div className="admin-config-workspace">
+          <fieldset disabled={refreshing || outcome.kind === "submitting" || outcome.kind === "conflict"}>
+            <div role="tabpanel" id={"cfg-panel-" + activeTab} aria-labelledby={"cfg-tab-" + activeTab}>
+              {activeTab === "identity" && <>
+                <p className="admin-config-group-description">Como as pessoas reconhecem sua plataforma na vitrine e nos portais administrativos.</p>
+                <div className="admin-config-grid">
+                  <div className="admin-config-field"><label htmlFor="cfg-platform">Nome da plataforma</label><input id="cfg-platform" value={platformName} onChange={event => setPlatformName(event.target.value)} minLength={2} maxLength={80} required/><small>Nome público, com até 80 caracteres.</small></div>
+                  <div className="admin-config-field"><label htmlFor="cfg-slogan">Slogan institucional</label><input id="cfg-slogan" value={slogan} onChange={event => setSlogan(event.target.value)} minLength={5} maxLength={255} required/><small>Mensagem usada pela aplicação, com até 255 caracteres.</small></div>
+                </div>
+              </>}
+              {activeTab === "operation" && <>
+                <p className="admin-config-group-description">Referência regional, moeda e horários usados na operação da plataforma.</p>
+                <div className="admin-config-grid admin-config-grid--location">
+                  <div className="admin-config-field"><label htmlFor="cfg-municipality">Município padrão</label><input id="cfg-municipality" value={municipality} onChange={event => setMunicipality(event.target.value)} minLength={2} maxLength={100} required/></div>
+                  <div className="admin-config-field"><label htmlFor="cfg-uf">UF padrão</label><select id="cfg-uf" value={uf} onChange={event => setUf(event.target.value)} required>{BRAZILIAN_STATES.map(code => <option key={code} value={code}>{code}</option>)}</select></div>
+                </div>
+                <div className="admin-config-grid">
+                  <div className="admin-config-field"><label htmlFor="cfg-currency">Moeda</label><input id="cfg-currency" value={currency} onChange={event => setCurrency(event.target.value.toUpperCase().slice(0, 3))} minLength={3} maxLength={3} pattern="[A-Z]{3}" required/><small>Código internacional de três letras, como BRL.</small></div>
+                  <div className="admin-config-field"><label htmlFor="cfg-timezone">Fuso horário operacional</label><select id="cfg-timezone" value={timezone} onChange={event => setTimezone(event.target.value)} required>{!BRAZIL_TIMEZONES.includes(timezone) && <option value={timezone}>{timezone}</option>}{BRAZIL_TIMEZONES.map(zone => <option key={zone} value={zone}>{zone}</option>)}</select><small>Referência para horários operacionais e datas.</small></div>
+                </div>
+              </>}
+              {activeTab === "support" && <>
+                <p className="admin-config-group-description">Canais oficiais apresentados nas mensagens de cobertura, bloqueio e exclusão.</p>
+                <div className="admin-config-grid">
+                  <div className="admin-config-field"><label htmlFor="cfg-email">E-mail de suporte</label><input id="cfg-email" type="email" value={email} onChange={event => setEmail(event.target.value)} maxLength={255} required/><small>Endereço oficial para atender as pessoas.</small></div>
+                  <div className="admin-config-field"><label htmlFor="cfg-phone">Telefone de suporte (opcional)</label><input id="cfg-phone" type="tel" placeholder="+5569999999999" pattern="\+[1-9][0-9]{1,14}" value={phone} onChange={event => setPhone(event.target.value)}/><small>Formato internacional E.164. Vazio remove o telefone.</small></div>
+                </div>
+              </>}
             </div>
-            <div className="admin-config-field">
-              <label htmlFor="cfg-slogan">Slogan institucional</label>
-              <input
-                id="cfg-slogan"
-                value={slogan}
-                onChange={(event) => setSlogan(event.target.value)}
-                minLength={5}
-                maxLength={255}
-                required
-              />
-              <small>Mensagem institucional usada pela aplicação.</small>
-            </div>
-          </div>
-
-          <div className="admin-config-grid admin-config-grid--location">
-            <div className="admin-config-field">
-              <label htmlFor="cfg-municipality">Município padrão</label>
-              <input
-                id="cfg-municipality"
-                value={municipality}
-                onChange={(event) => setMunicipality(event.target.value)}
-                minLength={2}
-                maxLength={100}
-                required
-              />
-            </div>
-            <div className="admin-config-field">
-              <label htmlFor="cfg-uf">UF padrão</label>
-              <select id="cfg-uf" value={uf} onChange={(event) => setUf(event.target.value)} required>
-                {BRAZILIAN_STATES.map((stateCode) => (
-                  <option key={stateCode} value={stateCode}>{stateCode}</option>
-                ))}
-              </select>
-            </div>
-            <div className="admin-config-field">
-              <label htmlFor="cfg-currency">Moeda</label>
-              <input
-                id="cfg-currency"
-                value={currency}
-                onChange={(event) => setCurrency(event.target.value.toUpperCase().slice(0, 3))}
-                minLength={3}
-                maxLength={3}
-                pattern="[A-Z]{3}"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="admin-config-grid">
-            <div className="admin-config-field">
-              <label htmlFor="cfg-timezone">Fuso horário operacional</label>
-              <select id="cfg-timezone" value={timezone} onChange={(event) => setTimezone(event.target.value)} required>
-                {BRAZIL_TIMEZONES.map((zone) => (
-                  <option value={zone} key={zone}>{zone}</option>
-                ))}
-              </select>
-              <small>Afeta horários operacionais e apresentação de datas.</small>
-            </div>
-            <div className="admin-config-field">
-              <label htmlFor="cfg-email">E-mail de suporte</label>
-              <input
-                id="cfg-email"
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                maxLength={255}
-                required
-              />
-              <small>Canal exibido nas mensagens de bloqueio, exclusão e cobertura.</small>
-            </div>
-          </div>
-
-          <div className="admin-config-field">
-            <label htmlFor="cfg-phone">Telefone de suporte (opcional)</label>
-            <input
-              id="cfg-phone"
-              type="tel"
-              placeholder="+5569999999999"
-              pattern="\+[1-9][0-9]{1,14}"
-              value={phone}
-              onChange={(event) => setPhone(event.target.value)}
-            />
-            <small>Formato internacional E.164. Deixe vazio para remover.</small>
-          </div>
-        </fieldset>
+          </fieldset>
+          <section className="admin-config-preview" aria-label="Prévia dos parâmetros">
+            <span className="admin-config-eyebrow">Prévia {hasChanges ? "das alterações" : "vigente"}</span>
+            {activeTab === "identity" ? <><Palette size={24}/><h3>{platformName || "Nome da plataforma"}</h3><p>{slogan || "Mensagem institucional"}</p><small>Identidade usada nas áreas públicas e administrativas.</small></>
+              : activeTab === "operation" ? <><MapPin size={24}/><h3>{municipality || "Município"} / {uf}</h3><p>{currency} · {timezone.replace("America/", "").replaceAll("_", " ")}</p><small>O município padrão é a referência inicial. A cobertura é gerenciada no departamento de Localidades.</small></>
+              : <><Mail size={24}/><h3>Atendimento oficial</h3><p>{email || "E-mail de suporte"}</p><p>{phone || "Sem telefone configurado"}</p><small>Confira os contatos antes de salvar; as mensagens do sistema usam esses canais.</small></>}
+          </section>
+        </div>
 
         <footer className="admin-config-footer">
           <div className="admin-config-security-note">
@@ -457,20 +310,6 @@ export function AdminConfiguracaoPage({
           </div>
         </footer>
       </form>
-    </section>
-  );
-}
-
-function LoadingSkeleton() {
-  return (
-    <section className="admin-config-page" aria-busy="true" aria-label="Carregando configuração">
-      <div className="admin-config-skeleton admin-config-skeleton--title" />
-      <div className="admin-config-metrics">
-        {[0, 1, 2, 3].map((item) => (
-          <div className="admin-config-skeleton admin-config-skeleton--metric" key={item} />
-        ))}
-      </div>
-      <div className="admin-config-skeleton admin-config-skeleton--form" />
     </section>
   );
 }
@@ -518,6 +357,18 @@ function EmptyCard({
     </section>
   );
 }
+
+function configUpdatedAt(value: string, timezone: string) {
+  try { return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: timezone }).format(new Date(value)); }
+  catch { return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value)); }
+}
+
+type ConfigTab = "identity" | "operation" | "support";
+const CONFIG_TABS = [
+  { key: "identity" as const, label: "Identidade", icon: Palette },
+  { key: "operation" as const, label: "Operação", icon: Clock3 },
+  { key: "support" as const, label: "Suporte", icon: Phone },
+];
 
 const BRAZILIAN_STATES = [
   "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",

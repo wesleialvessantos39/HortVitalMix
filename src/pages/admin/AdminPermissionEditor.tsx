@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useState, useRef, type FormEvent } from "react";
 import { api, type ApiFailure } from "../../lib/api";
 import { cryptoRandomUUID } from "../../lib/uuid";
@@ -101,7 +102,7 @@ export function AdminPermissionEditor({
           {error}
         </p>
       )}
-      {!view && !error && <p role="status">Consultando poderes…</p>}
+      {!view && !error && <PageLoading label="Consultando poderes…" compact />}
       {view && (
         <fieldset
           className="admin-sectors-fieldset"

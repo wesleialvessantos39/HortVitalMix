@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useRef, useState, type FormEvent } from "react";
 import {
   DeliveryWindowSchema,
@@ -201,7 +202,7 @@ export default function DeliveryWindowsPage({
             />
           </label>
           {data && <p>Horários em {data.timezone}.</p>}
-          {!data && !readError && <p role="status">Carregando janelas…</p>}
+          {!data && !readError && <PageLoading label="Carregando janelas…" compact />}
           {data &&
             weekdays.map((day, i) => (
               <article className="commerce-card" key={day}>

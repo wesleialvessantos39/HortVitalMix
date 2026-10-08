@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api, type ApiFailure } from "../../lib/api";
 import { cryptoRandomUUID } from "../../lib/uuid";
@@ -141,7 +142,7 @@ export default function AdminReviewsPage() {
           }}
         />
       )}
-      {!data && !error && <p role="status">Carregando avaliações…</p>}
+      {!data && !error && <PageLoading label="Carregando avaliações…" />}
       {selected && (
         <form
           onSubmit={moderate}

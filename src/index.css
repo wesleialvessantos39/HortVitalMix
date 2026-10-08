@@ -38,7 +38,7 @@ body {
 }
 .app-shell--standalone > .desktop-header,
 .app-shell--standalone > .mobile-header,
-.app-shell--standalone > footer,
+.app-shell.app-shell--standalone > footer,
 .app-shell--standalone > .bottom-nav {
   display: none;
 }
@@ -477,7 +477,7 @@ aside {
   text-decoration: underline;
   color: var(--primary);
 }
-footer {
+.app-shell > footer {
   border-top: 1px solid var(--line);
   background: white;
   display: flex;
@@ -489,7 +489,7 @@ footer {
   font-size: 11px;
   color: var(--muted);
 }
-footer strong {
+.app-shell > footer strong {
   color: var(--dark);
 }
 .mobile-header,
@@ -1467,7 +1467,7 @@ dialog p {
   .empty .text-button {
     font-size: 10px;
   }
-  footer {
+  .app-shell > footer {
     display: none;
   }
   .bottom-nav {

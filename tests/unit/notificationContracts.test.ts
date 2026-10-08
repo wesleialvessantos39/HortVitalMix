@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   NotificationListQuerySchema,
   NotificationSchema,
+  NotificationDetailSchema,
   ReadNotificationsSchema,
 } from "../../shared/contracts/notification.ts";
 import {
@@ -50,6 +51,41 @@ describe("Central de notificações: contratos estritos", () => {
       ReadNotificationsSchema.safeParse({
         through: new Date().toISOString(),
         userId: randomUUID(),
+      }).success,
+    ).toBe(false);
+  });
+  it("detalhe mantém ação explícita opcional e rejeita destino externo ou contexto extra", () => {
+    const detail = {
+      id: randomUUID(),
+      category: "refunds",
+      title: "Reembolso atualizado",
+      message: "Há uma nova informação no atendimento.",
+      actionPath: "/reembolsos",
+      createdAt: new Date().toISOString(),
+      readAt: null,
+      recipientRole: "consumer",
+      context: {
+        categoryLabel: "Reembolsos",
+        audienceLabel: "Consumidor",
+        why: "Atualização destinada à sua conta.",
+        nextStep: "Consulte o atendimento.",
+      },
+      action: { label: "Consultar reembolso", path: "/reembolsos" },
+    };
+    expect(NotificationDetailSchema.safeParse(detail).success).toBe(true);
+    expect(
+      NotificationDetailSchema.safeParse({ ...detail, action: null }).success,
+    ).toBe(true);
+    expect(
+      NotificationDetailSchema.safeParse({
+        ...detail,
+        action: { label: "Abrir", path: "//attacker.invalid" },
+      }).success,
+    ).toBe(false);
+    expect(
+      NotificationDetailSchema.safeParse({
+        ...detail,
+        context: { ...detail.context, privateUserId: randomUUID() },
       }).success,
     ).toBe(false);
   });

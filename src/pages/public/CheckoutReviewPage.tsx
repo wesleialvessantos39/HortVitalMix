@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { RefundPolicy } from "../../components/commerce/RefundPolicy";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -292,7 +293,7 @@ export default function CheckoutReviewPage({
           </button>
         </div>
       ) : state === "loading" ? (
-        <p role="status">Preparando a revisão do pedido…</p>
+        <PageLoading label="Preparando a revisão do pedido…" />
       ) : state === "empty" ? (
         <div className="hvm-checkout-empty">
           <Salad size={44} />

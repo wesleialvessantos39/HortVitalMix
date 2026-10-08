@@ -68,21 +68,14 @@ adminConfigRouter.get(
   "/configuration/overview",
   adminSessionMiddleware,
   requirePlatformConfiguration,
-  async (req: Request, res: Response) => {
-    try {
-      res.status(200).json(await ConfigurationService.getOverview());
-    } catch (error) {
-      reportFailure({
-        category: classifyDbError(error),
-        requestId: req.requestId,
-        route: req.path,
-        method: req.method,
-      });
-      res.status(503).json({
-        error: ConfigErrorCode.INTERNAL,
-        requestId: req.requestId,
-      });
-    }
+  (_req: Request, res: Response) => {
+    // The old global aggregate mixed departments under one configuration
+    // permission. Only the new dashboard evaluates each sector separately.
+    res.setHeader("Cache-Control", "private, no-store");
+    res.status(410).json({
+      error: "DASHBOARD_OVERVIEW_MOVED",
+      dashboardPath: "/v1/admin/dashboard",
+    });
   },
 );
 

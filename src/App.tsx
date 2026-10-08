@@ -50,6 +50,8 @@ import { OfflineStatusBanner } from "./components/producer/OfflineStatusBanner";
 import { ConsumerAccessNotice } from "./components/ConsumerAccessNotice";
 import { NotificationProvider, NotificationBell } from "./components/notifications/NotificationProvider";
 import { LocationSelector } from "./components/LocationSelector";
+import { PageLoading } from "./components/PageLoading";
+import { AppDownloadSection } from "./components/AppDownloadSection";
 const ProducerCatalogPage = lazy(() => import("./pages/producer/ProducerCatalogPage"));
 const InventoryLotsPage = lazy(() => import("./pages/producer/InventoryLotsPage"));
 const ProducerDeliveryAreaPage = lazy(() => import("./pages/producer/ProducerDeliveryAreaPage"));
@@ -69,6 +71,7 @@ const CasesPage = lazy(() => import("./pages/commerce/CasesPage"));
 const DeliveryWindowsPage = lazy(() => import("./pages/producer/DeliveryWindowsPage"));
 const ProducerOrdersPage = lazy(() => import("./pages/producer/ProducerOrdersPage"));
 const NotificationsPage = lazy(() => import("./pages/account/NotificationsPage"));
+const NotificationDetailPage = lazy(() => import("./pages/account/NotificationDetailPage"));
 const ProducerSalesPage = lazy(() => import("./pages/producer/ProducerSalesPage"));
 const ProducerRefundsPage = lazy(() => import("./pages/producer/ProducerRefundsPage"));
 const OrderTrackingPage = lazy(() => import("./pages/public/OrderTrackingPage"));
@@ -392,7 +395,7 @@ export default function App() {
               expanded={modal === "Localização"}
               onOpen={openLocality}
             />
-            <NotificationBell onClick={() => go(administrativeSession ? "/admin/notificacoes" : "/notificacoes")}/>
+            <NotificationBell onNavigate={go}/>
             {showAdministrationEntry && (
               <button
                 className="icon admin-home-entry"
@@ -427,7 +430,7 @@ export default function App() {
         <div className="mobile-top">
           {logo}
           <div className="header-actions">
-            <NotificationBell onClick={() => go(administrativeSession ? "/admin/notificacoes" : "/notificacoes")}/>
+            <NotificationBell onNavigate={go}/>
             {canShop&&<button
               className="icon"
               aria-label="Carrinho"
@@ -453,7 +456,7 @@ export default function App() {
             {shellSession.localityWarning}
           </p>
         )}
-        {(sessionLoading && (guestAccessRoute || isAccountDataRoute || isProducerPropertyRoute || isProducerStoreRoute || isProducerProductRoute || path === "/minha-conta")) || (shellSession && guestAccessRoute) ? <p role="status" className="account-notice">Carregando sua conta…</p> : publicLoginRole ? (
+        {(sessionLoading && (guestAccessRoute || isAccountDataRoute || isProducerPropertyRoute || isProducerStoreRoute || isProducerProductRoute || path === "/minha-conta")) || (shellSession && guestAccessRoute) ? <PageLoading label="Carregando sua conta…" /> : publicLoginRole ? (
           <PublicLoginPage key={publicLoginRole} role={publicLoginRole} onNavigate={go} onSessionAdopt={adoptSession}/>
         ) : isAdminRoute ? (
           <AdminRouter path={path} onNavigate={go} onSessionRefresh={refreshSession} />
@@ -476,63 +479,65 @@ export default function App() {
         ) : path === "/cadastro" ? (
           <ChoosePortalPage onNavigate={go} />
         ) : ["/assinaturas","/planos","/assinaturas/minhas","/produtor/assinaturas"].includes(path) ? (
-          <Suspense fallback={<p role="status">Carregando assinaturas…</p>}>{sessionLoading ? <p role="status">Conferindo sua conta…</p> : <SubscriptionPlansPage key={(shellSession?.userId??"guest")+":"+path} audience={path.startsWith("/produtor/") || (path === "/assinaturas/minhas" && shellSession?.activeRole === "producer") ? "producer":"consumer"} session={publicPortalSession?shellSession:null} onlyMine={path === "/assinaturas/minhas"} onNavigate={go}/>}</Suspense>
+          <Suspense fallback={<PageLoading label="Carregando assinaturas…" />}>{sessionLoading ? <PageLoading label="Conferindo sua conta…" /> : <SubscriptionPlansPage key={(shellSession?.userId??"guest")+":"+path} audience={path.startsWith("/produtor/") || (path === "/assinaturas/minhas" && shellSession?.activeRole === "producer") ? "producer":"consumer"} session={publicPortalSession?shellSession:null} onlyMine={path === "/assinaturas/minhas"} onNavigate={go}/>}</Suspense>
+        ) : path.startsWith("/notificacoes/") ? (
+          <Suspense fallback={<PageLoading label="Carregando notificação…" />}><NotificationDetailPage id={path.slice("/notificacoes/".length)} onNavigate={go}/></Suspense>
         ) : path === "/notificacoes" ? (
-          <Suspense fallback={<p role="status">Carregando notificações…</p>}><NotificationsPage onNavigate={go}/></Suspense>
+          <Suspense fallback={<PageLoading label="Carregando notificações…" />}><NotificationsPage onNavigate={go}/></Suspense>
         ) : shoppingRoute && shellSession && shellSession.activeRole !== "consumer" ? (
           <ConsumerAccessNotice session={shellSession} onNavigate={go}/>
         ) : ["/produtor/vendas","/vendas"].includes(path) ? (
-          <Suspense fallback={<p role="status">Carregando vendas…</p>}>{sessionLoading?<p role="status">Conferindo sua conta…</p>:shellSession?.activeRole==="producer"?<ProducerSalesPage key={shellSession.userId+location.search} userId={shellSession.userId} onNavigate={go}/>:<section className="account-notice"><h1>Minhas vendas</h1><p>Entre como produtor para consultar as vendas da sua loja.</p><button className="primary" onClick={()=>go("/entrar/produtor")}>Entrar como produtor</button></section>}</Suspense>
+          <Suspense fallback={<PageLoading label="Carregando vendas…" />}>{sessionLoading?<PageLoading label="Conferindo sua conta…" />:shellSession?.activeRole==="producer"?<ProducerSalesPage key={shellSession.userId+location.search} userId={shellSession.userId} onNavigate={go}/>:<section className="account-notice"><h1>Minhas vendas</h1><p>Entre como produtor para consultar as vendas da sua loja.</p><button className="primary" onClick={()=>go("/entrar/produtor")}>Entrar como produtor</button></section>}</Suspense>
         ) : path === "/produtor/reembolsos" || (path === "/reembolsos" && shellSession?.activeRole === "producer") ? (
-          <Suspense fallback={<p role="status">Carregando reembolsos das vendas…</p>}>{sessionLoading?<p role="status">Conferindo sua conta…</p>:shellSession?.activeRole==="producer"?<ProducerRefundsPage key={shellSession.userId+location.search} userId={shellSession.userId} onNavigate={go}/>:<section className="account-notice"><h1>Reembolsos das vendas</h1><p>Entre como produtor para acompanhar os reembolsos da sua loja.</p></section>}</Suspense>
+          <Suspense fallback={<PageLoading label="Carregando reembolsos das vendas…" />}>{sessionLoading?<PageLoading label="Conferindo sua conta…" />:shellSession?.activeRole==="producer"?<ProducerRefundsPage key={shellSession.userId+location.search} userId={shellSession.userId} onNavigate={go}/>:<section className="account-notice"><h1>Reembolsos das vendas</h1><p>Entre como produtor para acompanhar os reembolsos da sua loja.</p></section>}</Suspense>
         ) : paymentId ? (
-          <Suspense fallback={<p role="status">Carregando pagamento…</p>}>
-            {sessionLoading ? <p role="status">Conferindo sua conta…</p> : <PaymentPreparedPage key={shellSession?.userId+":"+paymentId} id={paymentId} userId={publicPortalSession?shellSession?.userId??null:null} onNavigate={go}/>}
+          <Suspense fallback={<PageLoading label="Carregando pagamento…" />}>
+            {sessionLoading ? <PageLoading label="Conferindo sua conta…" /> : <PaymentPreparedPage key={shellSession?.userId+":"+paymentId} id={paymentId} userId={publicPortalSession?shellSession?.userId??null:null} onNavigate={go}/>}
           </Suspense>
         ) : posCode ? (
-          <Suspense fallback={<p role="status">Carregando revisão presencial…</p>}>
-            {sessionLoading ? <p role="status">Conferindo sua conta…</p> : <PosSaleReviewPage key={shellSession?.userId+":"+posCode} code={posCode} userId={publicPortalSession?shellSession?.userId??null:null} onNavigate={go}/>}
+          <Suspense fallback={<PageLoading label="Carregando revisão presencial…" />}>
+            {sessionLoading ? <PageLoading label="Conferindo sua conta…" /> : <PosSaleReviewPage key={shellSession?.userId+":"+posCode} code={posCode} userId={publicPortalSession?shellSession?.userId??null:null} onNavigate={go}/>}
           </Suspense>
         ) : path === "/pedidos" || trackingId ? (
-          <Suspense fallback={<p role="status">Carregando pedidos…</p>}>
-            {sessionLoading ? <p role="status">Conferindo sua conta…</p> : <OrderTrackingPage key={(shellSession?.userId??"guest")+":"+(trackingId??"list")} id={trackingId} userId={publicPortalSession?shellSession?.userId??null:null} onNavigate={go}/>}
+          <Suspense fallback={<PageLoading label="Carregando pedidos…" />}>
+            {sessionLoading ? <PageLoading label="Conferindo sua conta…" /> : <OrderTrackingPage key={(shellSession?.userId??"guest")+":"+(trackingId??"list")} id={trackingId} userId={publicPortalSession?shellSession?.userId??null:null} onNavigate={go}/>}
           </Suspense>
         ) : path === "/produtor/loja/janelas" ? (
-          <Suspense fallback={<p role="status">Carregando janelas…</p>}>{sessionLoading ? <p role="status">Conferindo sua conta…</p> : shellSession?.activeRole === "producer" ? <DeliveryWindowsPage key={shellSession.userId} userId={shellSession.userId} onNavigate={go}/> : <section className="account-notice"><h1>Janelas de entrega</h1><p>Entre como produtor para configurar as janelas da loja.</p><button className="primary" onClick={()=>go("/entrar/produtor")}>Entrar como produtor</button></section>}</Suspense>
+          <Suspense fallback={<PageLoading label="Carregando janelas…" />}>{sessionLoading ? <PageLoading label="Conferindo sua conta…" /> : shellSession?.activeRole === "producer" ? <DeliveryWindowsPage key={shellSession.userId} userId={shellSession.userId} onNavigate={go}/> : <section className="account-notice"><h1>Janelas de entrega</h1><p>Entre como produtor para configurar as janelas da loja.</p><button className="primary" onClick={()=>go("/entrar/produtor")}>Entrar como produtor</button></section>}</Suspense>
         ) : path === "/produtor/pedidos" ? (
-          <Suspense fallback={<p role="status">Carregando pedidos da loja…</p>}>
-            {sessionLoading ? <p role="status">Conferindo sua conta…</p> : shellSession?.activeRole === "producer" ? <ProducerOrdersPage key={shellSession.userId+location.search} userId={shellSession.userId} onNavigate={go}/> : <section className="account-notice"><h1>Pedidos da minha loja</h1><p>Entre como produtor para gerenciar os pedidos da sua loja.</p><button className="primary" onClick={()=>go("/entrar/produtor")}>Entrar como produtor</button></section>}
+          <Suspense fallback={<PageLoading label="Carregando pedidos da loja…" />}>
+            {sessionLoading ? <PageLoading label="Conferindo sua conta…" /> : shellSession?.activeRole === "producer" ? <ProducerOrdersPage key={shellSession.userId+location.search} userId={shellSession.userId} onNavigate={go}/> : <section className="account-notice"><h1>Pedidos da minha loja</h1><p>Entre como produtor para gerenciar os pedidos da sua loja.</p><button className="primary" onClick={()=>go("/entrar/produtor")}>Entrar como produtor</button></section>}
           </Suspense>
         ) : path === "/compras" ? (
-          <Suspense fallback={<p role="status">Carregando suas compras…</p>}>
-            {sessionLoading ? <p role="status">Conferindo sua conta…</p> : <PurchasesPage key={shellSession?.userId??"guest"} userId={publicPortalSession?shellSession?.userId??null:null} onNavigate={go}/>}
+          <Suspense fallback={<PageLoading label="Carregando suas compras…" />}>
+            {sessionLoading ? <PageLoading label="Conferindo sua conta…" /> : <PurchasesPage key={shellSession?.userId??"guest"} userId={publicPortalSession?shellSession?.userId??null:null} onNavigate={go}/>}
           </Suspense>
         ) : path === "/denuncias" || path === "/reembolsos" ? (
-          <Suspense fallback={<p role="status">Carregando solicitações…</p>}>
-            {sessionLoading ? <p role="status">Conferindo sua conta…</p> : <CasesPage key={(shellSession?.userId??"guest")+path+location.search} kind={path==="/reembolsos"?"refund":"complaint"} session={publicPortalSession?shellSession:null} onNavigate={go}/>}
+          <Suspense fallback={<PageLoading label="Carregando solicitações…" />}>
+            {sessionLoading ? <PageLoading label="Conferindo sua conta…" /> : <CasesPage key={(shellSession?.userId??"guest")+path+location.search} kind={path==="/reembolsos"?"refund":"complaint"} session={publicPortalSession?shellSession:null} onNavigate={go}/>}
           </Suspense>
         ) : path === "/produtor/caixa" ? (
-          <Suspense fallback={<p role="status">Abrindo seu caixa…</p>}>
-            {sessionLoading?<p role="status">Conferindo sua conta…</p>:shellSession?.activeRole==="producer"?<ProducerPosPage key={shellSession.userId} userId={shellSession.userId} onNavigate={go}/>:<section className="account-notice"><p>Entre como produtor para acessar o caixa da sua loja.</p><button className="primary" onClick={()=>go("/entrar/produtor")}>Entrar como produtor</button></section>}
+          <Suspense fallback={<PageLoading label="Abrindo seu caixa…" />}>
+            {sessionLoading?<PageLoading label="Conferindo sua conta…" />:shellSession?.activeRole==="producer"?<ProducerPosPage key={shellSession.userId} userId={shellSession.userId} onNavigate={go}/>:<section className="account-notice"><p>Entre como produtor para acessar o caixa da sua loja.</p><button className="primary" onClick={()=>go("/entrar/produtor")}>Entrar como produtor</button></section>}
           </Suspense>
         ) : path === "/checkout" ? (
-          <Suspense fallback={<p role="status">Preparando a revisão do pedido…</p>}>
-            {sessionLoading ? <p role="status">Preparando a revisão do pedido…</p> : <CheckoutReviewPage key={shellSession?.userId ?? "guest"} userId={publicPortalSession ? shellSession?.userId ?? null : null} onNavigate={go}/>}
+          <Suspense fallback={<PageLoading label="Preparando a revisão do pedido…" />}>
+            {sessionLoading ? <PageLoading label="Preparando a revisão do pedido…" /> : <CheckoutReviewPage key={shellSession?.userId ?? "guest"} userId={publicPortalSession ? shellSession?.userId ?? null : null} onNavigate={go}/>}
           </Suspense>
         ) : path === "/carrinho" ? (
-          <Suspense fallback={<p role="status">Carregando sua cesta…</p>}>
-            {sessionLoading ? <p role="status">Carregando sua cesta…</p> : <CartPage key={shellSession?.userId ?? "guest"} signedIn={!!shellSession} onNavigate={go}/>}
+          <Suspense fallback={<PageLoading label="Carregando sua cesta…" />}>
+            {sessionLoading ? <PageLoading label="Carregando sua cesta…" /> : <CartPage key={shellSession?.userId ?? "guest"} signedIn={!!shellSession} onNavigate={go}/>}
           </Suspense>
         ) : publicStoreSlug ? (
-          <Suspense fallback={<p role="status">Carregando a vitrine…</p>}>
+          <Suspense fallback={<PageLoading label="Carregando a vitrine…" />}>
             <PublicProducerStorePage key={publicStoreSlug} slug={publicStoreSlug} onNavigate={go} />
           </Suspense>
         ) : isProducerProductRoute && shellSession?.activeRole === "producer" ? (
-          <Suspense fallback={<p role="status">Carregando seu catálogo…</p>}>
+          <Suspense fallback={<PageLoading label="Carregando seu catálogo…" />}>
             {inventoryProductId ? <InventoryLotsPage key={shellSession.userId + ":" + inventoryProductId} id={inventoryProductId} session={shellSession} onNavigate={go}/> : path === "/produtor/produtos" ? <ProducerCatalogPage key={shellSession.userId} session={shellSession} onNavigate={go}/> : <ProductEditorPage key={shellSession.userId + ":" + (productEditorId ?? "novo")} id={productEditorId} session={shellSession} onNavigate={go}/>}
           </Suspense>
         ) : isProducerStoreRoute && shellSession?.activeRole === "producer" ? (
-          <Suspense fallback={<p role="status">Carregando sua loja…</p>}>
+          <Suspense fallback={<PageLoading label="Carregando sua loja…" />}>
             {isProducerDeliveryAreaRoute ? <ProducerDeliveryAreaPage key={shellSession.userId} session={shellSession} onNavigate={go} /> : <ProducerStoreSettingsPage key={shellSession.userId} session={shellSession} onNavigate={go} />}
           </Suspense>
         ) : path.startsWith("/produtor/documentos") && shellSession?.activeRole === "producer" ? (
@@ -627,7 +632,7 @@ export default function App() {
                       })}
                     </div>
                   </div>
-                  <Suspense fallback={<p role="status">Preparando os destaques…</p>}>
+                  <Suspense fallback={<PageLoading label="Preparando os destaques…" />}>
                     <RegionalHighlights key={locality.selected?.municipalityId??"all"} municipalityId={locality.selected?.municipalityId} regionLabel={locality.label} blocked={localityBlocked} onNavigate={go}/>
                   </Suspense>
                 </section>
@@ -677,7 +682,7 @@ export default function App() {
                       </button>
                     )}
                   </div>
-                  {path === "/" || path === "/produtores" ? <Suspense fallback={<p role="status">Buscando produtores…</p>}><HomeDiscoveryPage session={shellSession} sessionLoading={sessionLoading} municipalityId={locality.selected?.municipalityId} regionLabel={locality.label} blocked={localityBlocked} onNavigate={go}/></Suspense> : path === "/produtos" && !localityBlocked ? <PublicProductCatalog categoryId={categoryId} search={query} onNavigate={go}/> : <div className="empty">
+                  {path === "/" || path === "/produtores" ? <Suspense fallback={<PageLoading label="Buscando produtores…" />}><HomeDiscoveryPage session={shellSession} sessionLoading={sessionLoading} municipalityId={locality.selected?.municipalityId} regionLabel={locality.label} blocked={localityBlocked} onNavigate={go}/></Suspense> : path === "/produtos" && !localityBlocked ? <PublicProductCatalog categoryId={categoryId} search={query} onNavigate={go}/> : <div className="empty">
                     <span className="empty-icon">
                       {path === "/planos" ? (
                         <CalendarDays />
@@ -708,6 +713,7 @@ export default function App() {
                   </div>}
                 </section>
               )}
+              {path === "/" && <AppDownloadSection />}
             </div>
           </>
         )}

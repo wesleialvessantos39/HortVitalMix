@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import {
   useCallback,
   useEffect,
@@ -246,10 +247,8 @@ export default function ProducerStoreSettingsPage({
           </span>
         )}
       </header>
-      {loading ? (
-        <p role="status" className="account-notice">
-          Carregando sua loja…
-        </p>
+      {loading && !settings ? (
+        <PageLoading label="Carregando sua loja…" />
       ) : !settings ? (
         <div className="hvm-store-empty">
           <Store />

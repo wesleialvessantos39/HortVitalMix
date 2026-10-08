@@ -119,23 +119,39 @@
 .admin-table th{white-space:nowrap}
 .admin-badge{font-size:11px;padding:5px 8px}
 
-/* A sidebar can scroll its own links without adding empty page height. */
-.admin-shell .admin-sidebar-nav{min-height:0;flex:1;overflow-y:auto;overscroll-behavior-y:contain;align-content:start;gap:3px;padding:0 3px 8px}
-.admin-shell .admin-nav-item{min-height:40px;padding:9px 10px;font-size:12px}
+/* Áreas agrupadas: todas as opções cabem nas alturas usuais sem uma lista longa. */
+.admin-shell .admin-sidebar{padding:12px 10px}
+.admin-sidebar-nav{min-height:0;flex:1;overflow-y:auto;overscroll-behavior-y:contain;align-content:start;gap:6px;padding:0 2px}
+.admin-nav-group{min-width:0}
+.admin-nav-group h3{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b8cdbc;line-height:1.4;margin:0 8px 3px}
+.admin-nav-group-items{display:grid;gap:0}
+.admin-shell .admin-nav-item{min-height:32px;padding:6px 8px;font-size:12px;line-height:1.3;border-radius:8px}
+.admin-nav-item>span{min-width:0;overflow-wrap:anywhere}
 .admin-sidebar>.admin-brand,.admin-sidebar-footer{flex-shrink:0}
-.admin-sidebar>.admin-brand{padding-bottom:16px}
-.admin-sidebar-footer{margin-top:10px;padding-top:12px}
-.admin-storefront-entry{border:0;background:transparent;color:inherit;display:flex;align-items:center;gap:7px;padding:8px 0;font-weight:700;cursor:pointer;text-align:left}
+.admin-sidebar>.admin-brand{padding:0 5px 12px;gap:8px;min-height:48px}
+.admin-sidebar>.admin-brand .admin-brand-mark{width:32px;height:32px;border-radius:10px}
+.admin-sidebar>.admin-brand strong{font-size:18px}
+.admin-sidebar-footer{margin-top:8px;padding:8px 4px 0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.admin-storefront-entry,.admin-sidebar-footer .admin-logout{border:0;background:transparent;color:inherit;display:flex;align-items:center;gap:7px;min-height:36px;padding:4px 0;font-size:12px;line-height:1.3;font-weight:700;cursor:pointer;text-align:left}
+.admin-sidebar-footer svg{flex-shrink:0}
+.admin-portal-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;height:auto;margin:0 0 12px;padding:0;background:transparent;border:0;position:relative;top:auto;z-index:25}
+.admin-portal-topbar>.icon{display:none}
+.admin-portal-topbar>.hvm-notification-bell{display:flex;width:44px;height:44px;flex:0 0 44px}
 .admin-mobile-heading{display:grid;gap:3px;padding:0;flex:1;min-width:0}
 .admin-mobile-heading strong{font-size:17px}
 .admin-mobile-heading small{font-size:10px;color:var(--admin-muted)}
+.admin-portal-topbar .admin-mobile-heading strong{display:none}
+.admin-portal-topbar .admin-mobile-heading small{font-size:12px;font-weight:700}
 .navigation-drawer.admin-navigation-drawer{background:#113d21;color:#fff}
 .admin-shell .admin-nav-item[aria-current="page"]{color:#fff!important}
 .admin-navigation-drawer .navigation-drawer-header{border-color:rgba(255,255,255,.12)}
 .admin-navigation-drawer .navigation-drawer-header small{color:#b8cdbc}
-.admin-navigation-drawer .admin-sidebar-nav{margin:12px 10px 0}
-.admin-navigation-drawer .admin-nav-item{min-height:46px;font-size:14px}
-.admin-navigation-drawer .admin-sidebar-footer{padding:12px 16px calc(12px + env(safe-area-inset-bottom));margin:0 10px}
+.admin-navigation-drawer .admin-sidebar-nav{margin:12px 10px;padding:0 0 4px;gap:12px}
+.admin-navigation-drawer .admin-nav-group-items{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+.admin-navigation-drawer .admin-nav-item{min-height:44px;padding:6px 8px;font-size:12px;line-height:1.3;gap:7px}
+.admin-navigation-drawer .admin-nav-group h3{font-size:11px;margin-bottom:5px}
+.admin-navigation-drawer .admin-sidebar-footer{padding:8px 6px calc(8px + env(safe-area-inset-bottom));margin:0 10px}
+.admin-navigation-drawer .admin-sidebar-footer button{min-height:44px;font-size:13px}
 .admin-login-card>form{margin-top:0;gap:12px}
 .admin-login-card>form>h2,.admin-login-card>form>p{margin:0}
 
@@ -144,6 +160,10 @@
  .admin-main{padding:0 14px calc(84px + env(safe-area-inset-bottom))}
  .admin-mobile-bar{height:auto;min-height:64px;margin:0 -14px 16px;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;gap:12px}
  .admin-mobile-bar>.icon{width:44px;height:44px;flex:0 0 44px}
+ .admin-portal-topbar{display:flex;position:sticky;top:0;background:#fff;border-bottom:1px solid var(--admin-line)}
+ .admin-portal-topbar>.icon{display:flex}
+ .admin-portal-topbar .admin-mobile-heading strong{display:block}
+ .admin-portal-topbar .admin-mobile-heading small{font-size:10px;font-weight:500}
  .admin-bottom-nav{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);grid-template-columns:none;overflow:visible;padding:6px max(4px,env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom)) max(4px,env(safe-area-inset-right));gap:0}
  .admin-bottom-nav button{min-width:0;min-height:54px;font-size:10px;padding:6px 2px;gap:4px}
  .admin-bottom-nav span{white-space:nowrap;max-width:100%;line-height:1.2}
@@ -158,6 +178,11 @@
  .admin-login-icon{width:40px;height:40px;border-radius:12px}
  .admin-login-icon svg{width:21px;height:21px}
  .admin-bootstrap-wrap{min-height:0;padding:14px 14px calc(20px + env(safe-area-inset-bottom))}
+}
+
+@media (min-width:768px) and (any-pointer:coarse){
+ .admin-shell .admin-nav-item{min-height:44px}
+ .admin-sidebar-footer button{min-height:44px}
 }
 
 /* Histórico de convites: largura própria, rótulos humanos e cartões no mobile. */

@@ -110,7 +110,7 @@ describe.runIf(!!process.env.HVM_NOTIFICATIONS_LOCAL_DATABASE_URL)(
           args: ["--disable-gpu", "--no-zygote"],
         }),
         errors: string[] = [],
-        directory = "/workspace/scratch/corrections-story",
+        directory = "/workspace/scratch/notifications-new-story",
         contexts: Awaited<ReturnType<typeof browser.newContext>>[] = [];
       mkdirSync(directory, { recursive: true });
       async function context(userId: string, role: string) {
@@ -157,6 +157,17 @@ describe.runIf(!!process.env.HVM_NOTIFICATIONS_LOCAL_DATABASE_URL)(
       async function responsive(page: Page, name: string) {
         for (const width of [320, 390, 768, 1440]) {
           await page.setViewportSize({ width, height: 950 });
+          const preview = page.locator(".hvm-notification-preview[open]");
+          if (await preview.isVisible()) {
+            const more = preview.getByRole("button", { name: "Mostrar mais" });
+            await check(more).toBeVisible();
+            const bounds = await more.boundingBox();
+            expect(bounds).not.toBeNull();
+            expect(bounds!.x).toBeGreaterThanOrEqual(0);
+            expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
+            expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(950);
+            expect(bounds!.height).toBeGreaterThanOrEqual(44);
+          }
           const overflow = await page.evaluate(() =>
             Array.from(document.querySelectorAll("body *"))
               .map((e) => ({
@@ -338,29 +349,145 @@ describe.runIf(!!process.env.HVM_NOTIFICATIONS_LOCAL_DATABASE_URL)(
         expect(
           (await api(complaint, "/admin/commerce/refunds/" + refund.id)).status,
         ).toBe(403);
-        for (const [page, path, label, name] of [
-          [consumer, "/notificacoes", "Consumidor", "consumidor"],
-          [producer, "/notificacoes", "Produtor", "produtor"],
-          [admin, "/admin/notificacoes", "Administrador", "administrador"],
+        for (const [page, path, label, name, userId, role] of [
+          [
+            consumer,
+            "/notificacoes",
+            "Consumidor",
+            "consumidor",
+            order.b.userId,
+            "consumer",
+          ],
+          [
+            producer,
+            "/notificacoes",
+            "Produtor",
+            "produtor",
+            f.catalog.a.userId,
+            "producer",
+          ],
+          [
+            admin,
+            "/admin/notificacoes",
+            "Administrador",
+            "administrador",
+            refundAdmin.userId,
+            "platform_admin",
+          ],
           [
             superAdmin,
             "/admin/notificacoes",
             "Super administrador",
             "superadministrador",
+            root.userId,
+            "platform_super_admin",
           ],
         ] as const) {
-          await page.goto(baseURL + path);
+          const endpoint = path.startsWith("/admin/")
+            ? "/admin/notifications"
+            : "/notifications";
+          await page.goto(
+            baseURL + (path.startsWith("/admin/") ? "/admin/conta" : "/conta"),
+          );
+          const feed = (await api(page, endpoint + "?page=1&filter=all")).body;
+          expect(feed.unreadCount).toBeGreaterThan(0);
+          const bell = page.locator(".hvm-notification-bell:visible").first();
+          await check(bell).toHaveAttribute(
+            "aria-label",
+            `Notificações, ${feed.unreadCount} não lidas`,
+          );
+          await check(bell.locator(".hvm-notification-count")).toHaveText(
+            String(feed.unreadCount),
+          );
+          await bell.click();
+          const preview = page.getByRole("dialog", {
+            name: "Notificações",
+            exact: true,
+          });
+          await check(preview).toBeVisible();
+          await check(
+            preview.locator(".hvm-notification-preview-list li"),
+          ).toHaveCount(Math.min(4, feed.notifications.length));
+          await check(preview.locator(".hvm-notification-eyebrow")).toHaveText(
+            label,
+          );
+          await check(
+            preview.getByRole("button", { name: "Mostrar mais" }),
+          ).toBeVisible();
+          await responsive(page, "previa-notificacoes-" + name);
+          await preview.getByRole("button", { name: "Mostrar mais" }).click();
+          await check(page).toHaveURL(baseURL + path);
           await check(
             page.getByRole("heading", { name: "Notificações", exact: true }),
           ).toBeVisible();
           await check(
-            page.locator(".hvm-notifications .eyebrow").first(),
+            page
+              .locator(".hvm-notifications .hvm-notification-eyebrow")
+              .first(),
           ).toHaveText(label);
           await check(
             page.locator(".hvm-notification-list li").first(),
           ).toBeVisible();
           await responsive(page, "notificacoes-" + name);
+          const selected = feed.notifications[0];
+          expect(selected.readAt).toBeNull();
+          await page
+            .locator(".hvm-notification-list li")
+            .first()
+            .locator(".hvm-notification-open")
+            .click();
+          await check(page).toHaveURL(baseURL + path + "/" + selected.id);
+          await check(
+            page.getByRole("heading", { name: selected.title, exact: true }),
+          ).toBeVisible();
+          await check(
+            page.getByRole("heading", {
+              name: "Por que recebi este aviso?",
+              exact: true,
+            }),
+          ).toBeVisible();
+          await check(
+            page.getByRole("heading", { name: "Próximo passo", exact: true }),
+          ).toBeVisible();
+          await check(
+            page.locator(".hvm-notification-explanation"),
+          ).toContainText(selected.message);
+          await check(page.locator(".hvm-notification-detail-read")).toHaveText(
+            "Lida",
+          );
+          expect(
+            (
+              await pool().query(
+                "SELECT read_at FROM app_notifications WHERE id=$1 AND recipient_user_id=$2 AND recipient_role=$3",
+                [selected.id, userId, role],
+              )
+            ).rows[0].read_at,
+          ).not.toBeNull();
+          const after = (await api(page, endpoint)).body;
+          expect(after.unreadCount).toBe(feed.unreadCount - 1);
+          await check(
+            page.locator(".hvm-notification-bell:visible").first(),
+          ).toHaveAttribute(
+            "aria-label",
+            after.unreadCount
+              ? `Notificações, ${after.unreadCount} não lidas`
+              : "Notificações",
+          );
+          const otherOwner = page === consumer ? producer : consumer;
+          expect(
+            (await api(otherOwner, "/notifications/" + selected.id)).status,
+          ).toBe(404);
+          await responsive(page, "detalhe-notificacao-" + name);
+          const detail = (await api(page, endpoint + "/" + selected.id)).body;
+          expect(detail.recipientRole).toBe(role);
+          expect(detail.context.audienceLabel).toBe(label);
+          expect(detail.action).not.toBeNull();
+          await page
+            .getByRole("button", { name: detail.action.label, exact: true })
+            .click();
+          await check(page).toHaveURL(baseURL + detail.action.path);
         }
+        await producer.goto(baseURL + "/notificacoes");
         await producer
           .getByRole("combobox", { name: "Assunto", exact: true })
           .selectOption("refunds");
@@ -377,8 +504,24 @@ describe.runIf(!!process.env.HVM_NOTIFICATIONS_LOCAL_DATABASE_URL)(
               exact: true,
             }),
           });
-        await contactRow
-          .getByRole("button", { name: "Ver atualização" })
+        await contactRow.locator(".hvm-notification-open").click();
+        await check(
+          producer.getByRole("heading", {
+            name: "Contato da administração",
+            exact: true,
+          }),
+        ).toBeVisible();
+        await check(
+          producer.getByRole("heading", {
+            name: "Por que recebi este aviso?",
+            exact: true,
+          }),
+        ).toBeVisible();
+        await producer
+          .getByRole("button", {
+            name: "Consultar reembolso da venda",
+            exact: true,
+          })
           .click();
         await check(
           producer.getByText(
@@ -479,6 +622,9 @@ describe.runIf(!!process.env.HVM_NOTIFICATIONS_LOCAL_DATABASE_URL)(
               privateConversationPreserved: true,
               administrativeContactVisible: true,
               notificationReadPersisted: true,
+              notificationPreviewAndGlobalBadge: true,
+              notificationExplanationBeforeExplicitDepartmentAction: true,
+              notificationDetailOwnershipChecked: true,
               cartDistinctOptions: 2,
               cartQuantity: 5,
               pageErrors: errors,
@@ -491,7 +637,7 @@ describe.runIf(!!process.env.HVM_NOTIFICATIONS_LOCAL_DATABASE_URL)(
         for (const c of contexts) await c.close();
         await browser.close();
       }
-    }, 180000);
+    }, 240000);
   },
 );
 vi.mock("../../server/config/runtime.ts", async (original) => {

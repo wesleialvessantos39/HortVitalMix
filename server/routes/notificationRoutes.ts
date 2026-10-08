@@ -65,6 +65,9 @@ for (const [router, admin] of [
       admin,
     ),
   );
+  router.get("/notifications/:id", (req, res) =>
+    run(req, res, (a) => NotificationService.detail(a, req.params.id), admin),
+  );
   router.post("/notifications/read-all", originProtection, (req, res) =>
     run(req, res, (a) => NotificationService.readAll(a, req.body), admin),
   );

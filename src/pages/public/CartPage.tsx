@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useCallback, useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -87,8 +88,8 @@ export default function CartPage({
         <h1>Minha cesta</h1>
         <p>Suas escolhas organizadas por produtor, com os preços atuais.</p>
       </header>
-      {loading ? (
-        <p role="status">Carregando sua cesta…</p>
+      {loading && !cart ? (
+        <PageLoading label="Carregando sua cesta…" />
       ) : error ? (
         <div className="hvm-cart-notice" role="alert">
           <p>{error}</p>
