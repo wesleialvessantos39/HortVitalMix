@@ -1,0 +1,27 @@
+{
+  "story": "Browser → actual Express/services → local PostgreSQL → browser; auth/Data API transport adapter only",
+  "roles": [
+    "consumer",
+    "producer",
+    "platform_admin",
+    "platform_super_admin"
+  ],
+  "widths": [
+    320,
+    390,
+    768,
+    1440
+  ],
+  "saleLinkedToStoreOrders": true,
+  "producerRequiresConsumerRegistration": true,
+  "sellerRefundReadOnly": true,
+  "privateConversationPreserved": true,
+  "administrativeContactVisible": true,
+  "notificationReadPersisted": true,
+  "notificationPreviewAndGlobalBadge": true,
+  "notificationExplanationBeforeExplicitDepartmentAction": true,
+  "notificationDetailOwnershipChecked": true,
+  "cartDistinctOptions": 2,
+  "cartQuantity": 5,
+  "pageErrors": []
+}

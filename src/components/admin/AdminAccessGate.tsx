@@ -1,4 +1,5 @@
 import { hasAdminPermission } from "../../../shared/adminPermissions";
+import { PageLoading } from "../PageLoading";
 import { useEffect, useState, type ReactNode } from "react";
 import { takeAdminAccess } from "../../lib/adminAccessHandoff";
 import { api, type ApiFailure } from "../../lib/api";
@@ -96,12 +97,7 @@ export function AdminAccessGate({
   }, []);
 
   if (state.kind === "loading")
-    return (
-      <section className="admin-loading" aria-live="polite">
-        <span className="admin-loading-spinner" />
-        <strong>Validando acesso administrativo…</strong>
-      </section>
-    );
+    return <PageLoading label="Validando acesso administrativo…" />;
 
   if (state.kind === "error")
     return (

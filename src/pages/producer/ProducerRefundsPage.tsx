@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useState } from "react";
 import {
   ProducerRefundListSchema,
@@ -71,7 +72,7 @@ export default function ProducerRefundsPage({
         </select>
       </label>
       {!list.data && !list.error && (
-        <p role="status">Carregando reembolsos das vendas…</p>
+        <PageLoading label="Carregando reembolsos das vendas…" />
       )}
       {list.data && !list.data.cases.length && (
         <p>Nenhuma solicitação de reembolso neste filtro.</p>

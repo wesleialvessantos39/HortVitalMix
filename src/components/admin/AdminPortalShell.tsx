@@ -12,7 +12,6 @@ import {
   UserRound,
   ListTree,
   Star,
-  Bell,
   BarChart3,
   Menu,
   X,
@@ -33,7 +32,6 @@ type Props = {
 };
 
 const items = [
-  ["/admin/notificacoes", "Notificações", Bell],
   ["/admin/painel", "Painel", LayoutDashboard],
   ["/admin/bi", "BI executivo", BarChart3],
   ["/admin/governanca", "Governança", ShieldCheck],
@@ -51,6 +49,12 @@ const items = [
   ["/admin/assinaturas", "Assinaturas", Leaf],
   ["/admin/conta", "Conta", UserRound],
 ] as const;
+
+const navigationGroups = [
+  { label: "Visão e acessos", paths: ["/admin/painel", "/admin/bi", "/admin/governanca", "/admin/usuarios", "/admin/documentos/fila", "/admin/conta"] },
+  { label: "Operação", paths: ["/admin/localidades", "/admin/bloqueios", "/admin/reembolsos", "/admin/politica-reembolso", "/admin/denuncias", "/admin/avaliacoes"] },
+  { label: "Plataforma", paths: ["/admin/configuracao", "/admin/categorias", "/admin/pagamentos", "/admin/assinaturas"] },
+];
 function keepMenuFocus(event: React.KeyboardEvent<HTMLDialogElement>) {
   if (event.key !== "Tab") return;
   const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>("button:not([disabled]), a[href]"));
@@ -153,9 +157,18 @@ export function AdminPortalShell({
     <span><strong>Horti<span>Vital</span>Mix</strong><small>{roleLabel}</small></span>
   </button>;
   const menuItems = <nav className="admin-sidebar-nav" aria-label="Todas as áreas administrativas">
-    {visible.map(([to, label, Icon]) => <button key={to} className={"admin-nav-item" + (isActive(to) ? " is-active" : "")} aria-current={isActive(to) ? "page" : undefined} onClick={() => navigate(to)}>
-      {to === "/admin/conta" ? <AccountStatusIcon session={{ activeRole: access.role }} size={18} /> : <Icon size={18} aria-hidden="true" />}<span>{label}</span>
-    </button>)}
+    {navigationGroups.map(group => {
+      const links = visible.filter(([to]) => group.paths.includes(to));
+      if (!links.length) return null;
+      return <div className="admin-nav-group" key={group.label} role="group" aria-label={group.label}>
+        <h3>{group.label}</h3>
+        <div className="admin-nav-group-items">
+          {links.map(([to, label, Icon]) => <button key={to} className={"admin-nav-item" + (isActive(to) ? " is-active" : "")} aria-current={isActive(to) ? "page" : undefined} onClick={() => navigate(to)}>
+            {to === "/admin/conta" ? <AccountStatusIcon session={{ activeRole: access.role }} size={18} /> : <Icon size={18} aria-hidden="true" />}<span>{label}</span>
+          </button>)}
+        </div>
+      </div>;
+    })}
   </nav>;
   const menuFooter = <div className="admin-sidebar-footer">
     <button className="admin-storefront-entry" onClick={() => navigate("/")}><Store size={17} aria-hidden="true" /> Abrir vitrine</button>
@@ -170,7 +183,7 @@ export function AdminPortalShell({
         {menuFooter}
       </aside>
       <div className="admin-main">
-        <div className="admin-mobile-bar">
+        <header className="admin-mobile-bar admin-portal-topbar" role="banner" aria-label="Cabeçalho administrativo">
           <button
             className="icon"
             aria-label="Abrir menu administrativo"
@@ -182,8 +195,8 @@ export function AdminPortalShell({
             <Menu aria-hidden="true" />
           </button>
           <button className="admin-brand admin-mobile-heading" onClick={() => navigate("/admin/painel")}><strong>Horti<span>Vital</span>Mix</strong><small>{roleLabel}</small></button>
-          <NotificationBell onClick={() => navigate("/admin/notificacoes")} />
-        </div>
+          <NotificationBell onNavigate={navigate} />
+        </header>
         {logoutError && (
           <p role="alert" className="admin-alert admin-alert--error">
             {logoutError}

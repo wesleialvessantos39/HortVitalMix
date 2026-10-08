@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import {
   useCallback,
   useEffect,
@@ -229,10 +230,8 @@ export default function InventoryLotsPage({
           Editar produto
         </button>
       </header>
-      {loading && (
-        <p className="hvm-product-notice" role="status">
-          Carregando lotes e movimentos…
-        </p>
+      {loading && !inventory && (
+        <PageLoading label="Carregando lotes e movimentos…" />
       )}
       {loadError ? (
         <div className="hvm-product-notice hvm-product-error" role="alert">

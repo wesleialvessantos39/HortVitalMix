@@ -18,6 +18,14 @@ async function mockPortal(page: Page, role: string, initiallyLogged = true) {
     }
     if (path === '/v1/auth/logout') { logged=false; logoutCalls++; return json({status:'signed_out'}); }
     if (path === '/v1/admin/auth/verify-session') return logged ? json({authorized:true,role,sectors:[],requiresReauth:false}) : json({error:'UNAUTHORIZED'},401);
+    if (path === '/v1/admin/dashboard') return json({
+      generatedAt:'2026-10-08T12:00:00Z',refreshAfterSeconds:30,
+      scope:{role,sectors:role==='platform_super_admin'?['document_verification']:[]},
+      departments:role==='platform_super_admin'?[{
+        sector:'document_verification',title:'Documentos',description:'Solicitações de verificação disponíveis para análise.',actionPath:'/admin/documentos/fila',
+        metrics:[{key:'pending_documents',label:'Documentos pendentes',value:2,unit:'count',attention:true,actionPath:'/admin/documentos/fila'}],
+      }]:[],
+    });
     if (path === '/v1/account/addresses') return json({addresses:[]});
     if (path === '/v1/account/profile') return json({fullName:session.fullName,email:session.email,cpfMasked:'***.***.123-45',phone:'+5569999999999',revision:1});
     if (path === '/v1/config') return json({platformName:'HortiVitalMix',slogan:'Tudo fresco.',defaultMunicipality:'Ariquemes',defaultState:'RO',currency:'BRL',timezone:'America/Porto_Velho',supportEmail:'suporte@example.com',supportPhone:null,revision:1});
@@ -39,10 +47,10 @@ for (const role of ['platform_admin','platform_super_admin']) for (const width o
     await page.getByRole('button',{name:'Fechar',exact:true}).click();
     await page.locator(width<768?'.admin-mobile-bar .admin-brand':'.admin-sidebar .admin-brand').click();
     await expect(page).toHaveURL(/\/admin\/painel$/);
-    await expect(page.locator('.admin-action-grid')).toBeVisible();
+    await expect(page.locator('.admin-dashboard-page')).toBeVisible();
     expect(mocked.logoutCount()).toBe(0);
     await page.locator(width<768?'.admin-mobile-bar .admin-brand':'.admin-sidebar .admin-brand').click();
-    await expect(page.locator('.admin-action-grid')).toBeVisible();
+    await expect(page.locator('.admin-dashboard-page')).toBeVisible();
     expect(mocked.logoutCount()).toBe(0);
     if (width < 768) await page.getByRole('button', { name: 'Abrir menu administrativo', exact: true }).click();
     await page.locator(width<768?'#admin-navigation-dialog .admin-logout':'.admin-sidebar .admin-logout').click();

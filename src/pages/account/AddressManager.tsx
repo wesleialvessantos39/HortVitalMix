@@ -198,18 +198,7 @@ export function AddressManager({ title, help, initialAddresses, administrative =
     return (
       <div className="account-panel address-manager" aria-busy="true">
         {panelHeader}
-        <div className="address-list" aria-label="Carregando endereços">
-          {[0, 1].map((item) => (
-            <div key={item} className="address-card address-card-skeleton">
-              <span className="skeleton-block skeleton-icon" />
-              <div>
-                <span className="skeleton-block skeleton-title" />
-                <span className="skeleton-block skeleton-line" />
-                <span className="skeleton-block skeleton-line short" />
-              </div>
-            </div>
-          ))}
-        </div>
+        <PageLoading label="Carregando endereços…" compact />
       </div>
     );
   }
@@ -791,3 +780,4 @@ function AddressEditorSheet({
     </div>
   );
 }
+import { PageLoading } from "../../components/PageLoading";

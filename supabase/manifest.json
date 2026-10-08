@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 65,
+  "schemaVersion": 66,
   "migrations": [
     {
       "version": "20260919030126",
@@ -360,7 +360,12 @@
       "version": "20261007214314",
       "name": "revoke_profile_client_column_mutations",
       "file": "20261007214314_revoke_profile_client_column_mutations.sql"
+    },
+    {
+      "version": "20261008220225",
+      "name": "notification_origin_permissions",
+      "file": "20261008220225_notification_origin_permissions.sql"
     }
   ],
-  "migrationHistoryHash": "654a6a62c736a81b32941d3e5badd395f723f3b0d1e011902a52836025968525"
+  "migrationHistoryHash": "11cfaf481196044d3a52bb078413c507285d6a112cc74bc37813ce57ee6bd8b9"
 }

@@ -44,6 +44,8 @@ export function assertManifestHash() {
 }
 
 const remoteVersionAliases: Readonly<Record<string, string>> = {
+  // Restrição da origem de notificações aplicada pelo Supabase em produção.
+  "20261008220740": "20261008220225",
   // Revogação dos quatro grants antigos por coluna, timestamp físico Supabase.
   "20261007214554": "20261007214314",
   // Perfis individuais e poderes aplicados com timestamp físico do Supabase.

@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useRef, useState } from "react";
 import type { OrderView, PosSale } from "../../../shared/contracts/commerce";
 import { api } from "../../lib/api";
@@ -137,7 +138,7 @@ export default function PurchasesPage({
               Abrir revisão
             </button>
           </article>
-          {!result && !error && <p role="status">Carregando suas compras…</p>}
+          {!result && !error && <PageLoading label="Carregando suas compras…" />}
           {result && (
             <>
               {!!result.payments.length && (

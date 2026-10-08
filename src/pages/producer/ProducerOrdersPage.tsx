@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   ArrowRight,
@@ -232,7 +233,7 @@ export default function ProducerOrdersPage({
           </button>
         </aside>
       )}
-      {!data && !readError && <p role="status">Carregando pedidos…</p>}
+      {!data && !readError && <PageLoading label="Carregando pedidos…" />}
       {data && !data.orders.length && (
         <article className="commerce-card order-empty">
           <Leaf aria-hidden="true" />

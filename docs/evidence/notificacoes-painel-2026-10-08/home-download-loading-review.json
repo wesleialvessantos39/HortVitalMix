@@ -1,0 +1,197 @@
+{
+  "checkedAt": "2026-10-08T22:11:24.812Z",
+  "scenarios": [
+    {
+      "width": 320,
+      "loading": {
+        "documentWidth": 320,
+        "viewportWidth": 320,
+        "loaders": 2,
+        "overflow": [
+          {
+            "client": 258,
+            "scroll": 258
+          },
+          {
+            "client": 296,
+            "scroll": 296
+          }
+        ]
+      },
+      "downloads": {
+        "viewportWidth": 320,
+        "client": 294,
+        "scroll": 294,
+        "text": "HortiVitalMix no seu celular\n\nOs aplicativos estão em preparação. Enquanto isso, aproveite tudo pelo navegador.\n\nAndroid\nEm breve\niPhone e iPad\nEm breve",
+        "links": [],
+        "buttons": [
+          {
+            "label": "Aplicativo Android: em breve",
+            "text": "Android\nEm breve",
+            "width": 125,
+            "scrollWidth": 125,
+            "disabled": true
+          },
+          {
+            "label": "Aplicativo iPhone e iPad: em breve",
+            "text": "iPhone e iPad\nEm breve",
+            "width": 125,
+            "scrollWidth": 125,
+            "disabled": true
+          }
+        ]
+      },
+      "notificationPreviewFooterVisible": true,
+      "final": {
+        "scrollWidth": 320,
+        "viewportWidth": 320,
+        "bodyOverflow": "visible"
+      },
+      "runtimeErrors": []
+    },
+    {
+      "width": 390,
+      "loading": {
+        "documentWidth": 390,
+        "viewportWidth": 390,
+        "loaders": 2,
+        "overflow": [
+          {
+            "client": 328,
+            "scroll": 328
+          },
+          {
+            "client": 366,
+            "scroll": 366
+          }
+        ]
+      },
+      "downloads": {
+        "viewportWidth": 390,
+        "client": 364,
+        "scroll": 364,
+        "text": "HortiVitalMix no seu celular\n\nOs aplicativos estão em preparação. Enquanto isso, aproveite tudo pelo navegador.\n\nAndroid\nEm breve\niPhone e iPad\nEm breve",
+        "links": [],
+        "buttons": [
+          {
+            "label": "Aplicativo Android: em breve",
+            "text": "Android\nEm breve",
+            "width": 160,
+            "scrollWidth": 160,
+            "disabled": true
+          },
+          {
+            "label": "Aplicativo iPhone e iPad: em breve",
+            "text": "iPhone e iPad\nEm breve",
+            "width": 160,
+            "scrollWidth": 160,
+            "disabled": true
+          }
+        ]
+      },
+      "notificationPreviewFooterVisible": true,
+      "final": {
+        "scrollWidth": 390,
+        "viewportWidth": 390,
+        "bodyOverflow": "visible"
+      },
+      "runtimeErrors": []
+    },
+    {
+      "width": 768,
+      "loading": {
+        "documentWidth": 768,
+        "viewportWidth": 768,
+        "loaders": 2,
+        "overflow": [
+          {
+            "client": 191,
+            "scroll": 191
+          },
+          {
+            "client": 495,
+            "scroll": 495
+          }
+        ]
+      },
+      "downloads": {
+        "viewportWidth": 768,
+        "client": 493,
+        "scroll": 493,
+        "text": "HortiVitalMix no seu celular\n\nOs aplicativos estão em preparação. Enquanto isso, aproveite tudo pelo navegador.\n\nAndroid\nEm breve\niPhone e iPad\nEm breve",
+        "links": [],
+        "buttons": [
+          {
+            "label": "Aplicativo Android: em breve",
+            "text": "Android\nEm breve",
+            "width": 113,
+            "scrollWidth": 113,
+            "disabled": true
+          },
+          {
+            "label": "Aplicativo iPhone e iPad: em breve",
+            "text": "iPhone e iPad\nEm breve",
+            "width": 113,
+            "scrollWidth": 113,
+            "disabled": true
+          }
+        ]
+      },
+      "notificationPreviewFooterVisible": true,
+      "final": {
+        "scrollWidth": 768,
+        "viewportWidth": 768,
+        "bodyOverflow": "visible"
+      },
+      "runtimeErrors": []
+    },
+    {
+      "width": 1440,
+      "loading": {
+        "documentWidth": 1440,
+        "viewportWidth": 1440,
+        "loaders": 2,
+        "overflow": [
+          {
+            "client": 443,
+            "scroll": 443
+          },
+          {
+            "client": 1108,
+            "scroll": 1108
+          }
+        ]
+      },
+      "downloads": {
+        "viewportWidth": 1440,
+        "client": 1106,
+        "scroll": 1106,
+        "text": "HortiVitalMix no seu celular\n\nOs aplicativos estão em preparação. Enquanto isso, aproveite tudo pelo navegador.\n\nAndroid\nEm breve\niPhone e iPad\nEm breve",
+        "links": [],
+        "buttons": [
+          {
+            "label": "Aplicativo Android: em breve",
+            "text": "Android\nEm breve",
+            "width": 113,
+            "scrollWidth": 113,
+            "disabled": true
+          },
+          {
+            "label": "Aplicativo iPhone e iPad: em breve",
+            "text": "iPhone e iPad\nEm breve",
+            "width": 113,
+            "scrollWidth": 113,
+            "disabled": true
+          }
+        ]
+      },
+      "notificationPreviewFooterVisible": true,
+      "final": {
+        "scrollWidth": 1440,
+        "viewportWidth": 1440,
+        "bodyOverflow": "visible"
+      },
+      "runtimeErrors": []
+    }
+  ]
+}

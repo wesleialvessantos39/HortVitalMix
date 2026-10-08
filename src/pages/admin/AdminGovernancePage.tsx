@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { adminSectorLabel } from "../../../shared/adminPermissions";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -516,9 +517,7 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
             </p>
           )}
           {loading ? (
-            <p className="admin-empty" role="status">
-              Carregando convites…
-            </p>
+            <PageLoading label="Carregando convites…" compact />
           ) : visibleInvites.length === 0 ? (
             <p className="admin-empty">
               {invites.length

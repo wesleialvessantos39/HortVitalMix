@@ -7,6 +7,7 @@ import { reportFailure } from "./config/reportFailure.ts";
 import { sessionMiddleware } from "./middleware/session.ts";
 import { isAllowedRequestOrigin } from "./security/origin.ts";
 import { adminConfigRouter } from "./routes/adminConfigRoutes.ts";
+import { adminDashboardRouter } from "./routes/adminDashboardRoutes.ts";
 import { adminGovernanceRouter } from "./routes/adminGovernanceRoutes.ts";
 import { profilePrivacyRouter } from "./routes/profilePrivacyRoutes.ts";
 import { ruralPropertyRouter } from "./routes/ruralPropertyRoutes.ts";
@@ -133,6 +134,7 @@ for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
   app.use(prefix, producerSalesRouter);
   app.use(prefix, offlineRouter);
   app.use(prefix + "/admin", adminBiRouter);
+  app.use(prefix + "/admin", adminDashboardRouter);
   app.use(prefix + "/admin", adminNotificationRouter);
   app.use(prefix + "/admin", adminReviewRouter);
   app.use(prefix + "/admin", adminSubscriptionRouter);

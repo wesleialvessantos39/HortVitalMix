@@ -89,6 +89,14 @@ async function mockT07(
 
     if (path === "/v1/auth/session") return json({ ...session, fullName: "Pessoa Cadastrada", roles: [role], activeRole: role });
     if (path === "/v1/admin/auth/verify-session") return json({ authorized: true, role, sectors: ["support"], requiresReauth: false });
+    if (path === "/v1/admin/dashboard") return json({
+      generatedAt: "2026-10-08T12:00:00Z", refreshAfterSeconds: 30,
+      scope: { role, sectors: role === "platform_super_admin" ? ["document_verification"] : [] },
+      departments: role === "platform_super_admin" ? [{
+        sector: "document_verification", title: "Documentos", description: "Solicitações de verificação disponíveis para análise.", actionPath: "/admin/documentos/fila",
+        metrics: [{ key: "pending_documents", label: "Documentos pendentes", value: 2, unit: "count", attention: true, actionPath: "/admin/documentos/fila" }],
+      }] : [],
+    });
     if (path === "/v1/admin/auth/login") {
       loginPaths.push(path);
       if (request.postDataJSON().portalRole !== role) return json({ error: "INVALID_CREDENTIALS" }, 401);
@@ -229,7 +237,7 @@ for (const role of ["platform_admin", "platform_super_admin"]) {
       await mockT07(page, [], role);
       await page.setViewportSize({ width, height: 900 });
       await page.goto("/admin/painel");
-      const shortcut = page.locator(".admin-action-grid").getByRole("button", { name: /Minha conta e privacidade/ });
+      const shortcut = page.locator(".admin-dashboard-footer").getByRole("button", { name: "Minha conta e privacidade", exact: true });
       await expect(shortcut).toBeVisible();
       await shortcut.click();
       await expect(page).toHaveURL(/\/admin\/conta$/);

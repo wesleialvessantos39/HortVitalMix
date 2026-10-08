@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useState } from "react";
 import { api, type ApiFailure } from "../../lib/api";
 import { cryptoRandomUUID } from "../../lib/uuid";
@@ -87,8 +88,8 @@ export function RegistrationReviews({
           {error}
         </p>
       )}
-      {loading ? (
-        <p role="status">Carregando solicitações…</p>
+      {loading && rows.length === 0 ? (
+        <PageLoading label="Carregando solicitações…" />
       ) : rows.length === 0 ? (
         <p className="admin-muted">Nenhuma solicitação pendente.</p>
       ) : (

@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import {
   useCallback,
   useEffect,
@@ -245,7 +246,7 @@ export default function SubscriptionPlansPage({
           {notice}
         </p>
       )}
-      {loading && <p role="status">Carregando assinaturas…</p>}
+      {loading && !plans.length && !subscriptions.length && <PageLoading label="Carregando assinaturas…" />}
       {!gateway && (
         <p className="subscription-notice">
           O recebimento Pix ainda está em preparação. Planos pagos podem ser

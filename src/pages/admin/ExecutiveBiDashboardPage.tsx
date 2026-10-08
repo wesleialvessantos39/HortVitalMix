@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useState, type FormEvent } from "react";
 import { BarChart3, RefreshCw } from "lucide-react";
 import { api, type ApiFailure } from "../../lib/api";
@@ -196,7 +197,7 @@ export default function ExecutiveBiDashboardPage() {
           {progress || notice}
         </p>
       )}
-      {!data && !error && <p role="status">Carregando métricas salvas…</p>}
+      {!data && !error && <PageLoading label="Carregando métricas salvas…" />}
       {data && (
         <>
           <p className="hvm-bi-context">

@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import "./deliveryScope.css";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { ArrowLeft, Check, MapPin, Truck } from "lucide-react";
@@ -178,8 +179,8 @@ export function DeliveryScopePage({ session, onNavigate }: Props) {
         </p>
       </header>
 
-      {loading ? (
-        <p role="status">Carregando seu escopo de entrega…</p>
+      {loading && !scope ? (
+        <PageLoading label="Carregando seu escopo de entrega…" />
       ) : error && !scope ? (
         <p role="alert" className="account-error">
           {error}

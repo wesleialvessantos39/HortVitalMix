@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useRef, useState } from "react";
 import type { PosSale } from "../../../shared/contracts/commerce";
 import { api } from "../../lib/api";
@@ -94,7 +95,7 @@ export default function PosSaleReviewPage({
           </button>
         </article>
       ) : !sale && !error ? (
-        <p role="status">Carregando a venda…</p>
+        <PageLoading label="Carregando a venda…" />
       ) : (
         sale && (
           <div className="commerce-grid">

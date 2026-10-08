@@ -22,6 +22,14 @@ async function mock(page: Page, role: string | null = null, deniedSectors: strin
       authorized: true, role, sectors: ["document_verification"], deniedSectors, requiresReauth: false,
     });
     if (path === "/v1/admin/users") return json({ users: [] });
+    if (path === "/v1/admin/dashboard") return json({
+      generatedAt: "2026-10-08T12:00:00Z", refreshAfterSeconds: 30,
+      scope: { role, sectors: ["document_verification"] },
+      departments: [{ sector: "document_verification", title: "Documentos",
+        description: "Solicitações de verificação sob sua responsabilidade.", actionPath: "/admin/documentos/fila",
+        metrics: [{ key: "pending_documents", label: "Documentos pendentes", value: 3, unit: "count", attention: true, actionPath: "/admin/documentos/fila" }],
+      }],
+    });
     if (path === "/v1/account/addresses") return json({ addresses: [] });
     if (path === "/v1/categories") return json({ categories: [] });
     if (path === "/v1/cart") return json({ stores: [], itemCount: 0, subtotalCents: 0 });
@@ -108,14 +116,14 @@ for (const width of [320, 390, 430]) test(`admin possui somente quatro atalhos m
   await mock(page, "platform_super_admin");
   await page.setViewportSize({ width, height: 844 });
   await page.goto("/admin/painel");
-  await expect(page.locator(".admin-action-grid")).toBeVisible();
+  await expect(page.locator(".admin-dashboard-page")).toBeVisible();
   const bottom = page.locator(".admin-bottom-nav");
   await expect(bottom.getByRole("button")).toHaveCount(4);
   expect(await bottom.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
   const trigger = page.getByRole("button", { name: "Abrir menu administrativo", exact: true });
   await trigger.click();
   const drawer = page.getByRole("dialog", { name: "Administração", exact: true });
-  await expect(drawer.locator(".admin-nav-item")).toHaveCount(17);
+  await expect(drawer.locator(".admin-nav-item")).toHaveCount(16);
   const contrast = await drawer.evaluate(element => {
     const rgb = (color: string) => (color.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
     const luminance = (color: string) => rgb(color).map(value => {
@@ -183,15 +191,15 @@ test("cesta vazia visitante cabe em 390x844 com aviso e ações disponíveis", a
   await page.screenshot({ path: "/workspace/scratch/hort-cart-390-local-final.png" });
 });
 
-test("painel desktop cabe e links laterais rolam independentemente", async ({ page }) => {
+test("painel desktop cabe e todas as áreas laterais aparecem sem rolagem", async ({ page }) => {
   await mock(page, "platform_super_admin");
   await page.setViewportSize({ width: 1440, height: 768 });
   await page.goto("/admin/painel");
-  await expect(page.locator(".admin-action-grid")).toBeVisible();
+  await expect(page.locator(".admin-dashboard-page")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(768);
   const navigation = page.locator(".admin-sidebar .admin-sidebar-nav");
-  expect(await navigation.evaluate(el => getComputedStyle(el).overflowY)).toBe("auto");
-  await page.locator(".admin-sidebar .admin-nav-item").last().scrollIntoViewIfNeeded();
+  expect(await navigation.evaluate(el => el.scrollHeight <= el.clientHeight)).toBe(true);
+  await expect(page.locator(".admin-sidebar .admin-nav-item").last()).toBeInViewport();
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
   await expect(page.locator(".admin-sidebar .admin-logout")).toBeInViewport();
 });

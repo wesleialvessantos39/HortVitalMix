@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import {
   useCallback,
   useEffect,
@@ -155,7 +156,7 @@ export default function AdminSubscriptionPlansPage() {
           utiliza a conta de recebimento já configurada.
         </p>
       </header>
-      {loading && <p role="status">Carregando planos…</p>}
+      {loading && !plans.length && <PageLoading label="Carregando planos…" />}
       {error && (
         <p role="alert" className="subscription-error">
           {error}

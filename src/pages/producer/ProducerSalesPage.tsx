@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useState } from "react";
 import { ProducerSalesSchema } from "../../../shared/contracts/producerSales";
 import { ORDER_STATUS_LABELS } from "../../../shared/contracts/order";
@@ -59,7 +60,7 @@ export default function ProducerSalesPage({
         </button>
       </nav>
       {error && <p role="alert">{error}</p>}
-      {!data && !error && <p role="status">Carregando suas vendas…</p>}
+      {!data && !error && <PageLoading label="Carregando suas vendas…" />}
       {data && (
         <>
           <div className="hvm-sale-summary">

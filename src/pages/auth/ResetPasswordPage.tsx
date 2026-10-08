@@ -158,10 +158,7 @@ export function ResetPasswordPage({
         </h1>
 
         {checking ? (
-          <div className="t04-loading">
-            <span className="t04-spinner" />
-            <p>Validando o link seguro…</p>
-          </div>
+          <PageLoading label="Validando o link seguro…" compact />
         ) : done ? (
           <>
             <div className="t04-banner success" role="status">{notice}</div>
@@ -229,3 +226,4 @@ export function ResetPasswordPage({
     </section>
   );
 }
+import { PageLoading } from "../../components/PageLoading";

@@ -1,0 +1,40 @@
+.hvm-app-download {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 20px;
+  margin-top: 20px;
+  border: 1px solid #dbe7dc;
+  border-radius: 18px;
+  background: #f0f6f0;
+  color: #153c25;
+}
+.hvm-app-download-copy { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.hvm-app-download-copy > svg { flex-shrink: 0; }
+.hvm-app-download h2 { margin: 0 0 4px; font-size: 1rem; }
+.hvm-app-download p { margin: 0; color: #526656; font-size: .85rem; line-height: 1.5; }
+.hvm-app-download-platforms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); flex-shrink: 0; gap: 8px; }
+.hvm-app-download-platforms button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 110px;
+  min-height: 54px;
+  border: 1px solid #cbd8cc;
+  border-radius: 12px;
+  padding: 8px 12px;
+  background: #fff;
+  color: #203c2a;
+  opacity: 1;
+  cursor: default;
+}
+.hvm-app-download-platforms span { font-size: .85rem; font-weight: 700; }
+.hvm-app-download-platforms small { font-size: .75rem; color: #657368; }
+.hvm-app-download .hvm-app-download-platforms button:disabled { opacity: 1; cursor: default; }
+@media (max-width: 640px) {
+  .hvm-app-download { flex-direction: column; align-items: stretch; padding: 16px; gap: 14px; }
+  .hvm-app-download-platforms { width: 100%; }
+  .hvm-app-download-platforms button { min-width: 0; }
+}

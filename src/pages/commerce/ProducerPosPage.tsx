@@ -140,7 +140,7 @@ export default function ProducerPosPage({
           {notice}
         </p>
       )}
-      {!context && !error && <p role="status">Abrindo seu caixa…</p>}
+      {!context && !error && <PageLoading label="Abrindo seu caixa…" />}
       {context && (
         <>
           <div className="commerce-card">
@@ -388,3 +388,4 @@ export default function ProducerPosPage({
     </section>
   );
 }
+import { PageLoading } from "../../components/PageLoading";

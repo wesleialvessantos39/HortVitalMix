@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { adminSectorLabel } from "../../../shared/adminPermissions";
 import { useEffect, useMemo, useState } from "react";
 import { Crown, Leaf, ShieldCheck } from "lucide-react";
@@ -123,7 +124,7 @@ export function AdminAcceptInvitePage({ onNavigate }: Props) {
               : "Convite administrativo"}
           </span>
           {state.status === "loading" && (
-            <p className="admin-muted">Validando convite…</p>
+            <PageLoading label="Validando convite…" compact />
           )}
           {state.status !== "loading" && !valid && (
             <>

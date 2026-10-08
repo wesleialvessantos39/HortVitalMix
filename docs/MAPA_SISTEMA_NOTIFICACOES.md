@@ -1,5 +1,7 @@
 # Mapa do sistema e central de notificações
 
+Atualização de 2026-10-08: central reestruturada, com sino no cabeçalho, prévia e “Mostrar mais”. A seleção de um aviso abre sua explicação em `/notificacoes/:id` ou `/admin/notificacoes/:id`; o departamento só abre por uma ação explícita depois dessa explicação. `GET /v1/notifications/:id` e `GET /v1/admin/notifications/:id` verificam proprietário, papel e poderes atuais. O contador permanece global mesmo com filtro/paginação. Revogações de Super administradores são respeitadas, inclusive em avisos históricos sem setor, por resolução de origem compartilhada entre API e RLS. Schema atual **66 / 73 migrations**; o texto abaixo conserva o contexto da implantação original.
+
 Correção aditiva de 2026-10-07 sobre T01–T24 homologadas, schema 62. Novo schema lógico **63**, **69 migrations**. Fonte: Livro-Raiz, plano T12–T25 e rotas/serviços efetivos do repositório canônico. Este mapa descreve os módulos existentes; não inicia a T25.
 
 ## Papéis e acesso

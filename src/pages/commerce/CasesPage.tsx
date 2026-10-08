@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Flag, MessageSquare, ShieldCheck } from "lucide-react";
 import type { CaseView, OrderView } from "../../../shared/contracts/commerce";
@@ -602,7 +603,7 @@ export default function CasesPage({
                 </select>
               </label>
               {loading ? (
-                <p role="status">Carregando solicitações…</p>
+                <PageLoading label="Carregando solicitações…" compact />
               ) : !cases.length ? (
                 <p>Nenhuma solicitação registrada.</p>
               ) : (

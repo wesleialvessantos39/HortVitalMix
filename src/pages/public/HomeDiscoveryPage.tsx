@@ -1,3 +1,4 @@
+import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useRef, useState } from "react";
 import {
   ChevronLeft,
@@ -383,9 +384,7 @@ export default function HomeDiscoveryPage({
           </p>
         </div>
       ) : loading ? (
-        <p role="status" className="hvm-discovery-notice">
-          Buscando produtores…
-        </p>
+        <PageLoading label="Buscando produtores…" />
       ) : error ? (
         <div role="alert" className="hvm-discovery-notice hvm-discovery-error">
           <p>Não foi possível consultar os produtores agora.</p>

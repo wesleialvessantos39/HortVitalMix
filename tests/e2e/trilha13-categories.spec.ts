@@ -249,14 +249,20 @@ for (const width of [320, 390, 768, 1440]) {
     await expect(nav.locator("button svg")).toHaveCount(12);
     expect(
       await nav.evaluate((element) => getComputedStyle(element).display),
-    ).toBe(width < 768 ? "flex" : "grid");
+    ).toBe("grid");
     if (width < 768) {
+      expect(await nav.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+      expect(await nav.evaluate(element => getComputedStyle(element).gridTemplateColumns.split(" ").length)).toBe(2);
+      for (const button of await nav.getByRole("button").all()) {
+        await expect(button).toBeInViewport({ ratio: 1 });
+        expect((await button.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+      }
       await nav.evaluate((element) => {
         element.scrollLeft = element.scrollWidth;
       });
       expect(
         await nav.evaluate((element) => element.scrollLeft),
-      ).toBeGreaterThan(0);
+      ).toBe(0);
     }
     await nav.getByRole("button", { name: "Frutas", exact: true }).click();
     await expect(page).toHaveURL(/\/produtos$/);

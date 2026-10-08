@@ -64,6 +64,46 @@ describe("Separação HTTP dos papéis e central de notificações", () => {
       );
     },
   );
+  it.each(["/v1", "/api/v1", "/_hvm_api/v1"])(
+    "detalhe exige sessão, usa somente o destinatário autenticado e não lê por GET em %s",
+    async (pre) => {
+      const id = randomUUID();
+      const detail = vi
+        .spyOn(NotificationService, "detail")
+        .mockResolvedValue({} as any);
+      const read = vi.spyOn(NotificationService, "read");
+      expect(
+        (await request(app()).get(pre + "/notifications/" + id)).status,
+      ).toBe(401);
+      const response = await request(app(["consumer", "producer"]))
+        .get(pre + "/notifications/" + id)
+        .set("Cookie", "hvm_portal_role=producer");
+      expect(response.status).toBe(200);
+      expect(response.headers["cache-control"]).toBe("private, no-store");
+      expect(detail).toHaveBeenCalledWith(
+        { userId: uid, role: "producer" },
+        id,
+      );
+      expect(read).not.toHaveBeenCalled();
+    },
+  );
+  it("detalhe não divulga erros internos nem aceita IDs inválidos", async () => {
+    expect(
+      (await request(app(["consumer"])).get("/v1/notifications/invalid-id"))
+        .status,
+    ).toBe(422);
+    vi.spyOn(NotificationService, "detail").mockRejectedValue(
+      new Error("private-db-connection"),
+    );
+    const response = await request(app(["consumer"])).get(
+      "/v1/notifications/" + randomUUID(),
+    );
+    expect(response.status).toBe(503);
+    expect(response.body.error).toBe("DEPENDENCY_UNAVAILABLE");
+    expect(JSON.stringify(response.body)).not.toContain(
+      "private-db-connection",
+    );
+  });
   it.each([
     "/cart",
     "/checkout/context",
