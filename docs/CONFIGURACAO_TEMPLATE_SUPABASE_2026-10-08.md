@@ -1,5 +1,7 @@
 # Modelo de convite hospedado — verificação de acesso
 
+O usuário optou por configurar o modelo diretamente no painel. O [guia completo de configuração](GUIA_CONFIGURAR_CONVITE_SUPABASE.md) reúne o HTML integral, assunto, URLs, condição de SMTP no plano Free e a verificação pelo fluxo de Governança. A investigação de acesso abaixo permanece como histórico; a criação do guia não comprova a aplicação remota do template.
+
 Verificado em **8 de outubro de 2026, 20:51 UTC**, com consultas posteriores às **20:56 UTC** e **21:56 UTC** depois da escolha e confirmação de atualizar as conexões. Projeto: `xipbsazvymkqqfmfegwu`.
 
 ## Resultado

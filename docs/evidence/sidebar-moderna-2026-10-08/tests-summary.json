@@ -1,0 +1,497 @@
+{
+  "scope": "local synthetic fixtures; existing navigation, shell and session tests",
+  "uniqueCases": 37,
+  "finalPassed": 37,
+  "initialPassed": 36,
+  "initialFailed": 1,
+  "rerunPassed": 1,
+  "cases": [
+    {
+      "file": "navigation-responsive.spec.ts",
+      "title": "menu público cabe e mantém foco em 320px",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:44:52.595Z",
+          "status": "passed",
+          "durationMs": 2590
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "navigation-responsive.spec.ts",
+      "title": "menu público cabe e mantém foco em 390px",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:44:55.398Z",
+          "status": "passed",
+          "durationMs": 2342
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "navigation-responsive.spec.ts",
+      "title": "menu público cabe e mantém foco em 430px",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:44:57.791Z",
+          "status": "passed",
+          "durationMs": 1818
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "navigation-responsive.spec.ts",
+      "title": "produtor encontra todas as áreas no menu e navegação fecha o drawer",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:44:59.624Z",
+          "status": "passed",
+          "durationMs": 1708
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "navigation-responsive.spec.ts",
+      "title": "localização abre pelo menu com foco e mantém rolagem de conteúdo necessário",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:01.351Z",
+          "status": "passed",
+          "durationMs": 2592
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "navigation-responsive.spec.ts",
+      "title": "admin possui somente quatro atalhos mobile em 320px",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:03.954Z",
+          "status": "passed",
+          "durationMs": 2014
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "navigation-responsive.spec.ts",
+      "title": "admin possui somente quatro atalhos mobile em 390px",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:05.977Z",
+          "status": "passed",
+          "durationMs": 1887
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "navigation-responsive.spec.ts",
+      "title": "admin possui somente quatro atalhos mobile em 430px",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:07.883Z",
+          "status": "passed",
+          "durationMs": 1802
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "navigation-responsive.spec.ts",
+      "title": "menu administrativo conserva restrições por setor",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:09.739Z",
+          "status": "passed",
+          "durationMs": 914
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "navigation-responsive.spec.ts",
+      "title": "acesso /entrar/consumidor cabe em 390x844 sem rolagem vazia",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:10.668Z",
+          "status": "passed",
+          "durationMs": 790
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "navigation-responsive.spec.ts",
+      "title": "acesso /entrar/produtor cabe em 390x844 sem rolagem vazia",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:11.468Z",
+          "status": "passed",
+          "durationMs": 674
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "navigation-responsive.spec.ts",
+      "title": "acesso /entrar/administrador cabe em 390x844 sem rolagem vazia",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:12.149Z",
+          "status": "passed",
+          "durationMs": 772
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "navigation-responsive.spec.ts",
+      "title": "acesso /entrar/super-administrador cabe em 390x844 sem rolagem vazia",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:12.929Z",
+          "status": "passed",
+          "durationMs": 688
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "navigation-responsive.spec.ts",
+      "title": "cesta vazia visitante cabe em 390x844 com aviso e ações disponíveis",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:13.631Z",
+          "status": "passed",
+          "durationMs": 1114
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "navigation-responsive.spec.ts",
+      "title": "painel desktop cabe e todas as áreas laterais aparecem sem rolagem",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:14.752Z",
+          "status": "passed",
+          "durationMs": 1316
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "session-navigation.spec.ts",
+      "title": "marca e endereços administrativos: platform_admin 360",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:44:52.595Z",
+          "status": "passed",
+          "durationMs": 2862
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "session-navigation.spec.ts",
+      "title": "marca e endereços administrativos: platform_admin 1440",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:44:55.675Z",
+          "status": "passed",
+          "durationMs": 1826
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "session-navigation.spec.ts",
+      "title": "marca e endereços administrativos: platform_super_admin 360",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:44:57.517Z",
+          "status": "passed",
+          "durationMs": 2175
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "session-navigation.spec.ts",
+      "title": "marca e endereços administrativos: platform_super_admin 1440",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:44:59.708Z",
+          "status": "passed",
+          "durationMs": 2361
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "session-navigation.spec.ts",
+      "title": "login público com layout completo: consumer 320",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:02.080Z",
+          "status": "passed",
+          "durationMs": 1424
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "session-navigation.spec.ts",
+      "title": "login público com layout completo: consumer 1440",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:03.520Z",
+          "status": "passed",
+          "durationMs": 1583
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "session-navigation.spec.ts",
+      "title": "sessão persiste na navegação e cadastro só reaparece ao sair: consumer",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:05.128Z",
+          "status": "failed",
+          "durationMs": 9659
+        },
+        {
+          "source": "hort-modern-consumer-session.json",
+          "startedAt": "2026-10-08T23:47:25.701Z",
+          "status": "passed",
+          "durationMs": 11094
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "session-navigation.spec.ts",
+      "title": "login público com layout completo: producer 320",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:15.658Z",
+          "status": "passed",
+          "durationMs": 1593
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "session-navigation.spec.ts",
+      "title": "login público com layout completo: producer 1440",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:17.350Z",
+          "status": "passed",
+          "durationMs": 1279
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "session-navigation.spec.ts",
+      "title": "sessão persiste na navegação e cadastro só reaparece ao sair: producer",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:18.649Z",
+          "status": "passed",
+          "durationMs": 11194
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "shell-compact-categories.spec.ts",
+      "title": "todas as áreas administrativas cabem no desktop 1280x720",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:16.099Z",
+          "status": "passed",
+          "durationMs": 2164
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "shell-compact-categories.spec.ts",
+      "title": "todas as áreas administrativas cabem no desktop 1440x768",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:18.316Z",
+          "status": "passed",
+          "durationMs": 1659
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "shell-compact-categories.spec.ts",
+      "title": "todas as áreas administrativas cabem no desktop 1024x768",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:19.990Z",
+          "status": "passed",
+          "durationMs": 2177
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "shell-compact-categories.spec.ts",
+      "title": "menu administrativo em duas colunas cabe sem rolagem 320x844",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:22.186Z",
+          "status": "passed",
+          "durationMs": 2368
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "shell-compact-categories.spec.ts",
+      "title": "menu administrativo em duas colunas cabe sem rolagem 390x844",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:24.569Z",
+          "status": "passed",
+          "durationMs": 2502
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "shell-compact-categories.spec.ts",
+      "title": "menu administrativo em duas colunas cabe sem rolagem 430x844",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:27.093Z",
+          "status": "passed",
+          "durationMs": 2154
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "shell-compact-categories.spec.ts",
+      "title": "menu em tela baixa mantém todas as áreas e o rodapé alcançáveis",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:29.261Z",
+          "status": "passed",
+          "durationMs": 1438
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "shell-compact-categories.spec.ts",
+      "title": "grupos preservam os setores revogados de platform_admin",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:30.705Z",
+          "status": "passed",
+          "durationMs": 726
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "shell-compact-categories.spec.ts",
+      "title": "grupos preservam os setores revogados de platform_super_admin",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:31.441Z",
+          "status": "passed",
+          "durationMs": 1044
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "shell-compact-categories.spec.ts",
+      "title": "categorias completas quebram em linhas sem rolagem lateral em 320px",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:32.493Z",
+          "status": "passed",
+          "durationMs": 891
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "shell-compact-categories.spec.ts",
+      "title": "categorias completas quebram em linhas sem rolagem lateral em 390px",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:33.394Z",
+          "status": "passed",
+          "durationMs": 1003
+        }
+      ],
+      "finalStatus": "passed"
+    },
+    {
+      "file": "shell-compact-categories.spec.ts",
+      "title": "categorias completas quebram em linhas sem rolagem lateral em 600px",
+      "attempts": [
+        {
+          "source": "hort-modern-sidebar-tests.json",
+          "startedAt": "2026-10-08T23:45:34.406Z",
+          "status": "passed",
+          "durationMs": 1051
+        }
+      ],
+      "finalStatus": "passed"
+    }
+  ]
+}

@@ -1,5 +1,20 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-10-08 — Barra lateral administrativa e guia manual do convite Supabase
+
+A navegação de Administrador e Super administrador foi refinada para eliminar a barra de rolagem nativa branca com setas e melhorar o alinhamento da lateral desktop. O novo `src/components/admin/adminNavigation.css` concentra os estilos do menu, retirando as definições antigas concorrentes de `admin.css`.
+
+- Marca, ícones e grupos com espaçamento consistente; estados ativo e hover, botões de vitrine/saída com bordas arredondadas e foco de teclado visível sem o contorno quadrado anterior.
+- Marca/cabeçalho e ações de rodapé permanecem fixos. Somente os links rolam quando a altura, o zoom ou a interface de toque exigem. As 16 áreas continuam disponíveis conforme os poderes vigentes, com duas colunas no menu mobile e alvos de pelo menos 44px no toque.
+- Chromium/Safari: trilho de 8px, fundo transparente, thumb arredondado, sem botões de seta e realce ao passar o cursor. Firefox: largura fina e cores integradas ao verde do aplicativo. Movimento reduzido e cores forçadas continuam respeitados; a rolagem necessária não é desativada.
+- Criado o [guia completo para configurar o convite no Supabase](docs/GUIA_CONFIGURAR_CONVITE_SUPABASE.md), com o assunto, HTML integral, URLs específicas, salvar/reabrir, apresentação diferente por papel e teste pelo menu Governança do aplicativo. O código HTML permanece idêntico a `supabase/templates/invite.html`, SHA-256 `d2faa61a3848607c65fe5c83a9ca7a6a6dd66673ed2970a28d92bcc54fd68661`.
+- Verificada a mudança oficial de 3 de junho de 2026: projetos Free novos com SMTP padrão não permitem personalizar os e-mails Auth; Custom SMTP libera a edição. O projeto foi criado depois dessa mudança, mas plano/SMTP não foram inferidos. O guia explica a condição e os campos do provedor caso a edição esteja bloqueada.
+- O link usa `{{ .RedirectTo }}` para preservar o token próprio do HortiVitalMix e seu aceite de governança em 24 horas. O modelo usa metadados somente para apresentação; poderes e validade são verificados no backend. Configurar pelo painel de usuários do Supabase não substitui o convite criado na Governança do aplicativo.
+
+Esta atualização não altera schema, migrations, dados de negócio ou configuração Auth hospedada. O guia permite ao usuário aplicar o template pelo painel; nenhum convite ou e-mail real foi enviado nesta preparação. Schema continua **66 / 73 migrations**.
+
+Validação da navegação: **37 cenários existentes aprovados** (36 na rodada e um na reexecução focada, sem reduzir as verificações) e **sete cenários visuais**, com Administrador e Super administrador, desktop/mobile e alturas reduzidas. TypeScript, build completo, gates obrigatórios de segurança/manifesto e verificação de bundle aprovados. Rolagem de 8px, track transparente, thumb arredondado e setas ausentes confirmados por estilos computados no Chromium. Marca/cabeçalho e rodapé permaneceram fixos, saída com alvo de 44px e nenhum erro JavaScript. Viewport `1113×626` representa a área CSS aproximada de zoom de 115% em uma tela `1280×720`; não é apresentado como teste de aparelho físico. [Resultados e capturas](docs/evidence/sidebar-moderna-2026-10-08/visual-review.json), [histórico dos cenários](docs/evidence/sidebar-moderna-2026-10-08/tests-summary.json). As capturas administrativas usam fixtures locais sintéticas.
+
 ## 2026-10-08 — Responsividade, convites e preparação mobile: consolidação das correções publicadas
 
 Registro das entregas anteriores que ainda não estavam consolidadas neste livro. **PR #101** integrada em `main`, SHA `32690a03f6c4d0083d3d0aa9ab0d08ba327db6ec`; **PR #102**, ajuste da cesta vazia, SHA `a48da740054b16dad60962e19cf51b70c61acd69`. A versão de #102 foi confirmada em Production no deployment `dpl_BVtxuTCxJyKTQXhQU8hUW5WFZEyN`, READY, domínio `https://hortvitalmix.vercel.app/`, release `fix-responsive-v65-a48da74`.
