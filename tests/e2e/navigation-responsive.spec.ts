@@ -24,6 +24,7 @@ async function mock(page: Page, role: string | null = null, deniedSectors: strin
     if (path === "/v1/admin/users") return json({ users: [] });
     if (path === "/v1/account/addresses") return json({ addresses: [] });
     if (path === "/v1/categories") return json({ categories: [] });
+    if (path === "/v1/cart") return json({ stores: [], itemCount: 0, subtotalCents: 0 });
     if (path === "/v1/localities") return json({ municipalities: [] });
     if (path === "/v1/admin/bootstrap/status") return json({ status: "closed" });
     if (path.includes("notifications")) return json({
@@ -158,6 +159,28 @@ for (const path of ["/entrar/consumidor", "/entrar/produtor", "/entrar/administr
   await expect(page.getByRole("button", { name: "Esqueci minha senha", exact: true })).toBeInViewport();
   expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(844);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
+
+test("cesta vazia visitante cabe em 390x844 com aviso e ações disponíveis", async ({ page }) => {
+  await mock(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/carrinho");
+  const cart = page.locator(".hvm-cart");
+  await expect(cart.getByRole("heading", { name: "Minha cesta", exact: true })).toBeVisible();
+  await expect(cart.getByRole("heading", { name: "Sua cesta está esperando o frescor", exact: true })).toBeVisible();
+  await expect(cart.getByText("Escolha alimentos ou combine porções no Monte seu HortiMix.")).toBeInViewport({ ratio: 1 });
+  await expect(cart.getByText("Entre na sua conta para guardar a cesta e continuar em outros aparelhos.")).toBeInViewport({ ratio: 1 });
+  await expect(cart).toBeInViewport({ ratio: 1 });
+  for (const name of ["Continuar escolhendo", "Explorar produtos", "Entrar na minha conta"]) {
+    const action = cart.getByRole("button", { name, exact: true });
+    await expect(action).toBeInViewport({ ratio: 1 });
+    const bounds = await action.boundingBox();
+    const bottomNavigation = await page.locator(".bottom-nav").boundingBox();
+    expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(bottomNavigation!.y);
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(844);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await page.screenshot({ path: "/workspace/scratch/hort-cart-390-local-final.png" });
 });
 
 test("painel desktop cabe e links laterais rolam independentemente", async ({ page }) => {

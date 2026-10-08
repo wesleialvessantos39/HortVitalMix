@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-10-08T16:45:19.766Z",
+  "generatedAt": "2026-10-08T16:57:18.150Z",
   "method": "Current test inventory; latest result per test from full execution and targeted executions. Not a single all-green full execution.",
   "stats": {
-    "current": 457,
-    "passed": 457,
+    "current": 458,
+    "passed": 458,
     "missing": 0
   },
   "runs": [
@@ -48,6 +48,15 @@
       "startTime": "2026-10-08T16:42:59.257Z",
       "duration": 6649.299000000001,
       "expected": 3,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    {
+      "source": "hort-cart-final-tests.json",
+      "startTime": "2026-10-08T16:55:09.121Z",
+      "duration": 23016.73,
+      "expected": 11,
       "skipped": 0,
       "unexpected": 0,
       "flaky": 0
@@ -400,6 +409,12 @@
       "key": "navigation-responsive.spec.ts|navigation-responsive.spec.ts > acesso /entrar/super-administrador cabe em 390x844 sem rolagem vazia|",
       "file": "navigation-responsive.spec.ts",
       "title": "navigation-responsive.spec.ts > acesso /entrar/super-administrador cabe em 390x844 sem rolagem vazia",
+      "status": "expected"
+    },
+    {
+      "key": "navigation-responsive.spec.ts|navigation-responsive.spec.ts > cesta vazia visitante cabe em 390x844 com aviso e ações disponíveis|",
+      "file": "navigation-responsive.spec.ts",
+      "title": "navigation-responsive.spec.ts > cesta vazia visitante cabe em 390x844 com aviso e ações disponíveis",
       "status": "expected"
     },
     {
