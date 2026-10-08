@@ -32,7 +32,9 @@ Contagens e digests de notificações, exceções de poderes e atribuições de 
 - TypeScript, manifesto/histórico, gates obrigatórios do build, análise de segurança, Vite e inspeção do bundle concluídos. Cold start da API aprovado sem `ERR_REQUIRE_ESM`; `git diff --check` limpo.
 - Os testes SQL mutacionais recusam banco remoto e usam fixtures sintéticas no PostgreSQL local isolado. Os testes de interface com fixtures comprovam comportamento e não são apresentados como login privado em produção.
 
-O fechamento de publicação, domínio oficial, SHA e release efetiva será registrado no Livro Raiz depois da confirmação do deployment READY e das verificações públicas. Esse fechamento distingue a validação local autenticada da visita pública à produção.
+A entrega funcional foi integrada na **PR #104**, SHA `8e31858ab452cce022aa4533225d7aee23ad968f`. Deployment `dpl_dk4qbD33oirRKTnDrUyrzua1oZ3G` confirmado READY em Production e no domínio oficial, com release `fix-notifications-v66-8e31858` e schema 66. Passaram **44 combinações de páginas públicas/viewport e 19 verificações HTTP/worker**, sem erros JavaScript, imagens quebradas ou rolagem horizontal. A revisão de logs do deployment, em janela de dez minutos, não retornou grupos error/fatal. [Prova da publicação](evidence/notificacoes-painel-2026-10-08/production-release-proof.json).
+
+O fechamento documental preserva a evidência desta publicação funcional. Uma integração posterior somente de documentos terá seu próprio SHA e release corrente em `/api/ready`; não altera o código comprovado. Os quatro fluxos privados foram validados localmente, e não por login real na produção.
 
 ## Pendência externa comprovada
 
