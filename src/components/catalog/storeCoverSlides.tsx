@@ -21,6 +21,7 @@ export function storeCoverSlides(
     PublicProduct,
     "id" | "title" | "media" | "currentPrice" | "unitType"
   >[],
+  publicPreview = true,
 ): MediaSlide[] {
   const producer = store.publicProducerName ?? name;
   const href = `/produtores/${encodeURIComponent(slug)}`;
@@ -33,7 +34,11 @@ export function storeCoverSlides(
       <div className="hvm-slide-product">
         <strong className="hvm-slide-title">{name}</strong>
         <span className="hvm-slide-producer">
-          <ProducerPortrait url={store.avatarUrl} name={producer} />
+          <ProducerPortrait
+            url={store.avatarUrl}
+            name={producer}
+            publicPreview={publicPreview}
+          />
           <strong>{producer}</strong>
         </span>
       </div>
@@ -64,6 +69,7 @@ export function storeCoverSlides(
             producerName={producer}
             avatarUrl={store.avatarUrl}
             storeName={name}
+            publicPreview={publicPreview}
           />
         ),
       })),

@@ -1,0 +1,242 @@
+[
+  {
+    "screen": "orders",
+    "width": 320,
+    "scrollWidth": 320,
+    "summaryWidth": null,
+    "layoutWidth": null,
+    "overflows": []
+  },
+  {
+    "screen": "checkout",
+    "width": 320,
+    "scrollWidth": 320,
+    "summaryWidth": 272,
+    "layoutWidth": 272,
+    "overflows": []
+  },
+  {
+    "screen": "commerce",
+    "width": 320,
+    "scrollWidth": 320,
+    "summaryWidth": null,
+    "layoutWidth": null,
+    "overflows": []
+  },
+  {
+    "screen": "subscriptions",
+    "width": 320,
+    "scrollWidth": 320,
+    "summaryWidth": null,
+    "layoutWidth": null,
+    "overflows": []
+  },
+  {
+    "screen": "cart",
+    "width": 320,
+    "scrollWidth": 320,
+    "summaryWidth": 296,
+    "layoutWidth": 296,
+    "overflows": []
+  },
+  {
+    "screen": "discovery",
+    "width": 320,
+    "scrollWidth": 320,
+    "summaryWidth": null,
+    "layoutWidth": null,
+    "overflows": []
+  },
+  {
+    "screen": "orders",
+    "width": 375,
+    "scrollWidth": 375,
+    "summaryWidth": null,
+    "layoutWidth": null,
+    "overflows": []
+  },
+  {
+    "screen": "checkout",
+    "width": 375,
+    "scrollWidth": 375,
+    "summaryWidth": 327,
+    "layoutWidth": 327,
+    "overflows": []
+  },
+  {
+    "screen": "commerce",
+    "width": 375,
+    "scrollWidth": 375,
+    "summaryWidth": null,
+    "layoutWidth": null,
+    "overflows": []
+  },
+  {
+    "screen": "subscriptions",
+    "width": 375,
+    "scrollWidth": 375,
+    "summaryWidth": null,
+    "layoutWidth": null,
+    "overflows": []
+  },
+  {
+    "screen": "cart",
+    "width": 375,
+    "scrollWidth": 375,
+    "summaryWidth": 351,
+    "layoutWidth": 351,
+    "overflows": []
+  },
+  {
+    "screen": "discovery",
+    "width": 375,
+    "scrollWidth": 375,
+    "summaryWidth": null,
+    "layoutWidth": null,
+    "overflows": []
+  },
+  {
+    "screen": "orders",
+    "width": 768,
+    "scrollWidth": 768,
+    "summaryWidth": null,
+    "layoutWidth": null,
+    "overflows": []
+  },
+  {
+    "screen": "checkout",
+    "width": 768,
+    "scrollWidth": 768,
+    "summaryWidth": 708,
+    "layoutWidth": 708,
+    "overflows": []
+  },
+  {
+    "screen": "commerce",
+    "width": 768,
+    "scrollWidth": 768,
+    "summaryWidth": null,
+    "layoutWidth": null,
+    "overflows": []
+  },
+  {
+    "screen": "subscriptions",
+    "width": 768,
+    "scrollWidth": 768,
+    "summaryWidth": null,
+    "layoutWidth": null,
+    "overflows": []
+  },
+  {
+    "screen": "cart",
+    "width": 768,
+    "scrollWidth": 768,
+    "summaryWidth": 744,
+    "layoutWidth": 744,
+    "overflows": []
+  },
+  {
+    "screen": "discovery",
+    "width": 768,
+    "scrollWidth": 768,
+    "summaryWidth": null,
+    "layoutWidth": null,
+    "overflows": []
+  },
+  {
+    "screen": "orders",
+    "width": 900,
+    "scrollWidth": 900,
+    "summaryWidth": null,
+    "layoutWidth": null,
+    "overflows": []
+  },
+  {
+    "screen": "checkout",
+    "width": 900,
+    "scrollWidth": 900,
+    "summaryWidth": 320,
+    "layoutWidth": 812,
+    "overflows": []
+  },
+  {
+    "screen": "commerce",
+    "width": 900,
+    "scrollWidth": 900,
+    "summaryWidth": null,
+    "layoutWidth": null,
+    "overflows": []
+  },
+  {
+    "screen": "subscriptions",
+    "width": 900,
+    "scrollWidth": 900,
+    "summaryWidth": null,
+    "layoutWidth": null,
+    "overflows": []
+  },
+  {
+    "screen": "cart",
+    "width": 900,
+    "scrollWidth": 900,
+    "summaryWidth": 860,
+    "layoutWidth": 860,
+    "overflows": []
+  },
+  {
+    "screen": "discovery",
+    "width": 900,
+    "scrollWidth": 900,
+    "summaryWidth": null,
+    "layoutWidth": null,
+    "overflows": []
+  },
+  {
+    "screen": "orders",
+    "width": 1440,
+    "scrollWidth": 1440,
+    "summaryWidth": null,
+    "layoutWidth": null,
+    "overflows": []
+  },
+  {
+    "screen": "checkout",
+    "width": 1440,
+    "scrollWidth": 1440,
+    "summaryWidth": 320,
+    "layoutWidth": 900,
+    "overflows": []
+  },
+  {
+    "screen": "commerce",
+    "width": 1440,
+    "scrollWidth": 1440,
+    "summaryWidth": null,
+    "layoutWidth": null,
+    "overflows": []
+  },
+  {
+    "screen": "subscriptions",
+    "width": 1440,
+    "scrollWidth": 1440,
+    "summaryWidth": null,
+    "layoutWidth": null,
+    "overflows": []
+  },
+  {
+    "screen": "cart",
+    "width": 1440,
+    "scrollWidth": 1440,
+    "summaryWidth": 270,
+    "layoutWidth": 948,
+    "overflows": []
+  },
+  {
+    "screen": "discovery",
+    "width": 1440,
+    "scrollWidth": 1440,
+    "summaryWidth": null,
+    "layoutWidth": null,
+    "overflows": []
+  }
+]

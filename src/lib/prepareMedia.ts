@@ -32,8 +32,15 @@ function decodedBytes(image: HTMLImageElement) {
   return width * width * (image.naturalHeight / image.naturalWidth) * 4;
 }
 
-function prepare(value: string, priority: "high" | "low", sizes?: string) {
-  const variant = mediaPreview(value, mediaPreviewWidth(sizes));
+function prepare(
+  value: string,
+  priority: "high" | "low",
+  sizes?: string,
+  publicPreview = true,
+) {
+  const variant = publicPreview
+    ? mediaPreview(value, mediaPreviewWidth(sizes))
+    : null;
   const src = variant ?? stableMediaUrl(value);
   const previous = entries.get(src);
   if (previous && previous.until > Date.now()) {
@@ -120,16 +127,18 @@ export async function prepareMediaUrls(
     signal,
     priority = "high",
     sizes,
+    publicPreview = true,
   }: {
     signal?: AbortSignal;
     priority?: "high" | "low";
     sizes?: string;
+    publicPreview?: boolean;
   } = {},
 ) {
   if (signal?.aborted || typeof Image === "undefined") return;
   const downloads = Promise.all(
     [...new Set(values.filter((value): value is string => Boolean(value)))].map(
-      (value) => prepare(value, priority, sizes),
+      (value) => prepare(value, priority, sizes, publicPreview),
     ),
   );
   if (!signal) {

@@ -435,7 +435,7 @@ export default function ProductEditorPage({
                 <div className="hvm-product-media-grid">
                   {product.media.map((media) => (
                     <div className="hvm-product-media" key={media.id}>
-                      <MediaImage src={media.url} alt={`Foto de ${product.title}`} />
+                      <MediaImage publicPreview={false} src={media.url} alt={`Foto de ${product.title}`} />
                       {media.isPrimary ? (
                         <span className="hvm-product-badge published">
                           Foto principal

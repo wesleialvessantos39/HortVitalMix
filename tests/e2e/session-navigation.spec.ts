@@ -44,7 +44,8 @@ for (const role of ['platform_admin','platform_super_admin']) for (const width o
     await page.locator(width<768?'.admin-mobile-bar .admin-brand':'.admin-sidebar .admin-brand').click();
     await expect(page.locator('.admin-action-grid')).toBeVisible();
     expect(mocked.logoutCount()).toBe(0);
-    await page.locator(width<768?'.admin-mobile-bar .admin-logout':'.admin-sidebar .admin-logout').click();
+    if (width < 768) await page.getByRole('button', { name: 'Abrir menu administrativo', exact: true }).click();
+    await page.locator(width<768?'#admin-navigation-dialog .admin-logout':'.admin-sidebar .admin-logout').click();
     await expect(page).toHaveURL(/\/admin\/entrar$/);
     expect(mocked.logoutCount()).toBe(1);
   });

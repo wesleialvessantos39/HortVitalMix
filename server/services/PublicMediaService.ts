@@ -8,10 +8,30 @@ const cached = new Map<
     string,
     { bytes: Buffer; etag: string; until: number }
   >(),
-  pending = new Map<string, Promise<{ bytes: Buffer; etag: string }>>();
+  pending = new Map<string, Promise<{ bytes: Buffer; etag: string }>>(),
+  originalDownloads = new Map<string, Promise<Buffer>>();
 let size = 0,
   processing = 0;
 const queue: Array<() => void> = [];
+// Responsive variants requested together share one original download. Each
+// caller still passes the current publication/visibility checks before this.
+function downloadOriginal(bucket: string, path: string) {
+  const key = `${bucket}:${path}`;
+  const previous = originalDownloads.get(key);
+  if (previous) return previous;
+  const work = (async () => {
+    const { data, error } = await supabaseAdmin!.storage
+      .from(bucket)
+      .download(path);
+    if (error || !data) throw new CommerceError("MEDIA_NOT_FOUND", 404);
+    if (data.size > 2 * 1024 * 1024)
+      throw new CommerceError("MEDIA_TOO_LARGE", 413);
+    return Buffer.from(await data.arrayBuffer());
+  })();
+  originalDownloads.set(key, work);
+  void work.finally(() => originalDownloads.delete(key)).catch(() => {});
+  return work;
+}
 sharp.cache({ memory: 16, files: 0, items: 32 });
 sharp.concurrency(1);
 async function convert(file: Buffer, width: number) {
@@ -78,13 +98,7 @@ export const PublicMediaService = {
     if (inflight) return inflight;
     if (pending.size >= 12) throw new CommerceError("MEDIA_BUSY", 503);
     const work = (async () => {
-      const { data, error } = await supabaseAdmin.storage
-        .from(bucket)
-        .download(path);
-      if (error || !data) throw new CommerceError("MEDIA_NOT_FOUND", 404);
-      if (data.size > 2 * 1024 * 1024)
-        throw new CommerceError("MEDIA_TOO_LARGE", 413);
-      const bytes = await convert(Buffer.from(await data.arrayBuffer()), width);
+      const bytes = await convert(await downloadOriginal(bucket, path), width);
       const value = {
         bytes,
         etag: '"' + createHash("sha256").update(bytes).digest("hex") + '"',

@@ -126,6 +126,7 @@ export default function ProducerCatalogPage({
                       <div className="hvm-product-photo">
                         {primary ? (
                           <MediaImage
+                            publicPreview={false}
                             src={primary.url}
                             alt={product.title}
                             priority={index<3}

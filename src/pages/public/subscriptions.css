@@ -1,10 +1,12 @@
 .subscription-page {
+  width: 100%;
   max-width: 1120px;
   margin: 0 auto;
   padding: 24px 16px;
   display: grid;
   gap: 24px;
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 .subscription-page h1 {
   font-size: clamp(1.7rem, 4vw, 2.7rem);
@@ -122,6 +124,9 @@
   overflow-wrap: anywhere;
 }
 .subscription-admin {
+  width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
   display: grid;
   gap: 22px;
   max-width: 1120px;

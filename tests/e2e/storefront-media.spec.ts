@@ -4,6 +4,8 @@ const id = (n: number) =>
 const origin = "https://xipbsazvymkqqfmfegwu.supabase.co";
 const photo = (n: number, bucket = "product-media") =>
   `${origin}/storage/v1/object/sign/${bucket}/photo-${n}.png?token=local`;
+const privatePhoto = (n: number, bucket = "product-media") =>
+  `${origin}/storage/v1/object/sign/${bucket}/${id(n)}/${id(n)}-${"a".repeat(64)}.png?token=local`;
 const png = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6LRsAAAAASUVORK5CYII=",
   "base64",
@@ -67,7 +69,13 @@ const session = {
 };
 async function mock(
   page: Page,
-  { producer = false, reauth = false, pagination = false, empty = false } = {},
+  {
+    producer = false,
+    reauth = false,
+    pagination = false,
+    empty = false,
+    privatePhotos = false,
+  } = {},
 ) {
   let recent = !reauth;
   const requests: URL[] = [],
@@ -100,6 +108,15 @@ async function mock(
     })),
   };
   const errors: string[] = [];
+  if (privatePhotos) {
+    store.avatarUrl = privatePhoto(100, "store-media");
+    store.coverImages = store.coverImages.map(
+      (image: { id: string }, index: number) => ({
+        ...image,
+        url: privatePhoto(110 + index, "store-media"),
+      }),
+    );
+  }
   page.on("pageerror", (e) => errors.push(e.message));
   await page.route("**/*", async (route) => {
     const req = route.request(),
@@ -209,7 +226,18 @@ async function mock(
               storeSlug: _slug,
               inStock: _stock,
               ...p
-            }) => ({ ...p, storeId: store.id, isPublished: true, revision: 1 }),
+            }) => ({
+              ...p,
+              media: privatePhotos
+                ? p.media.map((media, index) => ({
+                    ...media,
+                    url: privatePhoto(index),
+                  }))
+                : p.media,
+              storeId: store.id,
+              isPublished: !privatePhotos,
+              revision: 1,
+            }),
           ),
       });
     if (path === "/v1/producer/store" && req.method() === "GET")
@@ -535,6 +563,78 @@ test("assinatura renovada mantém foto carregada sem indicador permanente nem no
   await expect(image).toHaveAttribute("src", original!);
   await expect(carousel.getByRole("status")).toHaveCount(0);
   expect(downloads).toHaveLength(count);
+});
+
+test("fotos privadas do produtor carregam sem tentar endpoint público", async ({
+  page,
+}) => {
+  await mock(page, { producer: true, privatePhotos: true });
+  const previews: string[] = [];
+  await page.route("**/v1/public-media/**", async (route) => {
+    previews.push(route.request().url());
+    await route.fulfill({
+      status: 404,
+      contentType: "application/json",
+      body: '{"error":"MEDIA_NOT_FOUND"}',
+    });
+  });
+  await page.goto("/produtor/produtos");
+  const product = page.locator(".hvm-product-photo img").first();
+  await expect(product).toHaveAttribute("src", privatePhoto(0));
+  await expect
+    .poll(() =>
+      product.evaluate((img) => (img as HTMLImageElement).naturalWidth),
+    )
+    .toBeGreaterThan(0);
+  await page.goto("/produtor/loja");
+  await page.getByRole("tab", { name: "Fotos e capa" }).click();
+  const cover = page
+    .getByRole("region", { name: "Prévia da capa da loja" })
+    .locator(".hvm-carousel-surface > img");
+  await expect(cover).toHaveAttribute("src", privatePhoto(110, "store-media"));
+  await expect
+    .poll(() => cover.evaluate((img) => (img as HTMLImageElement).naturalWidth))
+    .toBeGreaterThan(0);
+  await expect(page.locator(".hvm-store-media-avatar img")).toHaveAttribute(
+    "fetchpriority",
+    "auto",
+  );
+  expect(previews).toEqual([]);
+});
+
+test("próximas capas aguardam a foto exibida antes de ocupar a conexão", async ({
+  page,
+}) => {
+  await mock(page);
+  await page.clock.install();
+  let release!: () => void;
+  const first = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const requested = new Set<string>();
+  await page.route(`${origin}/**`, async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    requested.add(path);
+    if (path === new URL(photo(110, "store-media")).pathname) await first;
+    await route.fulfill({ contentType: "image/png", body: png });
+  });
+  try {
+    await page.goto("/produtores/loja-0", { waitUntil: "domcontentloaded" });
+    await expect
+      .poll(() => requested.has(new URL(photo(110, "store-media")).pathname))
+      .toBe(true);
+    await expect(page.locator(".hvm-store-public")).toBeVisible();
+    await page.clock.runFor(100);
+    expect(requested.has(new URL(photo(111, "store-media")).pathname)).toBe(
+      false,
+    );
+    release();
+    await expect
+      .poll(() => requested.has(new URL(photo(111, "store-media")).pathname))
+      .toBe(true);
+  } finally {
+    release();
+  }
 });
 
 test("carrossel antecipa duas próximas fotos sem abrir os slides", async ({

@@ -1,0 +1,2800 @@
+{
+  "generatedAt": "2026-10-08T16:45:19.766Z",
+  "method": "Current test inventory; latest result per test from full execution and targeted executions. Not a single all-green full execution.",
+  "stats": {
+    "current": 457,
+    "passed": 457,
+    "missing": 0
+  },
+  "runs": [
+    {
+      "source": "hort-e2e-result.json",
+      "startTime": "2026-10-08T11:14:07.281Z",
+      "duration": 563930.2840000001,
+      "expected": 412,
+      "skipped": 0,
+      "unexpected": 5,
+      "flaky": 0
+    },
+    {
+      "source": "hort-final-targeted.json",
+      "startTime": "2026-10-08T11:24:49.444Z",
+      "duration": 129131.348,
+      "expected": 75,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    {
+      "source": "hort-safe-area.json",
+      "startTime": "2026-10-08T11:32:14.434Z",
+      "duration": 4618.762,
+      "expected": 4,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    {
+      "source": "hort-completion-tests.json",
+      "startTime": "2026-10-08T16:41:20.478Z",
+      "duration": 35132.792,
+      "expected": 30,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    {
+      "source": "hort-completion-windows-final.json",
+      "startTime": "2026-10-08T16:42:59.257Z",
+      "duration": 6649.299000000001,
+      "expected": 3,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    }
+  ],
+  "tests": [
+    {
+      "key": "access-confirmation.spec.ts|access-confirmation.spec.ts > confirmation recognizes identity once and opens the correct password login|",
+      "file": "access-confirmation.spec.ts",
+      "title": "access-confirmation.spec.ts > confirmation recognizes identity once and opens the correct password login",
+      "status": "expected"
+    },
+    {
+      "key": "access-confirmation.spec.ts|access-confirmation.spec.ts > pending signed link resends in place without asking email again|",
+      "file": "access-confirmation.spec.ts",
+      "title": "access-confirmation.spec.ts > pending signed link resends in place without asking email again",
+      "status": "expected"
+    },
+    {
+      "key": "access-confirmation.spec.ts|access-confirmation.spec.ts > temporary failure is recoverable and does not claim expiration|",
+      "file": "access-confirmation.spec.ts",
+      "title": "access-confirmation.spec.ts > temporary failure is recoverable and does not claim expiration",
+      "status": "expected"
+    },
+    {
+      "key": "access-confirmation.spec.ts|access-confirmation.spec.ts > super admin can block public identities|",
+      "file": "access-confirmation.spec.ts",
+      "title": "access-confirmation.spec.ts > super admin can block public identities",
+      "status": "expected"
+    },
+    {
+      "key": "access-confirmation.spec.ts|access-confirmation.spec.ts > property alias uses the canonical queue and archives approvals as read only|",
+      "file": "access-confirmation.spec.ts",
+      "title": "access-confirmation.spec.ts > property alias uses the canonical queue and archives approvals as read only",
+      "status": "expected"
+    },
+    {
+      "key": "admin-governance-responsive.spec.ts|admin-governance-responsive.spec.ts > super administrador vê os 52 municípios oficiais pelo nome|",
+      "file": "admin-governance-responsive.spec.ts",
+      "title": "admin-governance-responsive.spec.ts > super administrador vê os 52 municípios oficiais pelo nome",
+      "status": "expected"
+    },
+    {
+      "key": "admin-governance-responsive.spec.ts|admin-governance-responsive.spec.ts > platform_admin: populated administrative screens at 320px|",
+      "file": "admin-governance-responsive.spec.ts",
+      "title": "admin-governance-responsive.spec.ts > platform_admin: populated administrative screens at 320px",
+      "status": "expected"
+    },
+    {
+      "key": "admin-governance-responsive.spec.ts|admin-governance-responsive.spec.ts > platform_admin: populated administrative screens at 390px|",
+      "file": "admin-governance-responsive.spec.ts",
+      "title": "admin-governance-responsive.spec.ts > platform_admin: populated administrative screens at 390px",
+      "status": "expected"
+    },
+    {
+      "key": "admin-governance-responsive.spec.ts|admin-governance-responsive.spec.ts > platform_admin: populated administrative screens at 768px|",
+      "file": "admin-governance-responsive.spec.ts",
+      "title": "admin-governance-responsive.spec.ts > platform_admin: populated administrative screens at 768px",
+      "status": "expected"
+    },
+    {
+      "key": "admin-governance-responsive.spec.ts|admin-governance-responsive.spec.ts > platform_admin: populated administrative screens at 1024px|",
+      "file": "admin-governance-responsive.spec.ts",
+      "title": "admin-governance-responsive.spec.ts > platform_admin: populated administrative screens at 1024px",
+      "status": "expected"
+    },
+    {
+      "key": "admin-governance-responsive.spec.ts|admin-governance-responsive.spec.ts > platform_admin: populated administrative screens at 1440px|",
+      "file": "admin-governance-responsive.spec.ts",
+      "title": "admin-governance-responsive.spec.ts > platform_admin: populated administrative screens at 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "admin-governance-responsive.spec.ts|admin-governance-responsive.spec.ts > platform_super_admin: populated administrative screens at 320px|",
+      "file": "admin-governance-responsive.spec.ts",
+      "title": "admin-governance-responsive.spec.ts > platform_super_admin: populated administrative screens at 320px",
+      "status": "expected"
+    },
+    {
+      "key": "admin-governance-responsive.spec.ts|admin-governance-responsive.spec.ts > platform_super_admin: populated administrative screens at 390px|",
+      "file": "admin-governance-responsive.spec.ts",
+      "title": "admin-governance-responsive.spec.ts > platform_super_admin: populated administrative screens at 390px",
+      "status": "expected"
+    },
+    {
+      "key": "admin-governance-responsive.spec.ts|admin-governance-responsive.spec.ts > platform_super_admin: populated administrative screens at 768px|",
+      "file": "admin-governance-responsive.spec.ts",
+      "title": "admin-governance-responsive.spec.ts > platform_super_admin: populated administrative screens at 768px",
+      "status": "expected"
+    },
+    {
+      "key": "admin-governance-responsive.spec.ts|admin-governance-responsive.spec.ts > platform_super_admin: populated administrative screens at 1024px|",
+      "file": "admin-governance-responsive.spec.ts",
+      "title": "admin-governance-responsive.spec.ts > platform_super_admin: populated administrative screens at 1024px",
+      "status": "expected"
+    },
+    {
+      "key": "admin-governance-responsive.spec.ts|admin-governance-responsive.spec.ts > platform_super_admin: populated administrative screens at 1440px|",
+      "file": "admin-governance-responsive.spec.ts",
+      "title": "admin-governance-responsive.spec.ts > platform_super_admin: populated administrative screens at 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "admin-governance-responsive.spec.ts|admin-governance-responsive.spec.ts > audit queue keeps one mobile width and a three-column comparator on desktop|",
+      "file": "admin-governance-responsive.spec.ts",
+      "title": "admin-governance-responsive.spec.ts > audit queue keeps one mobile width and a three-column comparator on desktop",
+      "status": "expected"
+    },
+    {
+      "key": "admin-governance-responsive.spec.ts|admin-governance-responsive.spec.ts > approved property moves to Arquivados as read-only|",
+      "file": "admin-governance-responsive.spec.ts",
+      "title": "admin-governance-responsive.spec.ts > approved property moves to Arquivados as read-only",
+      "status": "expected"
+    },
+    {
+      "key": "admin-governance-responsive.spec.ts|admin-governance-responsive.spec.ts > super administrator confirms block, deletion and registration review|",
+      "file": "admin-governance-responsive.spec.ts",
+      "title": "admin-governance-responsive.spec.ts > super administrator confirms block, deletion and registration review",
+      "status": "expected"
+    },
+    {
+      "key": "admin-governance-responsive.spec.ts|admin-governance-responsive.spec.ts > configuração sem alterações mantém salvar desabilitado sem cursor de espera|",
+      "file": "admin-governance-responsive.spec.ts",
+      "title": "admin-governance-responsive.spec.ts > configuração sem alterações mantém salvar desabilitado sem cursor de espera",
+      "status": "expected"
+    },
+    {
+      "key": "admin-invite-lifecycle.spec.ts|admin-invite-lifecycle.spec.ts > convites: excluir, reenviar e limpar histórico em 320px|",
+      "file": "admin-invite-lifecycle.spec.ts",
+      "title": "admin-invite-lifecycle.spec.ts > convites: excluir, reenviar e limpar histórico em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "admin-invite-lifecycle.spec.ts|admin-invite-lifecycle.spec.ts > convites: excluir, reenviar e limpar histórico em 390px|",
+      "file": "admin-invite-lifecycle.spec.ts",
+      "title": "admin-invite-lifecycle.spec.ts > convites: excluir, reenviar e limpar histórico em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "admin-invite-lifecycle.spec.ts|admin-invite-lifecycle.spec.ts > convites: excluir, reenviar e limpar histórico em 1440px|",
+      "file": "admin-invite-lifecycle.spec.ts",
+      "title": "admin-invite-lifecycle.spec.ts > convites: excluir, reenviar e limpar histórico em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "admin-invite-lifecycle.spec.ts|admin-invite-lifecycle.spec.ts > resposta antiga da atualização não restaura convite excluído|",
+      "file": "admin-invite-lifecycle.spec.ts",
+      "title": "admin-invite-lifecycle.spec.ts > resposta antiga da atualização não restaura convite excluído",
+      "status": "expected"
+    },
+    {
+      "key": "admin-invite-lifecycle.spec.ts|admin-invite-lifecycle.spec.ts > aceite distingue platform_admin em 320px|",
+      "file": "admin-invite-lifecycle.spec.ts",
+      "title": "admin-invite-lifecycle.spec.ts > aceite distingue platform_admin em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "admin-invite-lifecycle.spec.ts|admin-invite-lifecycle.spec.ts > aceite distingue platform_admin em 390px|",
+      "file": "admin-invite-lifecycle.spec.ts",
+      "title": "admin-invite-lifecycle.spec.ts > aceite distingue platform_admin em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "admin-invite-lifecycle.spec.ts|admin-invite-lifecycle.spec.ts > aceite distingue platform_admin em 1440px|",
+      "file": "admin-invite-lifecycle.spec.ts",
+      "title": "admin-invite-lifecycle.spec.ts > aceite distingue platform_admin em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "admin-invite-lifecycle.spec.ts|admin-invite-lifecycle.spec.ts > aceite distingue platform_super_admin em 320px|",
+      "file": "admin-invite-lifecycle.spec.ts",
+      "title": "admin-invite-lifecycle.spec.ts > aceite distingue platform_super_admin em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "admin-invite-lifecycle.spec.ts|admin-invite-lifecycle.spec.ts > aceite distingue platform_super_admin em 390px|",
+      "file": "admin-invite-lifecycle.spec.ts",
+      "title": "admin-invite-lifecycle.spec.ts > aceite distingue platform_super_admin em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "admin-invite-lifecycle.spec.ts|admin-invite-lifecycle.spec.ts > aceite distingue platform_super_admin em 1440px|",
+      "file": "admin-invite-lifecycle.spec.ts",
+      "title": "admin-invite-lifecycle.spec.ts > aceite distingue platform_super_admin em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "admin-login-sync.spec.ts|admin-login-sync.spec.ts > platform_admin: password login opens dashboard without another session round trip|",
+      "file": "admin-login-sync.spec.ts",
+      "title": "admin-login-sync.spec.ts > platform_admin: password login opens dashboard without another session round trip",
+      "status": "expected"
+    },
+    {
+      "key": "admin-login-sync.spec.ts|admin-login-sync.spec.ts > platform_admin: refresh spins only while the request is pending|",
+      "file": "admin-login-sync.spec.ts",
+      "title": "admin-login-sync.spec.ts > platform_admin: refresh spins only while the request is pending",
+      "status": "expected"
+    },
+    {
+      "key": "admin-login-sync.spec.ts|admin-login-sync.spec.ts > platform_super_admin: password login opens dashboard without another session round trip|",
+      "file": "admin-login-sync.spec.ts",
+      "title": "admin-login-sync.spec.ts > platform_super_admin: password login opens dashboard without another session round trip",
+      "status": "expected"
+    },
+    {
+      "key": "admin-login-sync.spec.ts|admin-login-sync.spec.ts > platform_super_admin: refresh spins only while the request is pending|",
+      "file": "admin-login-sync.spec.ts",
+      "title": "admin-login-sync.spec.ts > platform_super_admin: refresh spins only while the request is pending",
+      "status": "expected"
+    },
+    {
+      "key": "documents.spec.ts|documents.spec.ts > conferência responsiva 320|",
+      "file": "documents.spec.ts",
+      "title": "documents.spec.ts > conferência responsiva 320",
+      "status": "expected"
+    },
+    {
+      "key": "documents.spec.ts|documents.spec.ts > conferência responsiva 390|",
+      "file": "documents.spec.ts",
+      "title": "documents.spec.ts > conferência responsiva 390",
+      "status": "expected"
+    },
+    {
+      "key": "documents.spec.ts|documents.spec.ts > conferência responsiva 768|",
+      "file": "documents.spec.ts",
+      "title": "documents.spec.ts > conferência responsiva 768",
+      "status": "expected"
+    },
+    {
+      "key": "documents.spec.ts|documents.spec.ts > conferência responsiva 1440|",
+      "file": "documents.spec.ts",
+      "title": "documents.spec.ts > conferência responsiva 1440",
+      "status": "expected"
+    },
+    {
+      "key": "documents.spec.ts|documents.spec.ts > envio direto lê o PDF e preenche o cadastro|",
+      "file": "documents.spec.ts",
+      "title": "documents.spec.ts > envio direto lê o PDF e preenche o cadastro",
+      "status": "expected"
+    },
+    {
+      "key": "documents.spec.ts|documents.spec.ts > leitura do PDF não depende de IA|",
+      "file": "documents.spec.ts",
+      "title": "documents.spec.ts > leitura do PDF não depende de IA",
+      "status": "expected"
+    },
+    {
+      "key": "documents.spec.ts|documents.spec.ts > exclusão confirma e remove da lista ativa|",
+      "file": "documents.spec.ts",
+      "title": "documents.spec.ts > exclusão confirma e remove da lista ativa",
+      "status": "expected"
+    },
+    {
+      "key": "iphone-responsive.spec.ts|iphone-responsive.spec.ts > iPhone viewport and touch: consumer|",
+      "file": "iphone-responsive.spec.ts",
+      "title": "iphone-responsive.spec.ts > iPhone viewport and touch: consumer",
+      "status": "expected"
+    },
+    {
+      "key": "iphone-responsive.spec.ts|iphone-responsive.spec.ts > iPhone viewport and touch: producer|",
+      "file": "iphone-responsive.spec.ts",
+      "title": "iphone-responsive.spec.ts > iPhone viewport and touch: producer",
+      "status": "expected"
+    },
+    {
+      "key": "iphone-responsive.spec.ts|iphone-responsive.spec.ts > iPhone viewport and touch: platform_admin|",
+      "file": "iphone-responsive.spec.ts",
+      "title": "iphone-responsive.spec.ts > iPhone viewport and touch: platform_admin",
+      "status": "expected"
+    },
+    {
+      "key": "iphone-responsive.spec.ts|iphone-responsive.spec.ts > iPhone viewport and touch: platform_super_admin|",
+      "file": "iphone-responsive.spec.ts",
+      "title": "iphone-responsive.spec.ts > iPhone viewport and touch: platform_super_admin",
+      "status": "expected"
+    },
+    {
+      "key": "navigation-responsive.spec.ts|navigation-responsive.spec.ts > menu público cabe e mantém foco em 320px|",
+      "file": "navigation-responsive.spec.ts",
+      "title": "navigation-responsive.spec.ts > menu público cabe e mantém foco em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "navigation-responsive.spec.ts|navigation-responsive.spec.ts > menu público cabe e mantém foco em 390px|",
+      "file": "navigation-responsive.spec.ts",
+      "title": "navigation-responsive.spec.ts > menu público cabe e mantém foco em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "navigation-responsive.spec.ts|navigation-responsive.spec.ts > menu público cabe e mantém foco em 430px|",
+      "file": "navigation-responsive.spec.ts",
+      "title": "navigation-responsive.spec.ts > menu público cabe e mantém foco em 430px",
+      "status": "expected"
+    },
+    {
+      "key": "navigation-responsive.spec.ts|navigation-responsive.spec.ts > produtor encontra todas as áreas no menu e navegação fecha o drawer|",
+      "file": "navigation-responsive.spec.ts",
+      "title": "navigation-responsive.spec.ts > produtor encontra todas as áreas no menu e navegação fecha o drawer",
+      "status": "expected"
+    },
+    {
+      "key": "navigation-responsive.spec.ts|navigation-responsive.spec.ts > localização abre pelo menu com foco e mantém rolagem de conteúdo necessário|",
+      "file": "navigation-responsive.spec.ts",
+      "title": "navigation-responsive.spec.ts > localização abre pelo menu com foco e mantém rolagem de conteúdo necessário",
+      "status": "expected"
+    },
+    {
+      "key": "navigation-responsive.spec.ts|navigation-responsive.spec.ts > admin possui somente quatro atalhos mobile em 320px|",
+      "file": "navigation-responsive.spec.ts",
+      "title": "navigation-responsive.spec.ts > admin possui somente quatro atalhos mobile em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "navigation-responsive.spec.ts|navigation-responsive.spec.ts > admin possui somente quatro atalhos mobile em 390px|",
+      "file": "navigation-responsive.spec.ts",
+      "title": "navigation-responsive.spec.ts > admin possui somente quatro atalhos mobile em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "navigation-responsive.spec.ts|navigation-responsive.spec.ts > admin possui somente quatro atalhos mobile em 430px|",
+      "file": "navigation-responsive.spec.ts",
+      "title": "navigation-responsive.spec.ts > admin possui somente quatro atalhos mobile em 430px",
+      "status": "expected"
+    },
+    {
+      "key": "navigation-responsive.spec.ts|navigation-responsive.spec.ts > menu administrativo conserva restrições por setor|",
+      "file": "navigation-responsive.spec.ts",
+      "title": "navigation-responsive.spec.ts > menu administrativo conserva restrições por setor",
+      "status": "expected"
+    },
+    {
+      "key": "navigation-responsive.spec.ts|navigation-responsive.spec.ts > acesso /entrar/consumidor cabe em 390x844 sem rolagem vazia|",
+      "file": "navigation-responsive.spec.ts",
+      "title": "navigation-responsive.spec.ts > acesso /entrar/consumidor cabe em 390x844 sem rolagem vazia",
+      "status": "expected"
+    },
+    {
+      "key": "navigation-responsive.spec.ts|navigation-responsive.spec.ts > acesso /entrar/produtor cabe em 390x844 sem rolagem vazia|",
+      "file": "navigation-responsive.spec.ts",
+      "title": "navigation-responsive.spec.ts > acesso /entrar/produtor cabe em 390x844 sem rolagem vazia",
+      "status": "expected"
+    },
+    {
+      "key": "navigation-responsive.spec.ts|navigation-responsive.spec.ts > acesso /entrar/administrador cabe em 390x844 sem rolagem vazia|",
+      "file": "navigation-responsive.spec.ts",
+      "title": "navigation-responsive.spec.ts > acesso /entrar/administrador cabe em 390x844 sem rolagem vazia",
+      "status": "expected"
+    },
+    {
+      "key": "navigation-responsive.spec.ts|navigation-responsive.spec.ts > acesso /entrar/super-administrador cabe em 390x844 sem rolagem vazia|",
+      "file": "navigation-responsive.spec.ts",
+      "title": "navigation-responsive.spec.ts > acesso /entrar/super-administrador cabe em 390x844 sem rolagem vazia",
+      "status": "expected"
+    },
+    {
+      "key": "navigation-responsive.spec.ts|navigation-responsive.spec.ts > painel desktop cabe e links laterais rolam independentemente|",
+      "file": "navigation-responsive.spec.ts",
+      "title": "navigation-responsive.spec.ts > painel desktop cabe e links laterais rolam independentemente",
+      "status": "expected"
+    },
+    {
+      "key": "registration-confirmation.spec.ts|registration-confirmation.spec.ts > cadastro consumer confirma perfil automaticamente em 390px sem aguardar e-mail|",
+      "file": "registration-confirmation.spec.ts",
+      "title": "registration-confirmation.spec.ts > cadastro consumer confirma perfil automaticamente em 390px sem aguardar e-mail",
+      "status": "expected"
+    },
+    {
+      "key": "registration-confirmation.spec.ts|registration-confirmation.spec.ts > cadastro consumer confirma perfil automaticamente em 1440px sem aguardar e-mail|",
+      "file": "registration-confirmation.spec.ts",
+      "title": "registration-confirmation.spec.ts > cadastro consumer confirma perfil automaticamente em 1440px sem aguardar e-mail",
+      "status": "expected"
+    },
+    {
+      "key": "registration-confirmation.spec.ts|registration-confirmation.spec.ts > cadastro producer confirma perfil automaticamente em 390px sem aguardar e-mail|",
+      "file": "registration-confirmation.spec.ts",
+      "title": "registration-confirmation.spec.ts > cadastro producer confirma perfil automaticamente em 390px sem aguardar e-mail",
+      "status": "expected"
+    },
+    {
+      "key": "registration-confirmation.spec.ts|registration-confirmation.spec.ts > cadastro producer confirma perfil automaticamente em 1440px sem aguardar e-mail|",
+      "file": "registration-confirmation.spec.ts",
+      "title": "registration-confirmation.spec.ts > cadastro producer confirma perfil automaticamente em 1440px sem aguardar e-mail",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /produtor/entrega producer 320px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /produtor/entrega producer 320px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /produtor/loja/janelas producer 320px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /produtor/loja/janelas producer 320px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /produtor/assinaturas producer 320px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /produtor/assinaturas producer 320px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /assinaturas/minhas consumer 320px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /assinaturas/minhas consumer 320px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /assinaturas/minhas producer 320px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /assinaturas/minhas producer 320px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /pos/venda/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa consumer 320px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /pos/venda/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa consumer 320px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /admin/bloqueios platform_super_admin 320px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /admin/bloqueios platform_super_admin 320px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /admin/denuncias platform_super_admin 320px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /admin/denuncias platform_super_admin 320px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /admin/politica-reembolso platform_super_admin 320px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /admin/politica-reembolso platform_super_admin 320px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /reembolsos consumer 320px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /reembolsos consumer 320px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /produtor/entrega producer 768px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /produtor/entrega producer 768px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /produtor/loja/janelas producer 768px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /produtor/loja/janelas producer 768px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /produtor/assinaturas producer 768px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /produtor/assinaturas producer 768px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /assinaturas/minhas consumer 768px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /assinaturas/minhas consumer 768px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /assinaturas/minhas producer 768px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /assinaturas/minhas producer 768px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /pos/venda/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa consumer 768px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /pos/venda/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa consumer 768px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /admin/bloqueios platform_super_admin 768px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /admin/bloqueios platform_super_admin 768px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /admin/denuncias platform_super_admin 768px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /admin/denuncias platform_super_admin 768px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /admin/politica-reembolso platform_super_admin 768px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /admin/politica-reembolso platform_super_admin 768px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /reembolsos consumer 768px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /reembolsos consumer 768px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /produtor/entrega producer 1440px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /produtor/entrega producer 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /produtor/loja/janelas producer 1440px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /produtor/loja/janelas producer 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /produtor/assinaturas producer 1440px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /produtor/assinaturas producer 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /assinaturas/minhas consumer 1440px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /assinaturas/minhas consumer 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /assinaturas/minhas producer 1440px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /assinaturas/minhas producer 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /pos/venda/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa consumer 1440px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /pos/venda/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa consumer 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /admin/bloqueios platform_super_admin 1440px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /admin/bloqueios platform_super_admin 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /admin/denuncias platform_super_admin 1440px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /admin/denuncias platform_super_admin 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /admin/politica-reembolso platform_super_admin 1440px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /admin/politica-reembolso platform_super_admin 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-completion.spec.ts|screen-audit-completion.spec.ts > telas restantes autenticadas: /reembolsos consumer 1440px|",
+      "file": "screen-audit-completion.spec.ts",
+      "title": "screen-audit-completion.spec.ts > telas restantes autenticadas: /reembolsos consumer 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /produtor/vendas 320px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /produtor/vendas 320px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /produtor/reembolsos 320px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /produtor/reembolsos 320px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /notificacoes 320px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /notificacoes 320px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /planos 320px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /planos 320px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/notificacoes 320px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/notificacoes 320px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/assinaturas 320px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/assinaturas 320px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/avaliacoes 320px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/avaliacoes 320px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/bi 320px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/bi 320px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /produtor/vendas 768px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /produtor/vendas 768px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /produtor/reembolsos 768px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /produtor/reembolsos 768px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /notificacoes 768px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /notificacoes 768px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /planos 768px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /planos 768px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/notificacoes 768px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/notificacoes 768px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/assinaturas 768px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/assinaturas 768px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/avaliacoes 768px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/avaliacoes 768px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/bi 768px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/bi 768px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /produtor/vendas 1440px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /produtor/vendas 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /produtor/reembolsos 1440px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /produtor/reembolsos 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /notificacoes 1440px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /notificacoes 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /planos 1440px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /planos 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/notificacoes 1440px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/notificacoes 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/assinaturas 1440px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/assinaturas 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/avaliacoes 1440px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/avaliacoes 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "screen-audit-responsive.spec.ts|screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/bi 1440px|",
+      "file": "screen-audit-responsive.spec.ts",
+      "title": "screen-audit-responsive.spec.ts > auditoria com conteúdo longo: /admin/bi 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "session-navigation.spec.ts|session-navigation.spec.ts > marca e endereços administrativos: platform_admin 360|",
+      "file": "session-navigation.spec.ts",
+      "title": "session-navigation.spec.ts > marca e endereços administrativos: platform_admin 360",
+      "status": "expected"
+    },
+    {
+      "key": "session-navigation.spec.ts|session-navigation.spec.ts > marca e endereços administrativos: platform_admin 1440|",
+      "file": "session-navigation.spec.ts",
+      "title": "session-navigation.spec.ts > marca e endereços administrativos: platform_admin 1440",
+      "status": "expected"
+    },
+    {
+      "key": "session-navigation.spec.ts|session-navigation.spec.ts > marca e endereços administrativos: platform_super_admin 360|",
+      "file": "session-navigation.spec.ts",
+      "title": "session-navigation.spec.ts > marca e endereços administrativos: platform_super_admin 360",
+      "status": "expected"
+    },
+    {
+      "key": "session-navigation.spec.ts|session-navigation.spec.ts > marca e endereços administrativos: platform_super_admin 1440|",
+      "file": "session-navigation.spec.ts",
+      "title": "session-navigation.spec.ts > marca e endereços administrativos: platform_super_admin 1440",
+      "status": "expected"
+    },
+    {
+      "key": "session-navigation.spec.ts|session-navigation.spec.ts > login público com layout completo: consumer 320|",
+      "file": "session-navigation.spec.ts",
+      "title": "session-navigation.spec.ts > login público com layout completo: consumer 320",
+      "status": "expected"
+    },
+    {
+      "key": "session-navigation.spec.ts|session-navigation.spec.ts > login público com layout completo: consumer 1440|",
+      "file": "session-navigation.spec.ts",
+      "title": "session-navigation.spec.ts > login público com layout completo: consumer 1440",
+      "status": "expected"
+    },
+    {
+      "key": "session-navigation.spec.ts|session-navigation.spec.ts > sessão persiste na navegação e cadastro só reaparece ao sair: consumer|",
+      "file": "session-navigation.spec.ts",
+      "title": "session-navigation.spec.ts > sessão persiste na navegação e cadastro só reaparece ao sair: consumer",
+      "status": "expected"
+    },
+    {
+      "key": "session-navigation.spec.ts|session-navigation.spec.ts > login público com layout completo: producer 320|",
+      "file": "session-navigation.spec.ts",
+      "title": "session-navigation.spec.ts > login público com layout completo: producer 320",
+      "status": "expected"
+    },
+    {
+      "key": "session-navigation.spec.ts|session-navigation.spec.ts > login público com layout completo: producer 1440|",
+      "file": "session-navigation.spec.ts",
+      "title": "session-navigation.spec.ts > login público com layout completo: producer 1440",
+      "status": "expected"
+    },
+    {
+      "key": "session-navigation.spec.ts|session-navigation.spec.ts > sessão persiste na navegação e cadastro só reaparece ao sair: producer|",
+      "file": "session-navigation.spec.ts",
+      "title": "session-navigation.spec.ts > sessão persiste na navegação e cadastro só reaparece ao sair: producer",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > shell e cadastro em 320px|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > shell e cadastro em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > shell e cadastro em 360px|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > shell e cadastro em 360px",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > shell e cadastro em 430px|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > shell e cadastro em 430px",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > shell e cadastro em 768px|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > shell e cadastro em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > shell e cadastro em 1024px|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > shell e cadastro em 1024px",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > shell e cadastro em 1440px|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > shell e cadastro em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > navegação, diálogo e indisponibilidade honesta|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > navegação, diálogo e indisponibilidade honesta",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > falha de config é não bloqueante e mantém navegação|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > falha de config é não bloqueante e mantém navegação",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > config pública válida atualiza slogan da shell|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > config pública válida atualiza slogan da shell",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > fluxos públicos de segurança estão acessíveis e responsivos|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > fluxos públicos de segurança estão acessíveis e responsivos",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > rotas diretas de recuperação preservam estado correto|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > rotas diretas de recuperação preservam estado correto",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > recuperação explicita o perfil e mantém administração isolada|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > recuperação explicita o perfil e mantém administração isolada",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > conta separa consumidor e produtor e administração fica independente|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > conta separa consumidor e produtor e administração fica independente",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > ícone de administração da home abre o seletor administrativo|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > ícone de administração da home abre o seletor administrativo",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > Conta e Administração possuem pontos de entrada diferentes na home|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > Conta e Administração possuem pontos de entrada diferentes na home",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > Conta mobile continua separada da Administração|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > Conta mobile continua separada da Administração",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > senha forte orienta e bloqueia cadastro fraco|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > senha forte orienta e bloqueia cadastro fraco",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > cadastros mostram exatamente os campos obrigatórios ausentes|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > cadastros mostram exatamente os campos obrigatórios ausentes",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > Trilha 02 — configuração admin responsiva em 320px|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > Trilha 02 — configuração admin responsiva em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > Trilha 02 — configuração admin responsiva em 360px|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > Trilha 02 — configuração admin responsiva em 360px",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > Trilha 02 — configuração admin responsiva em 768px|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > Trilha 02 — configuração admin responsiva em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > Trilha 02 — configuração admin responsiva em 1440px|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > Trilha 02 — configuração admin responsiva em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > Trilha 02 — loading permanece visível enquanto a requisição está pendente|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > Trilha 02 — loading permanece visível enquanto a requisição está pendente",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > Trilha 02 — erro recuperável mostra card e retry|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > Trilha 02 — erro recuperável mostra card e retry",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > Trilha 02 — conflito 409 preserva edição e oferece reload|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > Trilha 02 — conflito 409 preserva edição e oferece reload",
+      "status": "expected"
+    },
+    {
+      "key": "shell.spec.ts|shell.spec.ts > Trilha 02 — sucesso 200 exibe confirmação e nova revisão|",
+      "file": "shell.spec.ts",
+      "title": "shell.spec.ts > Trilha 02 — sucesso 200 exibe confirmação e nova revisão",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > destaque aparece enquanto retrato lento carrega em paralelo|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > destaque aparece enquanto retrato lento carrega em paralelo",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > vitrine aparece sem esperar fotos lentas dos produtos|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > vitrine aparece sem esperar fotos lentas dos produtos",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > imagem inválida libera a vitrine e mantém indicação honesta da falha|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > imagem inválida libera a vitrine e mantém indicação honesta da falha",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > foto sem resposta não deixa a vitrine esperando indefinidamente|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > foto sem resposta não deixa a vitrine esperando indefinidamente",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > assinatura renovada mantém foto carregada sem indicador permanente nem novo download|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > assinatura renovada mantém foto carregada sem indicador permanente nem novo download",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > fotos privadas do produtor carregam sem tentar endpoint público|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > fotos privadas do produtor carregam sem tentar endpoint público",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > próximas capas aguardam a foto exibida antes de ocupar a conexão|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > próximas capas aguardam a foto exibida antes de ocupar a conexão",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > carrossel antecipa duas próximas fotos sem abrir os slides|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > carrossel antecipa duas próximas fotos sem abrir os slides",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > destaques e busca única adaptados a 320px|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > destaques e busca única adaptados a 320px",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > produtos e capa da loja com fotos em 320px|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > produtos e capa da loja com fotos em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > escolha dos três modos de capa em 320px|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > escolha dos três modos de capa em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > destaques e busca única adaptados a 390px|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > destaques e busca única adaptados a 390px",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > produtos e capa da loja com fotos em 390px|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > produtos e capa da loja com fotos em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > escolha dos três modos de capa em 390px|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > escolha dos três modos de capa em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > destaques e busca única adaptados a 768px|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > destaques e busca única adaptados a 768px",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > produtos e capa da loja com fotos em 768px|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > produtos e capa da loja com fotos em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > escolha dos três modos de capa em 768px|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > escolha dos três modos de capa em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > destaques e busca única adaptados a 1440px|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > destaques e busca única adaptados a 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > produtos e capa da loja com fotos em 1440px|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > produtos e capa da loja com fotos em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > escolha dos três modos de capa em 1440px|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > escolha dos três modos de capa em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > mudar região filtra os slides e clicar abre a loja correta|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > mudar região filtra os slides e clicar abre a loja correta",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > páginas de produtos avançam e retornam ao início|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > páginas de produtos avançam e retornam ao início",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > autoplay respeita pausa, foco e preferência de movimento reduzido|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > autoplay respeita pausa, foco e preferência de movimento reduzido",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > salvar identidade preserva apresentação ainda não salva e recarga mantém capa|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > salvar identidade preserva apresentação ainda não salva e recarga mantém capa",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > foto grande é otimizada e retry após senha usa o mesmo comando|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > foto grande é otimizada e retry após senha usa o mesmo comando",
+      "status": "expected"
+    },
+    {
+      "key": "storefront-media.spec.ts|storefront-media.spec.ts > estado vazio regional é honesto e não inventa fotos, produtos ou preços|",
+      "file": "storefront-media.spec.ts",
+      "title": "storefront-media.spec.ts > estado vazio regional é honesto e não inventa fotos, produtos ou preços",
+      "status": "expected"
+    },
+    {
+      "key": "trilha03-auth.spec.ts|trilha03-auth.spec.ts > Trilha 03 — cadastro público separado e responsivo em 320px|",
+      "file": "trilha03-auth.spec.ts",
+      "title": "trilha03-auth.spec.ts > Trilha 03 — cadastro público separado e responsivo em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha03-auth.spec.ts|trilha03-auth.spec.ts > Trilha 03 — cadastro público separado e responsivo em 390px|",
+      "file": "trilha03-auth.spec.ts",
+      "title": "trilha03-auth.spec.ts > Trilha 03 — cadastro público separado e responsivo em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha03-auth.spec.ts|trilha03-auth.spec.ts > Trilha 03 — cadastro público separado e responsivo em 768px|",
+      "file": "trilha03-auth.spec.ts",
+      "title": "trilha03-auth.spec.ts > Trilha 03 — cadastro público separado e responsivo em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha03-auth.spec.ts|trilha03-auth.spec.ts > Trilha 03 — cadastro público separado e responsivo em 1024px|",
+      "file": "trilha03-auth.spec.ts",
+      "title": "trilha03-auth.spec.ts > Trilha 03 — cadastro público separado e responsivo em 1024px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha03-auth.spec.ts|trilha03-auth.spec.ts > Trilha 03 — cadastro público separado e responsivo em 1440px|",
+      "file": "trilha03-auth.spec.ts",
+      "title": "trilha03-auth.spec.ts > Trilha 03 — cadastro público separado e responsivo em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha03-auth.spec.ts|trilha03-auth.spec.ts > Trilha 03 — portal administrativo usa ponto de entrada independente|",
+      "file": "trilha03-auth.spec.ts",
+      "title": "trilha03-auth.spec.ts > Trilha 03 — portal administrativo usa ponto de entrada independente",
+      "status": "expected"
+    },
+    {
+      "key": "trilha03-auth.spec.ts|trilha03-auth.spec.ts > Trilha 03 — seleção pública nunca oferece papel administrativo|",
+      "file": "trilha03-auth.spec.ts",
+      "title": "trilha03-auth.spec.ts > Trilha 03 — seleção pública nunca oferece papel administrativo",
+      "status": "expected"
+    },
+    {
+      "key": "trilha03-auth.spec.ts|trilha03-auth.spec.ts > Trilha 03 — home acessa cadastro pela Conta e admin/entrar mostra somente Administração|",
+      "file": "trilha03-auth.spec.ts",
+      "title": "trilha03-auth.spec.ts > Trilha 03 — home acessa cadastro pela Conta e admin/entrar mostra somente Administração",
+      "status": "expected"
+    },
+    {
+      "key": "trilha03-auth.spec.ts|trilha03-auth.spec.ts > Trilha 03 — seletor de conta também expõe o caminho para cadastro|",
+      "file": "trilha03-auth.spec.ts",
+      "title": "trilha03-auth.spec.ts > Trilha 03 — seletor de conta também expõe o caminho para cadastro",
+      "status": "expected"
+    },
+    {
+      "key": "trilha04-contact-recovery.spec.ts|trilha04-contact-recovery.spec.ts > Trilha 04 — camada visual responsiva em 320px|",
+      "file": "trilha04-contact-recovery.spec.ts",
+      "title": "trilha04-contact-recovery.spec.ts > Trilha 04 — camada visual responsiva em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha04-contact-recovery.spec.ts|trilha04-contact-recovery.spec.ts > Trilha 04 — camada visual responsiva em 430px|",
+      "file": "trilha04-contact-recovery.spec.ts",
+      "title": "trilha04-contact-recovery.spec.ts > Trilha 04 — camada visual responsiva em 430px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha04-contact-recovery.spec.ts|trilha04-contact-recovery.spec.ts > Trilha 04 — camada visual responsiva em 768px|",
+      "file": "trilha04-contact-recovery.spec.ts",
+      "title": "trilha04-contact-recovery.spec.ts > Trilha 04 — camada visual responsiva em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha04-contact-recovery.spec.ts|trilha04-contact-recovery.spec.ts > Trilha 04 — camada visual responsiva em 1024px|",
+      "file": "trilha04-contact-recovery.spec.ts",
+      "title": "trilha04-contact-recovery.spec.ts > Trilha 04 — camada visual responsiva em 1024px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha04-contact-recovery.spec.ts|trilha04-contact-recovery.spec.ts > Trilha 04 — camada visual responsiva em 1440px|",
+      "file": "trilha04-contact-recovery.spec.ts",
+      "title": "trilha04-contact-recovery.spec.ts > Trilha 04 — camada visual responsiva em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha04-contact-recovery.spec.ts|trilha04-contact-recovery.spec.ts > Trilha 04 — confirmação usa página própria e Supabase-only|",
+      "file": "trilha04-contact-recovery.spec.ts",
+      "title": "trilha04-contact-recovery.spec.ts > Trilha 04 — confirmação usa página própria e Supabase-only",
+      "status": "expected"
+    },
+    {
+      "key": "trilha04-contact-recovery.spec.ts|trilha04-contact-recovery.spec.ts > Trilha 04 — redefinição inválida permanece em página visual própria|",
+      "file": "trilha04-contact-recovery.spec.ts",
+      "title": "trilha04-contact-recovery.spec.ts > Trilha 04 — redefinição inválida permanece em página visual própria",
+      "status": "expected"
+    },
+    {
+      "key": "trilha04-contact-recovery.spec.ts|trilha04-contact-recovery.spec.ts > Trilha 04 — aliases mantêm as camadas visuais próprias|",
+      "file": "trilha04-contact-recovery.spec.ts",
+      "title": "trilha04-contact-recovery.spec.ts > Trilha 04 — aliases mantêm as camadas visuais próprias",
+      "status": "expected"
+    },
+    {
+      "key": "trilha05-admin.spec.ts|trilha05-admin.spec.ts > Trilha 05 — login administrativo responsivo em 320px|",
+      "file": "trilha05-admin.spec.ts",
+      "title": "trilha05-admin.spec.ts > Trilha 05 — login administrativo responsivo em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha05-admin.spec.ts|trilha05-admin.spec.ts > Trilha 05 — login administrativo responsivo em 390px|",
+      "file": "trilha05-admin.spec.ts",
+      "title": "trilha05-admin.spec.ts > Trilha 05 — login administrativo responsivo em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha05-admin.spec.ts|trilha05-admin.spec.ts > Trilha 05 — login administrativo responsivo em 430px|",
+      "file": "trilha05-admin.spec.ts",
+      "title": "trilha05-admin.spec.ts > Trilha 05 — login administrativo responsivo em 430px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha05-admin.spec.ts|trilha05-admin.spec.ts > Trilha 05 — login administrativo responsivo em 768px|",
+      "file": "trilha05-admin.spec.ts",
+      "title": "trilha05-admin.spec.ts > Trilha 05 — login administrativo responsivo em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha05-admin.spec.ts|trilha05-admin.spec.ts > Trilha 05 — login administrativo responsivo em 1024px|",
+      "file": "trilha05-admin.spec.ts",
+      "title": "trilha05-admin.spec.ts > Trilha 05 — login administrativo responsivo em 1024px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha05-admin.spec.ts|trilha05-admin.spec.ts > Trilha 05 — login administrativo responsivo em 1440px|",
+      "file": "trilha05-admin.spec.ts",
+      "title": "trilha05-admin.spec.ts > Trilha 05 — login administrativo responsivo em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha05-admin.spec.ts|trilha05-admin.spec.ts > Trilha 05 — bootstrap usa página dedicada|",
+      "file": "trilha05-admin.spec.ts",
+      "title": "trilha05-admin.spec.ts > Trilha 05 — bootstrap usa página dedicada",
+      "status": "expected"
+    },
+    {
+      "key": "trilha05-admin.spec.ts|trilha05-admin.spec.ts > Trilha 05 — convite inválido não exibe ativação|",
+      "file": "trilha05-admin.spec.ts",
+      "title": "trilha05-admin.spec.ts > Trilha 05 — convite inválido não exibe ativação",
+      "status": "expected"
+    },
+    {
+      "key": "trilha05-admin.spec.ts|trilha05-admin.spec.ts > Trilha 05 — ajuda de governança abre, fecha por backdrop e Escape|",
+      "file": "trilha05-admin.spec.ts",
+      "title": "trilha05-admin.spec.ts > Trilha 05 — ajuda de governança abre, fecha por backdrop e Escape",
+      "status": "expected"
+    },
+    {
+      "key": "trilha05-admin.spec.ts|trilha05-admin.spec.ts > Trilha 05 — endpoint administrativo legado não cria sessão|",
+      "file": "trilha05-admin.spec.ts",
+      "title": "trilha05-admin.spec.ts > Trilha 05 — endpoint administrativo legado não cria sessão",
+      "status": "expected"
+    },
+    {
+      "key": "trilha05-admin.spec.ts|trilha05-admin.spec.ts > Trilha 05 — seletor administrativo conduz a telas de entrada distintas|",
+      "file": "trilha05-admin.spec.ts",
+      "title": "trilha05-admin.spec.ts > Trilha 05 — seletor administrativo conduz a telas de entrada distintas",
+      "status": "expected"
+    },
+    {
+      "key": "trilha05-admin.spec.ts|trilha05-admin.spec.ts > Trilha 05 — seletor administrativo expõe o estado protegido do bootstrap|",
+      "file": "trilha05-admin.spec.ts",
+      "title": "trilha05-admin.spec.ts > Trilha 05 — seletor administrativo expõe o estado protegido do bootstrap",
+      "status": "expected"
+    },
+    {
+      "key": "trilha05-admin.spec.ts|trilha05-admin.spec.ts > Trilha 05 — seletor sempre oferece diagnóstico do bootstrap enquanto não estiver fechado|",
+      "file": "trilha05-admin.spec.ts",
+      "title": "trilha05-admin.spec.ts > Trilha 05 — seletor sempre oferece diagnóstico do bootstrap enquanto não estiver fechado",
+      "status": "expected"
+    },
+    {
+      "key": "trilha05-admin.spec.ts|trilha05-admin.spec.ts > Trilha 05 — aliases administrativos usam o portal canônico|",
+      "file": "trilha05-admin.spec.ts",
+      "title": "trilha05-admin.spec.ts > Trilha 05 — aliases administrativos usam o portal canônico",
+      "status": "expected"
+    },
+    {
+      "key": "trilha05-admin.spec.ts|trilha05-admin.spec.ts > Trilha 05 — conflito do bootstrap não expõe detalhes técnicos|",
+      "file": "trilha05-admin.spec.ts",
+      "title": "trilha05-admin.spec.ts > Trilha 05 — conflito do bootstrap não expõe detalhes técnicos",
+      "status": "expected"
+    },
+    {
+      "key": "trilha05-admin.spec.ts|trilha05-admin.spec.ts > Trilha 05 — confirmação administrativa possui envio, OTP e reenvio|",
+      "file": "trilha05-admin.spec.ts",
+      "title": "trilha05-admin.spec.ts > Trilha 05 — confirmação administrativa possui envio, OTP e reenvio",
+      "status": "expected"
+    },
+    {
+      "key": "trilha05-admin.spec.ts|trilha05-admin.spec.ts > Trilha 05 — recuperação administrativa abre no perfil correto|",
+      "file": "trilha05-admin.spec.ts",
+      "title": "trilha05-admin.spec.ts > Trilha 05 — recuperação administrativa abre no perfil correto",
+      "status": "expected"
+    },
+    {
+      "key": "trilha06-account.spec.ts|trilha06-account.spec.ts > T06 sem overflow em 320px|",
+      "file": "trilha06-account.spec.ts",
+      "title": "trilha06-account.spec.ts > T06 sem overflow em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha06-account.spec.ts|trilha06-account.spec.ts > T06 sem overflow em 360px|",
+      "file": "trilha06-account.spec.ts",
+      "title": "trilha06-account.spec.ts > T06 sem overflow em 360px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha06-account.spec.ts|trilha06-account.spec.ts > T06 sem overflow em 768px|",
+      "file": "trilha06-account.spec.ts",
+      "title": "trilha06-account.spec.ts > T06 sem overflow em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha06-account.spec.ts|trilha06-account.spec.ts > T06 sem overflow em 1024px|",
+      "file": "trilha06-account.spec.ts",
+      "title": "trilha06-account.spec.ts > T06 sem overflow em 1024px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha06-account.spec.ts|trilha06-account.spec.ts > T06 sem overflow em 1440px|",
+      "file": "trilha06-account.spec.ts",
+      "title": "trilha06-account.spec.ts > T06 sem overflow em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha06-account.spec.ts|trilha06-account.spec.ts > T06 expõe as quatro áreas da conta|",
+      "file": "trilha06-account.spec.ts",
+      "title": "trilha06-account.spec.ts > T06 expõe as quatro áreas da conta",
+      "status": "expected"
+    },
+    {
+      "key": "trilha06-account.spec.ts|trilha06-account.spec.ts > T06 abre cadastro de endereço como bottom sheet no mobile|",
+      "file": "trilha06-account.spec.ts",
+      "title": "trilha06-account.spec.ts > T06 abre cadastro de endereço como bottom sheet no mobile",
+      "status": "expected"
+    },
+    {
+      "key": "trilha06-account.spec.ts|trilha06-account.spec.ts > T06 exige senha recente antes da exportação LGPD|",
+      "file": "trilha06-account.spec.ts",
+      "title": "trilha06-account.spec.ts > T06 exige senha recente antes da exportação LGPD",
+      "status": "expected"
+    },
+    {
+      "key": "trilha06-account.spec.ts|trilha06-account.spec.ts > conta antiga oferece acesso às quatro seções e retorno à segurança|",
+      "file": "trilha06-account.spec.ts",
+      "title": "trilha06-account.spec.ts > conta antiga oferece acesso às quatro seções e retorno à segurança",
+      "status": "expected"
+    },
+    {
+      "key": "trilha06-account.spec.ts|trilha06-account.spec.ts > saudação local às 9h usa nome completo|",
+      "file": "trilha06-account.spec.ts",
+      "title": "trilha06-account.spec.ts > saudação local às 9h usa nome completo",
+      "status": "expected"
+    },
+    {
+      "key": "trilha06-account.spec.ts|trilha06-account.spec.ts > saudação local às 14h usa nome completo|",
+      "file": "trilha06-account.spec.ts",
+      "title": "trilha06-account.spec.ts > saudação local às 14h usa nome completo",
+      "status": "expected"
+    },
+    {
+      "key": "trilha06-account.spec.ts|trilha06-account.spec.ts > saudação local às 20h usa nome completo|",
+      "file": "trilha06-account.spec.ts",
+      "title": "trilha06-account.spec.ts > saudação local às 20h usa nome completo",
+      "status": "expected"
+    },
+    {
+      "key": "trilha06-account.spec.ts|trilha06-account.spec.ts > preferências específicas: consumer|",
+      "file": "trilha06-account.spec.ts",
+      "title": "trilha06-account.spec.ts > preferências específicas: consumer",
+      "status": "expected"
+    },
+    {
+      "key": "trilha06-account.spec.ts|trilha06-account.spec.ts > preferências específicas: producer|",
+      "file": "trilha06-account.spec.ts",
+      "title": "trilha06-account.spec.ts > preferências específicas: producer",
+      "status": "expected"
+    },
+    {
+      "key": "trilha06-account.spec.ts|trilha06-account.spec.ts > preferências específicas: platform_admin|",
+      "file": "trilha06-account.spec.ts",
+      "title": "trilha06-account.spec.ts > preferências específicas: platform_admin",
+      "status": "expected"
+    },
+    {
+      "key": "trilha06-account.spec.ts|trilha06-account.spec.ts > preferências específicas: platform_super_admin|",
+      "file": "trilha06-account.spec.ts",
+      "title": "trilha06-account.spec.ts > preferências específicas: platform_super_admin",
+      "status": "expected"
+    },
+    {
+      "key": "trilha07-addresses.spec.ts|trilha07-addresses.spec.ts > conta e endereço vazio usam identidade pronta e uma única ação em mobile|",
+      "file": "trilha07-addresses.spec.ts",
+      "title": "trilha07-addresses.spec.ts > conta e endereço vazio usam identidade pronta e uma única ação em mobile",
+      "status": "expected"
+    },
+    {
+      "key": "trilha07-addresses.spec.ts|trilha07-addresses.spec.ts > exportação confirma senha no portal correto: platform_admin|",
+      "file": "trilha07-addresses.spec.ts",
+      "title": "trilha07-addresses.spec.ts > exportação confirma senha no portal correto: platform_admin",
+      "status": "expected"
+    },
+    {
+      "key": "trilha07-addresses.spec.ts|trilha07-addresses.spec.ts > conta administrativa permanece no portal: platform_admin 360px|",
+      "file": "trilha07-addresses.spec.ts",
+      "title": "trilha07-addresses.spec.ts > conta administrativa permanece no portal: platform_admin 360px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha07-addresses.spec.ts|trilha07-addresses.spec.ts > conta administrativa permanece no portal: platform_admin 1440px|",
+      "file": "trilha07-addresses.spec.ts",
+      "title": "trilha07-addresses.spec.ts > conta administrativa permanece no portal: platform_admin 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha07-addresses.spec.ts|trilha07-addresses.spec.ts > exportação confirma senha no portal correto: platform_super_admin|",
+      "file": "trilha07-addresses.spec.ts",
+      "title": "trilha07-addresses.spec.ts > exportação confirma senha no portal correto: platform_super_admin",
+      "status": "expected"
+    },
+    {
+      "key": "trilha07-addresses.spec.ts|trilha07-addresses.spec.ts > conta administrativa permanece no portal: platform_super_admin 360px|",
+      "file": "trilha07-addresses.spec.ts",
+      "title": "trilha07-addresses.spec.ts > conta administrativa permanece no portal: platform_super_admin 360px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha07-addresses.spec.ts|trilha07-addresses.spec.ts > conta administrativa permanece no portal: platform_super_admin 1440px|",
+      "file": "trilha07-addresses.spec.ts",
+      "title": "trilha07-addresses.spec.ts > conta administrativa permanece no portal: platform_super_admin 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha07-addresses.spec.ts|trilha07-addresses.spec.ts > produtor vê endereço pessoal sem convite de entrega ao consumidor|",
+      "file": "trilha07-addresses.spec.ts",
+      "title": "trilha07-addresses.spec.ts > produtor vê endereço pessoal sem convite de entrega ao consumidor",
+      "status": "expected"
+    },
+    {
+      "key": "trilha07-addresses.spec.ts|trilha07-addresses.spec.ts > rótulos rápidos e instruções de entrega são persistidos|",
+      "file": "trilha07-addresses.spec.ts",
+      "title": "trilha07-addresses.spec.ts > rótulos rápidos e instruções de entrega são persistidos",
+      "status": "expected"
+    },
+    {
+      "key": "trilha07-addresses.spec.ts|trilha07-addresses.spec.ts > geolocalização do aparelho envia latitude e longitude como pin manual|",
+      "file": "trilha07-addresses.spec.ts",
+      "title": "trilha07-addresses.spec.ts > geolocalização do aparelho envia latitude e longitude como pin manual",
+      "status": "expected"
+    },
+    {
+      "key": "trilha07-addresses.spec.ts|trilha07-addresses.spec.ts > troca de padrão sincroniza o resumo de entrega e preserva o seletor de região|",
+      "file": "trilha07-addresses.spec.ts",
+      "title": "trilha07-addresses.spec.ts > troca de padrão sincroniza o resumo de entrega e preserva o seletor de região",
+      "status": "expected"
+    },
+    {
+      "key": "trilha07-addresses.spec.ts|trilha07-addresses.spec.ts > limite de dez endereços bloqueia novo cadastro com mensagem amigável|",
+      "file": "trilha07-addresses.spec.ts",
+      "title": "trilha07-addresses.spec.ts > limite de dez endereços bloqueia novo cadastro com mensagem amigável",
+      "status": "expected"
+    },
+    {
+      "key": "trilha07-addresses.spec.ts|trilha07-addresses.spec.ts > endereços permanecem sem overflow nos cinco breakpoints oficiais|",
+      "file": "trilha07-addresses.spec.ts",
+      "title": "trilha07-addresses.spec.ts > endereços permanecem sem overflow nos cinco breakpoints oficiais",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 01 lista vazia diferencia imóvel rural de endereço pessoal|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 01 lista vazia diferencia imóvel rural de endereço pessoal",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 01b produtor sem aprovação recebe guia até iniciar novo imóvel|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 01b produtor sem aprovação recebe guia até iniciar novo imóvel",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 02 lista rascunho com estado e progresso|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 02 lista rascunho com estado e progresso",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 02b imóvel verificado nunca aparece como devolvido por decisão antiga|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 02b imóvel verificado nunca aparece como devolvido por decisão antiga",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 03 novo imóvel abre wizard de seis etapas com documentos primeiro|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 03 novo imóvel abre wizard de seis etapas com documentos primeiro",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 03b cria rascunho sem inventar dados antes do upload documental|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 03b cria rascunho sem inventar dados antes do upload documental",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 04 bloqueia avanço e submissão se não houver documento processado|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 04 bloqueia avanço e submissão se não houver documento processado",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 04b extrai os dados documentais para as etapas seguintes e permite revisá-los|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 04b extrai os dados documentais para as etapas seguintes e permite revisá-los",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 05 área inválida permite avançar com pendência e bloqueia submissão|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 05 área inválida permite avançar com pendência e bloqueia submissão",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 06 legumes picados exigem instalação de lavagem|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 06 legumes picados exigem instalação de lavagem",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 07 queda de conexão mantém rascunho local e informa o produtor|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 07 queda de conexão mantém rascunho local e informa o produtor",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 08 layout não cria overflow nos cinco breakpoints oficiais|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 08 layout não cria overflow nos cinco breakpoints oficiais",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 08b etapa de documentos não cria overflow em mobile e desktop|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 08b etapa de documentos não cria overflow em mobile e desktop",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 09 recarregar preserva imóvel e alterações locais ainda não sincronizadas|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 09 recarregar preserva imóvel e alterações locais ainda não sincronizadas",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 10 autosave salva também a edição feita enquanto a resposta estava pendente|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 10 autosave salva também a edição feita enquanto a resposta estava pendente",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 11 completa as seis etapas e submete o imóvel|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 11 completa as seis etapas e submete o imóvel",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 12 revisão final não oferece caminho paralelo que contorne a submissão|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 12 revisão final não oferece caminho paralelo que contorne a submissão",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 13 sem overflow horizontal em 320x568 (lista e etapas 1-6)|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 13 sem overflow horizontal em 320x568 (lista e etapas 1-6)",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 13 sem overflow horizontal em 360x800 (lista e etapas 1-6)|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 13 sem overflow horizontal em 360x800 (lista e etapas 1-6)",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 13 sem overflow horizontal em 390x844 (lista e etapas 1-6)|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 13 sem overflow horizontal em 390x844 (lista e etapas 1-6)",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 13 sem overflow horizontal em 412x915 (lista e etapas 1-6)|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 13 sem overflow horizontal em 412x915 (lista e etapas 1-6)",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 13 sem overflow horizontal em 768x1024 (lista e etapas 1-6)|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 13 sem overflow horizontal em 768x1024 (lista e etapas 1-6)",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 13 sem overflow horizontal em 1024x768 (lista e etapas 1-6)|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 13 sem overflow horizontal em 1024x768 (lista e etapas 1-6)",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 13 sem overflow horizontal em 1280x720 (lista e etapas 1-6)|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 13 sem overflow horizontal em 1280x720 (lista e etapas 1-6)",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > 13 sem overflow horizontal em 1440x900 (lista e etapas 1-6)|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > 13 sem overflow horizontal em 1440x900 (lista e etapas 1-6)",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > exclusão completed, último aprovado false: confirma impacto e remove cadastro|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > exclusão completed, último aprovado false: confirma impacto e remove cadastro",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > exclusão verified, último aprovado true: confirma impacto e remove cadastro|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > exclusão verified, último aprovado true: confirma impacto e remove cadastro",
+      "status": "expected"
+    },
+    {
+      "key": "trilha08-rural-properties.spec.ts|trilha08-rural-properties.spec.ts > exclusão verified, último aprovado false: confirma impacto e remove cadastro|",
+      "file": "trilha08-rural-properties.spec.ts",
+      "title": "trilha08-rural-properties.spec.ts > exclusão verified, último aprovado false: confirma impacto e remove cadastro",
+      "status": "expected"
+    },
+    {
+      "key": "trilha12-producer-store.spec.ts|trilha12-producer-store.spec.ts > configurações e matriz de sete dias em 320px|",
+      "file": "trilha12-producer-store.spec.ts",
+      "title": "trilha12-producer-store.spec.ts > configurações e matriz de sete dias em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha12-producer-store.spec.ts|trilha12-producer-store.spec.ts > vitrine pública sem login em 320px|",
+      "file": "trilha12-producer-store.spec.ts",
+      "title": "trilha12-producer-store.spec.ts > vitrine pública sem login em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha12-producer-store.spec.ts|trilha12-producer-store.spec.ts > configurações e matriz de sete dias em 390px|",
+      "file": "trilha12-producer-store.spec.ts",
+      "title": "trilha12-producer-store.spec.ts > configurações e matriz de sete dias em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha12-producer-store.spec.ts|trilha12-producer-store.spec.ts > vitrine pública sem login em 390px|",
+      "file": "trilha12-producer-store.spec.ts",
+      "title": "trilha12-producer-store.spec.ts > vitrine pública sem login em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha12-producer-store.spec.ts|trilha12-producer-store.spec.ts > configurações e matriz de sete dias em 768px|",
+      "file": "trilha12-producer-store.spec.ts",
+      "title": "trilha12-producer-store.spec.ts > configurações e matriz de sete dias em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha12-producer-store.spec.ts|trilha12-producer-store.spec.ts > vitrine pública sem login em 768px|",
+      "file": "trilha12-producer-store.spec.ts",
+      "title": "trilha12-producer-store.spec.ts > vitrine pública sem login em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha12-producer-store.spec.ts|trilha12-producer-store.spec.ts > configurações e matriz de sete dias em 1440px|",
+      "file": "trilha12-producer-store.spec.ts",
+      "title": "trilha12-producer-store.spec.ts > configurações e matriz de sete dias em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha12-producer-store.spec.ts|trilha12-producer-store.spec.ts > vitrine pública sem login em 1440px|",
+      "file": "trilha12-producer-store.spec.ts",
+      "title": "trilha12-producer-store.spec.ts > vitrine pública sem login em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha12-producer-store.spec.ts|trilha12-producer-store.spec.ts > salva configurações e sete horários em um único comando|",
+      "file": "trilha12-producer-store.spec.ts",
+      "title": "trilha12-producer-store.spec.ts > salva configurações e sete horários em um único comando",
+      "status": "expected"
+    },
+    {
+      "key": "trilha12-producer-store.spec.ts|trilha12-producer-store.spec.ts > 403 de homologação orienta o produtor para Meus Imóveis|",
+      "file": "trilha12-producer-store.spec.ts",
+      "title": "trilha12-producer-store.spec.ts > 403 de homologação orienta o produtor para Meus Imóveis",
+      "status": "expected"
+    },
+    {
+      "key": "trilha12-producer-store.spec.ts|trilha12-producer-store.spec.ts > conflito preserva o texto editado e exige recarga explícita|",
+      "file": "trilha12-producer-store.spec.ts",
+      "title": "trilha12-producer-store.spec.ts > conflito preserva o texto editado e exige recarga explícita",
+      "status": "expected"
+    },
+    {
+      "key": "trilha12-producer-store.spec.ts|trilha12-producer-store.spec.ts > senha recente retoma o mesmo comando idempotente de publicação|",
+      "file": "trilha12-producer-store.spec.ts",
+      "title": "trilha12-producer-store.spec.ts > senha recente retoma o mesmo comando idempotente de publicação",
+      "status": "expected"
+    },
+    {
+      "key": "trilha12-producer-store.spec.ts|trilha12-producer-store.spec.ts > pausa de emergência não exige confirmação de senha|",
+      "file": "trilha12-producer-store.spec.ts",
+      "title": "trilha12-producer-store.spec.ts > pausa de emergência não exige confirmação de senha",
+      "status": "expected"
+    },
+    {
+      "key": "trilha12-producer-store.spec.ts|trilha12-producer-store.spec.ts > a vitrine oculta não expõe cadastro, titular ou status|",
+      "file": "trilha12-producer-store.spec.ts",
+      "title": "trilha12-producer-store.spec.ts > a vitrine oculta não expõe cadastro, titular ou status",
+      "status": "expected"
+    },
+    {
+      "key": "trilha12-producer-store.spec.ts|trilha12-producer-store.spec.ts > conta do produtor oferece acesso à Minha loja|",
+      "file": "trilha12-producer-store.spec.ts",
+      "title": "trilha12-producer-store.spec.ts > conta do produtor oferece acesso à Minha loja",
+      "status": "expected"
+    },
+    {
+      "key": "trilha12-producer-store.spec.ts|trilha12-producer-store.spec.ts > estado vazio cria apenas um rascunho por ação|",
+      "file": "trilha12-producer-store.spec.ts",
+      "title": "trilha12-producer-store.spec.ts > estado vazio cria apenas um rascunho por ação",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 confirma sessão durante desativação e retoma o diálogo de impacto|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 confirma sessão durante desativação e retoma o diálogo de impacto",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 navegação pública responsiva em 320px|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 navegação pública responsiva em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 gestão e impacto responsivos em 320px|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 gestão e impacto responsivos em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 navegação pública responsiva em 390px|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 navegação pública responsiva em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 gestão e impacto responsivos em 390px|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 gestão e impacto responsivos em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 navegação pública responsiva em 768px|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 navegação pública responsiva em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 gestão e impacto responsivos em 768px|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 gestão e impacto responsivos em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 navegação pública responsiva em 1440px|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 navegação pública responsiva em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 gestão e impacto responsivos em 1440px|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 gestão e impacto responsivos em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 skeleton de carregamento sem categorias fictícias|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 skeleton de carregamento sem categorias fictícias",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 estado vazio e erro com nova tentativa|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 estado vazio e erro com nova tentativa",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 primeira carga acontece mesmo em aba inicialmente oculta|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 primeira carga acontece mesmo em aba inicialmente oculta",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 categoria desativada some e seleção retorna a todos os produtos|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 categoria desativada some e seleção retorna a todos os produtos",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 Super Admin cria categoria com hierarquia, descrição e ícone|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 Super Admin cria categoria com hierarquia, descrição e ícone",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 edição de slug autorizada e revisão enviada|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 edição de slug autorizada e revisão enviada",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 conflito preserva formulário até recarregamento explícito|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 conflito preserva formulário até recarregamento explícito",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 ciclo é informado sem perder campos|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 ciclo é informado sem perder campos",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 desativação com impacto exige confirmação e permite reativação|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 desativação com impacto exige confirmação e permite reativação",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 impacto alterado no envio requer nova confirmação|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 impacto alterado no envio requer nova confirmação",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 Administrador setorial não vê o atalho nem acessa a gestão|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 Administrador setorial não vê o atalho nem acessa a gestão",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 guia para reautenticação preserva a edição|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 guia para reautenticação preserva a edição",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 confirma sessão na própria tela e retoma criação sem perder a edição em 320px|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 confirma sessão na própria tela e retoma criação sem perder a edição em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 confirma sessão na própria tela e retoma criação sem perder a edição em 390px|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 confirma sessão na própria tela e retoma criação sem perder a edição em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 confirma sessão na própria tela e retoma criação sem perder a edição em 768px|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 confirma sessão na própria tela e retoma criação sem perder a edição em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha13-categories.spec.ts|trilha13-categories.spec.ts > T13 confirma sessão na própria tela e retoma criação sem perder a edição em 1440px|",
+      "file": "trilha13-categories.spec.ts",
+      "title": "trilha13-categories.spec.ts > T13 confirma sessão na própria tela e retoma criação sem perder a edição em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha14-products.spec.ts|trilha14-products.spec.ts > catálogo e criação responsivos em 320px|",
+      "file": "trilha14-products.spec.ts",
+      "title": "trilha14-products.spec.ts > catálogo e criação responsivos em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha14-products.spec.ts|trilha14-products.spec.ts > editor, preço, upload e publicação em 320px|",
+      "file": "trilha14-products.spec.ts",
+      "title": "trilha14-products.spec.ts > editor, preço, upload e publicação em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha14-products.spec.ts|trilha14-products.spec.ts > catálogo e criação responsivos em 390px|",
+      "file": "trilha14-products.spec.ts",
+      "title": "trilha14-products.spec.ts > catálogo e criação responsivos em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha14-products.spec.ts|trilha14-products.spec.ts > editor, preço, upload e publicação em 390px|",
+      "file": "trilha14-products.spec.ts",
+      "title": "trilha14-products.spec.ts > editor, preço, upload e publicação em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha14-products.spec.ts|trilha14-products.spec.ts > catálogo e criação responsivos em 768px|",
+      "file": "trilha14-products.spec.ts",
+      "title": "trilha14-products.spec.ts > catálogo e criação responsivos em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha14-products.spec.ts|trilha14-products.spec.ts > editor, preço, upload e publicação em 768px|",
+      "file": "trilha14-products.spec.ts",
+      "title": "trilha14-products.spec.ts > editor, preço, upload e publicação em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha14-products.spec.ts|trilha14-products.spec.ts > catálogo e criação responsivos em 1440px|",
+      "file": "trilha14-products.spec.ts",
+      "title": "trilha14-products.spec.ts > catálogo e criação responsivos em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha14-products.spec.ts|trilha14-products.spec.ts > editor, preço, upload e publicação em 1440px|",
+      "file": "trilha14-products.spec.ts",
+      "title": "trilha14-products.spec.ts > editor, preço, upload e publicação em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha14-products.spec.ts|trilha14-products.spec.ts > 409 preserva informação e preço e exige recarregamento explícito|",
+      "file": "trilha14-products.spec.ts",
+      "title": "trilha14-products.spec.ts > 409 preserva informação e preço e exige recarregamento explícito",
+      "status": "expected"
+    },
+    {
+      "key": "trilha14-products.spec.ts|trilha14-products.spec.ts > sessão antiga retoma preço com mesmo comando sem descartar edição|",
+      "file": "trilha14-products.spec.ts",
+      "title": "trilha14-products.spec.ts > sessão antiga retoma preço com mesmo comando sem descartar edição",
+      "status": "expected"
+    },
+    {
+      "key": "trilha14-products.spec.ts|trilha14-products.spec.ts > publicação sem foto mostra erro e mantém rascunho|",
+      "file": "trilha14-products.spec.ts",
+      "title": "trilha14-products.spec.ts > publicação sem foto mostra erro e mantém rascunho",
+      "status": "expected"
+    },
+    {
+      "key": "trilha14-products.spec.ts|trilha14-products.spec.ts > loja não habilitada informa próximo passo e impede criação|",
+      "file": "trilha14-products.spec.ts",
+      "title": "trilha14-products.spec.ts > loja não habilitada informa próximo passo e impede criação",
+      "status": "expected"
+    },
+    {
+      "key": "trilha14-products.spec.ts|trilha14-products.spec.ts > catálogo recupera falha de leitura|",
+      "file": "trilha14-products.spec.ts",
+      "title": "trilha14-products.spec.ts > catálogo recupera falha de leitura",
+      "status": "expected"
+    },
+    {
+      "key": "trilha14-products.spec.ts|trilha14-products.spec.ts > estado de carregamento é anunciado|",
+      "file": "trilha14-products.spec.ts",
+      "title": "trilha14-products.spec.ts > estado de carregamento é anunciado",
+      "status": "expected"
+    },
+    {
+      "key": "trilha14-products.spec.ts|trilha14-products.spec.ts > consulta pública seleciona categoria e mostra embalagem, peso e preço|",
+      "file": "trilha14-products.spec.ts",
+      "title": "trilha14-products.spec.ts > consulta pública seleciona categoria e mostra embalagem, peso e preço",
+      "status": "expected"
+    },
+    {
+      "key": "trilha14-products.spec.ts|trilha14-products.spec.ts > visitante não acessa editor do produtor|",
+      "file": "trilha14-products.spec.ts",
+      "title": "trilha14-products.spec.ts > visitante não acessa editor do produtor",
+      "status": "expected"
+    },
+    {
+      "key": "trilha15-inventory.spec.ts|trilha15-inventory.spec.ts > T15 colheita e histórico responsivos 320px|",
+      "file": "trilha15-inventory.spec.ts",
+      "title": "trilha15-inventory.spec.ts > T15 colheita e histórico responsivos 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha15-inventory.spec.ts|trilha15-inventory.spec.ts > T15 colheita e histórico responsivos 390px|",
+      "file": "trilha15-inventory.spec.ts",
+      "title": "trilha15-inventory.spec.ts > T15 colheita e histórico responsivos 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha15-inventory.spec.ts|trilha15-inventory.spec.ts > T15 colheita e histórico responsivos 768px|",
+      "file": "trilha15-inventory.spec.ts",
+      "title": "trilha15-inventory.spec.ts > T15 colheita e histórico responsivos 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha15-inventory.spec.ts|trilha15-inventory.spec.ts > T15 colheita e histórico responsivos 1440px|",
+      "file": "trilha15-inventory.spec.ts",
+      "title": "trilha15-inventory.spec.ts > T15 colheita e histórico responsivos 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha15-inventory.spec.ts|trilha15-inventory.spec.ts > T15 reautenticação conserva colheita 320px|",
+      "file": "trilha15-inventory.spec.ts",
+      "title": "trilha15-inventory.spec.ts > T15 reautenticação conserva colheita 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha15-inventory.spec.ts|trilha15-inventory.spec.ts > T15 reautenticação conserva colheita 390px|",
+      "file": "trilha15-inventory.spec.ts",
+      "title": "trilha15-inventory.spec.ts > T15 reautenticação conserva colheita 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha15-inventory.spec.ts|trilha15-inventory.spec.ts > T15 reautenticação conserva colheita 768px|",
+      "file": "trilha15-inventory.spec.ts",
+      "title": "trilha15-inventory.spec.ts > T15 reautenticação conserva colheita 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha15-inventory.spec.ts|trilha15-inventory.spec.ts > T15 reautenticação conserva colheita 1440px|",
+      "file": "trilha15-inventory.spec.ts",
+      "title": "trilha15-inventory.spec.ts > T15 reautenticação conserva colheita 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha15-inventory.spec.ts|trilha15-inventory.spec.ts > T15 validade próxima/vencida diferencia saldo e disponível|",
+      "file": "trilha15-inventory.spec.ts",
+      "title": "trilha15-inventory.spec.ts > T15 validade próxima/vencida diferencia saldo e disponível",
+      "status": "expected"
+    },
+    {
+      "key": "trilha15-inventory.spec.ts|trilha15-inventory.spec.ts > T15 conflito conserva formulário e permite corrigir o lote|",
+      "file": "trilha15-inventory.spec.ts",
+      "title": "trilha15-inventory.spec.ts > T15 conflito conserva formulário e permite corrigir o lote",
+      "status": "expected"
+    },
+    {
+      "key": "trilha15-inventory.spec.ts|trilha15-inventory.spec.ts > T15 indisponibilidade tem recuperação e estado de carregamento|",
+      "file": "trilha15-inventory.spec.ts",
+      "title": "trilha15-inventory.spec.ts > T15 indisponibilidade tem recuperação e estado de carregamento",
+      "status": "expected"
+    },
+    {
+      "key": "trilha15-inventory.spec.ts|trilha15-inventory.spec.ts > T15 loja pausada permite histórico e impede colheita|",
+      "file": "trilha15-inventory.spec.ts",
+      "title": "trilha15-inventory.spec.ts > T15 loja pausada permite histórico e impede colheita",
+      "status": "expected"
+    },
+    {
+      "key": "trilha15-inventory.spec.ts|trilha15-inventory.spec.ts > T15 paginação não descarta histórico|",
+      "file": "trilha15-inventory.spec.ts",
+      "title": "trilha15-inventory.spec.ts > T15 paginação não descarta histórico",
+      "status": "expected"
+    },
+    {
+      "key": "trilha15-inventory.spec.ts|trilha15-inventory.spec.ts > T15 isolamento de visitante|",
+      "file": "trilha15-inventory.spec.ts",
+      "title": "trilha15-inventory.spec.ts > T15 isolamento de visitante",
+      "status": "expected"
+    },
+    {
+      "key": "trilha15-inventory.spec.ts|trilha15-inventory.spec.ts > T15 isolamento de consumidor|",
+      "file": "trilha15-inventory.spec.ts",
+      "title": "trilha15-inventory.spec.ts > T15 isolamento de consumidor",
+      "status": "expected"
+    },
+    {
+      "key": "trilha16-delivery.spec.ts|trilha16-delivery.spec.ts > T16 raio, tarifas e acessibilidade 320px|",
+      "file": "trilha16-delivery.spec.ts",
+      "title": "trilha16-delivery.spec.ts > T16 raio, tarifas e acessibilidade 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha16-delivery.spec.ts|trilha16-delivery.spec.ts > T16 raio, tarifas e acessibilidade 390px|",
+      "file": "trilha16-delivery.spec.ts",
+      "title": "trilha16-delivery.spec.ts > T16 raio, tarifas e acessibilidade 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha16-delivery.spec.ts|trilha16-delivery.spec.ts > T16 raio, tarifas e acessibilidade 768px|",
+      "file": "trilha16-delivery.spec.ts",
+      "title": "trilha16-delivery.spec.ts > T16 raio, tarifas e acessibilidade 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha16-delivery.spec.ts|trilha16-delivery.spec.ts > T16 raio, tarifas e acessibilidade 1440px|",
+      "file": "trilha16-delivery.spec.ts",
+      "title": "trilha16-delivery.spec.ts > T16 raio, tarifas e acessibilidade 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha16-delivery.spec.ts|trilha16-delivery.spec.ts > T16 reautenticação conserva comando 390px|",
+      "file": "trilha16-delivery.spec.ts",
+      "title": "trilha16-delivery.spec.ts > T16 reautenticação conserva comando 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha16-delivery.spec.ts|trilha16-delivery.spec.ts > T16 reautenticação conserva comando 1440px|",
+      "file": "trilha16-delivery.spec.ts",
+      "title": "trilha16-delivery.spec.ts > T16 reautenticação conserva comando 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha16-delivery.spec.ts|trilha16-delivery.spec.ts > T16 conflito preserva valores e oferece recarga explícita|",
+      "file": "trilha16-delivery.spec.ts",
+      "title": "trilha16-delivery.spec.ts > T16 conflito preserva valores e oferece recarga explícita",
+      "status": "expected"
+    },
+    {
+      "key": "trilha16-delivery.spec.ts|trilha16-delivery.spec.ts > T16 indisponibilidade recupera carregamento|",
+      "file": "trilha16-delivery.spec.ts",
+      "title": "trilha16-delivery.spec.ts > T16 indisponibilidade recupera carregamento",
+      "status": "expected"
+    },
+    {
+      "key": "trilha16-delivery.spec.ts|trilha16-delivery.spec.ts > T16 ausência de GPS bloqueia gravação com orientação|",
+      "file": "trilha16-delivery.spec.ts",
+      "title": "trilha16-delivery.spec.ts > T16 ausência de GPS bloqueia gravação com orientação",
+      "status": "expected"
+    },
+    {
+      "key": "trilha16-delivery.spec.ts|trilha16-delivery.spec.ts > T16 loja ausente direciona configuração existente|",
+      "file": "trilha16-delivery.spec.ts",
+      "title": "trilha16-delivery.spec.ts > T16 loja ausente direciona configuração existente",
+      "status": "expected"
+    },
+    {
+      "key": "trilha16-delivery.spec.ts|trilha16-delivery.spec.ts > T16 gratuidade vazia permanece opcional|",
+      "file": "trilha16-delivery.spec.ts",
+      "title": "trilha16-delivery.spec.ts > T16 gratuidade vazia permanece opcional",
+      "status": "expected"
+    },
+    {
+      "key": "trilha16-delivery.spec.ts|trilha16-delivery.spec.ts > T16 centavos inválidos são rejeitados antes de chamar API|",
+      "file": "trilha16-delivery.spec.ts",
+      "title": "trilha16-delivery.spec.ts > T16 centavos inválidos são rejeitados antes de chamar API",
+      "status": "expected"
+    },
+    {
+      "key": "trilha16-delivery.spec.ts|trilha16-delivery.spec.ts > T16 configuração restrita visitante|",
+      "file": "trilha16-delivery.spec.ts",
+      "title": "trilha16-delivery.spec.ts > T16 configuração restrita visitante",
+      "status": "expected"
+    },
+    {
+      "key": "trilha16-delivery.spec.ts|trilha16-delivery.spec.ts > T16 configuração restrita consumidor|",
+      "file": "trilha16-delivery.spec.ts",
+      "title": "trilha16-delivery.spec.ts > T16 configuração restrita consumidor",
+      "status": "expected"
+    },
+    {
+      "key": "trilha17-discovery.spec.ts|trilha17-discovery.spec.ts > T17 home vazia e Localização acessível em 320px|",
+      "file": "trilha17-discovery.spec.ts",
+      "title": "trilha17-discovery.spec.ts > T17 home vazia e Localização acessível em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha17-discovery.spec.ts|trilha17-discovery.spec.ts > T17 cards, favorito e link T12 em 320px|",
+      "file": "trilha17-discovery.spec.ts",
+      "title": "trilha17-discovery.spec.ts > T17 cards, favorito e link T12 em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha17-discovery.spec.ts|trilha17-discovery.spec.ts > T17 home vazia e Localização acessível em 390px|",
+      "file": "trilha17-discovery.spec.ts",
+      "title": "trilha17-discovery.spec.ts > T17 home vazia e Localização acessível em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha17-discovery.spec.ts|trilha17-discovery.spec.ts > T17 cards, favorito e link T12 em 390px|",
+      "file": "trilha17-discovery.spec.ts",
+      "title": "trilha17-discovery.spec.ts > T17 cards, favorito e link T12 em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha17-discovery.spec.ts|trilha17-discovery.spec.ts > T17 home vazia e Localização acessível em 768px|",
+      "file": "trilha17-discovery.spec.ts",
+      "title": "trilha17-discovery.spec.ts > T17 home vazia e Localização acessível em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha17-discovery.spec.ts|trilha17-discovery.spec.ts > T17 cards, favorito e link T12 em 768px|",
+      "file": "trilha17-discovery.spec.ts",
+      "title": "trilha17-discovery.spec.ts > T17 cards, favorito e link T12 em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha17-discovery.spec.ts|trilha17-discovery.spec.ts > T17 home vazia e Localização acessível em 1440px|",
+      "file": "trilha17-discovery.spec.ts",
+      "title": "trilha17-discovery.spec.ts > T17 home vazia e Localização acessível em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha17-discovery.spec.ts|trilha17-discovery.spec.ts > T17 cards, favorito e link T12 em 1440px|",
+      "file": "trilha17-discovery.spec.ts",
+      "title": "trilha17-discovery.spec.ts > T17 cards, favorito e link T12 em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha17-discovery.spec.ts|trilha17-discovery.spec.ts > T17 visitante clica no coração e vai ao login de consumidor|",
+      "file": "trilha17-discovery.spec.ts",
+      "title": "trilha17-discovery.spec.ts > T17 visitante clica no coração e vai ao login de consumidor",
+      "status": "expected"
+    },
+    {
+      "key": "trilha17-discovery.spec.ts|trilha17-discovery.spec.ts > T17 busca, categoria e região enviam filtros reais à API|",
+      "file": "trilha17-discovery.spec.ts",
+      "title": "trilha17-discovery.spec.ts > T17 busca, categoria e região enviam filtros reais à API",
+      "status": "expected"
+    },
+    {
+      "key": "trilha17-discovery.spec.ts|trilha17-discovery.spec.ts > T17 geolocalização é opcional e pode voltar à referência de Ariquemes|",
+      "file": "trilha17-discovery.spec.ts",
+      "title": "trilha17-discovery.spec.ts > T17 geolocalização é opcional e pode voltar à referência de Ariquemes",
+      "status": "expected"
+    },
+    {
+      "key": "trilha17-discovery.spec.ts|trilha17-discovery.spec.ts > T17 erro de busca é explícito e permite recuperar|",
+      "file": "trilha17-discovery.spec.ts",
+      "title": "trilha17-discovery.spec.ts > T17 erro de busca é explícito e permite recuperar",
+      "status": "expected"
+    },
+    {
+      "key": "trilha17-discovery.spec.ts|trilha17-discovery.spec.ts > T17 favoritos indisponíveis não exibem um estado falso e recuperam|",
+      "file": "trilha17-discovery.spec.ts",
+      "title": "trilha17-discovery.spec.ts > T17 favoritos indisponíveis não exibem um estado falso e recuperam",
+      "status": "expected"
+    },
+    {
+      "key": "trilha17-discovery.spec.ts|trilha17-discovery.spec.ts > T17 resposta perdida repete commandId e não desfaz o favorito|",
+      "file": "trilha17-discovery.spec.ts",
+      "title": "trilha17-discovery.spec.ts > T17 resposta perdida repete commandId e não desfaz o favorito",
+      "status": "expected"
+    },
+    {
+      "key": "trilha17-discovery.spec.ts|trilha17-discovery.spec.ts > T17 navega páginas e filtro novo volta à primeira|",
+      "file": "trilha17-discovery.spec.ts",
+      "title": "trilha17-discovery.spec.ts > T17 navega páginas e filtro novo volta à primeira",
+      "status": "expected"
+    },
+    {
+      "key": "trilha17-discovery.spec.ts|trilha17-discovery.spec.ts > T17 carregamento não é confundido com catálogo vazio|",
+      "file": "trilha17-discovery.spec.ts",
+      "title": "trilha17-discovery.spec.ts > T17 carregamento não é confundido com catálogo vazio",
+      "status": "expected"
+    },
+    {
+      "key": "trilha17-discovery.spec.ts|trilha17-discovery.spec.ts > T17 sessão expirada abre login sem redirecionamento pela sessão antiga|",
+      "file": "trilha17-discovery.spec.ts",
+      "title": "trilha17-discovery.spec.ts > T17 sessão expirada abre login sem redirecionamento pela sessão antiga",
+      "status": "expected"
+    },
+    {
+      "key": "trilha17-discovery.spec.ts|trilha17-discovery.spec.ts > T17 leitura após resposta perdida resolve comando antes de desfavoritar|",
+      "file": "trilha17-discovery.spec.ts",
+      "title": "trilha17-discovery.spec.ts > T17 leitura após resposta perdida resolve comando antes de desfavoritar",
+      "status": "expected"
+    },
+    {
+      "key": "trilha18-cart.spec.ts|trilha18-cart.spec.ts > T18 cesta multilojas, mínimos, quantidades, persistência e remoção 320px|",
+      "file": "trilha18-cart.spec.ts",
+      "title": "trilha18-cart.spec.ts > T18 cesta multilojas, mínimos, quantidades, persistência e remoção 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha18-cart.spec.ts|trilha18-cart.spec.ts > T18 Monte seu HortiMix com duas lojas e cortes separados 320px|",
+      "file": "trilha18-cart.spec.ts",
+      "title": "trilha18-cart.spec.ts > T18 Monte seu HortiMix com duas lojas e cortes separados 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha18-cart.spec.ts|trilha18-cart.spec.ts > T18 cesta multilojas, mínimos, quantidades, persistência e remoção 390px|",
+      "file": "trilha18-cart.spec.ts",
+      "title": "trilha18-cart.spec.ts > T18 cesta multilojas, mínimos, quantidades, persistência e remoção 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha18-cart.spec.ts|trilha18-cart.spec.ts > T18 Monte seu HortiMix com duas lojas e cortes separados 390px|",
+      "file": "trilha18-cart.spec.ts",
+      "title": "trilha18-cart.spec.ts > T18 Monte seu HortiMix com duas lojas e cortes separados 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha18-cart.spec.ts|trilha18-cart.spec.ts > T18 cesta multilojas, mínimos, quantidades, persistência e remoção 768px|",
+      "file": "trilha18-cart.spec.ts",
+      "title": "trilha18-cart.spec.ts > T18 cesta multilojas, mínimos, quantidades, persistência e remoção 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha18-cart.spec.ts|trilha18-cart.spec.ts > T18 Monte seu HortiMix com duas lojas e cortes separados 768px|",
+      "file": "trilha18-cart.spec.ts",
+      "title": "trilha18-cart.spec.ts > T18 Monte seu HortiMix com duas lojas e cortes separados 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha18-cart.spec.ts|trilha18-cart.spec.ts > T18 cesta multilojas, mínimos, quantidades, persistência e remoção 1440px|",
+      "file": "trilha18-cart.spec.ts",
+      "title": "trilha18-cart.spec.ts > T18 cesta multilojas, mínimos, quantidades, persistência e remoção 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha18-cart.spec.ts|trilha18-cart.spec.ts > T18 Monte seu HortiMix com duas lojas e cortes separados 1440px|",
+      "file": "trilha18-cart.spec.ts",
+      "title": "trilha18-cart.spec.ts > T18 Monte seu HortiMix com duas lojas e cortes separados 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha18-cart.spec.ts|trilha18-cart.spec.ts > T18 resposta perdida mantém commandId e recupera sem duplicar|",
+      "file": "trilha18-cart.spec.ts",
+      "title": "trilha18-cart.spec.ts > T18 resposta perdida mantém commandId e recupera sem duplicar",
+      "status": "expected"
+    },
+    {
+      "key": "trilha18-cart.spec.ts|trilha18-cart.spec.ts > T18 erro de leitura não é cesta vazia e pode recuperar|",
+      "file": "trilha18-cart.spec.ts",
+      "title": "trilha18-cart.spec.ts > T18 erro de leitura não é cesta vazia e pode recuperar",
+      "status": "expected"
+    },
+    {
+      "key": "trilha18-cart.spec.ts|trilha18-cart.spec.ts > Fotos: visíveis são prioritárias, texto não espera download e assinatura renovada não baixa outra vez|",
+      "file": "trilha18-cart.spec.ts",
+      "title": "trilha18-cart.spec.ts > Fotos: visíveis são prioritárias, texto não espera download e assinatura renovada não baixa outra vez",
+      "status": "expected"
+    },
+    {
+      "key": "trilha18-cart.spec.ts|trilha18-cart.spec.ts > Fotos novas: imagem grande é otimizada uma vez e chega ao upload com dimensões e peso limitados|",
+      "file": "trilha18-cart.spec.ts",
+      "title": "trilha18-cart.spec.ts > Fotos novas: imagem grande é otimizada uma vez e chega ao upload com dimensões e peso limitados",
+      "status": "expected"
+    },
+    {
+      "key": "trilha19-checkout.spec.ts|trilha19-checkout.spec.ts > T19 revisão multilojas e confirmação acessível 320px|",
+      "file": "trilha19-checkout.spec.ts",
+      "title": "trilha19-checkout.spec.ts > T19 revisão multilojas e confirmação acessível 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha19-checkout.spec.ts|trilha19-checkout.spec.ts > T19 revisão multilojas e confirmação acessível 390px|",
+      "file": "trilha19-checkout.spec.ts",
+      "title": "trilha19-checkout.spec.ts > T19 revisão multilojas e confirmação acessível 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha19-checkout.spec.ts|trilha19-checkout.spec.ts > T19 revisão multilojas e confirmação acessível 768px|",
+      "file": "trilha19-checkout.spec.ts",
+      "title": "trilha19-checkout.spec.ts > T19 revisão multilojas e confirmação acessível 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha19-checkout.spec.ts|trilha19-checkout.spec.ts > T19 revisão multilojas e confirmação acessível 1440px|",
+      "file": "trilha19-checkout.spec.ts",
+      "title": "trilha19-checkout.spec.ts > T19 revisão multilojas e confirmação acessível 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha19-checkout.spec.ts|trilha19-checkout.spec.ts > T19 autenticação e cesta vazia|",
+      "file": "trilha19-checkout.spec.ts",
+      "title": "trilha19-checkout.spec.ts > T19 autenticação e cesta vazia",
+      "status": "expected"
+    },
+    {
+      "key": "trilha19-checkout.spec.ts|trilha19-checkout.spec.ts > T19 bloqueia cálculo sem pré-requisito noAddress|",
+      "file": "trilha19-checkout.spec.ts",
+      "title": "trilha19-checkout.spec.ts > T19 bloqueia cálculo sem pré-requisito noAddress",
+      "status": "expected"
+    },
+    {
+      "key": "trilha19-checkout.spec.ts|trilha19-checkout.spec.ts > T19 bloqueia cálculo sem pré-requisito noGps|",
+      "file": "trilha19-checkout.spec.ts",
+      "title": "trilha19-checkout.spec.ts > T19 bloqueia cálculo sem pré-requisito noGps",
+      "status": "expected"
+    },
+    {
+      "key": "trilha19-checkout.spec.ts|trilha19-checkout.spec.ts > T19 bloqueia cálculo sem pré-requisito belowMin|",
+      "file": "trilha19-checkout.spec.ts",
+      "title": "trilha19-checkout.spec.ts > T19 bloqueia cálculo sem pré-requisito belowMin",
+      "status": "expected"
+    },
+    {
+      "key": "trilha19-checkout.spec.ts|trilha19-checkout.spec.ts > T19 conflito 409 exige revisão e novo comando|",
+      "file": "trilha19-checkout.spec.ts",
+      "title": "trilha19-checkout.spec.ts > T19 conflito 409 exige revisão e novo comando",
+      "status": "expected"
+    },
+    {
+      "key": "trilha19-checkout.spec.ts|trilha19-checkout.spec.ts > T19 conflito 410 exige revisão e novo comando|",
+      "file": "trilha19-checkout.spec.ts",
+      "title": "trilha19-checkout.spec.ts > T19 conflito 410 exige revisão e novo comando",
+      "status": "expected"
+    },
+    {
+      "key": "trilha19-checkout.spec.ts|trilha19-checkout.spec.ts > T19 prazo usa relógio do servidor e expiração permite recálculo|",
+      "file": "trilha19-checkout.spec.ts",
+      "title": "trilha19-checkout.spec.ts > T19 prazo usa relógio do servidor e expiração permite recálculo",
+      "status": "expected"
+    },
+    {
+      "key": "trilha19-checkout.spec.ts|trilha19-checkout.spec.ts > T19 resposta perdida rede conserva chave no reload|",
+      "file": "trilha19-checkout.spec.ts",
+      "title": "trilha19-checkout.spec.ts > T19 resposta perdida rede conserva chave no reload",
+      "status": "expected"
+    },
+    {
+      "key": "trilha19-checkout.spec.ts|trilha19-checkout.spec.ts > T19 resposta perdida HTML201 conserva chave no reload|",
+      "file": "trilha19-checkout.spec.ts",
+      "title": "trilha19-checkout.spec.ts > T19 resposta perdida HTML201 conserva chave no reload",
+      "status": "expected"
+    },
+    {
+      "key": "trilha19-checkout.spec.ts|trilha19-checkout.spec.ts > T19 reload recupera recibo sem confirmar de novo|",
+      "file": "trilha19-checkout.spec.ts",
+      "title": "trilha19-checkout.spec.ts > T19 reload recupera recibo sem confirmar de novo",
+      "status": "expected"
+    },
+    {
+      "key": "trilha19-checkout.spec.ts|trilha19-checkout.spec.ts > T19 duplo clique bloqueado em trânsito e preserva um comando|",
+      "file": "trilha19-checkout.spec.ts",
+      "title": "trilha19-checkout.spec.ts > T19 duplo clique bloqueado em trânsito e preserva um comando",
+      "status": "expected"
+    },
+    {
+      "key": "trilha19-checkout.spec.ts|trilha19-checkout.spec.ts > T19 indisponibilidade inicial oferece recuperação|",
+      "file": "trilha19-checkout.spec.ts",
+      "title": "trilha19-checkout.spec.ts > T19 indisponibilidade inicial oferece recuperação",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > pagamento preparado e campos protegidos em 320px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > pagamento preparado e campos protegidos em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > caixa presencial sem dinheiro em 320px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > caixa presencial sem dinheiro em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > compra e prazos de proteção em 320px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > compra e prazos de proteção em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > denúncia privada com histórico e mensagens em 320px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > denúncia privada com histórico e mensagens em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > gestão de reembolsos em 320px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > gestão de reembolsos em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > configuração da conta e política em 320px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > configuração da conta e política em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > pagamento preparado e campos protegidos em 390px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > pagamento preparado e campos protegidos em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > caixa presencial sem dinheiro em 390px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > caixa presencial sem dinheiro em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > compra e prazos de proteção em 390px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > compra e prazos de proteção em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > denúncia privada com histórico e mensagens em 390px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > denúncia privada com histórico e mensagens em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > gestão de reembolsos em 390px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > gestão de reembolsos em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > configuração da conta e política em 390px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > configuração da conta e política em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > pagamento preparado e campos protegidos em 768px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > pagamento preparado e campos protegidos em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > caixa presencial sem dinheiro em 768px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > caixa presencial sem dinheiro em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > compra e prazos de proteção em 768px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > compra e prazos de proteção em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > denúncia privada com histórico e mensagens em 768px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > denúncia privada com histórico e mensagens em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > gestão de reembolsos em 768px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > gestão de reembolsos em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > configuração da conta e política em 768px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > configuração da conta e política em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > pagamento preparado e campos protegidos em 1440px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > pagamento preparado e campos protegidos em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > caixa presencial sem dinheiro em 1440px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > caixa presencial sem dinheiro em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > compra e prazos de proteção em 1440px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > compra e prazos de proteção em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > denúncia privada com histórico e mensagens em 1440px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > denúncia privada com histórico e mensagens em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > gestão de reembolsos em 1440px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > gestão de reembolsos em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > configuração da conta e política em 1440px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > configuração da conta e política em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > política de reembolso acessível antes do login em 390px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > política de reembolso acessível antes do login em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > política de reembolso acessível antes do login em 1440px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > política de reembolso acessível antes do login em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > login consumer mantém destino e ícone em 390px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > login consumer mantém destino e ícone em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > login producer mantém destino e ícone em 390px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > login producer mantém destino e ícone em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > login platform_admin mantém destino e ícone em 390px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > login platform_admin mantém destino e ícone em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > login platform_super_admin mantém destino e ícone em 390px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > login platform_super_admin mantém destino e ícone em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > login consumer mantém destino e ícone em 1440px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > login consumer mantém destino e ícone em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > login producer mantém destino e ícone em 1440px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > login producer mantém destino e ícone em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > login platform_admin mantém destino e ícone em 1440px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > login platform_admin mantém destino e ícone em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha20-commerce.spec.ts|trilha20-commerce.spec.ts > login platform_super_admin mantém destino e ícone em 1440px|",
+      "file": "trilha20-commerce.spec.ts",
+      "title": "trilha20-commerce.spec.ts > login platform_super_admin mantém destino e ícone em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha21-orders.spec.ts|trilha21-orders.spec.ts > produtor avança somente a próxima etapa em 320px|",
+      "file": "trilha21-orders.spec.ts",
+      "title": "trilha21-orders.spec.ts > produtor avança somente a próxima etapa em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha21-orders.spec.ts|trilha21-orders.spec.ts > cancelamento justificado e dialog acessível em 320px|",
+      "file": "trilha21-orders.spec.ts",
+      "title": "trilha21-orders.spec.ts > cancelamento justificado e dialog acessível em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha21-orders.spec.ts|trilha21-orders.spec.ts > comprador vê timeline e valores congelados em 320px|",
+      "file": "trilha21-orders.spec.ts",
+      "title": "trilha21-orders.spec.ts > comprador vê timeline e valores congelados em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha21-orders.spec.ts|trilha21-orders.spec.ts > lista do comprador abre o pedido em 320px|",
+      "file": "trilha21-orders.spec.ts",
+      "title": "trilha21-orders.spec.ts > lista do comprador abre o pedido em 320px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha21-orders.spec.ts|trilha21-orders.spec.ts > produtor avança somente a próxima etapa em 390px|",
+      "file": "trilha21-orders.spec.ts",
+      "title": "trilha21-orders.spec.ts > produtor avança somente a próxima etapa em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha21-orders.spec.ts|trilha21-orders.spec.ts > cancelamento justificado e dialog acessível em 390px|",
+      "file": "trilha21-orders.spec.ts",
+      "title": "trilha21-orders.spec.ts > cancelamento justificado e dialog acessível em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha21-orders.spec.ts|trilha21-orders.spec.ts > comprador vê timeline e valores congelados em 390px|",
+      "file": "trilha21-orders.spec.ts",
+      "title": "trilha21-orders.spec.ts > comprador vê timeline e valores congelados em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha21-orders.spec.ts|trilha21-orders.spec.ts > lista do comprador abre o pedido em 390px|",
+      "file": "trilha21-orders.spec.ts",
+      "title": "trilha21-orders.spec.ts > lista do comprador abre o pedido em 390px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha21-orders.spec.ts|trilha21-orders.spec.ts > produtor avança somente a próxima etapa em 768px|",
+      "file": "trilha21-orders.spec.ts",
+      "title": "trilha21-orders.spec.ts > produtor avança somente a próxima etapa em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha21-orders.spec.ts|trilha21-orders.spec.ts > cancelamento justificado e dialog acessível em 768px|",
+      "file": "trilha21-orders.spec.ts",
+      "title": "trilha21-orders.spec.ts > cancelamento justificado e dialog acessível em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha21-orders.spec.ts|trilha21-orders.spec.ts > comprador vê timeline e valores congelados em 768px|",
+      "file": "trilha21-orders.spec.ts",
+      "title": "trilha21-orders.spec.ts > comprador vê timeline e valores congelados em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha21-orders.spec.ts|trilha21-orders.spec.ts > lista do comprador abre o pedido em 768px|",
+      "file": "trilha21-orders.spec.ts",
+      "title": "trilha21-orders.spec.ts > lista do comprador abre o pedido em 768px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha21-orders.spec.ts|trilha21-orders.spec.ts > produtor avança somente a próxima etapa em 1440px|",
+      "file": "trilha21-orders.spec.ts",
+      "title": "trilha21-orders.spec.ts > produtor avança somente a próxima etapa em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha21-orders.spec.ts|trilha21-orders.spec.ts > cancelamento justificado e dialog acessível em 1440px|",
+      "file": "trilha21-orders.spec.ts",
+      "title": "trilha21-orders.spec.ts > cancelamento justificado e dialog acessível em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha21-orders.spec.ts|trilha21-orders.spec.ts > comprador vê timeline e valores congelados em 1440px|",
+      "file": "trilha21-orders.spec.ts",
+      "title": "trilha21-orders.spec.ts > comprador vê timeline e valores congelados em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha21-orders.spec.ts|trilha21-orders.spec.ts > lista do comprador abre o pedido em 1440px|",
+      "file": "trilha21-orders.spec.ts",
+      "title": "trilha21-orders.spec.ts > lista do comprador abre o pedido em 1440px",
+      "status": "expected"
+    },
+    {
+      "key": "trilha21-orders.spec.ts|trilha21-orders.spec.ts > resposta perdida conserva commandId após reload e recupera o resultado|",
+      "file": "trilha21-orders.spec.ts",
+      "title": "trilha21-orders.spec.ts > resposta perdida conserva commandId após reload e recupera o resultado",
+      "status": "expected"
+    },
+    {
+      "key": "trilha21-orders.spec.ts|trilha21-orders.spec.ts > HTTP 409 atualiza o painel sem avançar uma segunda etapa|",
+      "file": "trilha21-orders.spec.ts",
+      "title": "trilha21-orders.spec.ts > HTTP 409 atualiza o painel sem avançar uma segunda etapa",
+      "status": "expected"
+    },
+    {
+      "key": "trilha21-orders.spec.ts|trilha21-orders.spec.ts > rastreamento busca automaticamente a etapa nova e pausa quando oculto|",
+      "file": "trilha21-orders.spec.ts",
+      "title": "trilha21-orders.spec.ts > rastreamento busca automaticamente a etapa nova e pausa quando oculto",
+      "status": "expected"
+    },
+    {
+      "key": "trilha21-orders.spec.ts|trilha21-orders.spec.ts > pedido de terceiro não exibe timeline ou endereço|",
+      "file": "trilha21-orders.spec.ts",
+      "title": "trilha21-orders.spec.ts > pedido de terceiro não exibe timeline ou endereço",
+      "status": "expected"
+    },
+    {
+      "key": "trilha21-orders.spec.ts|trilha21-orders.spec.ts > visitante tem entrada segura e pagamento legado permanece com rota própria|",
+      "file": "trilha21-orders.spec.ts",
+      "title": "trilha21-orders.spec.ts > visitante tem entrada segura e pagamento legado permanece com rota própria",
+      "status": "expected"
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import { resolveDeniedAdminSectors } from "../security/adminPermissions.ts";
+import { adminSectorLabel } from "../../shared/adminPermissions.ts";
 import { effectiveAccountStatus, accountBlockCode, type AccountBlock } from "../../shared/accountBlock.ts";
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import type { PoolClient } from "pg";
@@ -16,7 +17,9 @@ import type {
   BootstrapResult,
   BootstrapStatusResponse,
   CreateInviteInput,
+  ClearInviteHistoryInput,
   InviteResponse,
+  RemoveInviteInput,
   MfaVerifyResult,
   ValidateInviteResponse,
 } from "../../shared/contracts/adminGovernance.ts";
@@ -341,6 +344,39 @@ async function audit(
       input.commandId ?? null,
     ],
   );
+}
+
+// Invitations own a provisional Auth identity, but never own a real account.
+// The database relationship, not editable user_metadata, determines cleanup.
+async function releaseInvalidatedInviteAuth(client: PoolClient, email: string) {
+  if (!supabaseAdmin) return false;
+  const abandoned = await client.query<{
+    id: string;
+    auth_user_id: string;
+    isolated: boolean;
+  }>(
+    `SELECT i.id,i.auth_user_id,
+       NOT EXISTS(SELECT 1 FROM public.app_people p WHERE p.user_id=i.auth_user_id)
+       AND NOT EXISTS(SELECT 1 FROM public.app_admin_principals p WHERE p.admin_user_id=i.auth_user_id)
+       AND NOT EXISTS(SELECT 1 FROM public.app_account_profiles p WHERE p.user_id=i.auth_user_id)
+       AND NOT EXISTS(SELECT 1 FROM public.app_user_role_assignments r WHERE r.user_id=i.auth_user_id) AS isolated
+     FROM public.app_admin_invites i
+     WHERE lower(i.email)=$1 AND NOT i.is_accepted AND i.invalidated_at IS NOT NULL
+       AND i.auth_user_id IS NOT NULL FOR UPDATE OF i`,
+    [email.toLowerCase()],
+  );
+  for (const invite of abandoned.rows) {
+    if (!invite.isolated) continue;
+    const result = await supabaseAdmin.auth.admin.deleteUser(
+      invite.auth_user_id,
+    );
+    if (result.error && result.error.status !== 404) return false;
+    await client.query(
+      "UPDATE public.app_admin_invites SET auth_user_id=NULL WHERE id=$1 AND NOT is_accepted AND invalidated_at IS NOT NULL",
+      [invite.id],
+    );
+  }
+  return true;
 }
 
 async function activeAdminRole(userId: string) {
@@ -1085,13 +1121,15 @@ export class AdminGovernanceService {
     let targetPersonId: string | null = null;
     let authEmail = input.email;
     let needsAuthAlias = false;
+    let prepared = false;
 
     try {
+      // Keep one transaction through delivery: the invite becomes visible only
+      // when its Auth identity is ready. Transaction locks also work in poolers.
       await client.query("BEGIN");
-      await client.query(
-        "SELECT pg_advisory_xact_lock(hashtext($1))",
-        [`invite:${input.email}`],
-      );
+      await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
+        `invite:${input.email}`,
+      ]);
 
       await client.query(
         `UPDATE public.app_admin_invites
@@ -1100,6 +1138,11 @@ export class AdminGovernanceService {
             AND expires_at<=now()`,
         [input.email],
       );
+
+      if (!(await releaseInvalidatedInviteAuth(client, input.email))) {
+        await client.query("ROLLBACK");
+        return { status: "unavailable" };
+      }
 
       const pending = await client.query(
         `SELECT 1
@@ -1119,7 +1162,10 @@ export class AdminGovernanceService {
       );
       if (pending.rowCount) {
         await client.query("ROLLBACK");
-        return { status: "conflict", message: "Já existe convite administrativo pendente." };
+        return {
+          status: "conflict",
+          message: "Já existe convite administrativo pendente.",
+        };
       }
 
       const emailInUse = await client.query(
@@ -1133,7 +1179,8 @@ export class AdminGovernanceService {
         await client.query("ROLLBACK");
         return {
           status: "conflict",
-          message: "Este e-mail já possui uma credencial para este mesmo portal.",
+          message:
+            "Este e-mail já possui uma credencial para este mesmo portal.",
         };
       }
 
@@ -1163,7 +1210,10 @@ export class AdminGovernanceService {
         const existing = person.rows[0];
         if (!existing || existing.status !== "active") {
           await client.query("ROLLBACK");
-          return { status: "conflict", message: "CPF não localizado em cadastro ativo." };
+          return {
+            status: "conflict",
+            message: "CPF não localizado em cadastro ativo.",
+          };
         }
 
         const eligibleIdentity = await client.query(
@@ -1184,7 +1234,8 @@ export class AdminGovernanceService {
           await client.query("ROLLBACK");
           return {
             status: "conflict",
-            message: "CPF não pertence a uma identidade ativa elegível para acesso administrativo.",
+            message:
+              "CPF não pertence a uma identidade ativa elegível para acesso administrativo.",
           };
         }
 
@@ -1199,7 +1250,8 @@ export class AdminGovernanceService {
           await client.query("ROLLBACK");
           return {
             status: "conflict",
-            message: "Esta pessoa já possui credencial para este mesmo portal administrativo.",
+            message:
+              "Esta pessoa já possui credencial para este mesmo portal administrativo.",
           };
         }
 
@@ -1219,7 +1271,8 @@ export class AdminGovernanceService {
           await client.query("ROLLBACK");
           return {
             status: "conflict",
-            message: "Informe o CPF do cadastro existente para vinculá-lo ao acesso administrativo.",
+            message:
+              "Informe o CPF do cadastro existente para vinculá-lo ao acesso administrativo.",
           };
         }
       }
@@ -1232,7 +1285,10 @@ export class AdminGovernanceService {
         );
         if (valid.rowCount !== input.sectors.length) {
           await client.query("ROLLBACK");
-          return { status: "conflict", message: "Setor administrativo inválido." };
+          return {
+            status: "conflict",
+            message: "Setor administrativo inválido.",
+          };
         }
       }
 
@@ -1282,9 +1338,10 @@ export class AdminGovernanceService {
         requestId,
         actorId,
         actorRole,
-        action: identityMode === "existing"
-          ? "admin.identity.link_invited"
-          : "admin.invite.created",
+        action:
+          identityMode === "existing"
+            ? "admin.identity.link_invited"
+            : "admin.invite.created",
         targetEntity: "app_admin_invites",
         targetId: inviteId,
         after: {
@@ -1297,76 +1354,275 @@ export class AdminGovernanceService {
         commandId: input.commandId,
         ipHash,
       });
-      await client.query("COMMIT");
+      prepared = true;
     } catch {
-      try { await client.query("ROLLBACK"); } catch {}
+      try {
+        await client.query("ROLLBACK");
+      } catch {}
+      return { status: "unavailable" };
+    } finally {
+      if (!prepared) client.release();
+    }
+
+    try {
+      let base = "https://hortvitalmix.vercel.app";
+      try {
+        base = new URL(origin).origin;
+      } catch {}
+      const redirectTo = `${base}/admin/aceitar-convite?token=${encodeURIComponent(token)}`;
+
+      const sent = await supabaseAdmin.auth.admin.inviteUserByEmail(authEmail, {
+        redirectTo,
+        data: {
+          hvm_admin_invite_id: inviteId,
+          hvm_admin_role: input.targetRole,
+          hvm_identity_mode: identityMode,
+          hvm_admin_sectors: input.sectors.map(adminSectorLabel).join(", "),
+          hvm_invite_expires_at: expiresAt.toISOString(),
+        },
+      });
+      if (sent.error || !sent.data.user) {
+        await client.query(
+            `UPDATE public.app_admin_invites
+            SET invalidated_at=clock_timestamp(),revision=revision+1
+          WHERE id=$1 AND is_accepted=false`,
+            [inviteId],
+          );
+        await client.query("COMMIT");
+        return {
+          status: sent.error?.status === 422 ? "conflict" : "unavailable",
+          message:
+            sent.error?.status === 422
+              ? "Já existe uma identidade de autenticação para este endereço técnico."
+              : undefined,
+        };
+      }
+
+      try {
+        await client.query("SAVEPOINT invite_auth_attach");
+        const attached = await client.query(
+          `UPDATE public.app_admin_invites SET auth_user_id=$2
+          WHERE id=$1 AND is_accepted=false AND invalidated_at IS NULL RETURNING id`,
+          [inviteId, sent.data.user.id],
+        );
+        if (!attached.rowCount)
+          throw new Error("INVITE_CANCELLED_DURING_DELIVERY");
+      } catch {
+        await client.query("ROLLBACK TO SAVEPOINT invite_auth_attach");
+        await client.query(
+            `UPDATE public.app_admin_invites
+            SET invalidated_at=coalesce(invalidated_at,clock_timestamp()),revision=revision+1,
+                auth_user_id=coalesce(auth_user_id,$2)
+          WHERE id=$1 AND is_accepted=false`,
+            [inviteId, sent.data.user.id],
+          );
+        await releaseInvalidatedInviteAuth(client, input.email);
+        await client.query("COMMIT");
+        return { status: "unavailable" };
+      }
+
+      await client.query("COMMIT");
+      return {
+        status: "created",
+        invite: {
+          id: inviteId,
+          email: input.email,
+          targetRole: input.targetRole,
+          identityMode,
+          sectors: input.sectors,
+          revision: 1,
+          isAccepted: false,
+          expiresAt: expiresAt.toISOString(),
+          createdAt: createdAt.toISOString(),
+          invalidatedAt: null,
+          invitedBy: actorId,
+        },
+      };
+    } catch {
+      await client
+        .query(
+          `UPDATE public.app_admin_invites SET invalidated_at=coalesce(invalidated_at,clock_timestamp()),revision=revision+1
+          WHERE id=$1 AND is_accepted=false`,
+          [inviteId],
+        )
+        .catch(() => undefined);
+      await client.query("COMMIT").catch(async () => {
+        await client.query("ROLLBACK").catch(() => undefined);
+      });
       return { status: "unavailable" };
     } finally {
       client.release();
     }
+  }
 
-    let base = "https://hortvitalmix.vercel.app";
-    try { base = new URL(origin).origin; } catch {}
-    const redirectTo = `${base}/admin/aceitar-convite?token=${encodeURIComponent(token)}`;
-
-    const sent = await supabaseAdmin.auth.admin.inviteUserByEmail(authEmail, {
-      redirectTo,
-      data: {
-        hvm_admin_invite_id: inviteId,
-        hvm_admin_role: input.targetRole,
-        hvm_identity_mode: identityMode,
-      },
-    });
-    if (sent.error || !sent.data.user) {
-      if (sent.data.user?.id) {
-        await supabaseAdmin.auth.admin.deleteUser(sent.data.user.id).catch(() => undefined);
-      }
-      await dbPool.query(
-        `UPDATE public.app_admin_invites
-            SET invalidated_at=clock_timestamp(),revision=revision+1
-          WHERE id=$1 AND is_accepted=false`,
-        [inviteId],
-      ).catch(() => undefined);
-      return {
-        status: sent.error?.status === 422 ? "conflict" : "unavailable",
-        message: sent.error?.status === 422
-          ? "Já existe uma identidade de autenticação para este endereço técnico."
-          : undefined,
-      };
-    }
-
+  static async removeInvite(
+    inviteId: string,
+    input: RemoveInviteInput,
+    actorId: string,
+    actorRole: AdminRole,
+    requestId: string,
+    ipHash: string,
+  ): Promise<
+    | { status: "deleted"; cleanupPending?: boolean }
+    | { status: "not_found" | "forbidden" | "conflict" | "unavailable" }
+  > {
+    if (!dbPool) return { status: "unavailable" };
+    const client = await dbPool.connect();
     try {
-      await dbPool.query(
-        `UPDATE public.app_admin_invites SET auth_user_id=$2 WHERE id=$1`,
-        [inviteId, sent.data.user.id],
+      await client.query("BEGIN");
+      const replay = await client.query(
+        "SELECT 1 FROM public.app_audit_events WHERE actor_id=$1 AND command_id=$2 AND action='admin.invite.archived' AND target_id=$3",
+        [actorId, input.commandId, inviteId],
       );
-    } catch {
-      await supabaseAdmin.auth.admin.deleteUser(sent.data.user.id).catch(() => undefined);
-      await dbPool.query(
-        `UPDATE public.app_admin_invites
-            SET invalidated_at=clock_timestamp(),revision=revision+1
-          WHERE id=$1 AND is_accepted=false`,
+      if (replay.rowCount) {
+        await client.query("COMMIT");
+        return { status: "deleted" };
+      }
+      const email = await client.query<{ email: string }>(
+        "SELECT email FROM public.app_admin_invites WHERE id=$1",
         [inviteId],
-      ).catch(() => undefined);
-      return { status: "unavailable" };
-    }
+      );
+      if (!email.rows[0]) {
+        await client.query("ROLLBACK");
+        return { status: "not_found" };
+      }
+      await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
+        `invite:${email.rows[0].email}`,
+      ]);
+      const found = await client.query<{
+        email: string;
+        invited_by: string;
+        target_role: AdminRole;
+        revision: number;
+        is_accepted: boolean;
+        invalidated_at: Date | string | null;
+      }>(
+        "SELECT email,invited_by,target_role,revision,is_accepted,invalidated_at FROM public.app_admin_invites WHERE id=$1 FOR UPDATE",
+        [inviteId],
+      );
+      const invite = found.rows[0];
+      if (!invite) {
+        await client.query("ROLLBACK");
+        return { status: "not_found" };
+      }
+      if (
+        actorRole === "platform_admin" &&
+        (invite.invited_by !== actorId ||
+          invite.target_role !== "platform_admin")
+      ) {
+        await client.query("ROLLBACK");
+        return { status: "forbidden" };
+      }
+      if (invite.revision !== input.expectedRevision) {
+        await client.query("ROLLBACK");
+        return { status: "conflict" };
+      }
+      if (!invite.is_accepted && !invite.invalidated_at) {
+        await client.query(
+          "UPDATE public.app_admin_invites SET invalidated_at=clock_timestamp(),revision=revision+1 WHERE id=$1 AND is_accepted=false",
+          [inviteId],
+        );
+      }
+      await audit(client, {
+        requestId,
+        actorId,
+        actorRole,
+        action: "admin.invite.archived",
+        targetEntity: "app_admin_invites",
+        targetId: inviteId,
+        after: {
+          cancelled: !invite.is_accepted,
+          accountPreserved: invite.is_accepted,
+        },
+        commandId: input.commandId,
+        ipHash,
+      });
+      await client.query("COMMIT");
 
-    return {
-      status: "created",
-      invite: {
-        id: inviteId,
-        email: input.email,
-        targetRole: input.targetRole,
-        identityMode,
-        sectors: input.sectors,
-        revision: 1,
-        isAccepted: false,
-        expiresAt: expiresAt.toISOString(),
-        createdAt: createdAt.toISOString(),
-        invalidatedAt: null,
-        invitedBy: actorId,
-      },
-    };
+      // Cancellation stays committed even if Auth is temporarily unavailable.
+      // The next create also retries this cleanup before sending a new invite.
+      if (!invite.is_accepted) {
+        await client.query("BEGIN");
+        await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
+          `invite:${invite.email}`,
+        ]);
+        const released = await releaseInvalidatedInviteAuth(
+          client,
+          invite.email,
+        );
+        await client.query("COMMIT");
+        return { status: "deleted", cleanupPending: !released };
+      }
+      return { status: "deleted" };
+    } catch {
+      await client.query("ROLLBACK").catch(() => undefined);
+      return { status: "unavailable" };
+    } finally {
+      client.release();
+    }
+  }
+
+  static async clearInviteHistory(
+    input: ClearInviteHistoryInput,
+    actorId: string,
+    actorRole: AdminRole,
+    requestId: string,
+    ipHash: string,
+  ): Promise<{ status: "cleared"; count: number } | { status: "unavailable" }> {
+    if (!dbPool) return { status: "unavailable" };
+    const client = await dbPool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
+        `invite-history:${actorId}`,
+      ]);
+      const replay = await client.query<{ payload_after: { count: number } }>(
+        "SELECT payload_after FROM public.app_audit_events WHERE actor_id=$1 AND command_id=$2 AND action='admin.invite.history_cleared'",
+        [actorId, input.commandId],
+      );
+      if (replay.rows[0]) {
+        await client.query("COMMIT");
+        return { status: "cleared", count: replay.rows[0].payload_after.count };
+      }
+      const finished = await client.query<{ id: string }>(
+        `SELECT i.id FROM public.app_admin_invites i
+          WHERE (i.is_accepted OR i.invalidated_at IS NOT NULL OR i.expires_at<=now())
+            AND ($2::text='platform_super_admin' OR (i.invited_by=$1 AND i.target_role='platform_admin'))
+            AND NOT EXISTS(SELECT 1 FROM public.app_audit_events a
+              WHERE a.target_entity='app_admin_invites' AND a.target_id=i.id AND a.action='admin.invite.archived')
+          ORDER BY i.id FOR UPDATE OF i`,
+        [actorId, actorRole],
+      );
+      for (const invite of finished.rows) {
+        await audit(client, {
+          requestId,
+          actorId,
+          actorRole,
+          action: "admin.invite.archived",
+          targetEntity: "app_admin_invites",
+          targetId: invite.id,
+          after: { source: "history_cleanup" },
+          ipHash,
+        });
+      }
+      await audit(client, {
+        requestId,
+        actorId,
+        actorRole,
+        action: "admin.invite.history_cleared",
+        targetEntity: "app_admin_invites",
+        after: { count: finished.rows.length },
+        commandId: input.commandId,
+        ipHash,
+      });
+      await client.query("COMMIT");
+      return { status: "cleared", count: finished.rows.length };
+    } catch {
+      await client.query("ROLLBACK").catch(() => undefined);
+      return { status: "unavailable" };
+    } finally {
+      client.release();
+    }
   }
 
   static async listInvites(
@@ -1375,16 +1631,25 @@ export class AdminGovernanceService {
   ): Promise<InviteResponse[]> {
     if (!dbPool) return [];
     const params: unknown[] = [];
-    let where = "";
+    let where = `WHERE NOT EXISTS(SELECT 1 FROM public.app_audit_events archived
+      WHERE archived.target_entity='app_admin_invites' AND archived.target_id=i.id
+        AND archived.action='admin.invite.archived')`;
     if (actorRole === "platform_admin") {
       params.push(actorId);
-      where = "WHERE i.invited_by=$1";
+      where += " AND i.invited_by=$1";
     }
     const result = await dbPool.query<{
-      id: string; email: string; target_role: AdminRole; identity_mode: "new" | "existing";
-      revision: number; is_accepted: boolean; expires_at: Date | string;
-      created_at: Date | string; invalidated_at: Date | string | null;
-      invited_by: string; sectors: AdminSectorCode[] | null;
+      id: string;
+      email: string;
+      target_role: AdminRole;
+      identity_mode: "new" | "existing";
+      revision: number;
+      is_accepted: boolean;
+      expires_at: Date | string;
+      created_at: Date | string;
+      invalidated_at: Date | string | null;
+      invited_by: string;
+      sectors: AdminSectorCode[] | null;
     }>(
       `SELECT i.id,i.email,i.target_role,i.identity_mode,i.revision,i.is_accepted,i.expires_at,
               i.created_at,i.invalidated_at,i.invited_by,
@@ -1406,7 +1671,9 @@ export class AdminGovernanceService {
       expiresAt: new Date(row.expires_at).toISOString(),
       createdAt: new Date(row.created_at).toISOString(),
       invitedBy: row.invited_by,
-      invalidatedAt: row.invalidated_at ? new Date(row.invalidated_at).toISOString() : null,
+      invalidatedAt: row.invalidated_at
+        ? new Date(row.invalidated_at).toISOString()
+        : null,
     }));
   }
 

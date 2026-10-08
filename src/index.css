@@ -25,6 +25,23 @@ body {
   margin: 0;
   min-width: 320px;
 }
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.app-shell > .layout {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+.app-shell--standalone > .desktop-header,
+.app-shell--standalone > .mobile-header,
+.app-shell--standalone > footer,
+.app-shell--standalone > .bottom-nav {
+  display: none;
+}
 button,
 input,
 select {
@@ -193,7 +210,7 @@ small {
   display: flex;
   gap: 24px;
   padding: 28px 32px;
-  min-height: calc(100vh - 170px);
+  min-height: 0;
 }
 aside {
   width: 244px;
@@ -466,7 +483,8 @@ footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 25px max(32px, calc((100vw - 1376px) / 2));
+  flex-wrap: wrap;
+  padding: 18px max(32px, calc((100vw - 1376px) / 2));
   gap: 12px;
   font-size: 11px;
   color: var(--muted);
@@ -498,6 +516,99 @@ dialog::backdrop {
 .dialog-title h2 {
   font-size: 19px;
   margin: 0;
+}
+/* Native modal drawers keep focus inside the menu and restore it on close. */
+.navigation-drawer {
+  position: fixed;
+  inset: 0 auto 0 0;
+  margin: 0;
+  width: min(360px, calc(100% - 32px));
+  max-width: none;
+  height: 100vh;
+  height: 100dvh;
+  max-height: none;
+  padding: 0;
+  border: 0;
+  border-radius: 0 20px 20px 0;
+  background: #fff;
+  color: var(--dark);
+  box-shadow: 12px 0 40px #102b2026;
+}
+.navigation-drawer[open] {
+  display: flex;
+  flex-direction: column;
+}
+.navigation-drawer::backdrop {
+  background: #102b2080;
+}
+.navigation-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(18px + env(safe-area-inset-top)) 16px 16px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.navigation-drawer-header h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+.navigation-drawer-header small {
+  font-size: 12px;
+}
+.navigation-drawer-header .icon {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+.navigation-drawer-content {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding: 12px 12px calc(20px + env(safe-area-inset-bottom));
+}
+.navigation-drawer-content h3 {
+  margin: 24px 10px 8px;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+.navigation-drawer-nav {
+  display: grid;
+  gap: 4px;
+}
+.navigation-drawer-nav a,
+.navigation-drawer-nav button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  text-align: left;
+}
+.navigation-drawer-nav a:hover,
+.navigation-drawer-nav button:hover,
+.navigation-drawer-nav [aria-current="page"] {
+  background: var(--light);
+}
+.navigation-drawer-nav > * > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.navigation-drawer-nav > * > span.account-status-icon {
+  flex: 0 0 auto;
+}
+.navigation-drawer-nav small {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 400;
 }
 .locality-picker p {
   margin: 14px 0 12px;
@@ -1149,7 +1260,12 @@ dialog p {
 @media (max-width: 767px) {
   body {
     background: #f3f5f3;
-    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+  .app-shell {
+    padding-bottom: calc(66px + env(safe-area-inset-bottom));
+  }
+  .app-shell--standalone {
+    padding-bottom: 0;
   }
   .desktop-header {
     display: none;
@@ -1161,18 +1277,19 @@ dialog p {
     z-index: 20;
     background: #fffffff5;
     border-bottom: 1px solid var(--line);
-    padding: 10px 12px;
+    padding: calc(8px + env(safe-area-inset-top)) 12px 8px;
   }
   .mobile-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 6px;
-    margin-bottom: 10px;
+    margin-bottom: 0;
   }
   .brand {
     gap: 8px;
     min-width: 0;
+    flex: 1;
   }
   .brand-icon {
     width: 32px;
@@ -1187,18 +1304,18 @@ dialog p {
     letter-spacing: -0.5px;
   }
   .brand small {
-    font-size: 8px;
-    max-width: 180px;
+    display: none;
   }
   .mobile-header .icon {
-    width: 34px;
-    height: 34px;
+    width: 44px;
+    height: 44px;
   }
   .mobile-header .search {
     background: #f3f5f3;
     border: 0;
     border-radius: 10px;
     padding: 2px 7px 2px 10px;
+    margin-top: 8px;
   }
   .mobile-header .search input {
     font-size: 11px;
@@ -1211,7 +1328,7 @@ dialog p {
   .layout {
     padding: 12px;
     display: block;
-    min-height: calc(100vh - 210px);
+    min-height: 0;
   }
   aside {
     width: 100%;
@@ -1363,10 +1480,11 @@ dialog p {
     border-top: 1px solid var(--line);
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    padding: 7px 4px calc(7px + env(safe-area-inset-bottom));
+    padding: 7px max(4px, env(safe-area-inset-right)) calc(7px + env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left));
     box-shadow: 0 -3px 16px #143d2405;
   }
-  .bottom-nav a {
+  .bottom-nav a,
+  .bottom-nav button {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2253,7 +2371,7 @@ dialog p {
   max-width: 980px !important;
   margin: 0 auto !important;
   padding: 8px 16px 28px !important;
-  min-height: calc(100vh - 170px);
+  min-height: 0;
   box-sizing: border-box;
 }
 
@@ -2266,7 +2384,7 @@ dialog p {
 @media (max-width: 768px) {
   .producer-route-layout {
     padding: 12px 12px !important;
-    min-height: calc(100vh - 210px);
+    min-height: 0;
   }
 }
 

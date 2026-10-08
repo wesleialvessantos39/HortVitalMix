@@ -1,8 +1,11 @@
 .hvm-commerce {
+  width: 100%;
+  min-width: 0;
   max-width: 1180px;
   margin: 0 auto;
   padding: 28px 20px 48px;
   color: var(--text, #21392b);
+  overflow-wrap: anywhere;
 }
 .hvm-commerce h1 {
   font-size: clamp(1.7rem, 4vw, 2.4rem);
@@ -248,7 +251,7 @@
 }
 .commerce-balances {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
   gap: 12px;
 }
 .commerce-balances strong {

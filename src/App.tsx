@@ -15,6 +15,11 @@ import {
   Salad,
   Sprout,
   ShieldCheck,
+  Menu,
+  Bell,
+  MessageCircle,
+  CreditCard,
+  ClipboardList,
   X,
 } from "lucide-react";
 import {
@@ -85,6 +90,25 @@ const navigation = [
   ["/planos", "Planos", CalendarDays],
   ["/sobre", "Sobre nós", Sprout],
 ] as const;
+const producerNavigation = [
+  ["/produtor/produtos", "Meus produtos", Package],
+  ["/produtor/loja", "Minha loja", Store],
+  ["/produtor/pedidos", "Pedidos da loja", ClipboardList],
+  ["/produtor/vendas", "Minhas vendas", CreditCard],
+  ["/produtor/caixa", "Caixa presencial", ShoppingCart],
+  ["/produtor/propriedades", "Propriedades e documentos", Sprout],
+  ["/produtor/entrega", "Região de atendimento", MapPin],
+  ["/produtor/loja/entrega", "Área de entrega", Truck],
+  ["/produtor/loja/janelas", "Horários de entrega", CalendarDays],
+  ["/produtor/reembolsos", "Reembolsos das vendas", CreditCard],
+  ["/produtor/assinaturas", "Planos para produtor", CalendarDays],
+] as const;
+const consumerNavigation = [
+  ["/compras", "Minhas compras", ShoppingCart],
+  ["/pedidos", "Acompanhar pedidos", Truck],
+  ["/assinaturas/minhas", "Minhas assinaturas", CalendarDays],
+  ["/reembolsos", "Reembolsos", CreditCard],
+] as const;
 const accountPaths = new Set([
   "/conta",
   "/minha-conta",
@@ -101,6 +125,18 @@ const accountPaths = new Set([
   "/acesso/administracao",
   "/acesso/super-administracao",
 ]);
+function keepMenuFocus(event: React.KeyboardEvent<HTMLDialogElement>) {
+  if (event.key !== "Tab") return;
+  const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>("button:not([disabled]), a[href]"));
+  const first = controls[0], last = controls[controls.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last?.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first?.focus();
+  }
+}
 export default function App() {
   const [config, setConfig] = useState<GlobalConfigPublic | null>(null),
     [path, setPath] = useState(location.pathname),
@@ -109,9 +145,11 @@ export default function App() {
     [category, setCategory] = useState("Todos os produtos"),
     [categoryId, setCategoryId] = useState<string | null>(null),
     [deliveryLabel, setDeliveryLabel] = useState<string | null>(null),
-    [cartCount, setCartCount] = useState(0);
+    [cartCount, setCartCount] = useState(0),
+    [menuOpen, setMenuOpen] = useState(false);
   const [,setNavigationRevision] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
+  const navigationDialog = useRef<HTMLDialogElement>(null);
   const {
     session: shellSession,
     loading: sessionLoading,
@@ -185,7 +223,10 @@ export default function App() {
     return () => abort.abort();
   }, []);
   useEffect(() => {
-    const fn = () => setPath(location.pathname);
+    const fn = () => {
+      setPath(location.pathname);
+      setMenuOpen(false);
+    };
     addEventListener("popstate", fn);
     return () => removeEventListener("popstate", fn);
   }, []);
@@ -193,6 +234,27 @@ export default function App() {
     if (modal) dialog.current?.showModal();
     else dialog.current?.close();
   }, [modal]);
+  useEffect(() => {
+    const menu = navigationDialog.current;
+    if (!menu) return;
+    if (!menuOpen) {
+      menu.close();
+      return;
+    }
+    menu.showModal();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const desktop = matchMedia("(min-width: 768px)");
+    const closeOnDesktop = () => {
+      if (desktop.matches) setMenuOpen(false);
+    };
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      desktop.removeEventListener("change", closeOnDesktop);
+      menu.close();
+    };
+  }, [menuOpen]);
   useEffect(() => {
     let cancelled = false;
     async function refreshDefaultAddress() {
@@ -229,6 +291,7 @@ export default function App() {
     };
   }, [publicPortalSession, shellSession?.userId]);
   const go = useCallback((to: string) => {
+    setMenuOpen(false);
     const next = new URL(to, location.origin);
     history.pushState({}, "", next.pathname + next.search + next.hash);
     setPath(next.pathname);
@@ -287,8 +350,21 @@ export default function App() {
       <button type="submit">Buscar</button>
     </form>
   );
+  const mobileNavigation = [
+    navigation[0],
+    shellSession?.activeRole === "producer"
+      ? ["/produtor/produtos", "Produtos", Package] as const
+      : navigation[2],
+    shellSession?.activeRole === "producer"
+      ? ["/produtor/caixa", "Caixa", ShoppingCart] as const
+      : administrativeSession
+        ? ["/admin/painel", "Painel", ShieldCheck] as const
+      : ["/carrinho", "Carrinho", ShoppingCart] as const,
+    [accountTarget, "Conta", UserRound] as const,
+  ];
   return (
     <NotificationProvider session={shellSession}>
+      <div className={"app-shell" + (isAdminRoute || publicLoginRole ? " app-shell--standalone" : "")}>
       <a className="skip" href="#conteudo">
         Ir para conteúdo
       </a>
@@ -352,16 +428,6 @@ export default function App() {
           {logo}
           <div className="header-actions">
             <NotificationBell onClick={() => go(administrativeSession ? "/admin/notificacoes" : "/notificacoes")}/>
-            {showAdministrationEntry && (
-              <button
-                className="icon admin-home-entry"
-                aria-label="Administração"
-                title="Administração"
-                onClick={() => go(adminTarget)}
-              >
-                <ShieldCheck />
-              </button>
-            )}
             {canShop&&<button
               className="icon"
               aria-label="Carrinho"
@@ -372,12 +438,12 @@ export default function App() {
             </button>}
           </div>
         </div>
-        {path !== "/" && !isProducerPropertyRoute && !isProducerStoreRoute && !isProducerProductRoute && search}
-        <LocationSelector
+        {path === "/produtos" && search}
+        {(path === "/" || path === "/produtos" || path === "/produtores" || Boolean(publicStoreSlug)) && <LocationSelector
           region={locality.label}
           expanded={modal === "Localização"}
           onOpen={openLocality}
-        />
+        />}
       </header>
       <OfflineStatusBanner session={shellSession} onNavigate={go}/>
       {shellSession?.activeRole === "producer" && (path.startsWith("/produtor/") || path === "/conta") && <ProducerTrialBanner key={shellSession.userId} userId={shellSession.userId} onNavigate={go}/>}
@@ -654,14 +720,11 @@ export default function App() {
         <a href="/denuncias" onClick={event=>{event.preventDefault();go("/denuncias");}}>Denúncias e segurança</a>
       </footer>
       <nav className="bottom-nav" aria-label="Navegação mobile">
-        {[
-          ...navigation.slice(0, 4),
-          [accountTarget, "Conta", UserRound] as const,
-        ].map(([to, label, Icon]) => (
+        {mobileNavigation.map(([to, label, Icon]) => (
           <a
             href={to}
             key={to}
-            aria-current={path === to ? "page" : undefined}
+            aria-current={path === to || (to !== "/" && path.startsWith(to + "/")) ? "page" : undefined}
             aria-description={to===accountTarget?accountSessionLabel(shellSession):undefined}
             onClick={(e) => {
               e.preventDefault();
@@ -672,7 +735,57 @@ export default function App() {
             <span>{label}</span>
           </a>
         ))}
+        <button
+          type="button"
+          aria-label="Abrir menu"
+          aria-haspopup="dialog"
+          aria-controls="public-navigation-dialog"
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen(true)}
+        >
+          <Menu size={20} aria-hidden="true" />
+          <span>Menu</span>
+        </button>
       </nav>
+      <dialog
+        ref={navigationDialog}
+        id="public-navigation-dialog"
+        className="navigation-drawer"
+        aria-labelledby="public-navigation-title"
+        onKeyDown={keepMenuFocus}
+        onCancel={() => setMenuOpen(false)}
+        onClose={() => setMenuOpen(false)}
+        onClick={(event) => {
+          if (event.target !== event.currentTarget) return;
+          const bounds = event.currentTarget.getBoundingClientRect();
+          if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) setMenuOpen(false);
+        }}
+      >
+        <div className="navigation-drawer-header">
+          <div><h2 id="public-navigation-title">Menu</h2><small>{shellSession?.activeRole === "producer" ? "Portal do produtor" : shellSession ? "Sua conta" : display.platformName}</small></div>
+          <button type="button" className="icon" aria-label="Fechar menu" autoFocus onClick={() => setMenuOpen(false)}><X aria-hidden="true" /></button>
+        </div>
+        <div className="navigation-drawer-content">
+          <nav className="navigation-drawer-nav" aria-label="Todas as páginas">
+            {navigation.map(([to, label, Icon]) => <a key={to} href={to} aria-current={path === to ? "page" : undefined} onClick={(event) => { event.preventDefault(); go(to); }}><Icon size={20} aria-hidden="true" /><span>{label}</span><ChevronRight size={16} aria-hidden="true" /></a>)}
+          </nav>
+          {publicPortalSession && <>
+            <h3>{shellSession?.activeRole === "producer" ? "Gerenciar produção" : "Compras e pedidos"}</h3>
+            <nav className="navigation-drawer-nav" aria-label={shellSession?.activeRole === "producer" ? "Área do produtor" : "Área do consumidor"}>
+              {(shellSession?.activeRole === "producer" ? producerNavigation : consumerNavigation).map(([to, label, Icon]) => <a key={to} href={to} aria-current={path === to ? "page" : undefined} onClick={(event) => { event.preventDefault(); go(to); }}><Icon size={20} aria-hidden="true" /><span>{label}</span><ChevronRight size={16} aria-hidden="true" /></a>)}
+            </nav>
+          </>}
+          <h3>Conta e atendimento</h3>
+          <nav className="navigation-drawer-nav" aria-label="Conta e atendimento">
+            <a href={accountTarget} onClick={(event) => { event.preventDefault(); go(accountTarget); }}><AccountStatusIcon session={shellSession} size={20} /><span>{shellSession ? "Minha conta" : "Entrar ou criar conta"}</span><ChevronRight size={16} aria-hidden="true" /></a>
+            {shellSession && <a href="/notificacoes" onClick={(event) => { event.preventDefault(); go(administrativeSession ? "/admin/notificacoes" : "/notificacoes"); }}><Bell size={20} aria-hidden="true" /><span>Notificações</span><ChevronRight size={16} aria-hidden="true" /></a>}
+            <button type="button" onClick={() => { navigationDialog.current?.close(); setMenuOpen(false); openLocality(); }}><MapPin size={20} aria-hidden="true" /><span>Região da vitrine<small>{locality.label ?? "Escolher região"}</small></span><ChevronRight size={16} aria-hidden="true" /></button>
+            <a href="/denuncias" onClick={(event) => { event.preventDefault(); go("/denuncias"); }}><ShieldCheck size={20} aria-hidden="true" /><span>Denúncias e segurança</span><ChevronRight size={16} aria-hidden="true" /></a>
+            <a href={"mailto:" + display.supportEmail}><MessageCircle size={20} aria-hidden="true" /><span>Fale com a gente</span><ChevronRight size={16} aria-hidden="true" /></a>
+            {showAdministrationEntry && <button type="button" className="admin-home-entry" onClick={() => go(adminTarget)}><ShieldCheck size={20} aria-hidden="true" /><span>Administração</span><ChevronRight size={16} aria-hidden="true" /></button>}
+          </nav>
+        </div>
+      </dialog>
       <dialog
         ref={dialog}
         id="shell-dialog"
@@ -767,6 +880,7 @@ export default function App() {
           Entendi
         </button>
       </dialog>
+      </div>
     </NotificationProvider>
   );
 }
