@@ -8,7 +8,8 @@ export function MobileUpdateNotice() {
   const [webUpdate, setWebUpdate] = useState(false);
   const installed = Number(import.meta.env.VITE_HVM_MOBILE_BUILD_NUMBER || 0);
   useEffect(() => {
-    const onChange = () => setWebUpdate(true);
+    const alreadyControlled = Boolean(navigator.serviceWorker?.controller);
+    const onChange = () => { if (alreadyControlled) setWebUpdate(true); };
     navigator.serviceWorker?.addEventListener("controllerchange", onChange);
     return () => navigator.serviceWorker?.removeEventListener("controllerchange", onChange);
   }, []);
@@ -18,7 +19,10 @@ export function MobileUpdateNotice() {
     }).Capacitor?.getPlatform?.();
     if (platform !== "android" || !Number.isSafeInteger(installed) || installed < 1) return;
     let active = true;
+    let lastCheck = 0;
     async function check() {
+      if (Date.now() - lastCheck < 15 * 60 * 1000) return;
+      lastCheck = Date.now();
       try {
         const resp = await fetch("https://api.github.com/repos/wesleialvessantos39/HortVitalMix/releases?per_page=10", {
           headers: { Accept: "application/vnd.github+json" },
