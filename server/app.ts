@@ -101,6 +101,7 @@ app.use((req,res,next)=> {
 // Public immutable photo variants have their own SQL visibility gate.
 // Serve before sessions to avoid auth refresh cookies on shared CDN images.
 for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) app.use(prefix, publicMediaRouter);
+for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) app.use(prefix, mobileReleaseRouter);
 app.use(sessionMiddleware);
 app.use(foundationRouter);
 app.use("/api", foundationRouter);
@@ -117,7 +118,6 @@ app.use("/_hvm_api/v1", ruralPropertyRouter);
 app.use("/v1", localityRouter);
 app.use("/api/v1", localityRouter);
 app.use("/_hvm_api/v1", localityRouter);
-for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) app.use(prefix, mobileReleaseRouter);
 for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
   app.use(prefix, producerStoreRouter);
   app.use(prefix, categoryRouter);
