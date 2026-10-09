@@ -8,6 +8,13 @@ import {
 
 export const MOBILE_CI_AUDIENCE = "https://hortvitalmix.vercel.app/mobile-ci";
 export const MOBILE_CI_REPOSITORY = "wesleialvessantos39/HortVitalMix";
+export const MOBILE_CI_REPOSITORY_ID = "1376634639";
+export const MOBILE_CI_REPOSITORY_OWNER_ID = "210783435";
+export const MOBILE_CI_ENVIRONMENT = "mobile-release";
+// GitHub's immutable default subject applies to this repository, created in
+// September 2026. Pin IDs as well as names so namespace reuse grants no access.
+export const MOBILE_CI_SUBJECT =
+  `repo:wesleialvessantos39@${MOBILE_CI_REPOSITORY_OWNER_ID}/HortVitalMix@${MOBILE_CI_REPOSITORY_ID}:environment:${MOBILE_CI_ENVIRONMENT}`;
 export const MOBILE_CI_WORKFLOW = ".github/workflows/hvm-mobile-build.yml";
 export const MobileBuildSchema = z.number().int().min(1).max(2147483647);
 export const MobileSha256Schema = z.string().regex(/^[a-f0-9]{64}$/);

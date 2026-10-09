@@ -40,7 +40,7 @@ Ao conectar um domínio próprio **ao mesmo projeto Vercel**, o site e o aplicat
 
 Se decidir mudar a origem da API embarcada, configure `HVM_NATIVE_BACKEND_ORIGIN` no GitHub antes do próximo pacote. O endereço é validado como origem HTTPS, sem usuário/senha, porta especial, caminho, parâmetros, hash ou loopback. Alterar o domínio usado pelo site não troca silenciosamente a origem confiável de um pacote já instalado. O domínio próprio e seus registros DNS precisam existir e ser confirmados na Vercel; nenhum domínio foi comprado ou anexado automaticamente.
 
-A identidade de CI mantém a audiência estável `https://hortvitalmix.vercel.app/mobile-ci`. `HVM_MOBILE_CI_ORIGIN` pode selecionar o endereço HTTPS do mesmo backend, mantendo as mesmas regras de identidade. O processo não requer token GitHub permanente nem service role nos runners.
+A identidade de CI mantém a audiência estável `https://hortvitalmix.vercel.app/mobile-ci`. `HVM_MOBILE_CI_ORIGIN` pode selecionar o endereço HTTPS do mesmo backend, mantendo as mesmas regras de identidade. O processo não requer token GitHub permanente nem service role nos runners. A validação OIDC fixa os IDs do repositório e do proprietário, o ambiente `mobile-release` e o subject imutável do GitHub usado pelos repositórios criados após 15/07/2026. Não configure um subject personalizado sem ajustar e revisar essa fronteira. [Regra oficial](https://docs.github.com/en/actions/reference/security/oidc#immutable-subject-claims).
 
 ## Workflow automático
 

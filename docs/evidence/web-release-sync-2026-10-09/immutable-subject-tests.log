@@ -1,0 +1,10 @@
+
+ RUN  v5.0.1 /workspace/HortVitalMix
+
+◇ injected env (0) from .env.test
+◇ injected env (0) from .env.local
+
+ Test Files  4 passed (4)
+      Tests  84 passed (84)
+   Start at  23:42:57
+   Duration  5.47s (import 48%, transform 37%, tests 14%, setup 1%)

@@ -1,0 +1,17 @@
+{
+  "source": "https://docs.github.com/en/actions/reference/security/oidc#immutable-subject-claims",
+  "excerpt": "Repositories created after July 15, 2026 now use an immutable default subject format that includes both the owner ID and repository ID.",
+  "repositoryMetadataSource": "https://api.github.com/repos/wesleialvessantos39/HortVitalMix",
+  "repository": {
+    "id": 1376634639,
+    "full_name": "wesleialvessantos39/HortVitalMix",
+    "created_at": "2026-09-19T02:22:24Z"
+  },
+  "ownerId": 210783435,
+  "expectedSubject": "repo:wesleialvessantos39@210783435/HortVitalMix@1376634639:environment:mobile-release",
+  "tokenRead": false,
+  "tokenLogged": false,
+  "affectedUnitAndHttpTests": 84,
+  "typecheck": "passed",
+  "realCiCallbackPendingRevalidation": true
+}
