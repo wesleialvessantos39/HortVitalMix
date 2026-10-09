@@ -1,0 +1,21 @@
+{
+  "sourceCommit": "c716df5cb3e9dca09d6676f36ad2df534dccc8f2",
+  "relationsCompared": 105,
+  "unchanged": 104,
+  "differences": [
+    {
+      "relation": "public.app_releases",
+      "before": {
+        "relation": "public.app_releases",
+        "rows": 111,
+        "digest": "c25aa4dfb39d7c0cf56707bb3f93d3ae"
+      },
+      "after": {
+        "relation": "public.app_releases",
+        "rows": 112,
+        "digest": "8a590768869802e4170959873ccf4ef0"
+      }
+    }
+  ],
+  "snapshotContainsPersonalRows": false
+}

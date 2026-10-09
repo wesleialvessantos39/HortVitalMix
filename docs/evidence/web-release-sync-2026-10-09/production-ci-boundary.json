@@ -1,0 +1,34 @@
+{
+  "sha": "c716df5cb3e9dca09d6676f36ad2df534dccc8f2",
+  "checkedAt": "2026-10-09T23:51:16.261Z",
+  "results": [
+    {
+      "path": "/api/v1/mobile-ci/web-release/status",
+      "status": 200,
+      "noCookies": true,
+      "noStore": true,
+      "identity": {
+        "appEnv": "production",
+        "sourceCommit": "c716df5cb3e9dca09d6676f36ad2df534dccc8f2",
+        "schemaVersion": 68,
+        "migrationHistoryHash": "ae1874579bb17297df3536863b1c01469c278ee3ebd52bb12990e417c7fbe549"
+      }
+    },
+    {
+      "path": "/api/v1/mobile-ci/web-release",
+      "method": "POST",
+      "origin": "canonical",
+      "status": 401,
+      "noCookies": true,
+      "noStore": true
+    },
+    {
+      "path": "/api/v1/mobile-ci/web-release",
+      "method": "POST",
+      "origin": "external",
+      "status": 403,
+      "noCookies": true,
+      "noStore": true
+    }
+  ]
+}
