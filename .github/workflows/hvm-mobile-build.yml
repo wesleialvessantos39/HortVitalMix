@@ -17,7 +17,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: hvm-mobile-${ github.ref }
+  group: hvm-mobile-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -33,11 +33,11 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - name: Build completo com gates existentes
         env:
-          VITE_HVM_MOBILE_BUILD_NUMBER: ${ github.run_number }
+          VITE_HVM_MOBILE_BUILD_NUMBER: ${{ github.run_number }}
         run: npm run build
       - uses: actions/upload-artifact@v4
         with:
-          name: web-dist-${ github.run_number }
+          name: web-dist-${{ github.run_number }}
           path: dist/
           retention-days: 2
           if-no-files-found: error
@@ -61,7 +61,7 @@ jobs:
         run: npm install --no-save --package-lock=false --no-audit --no-fund @capacitor/core@8 @capacitor/cli@8 @capacitor/android@8
       - uses: actions/download-artifact@v4
         with:
-          name: web-dist-${ github.run_number }
+          name: web-dist-${{ github.run_number }}
           path: dist/
       - name: Preparar nativo
         run: |
@@ -70,20 +70,20 @@ jobs:
       - name: Atribuir versao monotona
         run: |
           set -euo pipefail
-          sed -i -E 's/versionCode[[:space:]]+[0-9]+/versionCode ${ github.run_number }/' android/app/build.gradle
-          sed -i -E 's/versionName[[:space:]]+"[^"]+"/versionName "1.0.${ github.run_number }"/' android/app/build.gradle
-          grep -q 'versionCode ${ github.run_number }' android/app/build.gradle
+          sed -i -E 's/versionCode[[:space:]]+[0-9]+/versionCode ${{ github.run_number }}/' android/app/build.gradle
+          sed -i -E 's/versionName[[:space:]]+"[^"]+"/versionName "1.0.${{ github.run_number }}"/' android/app/build.gradle
+          grep -q 'versionCode ${{ github.run_number }}' android/app/build.gradle
       - name: Compilar APK nao assinado (somente verificacao)
         run: cd android && ./gradlew --no-daemon :app:assembleRelease
       - name: Assinar e validar somente apos homologacao e liberacao
         id: signing
         shell: bash
         env:
-          ENABLED: ${ vars.HVM_MOBILE_RELEASE_ENABLED }
-          KEYSTORE: ${ secrets.HVM_ANDROID_KEYSTORE_BASE64 }
-          STORE_PASSWORD: ${ secrets.HVM_ANDROID_KEYSTORE_PASSWORD }
-          KEY_ALIAS: ${ secrets.HVM_ANDROID_KEY_ALIAS }
-          KEY_PASSWORD: ${ secrets.HVM_ANDROID_KEY_PASSWORD }
+          ENABLED: ${{ vars.HVM_MOBILE_RELEASE_ENABLED }}
+          KEYSTORE: ${{ secrets.HVM_ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.HVM_ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.HVM_ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.HVM_ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           echo "signed=false" >> "$GITHUB_OUTPUT"
@@ -106,14 +106,14 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD="$STORE_PASSWORD" ANDROID_KEY_PASSWORD="$KEY_PASSWORD" \
           "$TOOLS/apksigner" sign --ks "$RUNNER_TEMP/release.jks" --ks-key-alias "$KEY_ALIAS" \
             --ks-pass env:ANDROID_KEYSTORE_PASSWORD --key-pass env:ANDROID_KEY_PASSWORD \
-            --out "release-assets/HortiVitalMix-Android-${ github.run_number }.apk" "$RUNNER_TEMP/aligned.apk"
-          "$TOOLS/apksigner" verify --verbose "release-assets/HortiVitalMix-Android-${ github.run_number }.apk"
-          (cd release-assets && sha256sum *.apk > "HortiVitalMix-Android-${ github.run_number }.sha256")
+            --out "release-assets/HortiVitalMix-Android-${{ github.run_number }}.apk" "$RUNNER_TEMP/aligned.apk"
+          "$TOOLS/apksigner" verify --verbose "release-assets/HortiVitalMix-Android-${{ github.run_number }}.apk"
+          (cd release-assets && sha256sum *.apk > "HortiVitalMix-Android-${{ github.run_number }}.sha256")
           echo "signed=true" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         if: steps.signing.outputs.signed == 'true'
         with:
-          name: android-signed-${ github.run_number }
+          name: android-signed-${{ github.run_number }}
           path: release-assets/*
           retention-days: 7
           if-no-files-found: error
@@ -132,7 +132,7 @@ jobs:
       - run: npm install --no-save --package-lock=false --no-audit --no-fund @capacitor/core@8 @capacitor/cli@8 @capacitor/ios@8
       - uses: actions/download-artifact@v4
         with:
-          name: web-dist-${ github.run_number }
+          name: web-dist-${{ github.run_number }}
           path: dist/
       - name: Preparar iOS com Swift Package Manager
         run: |
@@ -146,7 +146,7 @@ jobs:
 
   publish_android:
     needs: android
-    if: ${ vars.HVM_MOBILE_RELEASE_ENABLED == 'true' }
+    if: ${{ vars.HVM_MOBILE_RELEASE_ENABLED == 'true' }}
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -154,16 +154,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: android-signed-${ github.run_number }
+          name: android-signed-${{ github.run_number }}
           path: release-assets
       - name: Publicar APK e checksum verificados
         shell: bash
         env:
-          GH_TOKEN: ${ github.token }
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh release create "hvm-mobile-r${ github.run_number }" release-assets/* \
+          gh release create "hvm-mobile-r${{ github.run_number }}" release-assets/* \
             --target "$GITHUB_SHA" \
-            --title "HortiVitalMix Android 1.0.${ github.run_number }" \
+            --title "HortiVitalMix Android 1.0.${{ github.run_number }}" \
             --notes "Android APK assinado e checksum. A distribuicao nativa iOS depende de assinatura e canal Apple autorizado." \
             --latest
