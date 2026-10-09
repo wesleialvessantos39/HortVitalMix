@@ -76,7 +76,8 @@ describe("Indicadores reais por poder administrativo", () => {
     expect(result.departments).toHaveLength(9);
     expect(result.departments.find((department) => department.sector === "platform_configuration")?.metrics)
       .toContainEqual(expect.objectContaining({ key: "audit_events_24h", value: 24 }));
-    expect(result.departments.find((department) => department.sector === "catalog_moderation")?.actionPath).toBe("/admin/categorias");
+    expect(result.departments.find((department) => department.sector === "catalog_moderation")?.actionPath).toBe("/admin/catalogo");
+    expect(result.departments.find((department) => department.sector === "finance_ops")?.actionPath).toBe("/admin/financeiro");
   });
 
   it("poder negado de super administrador exclui agregado, métricas e auditoria global", async () => {

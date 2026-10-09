@@ -1,0 +1,24 @@
+
+Running 17 tests using 1 worker
+
+(node:10592) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/e2e/app-distribution-departments.spec.ts:69:3 › downloads, departamentos e distribuição cabem em 320px (3.0s)
+  ✓   2 tests/e2e/app-distribution-departments.spec.ts:69:3 › downloads, departamentos e distribuição cabem em 390px (3.5s)
+  ✓   3 tests/e2e/app-distribution-departments.spec.ts:69:3 › downloads, departamentos e distribuição cabem em 768px (8.3s)
+  ✓   4 tests/e2e/app-distribution-departments.spec.ts:69:3 › downloads, departamentos e distribuição cabem em 1440px (5.2s)
+  ✓   5 tests/e2e/app-distribution-departments.spec.ts:90:1 › downloads usam endereços estáveis, acompanham versão e retiram canais indisponíveis (1.6s)
+  ✓   6 tests/e2e/app-distribution-departments.spec.ts:111:1 › downloads mobile mantém a explicação completa em detalhe fechado e acessível (1.7s)
+  ✓   7 tests/e2e/app-distribution-departments.spec.ts:127:1 › Mais tarde libera o conteúdo, conserva o rascunho e reaparece apenas na próxima versão (1.7s)
+  ✓   8 tests/e2e/app-distribution-departments.spec.ts:146:1 › hub filtra respostas antigas por poderes atuais e pelas negativas do super (3.5s)
+  ✓   9 tests/e2e/app-distribution-departments.spec.ts:160:1 › publicação preserva o rascunho e a intenção na falha de rede (1.3s)
+  ✓  10 tests/e2e/app-distribution-departments.spec.ts:174:1 › conflito mantém edição até descarte explícito e poder revogado esconde configuração (1.3s)
+  ✓  11 tests/e2e/app-distribution-departments.spec.ts:195:3 › platform_admin: publicação confirma a mesma identidade, preserva senha incorreta e repete a intenção (2.0s)
+  ✓  12 tests/e2e/app-distribution-departments.spec.ts:195:3 › platform_super_admin: publicação confirma a mesma identidade, preserva senha incorreta e repete a intenção (2.6s)
+  ✓  13 tests/e2e/app-distribution-departments.spec.ts:242:1 › versão nova exige ação explícita em uma rota segura e recarrega uma vez (2.0s)
+  ✓  14 tests/e2e/app-distribution-departments.spec.ts:257:1 › atualização preserva formulário alterado, arquivo selecionado e janela aberta (6.0s)
+  ✓  15 tests/e2e/app-distribution-departments.spec.ts:280:1 › atualização aguarda mutações reais e nunca força reload durante uma operação (1.6s)
+  ✓  16 tests/e2e/app-distribution-departments.spec.ts:295:1 › fila offline do produtor permanece durável e impede atualização (1.7s)
+  ✓  17 tests/e2e/app-distribution-departments.spec.ts:307:1 › troca de usuário durante a verificação durável cancela o reload (1.6s)
+
+  17 passed (49.8s)

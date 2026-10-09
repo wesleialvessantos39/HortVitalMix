@@ -1,0 +1,23 @@
+{
+  "appId": "br.com.hortivitalmix.app",
+  "appName": "HortiVitalMix",
+  "webDir": "../../dist",
+  "backgroundColor": "#143f28",
+  "android": {
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false
+  },
+  "ios": {
+    "scheme": "App",
+    "contentInset": "automatic",
+    "webContentsDebuggingEnabled": false
+  },
+  "server": {
+    "cleartext": false
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": false
+    }
+  }
+}

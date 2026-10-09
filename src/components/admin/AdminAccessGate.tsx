@@ -1,6 +1,6 @@
 import { hasAdminPermission } from "../../../shared/adminPermissions";
 import { PageLoading } from "../PageLoading";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { takeAdminAccess } from "../../lib/adminAccessHandoff";
 import { api, type ApiFailure } from "../../lib/api";
 import type {
@@ -33,16 +33,37 @@ export function AdminAccessGate({
       : { kind: "loading" },
   );
   const [attempt, setAttempt] = useState(0);
+  const revision = useRef(0);
+  const loggedOut = useRef(false);
+
+  useEffect(() => {
+    const ending = () => {
+      loggedOut.current = true;
+      revision.current++;
+    };
+    const clear = () => {
+      ending();
+      setState({ kind: "loading" });
+      onNavigate("/admin/entrar");
+    };
+    window.addEventListener("hvm:session-ending", ending);
+    window.addEventListener("hvm:session-cleared", clear);
+    return () => {
+      window.removeEventListener("hvm:session-ending", ending);
+      window.removeEventListener("hvm:session-cleared", clear);
+    };
+  }, [onNavigate]);
 
   useEffect(() => {
     if (initialAccess && attempt === 0) return;
     const abort = new AbortController();
+    const request = revision.current;
     setState({ kind: "loading" });
     api<AdminVerifySessionResponse>("/v1/admin/auth/verify-session", {
       signal: abort.signal,
     })
       .then((access) => {
-        if (abort.signal.aborted) return;
+        if (abort.signal.aborted || request !== revision.current) return;
         if (!access.authorized || !access.role) {
           onNavigate("/admin/entrar");
           return;
@@ -50,7 +71,7 @@ export function AdminAccessGate({
         setState({ kind: "ready", access });
       })
       .catch((error: ApiFailure) => {
-        if (abort.signal.aborted) return;
+        if (abort.signal.aborted || request !== revision.current) return;
         if (error.status === 401) onNavigate("/admin/entrar");
         else setState({ kind: error.status === 403 ? "denied" : "error" });
       });
@@ -61,14 +82,20 @@ export function AdminAccessGate({
     const abort = new AbortController();
     let inFlight = false;
     const refresh = async () => {
-      if (document.visibilityState === "hidden" || inFlight) return;
+      if (
+        document.visibilityState === "hidden" ||
+        inFlight ||
+        loggedOut.current
+      )
+        return;
       inFlight = true;
+      const request = revision.current;
       try {
         const access = await api<AdminVerifySessionResponse>(
           "/v1/admin/auth/verify-session",
           { signal: abort.signal },
         );
-        if (!abort.signal.aborted)
+        if (!abort.signal.aborted && request === revision.current)
           setState(
             access.authorized && access.role
               ? { kind: "ready", access }
@@ -77,6 +104,7 @@ export function AdminAccessGate({
       } catch (cause) {
         if (
           !abort.signal.aborted &&
+          request === revision.current &&
           [401, 403].includes((cause as ApiFailure).status ?? 0)
         )
           setState({ kind: "denied" });

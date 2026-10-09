@@ -1,0 +1,13 @@
+HTTP/1.1 404 Not Found
+Vary: Origin
+x-request-id: 89f49ae2-d14c-464f-8107-3d8eeb1a2957
+Cache-Control: no-store, max-age=0
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+X-Frame-Options: DENY
+Content-Type: application/json; charset=utf-8
+Content-Length: 72
+ETag: W/"48-J7Xk3EKgs5vUBqw8ovH8Gp+30lY"
+Date: Fri, 09 Oct 2026 11:20:43 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5

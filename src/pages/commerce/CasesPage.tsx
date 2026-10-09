@@ -359,8 +359,11 @@ export default function CasesPage({
     selected &&
     ["resolved", "dismissed", "rejected", "refunded"].includes(selected.status);
   return (
-    <section className="hvm-commerce">
+    <section className={"hvm-commerce" + (isAdmin ? " admin-page" : "")}>
+      <header className={isAdmin ? "admin-department-header" : undefined}><div>
+      {isAdmin && <span className="admin-kicker">{kind === "refund" ? "Proteção da compra" : "Qualidade e segurança"}</span>}
       <h1>
+        {isAdmin && (kind === "refund" ? <ShieldCheck aria-hidden="true" /> : <Flag aria-hidden="true" />)}
         {kind === "refund"
           ? isAdmin
             ? "Gestão de reembolsos"
@@ -374,6 +377,7 @@ export default function CasesPage({
           ? "Acompanhe as solicitações, a análise e a confirmação do estorno."
           : "Relate problemas com lojas, produtores, produtos ou compras. As denúncias são privadas e analisadas pela equipe autorizada."}
       </p>
+      </div></header>
       {error && (
         <p role="alert" className="commerce-error">
           {error}

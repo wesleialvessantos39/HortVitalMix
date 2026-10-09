@@ -1,0 +1,35 @@
+{
+  "sourceSchemaVersion": 67,
+  "sourceMigrationHistoryHash": "db7f5d98aabd1a2c7e1e02fbe18e563bc56441b9d1275b651ec1c66e0f878075",
+  "sourceMigrations": 74,
+  "tests": {
+    "contracts": 34,
+    "postgresLocal": 12,
+    "http": 14,
+    "passed": 60,
+    "typecheck": "passed"
+  },
+  "databaseScope": "disposable local PostgreSQL only; production not accessed by these tests",
+  "migration": "20261009023420_app_mobile_distribution.sql",
+  "checked": [
+    "canonical permissions and revoked sectors",
+    "explicit denial for Super administrator",
+    "recent authentication",
+    "concurrent revision conflict",
+    "actor/payload-bound idempotent receipt",
+    "one immutable audit event per mutation",
+    "browser role grants and force RLS",
+    "singleton and foreign-key index",
+    "stable current download redirects",
+    "unavailable native artifacts return JSON404 without redirect",
+    "real Express and Vercel dispatcher mounts",
+    "live Vite download middleware JSON404/no-store"
+  ],
+  "native": {
+    "android": "TWA manifest/icons plus offline association template; no signed binary or real certificate published",
+    "ios": "SwiftUI/WKWebView source template; not compiled without macOS/Xcode",
+    "storeReviewAndSigning": "required before public native distribution"
+  },
+  "emailsSent": 0,
+  "productionDatabaseWrites": 0
+}

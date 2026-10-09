@@ -10,3 +10,6 @@ export function takeAdminAccess() {
   pending = null;
   return value && value.expires > Date.now() ? value.access : null;
 }
+export function clearAdminAccess() {
+  pending = null;
+}

@@ -1,0 +1,23 @@
+✔ bundled assets require packages; server and data changes do not (2.19655ms)
+✔ backend origin rejects credentials, insecure/local endpoints and URL paths (0.421071ms)
+✔ native versions are bounded positive builds and numeric store versions (0.815893ms)
+✔ fingerprint remains stable across package version changes and copied web assets (19.578188ms)
+✔ remote live-reload and global fetch patch cannot pass runtime validation (6.811177ms)
+✔ prepare stamps Android and iOS consistently using real schema and source SHA (5.538249ms)
+✔ invalid native target fails before changing the other project (4.692401ms)
+✔ certificate proof requires the actual single signer matching the configured pin (0.495891ms)
+✔ APK package proof rejects a validly signed different application or version (0.37344ms)
+✔ IPA proof requires signed team, application and actual version without debugging entitlement (0.434311ms)
+✔ signed upload destination is immutable and restricted to the project bucket (0.331409ms)
+✔ publication is bound to the exact source and signer; no arbitrary iOS installation link (0.512556ms)
+✔ CI callback sends the exact matching origin and bearer without following redirects (0.31836ms)
+✔ OIDC token is requested only from the GitHub-controlled endpoint for the fixed audience (0.456914ms)
+✔ workflow reuses producer artifacts on failed-job retries and isolates signing from pull requests (4.002834ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 106.869079

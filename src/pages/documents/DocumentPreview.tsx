@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import workerUrl from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
+import { fetchApiFile } from "../../lib/api";
 
 type PdfTextItem = { str?: string; transform?: number[] };
 type PdfPage = {
@@ -79,7 +80,9 @@ export function DocumentPreview({
     setTotal(0);
     void (async () => {
       try {
-        const response = await fetch(url, { credentials: "include" });
+        const response = url.startsWith("blob:")
+          ? await fetch(url)
+          : await fetchApiFile(url);
         if (!response.ok) throw new Error("PREVIEW_FAILED");
         const data = new Uint8Array(await response.arrayBuffer());
         const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");

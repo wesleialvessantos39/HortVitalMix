@@ -289,13 +289,13 @@ export default function ExecutiveBiDashboardPage() {
                 </caption>
                 <thead>
                   <tr>
-                    <th>Data</th>
-                    <th>GMV</th>
-                    <th>Ticket médio</th>
-                    <th>Produtores ativos</th>
-                    <th>Conversão</th>
-                    <th>Assinaturas</th>
-                    <th>Último cálculo</th>
+                    <th scope="col">Data</th>
+                    <th scope="col">GMV</th>
+                    <th scope="col">Ticket médio</th>
+                    <th scope="col">Produtores ativos</th>
+                    <th scope="col">Conversão</th>
+                    <th scope="col">Assinaturas</th>
+                    <th scope="col">Último cálculo</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -310,16 +310,22 @@ export default function ExecutiveBiDashboardPage() {
                         </th>
                         {metric ? (
                           <>
-                            <td>{money(value("gmv_cents", date))}</td>
-                            <td>{money(value("avg_ticket_cents", date))}</td>
-                            <td>{value("active_producers", date)}</td>
-                            <td>
+                            <td data-label="GMV">
+                              {money(value("gmv_cents", date))}
+                            </td>
+                            <td data-label="Ticket médio">
+                              {money(value("avg_ticket_cents", date))}
+                            </td>
+                            <td data-label="Produtores ativos">
+                              {value("active_producers", date)}
+                            </td>
+                            <td data-label="Conversão">
                               {value("conversion_rate", date).toFixed(2)}%
                             </td>
-                            <td>
+                            <td data-label="Assinaturas">
                               {money(value("subscription_revenue_cents", date))}
                             </td>
-                            <td>
+                            <td data-label="Último cálculo">
                               {new Date(metric.calculatedAt).toLocaleString(
                                 "pt-BR",
                                 { timeZone: data.timezone },
@@ -327,7 +333,9 @@ export default function ExecutiveBiDashboardPage() {
                             </td>
                           </>
                         ) : (
-                          <td colSpan={6}>Não calculado</td>
+                          <td data-label="Situação" colSpan={6}>
+                            Não calculado
+                          </td>
                         )}
                       </tr>
                     );

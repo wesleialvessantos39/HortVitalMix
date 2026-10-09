@@ -1,0 +1,179 @@
+{
+  "verifiedAt": "2026-10-09T17:13:07.143099+00:00",
+  "scope": "Existing administrative departments; local browser fixtures only",
+  "productionPublished": false,
+  "fullSuite": {
+    "passed": 75,
+    "failed": 0,
+    "log": "browser-complete.log",
+    "note": "Before the final narrow-table metadata compact adjustment."
+  },
+  "finalAffectedRecheck": {
+    "passed": 14,
+    "failed": 0,
+    "log": "browser-compact-recheck.log",
+    "note": "After final compact CSS adjustment; 6 mobile table layouts, 2 filters, 2 draft-preservation and 4 identity-confirmation flows."
+  },
+  "initialFocusedVerification": {
+    "passed": 11,
+    "failed": 0,
+    "log": "browser-focused.log"
+  },
+  "viewportWidths": [
+    320,
+    390,
+    768,
+    1024,
+    1440
+  ],
+  "screenshots": [
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/assinaturas-1440.png",
+      "sha256": "8d5d648fc8588b40c6a76082a49c2bd6523877d93e3f3f1f7fa9b8fb86d7bf3f"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/assinaturas-320.png",
+      "sha256": "c2dbc8014c3c0bdbd85103ca06c7248f24d77780dabe5cfec86c7953b3f92c88"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/assinaturas-390.png",
+      "sha256": "74b7e87ee63f96c09512a1eb004a9277f537f87f984a756a9960081a38ccdf39"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/assinaturas-768.png",
+      "sha256": "4dfc89be3a0d3b73ec71c668badbd85ae6072af8f7642cc2b69f14ccfa5ad587"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/avaliacoes-1440.png",
+      "sha256": "12e36223df05d8f578a2f823a3e3ca6a7a4e87a0c67b1b5358e94b6822b25bdb"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/avaliacoes-390.png",
+      "sha256": "b67b0c0bc03b692614f823c47a1fccb2246f05a58aeaeabf805439c2737b0e64"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/bi-1440.png",
+      "sha256": "fdf71c374e3aff4019b92c77a1ca7185e28ed2a77b8f23b12e4107d0e255ec13"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/bi-320.png",
+      "sha256": "f63560506bc7f7fade3a06e6ff7e8005825fe3dc9e8c1738fcdd3cc400a89995"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/bi-390.png",
+      "sha256": "48d4e2f60522e318171d1485a5b4c7bced4c727e3241b2ee9ff701da7beac1eb"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/bi-768.png",
+      "sha256": "53bd6f38edba6d3743e812ce7695b72936842df6e569a8f704b6007ecbbdc5f7"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/bloqueios-1440.png",
+      "sha256": "ae684398439d0b0819d783445904fecbc4f76e647acd4c90de0acea68c859cee"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/bloqueios-320.png",
+      "sha256": "38f58e246b63cc1a9e7ba7d0964ce378bc573a7e6af89db4e9cc6b7cd94115f5"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/bloqueios-390.png",
+      "sha256": "8cc88cb3e1dae642f99e95e4fb5a0c1742636e8b2a60dfbba9746a6b37d7676f"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/categorias-1440.png",
+      "sha256": "e412635c94cfb9b6c4b5a87ea00438719072e525a80faf8d2369949122e63956"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/categorias-390.png",
+      "sha256": "438199922fb0b7721ec7a36bf05e3fff2128e30ff2524f4bac5196dfe878e1b2"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/denuncias-1440.png",
+      "sha256": "e5733fd19d742ea3a5b8225578092eb5f6c044568f5cbe02cbb23e93f9c6c628"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/denuncias-390.png",
+      "sha256": "e5fdd2dcc0f6a6a02306275648b2738e03bbaa977f62b8a4a17f1934aa077917"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/imoveis-1440.png",
+      "sha256": "fcae13ed722c8c9ed0af477181c0b2c741249247c3b0ba9aa0bee046cb9ec970"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/imoveis-390.png",
+      "sha256": "b0b7cf91a778fcdbfce298bba0dedf94de21361ede273827d1cfa2f424c6e405"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/localidades-1440.png",
+      "sha256": "1c403b8857ae95310369b0fef06aeaba03de0acfcb2bbb9736d3cd380d8faf67"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/localidades-320.png",
+      "sha256": "3c68672fb41d5130c46e3428bb7ba73b19aca990487f6dbe7514d25c024590bc"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/localidades-390.png",
+      "sha256": "8347c1dea36b81ec1f951b6c49b50f0e4b18502ba8af28a18df9d5f77919bb48"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/localidades-768.png",
+      "sha256": "aa0475fcefe06aa29418a742be0bfbea999d5acd3756eb2f978ccd88e272e1d1"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/pagamentos-1440.png",
+      "sha256": "1c25afc31bfbf783121912c19fe3c84abe04b5aba990eb3ab772d217ae675ec2"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/pagamentos-390.png",
+      "sha256": "13cacd9b483e784557ed854856e497974a5c572d7c3707ed4715fa5d58087f33"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/politica-reembolso-1440.png",
+      "sha256": "762494dbc16a90661d6f84a26efed7d7bb540251abc122a3ac73bff3b19e980b"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/politica-reembolso-390.png",
+      "sha256": "b4d6f20b799f8a8060c89817008c0d744add09618ff20528f2eccebd38bd9356"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/reembolsos-1440.png",
+      "sha256": "1992767489fd3f8f922da24616b02a13ffb1fbc2923d1a67511ebde5ae90b786"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/reembolsos-390.png",
+      "sha256": "21163a64d1a678f3be8422dfa1754423c30151933cc8d8e3e067497d3d511e4f"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/usuarios-1440.png",
+      "sha256": "2643ccd4d325dc9d14a16b95d7f26493e8067f1638cef1a22386a1527689e171"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/usuarios-320.png",
+      "sha256": "4589bef1ec95fdfc4efaeba0ed07975eba7d3a0ff8a37465d7130caf839fa534"
+    },
+    {
+      "path": "docs/evidence/departamentos-responsivos-2026-10-09/usuarios-390.png",
+      "sha256": "2cbebb1e8d915a5eb24264c6688ac279d417c658d85b3ba01ed546ce6a772079"
+    }
+  ],
+  "sourceFingerprints": {
+    "src/pages/admin/admin.css": "a0c9dd5dcc88184c91fa07d81cc8fa4239ace81bcecb018229b80be00db9ebb0",
+    "src/pages/admin/adminDepartments.css": "6e1110d9957098f643676577996519eb22a11e79876c212c9bd6201de1d40064",
+    "src/pages/admin/AdminUsersPage.tsx": "35791c0b0d88d377a6247fcde4aa4350d9b970e5d3fa24f43351aef17666c11e",
+    "src/pages/admin/AdminAccessBlocksPage.tsx": "5dde45e0d4ba4a01562543ff322f55710cf43651369f7509a76d0ea0666cabc2",
+    "src/pages/admin/AdminReviewsPage.tsx": "1051d772a9d8cf2415e8790e2e304a8f1d992cd9778d35020c1f0678b4853f79",
+    "src/pages/admin/AdminSubscriptionPlansPage.tsx": "ca660c20bfd8d35c7a3942338075a3f548f1ddb22e2a7d801046f7c82bcc206a",
+    "src/pages/admin/ExecutiveBiDashboardPage.tsx": "1a7b594300ebacdc5880916e61436bf7daca1ca1ecc51e343a81134572f9261a",
+    "src/pages/admin/locality/AdminLocalitiesPage.tsx": "c2adfbe772704d8d639cbda0b468f92ef13f686297d16552bde819c237a7dd8b",
+    "src/pages/admin/useAdminConfirmedCommand.tsx": "421b8719b8b23f03eb07b8da5c06973320f63cfb60e88f5fa937425ffb6bd2aa",
+    "src/pages/commerce/AdminCommercePage.tsx": "5ad4eb421770c920edaf3eabf6c0fa4ea3a46f52487bb0373a3215141701e5bc",
+    "src/pages/commerce/CasesPage.tsx": "258a2b9eec42c7f5bb199b9f336f1506cf728785dd58dcc8a55c5b376ee4c783",
+    "tests/e2e/admin-departments-responsive.spec.ts": "1560ddf6ebc53c965c6f97e0afab2f3706d3bf30b5d3251793621a5a8f4975fc",
+    "tests/e2e/admin-governance-responsive.spec.ts": "b07e0f6219412222ab9a358dc9ded028d7e3b4e2a7a349f09bff023a841f9775"
+  },
+  "limits": [
+    "API responses are synthetic browser fixtures.",
+    "No real email, production accounts or production business writes.",
+    "Release/publication must be recorded separately in Livro Raiz."
+  ]
+}

@@ -8,6 +8,7 @@ import {
 } from "react";
 import { mediaPreview, mediaPreviewWidth } from "../../lib/mediaPreview";
 import { stableMediaUrl, invalidateMediaUrl } from "../../lib/mediaCache";
+import { publicMediaSource } from "../../lib/publicMediaSource";
 
 export function MediaImage({
   src,
@@ -25,14 +26,15 @@ export function MediaImage({
   publicPreview?: boolean;
   onReady?: () => void;
 }) {
-  const preferred = useMemo(() => stableMediaUrl(src), [src]),
+  const approved = publicMediaSource(src);
+  const preferred = useMemo(() => approved ? stableMediaUrl(approved) : null, [approved]),
     [retry, setRetry] = useState<string | null>(null),
     [near, setNear] = useState(priority),
     node = useRef<HTMLImageElement>(null);
-  const variant = publicPreview
-    ? mediaPreview(src, mediaPreviewWidth(sizes))
+  const variant = publicPreview && approved
+    ? mediaPreview(approved, mediaPreviewWidth(sizes))
     : null;
-  const source = retry === src ? src : (variant ?? preferred);
+  const source = (retry === src ? approved : (variant ?? preferred)) ?? "data:,";
   useLayoutEffect(() => {
     if (node.current?.complete && node.current.naturalWidth > 0) onReady?.();
   }, [source, onReady]);
@@ -63,7 +65,7 @@ export function MediaImage({
       srcSet={
         variant && retry !== src
           ? [320, 640, 1280]
-              .map((w) => `${mediaPreview(src, w as 320 | 640 | 1280)} ${w}w`)
+              .map((w) => `${mediaPreview(approved!, w as 320 | 640 | 1280)} ${w}w`)
               .join(", ")
           : undefined
       }
@@ -76,7 +78,7 @@ export function MediaImage({
       decoding="async"
       fetchPriority={props.fetchPriority ?? (priority ? "high" : "auto")}
       onError={(event) => {
-        if (source !== src) {
+        if (approved && source !== approved) {
           invalidateMediaUrl(src);
           setRetry(src);
           return;

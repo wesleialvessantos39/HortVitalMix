@@ -1,0 +1,63 @@
+
+ RUN  v5.0.1 /workspace/HortVitalMix
+
+◇ injected env (0) from .env.test
+◇ injected env (0) from .env.local
+ ✓ tests/unit/sessionLogoutClient.test.ts > Safe browser exit is complete before navigation may continue > waits for offline cleanup before announcing logout completion 261ms
+ ✓ tests/unit/sessionLogoutClient.test.ts > Safe browser exit is complete before navigation may continue > retains browser credentials when server revocation fails 4ms
+ ✓ tests/unit/sessionLogoutClient.test.ts > Safe browser exit is complete before navigation may continue > fails closed and supports retry when private offline cleanup fails 2ms
+ ✓ tests/unit/sessionLogoutClient.test.ts > Safe browser exit is complete before navigation may continue > waits for refresh cookies and revokes the adopted refresh credentials 88ms
+ ✓ tests/unit/sessionLogoutClient.test.ts > Safe browser exit is complete before navigation may continue > waits for an in-flight password confirmation before revoking its new session 55ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > ADMIN_REAUTHENTICATION_REQUIRED exige confirmação sem renovar ou repetir o convite 387ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > ADMIN_REAUTH_REQUIRED exige confirmação sem renovar ou repetir o convite 8ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > REAUTH_REQUIRED exige confirmação sem renovar ou repetir o convite 4ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > RECENT_AUTH_REQUIRED exige confirmação sem renovar ou repetir o convite 11ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > senha incorreta no login não renova a sessão anterior nem repete a senha 1ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > senha incorreta na confirmação não renova nem repete a tentativa 51ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > renovação em trânsito não substitui outra conta nem repete seu convite 101ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > /v1/admin/auth/verify-session renova somente a sessão expirada, preservando a identidade 8ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > /v1/admin/auth/reauthenticate renova somente a sessão expirada, preservando a identidade 6ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > a confirmação aguarda a renovação pendente antes de enviar a senha 82ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > uma requisição expirada aguarda a confirmação sem emitir renovação concorrente 101ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > sessão expirada ainda renova e retoma o mesmo comando uma única vez 1ms
+stderr | tests/unit/browserSessionLogout.test.ts
+◇ injected env (0) from .env
+
+ ✓ tests/unit/browserSessionLogout.test.ts > Explicit exit revokes every identity present in this browser > revokes the current platform_admin cookie and a distinct administrative bearer 95ms
+ ✓ tests/unit/browserSessionLogout.test.ts > Explicit exit revokes every identity present in this browser > revokes the current platform_super_admin cookie and a distinct administrative bearer 9ms
+ ✓ tests/unit/browserSessionLogout.test.ts > Explicit exit revokes every identity present in this browser > revokes the current consumer cookie and a distinct administrative bearer 3ms
+ ✓ tests/unit/browserSessionLogout.test.ts > Explicit exit revokes every identity present in this browser > revokes the current producer cookie and a distinct administrative bearer 49ms
+ ✓ tests/unit/browserSessionLogout.test.ts > Explicit exit revokes every identity present in this browser > does not revoke the same cookie/bearer twice 1ms
+ ✓ tests/unit/browserSessionLogout.test.ts > Explicit exit revokes every identity present in this browser > revokes a distinct live refresh identity even after the access session was revoked 1ms
+ ✓ tests/unit/browserSessionLogout.test.ts > Explicit exit revokes every identity present in this browser > checks distinct refresh tokens attached to an identical access token 0ms
+ ✓ tests/unit/browserSessionLogout.test.ts > Explicit exit revokes every identity present in this browser > revokes a remaining refresh cookie even when the access cookie expired 8ms
+ ✓ tests/unit/browserSessionLogout.test.ts > Explicit exit revokes every identity present in this browser > does not mistake an expired JWT for a revoked refresh session 2ms
+ ✓ tests/unit/browserSessionLogout.test.ts > Explicit exit revokes every identity present in this browser > retains credentials for retry and fails closed when revocation is unavailable 5ms
+ ✓ tests/unit/browserSessionLogout.test.ts > Explicit exit revokes every identity present in this browser > fails closed when refreshing an expired session is unavailable 0ms
+ ✓ tests/unit/browserSessionLogout.test.ts > Explicit exit revokes every identity present in this browser > accepts a session that Auth already revoked 0ms
+ ✓ tests/unit/browserSessionLogout.test.ts > Explicit exit revokes every identity present in this browser > does not mistake a generic refresh 401 for confirmed revocation 0ms
+ ✓ tests/unit/browserSessionLogout.test.ts > Explicit exit revokes every identity present in this browser > does not mistake a generic refresh 403 for confirmed revocation 0ms
+ ✓ tests/unit/browserSessionLogout.test.ts > Explicit exit revokes every identity present in this browser > fails closed when freshly minted logout-only credentials cannot be revoked 2ms
+ ✓ tests/unit/browserSessionLogout.test.ts > Explicit exit revokes every identity present in this browser > does not treat a misconfigured API key as an expired user token 0ms
+ ✓ tests/unit/browserSessionLogout.test.ts > Explicit exit revokes every identity present in this browser > validates refresh input before contacting Auth 11ms
+ ✓ tests/unit/adminInviteInvalidSession.test.ts > Unavailable platform_admin links cannot create or import a session > invalid validation is read only and reveals no identity 9ms
+ ✓ tests/unit/adminInviteInvalidSession.test.ts > Unavailable platform_admin links cannot create or import a session > invalid acceptance cannot change passwords or create access 2ms
+ ✓ tests/unit/adminInviteInvalidSession.test.ts > Unavailable platform_admin links cannot create or import a session > expired validation is read only and reveals no identity 1ms
+ ✓ tests/unit/adminInviteInvalidSession.test.ts > Unavailable platform_admin links cannot create or import a session > expired acceptance cannot change passwords or create access 1ms
+ ✓ tests/unit/adminInviteInvalidSession.test.ts > Unavailable platform_admin links cannot create or import a session > invalidated validation is read only and reveals no identity 1ms
+ ✓ tests/unit/adminInviteInvalidSession.test.ts > Unavailable platform_admin links cannot create or import a session > invalidated acceptance cannot change passwords or create access 1ms
+ ✓ tests/unit/adminInviteInvalidSession.test.ts > Unavailable platform_admin links cannot create or import a session > already_accepted validation is read only and reveals no identity 0ms
+ ✓ tests/unit/adminInviteInvalidSession.test.ts > Unavailable platform_admin links cannot create or import a session > already_accepted acceptance cannot change passwords or create access 0ms
+ ✓ tests/unit/adminInviteInvalidSession.test.ts > Unavailable platform_super_admin links cannot create or import a session > invalid validation is read only and reveals no identity 1ms
+ ✓ tests/unit/adminInviteInvalidSession.test.ts > Unavailable platform_super_admin links cannot create or import a session > invalid acceptance cannot change passwords or create access 0ms
+ ✓ tests/unit/adminInviteInvalidSession.test.ts > Unavailable platform_super_admin links cannot create or import a session > expired validation is read only and reveals no identity 0ms
+ ✓ tests/unit/adminInviteInvalidSession.test.ts > Unavailable platform_super_admin links cannot create or import a session > expired acceptance cannot change passwords or create access 0ms
+ ✓ tests/unit/adminInviteInvalidSession.test.ts > Unavailable platform_super_admin links cannot create or import a session > invalidated validation is read only and reveals no identity 0ms
+ ✓ tests/unit/adminInviteInvalidSession.test.ts > Unavailable platform_super_admin links cannot create or import a session > invalidated acceptance cannot change passwords or create access 1ms
+ ✓ tests/unit/adminInviteInvalidSession.test.ts > Unavailable platform_super_admin links cannot create or import a session > already_accepted validation is read only and reveals no identity 0ms
+ ✓ tests/unit/adminInviteInvalidSession.test.ts > Unavailable platform_super_admin links cannot create or import a session > already_accepted acceptance cannot change passwords or create access 2ms
+
+ Test Files  4 passed (4)
+      Tests  50 passed (50)
+   Start at  11:19:17
+   Duration  7.08s (transform 41%, tests 32%, import 20%, setup 5%, worker 2%)

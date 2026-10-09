@@ -9,6 +9,7 @@ import {
   type AdminReview,
 } from "../../../shared/contracts/review";
 import { ReviewStars } from "../../components/reviews/ReviewStars";
+import { Star } from "lucide-react";
 import { AdminReauthentication } from "../../components/commerce/AdminReauthentication";
 import { useSession } from "../../hooks/useSession";
 import "../../components/reviews/reviews.css";
@@ -91,14 +92,18 @@ export default function AdminReviewsPage() {
     }
   }
   return (
-    <section className="review-admin">
-      <header>
-        <span className="eyebrow">Reputação auditada</span>
-        <h1>Moderação de avaliações</h1>
-        <p>
-          Avaliações de compras entregues. A moderação oculta o conteúdo público
-          e registra o motivo.
-        </p>
+    <section className="review-admin admin-page">
+      <header className="admin-department-header">
+        <div>
+          <span className="admin-kicker">Reputação auditada</span>
+          <h1>
+            <Star aria-hidden="true" /> Moderação de avaliações
+          </h1>
+          <p>
+            Avaliações de compras entregues. A moderação oculta o conteúdo
+            público e registra o motivo.
+          </p>
+        </div>
       </header>
       <label className="review-filter">
         Exibir
@@ -122,7 +127,10 @@ export default function AdminReviewsPage() {
         <p role="alert" className="review-error">
           {error}{" "}
           {!selected && (
-            <button onClick={() => setAttempt((v) => v + 1)}>
+            <button
+              className="admin-secondary"
+              onClick={() => setAttempt((v) => v + 1)}
+            >
               Tentar novamente
             </button>
           )}
@@ -168,7 +176,7 @@ export default function AdminReviewsPage() {
               onChange={(e) => setReason(e.target.value)}
             />
           </label>
-          <p>
+          <p className="admin-record-count">
             A avaliação deixará de compor a nota da loja. Seu conteúdo
             continuará disponível neste painel.
           </p>
@@ -193,7 +201,7 @@ export default function AdminReviewsPage() {
       )}
       {data && (
         <>
-          <p>
+          <p className="admin-record-count">
             {data.total} {data.total === 1 ? "avaliação" : "avaliações"}
           </p>
           <div className="review-admin-list">
@@ -237,13 +245,19 @@ export default function AdminReviewsPage() {
               </article>
             ))}
           </div>
-          {!data.reviews.length && <p>Nenhuma avaliação neste filtro.</p>}
+          {!data.reviews.length && (
+            <p className="admin-empty">
+              Nenhuma avaliação neste filtro. Escolha outra situação para
+              consultar o histórico.
+            </p>
+          )}
           {data.pages > 1 && (
             <nav
               className="review-pagination"
               aria-label="Páginas de avaliações administrativas"
             >
               <button
+                className="admin-secondary"
                 disabled={busy || page === 1}
                 onClick={() => setPage((v) => v - 1)}
               >
@@ -253,6 +267,7 @@ export default function AdminReviewsPage() {
                 Página {page} de {data.pages}
               </span>
               <button
+                className="admin-secondary"
                 disabled={busy || page >= data.pages}
                 onClick={() => setPage((v) => v + 1)}
               >

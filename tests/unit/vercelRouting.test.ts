@@ -9,6 +9,14 @@ describe("Vercel API dispatcher", () => {
       source: "/api/:path*", destination: "/api?__hvm_path=:path*",
     });
   });
+  it.each(["android", "ios"])("keeps the stable %s download behind the server allowlist before the SPA", (platform) => {
+    expect(config.rewrites[1]).toEqual({
+      source: "/downloads/:platform(android|ios)",
+      destination: "/api?__hvm_path=v1/app-distribution/download/:platform",
+    });
+    expect(vercelRequestUrl(`/api?__hvm_path=v1/app-distribution/download/${platform}`))
+      .toBe(`/v1/app-distribution/download/${platform}`);
+  });
   it.each([
     "v1/admin/auth/login", "v1/admin/auth/mfa/verify",
     "v1/admin/auth/verify-session", "v1/auth/login",

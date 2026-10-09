@@ -5,9 +5,30 @@ import {
   readAdminSessionIdentityVersion,
   saveAdminSession,
 } from "./adminSessionStore";
+import {
+  fetchAppApi,
+  hasPendingNativeMutations,
+  hasPendingNativeSessionChanges,
+  nativeBackendOrigin,
+  waitForNativeSessionChanges,
+} from "./nativeTransport";
 
 let refreshing: Promise<boolean> | null = null;
 let confirmingIdentity: Promise<void> | null = null;
+let pendingApiMutations = 0;
+
+export function hasPendingApiMutations() {
+  return pendingApiMutations > 0 || hasPendingNativeMutations();
+}
+
+export function hasPendingSessionChanges() {
+  return Boolean(refreshing || confirmingIdentity) || hasPendingNativeSessionChanges();
+}
+
+function publishMutationState() {
+  if (typeof window !== "undefined")
+    window.dispatchEvent(new Event("hvm:api-mutating"));
+}
 
 export type ApiFailure = Error & {
   status?: number;
@@ -41,20 +62,32 @@ async function parseResponse(response: Response) {
 }
 
 function apiBases() {
+  const nativeOrigin = nativeBackendOrigin();
+  if (nativeOrigin) return [nativeOrigin + "/api"];
   if (typeof location === "undefined") return ["/api"];
 
   const hostname = location.hostname.toLowerCase();
-  const vercelOrCanonical =
-    hostname === "hortvitalmix.vercel.app" ||
-    hostname.endsWith(".vercel.app") ||
-    hostname === "hortivitalmix.com.br";
+  const studioPreview =
+    hostname === "aistudio.google.com" ||
+    hostname.endsWith(".usercontent.goog") ||
+    hostname.endsWith(".googleusercontent.com");
 
   // Google AI Studio pode executar bundle de produção mesmo no preview.
   // Por isso não usamos import.meta.env.DEV para decidir o transporte.
-  return vercelOrCanonical ? ["/api"] : ["/_hvm_api", "/api"];
+  // Todo domínio publicado pela Vercel usa a mesma rota /api. Não inferir
+  // preview de um domínio desconhecido: /_hvm_api pode responder o HTML da
+  // SPA com status 200 e interromper login, sessões e comandos sensíveis.
+  return studioPreview ? ["/_hvm_api", "/api"] : ["/api"];
 }
 
-async function shouldTryAlternateBase(response: Response) {
+async function shouldTryAlternateBase(response: Response, method: string) {
+  // A preview proxy may serve the application HTML instead of its read API.
+  // Only safe reads can use this recovery; never replay a submitted command
+  // after an ambiguous successful response.
+  if (response.ok && ["GET", "HEAD"].includes(method)) {
+    const contentType = response.headers.get("content-type") ?? "";
+    if (contentType.includes("text/html")) return true;
+  }
   if (response.status === 404 || response.status === 405) return true;
   if (response.status !== 403) return false;
 
@@ -87,7 +120,7 @@ async function fetchApiPath(
   for (let index = 0; index < bases.length; index++) {
     const response = await doFetch(bases[index] + path, options, credentials);
     lastResponse = response;
-    if (index < bases.length - 1 && (await shouldTryAlternateBase(response)))
+    if (index < bases.length - 1 && (await shouldTryAlternateBase(response, (options.method ?? "GET").toUpperCase())))
       continue;
     return { response, base: bases[index] };
   }
@@ -102,7 +135,7 @@ async function doFetch(
 ) {
   const adminToken = url.includes("/admin/") ? readAdminAccessToken() : "";
   try {
-    return await fetch(url, {
+    return await fetchAppApi(url, {
       ...options,
       credentials,
       headers: {
@@ -127,12 +160,38 @@ export function apiBase() {
   return apiBases()[0];
 }
 
+// Protected files share the native cookie jar and the administrative bearer
+// used by JSON endpoints. Blob URLs remain local to the document viewer.
+export async function fetchApiFile(path: string, options: RequestInit = {}) {
+  const base = apiBase();
+  const url = path.startsWith("/v1/") ? base + path : path;
+  const headers = new Headers(options.headers);
+  const nativeOrigin = nativeBackendOrigin();
+  const browserOrigin = nativeOrigin ??
+    (typeof location === "undefined" ? "http://localhost" : location.origin);
+  const resolved = new URL(url, browserOrigin);
+  const expected = new URL(base + "/", browserOrigin);
+  if (resolved.origin !== expected.origin || !/^\/(?:api|_hvm_api)\/v1\//.test(resolved.pathname))
+    throw failure("API_FILE_URL_REJECTED");
+  const token = resolved.pathname.startsWith(expected.pathname.replace(/\/$/, "") + "/v1/admin/")
+    ? readAdminAccessToken() : "";
+  if (token) headers.set("Authorization", "Bearer " + token);
+  headers.set("X-HVM-Request", "1");
+  return fetchAppApi(url, {
+    ...options,
+    headers,
+    credentials: "same-origin",
+    signal: options.signal ?? AbortSignal.timeout(20000),
+  }, true);
+}
+
 export async function withAdminIdentityConfirmation<T>(
   confirm: () => Promise<T>,
 ): Promise<T> {
   // As respostas de renovação também gravam cookies HttpOnly. Aguarde-as
   // antes da confirmação e impeça outra renovação durante a troca de sessão.
   await refreshing;
+  await waitForNativeSessionChanges();
   while (confirmingIdentity) await confirmingIdentity;
   let release!: () => void;
   const confirmation = new Promise<void>((resolve) => {
@@ -154,7 +213,21 @@ export async function api<T>(
   options: RequestInit & { timeoutMs?: number } = {},
   retried = false,
 ): Promise<T> {
-  return performApi<T>(path, options, retried);
+  const mutation = !["GET", "HEAD", "OPTIONS"].includes(
+    (options.method ?? "GET").toUpperCase(),
+  );
+  if (mutation) {
+    pendingApiMutations++;
+    publishMutationState();
+  }
+  try {
+    return await performApi<T>(path, options, retried);
+  } finally {
+    if (mutation) {
+      pendingApiMutations--;
+      publishMutationState();
+    }
+  }
 }
 
 async function performApi<T>(
@@ -226,7 +299,7 @@ async function performApi<T>(
     const refreshToken = readAdminRefreshToken();
     const identityVersion = readAdminSessionIdentityVersion();
     if (refreshToken) {
-      refreshing ??= fetch(base + "/v1/auth/refresh", {
+      refreshing ??= fetchAppApi(base + "/v1/auth/refresh", {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json", "X-HVM-Request": "1" },
@@ -284,7 +357,7 @@ async function performApi<T>(
       .catch(() => ({}) as { error?: string });
 
     if (sessionFailure?.error === "SESSION_EXPIRED") {
-      refreshing ??= fetch(base + "/v1/auth/refresh", {
+      refreshing ??= fetchAppApi(base + "/v1/auth/refresh", {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },

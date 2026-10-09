@@ -1,0 +1,705 @@
+/* Shared presentation for authenticated departments. Public commerce keeps its own layout. */
+.admin-shell
+  :is(.admin-page, .hvm-commerce, .review-admin, .subscription-admin) {
+  width: 100%;
+  max-width: 1220px;
+  margin-inline: auto;
+  min-width: 0;
+  box-sizing: border-box;
+  color: var(--admin-ink);
+  overflow-wrap: anywhere;
+}
+.admin-shell .hvm-commerce {
+  padding: 0;
+}
+.admin-shell :is(.admin-page-header, .admin-department-header) {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--admin-line);
+}
+.admin-shell :is(.admin-page-header, .admin-department-header) > div {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+.admin-shell :is(.admin-page-header, .admin-department-header) h1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 5px 0 6px;
+  color: var(--admin-green);
+  font-size: clamp(23px, 2vw, 29px);
+  letter-spacing: -0.6px;
+  line-height: 1.2;
+}
+.admin-shell :is(.admin-page-header, .admin-department-header) h1 > svg {
+  flex: 0 0 auto;
+  width: 23px;
+  height: 23px;
+}
+.admin-shell :is(.admin-page-header, .admin-department-header) p {
+  margin: 0;
+  max-width: 760px;
+  color: var(--admin-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.admin-shell
+  :is(
+    .admin-card,
+    .commerce-card,
+    .commerce-policy,
+    .review-admin-card,
+    .subscription-card
+  ) {
+  min-width: 0;
+  border: 1px solid var(--admin-line);
+  border-radius: 16px;
+  background: #fff;
+  padding: 16px;
+  box-shadow: 0 3px 16px #123f2205;
+}
+.admin-shell
+  :is(.admin-card, .commerce-card, .review-admin-card, .subscription-card)
+  h2 {
+  color: var(--admin-green);
+  font-size: 16px;
+  line-height: 1.4;
+  margin: 0 0 8px;
+  letter-spacing: -0.2px;
+}
+.admin-shell :is(.admin-card, .commerce-card) h3 {
+  font-size: 14px;
+  line-height: 1.4;
+}
+.admin-shell .admin-page > :is(.admin-card, .admin-alert) {
+  margin-bottom: 14px;
+}
+.admin-shell .admin-card-heading {
+  gap: 10px;
+  align-items: flex-start;
+}
+.admin-shell .admin-card-heading > div {
+  flex: 1 1 200px;
+}
+.admin-shell .admin-form {
+  gap: 12px;
+  margin-top: 14px;
+}
+.admin-shell .admin-form-grid {
+  gap: 12px !important;
+}
+.admin-shell :is(.admin-form, .admin-form-grid) label {
+  font-size: 12px;
+  line-height: 1.4;
+}
+.admin-shell
+  :is(.admin-form, .admin-form-grid, .hvm-commerce, .subscription-admin)
+  :is(input, select, textarea) {
+  min-width: 0;
+  border-color: #cbd9ce;
+  border-radius: 10px;
+  font-size: 16px;
+}
+.admin-shell
+  :is(
+    .admin-primary,
+    .admin-secondary,
+    .admin-table-action,
+    .hvm-commerce .primary,
+    .hvm-commerce .secondary,
+    .hvm-executive-bi .primary,
+    .hvm-executive-bi .secondary
+  ) {
+  min-height: 40px;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 700;
+  white-space: normal;
+}
+.admin-shell
+  :is(.admin-primary, .hvm-commerce .primary, .hvm-executive-bi .primary) {
+  background: var(--admin-green-2);
+  border: 1px solid var(--admin-green-2);
+  color: #fff;
+}
+.admin-shell .admin-primary.admin-danger {
+  background: #982f2e;
+  border-color: #982f2e;
+}
+.admin-shell
+  :is(
+    .admin-secondary,
+    .admin-table-action,
+    .hvm-commerce .secondary,
+    .hvm-executive-bi .secondary
+  ) {
+  border: 1px solid #cbd9ce;
+  background: #fff;
+  color: var(--admin-green-2);
+}
+.admin-shell .admin-table-action.admin-danger-text {
+  border-color: #e4b8b8;
+  color: #982f2e;
+}
+.admin-shell
+  :is(.admin-primary, .admin-secondary, .admin-table-action):not(
+    :disabled
+  ):hover {
+  filter: brightness(0.97);
+}
+.admin-shell
+  :is(.admin-page, .hvm-commerce, .review-admin, .subscription-admin)
+  :is(button, input, select, textarea, a, summary):focus-visible {
+  outline: 2px solid #347a4a;
+  outline-offset: 3px;
+}
+.admin-shell
+  :is(.admin-page, .hvm-commerce, .review-admin, .subscription-admin)
+  button:disabled {
+  cursor: not-allowed;
+}
+.admin-shell
+  :is(
+    .admin-alert,
+    .commerce-error,
+    .commerce-success,
+    .review-error,
+    .review-notice,
+    .subscription-error,
+    .subscription-notice
+  ) {
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 11px 13px;
+  border-radius: 12px;
+}
+.admin-shell .admin-empty {
+  margin: 12px 0 0;
+  padding: 22px 14px;
+  border: 1px dashed #d5e2d8;
+  border-radius: 12px;
+  background: #fafcf9;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.admin-shell .admin-records-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px;
+  margin: 12px 0;
+}
+.admin-shell .admin-records-toolbar label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 140px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.admin-shell .admin-records-toolbar label:first-child {
+  flex-grow: 2;
+}
+.admin-shell .admin-records-toolbar :is(input, select) {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 9px 11px;
+  box-sizing: border-box;
+  border: 1px solid #cbd9ce;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--admin-ink);
+  font: inherit;
+  font-size: 16px;
+}
+.admin-shell .admin-record-count {
+  margin: 8px 0;
+  font-size: 12px;
+  color: var(--admin-muted);
+}
+.admin-shell .admin-card--table:not(:has(.admin-invites-table)) {
+  container: admin-records / inline-size;
+}
+.admin-shell .admin-data-table {
+  min-width: 0;
+  table-layout: fixed;
+}
+.admin-shell .admin-data-table :is(th, td) {
+  overflow-wrap: anywhere;
+  white-space: normal;
+  padding: 11px 10px;
+}
+.admin-shell .admin-data-table th {
+  font-size: 10px;
+  line-height: 1.4;
+}
+.admin-shell .admin-data-table td {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.admin-shell .admin-data-table th:first-child {
+  width: 25%;
+}
+.admin-shell .admin-data-table th:last-child {
+  width: 23%;
+}
+.admin-shell .admin-users-table th:nth-child(4) {
+  width: 20%;
+}
+.admin-shell .admin-data-table .admin-button-row {
+  gap: 6px;
+}
+.admin-shell .admin-data-table .admin-table-action {
+  min-height: 36px;
+  padding: 7px 9px;
+  font-size: 11px;
+}
+.admin-shell .admin-data-table .admin-badge {
+  white-space: normal;
+  line-height: 1.3;
+}
+.admin-shell .commerce-grid {
+  gap: 14px;
+}
+.admin-shell :is(.commerce-card, .commerce-policy) {
+  margin: 0 0 14px;
+}
+.admin-shell .commerce-card p {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.admin-shell .hvm-commerce label {
+  margin-block: 10px;
+  font-size: 12px;
+}
+.admin-shell .hvm-commerce fieldset {
+  padding: 12px;
+}
+.admin-shell .hvm-commerce legend {
+  font-size: 12px;
+  font-weight: 700;
+}
+.admin-shell .commerce-tag {
+  align-self: start;
+  font-size: 11px;
+}
+.admin-shell .commerce-case-list button {
+  padding: 12px;
+  gap: 8px;
+}
+.admin-shell .commerce-case-list button > span:first-child {
+  flex: 1 1 170px;
+  min-width: 0;
+}
+.admin-shell .commerce-case-list button strong {
+  font-size: 13px;
+}
+.admin-shell .commerce-case-list button small {
+  font-size: 11px;
+}
+.admin-shell .commerce-history {
+  padding-left: 18px;
+}
+.admin-shell .commerce-history li {
+  padding-block: 5px;
+}
+.admin-shell .commerce-history li p {
+  margin-block: 5px;
+}
+.admin-shell .commerce-message {
+  margin-block: 8px;
+  padding: 10px;
+}
+.admin-shell .commerce-message p {
+  margin-block: 6px;
+}
+.admin-shell .review-admin-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 12px;
+  align-items: start;
+}
+.admin-shell .review-admin-card {
+  margin: 0;
+}
+.admin-shell .review-admin-card p {
+  font-size: 13px;
+  margin-block: 8px;
+  line-height: 1.5;
+}
+.admin-shell .review-filter {
+  padding: 12px;
+  background: #fff;
+  border: 1px solid var(--admin-line);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.admin-shell .review-filter select {
+  width: min(100%, 260px);
+  border: 1px solid #cbd9ce;
+  border-radius: 10px;
+  color: var(--admin-ink);
+}
+.admin-shell .review-moderation-form {
+  margin-bottom: 14px;
+}
+.admin-shell .review-moderation-form textarea {
+  box-sizing: border-box;
+  font-size: 16px;
+  border-radius: 10px;
+  resize: vertical;
+}
+.admin-shell .subscription-admin {
+  gap: 14px;
+}
+.admin-shell .subscription-admin-form {
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+}
+.admin-shell .subscription-admin label {
+  font-size: 12px;
+  font-weight: 700;
+}
+.admin-shell .subscription-admin :is(input, select, textarea) {
+  min-height: 44px;
+  box-sizing: border-box;
+}
+.admin-shell .subscription-admin .subscription-checkbox input {
+  min-height: 20px;
+}
+.admin-shell .subscription-grid {
+  gap: 12px;
+}
+.admin-shell .subscription-card {
+  gap: 10px;
+}
+.admin-shell .subscription-card p {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.admin-shell .subscription-card button {
+  align-self: start;
+}
+.admin-shell .admin-department-editor {
+  scroll-margin-block-start: 90px;
+}
+.admin-shell .subscription-card .subscription-plan-price {
+  font-size: 20px;
+  font-weight: 750;
+  color: var(--admin-green);
+}
+.admin-shell .hvm-category-fields {
+  gap: 12px;
+}
+.admin-shell .hvm-category-list li {
+  padding-block: 12px;
+  gap: 10px;
+}
+.admin-shell .hvm-category-fields label {
+  font-size: 12px;
+}
+.admin-shell .hvm-bi-filters {
+  gap: 10px;
+}
+.admin-shell .hvm-bi-filters label {
+  flex: 1 1 150px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.admin-shell .hvm-bi-filters input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  box-sizing: border-box;
+  font-size: 16px;
+}
+.admin-shell .hvm-bi-cards {
+  gap: 12px;
+  margin-block: 14px;
+}
+.admin-shell .hvm-bi-cards strong {
+  font-size: 22px;
+}
+.admin-shell .hvm-bi-charts {
+  gap: 12px;
+}
+.admin-shell .hvm-bi-context {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.admin-shell .hvm-bi-table-wrap {
+  container: bi-records / inline-size;
+}
+.admin-shell .hvm-bi-table-scroll :is(th, td) {
+  padding: 10px;
+  font-size: 12px;
+}
+.admin-shell .verification-list {
+  gap: 10px;
+}
+.admin-shell .verification-queue {
+  container: admin-verification / inline-size;
+}
+.admin-shell .verification-tabs button {
+  min-height: 42px;
+  border-radius: 11px;
+  white-space: normal;
+  line-height: 1.35;
+}
+.admin-shell .verification-frame {
+  min-height: 220px;
+}
+.admin-shell .verification-dl {
+  gap: 9px;
+}
+.admin-shell .verification-dl dd {
+  font-size: 13px;
+  line-height: 1.4;
+}
+.admin-shell .verification-dl dt {
+  font-size: 10px;
+}
+.admin-shell .verification-check {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.admin-shell .verification-history article {
+  padding: 10px;
+}
+.admin-shell .admin-review-item {
+  padding: 12px;
+  gap: 12px;
+}
+.admin-shell .admin-review-item strong {
+  font-size: 13px;
+}
+.admin-shell .admin-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.admin-shell .admin-command-confirmation {
+  width: calc(100% - 28px);
+  max-width: 520px;
+  max-height: calc(
+    90dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+  );
+  overflow: auto;
+  overscroll-behavior: contain;
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--admin-line);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 24px 80px #102e2738;
+}
+.admin-shell .admin-command-confirmation::backdrop {
+  background: #102e2794;
+  backdrop-filter: blur(3px);
+}
+.admin-shell .admin-command-confirmation .commerce-card {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 20px;
+  box-shadow: none;
+}
+.admin-shell .admin-command-confirmation form > button {
+  margin: 8px 8px 0 0;
+}
+.admin-shell .admin-command-confirmation h3 {
+  margin-top: 0;
+}
+.admin-shell .admin-command-confirmation :is(input, button):focus-visible {
+  outline: 2px solid #347a4a;
+  outline-offset: 3px;
+}
+@container admin-records (max-width: 820px) {
+  .admin-shell .admin-data-table,
+  .admin-shell .admin-data-table tbody {
+    display: block;
+    width: 100%;
+  }
+  .admin-shell .admin-data-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .admin-shell .admin-data-table tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 16px;
+    padding: 14px;
+    border-bottom: 1px solid var(--admin-line);
+  }
+  .admin-shell .admin-data-table tr:last-child {
+    border-bottom: 0;
+  }
+  .admin-shell .admin-data-table td {
+    display: block;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+  .admin-shell .admin-data-table td:first-child,
+  .admin-shell .admin-data-table td:last-child {
+    grid-column: 1 / -1;
+  }
+  .admin-shell .admin-data-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--admin-muted);
+    letter-spacing: 0.03em;
+  }
+}
+@container bi-records (max-width: 820px) {
+  .admin-shell .hvm-bi-table-scroll caption {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .admin-shell .hvm-bi-table-scroll table,
+  .admin-shell .hvm-bi-table-scroll tbody {
+    display: block;
+    width: 100%;
+  }
+  .admin-shell .hvm-bi-table-scroll thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .admin-shell .hvm-bi-table-scroll tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 14px 0;
+    border-top: 1px solid var(--admin-line);
+  }
+  .admin-shell .hvm-bi-table-scroll :is(th, td) {
+    display: block;
+    border: 0;
+    padding: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .admin-shell .hvm-bi-table-scroll th,
+  .admin-shell .hvm-bi-table-scroll td:last-child {
+    grid-column: 1 / -1;
+  }
+  .admin-shell .hvm-bi-table-scroll td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    font-size: 10px;
+    color: var(--admin-muted);
+    font-weight: 700;
+  }
+}
+@container admin-verification (max-width: 900px) {
+  .admin-shell .verification-triple {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 1023px) {
+  .admin-shell .commerce-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .admin-shell .subscription-admin-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 767px) {
+  .admin-shell :is(.admin-page-header, .admin-department-header) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    padding-bottom: 13px;
+    margin-bottom: 14px;
+    gap: 10px;
+  }
+  .admin-shell
+    :is(
+      .admin-card,
+      .commerce-card,
+      .commerce-policy,
+      .review-admin-card,
+      .subscription-card
+    ) {
+    padding: 14px;
+    border-radius: 14px;
+  }
+  .admin-shell
+    :is(
+      .admin-primary,
+      .admin-secondary,
+      .admin-table-action,
+      .hvm-commerce button,
+      .hvm-executive-bi button
+    ) {
+    min-height: 44px;
+  }
+  .admin-shell .admin-data-table .admin-table-action {
+    min-height: 44px;
+    font-size: 12px;
+  }
+  .admin-shell .admin-records-toolbar {
+    gap: 9px;
+  }
+  .admin-shell .admin-records-toolbar label:first-child {
+    flex-basis: 100%;
+  }
+  .admin-shell .admin-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .admin-shell .review-actions button {
+    flex: 1 1 150px;
+  }
+  .admin-shell .subscription-admin-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .admin-shell .subscription-card button {
+    align-self: stretch;
+  }
+}
+@container admin-records (max-width: 420px) {
+  .admin-shell .admin-data-table tr {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px;
+    padding: 12px;
+  }
+  .admin-shell .admin-data-table td[data-label="Setores"],
+  .admin-shell .admin-data-table td[data-label="Motivo"] {
+    grid-column: 1 / -1;
+  }
+}
+@media (pointer: coarse) {
+  .admin-shell :is(.admin-primary, .admin-secondary, .admin-table-action) {
+    min-height: 44px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-shell
+    :is(.admin-page, .hvm-commerce, .review-admin, .subscription-admin) {
+    scroll-behavior: auto;
+  }
+}

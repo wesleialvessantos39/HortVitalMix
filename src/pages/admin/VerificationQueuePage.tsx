@@ -1,7 +1,6 @@
 import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useMemo, useState } from "react";
-import { api } from "../../lib/api";
-import { readAdminAccessToken } from "../../lib/adminSessionStore";
+import { api, apiBase, fetchApiFile } from "../../lib/api";
 import { isEstimatedPerimeter } from "../../../shared/rural/estimatePropertyPerimeter";
 import "./verificationQueue.css";
 
@@ -21,7 +20,7 @@ type QueueRow = {
   decision_history?: HistoryItem[] | null;
 };
 
-const fileUrl = (id: string) => "/api/v1/admin/documents/" + id + "/file";
+const fileUrl = (id: string) => apiBase() + "/v1/admin/documents/" + id + "/file";
 
 const statusLabel: Record<string, string> = {
   pending: "Pendente",
@@ -102,18 +101,13 @@ export function VerificationQueuePage() {
     let objectUrl = "";
     setPreviewError("");
     setPreviewUrl("");
-    const token = readAdminAccessToken();
-    fetch("/api/v1/admin/documents/" + selectedDoc.id + "/file", {
-      credentials: "same-origin",
+    fetchApiFile("/v1/admin/documents/" + selectedDoc.id + "/file", {
       signal: controller.signal,
-      headers: {
-        "X-HVM-Request": "1",
-        ...(token ? { Authorization: "Bearer " + token } : {}),
-      },
     })
       .then(async (response) => {
         if (!response.ok) throw new Error("documento");
         const blob = await response.blob();
+        if (controller.signal.aborted) return;
         objectUrl = URL.createObjectURL(blob);
         setPreviewUrl(objectUrl);
       })

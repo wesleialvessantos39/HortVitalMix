@@ -51,6 +51,7 @@ import {
 } from "../../shared/contracts/locality.ts";
 import { confirmationRouter } from "./confirmationRoutes.ts";
 import { mergeLoginCart, clearCartSession } from "../security/cartSession.ts";
+import { revokeBrowserSessions } from "../services/BrowserSessionLogoutService.ts";
 export const authRouter = Router();
 authRouter.use(confirmationRouter);
 
@@ -641,18 +642,21 @@ authRouter.get("/session", async (req, res, next) => {
 
 authRouter.post("/logout", async (req, res, next) => {
   try {
-    const token = cookie(req, "hvm_access");
-    if (token) {
-      if (!supabaseAdmin) {
-        res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
-        return;
-      }
-
-      const { error } = await supabaseAdmin.auth.admin.signOut(token, "local");
-      if (error && error.status !== 401 && error.status !== 403) {
-        res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
-        return;
-      }
+    const refreshToken = req.body?.refreshToken;
+    if (refreshToken !== undefined && (typeof refreshToken !== "string" || refreshToken.length > 4096)) {
+      res.status(400).json({ error: "VALIDATION_ERROR" });
+      return;
+    }
+    const bearer = req.headers.authorization?.startsWith("Bearer ")
+      ? req.headers.authorization.slice(7).trim()
+      : "";
+    const revoked = await revokeBrowserSessions([
+      { accessToken: cookie(req, "hvm_access"), refreshToken: cookie(req, "hvm_refresh") },
+      { accessToken: bearer, refreshToken },
+    ]);
+    if (!revoked) {
+      res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
+      return;
     }
 
     clear(res);

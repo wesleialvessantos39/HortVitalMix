@@ -8,6 +8,9 @@ import { sessionMiddleware } from "./middleware/session.ts";
 import { isAllowedRequestOrigin } from "./security/origin.ts";
 import { adminConfigRouter } from "./routes/adminConfigRoutes.ts";
 import { adminDashboardRouter } from "./routes/adminDashboardRoutes.ts";
+import { adminOperationsRouter } from "./routes/adminOperationsRoutes.ts";
+import { appDistributionRouter, appDownloadRouter } from "./routes/appDistributionRoutes.ts";
+import { mobileCiRouter, mobileReleaseRouter } from "./routes/mobileReleaseRoutes.ts";
 import { adminGovernanceRouter } from "./routes/adminGovernanceRoutes.ts";
 import { profilePrivacyRouter } from "./routes/profilePrivacyRoutes.ts";
 import { ruralPropertyRouter } from "./routes/ruralPropertyRoutes.ts";
@@ -99,8 +102,11 @@ app.use((req,res,next)=> {
 });
 // Public immutable photo variants have their own SQL visibility gate.
 // Serve before sessions to avoid auth refresh cookies on shared CDN images.
+// GitHub CI uses its own signed identity; never resolve it as a customer session.
+for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) app.use(prefix, mobileCiRouter);
 for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) app.use(prefix, publicMediaRouter);
 app.use(sessionMiddleware);
+app.use("/downloads", appDownloadRouter);
 app.use(foundationRouter);
 app.use("/api", foundationRouter);
 app.use("/_hvm_api", foundationRouter);
@@ -118,6 +124,9 @@ app.use("/api/v1", localityRouter);
 app.use("/_hvm_api/v1", localityRouter);
 for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
   app.use(prefix, producerStoreRouter);
+  app.use(prefix, appDistributionRouter);
+  app.use(prefix, mobileReleaseRouter);
+  app.use(prefix + "/admin", adminOperationsRouter);
   app.use(prefix, categoryRouter);
   app.use(prefix, productRouter);
   app.use(prefix, inventoryRouter);

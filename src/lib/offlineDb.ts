@@ -26,6 +26,7 @@ type Snapshot = {
   value: unknown;
 };
 let connection: Promise<IDBDatabase> | null = null;
+let snapshotRevision = 0;
 const changed = () => window.dispatchEvent(new Event("hvm:offline-changed"));
 function open(): Promise<IDBDatabase> {
   if (!globalThis.indexedDB)
@@ -256,7 +257,9 @@ export async function cacheSnapshot(
   path: string,
   value: unknown,
 ) {
+  const revision = snapshotRevision;
   await transaction<void>(["snapshots"], "readwrite", (tx, finish) => {
+    if (revision !== snapshotRevision) { finish(); return; }
     const store = tx.objectStore("snapshots");
     store.put({
       key: userId + ":" + path,
@@ -293,6 +296,7 @@ export async function producerRead<T>(
   schema: z.ZodType<T>,
   signal?: AbortSignal,
 ): Promise<T> {
+  const revision = snapshotRevision;
   if (
     !/^\/v1\/producer\/(?:products(?:\/[^/]+\/lots)?|orders)(?:\?|$)/.test(path)
   )
@@ -300,6 +304,7 @@ export async function producerRead<T>(
   if (navigator.onLine) {
     try {
       const value = schema.parse(await api(path, { signal }));
+      if (revision !== snapshotRevision) throw new Error("SESSION_CHANGED");
       if (!signal?.aborted)
         await cacheSnapshot(userId, path, value).catch(() => {});
       return value;
@@ -308,11 +313,14 @@ export async function producerRead<T>(
     }
   }
   const value = await cachedSnapshot(userId, path);
+  if (revision !== snapshotRevision) throw new Error("SESSION_CHANGED");
   if (value === null) throw new Error("OFFLINE_SNAPSHOT_MISSING");
   return schema.parse(value);
 }
 export async function saveProducerSession(session: ShellSession | null) {
+  const revision = snapshotRevision;
   await transaction<void>(["meta"], "readwrite", (tx, finish) => {
+    if (revision !== snapshotRevision) { finish(); return; }
     const store = tx.objectStore("meta");
     if (
       session?.activeRole === "producer" &&
@@ -348,6 +356,7 @@ export async function readProducerSession(): Promise<ShellSession | null> {
   });
 }
 export async function clearProducerSnapshots() {
+  snapshotRevision++;
   await transaction<void>(["meta", "snapshots"], "readwrite", (tx, finish) => {
     tx.objectStore("meta").delete("producerSession");
     tx.objectStore("snapshots").clear();

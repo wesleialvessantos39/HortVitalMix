@@ -24,6 +24,7 @@ import { storeCoverSlides } from "../../components/catalog/storeCoverSlides";
 import { ProducerPortrait } from "../../components/catalog/ProductSlideCaption";
 import "../../components/catalog/storefrontMedia.css";
 import { StoreReputationBlock } from "../../components/reviews/StoreReputationBlock";
+import { MediaImage } from "../../components/catalog/MediaImage";
 
 export default function PublicProducerStorePage({
   slug,
@@ -124,7 +125,7 @@ export default function PublicProducerStorePage({
       ) : (
         <div className="hvm-store-banner">
           {store.bannerUrl ? (
-            <img src={store.bannerUrl} alt="" />
+            <MediaImage src={store.bannerUrl} alt="" priority sizes="100vw" />
           ) : (
             <>
               <span className="hvm-store-banner-leaf">

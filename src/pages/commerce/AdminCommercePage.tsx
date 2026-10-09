@@ -112,8 +112,10 @@ export default function AdminCommercePage({
       />
     );
   return (
-    <section className="hvm-commerce">
-      <h1>
+    <section className="hvm-commerce admin-page">
+      <header className="admin-department-header"><div>
+      <span className="admin-kicker">Pagamentos e proteção da compra</span>
+      <h1><CreditCard aria-hidden="true" />
         {path === "/admin/politica-reembolso"
           ? "Política de reembolso"
           : "Preparação dos pagamentos"}
@@ -122,6 +124,7 @@ export default function AdminCommercePage({
         Configure a proteção da compra e as referências da futura conta de
         recebimento da plataforma.
       </p>
+      </div></header>
       {error && (
         <p role="alert" className="commerce-error">
           {error}

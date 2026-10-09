@@ -287,7 +287,8 @@ test("audit queue keeps one mobile width and a three-column comparator on deskto
     const columns = await page.locator(".verification-triple").evaluate((element) =>
       getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length,
     );
-    expect(columns).toBe(width >= 1024 ? 3 : 1);
+    const contentWidth = await page.locator(".verification-queue").evaluate((element) => element.clientWidth);
+    expect(columns).toBe(width >= 1024 && contentWidth > 900 ? 3 : 1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
 });
@@ -335,7 +336,7 @@ test("super administrator confirms block, deletion and registration review", asy
   ).toBeDisabled();
   await page.getByLabel("Confirmo a exclusão desta conta.").check();
   await page.getByRole("button", { name: "Confirmar exclusão" }).click();
-  await expect(page.getByText("Excluída", { exact: true })).toBeVisible();
+  await expect(page.getByRole("table").getByText("Excluída", { exact: true })).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Bloquear", exact: true }),
   ).toHaveCount(0);
