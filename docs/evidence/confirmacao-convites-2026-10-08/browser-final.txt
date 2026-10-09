@@ -1,0 +1,23 @@
+
+Running 16 tests using 1 worker
+
+(node:55644) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/e2e/admin-invite-reauthentication.spec.ts:243:5 › platform_admin confirma convite platform_admin sem perder dados em 320px (1.5s)
+  ✓   2 tests/e2e/admin-invite-reauthentication.spec.ts:243:5 › platform_admin confirma convite platform_admin sem perder dados em 1440px (1.4s)
+  ✓   3 tests/e2e/admin-invite-reauthentication.spec.ts:243:5 › platform_super_admin confirma convite platform_admin sem perder dados em 320px (1.2s)
+  ✓   4 tests/e2e/admin-invite-reauthentication.spec.ts:243:5 › platform_super_admin confirma convite platform_admin sem perder dados em 1440px (1.5s)
+  ✓   5 tests/e2e/admin-invite-reauthentication.spec.ts:243:5 › platform_super_admin confirma convite platform_super_admin sem perder dados em 320px (1.2s)
+  ✓   6 tests/e2e/admin-invite-reauthentication.spec.ts:243:5 › platform_super_admin confirma convite platform_super_admin sem perder dados em 1440px (1.4s)
+  ✓   7 tests/e2e/admin-invite-reauthentication.spec.ts:323:1 › cancelar a confirmação preserva o rascunho para uma nova tentativa (1.2s)
+  ✓   8 tests/e2e/admin-invite-reauthentication.spec.ts:347:1 › senha incorreta não envia outro convite e permite corrigir a confirmação (1.2s)
+  ✓   9 tests/e2e/admin-invite-reauthentication.spec.ts:367:1 › nova exigência após a confirmação não inicia ciclo de tentativas automáticas (1.2s)
+  ✓  10 tests/e2e/admin-invite-reauthentication.spec.ts:384:1 › indisponibilidade da confirmação preserva o rascunho e permite repetir somente a senha (1.1s)
+  ✓  11 tests/e2e/admin-invite-reauthentication.spec.ts:407:1 › confirmação de outro usuário não reaplica a operação do ator original (1.1s)
+  ✓  12 tests/e2e/admin-invite-reauthentication.spec.ts:431:1 › trocar de conta durante a confirmação descarta a resposta anterior (1.1s)
+  ✓  13 tests/e2e/admin-invite-reauthentication.spec.ts:472:1 › cliques repetidos confirmam uma vez e não duplicam o envio (1.2s)
+  ✓  14 tests/e2e/admin-invite-reauthentication.spec.ts:503:1 › sessão inválida mostra uma ação para entrar novamente (971ms)
+  ✓  15 tests/e2e/admin-invite-reauthentication.spec.ts:520:3 › delete retoma a operação original após confirmar identidade (1.0s)
+  ✓  16 tests/e2e/admin-invite-reauthentication.spec.ts:520:3 › clear-history retoma a operação original após confirmar identidade (923ms)
+
+  16 passed (20.2s)

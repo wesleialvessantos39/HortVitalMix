@@ -1,5 +1,7 @@
 # Modelo de convite hospedado — verificação de acesso
 
+**Atualização de 8 de outubro de 2026:** o usuário informou que já configurou o template no painel do Supabase. A investigação abaixo documenta o acesso disponível na rodada anterior; não representa uma nova solicitação para repetir a configuração. O conteúdo hospedado e a entrega de e-mails não foram relidos/testados por automação. A mensagem posterior “Entre novamente para confirmar esta operação” era exibida pelo aplicativo para falhas HTTP 401, inclusive quando a confirmação administrativa de 15 minutos havia vencido, antes do envio ao Supabase. Esse caso é tratado no fluxo de Governança, sem exigir outra alteração do template.
+
 O usuário optou por configurar o modelo diretamente no painel. O [guia completo de configuração](GUIA_CONFIGURAR_CONVITE_SUPABASE.md) reúne o HTML integral, assunto, URLs, condição de SMTP no plano Free e a verificação pelo fluxo de Governança. A investigação de acesso abaixo permanece como histórico; a criação do guia não comprova a aplicação remota do template.
 
 Verificado em **8 de outubro de 2026, 20:51 UTC**, com consultas posteriores às **20:56 UTC** e **21:56 UTC** depois da escolha e confirmação de atualizar as conexões. Projeto: `xipbsazvymkqqfmfegwu`.

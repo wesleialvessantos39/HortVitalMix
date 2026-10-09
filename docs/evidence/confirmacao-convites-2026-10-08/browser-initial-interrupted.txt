@@ -1,0 +1,18 @@
+
+Running 31 tests using 2 workers
+
+(node:53478) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:53477) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   2 tests/e2e/admin-governance-responsive.spec.ts:193:1 › super administrador vê os 52 municípios oficiais pelo nome (2.0s)
+  ✓   3 tests/e2e/admin-governance-responsive.spec.ts:209:5 › platform_admin: populated administrative screens at 320px (6.1s)
+  ✓   4 tests/e2e/admin-governance-responsive.spec.ts:209:5 › platform_admin: populated administrative screens at 390px (6.3s)
+  ✓   5 tests/e2e/admin-governance-responsive.spec.ts:209:5 › platform_admin: populated administrative screens at 768px (6.0s)
+  ✓   6 tests/e2e/admin-governance-responsive.spec.ts:209:5 › platform_admin: populated administrative screens at 1024px (6.6s)
+  ✘   1 tests/e2e/admin-invite-reauthentication.spec.ts:241:5 › platform_admin confirma convite platform_admin sem perder dados em 320px (30.1s)
+(node:53718) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   7 tests/e2e/admin-governance-responsive.spec.ts:209:5 › platform_admin: populated administrative screens at 1440px (7.2s)
+  ✓   9 tests/e2e/admin-governance-responsive.spec.ts:209:5 › platform_super_admin: populated administrative screens at 320px (11.6s)
+  ✓  10 tests/e2e/admin-governance-responsive.spec.ts:209:5 › platform_super_admin: populated administrative screens at 390px (8.6s)

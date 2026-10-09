@@ -935,6 +935,65 @@ export class AdminGovernanceService {
     };
   }
 
+  static async reauthenticate(
+    userId: string,
+    portalRole: AdminRole,
+    password: string,
+    ipHash: string,
+    requestId: string,
+  ): Promise<AdminLoginResult> {
+    // A confirmação pertence à identidade já autenticada. O e-mail de Auth
+    // pode ser um alias interno e nunca é aceito do cliente para trocar a conta.
+    let principal: { admin_email: string } | null = null;
+    let unavailable = true;
+    if (supabaseAdmin) {
+      const result = await supabaseAdmin
+        .from("app_admin_principals")
+        .select("admin_email")
+        .eq("admin_user_id", userId)
+        .eq("portal_role", portalRole)
+        .maybeSingle();
+      if (!result.error) {
+        principal = result.data;
+        unavailable = false;
+      }
+    }
+    if (unavailable && dbPool) {
+      try {
+        const result = await dbPool.query<{ admin_email: string }>(
+          `SELECT admin_email FROM public.app_admin_principals
+            WHERE admin_user_id=$1 AND portal_role=$2 LIMIT 1`,
+          [userId, portalRole],
+        );
+        principal = result.rows[0] ?? null;
+        unavailable = false;
+      } catch {
+        return { status: "unavailable" };
+      }
+    }
+    if (unavailable) return { status: "unavailable" };
+    if (!principal) return { status: "no_admin_role" };
+
+    const result = await this.login(
+      principal.admin_email,
+      password,
+      ipHash,
+      requestId,
+      portalRole,
+    );
+    if (
+      result.status === "session_created" &&
+      (result.userId !== userId || result.role !== portalRole)
+    ) {
+      await supabaseAdmin?.auth.admin
+        .signOut(result.accessToken, "local")
+        .catch(() => undefined);
+      await this.recordAttempt(principal.admin_email, ipHash, "failure");
+      return { status: "invalid_credentials" };
+    }
+    return result;
+  }
+
   static async verifyMfa(
     challengeId: string,
     otp: string,

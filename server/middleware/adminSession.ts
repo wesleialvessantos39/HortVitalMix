@@ -358,6 +358,7 @@ export function requireRecentAuth(
     res.status(401).json({
       error: AdminErrorCode.REAUTH_REQUIRED,
       message: "Reautenticação administrativa recente requerida.",
+      actorId: req.adminActor.userId,
       requestId: req.requestId,
     });
     return;

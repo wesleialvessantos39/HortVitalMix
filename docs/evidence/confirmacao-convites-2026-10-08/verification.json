@@ -1,0 +1,48 @@
+{
+  "baseCommit": "2681b7f4177674fc896f1080b50463e48e39a066",
+  "verificationScope": "Local synthetic Auth/data/delivery adapters and browser fixtures; no authenticated production login or real email sent.",
+  "backendTestsPassed": 37,
+  "transportTestsPassed": 12,
+  "browserUniqueCasesPassed": 31,
+  "focusedBrowserCasesReexecutedAfterFinalChange": 16,
+  "visualCasesReexecuted": 4,
+  "initialBrowserExecution": "Interrupted after one failure while source/HMR was changing; retained history. Stable execution passed all 31 cases.",
+  "fullTypecheck": "passed",
+  "build": "passed",
+  "requiredBuildGateCasesPassed": 212,
+  "independentReview": "cleared after session adoption, actor-switch and replay fixes",
+  "schemaVersion": 66,
+  "migrationCount": 73,
+  "images": [
+    {
+      "file": "convite-confirmacao-platform_admin-320.png",
+      "width": 320,
+      "height": 850,
+      "sha256": "de166f86f4b4d0e4851f48e71cbdbeaa6762d5f307df40eb524c7719d0162d5e"
+    },
+    {
+      "file": "convite-confirmacao-platform_admin-1440.png",
+      "width": 1440,
+      "height": 850,
+      "sha256": "a68fbe95734c664520d91893ca9e6a131377f8d0273c5a2b82481bb9930f56cd"
+    },
+    {
+      "file": "convite-confirmacao-platform_super_admin-320.png",
+      "width": 320,
+      "height": 850,
+      "sha256": "8dd7669cdd5df619dbcc6fa01c3a9b63a88621964327c9e43cb740b0dcc12387"
+    },
+    {
+      "file": "convite-confirmacao-platform_super_admin-1440.png",
+      "width": 1440,
+      "height": 850,
+      "sha256": "20d4b110ed2c3f10aaececbd5b7169627acbba8b32656a70d8a485024d4fb4d1"
+    },
+    {
+      "file": "convite-enviado-apos-confirmacao-1440.png",
+      "width": 1440,
+      "height": 850,
+      "sha256": "1c1d08dd7773a832a8bb512d73e20207b64904081f9c5b00878adfd1ad6c8ff0"
+    }
+  ]
+}

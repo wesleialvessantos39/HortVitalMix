@@ -130,6 +130,7 @@ Use o envio de **Governança do HortiVitalMix** para essa verificação. A açã
 
 | Situação observada | O que conferir |
 | --- | --- |
+| Governança pede confirmação da identidade antes de enviar, excluir ou limpar o histórico | Confirme sua senha administrativa na janela do próprio aplicativo. Essa proteção exige confirmação recente após 15 minutos; o formulário e os poderes escolhidos são preservados. Cancelar não executa a ação. Não exige alterar o template no Supabase. |
 | Editor informa que o plano não permite personalização | Verifique a condição de plano Free + SMTP padrão descrita no início e configure Custom SMTP, se aplicável. |
 | Envio retorna `Email address not authorized` | O SMTP padrão só atende endereços autorizados da equipe Supabase. Para entregar aos destinatários do aplicativo, confira Custom SMTP. |
 | Envio retorna limite de e-mails / status `429` | Aguarde o intervalo informado e confira [Authentication → Rate Limits](https://supabase.com/dashboard/project/xipbsazvymkqqfmfegwu/auth/rate-limits) e os limites do seu provedor. |

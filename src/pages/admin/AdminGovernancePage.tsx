@@ -12,19 +12,22 @@ import {
   UsersRound,
 } from "lucide-react";
 import "./adminInvites.css";
-import { api } from "../../lib/api";
+import { api, type ApiFailure } from "../../lib/api";
+import { AdminReauthentication } from "../../components/commerce/AdminReauthentication";
 import { CPFInput } from "../../components/forms/CPFInput";
 import { cryptoRandomUUID } from "../../lib/uuid";
 import type {
   AdminVerifySessionResponse,
   InviteResponse,
+  CreateInviteInput,
+  AdminSectorCode,
 } from "../../../shared/contracts/adminGovernance";
 
 type Props = {
   onNavigate: (to: string) => void;
   access: AdminVerifySessionResponse;
 };
-type Sector = { code: string; name: string; description: string };
+type Sector = { code: AdminSectorCode; name: string; description: string };
 type IdentityLookup = {
   found: boolean;
   identity?: {
@@ -36,6 +39,10 @@ type IdentityLookup = {
     adminRoles: Array<"platform_admin" | "platform_super_admin">;
   };
 };
+type GovernanceOperation =
+  | { kind: "create"; input: CreateInviteInput }
+  | { kind: "delete"; invite: InviteResponse; commandId: string }
+  | { kind: "clear"; commandId: string };
 const roleLabels = {
   platform_admin: "Administrador setorial",
   platform_super_admin: "Super administrador",
@@ -56,7 +63,7 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
   const [targetRole, setTargetRole] = useState<
     "platform_admin" | "platform_super_admin"
   >("platform_admin");
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<AdminSectorCode[]>([]);
   const [identity, setIdentity] = useState<IdentityLookup | null>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
@@ -64,6 +71,19 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
   const [action, setAction] = useState<InviteResponse | "clear" | null>(null);
   const [acting, setActing] = useState(false);
   const confirmation = useRef<HTMLDialogElement>(null);
+  const sessionDialog = useRef<HTMLDialogElement>(null);
+  const operationInFlight = useRef(false);
+  const lastCommand = useRef<{
+    key: string;
+    operation: GovernanceOperation;
+  } | null>(null);
+  const [pendingConfirmation, setPendingConfirmation] = useState<{
+    operation: GovernanceOperation;
+    actorId: string;
+    actorRole: AdminVerifySessionResponse["role"];
+  } | null>(null);
+  const [confirmingSession, setConfirmingSession] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [success, setSuccess] = useState("");
@@ -102,6 +122,11 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
     if (action && dialog && !dialog.open) dialog.showModal();
     if (!action && dialog?.open) dialog.close();
   }, [action]);
+  useEffect(() => {
+    const dialog = sessionDialog.current;
+    if (pendingConfirmation && dialog && !dialog.open) dialog.showModal();
+    if (!pendingConfirmation && dialog?.open) dialog.close();
+  }, [pendingConfirmation]);
   const hasPending = invites.some(
     (i) =>
       !i.isAccepted &&
@@ -157,31 +182,33 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
     }
   }
 
-  function toggle(code: string) {
+  function toggle(code: AdminSectorCode) {
     setSelected((v) =>
       v.includes(code) ? v.filter((x) => x !== code) : [...v, code],
     );
   }
-  async function createInvite(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
+  async function executeOperation(
+    operation: GovernanceOperation,
+    confirmed = false,
+  ) {
+    if (operationInFlight.current) return;
+    operationInFlight.current = true;
+    setBusy(operation.kind === "create");
+    setActing(operation.kind !== "create");
     setError("");
     setSuccess("");
+    setSessionExpired(false);
     try {
-      const result = await api<{ status: string; invite?: InviteResponse }>(
-        "/v1/admin/invites",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            email,
-            targetCpf: targetCpf.replace(/\D/g, "") || undefined,
-            targetRole,
-            sectors: targetRole === "platform_admin" ? selected : [],
-            commandId: cryptoRandomUUID(),
-          }),
-        },
-      );
-      if (result.status === "created" && result.invite) {
+      if (operation.kind === "create") {
+        const result = await api<{ status: string; invite?: InviteResponse }>(
+          "/v1/admin/invites",
+          {
+            method: "POST",
+            body: JSON.stringify(operation.input),
+          },
+        );
+        if (result.status !== "created" || !result.invite)
+          throw Error("INVALID_INVITE_RESPONSE");
         inviteListRevision.current++;
         setSuccess(
           result.invite.identityMode === "existing"
@@ -198,21 +225,107 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
           created,
           ...current.filter((i) => i.id !== created.id),
         ]);
+      } else if (operation.kind === "clear") {
+        const result = await api<{ count: number }>(
+          "/v1/admin/invites/clear-history",
+          {
+            method: "POST",
+            body: JSON.stringify({ commandId: operation.commandId }),
+          },
+        );
+        inviteListRevision.current++;
+        setInvites((current) =>
+          current.filter((i) => inviteStatus(i) === "pending"),
+        );
+        setSuccess(
+          `${result.count} convite(s) removido(s) do histórico. Os convites pendentes continuam disponíveis.`,
+        );
+      } else {
+        const result = await api<{ cleanupPending?: boolean }>(
+          `/v1/admin/invites/${operation.invite.id}`,
+          {
+            method: "DELETE",
+            body: JSON.stringify({
+              expectedRevision: operation.invite.revision,
+              commandId: operation.commandId,
+            }),
+          },
+        );
+        inviteListRevision.current++;
+        setInvites((current) =>
+          current.filter((i) => i.id !== operation.invite.id),
+        );
+        setSuccess(
+          operation.invite.isAccepted
+            ? "Convite removido do histórico. O acesso administrativo permanece ativo."
+            : result.cleanupPending
+              ? "Convite excluído e link cancelado. A liberação do e-mail será tentada novamente ao emitir um novo convite."
+              : "Convite excluído e link cancelado. Você já pode enviar um novo convite para este e-mail.",
+        );
       }
+      lastCommand.current = null;
+      setAction(null);
     } catch (err) {
-      const status = (err as { status?: number }).status;
+      const failure = err as ApiFailure;
+      if (failure.message === "ADMIN_REAUTHENTICATION_REQUIRED") {
+        setAction(null);
+        if (!confirmed && failure.actorId) {
+          setPendingConfirmation({
+            operation,
+            actorId: failure.actorId,
+            actorRole: access.role,
+          });
+          return;
+        }
+        setError(
+          "Não foi possível validar a confirmação desta operação. Seus dados foram preservados; tente novamente.",
+        );
+        return;
+      }
+      const status = failure.status;
+      if (status && status < 500) lastCommand.current = null;
+      if (status === 401) setSessionExpired(true);
       setError(
         status === 401
-          ? "Entre novamente para confirmar esta operação."
+          ? "Sua sessão administrativa expirou. Entre novamente para continuar. Seus dados foram preservados."
           : status === 403
-            ? "Seu nível de acesso não permite criar esse tipo de administrador."
+            ? operation.kind === "create"
+              ? "Seu nível de acesso não permite criar esse tipo de administrador."
+              : "Seu acesso não permite alterar este convite."
             : status === 409
-              ? "Já existe acesso ou convite pendente para este mesmo papel administrativo."
-              : "Não foi possível emitir o convite.",
+              ? operation.kind === "create"
+                ? "Já existe acesso ou convite pendente para este mesmo papel administrativo."
+                : "O convite foi atualizado. Atualize o histórico antes de tentar novamente."
+              : operation.kind === "create"
+                ? "Não foi possível emitir o convite. Seus dados foram preservados."
+                : "Não foi possível concluir a operação. Tente novamente.",
       );
+      setAction(null);
     } finally {
+      operationInFlight.current = false;
       setBusy(false);
+      setActing(false);
     }
+  }
+  async function createInvite(e: React.FormEvent) {
+    e.preventDefault();
+    if (operationInFlight.current || pendingConfirmation) return;
+    const input = {
+      email,
+      targetCpf: targetCpf.replace(/\D/g, "") || undefined,
+      targetRole,
+      sectors: targetRole === "platform_admin" ? [...selected] : [],
+    };
+    const key = "create:" + JSON.stringify(input);
+    if (lastCommand.current?.key !== key)
+      lastCommand.current = {
+        key,
+        operation: {
+          kind: "create",
+          input: { ...input, commandId: cryptoRandomUUID() },
+        },
+      };
+    await executeOperation(lastCommand.current.operation);
   }
 
   const inviteStatus = (i: InviteResponse) =>
@@ -230,63 +343,18 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
   );
 
   async function confirmAction() {
-    if (!action || acting) return;
-    setActing(true);
-    setError("");
-    setSuccess("");
-    try {
-      if (action === "clear") {
-        const result = await api<{ count: number }>(
-          "/v1/admin/invites/clear-history",
-          {
-            method: "POST",
-            body: JSON.stringify({ commandId: cryptoRandomUUID() }),
-          },
-        );
-        inviteListRevision.current++;
-        setInvites((current) =>
-          current.filter((i) => inviteStatus(i) === "pending"),
-        );
-        setSuccess(
-          `${result.count} convite(s) removido(s) do histórico. Os convites pendentes continuam disponíveis.`,
-        );
-      } else {
-        const result = await api<{ cleanupPending?: boolean }>(
-          `/v1/admin/invites/${action.id}`,
-          {
-            method: "DELETE",
-            body: JSON.stringify({
-              expectedRevision: action.revision,
-              commandId: cryptoRandomUUID(),
-            }),
-          },
-        );
-        inviteListRevision.current++;
-        setInvites((current) => current.filter((i) => i.id !== action.id));
-        setSuccess(
-          action.isAccepted
-            ? "Convite removido do histórico. O acesso administrativo permanece ativo."
-            : result.cleanupPending
-              ? "Convite excluído e link cancelado. A liberação do e-mail será tentada novamente ao emitir um novo convite."
-              : "Convite excluído e link cancelado. Você já pode enviar um novo convite para este e-mail.",
-        );
-      }
-      setAction(null);
-    } catch (err) {
-      const status = (err as { status?: number }).status;
-      setError(
-        status === 409
-          ? "O convite foi atualizado. Atualize o histórico antes de tentar novamente."
-          : status === 401
-            ? "Entre novamente para confirmar esta operação."
-            : status === 403
-              ? "Seu acesso não permite alterar este convite."
-              : "Não foi possível concluir a operação. Tente novamente.",
-      );
-      setAction(null);
-    } finally {
-      setActing(false);
-    }
+    if (!action || operationInFlight.current || pendingConfirmation) return;
+    const key =
+      action === "clear" ? "clear" : `delete:${action.id}:${action.revision}`;
+    if (lastCommand.current?.key !== key)
+      lastCommand.current = {
+        key,
+        operation:
+          action === "clear"
+            ? { kind: "clear", commandId: cryptoRandomUUID() }
+            : { kind: "delete", invite: action, commandId: cryptoRandomUUID() },
+      };
+    await executeOperation(lastCommand.current.operation);
   }
 
   return (
@@ -319,6 +387,21 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
       {error && (
         <div className="admin-alert admin-alert--error" role="alert">
           {error}
+          {sessionExpired && (
+            <button
+              type="button"
+              className="admin-secondary compact"
+              onClick={() =>
+                onNavigate(
+                  isSuper
+                    ? "/entrar/super-administrador?reason=reauth"
+                    : "/entrar/administrador?reason=reauth",
+                )
+              }
+            >
+              Entrar novamente
+            </button>
+          )}
         </div>
       )}
       {success && (
@@ -342,125 +425,130 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
             um convite válido por 24 horas.
           </p>
           <form onSubmit={createInvite} className="admin-form">
-            <CPFInput
-              label="CPF já cadastrado (opcional)"
-              required={false}
-              value={targetCpf}
-              onChange={(value) => {
-                setTargetCpf(value);
-                setIdentity(null);
-              }}
-            />
-            {targetCpf.replace(/\D/g, "").length === 11 && (
-              <button
-                type="button"
-                className="admin-secondary compact"
-                onClick={() => void lookupIdentity()}
-              >
-                Localizar cadastro
-              </button>
-            )}
-
-            {identity?.found && identity.identity && (
-              <div className="admin-alert admin-alert--success">
-                <strong>
-                  <UsersRound size={15} /> Cadastro existente localizado.
-                </strong>
-                <div>{identity.identity.fullName}</div>
-                <small>
-                  Perfis públicos:{" "}
-                  {identity.identity.publicRoles.length
-                    ? identity.identity.publicRoles
-                        .map(publicRoleLabel)
-                        .join(" • ")
-                    : "nenhum"}
-                  . Esses perfis serão preservados.
-                  {identity.identity.adminRoles.length
-                    ? " Acessos administrativos existentes: " +
-                      identity.identity.adminRoles
-                        .map(adminRoleLabel)
-                        .join(" • ") +
-                      "."
-                    : ""}
-                </small>
-              </div>
-            )}
-
-            <label>
-              E-mail administrativo
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </label>
-
-            <div
-              className={`admin-invite-role-preview ${targetRole === "platform_super_admin" ? "is-super" : ""}`}
+            <fieldset
+              className="admin-invite-inputs"
+              disabled={busy || acting || Boolean(pendingConfirmation)}
             >
-              {targetRole === "platform_super_admin" ? (
-                <Crown size={23} />
-              ) : (
-                <ShieldCheck size={23} />
-              )}
-              <div>
-                <strong>{roleLabels[targetRole]}</strong>
-                <p>
-                  {targetRole === "platform_super_admin"
-                    ? "Acesso à gestão da plataforma e à delegação de administradores."
-                    : "Acesso restrito aos setores selecionados neste convite."}
-                </p>
-              </div>
-            </div>
-
-            <label>
-              Papel
-              <select
-                value={targetRole}
-                onChange={(e) => {
-                  const role = e.target.value as typeof targetRole;
-                  setTargetRole(role);
-                  if (role === "platform_super_admin") setSelected([]);
+              <CPFInput
+                label="CPF já cadastrado (opcional)"
+                required={false}
+                value={targetCpf}
+                onChange={(value) => {
+                  setTargetCpf(value);
+                  setIdentity(null);
                 }}
+              />
+              {targetCpf.replace(/\D/g, "").length === 11 && (
+                <button
+                  type="button"
+                  className="admin-secondary compact"
+                  onClick={() => void lookupIdentity()}
+                >
+                  Localizar cadastro
+                </button>
+              )}
+
+              {identity?.found && identity.identity && (
+                <div className="admin-alert admin-alert--success">
+                  <strong>
+                    <UsersRound size={15} /> Cadastro existente localizado.
+                  </strong>
+                  <div>{identity.identity.fullName}</div>
+                  <small>
+                    Perfis públicos:{" "}
+                    {identity.identity.publicRoles.length
+                      ? identity.identity.publicRoles
+                          .map(publicRoleLabel)
+                          .join(" • ")
+                      : "nenhum"}
+                    . Esses perfis serão preservados.
+                    {identity.identity.adminRoles.length
+                      ? " Acessos administrativos existentes: " +
+                        identity.identity.adminRoles
+                          .map(adminRoleLabel)
+                          .join(" • ") +
+                        "."
+                      : ""}
+                  </small>
+                </div>
+              )}
+
+              <label>
+                E-mail administrativo
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </label>
+
+              <div
+                className={`admin-invite-role-preview ${targetRole === "platform_super_admin" ? "is-super" : ""}`}
               >
-                <option value="platform_admin">Administrador setorial</option>
-                {isSuper && (
-                  <option value="platform_super_admin">
-                    Super administrador
-                  </option>
+                {targetRole === "platform_super_admin" ? (
+                  <Crown size={23} />
+                ) : (
+                  <ShieldCheck size={23} />
                 )}
-              </select>
-            </label>
+                <div>
+                  <strong>{roleLabels[targetRole]}</strong>
+                  <p>
+                    {targetRole === "platform_super_admin"
+                      ? "Acesso à gestão da plataforma e à delegação de administradores."
+                      : "Acesso restrito aos setores selecionados neste convite."}
+                  </p>
+                </div>
+              </div>
 
-            {targetRole === "platform_admin" && (
-              <fieldset className="admin-sectors-fieldset">
-                <legend>Setores obrigatórios</legend>
-                {sectors.map((s) => (
-                  <label key={s.code} className="admin-sector-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={selected.includes(s.code)}
-                      onChange={() => toggle(s.code)}
-                    />
-                    <span>
-                      <strong>{s.name}</strong>
-                      <small>{s.description}</small>
-                    </span>
-                  </label>
-                ))}
-              </fieldset>
-            )}
+              <label>
+                Papel
+                <select
+                  value={targetRole}
+                  onChange={(e) => {
+                    const role = e.target.value as typeof targetRole;
+                    setTargetRole(role);
+                    if (role === "platform_super_admin") setSelected([]);
+                  }}
+                >
+                  <option value="platform_admin">Administrador setorial</option>
+                  {isSuper && (
+                    <option value="platform_super_admin">
+                      Super administrador
+                    </option>
+                  )}
+                </select>
+              </label>
 
-            <button
-              className="admin-primary"
-              disabled={
-                busy ||
-                (targetRole === "platform_admin" && selected.length === 0)
-              }
-            >
-              {busy ? "Enviando…" : "Enviar convite"}
-            </button>
+              {targetRole === "platform_admin" && (
+                <fieldset className="admin-sectors-fieldset">
+                  <legend>Setores obrigatórios</legend>
+                  {sectors.map((s) => (
+                    <label key={s.code} className="admin-sector-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={selected.includes(s.code)}
+                        onChange={() => toggle(s.code)}
+                      />
+                      <span>
+                        <strong>{s.name}</strong>
+                        <small>{s.description}</small>
+                      </span>
+                    </label>
+                  ))}
+                </fieldset>
+              )}
+
+              <button
+                className="admin-primary"
+                disabled={
+                  busy ||
+                  (targetRole === "platform_admin" && selected.length === 0)
+                }
+              >
+                {busy ? "Enviando…" : "Enviar convite"}
+              </button>
+            </fieldset>
           </form>
         </section>
 
@@ -477,7 +565,13 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
             <button
               type="button"
               className="admin-secondary compact"
-              disabled={invites.length === 0 || acting || loading}
+              disabled={
+                invites.length === 0 ||
+                acting ||
+                busy ||
+                loading ||
+                Boolean(pendingConfirmation)
+              }
               onClick={() => setAction("clear")}
             >
               <Archive size={16} /> Limpar histórico
@@ -555,7 +649,9 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
                           <button
                             type="button"
                             className="admin-invite-remove"
-                            disabled={acting}
+                            disabled={
+                              acting || busy || Boolean(pendingConfirmation)
+                            }
                             aria-label={`Excluir convite para ${i.email}`}
                             onClick={() => setAction(i)}
                           >
@@ -668,6 +764,48 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
                 : "Excluir convite"}
           </button>
         </div>
+      </dialog>
+      <dialog
+        ref={sessionDialog}
+        className="admin-invite-confirmation admin-invite-session-confirmation"
+        aria-labelledby="invite-session-confirm-title"
+        onCancel={(event) => {
+          if (confirmingSession) event.preventDefault();
+          else setPendingConfirmation(null);
+        }}
+      >
+        <h2 id="invite-session-confirm-title">
+          Confirmar operação administrativa
+        </h2>
+        <p>
+          Por segurança, confirme sua senha administrativa para continuar. O
+          convite e os poderes escolhidos foram preservados.
+        </p>
+        {pendingConfirmation && (
+          <AdminReauthentication
+            expectedRole={pendingConfirmation.actorRole}
+            expectedUserId={pendingConfirmation.actorId}
+            onBusyChange={setConfirmingSession}
+            onCancel={() => setPendingConfirmation(null)}
+            onSessionExpired={() => {
+              setPendingConfirmation(null);
+              setConfirmingSession(false);
+              setSessionExpired(true);
+              setError(
+                "Sua sessão administrativa expirou. Entre novamente para continuar. Seus dados foram preservados.",
+              );
+            }}
+            onConfirmed={async () => {
+              const operation = pendingConfirmation.operation;
+              setPendingConfirmation(null);
+              try {
+                await executeOperation(operation, true);
+              } finally {
+                setConfirmingSession(false);
+              }
+            }}
+          />
+        )}
       </dialog>
       <button
         className="admin-link"
