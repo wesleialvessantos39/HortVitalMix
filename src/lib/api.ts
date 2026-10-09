@@ -2,10 +2,12 @@ import {
   clearAdminSession,
   readAdminAccessToken,
   readAdminRefreshToken,
+  readAdminSessionIdentityVersion,
   saveAdminSession,
 } from "./adminSessionStore";
 
 let refreshing: Promise<boolean> | null = null;
+let confirmingIdentity: Promise<void> | null = null;
 
 export type ApiFailure = Error & {
   status?: number;
@@ -13,12 +15,10 @@ export type ApiFailure = Error & {
   requestId?: string;
   currentRevision?: number;
   retryAfterSeconds?: number;
+  actorId?: string;
 };
 
-function failure(
-  code: string,
-  details: Partial<ApiFailure> = {},
-): ApiFailure {
+function failure(code: string, details: Partial<ApiFailure> = {}): ApiFailure {
   return Object.assign(new Error(code), details);
 }
 
@@ -64,7 +64,7 @@ async function shouldTryAlternateBase(response: Response) {
   const body = await response
     .clone()
     .json()
-    .catch(() => ({} as { error?: string; status?: string }));
+    .catch(() => ({}) as { error?: string; status?: string });
   const code = String(body.error ?? body.status ?? "");
   return ![
     "email_not_authorized",
@@ -87,10 +87,7 @@ async function fetchApiPath(
   for (let index = 0; index < bases.length; index++) {
     const response = await doFetch(bases[index] + path, options, credentials);
     lastResponse = response;
-    if (
-      index < bases.length - 1 &&
-      (await shouldTryAlternateBase(response))
-    )
+    if (index < bases.length - 1 && (await shouldTryAlternateBase(response)))
       continue;
     return { response, base: bases[index] };
   }
@@ -130,11 +127,42 @@ export function apiBase() {
   return apiBases()[0];
 }
 
+export async function withAdminIdentityConfirmation<T>(
+  confirm: () => Promise<T>,
+): Promise<T> {
+  // As respostas de renovação também gravam cookies HttpOnly. Aguarde-as
+  // antes da confirmação e impeça outra renovação durante a troca de sessão.
+  await refreshing;
+  while (confirmingIdentity) await confirmingIdentity;
+  let release!: () => void;
+  const confirmation = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  confirmingIdentity = confirmation;
+  try {
+    // O bloqueio também abrange a validação da identidade e a adoção do
+    // token. Requisições em espera retomarão com a sessão já confirmada.
+    return await confirm();
+  } finally {
+    if (confirmingIdentity === confirmation) confirmingIdentity = null;
+    release();
+  }
+}
+
 export async function api<T>(
   path: string,
   options: RequestInit & { timeoutMs?: number } = {},
   retried = false,
 ): Promise<T> {
+  return performApi<T>(path, options, retried);
+}
+
+async function performApi<T>(
+  path: string,
+  options: RequestInit & { timeoutMs?: number },
+  retried: boolean,
+): Promise<T> {
+  const requestIdentityVersion = readAdminSessionIdentityVersion();
   const { timeoutMs, ...init } = options;
   const requestInit: RequestInit = {
     ...init,
@@ -144,8 +172,59 @@ export async function api<T>(
   let response = first.response;
   const base = first.base;
 
-  if (response.status === 401 && !retried && path.startsWith("/v1/admin")) {
+  // A confirmação de identidade é uma ação explícita: renovar o JWT não
+  // comprova a senha e não deve repetir uma operação administrativa sensível.
+  const adminAuthFailure =
+    response.status === 401 && path.startsWith("/v1/admin")
+      ? await response
+          .clone()
+          .json()
+          .catch(() => ({}) as Record<string, unknown>)
+      : null;
+  const adminFailureCode = String(
+    adminAuthFailure?.error ??
+      adminAuthFailure?.status ??
+      adminAuthFailure?.code ??
+      "",
+  );
+  const requiresIdentityConfirmation = [
+    "ADMIN_REAUTHENTICATION_REQUIRED",
+    "ADMIN_REAUTH_REQUIRED",
+    "REAUTH_REQUIRED",
+    "RECENT_AUTH_REQUIRED",
+  ].includes(adminFailureCode);
+  if (
+    response.status === 401 &&
+    !retried &&
+    confirmingIdentity &&
+    path !== "/v1/admin/auth/reauthenticate" &&
+    ((path.startsWith("/v1/admin") && !requiresIdentityConfirmation) ||
+      path === "/v1/auth/session")
+  ) {
+    await confirmingIdentity;
+    if (
+      (options.method ?? "GET").toUpperCase() !== "GET" &&
+      requestIdentityVersion !== readAdminSessionIdentityVersion()
+    )
+      throw failure("SESSION_CHANGED", { status: 401 });
+    return api<T>(path, options, true);
+  }
+  const canRefreshAdminEndpoint =
+    !path.startsWith("/v1/admin/auth/") ||
+    ([
+      "/v1/admin/auth/reauthenticate",
+      "/v1/admin/auth/verify-session",
+    ].includes(path) &&
+      adminFailureCode === "UNAUTHORIZED");
+  if (
+    response.status === 401 &&
+    !retried &&
+    path.startsWith("/v1/admin") &&
+    canRefreshAdminEndpoint &&
+    !requiresIdentityConfirmation
+  ) {
     const refreshToken = readAdminRefreshToken();
+    const identityVersion = readAdminSessionIdentityVersion();
     if (refreshToken) {
       refreshing ??= fetch(base + "/v1/auth/refresh", {
         method: "POST",
@@ -155,6 +234,12 @@ export async function api<T>(
         signal: AbortSignal.timeout(10000),
       })
         .then(async (refreshed) => {
+          // Uma confirmação em outra requisição/aba pode ter criado uma sessão
+          // nova enquanto esta renovação estava em trânsito. Preserve-a.
+          if (identityVersion !== readAdminSessionIdentityVersion())
+            return false;
+          if (readAdminRefreshToken() !== refreshToken)
+            return Boolean(readAdminAccessToken());
           if (!refreshed.ok) {
             clearAdminSession();
             return false;
@@ -164,6 +249,10 @@ export async function api<T>(
             refreshToken?: string;
             expiresIn?: number;
           };
+          if (identityVersion !== readAdminSessionIdentityVersion())
+            return false;
+          if (readAdminRefreshToken() !== refreshToken)
+            return Boolean(readAdminAccessToken());
           if (!body.accessToken || !body.refreshToken) {
             clearAdminSession();
             return false;
@@ -172,6 +261,7 @@ export async function api<T>(
             accessToken: body.accessToken,
             refreshToken: body.refreshToken,
             expiresIn: body.expiresIn ?? 3600,
+            preserveIdentity: true,
           });
           return true;
         })
@@ -179,7 +269,11 @@ export async function api<T>(
         .finally(() => {
           refreshing = null;
         });
-      if (await refreshing) return api<T>(path, options, true);
+      if (await refreshing) {
+        if (requestIdentityVersion !== readAdminSessionIdentityVersion())
+          throw failure("SESSION_CHANGED", { status: 401 });
+        return api<T>(path, options, true);
+      }
     }
   }
 
@@ -187,7 +281,7 @@ export async function api<T>(
     const sessionFailure = await response
       .clone()
       .json()
-      .catch(() => ({} as { error?: string }));
+      .catch(() => ({}) as { error?: string });
 
     if (sessionFailure?.error === "SESSION_EXPIRED") {
       refreshing ??= fetch(base + "/v1/auth/refresh", {
@@ -215,6 +309,7 @@ export async function api<T>(
     requestId?: string;
     currentRevision?: number;
     retryAfterSeconds?: number;
+    actorId?: string;
   };
   const { json, requestId } = parsed;
 
@@ -237,6 +332,7 @@ export async function api<T>(
           typeof body.retryAfterSeconds === "number"
             ? body.retryAfterSeconds
             : undefined,
+        actorId: typeof body.actorId === "string" ? body.actorId : undefined,
       },
     );
 
@@ -246,7 +342,11 @@ export async function api<T>(
       requestId,
     });
 
-  if ((requestInit.method??"GET").toUpperCase()!=="GET" && !path.includes("/notifications/") && typeof window!=="undefined")
+  if (
+    (requestInit.method ?? "GET").toUpperCase() !== "GET" &&
+    !path.includes("/notifications/") &&
+    typeof window !== "undefined"
+  )
     window.dispatchEvent(new Event("hvm:notifications-changed"));
   return json as T;
 }

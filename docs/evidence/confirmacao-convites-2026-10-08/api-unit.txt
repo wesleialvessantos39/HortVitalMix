@@ -1,0 +1,22 @@
+
+ RUN  v5.0.1 /workspace/HortVitalMix
+
+◇ injected env (0) from .env.test
+◇ injected env (0) from .env.local
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > ADMIN_REAUTHENTICATION_REQUIRED exige confirmação sem renovar ou repetir o convite 60ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > ADMIN_REAUTH_REQUIRED exige confirmação sem renovar ou repetir o convite 2ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > REAUTH_REQUIRED exige confirmação sem renovar ou repetir o convite 1ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > RECENT_AUTH_REQUIRED exige confirmação sem renovar ou repetir o convite 1ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > senha incorreta no login não renova a sessão anterior nem repete a senha 1ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > senha incorreta na confirmação não renova nem repete a tentativa 1ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > renovação em trânsito não substitui outra conta nem repete seu convite 79ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > /v1/admin/auth/verify-session renova somente a sessão expirada, preservando a identidade 6ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > /v1/admin/auth/reauthenticate renova somente a sessão expirada, preservando a identidade 1ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > a confirmação aguarda a renovação pendente antes de enviar a senha 55ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > uma requisição expirada aguarda a confirmação sem emitir renovação concorrente 52ms
+ ✓ tests/unit/adminApiReauthentication.test.ts > Confirmação administrativa e renovação de sessão > sessão expirada ainda renova e retoma o mesmo comando uma única vez 1ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  00:36:20
+   Duration  695ms (tests 57%, transform 36%, setup 3%, import 3%, worker 1%)

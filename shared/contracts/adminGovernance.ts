@@ -70,6 +70,10 @@ export const AdminLoginSchema = z
   .strict();
 export type AdminLoginInput = z.infer<typeof AdminLoginSchema>;
 
+export const AdminReauthenticationSchema = z
+  .object({ password: z.string().min(1).max(128) })
+  .strict();
+
 export const AdminEmailConfirmationRequestSchema = z
   .object({ email, portalRole: AdminRoleSchema.optional() })
   .strict();

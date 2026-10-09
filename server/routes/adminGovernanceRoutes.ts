@@ -18,6 +18,7 @@ import {
   AdminEmailConfirmationRequestSchema,
   AdminEmailConfirmationVerifySchema,
   AdminLoginSchema,
+  AdminReauthenticationSchema,
   BootstrapRequestSchema,
   CreateInviteSchema,
   ClearInviteHistorySchema,
@@ -273,6 +274,64 @@ adminGovernanceRouter.post(
     res
       .status(result.status === "unavailable" ? 503 : 401)
       .json(result);
+  },
+);
+
+adminGovernanceRouter.post(
+  "/auth/reauthenticate",
+  originProtection,
+  adminSessionMiddleware,
+  async (req: Request, res: Response) => {
+    const parsed = AdminReauthenticationSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(422).json({
+        status: "validation_failed",
+        requestId: req.requestId,
+      });
+      return;
+    }
+    const actor = req.adminActor!;
+    try {
+      const result = await AdminGovernanceService.reauthenticate(
+        actor.userId,
+        actor.role,
+        parsed.data.password,
+        req.clientIpHash,
+        req.requestId,
+      );
+      if (result.status === "session_created") {
+        if (result.userId !== actor.userId || result.role !== actor.role) {
+          res.status(401).json({
+            status: "invalid_credentials",
+            requestId: req.requestId,
+          });
+          return;
+        }
+        setAdminSession(res, result);
+        res.status(200).json(result);
+        return;
+      }
+      if (
+        result.status === "rate_limited" ||
+        result.status === "email_rate_limited"
+      ) {
+        res.setHeader("Retry-After", String(result.retryAfterSeconds));
+        res.status(429).json(result);
+        return;
+      }
+      res
+        .status(
+          result.status === "unavailable"
+            ? 503
+            : result.status === "invalid_credentials"
+              ? 401
+              : 403,
+        )
+        .json(result);
+    } catch {
+      reportFailure("admin_reauthentication_unavailable", req.requestId);
+      res.status(503).json({ status: "unavailable", requestId: req.requestId });
+    }
   },
 );
 
