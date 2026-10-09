@@ -16,4 +16,4 @@ As outras abas recebem somente um aviso com nonce aleatório, sem tokens nem dad
 
 Resultados: [unidade e transporte](evidence/convite-invalido-2026-10-09/unit-50-passed.log), [navegador](evidence/convite-invalido-2026-10-09/browser-34-passed.log). Os testes de interface comprovam o estado autenticado e a navegação, sem afirmar homologação em aparelho Android/iOS.
 
-Esta auditoria registra a implementação local. A publicação, a SHA efetiva e a verificação do domínio oficial serão registradas no fechamento integrado do Livro Raiz.
+Publicado na SHA funcional `49092a3b44980c3b3ea74582b2934fcf902492b0`. O domínio oficial foi conferido em quatro larguras com link sem token, exibindo somente Voltar ao site. Revogação e condições autenticadas foram comprovadas pelos testes locais, sem login de produção. A saída utiliza somente o backend canônico: o cliente SDK não utilizado foi removido, preservando o gate de segurança do bundle. Provas no fechamento integrado do Livro Raiz.

@@ -1,0 +1,34 @@
+{
+  "beforeRelations": 105,
+  "afterRelations": 105,
+  "changes": [
+    {
+      "relation": "public.app_carts",
+      "before": {
+        "relation": "public.app_carts",
+        "rows": 19,
+        "digest": "de2937a6e39162b69cace80c7c3e4c7e"
+      },
+      "after": {
+        "relation": "public.app_carts",
+        "rows": 20,
+        "digest": "bab7d1fedc67c1abd4eb49d034d04524"
+      }
+    },
+    {
+      "relation": "public.app_releases",
+      "before": {
+        "relation": "public.app_releases",
+        "rows": 109,
+        "digest": "171111691b177570b8d1a9f6c3dc91c6"
+      },
+      "after": {
+        "relation": "public.app_releases",
+        "rows": 110,
+        "digest": "338690f8d76ee0490032e1e00514703b"
+      }
+    }
+  ],
+  "excludedReleaseMetadata": "public.app_releases",
+  "method": "counts and MD5 sorted row digests; no raw rows read into artifacts"
+}

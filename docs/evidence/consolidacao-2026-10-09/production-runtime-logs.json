@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "## Runtime Log Counts\n\n**Project:** prj_I45qiWMbm1O2BVML983JL0WlRtY5\n**Grouped by:** level\n**Showing:** Top 25 groups by log count; this may omit other groups.\n\n| level | count |\n|---|---|"
+    }
+  ],
+  "isError": false
+}

@@ -1,0 +1,192 @@
+{
+  "sha": "49092a3b44980c3b3ea74582b2934fcf902492b0",
+  "generatedAt": "2026-10-09T23:17:46.593Z",
+  "results": [
+    {
+      "path": "/health",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/ready",
+      "method": "GET",
+      "status": 200,
+      "schema": 68,
+      "releaseTag": "fix-admin-mobile-v68-49092a3"
+    },
+    {
+      "path": "/v1/config",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/v1/account/profile",
+      "method": "GET",
+      "status": 401,
+      "cache": "no-store, max-age=0"
+    },
+    {
+      "path": "/v1/admin/invites",
+      "method": "GET",
+      "status": 401,
+      "cache": "no-store, max-age=0"
+    },
+    {
+      "path": "/v1/admin/users",
+      "method": "GET",
+      "status": 401,
+      "cache": "no-store, max-age=0"
+    },
+    {
+      "path": "/v1/notifications",
+      "method": "GET",
+      "status": 401,
+      "cache": "private, no-store"
+    },
+    {
+      "path": "/v1/producer/orders",
+      "method": "GET",
+      "status": 401,
+      "cache": "private, no-store"
+    },
+    {
+      "path": "/v1/producer/sales",
+      "method": "GET",
+      "status": 401,
+      "cache": "private, no-store"
+    },
+    {
+      "path": "/v1/producer/refunds",
+      "method": "GET",
+      "status": 401,
+      "cache": "private, no-store"
+    },
+    {
+      "path": "/v1/admin/app-distribution",
+      "method": "GET",
+      "status": 401,
+      "cache": "no-store, max-age=0"
+    },
+    {
+      "path": "/v1/admin/mobile-releases",
+      "method": "GET",
+      "status": 401,
+      "cache": "no-store, max-age=0"
+    },
+    {
+      "path": "/v1/admin/finance/overview",
+      "method": "GET",
+      "status": 401,
+      "cache": "private, no-store"
+    },
+    {
+      "path": "/v1/admin/catalog/overview",
+      "method": "GET",
+      "status": 401,
+      "cache": "private, no-store"
+    },
+    {
+      "path": "/v1/admin/bi",
+      "method": "GET",
+      "status": 401,
+      "cache": "no-store, max-age=0"
+    },
+    {
+      "path": "/v1/admin/dashboard",
+      "method": "GET",
+      "status": 401,
+      "cache": "no-store, max-age=0"
+    },
+    {
+      "path": "/v1/admin/configuration/overview",
+      "method": "GET",
+      "status": 401,
+      "cache": "no-store, max-age=0"
+    },
+    {
+      "path": "/v1/notifications/11111111-1111-4111-8111-111111111111",
+      "method": "GET",
+      "status": 401,
+      "cache": "private, no-store"
+    },
+    {
+      "path": "/v1/admin/notifications/11111111-1111-4111-8111-111111111111",
+      "method": "GET",
+      "status": 401,
+      "cache": "no-store, max-age=0"
+    },
+    {
+      "path": "/v1/admin/invites/11111111-1111-4111-8111-111111111111",
+      "method": "DELETE",
+      "status": 401,
+      "cache": "no-store, max-age=0"
+    },
+    {
+      "path": "/v1/admin/invites/clear-history",
+      "method": "POST",
+      "status": 401,
+      "cache": "no-store, max-age=0"
+    },
+    {
+      "path": "/v1/admin/invites/clear-history",
+      "method": "POST",
+      "origin": "external",
+      "status": 403
+    },
+    {
+      "path": "/v1/mobile-ci/uploads",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "path": "/v1/mobile-ci/releases",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "path": "/downloads/android",
+      "method": "GET",
+      "status": 404,
+      "available": false
+    },
+    {
+      "path": "/downloads/ios",
+      "method": "GET",
+      "status": 404,
+      "available": false
+    },
+    {
+      "path": "/v1/app-distribution",
+      "method": "GET",
+      "status": 200,
+      "web": {
+        "version": "fix-admin-mobile-v68-49092a3",
+        "commitSha": "49092a3b44980c3b3ea74582b2934fcf902492b0",
+        "schemaVersion": 68,
+        "available": true,
+        "updatedAt": "2026-10-09T23:17:27.573Z",
+        "updateMode": "hosted_web",
+        "requiresStoreUpdateForNativeChanges": true
+      }
+    },
+    {
+      "path": "/v1/mobile-releases",
+      "method": "GET",
+      "status": 200,
+      "revision": 1,
+      "minimumSupportedBuild": {
+        "android": 0,
+        "ios": 0
+      },
+      "android": null,
+      "ios": null
+    },
+    {
+      "path": "/offline-worker.js",
+      "method": "GET",
+      "status": 200,
+      "staticAssetCount": 89,
+      "noApiOrAuthCached": true
+    }
+  ]
+}
