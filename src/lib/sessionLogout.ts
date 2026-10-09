@@ -6,17 +6,15 @@ import {
   readAdminRefreshToken,
 } from "./adminSessionStore";
 import { clearProducerSnapshots } from "./offlineDb";
-import { supabaseBrowser } from "./supabaseClient";
 import { announceBrowserSessionExit } from "./sessionExit";
 
 export async function logoutCurrentBrowserSessions() {
   // Finish an already-started refresh/password confirmation before revocation.
   // Neither response may recreate HttpOnly cookies after the exit succeeds.
   await withAdminIdentityConfirmation(async () => {
-    if (supabaseBrowser) {
-      const { error } = await supabaseBrowser.auth.signOut({ scope: "local" });
-      if (error) throw error;
-    }
+    // All portal sessions belong to this backend. The unused Supabase browser
+    // client never authenticates or persists a session; importing it here would
+    // add a second Auth client without revoking our HttpOnly/bearer sessions.
     const token = readAdminAccessToken();
     await api("/v1/auth/logout", {
       method: "POST",

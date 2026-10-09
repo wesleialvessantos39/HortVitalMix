@@ -4,7 +4,6 @@ const mocks = vi.hoisted(() => ({ clearSnapshots: vi.fn() }));
 vi.mock("../../src/lib/offlineDb", () => ({
   clearProducerSnapshots: mocks.clearSnapshots,
 }));
-vi.mock("../../src/lib/supabaseClient", () => ({ supabaseBrowser: null }));
 
 import { api, withAdminIdentityConfirmation } from "../../src/lib/api";
 import {

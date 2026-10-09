@@ -1,0 +1,348 @@
+{
+  "sha": "ffaf9806aa8449fd0e6e3f7824882e0f58fd94d9",
+  "mergeSha": "e65a597a938ccfe5b852263b8a8d6a25dd476205",
+  "workflowRun": 38002556603,
+  "url": "https://github.com/wesleialvessantos39/HortVitalMix/actions/runs/38002556603",
+  "jobs": [
+    {
+      "id": 114063827889,
+      "name": "web",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 38002556603,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run npm ci --no-audit --no-fund",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run npm ci --prefix packaging/capacitor --no-audit --no-fund",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run node --test scripts/mobile/native-pipeline.test.mjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run node scripts/mobile/native-plan.mjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Prepare installed-version identity and runtime fingerprint",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Build bundled web with all existing gates",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        }
+      ]
+    },
+    {
+      "id": 114064014282,
+      "name": "android_verify",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 38002556603,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run npm ci --prefix packaging/capacitor --no-audit --no-fund",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run node scripts/mobile/native-build.mjs prepare \"$BUILD_NUMBER\" \"$BUILD_VERSION\"",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Run npx cap sync android",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Install the Android SDK used by the committed project",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Compile unsigned APK and AAB for validation",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        }
+      ]
+    },
+    {
+      "id": 114064014383,
+      "name": "ios_verify",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 38002556603,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run npm ci --prefix packaging/capacitor --no-audit --no-fund",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run node scripts/mobile/native-build.mjs prepare \"$BUILD_NUMBER\" \"$BUILD_VERSION\"",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run npx cap sync ios",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Compile iOS simulator; this is not an installable IPA",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        }
+      ]
+    },
+    {
+      "id": 114064547339,
+      "name": "ios_release",
+      "status": "completed",
+      "conclusion": "skipped",
+      "run_id": 38002556603,
+      "logs_url": null,
+      "steps": null
+    },
+    {
+      "id": 114064547340,
+      "name": "android_release",
+      "status": "completed",
+      "conclusion": "skipped",
+      "run_id": 38002556603,
+      "logs_url": null,
+      "steps": null
+    }
+  ],
+  "artifacts": {
+    "status": "fulfilled",
+    "value": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Action completed."
+        }
+      ],
+      "structuredContent": {
+        "artifacts": [
+          {
+            "id": 11649329630,
+            "name": "android-unsigned-38002556603",
+            "size_in_bytes": 8648658,
+            "url": "https://api.github.com/repos/wesleialvessantos39/HortVitalMix/actions/artifacts/11649329630",
+            "archive_download_url": "https://api.github.com/repos/wesleialvessantos39/HortVitalMix/actions/artifacts/11649329630/zip",
+            "expired": false,
+            "created_at": "2026-10-09T23:06:55Z",
+            "expires_at": "2026-10-12T23:06:54Z",
+            "updated_at": "2026-10-09T23:06:55Z",
+            "digest": "sha256:b08c3edc26d4a38a3eb0c75b076c362afc016088dc0c135ecaf74226cbb38434",
+            "workflow_run": {
+              "id": 38002556603,
+              "repository_id": 1376634639,
+              "head_repository_id": 1376634639,
+              "head_branch": "fix/hvm-complete-admin-mobile-20261009",
+              "head_sha": "ffaf9806aa8449fd0e6e3f7824882e0f58fd94d9"
+            }
+          },
+          {
+            "id": 11649058501,
+            "name": "native-web-38002556603",
+            "size_in_bytes": 1529283,
+            "url": "https://api.github.com/repos/wesleialvessantos39/HortVitalMix/actions/artifacts/11649058501",
+            "archive_download_url": "https://api.github.com/repos/wesleialvessantos39/HortVitalMix/actions/artifacts/11649058501/zip",
+            "expired": false,
+            "created_at": "2026-10-09T23:04:58Z",
+            "expires_at": "2026-10-12T23:04:57Z",
+            "updated_at": "2026-10-09T23:04:58Z",
+            "digest": "sha256:0016163f52e1fede8070ac0780c9de06508f4608016253353b509194890fc02d",
+            "workflow_run": {
+              "id": 38002556603,
+              "repository_id": 1376634639,
+              "head_repository_id": 1376634639,
+              "head_branch": "fix/hvm-complete-admin-mobile-20261009",
+              "head_sha": "ffaf9806aa8449fd0e6e3f7824882e0f58fd94d9"
+            }
+          }
+        ]
+      },
+      "isError": false
+    }
+  },
+  "signingConfigured": false,
+  "deviceHomologated": false,
+  "ota": "unavailable",
+  "iosBuildSucceeded": true
+}

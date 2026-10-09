@@ -18,6 +18,8 @@ Validação integrada local: **819 testes unitários**, **63 cenários de distri
 
 A configuração do template Supabase foi informada pelo usuário. A entrega na caixa principal do Gmail ainda não foi comprovada: perfil TinyFish sem sessão Supabase disponível para conferir SMTP e DNS do remetente. Não foi alterado provedor, SPF/DKIM/DMARC nem prometida ausência de spam. [Diagnóstico](docs/AUDITORIA_ENTREGA_CONVITES_2026-10-08.md).
 
+O workflow real da PR #109 (`38002556603`) aprovou build web, APK/AAB Android e simulador iOS; jobs assinados ficaram desativados. A primeira publicação Vercel da SHA `e65a597a938ccfe5b852263b8a8d6a25dd476205` foi rejeitada pelo gate de bundle: um import do cliente Supabase sem uso real de autenticação incluiu o literal de reconhecimento de chave do SDK. Removido somente esse cliente da saída, preservando a revogação canônica e o gate integral. Reprodução com URL pública Supabase e chave sintética passou, assim como 38 regressões de saída e 34 cenários de navegador; nenhuma chave real foi exposta e o deployment recusado não substituiu o site vigente.
+
 Publicação do código e compilação CI nativa: fechamento pendente de confirmação do SHA e deployment correspondentes; a prova final será acrescentada após a conferência em produção.
 
 ## 2026-10-08 — Confirmação de identidade nos convites administrativos
