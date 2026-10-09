@@ -1,5 +1,14 @@
 # Livro Raiz — HortiVitalMix
 
+
+## 2026-10-09 — Sincronização automática da identidade web após Vercel
+
+Na verificação final, constatado que cada novo deployment alterava a SHA do runtime, mas a central dependia de selagem manual para apresentar a versão web disponível. Acrescentado o job `web_sync` ao workflow existente, somente em `main`, com OIDC temporário e espera limitada pelo domínio canônico. Pushes documentais também sincronizam; o detector mantém compilação nativa restrita às mudanças que exigem pacote.
+
+O callback verifica produção, identidade GitHub, SHA do runtime, SHA observada no domínio fixo, histórico completo das migrations e aliases físicos. Lock, CAS, piso de execução CI autenticada, recusa de SHA arquivada e replay idempotente preservam a versão corrente. A mutação se restringe a `app_releases`; não aplica DDL e não acessa Auth ou dados comerciais. Extraída a validação de história para módulo puro compartilhado, mantendo manifesto, hash e migrations intactos e evitando incluir inicialização CLI no bundle backend.
+
+A leitura canônica e o commit SQL não são uma transação entre Vercel e Supabase; a prova é a SHA observada durante a sincronização, com proteção contra sobrescrita por execução antiga. Assinaturas Android, conta Apple, homologação de dispositivos, OTA e entrega SMTP conservam os limites descritos na entrega anterior. [Guia de distribuição](docs/DISTRIBUICAO_ANDROID_IOS.md) e [registro de atualizações](docs/LEDGER_ATUALIZACOES_MOBILE.md) atualizados. **Validação local:** 34 cenários unitários/HTTP, 6 integrações PostgreSQL reais, 72 regressões afetadas e 34 testes de scripts/pipeline aprovados; TypeScript, actionlint, inicialização completa da API e build com URL pública Supabase/chave sintética passaram. O gate T05 acompanha a extração do módulo mantendo a verificação dos quatro aliases e do reexport; nenhum gate foi dispensado. [Evidências](docs/evidence/web-release-sync-2026-10-09/). A publicação e a sincronização real da `main` serão registradas depois dos jobs, sem apresentar fixtures como prova de produção.
+
 ## 2026-10-09 — Segurança do convite, departamentos e distribuição Android/iOS
 
 O convite inválido passou a exibir somente **Voltar ao site**. Essa ação conclui a saída da sessão antes de retornar à vitrine, incluindo cookies, sessão independente e dados privados locais. Falha de saída mantém o bloqueio; outras abas e respostas antigas não restauram a identidade. O aceite válido também não reaproveita outra conta conectada. [Auditoria](docs/AUDITORIA_CONVITE_INVALIDO_2026-10-09.md).

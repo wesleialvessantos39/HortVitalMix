@@ -1,0 +1,42 @@
+✔ bundled assets require packages; server and data changes do not (1.943635ms)
+✔ backend origin rejects credentials, insecure/local endpoints and URL paths (0.40702ms)
+✔ native versions are bounded positive builds and numeric store versions (0.814501ms)
+✔ fingerprint remains stable across package version changes and copied web assets (13.48857ms)
+✔ remote live-reload and global fetch patch cannot pass runtime validation (4.894254ms)
+✔ prepare stamps Android and iOS consistently using real schema and source SHA (3.448082ms)
+✔ invalid native target fails before changing the other project (2.834217ms)
+✔ certificate proof requires the actual single signer matching the configured pin (0.506416ms)
+✔ APK package proof rejects a validly signed different application or version (0.439758ms)
+✔ IPA proof requires signed team, application and actual version without debugging entitlement (0.615007ms)
+✔ signed upload destination is immutable and restricted to the project bucket (0.357426ms)
+✔ publication is bound to the exact source and signer; no arbitrary iOS installation link (0.588467ms)
+✔ CI callback sends the exact matching origin and bearer without following redirects (0.31941ms)
+✔ OIDC token is requested only from the GitHub-controlled endpoint for the fixed audience (0.46771ms)
+✔ workflow reuses producer artifacts on failed-job retries and isolates signing from pull requests (2.596346ms)
+✔ every main deployment synchronizes web identity while signing remains separately gated (0.762544ms)
+✔ exact main SHA synchronizes only with the fixed canonical backend and a fresh bearer (3.567648ms)
+✔ workflow dispatch on main accepts an idempotent receipt (0.460068ms)
+✔ pull requests, other refs, untrusted events and shortened SHAs fail before network or identity (0.686191ms)
+✔ build manifest is validated before any network operation (0.252582ms)
+✔ stale deployments wait without requesting identity and probes carry different nonces (0.695174ms)
+✔ old-code 401/404 and transient GET 5xx remain bounded retries (0.773209ms)
+✔ malformed or non-production status fails closed without bearer publication (0.618832ms)
+✔ target SHA with a different schema or migration hash never publishes (0.240535ms)
+✔ a pending POST is retried through a fresh status probe and a fresh OIDC token (0.439498ms)
+✔ transient POST 503 retries, while schema, history and stale-run conflicts are fatal (1.73687ms)
+✔ POST authentication and origin failures are fatal rather than repeated (0.346331ms)
+✔ redirects are never followed or accepted for status or synchronization (0.63845ms)
+✔ receipt confirms exact SHA, schema, hash, status and strict field set (0.826258ms)
+✔ malformed JSON produces fixed diagnostics without reflecting response contents (1.220619ms)
+✔ network failures retry safely and never include thrown tokens in diagnostics (1.072631ms)
+✔ identity errors and malformed tokens fail with fixed diagnostics (0.813269ms)
+✔ twenty-minute deadline terminates repeated stale status without real waiting or bearer issuance (2.675323ms)
+✔ a request that consumes the remaining deadline cannot obtain identity or issue a POST (0.170591ms)
+ℹ tests 34
+ℹ suites 0
+ℹ pass 34
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 165.829437

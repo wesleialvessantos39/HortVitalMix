@@ -137,3 +137,18 @@ test('workflow reuses producer artifacts on failed-job retries and isolates sign
  assert.match(workflow,/github.ref == 'refs\/heads\/main'/);
  assert.equal(/pull_request_target/.test(workflow),false);
 });
+test('every main deployment synchronizes web identity while signing remains separately gated',async()=>{
+ const workflow=await readFile(new URL('../../.github/workflows/hvm-mobile-build.yml',import.meta.url),'utf8');
+ const push=workflow.split('  push:')[1].split('  pull_request:')[0];
+ assert.equal(push.includes('paths-ignore'),false,'docs-only main commits also change the Vercel runtime SHA');
+ const sync=workflow.split('  web_sync:')[1].split('  android_verify:')[0];
+ assert.match(sync,/needs: web/);
+ assert.match(sync,/github.ref == 'refs\/heads\/main'/);
+ assert.match(sync,/github.event_name == 'push'.*github.event_name == 'workflow_dispatch'/);
+ assert.match(sync,/environment: mobile-release/);
+ assert.match(sync,/id-token: write/);
+ assert.match(sync,/node scripts\/mobile\/sync-web-release.mjs/);
+ assert.equal(sync.includes('secrets.'),false,'web synchronization uses temporary OIDC without database or Vercel credentials');
+ assert.equal((workflow.match(/needs: \[web, web_sync, android_verify, ios_verify\]/g)||[]).length,2);
+ for (const platform of ['ANDROID','IOS']) assert.match(workflow,new RegExp(`vars.HVM_${platform}_RELEASE_ENABLED == 'true' && vars.HVM_${platform}_NATIVE_VERIFIED == 'true'`));
+});

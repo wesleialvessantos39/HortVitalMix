@@ -1,0 +1,111 @@
+import manifest from "../supabase/manifest.json" with { type: "json" };
+
+const remoteVersionAliases: Readonly<Record<string, string>> = {
+  // Mobile distribution/release ledger applied with Supabase physical versions.
+  "20261009225521": "20261009023420",
+  "20261009225532": "20261009170751",
+  // Restrição da origem de notificações aplicada pelo Supabase em produção.
+  "20261008220740": "20261008220225",
+  // Revogação dos quatro grants antigos por coluna, timestamp físico Supabase.
+  "20261007214554": "20261007214314",
+  // Perfis individuais e poderes aplicados com timestamp físico do Supabase.
+  "20261007214025": "20261007205812",
+  // Offline/BI T25 aplicados com timestamp físico próprio do Supabase.
+  "20261007183835": "20261007174202",
+  // Papéis, vendas e notificações aplicados com timestamp físico do Supabase.
+  "20261007163252": "20261007140032",
+  // Avaliações T24 aplicadas com timestamp físico próprio do Supabase.
+  "20261007125921": "20261007122255",
+  // Assinaturas T23 aplicadas com timestamp físico próprio do Supabase.
+  "20261007113436": "20261007104345",
+  // Logística T22 aplicada com timestamp físico próprio do Supabase.
+  "20261007025750": "20261007023213",
+  // Máquina de estados T21 aplicada com timestamp físico próprio do Supabase.
+  "20261007015514": "20261007012246",
+  // Preparação T20 aplicada com timestamp físico próprio do Supabase.
+  "20261006191208": "20261006180831",
+  // Auditoria aditiva aplicada com timestamp físico próprio do Supabase.
+  "20261006120330": "20261006023915",
+  // Checkout T19 aplicado com timestamp físico próprio do Supabase.
+  "20261006015914": "20261006012938",
+  // Cesta multilojas T18 aplicada com timestamp físico próprio do Supabase.
+  "20261005212931": "20261005210404",
+  // Capas e carrosséis aplicados pelo Supabase com timestamp físico próprio.
+  "20261005194858": "20261005191237",
+  // Correção de cadastro/aceite aplicada com timestamp físico gerado pelo Supabase.
+  "20261005152423": "20261005144950",
+  // Descoberta/favoritos T17 aplicada com timestamp físico gerado pelo Supabase.
+  "20261005134716": "20261005131647",
+  // Área de entrega/frete T16 aplicada com timestamp físico gerado pelo Supabase.
+  "20261005040640": "20261005034322",
+  // Grants privilegiados T15 aplicados com timestamp físico gerado pelo Supabase.
+  "20261005002434": "20261005002322",
+  // Estoque/lotes T15 aplicado com timestamp físico gerado pelo Supabase.
+  "20261005002132": "20261004235555",
+  // Produtos/preços T14 aplicados com timestamp físico gerado pelo Supabase.
+  "20261004210207": "20261004202124",
+  // Taxonomia global T13 aplicada com timestamp físico gerado pelo Supabase.
+  "20261004142901": "20261004133608",
+  // Vitrine comercial T12 aplicada com timestamp físico gerado pelo Supabase.
+  "20261004124506": "20261004120547",
+  "20261004014120": "20261004013902",
+  // Governança de imóveis/contas/localidades aplicada pelo Supabase em UTC.
+  "20261004012409": "20261003151000",
+  // Reconstrução controlada de localidades/onboarding aplicada pelo Supabase.
+  "20261003030427": "20261003025010",
+  // Sincronização canônica imóvel/auditoria aplicada com timestamp físico Supabase.
+  "20260930184151": "20260930184100",
+  // T12: hardening final da fila/arquivo aplicado com timestamp físico Supabase.
+  "20260930173943": "20260930173900",
+  // T12: retirada de imóvel aprovado aplicada em produção com timestamp físico Supabase.
+  "20260930172140": "20260930013000",
+  // T12: aliases de login administrativo + arquivo da auditoria.
+  "20260930172239": "20260930172000",
+  // T11 aplicada/reconciliada em produção com timestamps físicos do Supabase.
+  "20260929213043": "20260929120000",
+  "20260929213048": "20260929133000",
+  "20260929213052": "20260929200000",
+  "20260928060434": "20260928060300",
+  "20260928111654": "20260928110512",
+  "20260927203404": "20260927202711",
+  "20260927144553": "20260927143315",
+  // A migration de hardening T05 foi aplicada em produção com timestamp gerado
+  // pelo Supabase. O conteúdo/nome são canônicos; somente a versão física difere.
+  "20260923022554": "20260923022000",
+  // A migration de credencial administrativa T05 foi aplicada pelo Supabase
+  // com timestamp físico próprio; conteúdo e nome permanecem canônicos.
+  "20260924023250": "20260924023000",
+  // Confirmação explícita do e-mail administrativo aplicada pelo Supabase
+  // com timestamp físico próprio.
+  "20260924115207": "20260924114500",
+  // Revogação de sessões do recovery aplicada com timestamp físico Supabase.
+  "20260924124802": "20260924125000",
+  // Trilha 06 aplicada pelo Supabase com timestamp físico próprio.
+  "20260925002406": "20260925002000",
+  // Hardening RLS T06 aplicado pelo Supabase com timestamp físico próprio.
+  "20260925002930": "20260925003500",
+  // Homologação/hardening T06 aplicada pelo Supabase com timestamp físico próprio.
+  "20260925010313": "20260925010000",
+  // Correção de normalização do fingerprint T06 aplicada com timestamp físico próprio.
+  "20260925010505": "20260925011000",
+  // Múltiplos endereços T07 aplicada pelo Supabase com timestamp físico próprio.
+  "20260925192227": "20260925153500",
+  // Cadastro rural T08 aplicado pelo Supabase com timestamp físico próprio.
+  "20260926223504": "20260926190000",
+  // Revogação de privilégios herdados T07/T08.
+  "20260926223741": "20260926223700",
+};
+
+export function validateHistory(rows: { version: string; name: string }[]) {
+  if (
+    rows.length !== manifest.migrations.length ||
+    rows.some((row, index) => {
+      const expected = manifest.migrations[index];
+      const canonicalVersion = remoteVersionAliases[row.version] ?? row.version;
+      return canonicalVersion !== expected.version || row.name !== expected.name;
+    })
+  )
+    throw new Error("REMOTE_MIGRATION_HISTORY_MISMATCH");
+
+  return manifest.schemaVersion;
+}

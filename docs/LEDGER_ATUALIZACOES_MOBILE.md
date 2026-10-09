@@ -14,6 +14,14 @@ O backend registra cada pacote produzido pelo workflow confiável, mantém a ver
 
 Proteja `main` e configure o ambiente GitHub `mobile-release` para permitir somente essa branch, com os responsáveis pela primeira configuração e pelas credenciais de assinatura. A assinatura RS256 do token prova a identidade do workflow, enquanto a proteção do repositório e do ambiente mantém o código do workflow confiável. Não compartilhe tokens OIDC ou URLs de upload nos logs.
 
+## Selo web após cada publicação Vercel
+
+O mesmo workflow inclui `web_sync` somente para `main` em `push` ou execução manual, com `id-token: write` no ambiente `mobile-release`. Inclui pushes documentais porque eles também alteram a SHA do runtime. Não usa segredo de banco, token permanente GitHub ou credencial Vercel; a API existente mantém sua conexão protegida ao Supabase.
+
+`GET /api/v1/mobile-ci/web-release/status` informa somente ambiente e identidade pública do build, sem sessão, cookies ou consultas ao banco. O script aguarda o commit esperado; depois obtém um token OIDC novo e chama `POST /api/v1/mobile-ci/web-release` com `{sourceCommit}`. O servidor confere novamente o domínio canônico fixo sob lock, valida migrations já aplicadas e sela `app_releases` preservando o histórico. CAS, piso de execução CI autenticada e recusa de SHA arquivada impedem um job atrasado de repor uma release anterior.
+
+`401/403` após o runtime correto são falhas de autorização, sem tentativas intermináveis. Tempo esgotado, história/schema divergentes, conflito definitivo ou recibo inválido falham explicitamente. Nenhuma DDL é executada por esse callback; nenhuma versão nativa é publicada por ele. Assinatura, build mínimo e aprovação Apple continuam governados pelos fluxos abaixo.
+
 ## APIs e histórico
 
 - `GET /api/v1/mobile-releases`: política pública real, build atual, versão mínima, fingerprint do runtime, commit, schema, checksum, tamanho, canal e link permanente. Não devolve operador, identidade CI ou chaves.
