@@ -6,6 +6,11 @@ on:
     paths-ignore:
       - "docs/**"
       - "**/*.md"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
   workflow_dispatch:
 
 permissions:
@@ -82,7 +87,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "signed=false" >> "$GITHUB_OUTPUT"
-          if [ "$ENABLED" != "true" ]; then
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ] || [ "$ENABLED" != "true" ]; then
             echo "Release publica desativada. Build de verificacao concluido."
             exit 0
           fi
