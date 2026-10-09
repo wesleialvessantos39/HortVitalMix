@@ -1,0 +1,17 @@
+.hvm-mobile-update {
+  position: fixed; z-index: 1500;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  right: max(12px, env(safe-area-inset-right));
+  max-width: min(350px, calc(100vw - 24px));
+  padding: 14px 16px; border: 1px solid #c9dfcc;
+  border-radius: 12px; background: white; color: #153c25;
+  box-shadow: 0 4px 20px #163a2522;
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+}
+.hvm-mobile-update strong, .hvm-mobile-update span { flex-basis: 100%; }
+.hvm-mobile-update span { font-size: .85rem; }
+.hvm-mobile-update a, .hvm-mobile-update button {
+  border: 1px solid #2a6740; border-radius: 8px; padding: 8px 10px;
+  background: #edf5ed; color: #153c25; font: inherit;
+  font-size: .85rem; text-decoration: none; cursor: pointer;
+}
