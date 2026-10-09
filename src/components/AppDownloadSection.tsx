@@ -25,7 +25,7 @@ export function AppDownloadSection() {
         <div>
           <h2 id="hvm-app-download-title">HortiVitalMix no seu celular</h2>
           <p>{android ? "Versão Android assinada disponível. iPhone e iPad: use o navegador." :
-            "Os aplicativos nativos estão em preparação. Enquanto isso, aproveite tudo pelo navegador."}</p>
+            "Os aplicativos estão em preparação. Enquanto isso, aproveite tudo pelo navegador."}</p>
         </div>
       </div>
       <div className="hvm-app-download-platforms" aria-label="Disponibilidade dos aplicativos">
