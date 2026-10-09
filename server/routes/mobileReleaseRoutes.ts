@@ -21,6 +21,15 @@ import {
 import { CommerceError } from "../services/CommerceSupport.ts";
 import { ReauthRequiredError } from "../services/reauthService.ts";
 import { reportFailure } from "../config/reportFailure.ts";
+import {
+  WebReleaseSyncService,
+  WebReleaseSyncError,
+  WebReleaseSyncRequestSchema,
+  WEB_RELEASE_CI_ORIGIN,
+} from "../services/WebReleaseSyncService.ts";
+import { runtime } from "../config/runtime.ts";
+import manifest from "../../supabase/manifest.json" with { type: "json" };
+import { FOUNDATION_SCHEMA_VERSION } from "../../shared/contracts/foundation.ts";
 
 export const mobileReleaseRouter = Router();
 /** Mount CI before public session middleware: GitHub tokens are not Supabase tokens. */
@@ -38,6 +47,7 @@ function failure(error: unknown, req: Request, res: Response) {
   }
   if (
     error instanceof MobileReleaseError ||
+    error instanceof WebReleaseSyncError ||
     error instanceof CommerceError ||
     error instanceof MobileCiIdentityError
   ) {
@@ -143,4 +153,25 @@ mobileCiRouter.post("/mobile-ci/releases", async (req, res) => {
   } catch (error) {
     failure(error, req, res);
   }
+});
+mobileCiRouter.get("/mobile-ci/web-release/status", (_req, res) => {
+  res.json({ appEnv: runtime.appEnv, sourceCommit: runtime.commitSha,
+    schemaVersion: FOUNDATION_SCHEMA_VERSION, migrationHistoryHash: manifest.migrationHistoryHash });
+});
+mobileCiRouter.post("/mobile-ci/web-release", async (req, res) => {
+  try {
+    if (req.headers.host !== new URL(WEB_RELEASE_CI_ORIGIN).host || req.headers.origin !== WEB_RELEASE_CI_ORIGIN) {
+      res.status(403).json({ error: "ORIGIN_NOT_ALLOWED", requestId: req.requestId });
+      return;
+    }
+    const identity = await verifyMobileCiToken(
+      req.headers.authorization?.match(/^Bearer ([^ ]+)$/)?.[1] ?? "",
+    );
+    const input = WebReleaseSyncRequestSchema.safeParse(req.body);
+    if (!input.success) {
+      res.status(422).json({ error: "VALIDATION_FAILED", requestId: req.requestId });
+      return;
+    }
+    res.json(await WebReleaseSyncService.sync(input.data, identity));
+  } catch (error) { failure(error, req, res); }
 });

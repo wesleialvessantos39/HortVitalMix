@@ -1,0 +1,14 @@
+{
+  "scope": "authenticated web release metadata synchronization",
+  "unitAndHttp": 34,
+  "postgresIntegration": 6,
+  "affectedRegression": 72,
+  "typecheck": "passed",
+  "schemaVersion": 68,
+  "migrationCount": 75,
+  "migrationHistoryHash": "ae1874579bb17297df3536863b1c01469c278ee3ebd52bb12990e417c7fbe549",
+  "postgresFixture": "disposable schema at 127.0.0.1:55432/postgres",
+  "productionDataWrittenByTests": false,
+  "productionPublished": false,
+  "limitations": "Vercel alias and database cannot be changed atomically; fixed canonical probe, SHA binding, common advisory lock, optimistic current-row compare, signed run high-water and archived-SHA refusal guard against delayed callbacks."
+}

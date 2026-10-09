@@ -14,6 +14,14 @@ A arquitetura selecionada é **Capacitor 8 com HTML, CSS e JavaScript embarcados
 
 **OTA de código web está indisponível nesta implementação.** Não existe uma instalação silenciosa, um serviço Capgo contratado nem um `server.url` de live reload disfarçado de configuração de produção. Ativar OTA futuramente exige assinatura das versões web, verificação de compatibilidade com o runtime, recuperação da versão anterior e testes que preservem formulários e a fila offline. O sistema apresenta esse estado real.
 
+## Sincronização automática da publicação web
+
+O job `web_sync` usa a origem fixa `https://hortvitalmix.vercel.app`, aguarda até 20 minutos pelo runtime da SHA daquela execução e chama `POST /api/v1/mobile-ci/web-release`. A API verifica OIDC, ambiente de produção, commit do runtime e commit observado novamente no domínio canônico. Confere o histórico completo das migrations já aplicadas, incluindo os timestamps físicos do Supabase, antes de alterar somente `app_releases`. Não executa SQL de migração, não copia o banco e não toca em usuários, pedidos ou Auth.
+
+O histórico é preservado, uma repetição da versão corrente é idempotente, e execuções anteriores ou SHAs já arquivadas são recusadas. Lock e comparação da revisão evitam que dois jobs sobrescrevam o selo. A conferência do alias e a transação do Supabase pertencem a serviços distintos: a garantia corresponde à SHA observada no domínio canônico durante a sincronização, sem atomicidade com uma promoção externa na Vercel.
+
+A central só declara a versão web disponível quando o selo corresponde ao deployment real. Erros de autenticação, schema ou integridade deixam o job falhar, sem marcar uma atualização inexistente como concluída. Migrações futuras continuam exigindo aplicação controlada antes da publicação. Para repetir apenas uma sincronização falhada, use **Actions → execução da main → web_sync → Re-run failed jobs**; uma SHA antiga não pode restaurar outra versão.
+
 ## Projetos e identidade instalada
 
 - App ID proposto: `br.com.hortivitalmix.app`, ainda sem publicação conhecida nas lojas. Confirme esse identificador antes da primeira publicação; depois mantenha-o e mantenha a assinatura para que a instalação seguinte atualize o aplicativo existente.
@@ -36,11 +44,11 @@ A identidade de CI mantém a audiência estável `https://hortvitalmix.vercel.ap
 
 ## Workflow automático
 
-`.github/workflows/hvm-mobile-build.yml` roda em PRs, em alterações aprovadas na `main` e manualmente por **Actions → HortiVitalMix — Android e iOS → Run workflow**. Alterações apenas documentais são ignoradas.
+`.github/workflows/hvm-mobile-build.yml` roda em PRs, em alterações aprovadas na `main` e manualmente por **Actions → HortiVitalMix — Android e iOS → Run workflow**. PRs apenas documentais são ignoradas; todo push na `main`, inclusive documentação, verifica e sincroniza a identidade web publicada. O detector evita recompilar Android/iOS quando os arquivos embarcados e o projeto nativo não mudaram.
 
 1. `npm ci` instala as dependências travadas do site e do workspace nativo.
 2. Os testes do pipeline e os gates existentes verificam o build web.
-3. O detector separa mudanças de servidor/dados das mudanças em arquivos embarcados ou no projeto nativo.
+3. O detector separa mudanças de servidor/dados das mudanças em arquivos embarcados ou no projeto nativo. Após os gates, o job `web_sync` aguarda a SHA completa na origem canônica da Vercel e sincroniza o selo web com identidade OIDC temporária. Não depende de assinatura Android nem conta Apple.
 4. Para mudanças que exigem pacote, compila APK/AAB Android sem assinatura e iOS para simulador. Esses arquivos de validação não são oferecidos como instaladores.
 5. Jobs de publicação são separados, executam somente na `main`, usam o ambiente `mobile-release` e ficam desativados até a configuração e homologação necessárias.
 6. Android: verifica App ID, versão e build reais com `aapt`, assina com a chave permanente, verifica o APK com `apksigner`, confirma a impressão do certificado configurada e produz checksums. AAB fica como artefato privado para a distribuição pela Play Store.

@@ -127,7 +127,7 @@
     "test:t25:unit": "vitest run tests/unit/offlineBiContracts.test.ts tests/integration/offlineBiRoutes.test.ts",
     "test:t25:postgres": "vitest run tests/integration/offlineBiPostgres.test.ts",
     "test:t25:story": "vitest run tests/integration/offlineBiBrowserPostgres.test.ts",
-    "mobile:verify": "node --test scripts/mobile/native-pipeline.test.mjs",
+    "mobile:verify": "node --test scripts/mobile/native-pipeline.test.mjs scripts/mobile/web-sync.test.mjs",
     "mobile:fingerprint": "node scripts/mobile/native-build.mjs fingerprint"
   },
   "dependencies": {

@@ -20,6 +20,7 @@ const legacyAuth = read("server/routes/authRoutes.ts");
 const account = read("src/components/Account.tsx");
 const foundation = read("shared/contracts/foundation.ts");
 const migrationManifest = read("scripts/migrations-manifest.ts");
+const migrationHistory = read("shared/migrationHistory.ts");
 const apiClient = read("src/lib/api.ts");
 const originProtection = read("server/security/originProtection.ts");
 const bootstrapTransport = read("src/lib/adminBootstrapTransport.ts");
@@ -157,10 +158,11 @@ const checks = {
   readinessSchema25:
     Number(foundation.match(/FOUNDATION_SCHEMA_VERSION = (\d+)/)?.[1]) >= 25,
   remoteMigrationAlias:
-    migrationManifest.includes('"20260923022554": "20260923022000"') &&
-    migrationManifest.includes('"20260924023250": "20260924023000"') &&
-    migrationManifest.includes('"20260924115207": "20260924114500"') &&
-    migrationManifest.includes('"20260924124802": "20260924125000"'),
+    migrationManifest.includes('export { validateHistory } from "../shared/migrationHistory.ts"') &&
+    migrationHistory.includes('"20260923022554": "20260923022000"') &&
+    migrationHistory.includes('"20260924023250": "20260924023000"') &&
+    migrationHistory.includes('"20260924115207": "20260924114500"') &&
+    migrationHistory.includes('"20260924124802": "20260924125000"'),
   adminScreenDiscovery:
     account.includes("admin-bootstrap-discovery") &&
     account.includes('navigate("/admin/bootstrap")') &&
