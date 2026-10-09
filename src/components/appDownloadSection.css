@@ -38,3 +38,8 @@
   .hvm-app-download-platforms { width: 100%; }
   .hvm-app-download-platforms button { min-width: 0; }
 }
+
+.hvm-app-download-platforms .hvm-app-download-link { display:flex; flex-direction:column; align-items:flex-start; gap:3px; min-width:110px; min-height:54px; box-sizing:border-box; border:1px solid #276940; border-radius:12px; padding:8px 12px; background:#e5f3e7; color:#153c25; text-decoration:none; }
+.hvm-app-download-link span { font-weight:700; }
+.hvm-app-download-link small { font-size:.75rem; }
+@media (max-width:640px) { .hvm-app-download-platforms .hvm-app-download-link { min-width:0; } }

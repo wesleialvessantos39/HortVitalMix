@@ -1,0 +1,170 @@
+name: HortiVitalMix - builds mobile automaticos
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hvm-mobile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx vitest run tests/unit/mobileReleaseRoutes.test.ts
+      - name: Build completo com gates existentes
+        env:
+          VITE_HVM_MOBILE_BUILD_NUMBER: ${{ github.run_number }}
+        run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-dist-${{ github.run_number }}
+          path: dist/
+          retention-days: 2
+          if-no-files-found: error
+
+  android:
+    needs: web
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - run: npm ci --no-audit --no-fund
+      - name: Instalar Capacitor no runner
+        run: npm install --no-save --package-lock=false --no-audit --no-fund @capacitor/core@8 @capacitor/cli@8 @capacitor/android@8
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-dist-${{ github.run_number }}
+          path: dist/
+      - name: Preparar nativo
+        run: |
+          npx cap add android
+          npx cap sync android
+      - name: Atribuir versao monotona
+        run: |
+          set -euo pipefail
+          sed -i -E 's/versionCode[[:space:]]+[0-9]+/versionCode ${{ github.run_number }}/' android/app/build.gradle
+          sed -i -E 's/versionName[[:space:]]+"[^"]+"/versionName "1.0.${{ github.run_number }}"/' android/app/build.gradle
+          grep -q 'versionCode ${{ github.run_number }}' android/app/build.gradle
+      - name: Compilar APK nao assinado (somente verificacao)
+        run: cd android && ./gradlew --no-daemon :app:assembleRelease
+      - name: Assinar e validar somente apos homologacao e liberacao
+        id: signing
+        shell: bash
+        env:
+          ENABLED: ${{ vars.HVM_MOBILE_RELEASE_ENABLED }}
+          KEYSTORE: ${{ secrets.HVM_ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.HVM_ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.HVM_ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.HVM_ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          echo "signed=false" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ] || [ "$ENABLED" != "true" ]; then
+            echo "Release publica desativada. Build de verificacao concluido."
+            exit 0
+          fi
+          test -f docs/evidence/mobile-native-release-approved.txt || {
+            echo "::error::Falta homologacao da autenticacao/API/mobile e aparelho real."
+            exit 1
+          }
+          test -n "$KEYSTORE" && test -n "$STORE_PASSWORD" && test -n "$KEY_ALIAS" && test -n "$KEY_PASSWORD" || {
+            echo "::error::Secrets de assinatura Android ausentes."
+            exit 1
+          }
+          printf '%s' "$KEYSTORE" | base64 -d > "$RUNNER_TEMP/release.jks"
+          TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n1)"
+          mkdir -p release-assets
+          "$TOOLS/zipalign" -f 4 android/app/build/outputs/apk/release/app-release-unsigned.apk "$RUNNER_TEMP/aligned.apk"
+          ANDROID_KEYSTORE_PASSWORD="$STORE_PASSWORD" ANDROID_KEY_PASSWORD="$KEY_PASSWORD" \
+          "$TOOLS/apksigner" sign --ks "$RUNNER_TEMP/release.jks" --ks-key-alias "$KEY_ALIAS" \
+            --ks-pass env:ANDROID_KEYSTORE_PASSWORD --key-pass env:ANDROID_KEY_PASSWORD \
+            --out "release-assets/HortiVitalMix-Android-${{ github.run_number }}.apk" "$RUNNER_TEMP/aligned.apk"
+          "$TOOLS/apksigner" verify --verbose "release-assets/HortiVitalMix-Android-${{ github.run_number }}.apk"
+          (cd release-assets && sha256sum *.apk > "HortiVitalMix-Android-${{ github.run_number }}.sha256")
+          echo "signed=true" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        if: steps.signing.outputs.signed == 'true'
+        with:
+          name: android-signed-${{ github.run_number }}
+          path: release-assets/*
+          retention-days: 7
+          if-no-files-found: error
+
+  ios:
+    needs: web
+    runs-on: macos-26
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm install --no-save --package-lock=false --no-audit --no-fund @capacitor/core@8 @capacitor/cli@8 @capacitor/ios@8
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-dist-${{ github.run_number }}
+          path: dist/
+      - name: Preparar iOS com Swift Package Manager
+        run: |
+          npx cap add ios --packagemanager SPM
+          npx cap sync ios
+      - name: Compilar iOS (sem assinatura, nao produz IPA instalavel)
+        run: |
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build
+
+  publish_android:
+    needs: android
+    if: ${{ vars.HVM_MOBILE_RELEASE_ENABLED == 'true' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: android-signed-${{ github.run_number }}
+          path: release-assets
+      - name: Publicar APK e checksum verificados
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create "hvm-mobile-r${{ github.run_number }}" release-assets/* \
+            --target "$GITHUB_SHA" \
+            --title "HortiVitalMix Android 1.0.${{ github.run_number }}" \
+            --notes "Android APK assinado e checksum. A distribuicao nativa iOS depende de assinatura e canal Apple autorizado." \
+            --latest

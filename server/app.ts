@@ -34,6 +34,7 @@ import { reviewRouter,adminReviewRouter } from "./routes/reviewRoutes.ts";
 import { notificationRouter,adminNotificationRouter } from "./routes/notificationRoutes.ts";
 import { producerSalesRouter } from "./routes/producerSalesRoutes.ts";
 import { offlineRouter,adminBiRouter } from "./routes/offlineBiRoutes.ts";
+import { mobileReleaseRouter } from "./routes/mobileReleaseRoutes.ts";
 export const app = express();
 app.disable("x-powered-by");
 
@@ -100,6 +101,7 @@ app.use((req,res,next)=> {
 // Public immutable photo variants have their own SQL visibility gate.
 // Serve before sessions to avoid auth refresh cookies on shared CDN images.
 for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) app.use(prefix, publicMediaRouter);
+for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) app.use(prefix, mobileReleaseRouter);
 app.use(sessionMiddleware);
 app.use(foundationRouter);
 app.use("/api", foundationRouter);
