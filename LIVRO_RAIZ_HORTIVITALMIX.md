@@ -1,5 +1,9 @@
 # Livro Raiz — HortiVitalMix
 
+## 2026-10-09 — Preparação de compilação mobile (PR #108 em rascunho; NÃO publicada)
+
+Foi criada uma integração inicial pós-Trilha 25 para compilar automaticamente em GitHub Actions (build web canônico, verificação Android e iOS), descobrir APKs assinados em GitHub Releases no frontend e exibir aviso de atualização sem reiniciar o sistema ou descartar dados offline. Arquivos e critérios em docs/MOBILE_AUTOMATIC_BUILDS_2026-10-09.md. A publicação Android está bloqueada por padrão até homologação física, compatibilidade de /api/Auth/CSRF, recursos de marca e secrets de assinatura; iOS ainda é somente compilação de simulador, sem IPA instalável ou canal Apple configurado. Nenhum schema, migration ou dado Supabase foi alterado. Nenhum aplicativo nativo foi certificado ou publicado. A PR #108 não deve ser promovida sem gates verdes e correção de eventuais falhas de CI.
+
 ## 2026-10-08 — Confirmação de identidade nos convites administrativos
 
 O usuário informou que já configurou o template no painel do Supabase. Esse relato atualiza a situação da pendência documentada nas entradas anteriores; a configuração remota e a entrega de e-mails não foram relidas/testadas por automação. O bloqueio posterior “Entre novamente para confirmar esta operação” era o tratamento genérico de HTTP 401 em Governança, incluindo confirmação administrativa vencida após 15 minutos, sem oferecer um fluxo para concluí-la.
