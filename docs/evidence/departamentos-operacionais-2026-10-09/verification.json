@@ -1,0 +1,60 @@
+{
+  "date": "2026-10-09",
+  "scope": "synthetic-local-only",
+  "unitHttpTests": {
+    "passed": 24,
+    "failed": 0
+  },
+  "postgresIntegration": {
+    "passed": 4,
+    "failed": 0,
+    "target": "127.0.0.1:55432/postgres",
+    "fixtures": "disposable and rolled back"
+  },
+  "browser": {
+    "passed": 11,
+    "failed": 0,
+    "workers": 1,
+    "duration": "1.3m",
+    "widths": [
+      320,
+      390,
+      768,
+      1280,
+      1440
+    ],
+    "screenshots": [
+      "catalogo-1280.png",
+      "catalogo-1440.png",
+      "catalogo-320.png",
+      "catalogo-390.png",
+      "catalogo-768.png",
+      "financeiro-1280.png",
+      "financeiro-1440.png",
+      "financeiro-320.png",
+      "financeiro-390.png",
+      "financeiro-768.png"
+    ],
+    "command": "HVM_PORTABLE_CHROMIUM=1 npx playwright test tests/e2e/admin-operations.spec.ts --workers=1 --output=/workspace/scratch/hvm-admin-operations-browser-final-2"
+  },
+  "sources": {
+    "server/services/AdminOperationsService.ts": "c631503bb59273847c086eda42e0fc99c5bdd21e89eb53a7c88089173ef43854",
+    "server/routes/adminOperationsRoutes.ts": "c4f6bb6e5143cae0e1ae3c87614e8ad1b4b16426d17f94bab15193da7a9fb3c9",
+    "shared/contracts/adminOperations.ts": "d674d734bca82ce34ea9fa0de37902d505f38753b1351d9fdea20c12e04bbd63",
+    "src/pages/admin/AdminFinancePage.tsx": "794a144e1c2ff930cf91c79889e7e51f5da39007ef5d39504751d695b527d3e0",
+    "src/pages/admin/AdminCatalogPage.tsx": "fedaeb596af63b1000203dbbf91481f0006f299ba753324f0f47dba1a8b001af",
+    "src/pages/admin/adminOperationsView.tsx": "6bdec6b55936e5a62c45c227aedb7a26f3cd3ad92973bba630540e5ace3bc56e",
+    "src/pages/admin/adminOperations.css": "20a0cf69dfc33e2253ae563e48b78104d201842cc1702e1fcc6bf69c7082122f",
+    "tests/unit/adminOperations.test.ts": "3368d094e5ca85b7c6969dd5999308761510fc92ea9e3df8a44e558af056fcdf",
+    "tests/integration/adminOperationsPostgres.test.ts": "67b5f9f48f31e1b86633b09f9d45b5a2621d9eb2b5632ea987030e56f18f84d3",
+    "tests/e2e/admin-operations.spec.ts": "d2671aff361afa066f2035070ab01ecb82b0b771c1a407986b098506f0434631"
+  },
+  "productionIdentityTested": false,
+  "productionBusinessRowsChanged": false,
+  "realEmailSent": false,
+  "responseContractFailure": {
+    "status": 503,
+    "code": "DEPARTMENT_UNAVAILABLE",
+    "verified": "two HTTP regression tests, transaction rollback and no-store"
+  }
+}

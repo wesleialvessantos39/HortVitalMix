@@ -1,0 +1,8 @@
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: 'hortivitalmix-native@1.0.0',
+npm warn EBADENGINE   required: { node: '22.x' },
+npm warn EBADENGINE   current: { node: 'v24.19.0', npm: '11.9.0' }
+npm warn EBADENGINE }
+npm warn deprecated uuid@7.0.3: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+
+added 101 packages in 2s

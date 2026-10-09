@@ -1,0 +1,82 @@
+
+Running 46 tests using 2 workers
+
+(node:4108) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:4107) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   2 tests/e2e/navigation-responsive.spec.ts:46:38 › menu público cabe e mantém foco em 320px (2.7s)
+  ✓   1 tests/e2e/session-navigation.spec.ts:38:3 › marca e endereços administrativos: platform_admin 360 (2.9s)
+  ✓   3 tests/e2e/navigation-responsive.spec.ts:46:38 › menu público cabe e mantém foco em 390px (2.8s)
+  ✓   4 tests/e2e/session-navigation.spec.ts:38:3 › marca e endereços administrativos: platform_admin 1440 (2.7s)
+  ✓   5 tests/e2e/navigation-responsive.spec.ts:46:38 › menu público cabe e mantém foco em 430px (2.7s)
+  ✓   6 tests/e2e/session-navigation.spec.ts:38:3 › marca e endereços administrativos: platform_super_admin 360 (3.5s)
+  ✓   7 tests/e2e/navigation-responsive.spec.ts:81:1 › produtor encontra todas as áreas no menu e navegação fecha o drawer (2.6s)
+  ✓   8 tests/e2e/session-navigation.spec.ts:38:3 › marca e endereços administrativos: platform_super_admin 1440 (3.0s)
+  ✓  10 tests/e2e/session-navigation.spec.ts:62:34 › login público com layout completo: consumer 320 (1.9s)
+  ✓   9 tests/e2e/navigation-responsive.spec.ts:95:1 › localização abre pelo menu com foco e mantém rolagem de conteúdo necessário (3.9s)
+  ✓  11 tests/e2e/session-navigation.spec.ts:62:34 › login público com layout completo: consumer 1440 (2.1s)
+  ✓  12 tests/e2e/navigation-responsive.spec.ts:115:38 › admin possui somente quatro atalhos mobile em 320px (2.9s)
+  ✓  14 tests/e2e/navigation-responsive.spec.ts:115:38 › admin possui somente quatro atalhos mobile em 390px (3.4s)
+  ✓  15 tests/e2e/navigation-responsive.spec.ts:115:38 › admin possui somente quatro atalhos mobile em 430px (4.2s)
+  ✓  16 tests/e2e/navigation-responsive.spec.ts:150:1 › menu administrativo conserva restrições por setor (3.1s)
+  ✓  17 tests/e2e/navigation-responsive.spec.ts:162:120 › acesso /entrar/consumidor cabe em 390x844 sem rolagem vazia (3.5s)
+  ✓  18 tests/e2e/navigation-responsive.spec.ts:162:120 › acesso /entrar/produtor cabe em 390x844 sem rolagem vazia (3.6s)
+  ✓  19 tests/e2e/navigation-responsive.spec.ts:162:120 › acesso /entrar/administrador cabe em 390x844 sem rolagem vazia (5.8s)
+  ✓  20 tests/e2e/navigation-responsive.spec.ts:162:120 › acesso /entrar/super-administrador cabe em 390x844 sem rolagem vazia (3.7s)
+  ✓  13 tests/e2e/session-navigation.spec.ts:75:3 › sessão persiste na navegação e cadastro só reaparece ao sair: consumer (29.0s)
+  ✓  22 tests/e2e/session-navigation.spec.ts:62:34 › login público com layout completo: producer 320 (3.6s)
+  ✓  21 tests/e2e/navigation-responsive.spec.ts:172:1 › cesta vazia visitante cabe em 390x844 com aviso e ações disponíveis (4.1s)
+  ✓  23 tests/e2e/session-navigation.spec.ts:62:34 › login público com layout completo: producer 1440 (3.9s)
+  ✓  24 tests/e2e/navigation-responsive.spec.ts:194:1 › painel desktop cabe e todas as áreas laterais são alcançáveis na navegação (3.8s)
+  ✓  26 tests/e2e/shell-compact-categories.spec.ts:62:3 › todas as áreas de platform_admin estão acessíveis no desktop 768x844 (7.2s)
+  ✓  27 tests/e2e/shell-compact-categories.spec.ts:62:3 › todas as áreas de platform_admin estão acessíveis no desktop 1280x720 (5.2s)
+  ✓  28 tests/e2e/shell-compact-categories.spec.ts:62:3 › todas as áreas de platform_admin estão acessíveis no desktop 1440x768 (5.6s)
+  ✓  29 tests/e2e/shell-compact-categories.spec.ts:62:3 › todas as áreas de platform_admin estão acessíveis no desktop 1024x768 (5.5s)
+  ✓  25 tests/e2e/session-navigation.spec.ts:75:3 › sessão persiste na navegação e cadastro só reaparece ao sair: producer (26.5s)
+  ✓  30 tests/e2e/shell-compact-categories.spec.ts:62:3 › todas as áreas de platform_super_admin estão acessíveis no desktop 768x844 (3.7s)
+  ✓  31 tests/e2e/shell-compact-categories.spec.ts:62:3 › todas as áreas de platform_super_admin estão acessíveis no desktop 1280x720 (3.5s)
+  ✓  32 tests/e2e/shell-compact-categories.spec.ts:62:3 › todas as áreas de platform_super_admin estão acessíveis no desktop 1440x768 (2.8s)
+  ✓  33 tests/e2e/shell-compact-categories.spec.ts:62:3 › todas as áreas de platform_super_admin estão acessíveis no desktop 1024x768 (3.3s)
+  ✘  34 tests/e2e/shell-compact-categories.spec.ts:86:3 › menu de platform_admin mobile mantém o formato e todas as áreas do desktop em 320x844 (30.3s)
+(node:7173) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  35 tests/e2e/shell-compact-categories.spec.ts:86:3 › menu de platform_admin mobile mantém o formato e todas as áreas do desktop em 390x844 (8.2s)
+  ✓  36 tests/e2e/shell-compact-categories.spec.ts:86:3 › menu de platform_admin mobile mantém o formato e todas as áreas do desktop em 430x844 (5.2s)
+  ✓  37 tests/e2e/shell-compact-categories.spec.ts:86:3 › menu de platform_super_admin mobile mantém o formato e todas as áreas do desktop em 320x844 (11.5s)
+  ✓  38 tests/e2e/shell-compact-categories.spec.ts:86:3 › menu de platform_super_admin mobile mantém o formato e todas as áreas do desktop em 390x844 (11.4s)
+  ✓  39 tests/e2e/shell-compact-categories.spec.ts:86:3 › menu de platform_super_admin mobile mantém o formato e todas as áreas do desktop em 430x844 (6.6s)
+  ✓  40 tests/e2e/shell-compact-categories.spec.ts:125:64 › menu de platform_admin em tela baixa mantém marca e rodapé fixos e todas as áreas alcançáveis (4.2s)
+  ✓  41 tests/e2e/shell-compact-categories.spec.ts:125:64 › menu de platform_super_admin em tela baixa mantém marca e rodapé fixos e todas as áreas alcançáveis (5.0s)
+  ✓  42 tests/e2e/shell-compact-categories.spec.ts:148:64 › grupos preservam os setores revogados de platform_admin (4.5s)
+  ✓  43 tests/e2e/shell-compact-categories.spec.ts:148:64 › grupos preservam os setores revogados de platform_super_admin (4.7s)
+  ✓  44 tests/e2e/shell-compact-categories.spec.ts:162:38 › categorias completas quebram em linhas sem rolagem lateral em 320px (5.6s)
+  ✓  45 tests/e2e/shell-compact-categories.spec.ts:162:38 › categorias completas quebram em linhas sem rolagem lateral em 390px (6.3s)
+  ✓  46 tests/e2e/shell-compact-categories.spec.ts:162:38 › categorias completas quebram em linhas sem rolagem lateral em 600px (5.3s)
+
+
+  1) tests/e2e/shell-compact-categories.spec.ts:86:3 › menu de platform_admin mobile mantém o formato e todas as áreas do desktop em 320x844
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.boundingBox: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('dialog', { name: 'Administração', exact: true }).locator('.admin-nav-item').nth(6)
+        - waiting for "http://127.0.0.1:3000/admin/painel" navigation to finish...
+        - navigated to "http://127.0.0.1:3000/admin/painel"
+
+
+      105 |       await link.scrollIntoViewIfNeeded();
+      106 |       await expect(link).toBeInViewport({ ratio: 1 });
+    > 107 |       expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+          |                          ^
+      108 |     }
+      109 |     expect(await drawer.locator(".admin-sidebar-nav").evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+      110 |     await expect(drawer.getByRole("button", { name: "Sair", exact: true })).toBeInViewport({ ratio: 1 });
+        at /workspace/HortVitalMix/tests/e2e/shell-compact-categories.spec.ts:107:26
+
+    Error Context: ../scratch/hvm-sidebar-final/shell-compact-categories-m-63d70-áreas-do-desktop-em-320x844/error-context.md
+
+  1 failed
+    tests/e2e/shell-compact-categories.spec.ts:86:3 › menu de platform_admin mobile mantém o formato e todas as áreas do desktop em 320x844
+  45 passed (3.4m)

@@ -1,0 +1,10 @@
+node_modules/
+native-build.json
+*.jks
+*.keystore
+*.p12
+*.p8
+*.cer
+*.mobileprovision
+ExportOptions.plist
+release-assets/

@@ -58,7 +58,7 @@ const departments: DepartmentDefinition[] = [
   },
   {
     sector: "catalog_moderation", title: "Catálogo e lojas",
-    description: "Publicação de produtos e organização das categorias.", actionPath: "/produtos",
+    description: "Publicação de produtos e organização das categorias.", actionPath: "/admin/catalogo",
     sql: `(SELECT jsonb_build_object(
       'published_products',count(*) FILTER(WHERE is_published),
       'draft_products',count(*) FILTER(WHERE NOT is_published),
@@ -88,7 +88,7 @@ const departments: DepartmentDefinition[] = [
   },
   {
     sector: "finance_ops", title: "Operações financeiras",
-    description: "Valores confirmados e retenções registradas; sem executar cobranças ou repasses.", actionPath: "/admin/painel",
+    description: "Valores confirmados e retenções registradas; sem executar cobranças ou repasses.", actionPath: "/admin/financeiro",
     sql: `(SELECT jsonb_build_object(
       'approved_payments',count(*) FILTER(WHERE status='approved'),
       'approved_amount',coalesce(sum(amount_cents::bigint) FILTER(WHERE status='approved'),0),
@@ -194,7 +194,7 @@ export const AdminDashboardService = {
         key: "audit_events_24h", label: "Eventos de auditoria em 24 h", value: Number(row.audit_events_24h), unit: "count", attention: false,
         note: "Todas as áreas: visível somente com todos os poderes administrativos",
       });
-      const actionPath = department.sector === "catalog_moderation" && isSuper ? "/admin/categorias" : department.actionPath;
+      const actionPath = department.actionPath;
       return { sector: department.sector, title: department.title, description: department.description, actionPath, metrics };
     });
     return AdminDashboardResponseSchema.parse({

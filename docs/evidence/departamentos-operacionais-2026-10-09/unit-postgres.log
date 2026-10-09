@@ -1,0 +1,9 @@
+
+ RUN  v5.0.1 /workspace/HortVitalMix
+
+····························
+
+ Test Files  2 passed (2)
+      Tests  28 passed (28)
+   Start at  11:25:31
+   Duration  962ms (tests 37%, import 35%, transform 25%, setup 2%, worker 1%)

@@ -44,6 +44,9 @@ export function assertManifestHash() {
 }
 
 const remoteVersionAliases: Readonly<Record<string, string>> = {
+  // Mobile distribution/release ledger applied with Supabase physical versions.
+  "20261009225521": "20261009023420",
+  "20261009225532": "20261009170751",
   // Restrição da origem de notificações aplicada pelo Supabase em produção.
   "20261008220740": "20261008220225",
   // Revogação dos quatro grants antigos por coluna, timestamp físico Supabase.

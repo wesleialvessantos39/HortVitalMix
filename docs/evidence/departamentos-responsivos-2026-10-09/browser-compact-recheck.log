@@ -1,0 +1,21 @@
+
+Running 14 tests using 1 worker
+
+(node:15044) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/e2e/admin-departments-responsive.spec.ts:554:5 › departamento profissional com conteúdo realista: /admin/usuarios 320px (1.3s)
+  ✓   2 tests/e2e/admin-departments-responsive.spec.ts:554:5 › departamento profissional com conteúdo realista: /admin/localidades 320px (1.1s)
+  ✓   3 tests/e2e/admin-departments-responsive.spec.ts:554:5 › departamento profissional com conteúdo realista: /admin/bloqueios 320px (1.2s)
+  ✓   4 tests/e2e/admin-departments-responsive.spec.ts:554:5 › departamento profissional com conteúdo realista: /admin/usuarios 390px (1.2s)
+  ✓   5 tests/e2e/admin-departments-responsive.spec.ts:554:5 › departamento profissional com conteúdo realista: /admin/localidades 390px (1.1s)
+  ✓   6 tests/e2e/admin-departments-responsive.spec.ts:554:5 › departamento profissional com conteúdo realista: /admin/bloqueios 390px (1.2s)
+  ✓   7 tests/e2e/admin-departments-responsive.spec.ts:624:1 › filtros de usuários mantêm ações e recuperam a consulta vazia (1.1s)
+  ✓   8 tests/e2e/admin-departments-responsive.spec.ts:645:1 › busca por município conserva o controle de cobertura (969ms)
+  ✓   9 tests/e2e/admin-departments-responsive.spec.ts:667:3 › localidades exibem lista compacta e conservam cadastro recolhido: platform_admin (1.2s)
+  ✓  10 tests/e2e/admin-departments-responsive.spec.ts:739:3 › bloqueio confirma a mesma conta e preserva o comando: platform_admin (1.5s)
+  ✓  11 tests/e2e/admin-departments-responsive.spec.ts:793:3 › localidade mantém impacto/revisão e permite cancelar confirmação: platform_admin (1.5s)
+  ✓  12 tests/e2e/admin-departments-responsive.spec.ts:667:3 › localidades exibem lista compacta e conservam cadastro recolhido: platform_super_admin (1.2s)
+  ✓  13 tests/e2e/admin-departments-responsive.spec.ts:739:3 › bloqueio confirma a mesma conta e preserva o comando: platform_super_admin (1.6s)
+  ✓  14 tests/e2e/admin-departments-responsive.spec.ts:793:3 › localidade mantém impacto/revisão e permite cancelar confirmação: platform_super_admin (1.4s)
+
+  14 passed (18.5s)

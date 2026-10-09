@@ -16,6 +16,7 @@ import {
 } from "../../../shared/contracts/subscription";
 import { AdminReauthentication } from "../../components/commerce/AdminReauthentication";
 import { useSession } from "../../hooks/useSession";
+import { CalendarDays, ChevronUp, Plus } from "lucide-react";
 import "../public/subscriptions.css";
 type Draft = {
   slug: string;
@@ -50,6 +51,18 @@ export default function AdminSubscriptionPlansPage() {
     [busy, setBusy] = useState(false),
     [reauth, setReauth] = useState(false),
     [loading, setLoading] = useState(true);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const editor = useRef<HTMLFormElement>(null);
+  const showEditor = editorOpen || (!loading && plans.length === 0);
+  function focusEditor() {
+    editor.current?.scrollIntoView({ block: "start" });
+    editor.current
+      ?.querySelector<HTMLInputElement>("input")
+      ?.focus({ preventScroll: true });
+  }
+  useEffect(() => {
+    if (editorOpen) focusEditor();
+  }, [editorOpen, editing]);
   const pending = useRef<{ key: string; id: string } | null>(null),
     flight = useRef(false);
   const load = useCallback(async (signal?: AbortSignal) => {
@@ -74,6 +87,8 @@ export default function AdminSubscriptionPlansPage() {
     return () => c.abort();
   }, [load]);
   function edit(p: SubscriptionPlan) {
+    setEditorOpen(true);
+    focusEditor();
     setEditing(p);
     setDraft({
       slug: p.slug,
@@ -127,6 +142,7 @@ export default function AdminSubscriptionPlansPage() {
       });
       pending.current = null;
       setEditing(null);
+      setEditorOpen(false);
       setDraft(empty());
       setNotice(
         "Plano salvo. Contratos existentes mantêm as condições contratadas.",
@@ -147,14 +163,39 @@ export default function AdminSubscriptionPlansPage() {
     }
   }
   return (
-    <section className="subscription-admin">
-      <header>
-        <span className="eyebrow">Monetização rural</span>
-        <h1>Planos de assinatura</h1>
-        <p>
-          Defina nomes, preços e frequências antes de publicar. A cobrança Pix
-          utiliza a conta de recebimento já configurada.
-        </p>
+    <section className="subscription-admin admin-page">
+      <header className="admin-department-header">
+        <div>
+          <span className="admin-kicker">Assinaturas e recorrência</span>
+          <h1>
+            <CalendarDays aria-hidden="true" /> Planos de assinatura
+          </h1>
+          <p>
+            Defina nomes, preços e frequências antes de publicar. A cobrança Pix
+            utiliza a conta de recebimento já configurada.
+          </p>
+        </div>
+        {plans.length > 0 && (
+          <button
+            type="button"
+            className="admin-primary"
+            disabled={busy || reauth}
+            aria-expanded={showEditor}
+            aria-controls="admin-plan-editor"
+            onClick={() => setEditorOpen(!showEditor)}
+          >
+            {showEditor ? (
+              <ChevronUp size={17} aria-hidden="true" />
+            ) : (
+              <Plus size={17} aria-hidden="true" />
+            )}
+            {showEditor
+              ? "Recolher formulário"
+              : editing
+                ? "Continuar edição"
+                : "Novo plano"}
+          </button>
+        )}
       </header>
       {loading && !plans.length && <PageLoading label="Carregando planos…" />}
       {error && (
@@ -176,156 +217,171 @@ export default function AdminSubscriptionPlansPage() {
           }}
         />
       )}
-      <form className="subscription-card" onSubmit={save}>
-        <h2>{editing ? "Editar plano" : "Novo plano"}</h2>
-        <div className="subscription-admin-form">
-          <label>
-            Nome do plano
-            <input
-              required
-              maxLength={128}
-              value={draft.name}
-              onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-            />
-          </label>
-          <label>
-            Identificador
-            <input
-              required
-              maxLength={64}
-              placeholder="cesta-semanal"
-              value={draft.slug}
-              onChange={(e) => setDraft({ ...draft, slug: e.target.value })}
-            />
-          </label>
-          <label>
-            Público
-            <select
-              aria-label="Público"
-              value={draft.targetAudience}
-              onChange={(e) => {
-                const targetAudience = e.target
-                  .value as Draft["targetAudience"];
-                setDraft({
-                  ...draft,
-                  targetAudience,
-                  deliveriesPerWeek: targetAudience === "producer" ? 0 : 1,
-                  storeId: "",
-                });
-              }}
-            >
-              <option value="consumer">Consumidor</option>
-              <option value="producer">Produtor</option>
-            </select>
-          </label>
-          <label>
-            Preço por ciclo (R$)
-            <input
-              required
-              type="text"
-              inputMode="decimal"
-              placeholder="0,00"
-              value={draft.price}
-              onChange={(e) => setDraft({ ...draft, price: e.target.value })}
-            />
-          </label>
-          <label>
-            Período da cobrança
-            <select
-              aria-label="Período da cobrança"
-              value={draft.billingPeriod}
-              onChange={(e) =>
-                setDraft({
-                  ...draft,
-                  billingPeriod: e.target.value as Draft["billingPeriod"],
-                })
-              }
-            >
-              <option value="weekly">Semanal</option>
-              <option value="biweekly">Quinzenal</option>
-              <option value="monthly">Mensal</option>
-            </select>
-          </label>
-          {draft.targetAudience === "consumer" && (
-            <>
-              <label>
-                Loja responsável
-                <select
-                  aria-label="Loja responsável"
-                  required
-                  value={draft.storeId}
-                  onChange={(e) =>
-                    setDraft({ ...draft, storeId: e.target.value })
-                  }
-                >
-                  <option value="">Selecione uma loja</option>
-                  {stores.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Entregas por semana
-                <input
-                  type="number"
-                  min="1"
-                  max="7"
-                  required
-                  value={draft.deliveriesPerWeek}
-                  onChange={(e) =>
-                    setDraft({
-                      ...draft,
-                      deliveriesPerWeek: Number(e.target.value),
-                    })
-                  }
-                />
-              </label>
-            </>
-          )}
-          <label className="subscription-description">
-            Descrição e benefícios
-            <textarea
-              required
-              maxLength={2000}
-              rows={4}
-              value={draft.description}
-              onChange={(e) =>
-                setDraft({ ...draft, description: e.target.value })
-              }
-            />
-          </label>
-          <label className="subscription-checkbox">
-            <input
-              type="checkbox"
-              checked={draft.isActive}
-              onChange={(e) =>
-                setDraft({ ...draft, isActive: e.target.checked })
-              }
-            />
-            Disponível para novas assinaturas
-          </label>
-        </div>
-        <div className="subscription-actions">
-          <button className="admin-primary" disabled={busy || reauth}>
-            {busy ? "Salvando…" : "Salvar plano"}
-          </button>
-          {editing && (
-            <button
-              type="button"
-              className="admin-secondary"
-              disabled={busy}
-              onClick={() => {
-                setEditing(null);
-                setDraft(empty());
-              }}
-            >
-              Cancelar edição
+      {showEditor && (
+        <form
+          ref={editor}
+          id="admin-plan-editor"
+          className="subscription-card admin-department-editor"
+          onSubmit={save}
+        >
+          <h2>{editing ? "Editar plano" : "Novo plano"}</h2>
+          <div className="subscription-admin-form">
+            <label>
+              Nome do plano
+              <input
+                required
+                maxLength={128}
+                value={draft.name}
+                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+              />
+            </label>
+            <label>
+              Identificador
+              <input
+                required
+                maxLength={64}
+                placeholder="cesta-semanal"
+                value={draft.slug}
+                onChange={(e) => setDraft({ ...draft, slug: e.target.value })}
+              />
+            </label>
+            <label>
+              Público
+              <select
+                aria-label="Público"
+                value={draft.targetAudience}
+                onChange={(e) => {
+                  const targetAudience = e.target
+                    .value as Draft["targetAudience"];
+                  setDraft({
+                    ...draft,
+                    targetAudience,
+                    deliveriesPerWeek: targetAudience === "producer" ? 0 : 1,
+                    storeId: "",
+                  });
+                }}
+              >
+                <option value="consumer">Consumidor</option>
+                <option value="producer">Produtor</option>
+              </select>
+            </label>
+            <label>
+              Preço por ciclo (R$)
+              <input
+                required
+                type="text"
+                inputMode="decimal"
+                placeholder="0,00"
+                value={draft.price}
+                onChange={(e) => setDraft({ ...draft, price: e.target.value })}
+              />
+            </label>
+            <label>
+              Período da cobrança
+              <select
+                aria-label="Período da cobrança"
+                value={draft.billingPeriod}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    billingPeriod: e.target.value as Draft["billingPeriod"],
+                  })
+                }
+              >
+                <option value="weekly">Semanal</option>
+                <option value="biweekly">Quinzenal</option>
+                <option value="monthly">Mensal</option>
+              </select>
+            </label>
+            {draft.targetAudience === "consumer" && (
+              <>
+                <label>
+                  Loja responsável
+                  <select
+                    aria-label="Loja responsável"
+                    required
+                    value={draft.storeId}
+                    onChange={(e) =>
+                      setDraft({ ...draft, storeId: e.target.value })
+                    }
+                  >
+                    <option value="">Selecione uma loja</option>
+                    {stores.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Entregas por semana
+                  <input
+                    type="number"
+                    min="1"
+                    max="7"
+                    required
+                    value={draft.deliveriesPerWeek}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        deliveriesPerWeek: Number(e.target.value),
+                      })
+                    }
+                  />
+                </label>
+              </>
+            )}
+            <label className="subscription-description">
+              Descrição e benefícios
+              <textarea
+                required
+                maxLength={2000}
+                rows={4}
+                value={draft.description}
+                onChange={(e) =>
+                  setDraft({ ...draft, description: e.target.value })
+                }
+              />
+            </label>
+            <label className="subscription-checkbox">
+              <input
+                type="checkbox"
+                checked={draft.isActive}
+                onChange={(e) =>
+                  setDraft({ ...draft, isActive: e.target.checked })
+                }
+              />
+              Disponível para novas assinaturas
+            </label>
+          </div>
+          <div className="subscription-actions">
+            <button className="admin-primary" disabled={busy || reauth}>
+              {busy ? "Salvando…" : "Salvar plano"}
             </button>
-          )}
-        </div>
-      </form>
+            {editing && (
+              <button
+                type="button"
+                className="admin-secondary"
+                disabled={busy}
+                onClick={() => {
+                  setEditing(null);
+                  setDraft(empty());
+                }}
+              >
+                Cancelar edição
+              </button>
+            )}
+          </div>
+        </form>
+      )}
+      {!loading && plans.length > 0 && (
+        <p className="admin-record-count" role="status">
+          {plans.length}{" "}
+          {plans.length === 1 ? "plano cadastrado" : "planos cadastrados"} ·{" "}
+          {plans.filter((plan) => plan.isActive).length} disponíveis para novas
+          assinaturas
+        </p>
+      )}
       <div className="subscription-grid">
         {plans.map((p) => (
           <article key={p.id} className="subscription-card">
@@ -334,22 +390,25 @@ export default function AdminSubscriptionPlansPage() {
               {p.targetAudience === "consumer" ? "Consumidor" : "Produtor"} ·{" "}
               {p.isActive ? "Publicado" : "Inativo"}
             </p>
-            <p>
+            <p className="subscription-plan-price">
               {money(p.priceCents)} por {billingLabels[p.billingPeriod]}
             </p>
             <p>{p.description}</p>
             <button
               className="admin-secondary"
+              aria-label={`Editar ${p.name}`}
               disabled={busy}
               onClick={() => edit(p)}
             >
-              Editar {p.name}
+              Editar plano
             </button>
           </article>
         ))}
       </div>
       {!loading && !plans.length && (
-        <p>Nenhum plano foi definido. Cadastre o primeiro acima.</p>
+        <p className="admin-empty">
+          Nenhum plano foi definido. Cadastre o primeiro acima.
+        </p>
       )}
     </section>
   );

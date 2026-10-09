@@ -123,7 +123,7 @@ for (const width of [320, 390, 430]) test(`admin possui somente quatro atalhos m
   const trigger = page.getByRole("button", { name: "Abrir menu administrativo", exact: true });
   await trigger.click();
   const drawer = page.getByRole("dialog", { name: "Administração", exact: true });
-  await expect(drawer.locator(".admin-nav-item")).toHaveCount(16);
+  await expect(drawer.locator(".admin-nav-item")).toHaveCount(20);
   const contrast = await drawer.evaluate(element => {
     const rgb = (color: string) => (color.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
     const luminance = (color: string) => rgb(color).map(value => {
@@ -191,14 +191,15 @@ test("cesta vazia visitante cabe em 390x844 com aviso e ações disponíveis", a
   await page.screenshot({ path: "/workspace/scratch/hort-cart-390-local-final.png" });
 });
 
-test("painel desktop cabe e todas as áreas laterais aparecem sem rolagem", async ({ page }) => {
+test("painel desktop cabe e todas as áreas laterais são alcançáveis na navegação", async ({ page }) => {
   await mock(page, "platform_super_admin");
   await page.setViewportSize({ width: 1440, height: 768 });
   await page.goto("/admin/painel");
   await expect(page.locator(".admin-dashboard-page")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(768);
   const navigation = page.locator(".admin-sidebar .admin-sidebar-nav");
-  expect(await navigation.evaluate(el => el.scrollHeight <= el.clientHeight)).toBe(true);
+  expect(await navigation.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+  await page.locator(".admin-sidebar .admin-nav-item").last().scrollIntoViewIfNeeded();
   await expect(page.locator(".admin-sidebar .admin-nav-item").last()).toBeInViewport();
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
   await expect(page.locator(".admin-sidebar .admin-logout")).toBeInViewport();

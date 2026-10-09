@@ -37,6 +37,9 @@ export function AdminUsersPage({
   const [powers, setPowers] = useState<UserRow | null>(null);
   const [success, setSuccess] = useState("");
   const [users, setUsers] = useState<UserRow[]>([]);
+  const [search, setSearch] = useState("");
+  const [accountFilter, setAccountFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [focusUserId, setFocusUserId] = useState(() => {
     const value = new URLSearchParams(location.search).get("userId");
     return value && /^[a-f0-9-]{36}$/i.test(value) ? value : null;
@@ -52,6 +55,28 @@ export function AdminUsersPage({
     [refreshKey, setRefreshKey] = useState(0);
   const isSuper = access.role === "platform_super_admin";
   const canGovernAccounts = hasAdminPermission(access, "account_governance");
+  const normalizedSearch = search.trim().toLocaleLowerCase("pt-BR");
+  const visibleUsers = users.filter((user) => {
+    if (focusUserId && user.id !== focusUserId) return false;
+    if (
+      accountFilter !== "all" &&
+      user.role_code !== accountFilter &&
+      !user.public_roles?.includes(accountFilter)
+    )
+      return false;
+    if (statusFilter !== "all" && user.status !== statusFilter) return false;
+    return (
+      !normalizedSearch ||
+      [
+        user.full_name,
+        user.email_normalized,
+        ...user.sectors.map(adminSectorLabel),
+      ]
+        .join(" ")
+        .toLocaleLowerCase("pt-BR")
+        .includes(normalizedSearch)
+    );
+  });
 
   const [refreshing, setRefreshing] = useState(false);
   const manualRefresh = useRef(false);
@@ -300,190 +325,241 @@ export function AdminUsersPage({
         />
       )}
       <section className="admin-card admin-card--table">
+        <h2>
+          <UsersRound size={17} /> Contas cadastradas
+        </h2>
+        <div className="admin-records-toolbar">
+          <label>
+            Buscar usuário
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Nome, e-mail ou setor"
+            />
+          </label>
+          <label>
+            Tipo de conta
+            <select
+              value={accountFilter}
+              onChange={(event) => setAccountFilter(event.target.value)}
+            >
+              <option value="all">Todos</option>
+              <option value="consumer">Consumidor</option>
+              <option value="producer">Produtor</option>
+              <option value="platform_admin">Administrador</option>
+              <option value="platform_super_admin">Super administrador</option>
+            </select>
+          </label>
+          <label>
+            Situação da conta
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+            >
+              <option value="all">Todas</option>
+              <option value="active">Ativa</option>
+              <option value="pending">Em análise</option>
+              <option value="blocked">Bloqueada</option>
+              <option value="suspended">Suspensa</option>
+              <option value="deleted">Excluída</option>
+            </select>
+          </label>
+        </div>
+        <p className="admin-record-count" role="status">
+          {visibleUsers.length} de {users.length} contas nesta consulta
+        </p>
+        {focusUserId && (
+          <p className="admin-alert">
+            Conta vinculada à denúncia.{" "}
+            <button
+              className="admin-secondary"
+              onClick={() => setFocusUserId(null)}
+            >
+              Mostrar todos os usuários
+            </button>
+          </p>
+        )}
         {refreshing && users.length === 0 ? (
           <PageLoading label="Carregando usuários…" compact />
-        ) : users.length === 0 ? (
-          <p className="admin-empty">Nenhum usuário encontrado.</p>
+        ) : visibleUsers.length === 0 ? (
+          <p className="admin-empty">
+            {users.length
+              ? "Nenhuma conta corresponde a esta busca. Ajuste os filtros para ver outros usuários."
+              : "Nenhum usuário encontrado."}
+          </p>
         ) : (
           <>
-            {focusUserId && (
-              <p className="admin-alert">
-                Conta vinculada à denúncia.{" "}
-                <button
-                  className="admin-secondary"
-                  onClick={() => setFocusUserId(null)}
-                >
-                  Mostrar todos os usuários
-                </button>
-              </p>
-            )}
             <div className="admin-table-wrap">
-              <table className="admin-table admin-users-table">
+              <table className="admin-table admin-users-table admin-data-table">
+                <caption className="admin-visually-hidden">
+                  Contas encontradas e poderes administrativos
+                </caption>
                 <thead>
                   <tr>
-                    <th>Usuário</th>
-                    <th>Tipo de conta</th>
-                    <th>Perfis vinculados</th>
-                    <th>Setores</th>
-                    <th>Status</th>
-                    {canGovernAccounts && <th>Ação</th>}
+                    <th scope="col">Usuário</th>
+                    <th scope="col">Tipo de conta</th>
+                    <th scope="col">Perfis vinculados</th>
+                    <th scope="col">Setores</th>
+                    <th scope="col">Status</th>
+                    {canGovernAccounts && <th scope="col">Ação</th>}
                   </tr>
                 </thead>
                 <tbody>
-                  {users
-                    .filter((user) => !focusUserId || user.id === focusUserId)
-                    .map((u) => (
-                      <tr key={u.id + "-" + u.role_code}>
-                        <td data-label="Usuário">
-                          <strong>{u.full_name}</strong>
-                          <small className="admin-table-sub">
-                            {u.email_normalized}
-                          </small>
-                        </td>
-                        <td data-label="Tipo de conta">
-                          {u.role_code === "platform_super_admin"
-                            ? "Super administrador"
-                            : u.role_code === "platform_admin"
-                              ? "Administrador setorial"
-                              : u.role_code === "consumer"
-                                ? "Consumidor"
-                                : u.role_code === "producer"
-                                  ? "Produtor"
-                                  : "Conta pública"}
-                        </td>
-                        <td data-label="Perfis">
-                          {u.public_roles?.length
-                            ? u.public_roles.map(publicRoleLabel).join(" • ")
-                            : "Somente administrativo"}
-                        </td>
-                        <td data-label="Setores">
-                          {u.sectors?.length
-                            ? u.role_code === "platform_super_admin" && u.sectors.length === 9 ? "Todos os poderes" : u.sectors.map(adminSectorLabel).join(" • ")
-                            : "—"}
-                        </td>
-                        <td data-label="Status">
-                          <span
-                            className={
-                              "admin-badge " +
-                              (u.status === "active" ? "admin-badge--ok" : "")
-                            }
-                          >
-                            {u.status === "deleted"
-                              ? "Excluída"
-                              : u.status === "pending"
-                                ? "Em análise"
-                                : u.status === "suspended"
-                                  ? "Suspensa"
-                                  : u.status !== "active"
-                                    ? "Bloqueado"
-                                    : u.email_confirmed === false
-                                      ? "E-mail pendente"
-                                      : "Ativo"}
-                          </span>
-                          {u.stored_status === "blocked" &&
-                            u.block_ends_at &&
-                            Date.parse(u.block_ends_at) > Date.now() && (
-                              <small className="admin-table-sub">
-                                {u.block_starts_at &&
-                                  new Date(u.block_starts_at).toLocaleString(
-                                    "pt-BR",
-                                  )}{" "}
-                                até{" "}
-                                {new Date(u.block_ends_at).toLocaleString(
+                  {visibleUsers.map((u) => (
+                    <tr key={u.id + "-" + u.role_code}>
+                      <td data-label="Usuário">
+                        <strong>{u.full_name}</strong>
+                        <small className="admin-table-sub">
+                          {u.email_normalized}
+                        </small>
+                      </td>
+                      <td data-label="Tipo de conta">
+                        {u.role_code === "platform_super_admin"
+                          ? "Super administrador"
+                          : u.role_code === "platform_admin"
+                            ? "Administrador setorial"
+                            : u.role_code === "consumer"
+                              ? "Consumidor"
+                              : u.role_code === "producer"
+                                ? "Produtor"
+                                : "Conta pública"}
+                      </td>
+                      <td data-label="Perfis">
+                        {u.public_roles?.length
+                          ? u.public_roles.map(publicRoleLabel).join(" • ")
+                          : "Somente administrativo"}
+                      </td>
+                      <td data-label="Setores">
+                        {u.sectors?.length
+                          ? u.role_code === "platform_super_admin" &&
+                            u.sectors.length === 9
+                            ? "Todos os poderes"
+                            : u.sectors.map(adminSectorLabel).join(" • ")
+                          : "—"}
+                      </td>
+                      <td data-label="Status">
+                        <span
+                          className={
+                            "admin-badge " +
+                            (u.status === "active" ? "admin-badge--ok" : "")
+                          }
+                        >
+                          {u.status === "deleted"
+                            ? "Excluída"
+                            : u.status === "pending"
+                              ? "Em análise"
+                              : u.status === "suspended"
+                                ? "Suspensa"
+                                : u.status !== "active"
+                                  ? "Bloqueado"
+                                  : u.email_confirmed === false
+                                    ? "E-mail pendente"
+                                    : "Ativo"}
+                        </span>
+                        {u.stored_status === "blocked" &&
+                          u.block_ends_at &&
+                          Date.parse(u.block_ends_at) > Date.now() && (
+                            <small className="admin-table-sub">
+                              {u.block_starts_at &&
+                                new Date(u.block_starts_at).toLocaleString(
                                   "pt-BR",
-                                )}
-                              </small>
-                            )}
-                        </td>
-                        {canGovernAccounts && (
-                          <td data-label="Ações">
-                            <div className="admin-button-row">
-                              {isSuper &&
-                                [
-                                  "platform_admin",
-                                  "platform_super_admin",
-                                ].includes(u.role_code ?? "") &&
-                                u.status !== "deleted" && (
-                                  <button
-                                    className="admin-table-action"
-                                    disabled={!!busy}
-                                    onClick={() => {
-                                      setPowers(u);
-                                      setSelected(null);
-                                      setDeleting(null);
-                                      setSuccess("");
-                                      window.scrollTo({
-                                        top: 0,
-                                        behavior: "instant",
-                                      });
-                                    }}
-                                  >
-                                    <UserCog size={15} />
-                                    Gerenciar poderes
-                                  </button>
-                                )}
-                              {["active", "blocked"].includes(u.status) && (
+                                )}{" "}
+                              até{" "}
+                              {new Date(u.block_ends_at).toLocaleString(
+                                "pt-BR",
+                              )}
+                            </small>
+                          )}
+                      </td>
+                      {canGovernAccounts && (
+                        <td data-label="Ações">
+                          <div className="admin-button-row">
+                            {isSuper &&
+                              [
+                                "platform_admin",
+                                "platform_super_admin",
+                              ].includes(u.role_code ?? "") &&
+                              u.status !== "deleted" && (
                                 <button
                                   className="admin-table-action"
-                                  disabled={busy === u.id}
+                                  disabled={!!busy}
                                   onClick={() => {
-                                    if (
-                                      u.status === "blocked" ||
-                                      (u.stored_status === "blocked" &&
-                                        u.block_starts_at &&
-                                        Date.parse(u.block_starts_at) >
-                                          Date.now())
-                                    )
-                                      void changeStatus(u, true);
-                                    else {
-                                      setDeleting(null);
-                                      setSelected(u);
-                                      window.scrollTo({
-                                        top: 0,
-                                        behavior: "instant",
-                                      });
-                                      setMode("indefinite");
-                                      setStartsAt("");
-                                      setEndsAt("");
-                                    }
+                                    setPowers(u);
+                                    setSelected(null);
+                                    setDeleting(null);
+                                    setSuccess("");
+                                    window.scrollTo({
+                                      top: 0,
+                                      behavior: "instant",
+                                    });
                                   }}
                                 >
                                   <UserCog size={15} />
-                                  {u.status === "blocked"
-                                    ? "Desbloquear"
-                                    : u.stored_status === "blocked" &&
-                                        u.block_starts_at &&
-                                        Date.parse(u.block_starts_at) >
-                                          Date.now()
-                                      ? "Cancelar bloqueio agendado"
-                                      : "Bloquear"}
+                                  Gerenciar poderes
                                 </button>
                               )}
-                              {u.status !== "deleted" &&
-                                (u.role_code !== "platform_super_admin" ||
-                                  isSuper) && (
-                                  <button
-                                    className="admin-table-action admin-danger-text"
-                                    disabled={!!busy}
-                                    onClick={() => {
-                                      setDeleting(u);
-                                      setDeleteConfirmed(false);
-                                      setSelected(null);
-                                      window.scrollTo({
-                                        top: 0,
-                                        behavior: "instant",
-                                      });
-                                    }}
-                                  >
-                                    <Trash2 size={15} />
-                                    Excluir conta
-                                  </button>
-                                )}
-                            </div>
-                          </td>
-                        )}
-                      </tr>
-                    ))}
+                            {["active", "blocked"].includes(u.status) && (
+                              <button
+                                className="admin-table-action"
+                                disabled={busy === u.id}
+                                onClick={() => {
+                                  if (
+                                    u.status === "blocked" ||
+                                    (u.stored_status === "blocked" &&
+                                      u.block_starts_at &&
+                                      Date.parse(u.block_starts_at) >
+                                        Date.now())
+                                  )
+                                    void changeStatus(u, true);
+                                  else {
+                                    setDeleting(null);
+                                    setSelected(u);
+                                    window.scrollTo({
+                                      top: 0,
+                                      behavior: "instant",
+                                    });
+                                    setMode("indefinite");
+                                    setStartsAt("");
+                                    setEndsAt("");
+                                  }
+                                }}
+                              >
+                                <UserCog size={15} />
+                                {u.status === "blocked"
+                                  ? "Desbloquear"
+                                  : u.stored_status === "blocked" &&
+                                      u.block_starts_at &&
+                                      Date.parse(u.block_starts_at) > Date.now()
+                                    ? "Cancelar bloqueio agendado"
+                                    : "Bloquear"}
+                              </button>
+                            )}
+                            {u.status !== "deleted" &&
+                              (u.role_code !== "platform_super_admin" ||
+                                isSuper) && (
+                                <button
+                                  className="admin-table-action admin-danger-text"
+                                  disabled={!!busy}
+                                  onClick={() => {
+                                    setDeleting(u);
+                                    setDeleteConfirmed(false);
+                                    setSelected(null);
+                                    window.scrollTo({
+                                      top: 0,
+                                      behavior: "instant",
+                                    });
+                                  }}
+                                >
+                                  <Trash2 size={15} />
+                                  Excluir conta
+                                </button>
+                              )}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

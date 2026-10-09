@@ -1,0 +1,49 @@
+.admin-department-hub { width: min(100%, 1220px); margin: 0 auto; color: #193c28; overflow-wrap: anywhere; }
+.admin-department-hub * { box-sizing: border-box; }
+.admin-department-hub-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+.admin-department-hub-header > div { min-width: 0; }
+.admin-department-hub-eyebrow { display: inline-flex; align-items: center; gap: 6px; color: #607464; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; }
+.admin-department-hub h1 { font-size: clamp(24px, 2.3vw, 30px); margin: 5px 0 6px; line-height: 1.2; letter-spacing: -.6px; }
+.admin-department-hub-header p { margin: 0; color: #5e7164; font-size: 13px; line-height: 1.5; }
+.admin-department-hub-header > button { display: inline-flex; align-items: center; gap: 6px; min-height: 42px; padding: 9px 12px; border: 1px solid #cbdccf; border-radius: 10px; background: #fff; color: #2c5b3c; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.admin-department-hub-scope { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 12px; margin-bottom: 14px; background: #edf6ee; border: 1px solid #d6e6d9; border-radius: 11px; font-size: 11px; color: #557160; }
+.admin-department-hub-scope > span:first-child { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: #28533a; }
+.admin-department-hub-scope time { margin-left: auto; }
+.admin-department-hub-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.admin-department-hub-card { display: flex; flex-direction: column; min-width: 0; padding: 15px; border: 1px solid #dbe5dc; border-radius: 15px; background: #fff; box-shadow: 0 3px 12px #193c2804; }
+.admin-department-hub-card-title { display: flex; align-items: center; gap: 9px; }
+.admin-department-hub-card-title > span:first-child { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 10px; background: #eef5eb; color: #3e754c; flex-shrink: 0; }
+.admin-department-hub-card h2 { margin: 0; font-size: 15px; line-height: 1.25; letter-spacing: -.2px; }
+.admin-department-hub-card > p { color: #65766a; font-size: 12px; line-height: 1.45; margin: 11px 0; }
+.admin-department-hub-attention { width: 7px; height: 7px; margin-left: auto; background: #c28324; border-radius: 50%; flex-shrink: 0; }
+.admin-department-hub-card dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin: auto 0 12px; padding: 10px 0; border-top: 1px solid #edf0e9; }
+.admin-department-hub-card dt { color: #6d7e71; font-size: 10px; line-height: 1.35; }
+.admin-department-hub-card dd { margin: 5px 0 0; font-size: clamp(16px, 1.65vw, 21px); font-weight: 800; letter-spacing: -.3px; color: #2b5135; line-height: 1.25; }
+.admin-department-hub-card nav { display: flex; flex-wrap: wrap; gap: 6px; }
+.admin-department-hub-card nav a { display: inline-flex; justify-content: space-between; align-items: center; gap: 6px; padding: 7px 9px; min-height: 36px; border: 1px solid #d9e5d8; border-radius: 8px; color: #356344; background: #f7faf5; font-size: 11px; font-weight: 700; line-height: 1.4; text-decoration: none; }
+.admin-department-hub-card nav a svg { flex-shrink: 0; }
+.admin-department-hub-card nav a:hover { background: #ebf5e9; border-color: #a0c2a6; }
+.admin-department-hub-error { display: flex; align-items: flex-start; gap: 8px; padding: 12px; margin-bottom: 14px; border: 1px solid #e4cda4; border-radius: 11px; background: #fff9ed; color: #816732; font-size: 12px; line-height: 1.5; }
+.admin-department-hub-error > div { flex: 1; min-width: 0; }
+.admin-department-hub-error p { margin: 0; }
+.admin-department-hub-error small { font-size: 11px; }
+.admin-department-hub-error > button { min-height: 36px; padding: 6px 9px; border: 1px solid #dec69d; border-radius: 8px; background: #fff; color: inherit; font: inherit; }
+.admin-department-hub-empty { padding: 25px 15px; border: 1px dashed #d4e1d5; border-radius: 14px; background: #fafcf9; text-align: center; }
+.admin-department-hub-empty h2 { font-size: 18px; }
+.admin-department-hub-empty p { font-size: 13px; line-height: 1.5; color: #647969; }
+.admin-department-hub footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 12px; font-size: 10px; line-height: 1.5; color: #6d8073; }
+.admin-department-hub footer a { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; color: #396b49; font-weight: 700; text-decoration: none; }
+.admin-department-hub :is(a, button):focus-visible { outline: 2px solid #b88036; outline-offset: 3px; }
+.admin-department-hub button:disabled { opacity: .6; cursor: not-allowed; }
+@media (max-width: 1100px) { .admin-department-hub-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 650px) {
+  .admin-department-hub-header { flex-wrap: wrap; gap: 10px; }
+  .admin-department-hub-header > button { min-height: 44px; }
+  .admin-department-hub-scope time { margin-left: 0; }
+  .admin-department-hub-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .admin-department-hub-card { padding: 14px; }
+  .admin-department-hub-card dd { font-size: 21px; }
+  .admin-department-hub-card nav a { min-height: 44px; font-size: 12px; }
+  .admin-department-hub-error { flex-wrap: wrap; }
+  .admin-department-hub-error > button { min-height: 44px; }
+}

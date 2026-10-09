@@ -52,6 +52,9 @@ import { NotificationProvider, NotificationBell } from "./components/notificatio
 import { LocationSelector } from "./components/LocationSelector";
 import { PageLoading } from "./components/PageLoading";
 import { AppDownloadSection } from "./components/AppDownloadSection";
+import { AppUpdateNotice } from "./components/AppUpdateNotice";
+import { NativeUpdateNotice } from "./components/NativeUpdateNotice";
+const AppDownloadsPage = lazy(() => import("./pages/AppDownloadsPage"));
 const ProducerCatalogPage = lazy(() => import("./pages/producer/ProducerCatalogPage"));
 const InventoryLotsPage = lazy(() => import("./pages/producer/InventoryLotsPage"));
 const ProducerDeliveryAreaPage = lazy(() => import("./pages/producer/ProducerDeliveryAreaPage"));
@@ -449,6 +452,8 @@ export default function App() {
         />}
       </header>
       <OfflineStatusBanner session={shellSession} onNavigate={go}/>
+      <AppUpdateNotice path={path} session={shellSession}/>
+      <NativeUpdateNotice session={shellSession}/>
       {shellSession?.activeRole === "producer" && (path.startsWith("/produtor/") || path === "/conta") && <ProducerTrialBanner key={shellSession.userId} userId={shellSession.userId} onNavigate={go}/>}
       <main id="conteudo" className={isAdminRoute || publicLoginRole ? "layout admin-route-layout" : isProducerPropertyRoute ? "layout producer-route-layout rural-property-layout" : isProducerScopeRoute || isProducerStoreRoute || isProducerProductRoute || path === "/carrinho" || path === "/checkout" ? "layout producer-route-layout" : "layout"}>
         {shellSession?.localityWarning && !isAdminRoute && (
@@ -460,6 +465,8 @@ export default function App() {
           <PublicLoginPage key={publicLoginRole} role={publicLoginRole} onNavigate={go} onSessionAdopt={adoptSession}/>
         ) : isAdminRoute ? (
           <AdminRouter path={path} onNavigate={go} onSessionRefresh={refreshSession} />
+        ) : path === "/aplicativos" ? (
+          <Suspense fallback={<PageLoading label="Carregando aplicativos…" />}><AppDownloadsPage onNavigate={go}/></Suspense>
         ) : path === "/confirmar-contato" || path === "/confirmarcontato" ? (
           <ContactConfirmationPage
             session={shellSession}
@@ -713,7 +720,7 @@ export default function App() {
                   </div>}
                 </section>
               )}
-              {path === "/" && <AppDownloadSection />}
+              {path === "/" && <AppDownloadSection onNavigate={go}/>}
             </div>
           </>
         )}

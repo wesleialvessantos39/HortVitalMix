@@ -51,7 +51,11 @@
       "destination": "/api?__hvm_path=:path*"
     },
     {
-      "source": "/((?!api(?:/|$)|assets/|favicon.svg).*)",
+      "source": "/downloads/:platform(android|ios)",
+      "destination": "/api?__hvm_path=v1/app-distribution/download/:platform"
+    },
+    {
+      "source": "/((?!api(?:/|$)|assets/|app-icons/|native-downloads/|manifest.webmanifest|favicon.svg).*)",
       "destination": "/index.html"
     }
   ],

@@ -239,7 +239,10 @@ const checks = {
       bootstrapRpc.includes("GRANT EXECUTE ON FUNCTION public.fn_finalize_first_super_admin") &&
       bootstrapPage.includes('status:"open" as const') &&
       routes.includes("BOOTSTRAP_EMAIL_NOT_AUTHORIZED") &&
-      apiClient.includes('hostname.endsWith(".vercel.app")') &&
+      // Published custom domains use /api too; only a verified Studio host
+      // selects the preview prefix. Transport tests exercise the behavior.
+      apiClient.includes('hostname === "aistudio.google.com"') &&
+      apiClient.includes('return studioPreview ? ["/_hvm_api", "/api"] : ["/api"]') &&
       apiClient.includes('["/_hvm_api", "/api"]') &&
       originProtection.includes('fetchSite === "same-origin"') &&
       bootstrapTransport.includes("/functions/v1/admin-bootstrap") &&

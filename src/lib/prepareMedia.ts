@@ -6,6 +6,7 @@ import {
 
 const WAIT_MS = 8000;
 import { mediaPreview, mediaPreviewWidth } from "./mediaPreview";
+import { publicMediaSource } from "./publicMediaSource";
 const MAX_ENTRIES = 24;
 type Entry = {
   promise: Promise<void>;
@@ -38,10 +39,12 @@ function prepare(
   sizes?: string,
   publicPreview = true,
 ) {
+  const approved = publicMediaSource(value);
+  if (!approved) return Promise.resolve();
   const variant = publicPreview
-    ? mediaPreview(value, mediaPreviewWidth(sizes))
+    ? mediaPreview(approved, mediaPreviewWidth(sizes))
     : null;
-  const src = variant ?? stableMediaUrl(value);
+  const src = variant ?? stableMediaUrl(approved);
   const previous = entries.get(src);
   if (previous && previous.until > Date.now()) {
     if (priority === "high" && previous.image)
@@ -108,7 +111,7 @@ function prepare(
   image.onerror = () => finish(false);
   if (variant) {
     image.srcset = [320, 640, 1280]
-      .map((w) => `${mediaPreview(value, w as 320 | 640 | 1280)} ${w}w`)
+      .map((w) => `${mediaPreview(approved, w as 320 | 640 | 1280)} ${w}w`)
       .join(", ");
     image.sizes = sizes ?? "(max-width: 600px) 100vw, 480px";
   }

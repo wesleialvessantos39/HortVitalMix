@@ -1,6 +1,6 @@
 import { PageLoading } from "../../components/PageLoading";
 import { adminSectorLabel } from "../../../shared/adminPermissions";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Crown, Leaf, ShieldCheck } from "lucide-react";
 import "./adminInvites.css";
 import { api } from "../../lib/api";
@@ -9,6 +9,7 @@ import { PasswordInput } from "../../components/forms/PasswordInput";
 import { PasswordStrengthMeter } from "../../components/forms/PasswordStrengthMeter";
 import { CPFInput } from "../../components/forms/CPFInput";
 import { PhoneInput } from "../../components/forms/PhoneInput";
+import { logoutCurrentBrowserSessions } from "../../lib/sessionLogout";
 
 type Props = { onNavigate: (to: string) => void };
 type InviteState = {
@@ -24,10 +25,7 @@ const publicRoleLabel = (role: string) =>
   role === "producer" ? "Produtor" : role === "consumer" ? "Consumidor" : role;
 
 export function AdminAcceptInvitePage({ onNavigate }: Props) {
-  const token = useMemo(
-    () => new URLSearchParams(location.search).get("token") ?? "",
-    [],
-  );
+  const token = new URLSearchParams(location.search).get("token") ?? "";
   const [state, setState] = useState<InviteState>({ status: "loading" });
   const [form, setForm] = useState({
     fullName: "",
@@ -37,46 +35,122 @@ export function AdminAcceptInvitePage({ onNavigate }: Props) {
   });
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
+  const [leaving, setLeaving] = useState(false);
+  const [exitError, setExitError] = useState("");
+  const [accepted, setAccepted] = useState(false);
+  const successNavigation = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mounted = useRef(false);
+  const activation = useRef<AbortController | null>(null);
+  const currentToken = useRef(token);
+  currentToken.current = token;
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      activation.current?.abort();
+      if (successNavigation.current) clearTimeout(successNavigation.current);
+    };
+  }, []);
 
   useEffect(() => {
+    activation.current?.abort();
+    activation.current = null;
+    if (successNavigation.current) clearTimeout(successNavigation.current);
+    successNavigation.current = null;
+    setAccepted(false);
+    setBusy(false);
+    setMessage("");
+    setExitError("");
+    setForm({ fullName: "", cpf: "", phone: "", password: "" });
+    setState({ status: "loading" });
     if (!token) {
       setState({ status: "invalid" });
       return;
     }
+    const abort = new AbortController();
     api<InviteState>(
       "/v1/admin/invites/validate?token=" + encodeURIComponent(token),
+      { signal: abort.signal },
     )
-      .then(setState)
-      .catch(() => setState({ status: "invalid" }));
+      .then((next) => {
+        if (!abort.signal.aborted) setState(next);
+      })
+      .catch(() => {
+        if (!abort.signal.aborted) setState({ status: "invalid" });
+      });
+    return () => abort.abort();
   }, [token]);
+
+  async function returnToSite() {
+    if (leaving || busy) return;
+    setLeaving(true);
+    setExitError("");
+    if (successNavigation.current) clearTimeout(successNavigation.current);
+    try {
+      await logoutCurrentBrowserSessions();
+      if (!mounted.current) return;
+      // Remove the personal invitation URL from the current history entry.
+      history.replaceState({}, "", "/");
+      onNavigate("/");
+    } catch {
+      if (mounted.current)
+        setExitError(
+          "Não foi possível encerrar as sessões com segurança. Confira sua conexão e tente voltar ao site novamente.",
+        );
+    } finally {
+      if (mounted.current) setLeaving(false);
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (busy || leaving || accepted || activation.current) return;
+    const abort = new AbortController();
+    activation.current = abort;
+    const stillCurrent = () =>
+      mounted.current &&
+      !abort.signal.aborted &&
+      currentToken.current === token;
     setBusy(true);
     setMessage("");
+    let activated = false;
     try {
       const payload = { ...form, token, commandId: cryptoRandomUUID() };
       const result = await api<{ status: string }>("/v1/admin/invites/accept", {
         method: "POST",
         body: JSON.stringify(payload),
+        signal: abort.signal,
       });
+      if (!stillCurrent()) return;
       if (result.status === "accepted") {
+        activated = true;
+        setAccepted(true);
         setMessage(
           state.identityMode === "existing"
             ? "Acesso administrativo criado. Seus perfis de Consumidor ou Produtor continuam preservados e usam o cadastro público normalmente."
             : "Convite aceito. Seu acesso administrativo está pronto.",
         );
-        setTimeout(
-          () =>
+        // Activation grants a credential; it never signs the recipient in.
+        // Clear any previously open identity before showing its login screen.
+        await logoutCurrentBrowserSessions();
+        if (!stillCurrent()) return;
+        successNavigation.current = setTimeout(() => {
+          if (stillCurrent())
             onNavigate(
               state.targetRole === "platform_super_admin"
                 ? "/entrar/super-administrador"
                 : "/admin/entrar",
-            ),
-          900,
-        );
+            );
+        }, 900);
       }
     } catch (err) {
+      if (!stillCurrent()) return;
+      if (activated) {
+        setExitError(
+          "Seu convite foi aceito, mas não foi possível encerrar a sessão anterior com segurança. Confira sua conexão e use Voltar ao site para sair antes de entrar com seu e-mail e senha.",
+        );
+        return;
+      }
       const status = (err as { status?: number }).status;
       setMessage(
         status === 409
@@ -86,7 +160,8 @@ export function AdminAcceptInvitePage({ onNavigate }: Props) {
             : "Não foi possível concluir o convite. Tente novamente.",
       );
     } finally {
-      setBusy(false);
+      if (activation.current === abort) activation.current = null;
+      if (mounted.current && currentToken.current === token) setBusy(false);
     }
   }
 
@@ -99,8 +174,13 @@ export function AdminAcceptInvitePage({ onNavigate }: Props) {
       className={`admin-login-page admin-invite-accept ${isSuper ? "is-super" : ""}`}
     >
       <header className="admin-login-header">
-        <button className="admin-back" onClick={() => onNavigate("/")}>
-          ← Voltar ao site
+        <button
+          type="button"
+          className="admin-back"
+          onClick={returnToSite}
+          disabled={leaving || busy}
+        >
+          {leaving ? "Encerrando sessões…" : "← Voltar ao site"}
         </button>
         <div className="admin-login-brand">
           <span className="admin-brand-mark">
@@ -123,6 +203,11 @@ export function AdminAcceptInvitePage({ onNavigate }: Props) {
                 : "Convite de administrador setorial"
               : "Convite administrativo"}
           </span>
+          {exitError && (
+            <p className="admin-alert" role="alert">
+              {exitError}
+            </p>
+          )}
           {state.status === "loading" && (
             <PageLoading label="Validando convite…" compact />
           )}
@@ -132,12 +217,6 @@ export function AdminAcceptInvitePage({ onNavigate }: Props) {
               <p className="admin-muted">
                 O link pode ter expirado, sido invalidado ou já utilizado.
               </p>
-              <button
-                className="admin-secondary"
-                onClick={() => onNavigate("/admin/entrar")}
-              >
-                Ir para o acesso administrativo
-              </button>
             </>
           )}
           {valid && (
@@ -202,47 +281,54 @@ export function AdminAcceptInvitePage({ onNavigate }: Props) {
                 </div>
               )}
               {message && <div className="admin-alert">{message}</div>}
-              <form onSubmit={submit} className="admin-form-grid">
-                <label>
-                  Nome completo
-                  <input
-                    value={form.fullName}
-                    onChange={(e) =>
-                      setForm({ ...form, fullName: e.target.value })
-                    }
-                    required
-                    minLength={3}
+              {!accepted && (
+                <form onSubmit={submit} className="admin-form-grid">
+                  <label>
+                    Nome completo
+                    <input
+                      value={form.fullName}
+                      onChange={(e) =>
+                        setForm({ ...form, fullName: e.target.value })
+                      }
+                      required
+                      minLength={3}
+                    />
+                  </label>
+
+                  <CPFInput
+                    value={form.cpf}
+                    onChange={(value) => setForm({ ...form, cpf: value })}
                   />
-                </label>
 
-                <CPFInput
-                  value={form.cpf}
-                  onChange={(value) => setForm({ ...form, cpf: value })}
-                />
-
-                <PhoneInput
-                  value={form.phone}
-                  onChange={(value) => setForm({ ...form, phone: value })}
-                />
-
-                <label className="admin-span-2">
-                  Crie a senha do acesso administrativo
-                  <PasswordInput
-                    value={form.password}
-                    onChange={(value) => setForm({ ...form, password: value })}
-                    autoComplete="new-password"
+                  <PhoneInput
+                    value={form.phone}
+                    onChange={(value) => setForm({ ...form, phone: value })}
                   />
-                  <PasswordStrengthMeter value={form.password} />
-                </label>
 
-                <button className="admin-primary admin-span-2" disabled={busy}>
-                  {busy
-                    ? "Ativando…"
-                    : existing
-                      ? "Adicionar acesso administrativo"
-                      : "Aceitar convite e ativar acesso"}
-                </button>
-              </form>
+                  <label className="admin-span-2">
+                    Crie a senha do acesso administrativo
+                    <PasswordInput
+                      value={form.password}
+                      onChange={(value) =>
+                        setForm({ ...form, password: value })
+                      }
+                      autoComplete="new-password"
+                    />
+                    <PasswordStrengthMeter value={form.password} />
+                  </label>
+
+                  <button
+                    className="admin-primary admin-span-2"
+                    disabled={busy || leaving}
+                  >
+                    {busy
+                      ? "Ativando…"
+                      : existing
+                        ? "Adicionar acesso administrativo"
+                        : "Aceitar convite e ativar acesso"}
+                  </button>
+                </form>
+              )}
             </>
           )}
         </div>

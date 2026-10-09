@@ -1,7 +1,17 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { Ban, Search, ShieldOff, Undo2 } from "lucide-react";
 import { api, type ApiFailure } from "../../lib/api";
 import { cryptoRandomUUID } from "../../lib/uuid";
+import {
+  AdminCommandConfirmation,
+  useAdminConfirmedCommand,
+} from "./useAdminConfirmedCommand";
 import type { AdminVerifySessionResponse } from "../../../shared/contracts/adminGovernance";
 import {
   PartialBlockListSchema,
@@ -41,10 +51,11 @@ const subjectLabels: Record<PartialBlockSubject, string> = {
   consumer_purchasing: "Bloquear compra (consumidor)",
 };
 
-export function AdminAccessBlocksPage({ access, onNavigate }: Props) {
+export function AdminAccessBlocksPage({ access }: Props) {
   const [identifier, setIdentifier] = useState("");
-  const [subject, setSubject] =
-    useState<PartialBlockSubject>("producer_publishing");
+  const [subject, setSubject] = useState<PartialBlockSubject>(
+    "producer_publishing",
+  );
   const [target, setTarget] = useState<SubjectLookup | null>(null);
   const [blocks, setBlocks] = useState<PartialBlock[]>([]);
   const [municipalities, setMunicipalities] = useState<
@@ -55,7 +66,9 @@ export function AdminAccessBlocksPage({ access, onNavigate }: Props) {
   const [reason, setReason] = useState("");
   const [chosenMunicipalities, setChosen] = useState<string[]>([]);
   const [chosenProperties, setChosenProperties] = useState<string[]>([]);
-  const [busy, setBusy] = useState(false);
+  const [lookupBusy, setLookupBusy] = useState(false);
+  const lookupFlight = useRef(false);
+  const pendingCommand = useRef<{ key: string; id: string } | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
@@ -91,40 +104,79 @@ export function AdminAccessBlocksPage({ access, onNavigate }: Props) {
   function handleFailure(failure: unknown) {
     const code = (failure as ApiFailure).message;
     if (
-      code === "ADMIN_REAUTHENTICATION_REQUIRED" ||
-      code === "REAUTH_REQUIRED" ||
-      code === "SESSION_REQUIRED"
+      ["UNAUTHORIZED", "SESSION_CHANGED", "SESSION_REQUIRED"].includes(code)
     ) {
-      setNotice(
-        "Sua sessão administrativa precisa ser confirmada novamente. Redirecionando para o acesso.",
+      setError(
+        "Sua sessão mudou ou expirou. Entre novamente com a conta administrativa que iniciou esta operação.",
       );
-      window.setTimeout(
-        () => onNavigate("/entrar/super-administrador?reason=reauth"),
-        2500,
+      return;
+    }
+    if (
+      [
+        "ADMIN_REAUTHENTICATION_REQUIRED",
+        "REAUTH_REQUIRED",
+        "RECENT_AUTH_REQUIRED",
+      ].includes(code)
+    ) {
+      setError(
+        "Não foi possível validar esta operação após a confirmação. Seus dados foram preservados; tente novamente.",
+      );
+      return;
+    }
+    if ((failure as ApiFailure).status === 422) {
+      pendingCommand.current = null;
+      setError(
+        "Revise a seleção: bloqueio personalizado exige municípios e, para publicação, ao menos um imóvel.",
       );
       return;
     }
     if (code === "INVALID_MUNICIPALITY") {
-      setError("Um dos municípios escolhidos não existe mais. Revise a seleção.");
+      setError(
+        "Um dos municípios escolhidos não existe mais. Revise a seleção.",
+      );
       return;
     }
     if (code === "INVALID_PROPERTY") {
       setError("Um dos imóveis escolhidos não pertence a este titular.");
       return;
     }
-    setError("Não foi possível concluir a operação agora.");
+    setError(
+      (failure as ApiFailure).status === 403
+        ? "Seu perfil não tem mais permissão para gerenciar estes bloqueios."
+        : "Não foi possível concluir a operação agora. Seus dados foram preservados.",
+    );
+  }
+  const {
+    run: runCommand,
+    busy: commandBusy,
+    confirmation,
+    confirm,
+    cancel,
+  } = useAdminConfirmedCommand(access.role, handleFailure);
+  const busy = lookupBusy || commandBusy;
+  const locked = busy || Boolean(confirmation);
+  function commandId(path: string, payload: unknown) {
+    const key = path + JSON.stringify(payload);
+    if (pendingCommand.current?.key !== key)
+      pendingCommand.current = { key, id: cryptoRandomUUID() };
+    return pendingCommand.current.id;
   }
 
   async function lookup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setBusy(true);
+    if (lookupFlight.current || locked) return;
+    lookupFlight.current = true;
+    setLookupBusy(true);
     setError("");
     setNotice("");
     setTarget(null);
     setBlocks([]);
     setProperties([]);
     const digits = identifier.replace(/\D/g, "");
-    const query = digits.length === 11 ? `cpf=${digits}` : `email=${encodeURIComponent(identifier.trim())}`;
+    const query =
+      digits.length === 11
+        ? `cpf=${digits}`
+        : `email=${encodeURIComponent(identifier.trim())}`;
     try {
       const result = await api<unknown>(
         `/v1/admin/access-blocks/subject?${query}`,
@@ -152,35 +204,40 @@ export function AdminAccessBlocksPage({ access, onNavigate }: Props) {
     } catch (failure) {
       handleFailure(failure);
     } finally {
-      setBusy(false);
+      lookupFlight.current = false;
+      setLookupBusy(false);
     }
   }
 
   async function create(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!target) return;
-    setBusy(true);
+    if (!target || locked) return;
+    const userId = target.userId;
+    const path = "/v1/admin/access-blocks";
+    const input = {
+      userId,
+      subject,
+      scope,
+      reason: reason.trim(),
+      municipalityIds: scope === "custom" ? [...chosenMunicipalities] : [],
+      propertyIds:
+        subject === "producer_publishing" && scope === "custom"
+          ? [...chosenProperties]
+          : [],
+    };
+    const payload = { ...input, commandId: commandId(path, input) };
     setError("");
     setNotice("");
-    try {
-      const payload = {
-        userId: target.userId,
-        subject,
-        scope,
-        reason: reason.trim(),
-        municipalityIds: scope === "custom" ? chosenMunicipalities : [],
-        propertyIds:
-          subject === "producer_publishing" && scope === "custom"
-            ? chosenProperties
-            : [],
-        commandId: cryptoRandomUUID(),
-      };
+    await runCommand(async (signal) => {
       const result = PartialBlockMutationResultSchema.parse(
-        await api<unknown>("/v1/admin/access-blocks", {
+        await api<unknown>(path, {
           method: "POST",
           body: JSON.stringify(payload),
+          signal,
         }),
       );
+      if (signal.aborted) return;
+      pendingCommand.current = null;
       if (result.status === "created") {
         setNotice("Bloqueio parcial aplicado.");
         setReason("");
@@ -191,49 +248,35 @@ export function AdminAccessBlocksPage({ access, onNavigate }: Props) {
       } else {
         setError("Não foi possível aplicar o bloqueio agora.");
       }
-      await loadBlocks(target.userId);
-    } catch (failure) {
-      if ((failure as ApiFailure).status === 422) {
-        setError(
-          "Revise a seleção: bloqueio personalizado exige municípios e, para publicação, ao menos um imóvel.",
-        );
-      } else {
-        handleFailure(failure);
-      }
-    } finally {
-      setBusy(false);
-    }
+      await loadBlocks(userId, signal);
+    });
   }
 
   async function revoke(block: PartialBlock) {
-    if (!target) return;
-    setBusy(true);
+    if (!target || locked) return;
+    const userId = target.userId;
+    const path = `/v1/admin/access-blocks/${block.id}/revoke`;
+    const input = { reason: "revisao_administrativa" };
+    const payload = { ...input, commandId: commandId(path, input) };
     setError("");
     setNotice("");
-    try {
+    await runCommand(async (signal) => {
       const result = PartialBlockMutationResultSchema.parse(
-        await api<unknown>(
-          `/v1/admin/access-blocks/${block.id}/revoke`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              reason: "revisao_administrativa",
-              commandId: cryptoRandomUUID(),
-            }),
-          },
-        ),
+        await api<unknown>(path, {
+          method: "POST",
+          body: JSON.stringify(payload),
+          signal,
+        }),
       );
+      if (signal.aborted) return;
+      pendingCommand.current = null;
       setNotice(
         result.status === "revoked"
           ? "Bloqueio revogado."
           : "O bloqueio já estava revogado.",
       );
-      await loadBlocks(target.userId);
-    } catch (failure) {
-      handleFailure(failure);
-    } finally {
-      setBusy(false);
-    }
+      await loadBlocks(userId, signal);
+    });
   }
 
   const isSuper = access.role === "platform_super_admin";
@@ -257,9 +300,8 @@ export function AdminAccessBlocksPage({ access, onNavigate }: Props) {
 
       {!isSuper && (
         <p className="admin-alert">
-          Você opera esta área pelo setor
-          <strong> location_management</strong>, concedido pelo Super
-          administrador.
+          Você possui o poder de gerenciar bloqueios por localidade. Cada
+          alteração é registrada no histórico administrativo.
         </p>
       )}
       {notice && (
@@ -273,6 +315,12 @@ export function AdminAccessBlocksPage({ access, onNavigate }: Props) {
         </p>
       )}
 
+      <AdminCommandConfirmation
+        confirmation={confirmation}
+        onConfirmed={confirm}
+        onCancel={cancel}
+      />
+
       <div className="admin-card">
         <h2>
           <Search size={17} /> Titular
@@ -281,6 +329,7 @@ export function AdminAccessBlocksPage({ access, onNavigate }: Props) {
           <label>
             CPF ou e-mail
             <input
+              disabled={locked}
               required
               value={identifier}
               onChange={(event) => setIdentifier(event.target.value)}
@@ -290,6 +339,7 @@ export function AdminAccessBlocksPage({ access, onNavigate }: Props) {
           <label>
             Assunto do bloqueio
             <select
+              disabled={locked}
               value={subject}
               onChange={(event) =>
                 setSubject(event.target.value as PartialBlockSubject)
@@ -303,7 +353,7 @@ export function AdminAccessBlocksPage({ access, onNavigate }: Props) {
               </option>
             </select>
           </label>
-          <button className="admin-primary" type="submit" disabled={busy}>
+          <button className="admin-primary" type="submit" disabled={locked}>
             {busy ? "Consultando…" : "Localizar"}
           </button>
         </form>
@@ -318,7 +368,15 @@ export function AdminAccessBlocksPage({ access, onNavigate }: Props) {
               <span className="admin-table-sub">
                 Perfis públicos:{" "}
                 {target.publicRoles.length
-                  ? target.publicRoles.join(", ")
+                  ? target.publicRoles
+                      .map((role) =>
+                        role === "producer"
+                          ? "Produtor"
+                          : role === "consumer"
+                            ? "Consumidor"
+                            : role,
+                      )
+                      .join(", ")
                   : "nenhum"}
                 {target.municipalityName
                   ? ` · ${target.municipalityName} – ${target.municipalityState}`
@@ -339,6 +397,7 @@ export function AdminAccessBlocksPage({ access, onNavigate }: Props) {
               <legend>Alcance</legend>
               <label className="admin-sector-checkbox">
                 <input
+                  disabled={locked}
                   type="radio"
                   name="blockScope"
                   checked={scope === "all"}
@@ -352,6 +411,7 @@ export function AdminAccessBlocksPage({ access, onNavigate }: Props) {
               </label>
               <label className="admin-sector-checkbox">
                 <input
+                  disabled={locked}
                   type="radio"
                   name="blockScope"
                   checked={scope === "custom"}
@@ -365,8 +425,12 @@ export function AdminAccessBlocksPage({ access, onNavigate }: Props) {
               <fieldset className="admin-sectors-fieldset">
                 <legend>Municípios bloqueados</legend>
                 {municipalities.map((municipality) => (
-                  <label className="admin-sector-checkbox" key={municipality.id}>
+                  <label
+                    className="admin-sector-checkbox"
+                    key={municipality.id}
+                  >
                     <input
+                      disabled={locked}
                       type="checkbox"
                       checked={chosenMunicipalities.includes(municipality.id)}
                       onChange={() =>
@@ -398,6 +462,7 @@ export function AdminAccessBlocksPage({ access, onNavigate }: Props) {
                   properties.map((property) => (
                     <label className="admin-sector-checkbox" key={property.id}>
                       <input
+                        disabled={locked}
                         type="checkbox"
                         checked={chosenProperties.includes(property.id)}
                         onChange={() =>
@@ -421,6 +486,7 @@ export function AdminAccessBlocksPage({ access, onNavigate }: Props) {
             <label>
               Motivo
               <input
+                disabled={locked}
                 required
                 minLength={3}
                 maxLength={500}
@@ -429,7 +495,7 @@ export function AdminAccessBlocksPage({ access, onNavigate }: Props) {
                 placeholder="Ex.: denúncia analisada pelo setor de qualidade"
               />
             </label>
-            <button className="admin-primary" type="submit" disabled={busy}>
+            <button className="admin-primary" type="submit" disabled={locked}>
               {busy ? "Aplicando…" : "Aplicar bloqueio parcial"}
             </button>
           </form>
@@ -447,23 +513,26 @@ export function AdminAccessBlocksPage({ access, onNavigate }: Props) {
             </p>
           ) : (
             <div className="admin-table-wrap">
-              <table className="admin-table">
+              <table className="admin-table admin-data-table">
+                <caption className="admin-visually-hidden">
+                  Bloqueios ativos do titular selecionado
+                </caption>
                 <thead>
                   <tr>
-                    <th>Assunto</th>
-                    <th>Alcance</th>
-                    <th>Motivo</th>
-                    <th>Criado em</th>
-                    <th>Ação</th>
+                    <th scope="col">Assunto</th>
+                    <th scope="col">Alcance</th>
+                    <th scope="col">Motivo</th>
+                    <th scope="col">Criado em</th>
+                    <th scope="col">Ação</th>
                   </tr>
                 </thead>
                 <tbody>
                   {blocks.map((block) => (
                     <tr key={block.id}>
-                      <td>
+                      <td data-label="Assunto">
                         <strong>{subjectLabels[block.subject]}</strong>
                       </td>
-                      <td>
+                      <td data-label="Alcance">
                         {block.scope === "all" ? "Total" : "Personalizado"}
                         <span className="admin-table-sub">
                           {block.municipalityIds.length} município(s)
@@ -472,13 +541,15 @@ export function AdminAccessBlocksPage({ access, onNavigate }: Props) {
                             : ""}
                         </span>
                       </td>
-                      <td>{block.reason}</td>
-                      <td>{new Date(block.createdAt).toLocaleString("pt-BR")}</td>
-                      <td>
+                      <td data-label="Motivo">{block.reason}</td>
+                      <td data-label="Criado em">
+                        {new Date(block.createdAt).toLocaleString("pt-BR")}
+                      </td>
+                      <td data-label="Ação">
                         <button
                           className="admin-table-action"
                           type="button"
-                          disabled={busy}
+                          disabled={locked}
                           onClick={() => void revoke(block)}
                         >
                           <Undo2 size={13} /> Revogar

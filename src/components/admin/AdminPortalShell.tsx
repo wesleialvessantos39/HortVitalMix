@@ -16,11 +16,14 @@ import {
   Menu,
   X,
   Store,
+  LayoutGrid,
+  PackageSearch,
+  WalletCards,
+  Smartphone,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { AdminVerifySessionResponse } from "../../../shared/contracts/adminGovernance";
-import { clearAdminSession } from "../../lib/adminSessionStore";
-import { api } from "../../lib/api";
+import { logoutCurrentBrowserSessions } from "../../lib/sessionLogout";
 import { AccountStatusIcon } from "../AccountStatusIcon";
 import "./adminNavigation.css";
 
@@ -34,13 +37,17 @@ type Props = {
 
 const items = [
   ["/admin/painel", "Painel", LayoutDashboard],
+  ["/admin/departamentos", "Departamentos", LayoutGrid],
   ["/admin/bi", "BI executivo", BarChart3],
   ["/admin/governanca", "Governança", ShieldCheck],
   ["/admin/usuarios", "Usuários", UsersRound],
   ["/admin/documentos/fila", "Auditoria", ShieldCheck],
   ["/admin/localidades", "Localidades", MapPin],
   ["/admin/bloqueios", "Bloqueios", Ban],
+  ["/admin/financeiro", "Financeiro", WalletCards],
   ["/admin/configuracao", "Configuração", Settings],
+  ["/admin/catalogo", "Catálogo", PackageSearch],
+  ["/admin/aplicativos", "Aplicativos", Smartphone],
   ["/admin/categorias", "Categorias", ListTree],
   ["/admin/reembolsos", "Reembolsos", ShieldCheck],
   ["/admin/politica-reembolso", "Política de reembolso", Settings],
@@ -52,9 +59,9 @@ const items = [
 ] as const;
 
 const navigationGroups = [
-  { label: "Visão e acessos", paths: ["/admin/painel", "/admin/bi", "/admin/governanca", "/admin/usuarios", "/admin/documentos/fila", "/admin/conta"] },
-  { label: "Operação", paths: ["/admin/localidades", "/admin/bloqueios", "/admin/reembolsos", "/admin/politica-reembolso", "/admin/denuncias", "/admin/avaliacoes"] },
-  { label: "Plataforma", paths: ["/admin/configuracao", "/admin/categorias", "/admin/pagamentos", "/admin/assinaturas"] },
+  { label: "Visão e acessos", paths: ["/admin/painel", "/admin/departamentos", "/admin/bi", "/admin/governanca", "/admin/usuarios", "/admin/documentos/fila", "/admin/conta"] },
+  { label: "Operação", paths: ["/admin/localidades", "/admin/bloqueios", "/admin/financeiro", "/admin/reembolsos", "/admin/politica-reembolso", "/admin/denuncias", "/admin/avaliacoes"] },
+  { label: "Plataforma", paths: ["/admin/configuracao", "/admin/catalogo", "/admin/categorias", "/admin/aplicativos", "/admin/pagamentos", "/admin/assinaturas"] },
 ];
 function keepMenuFocus(event: React.KeyboardEvent<HTMLDialogElement>) {
   if (event.key !== "Tab") return;
@@ -77,6 +84,12 @@ export function AdminPortalShell({
   children,
 }: Props) {
   const visible = items.filter(([to]) => {
+    if (to === "/admin/catalogo")
+      return hasAdminPermission(access, "catalog_moderation");
+    if (to === "/admin/financeiro")
+      return hasAdminPermission(access, "finance_ops");
+    if (to === "/admin/aplicativos")
+      return hasAdminPermission(access, "platform_configuration");
     if (to === "/admin/categorias")
       return (
         access.role === "platform_super_admin" &&
@@ -108,6 +121,7 @@ export function AdminPortalShell({
   const [logoutError, setLogoutError] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const drawer = useRef<HTMLDialogElement>(null);
+  const drawerClose = useRef<HTMLButtonElement>(null);
   const roleLabel = access.role === "platform_super_admin" ? "Super administrador" : "Administrador";
   const isActive = (to: string) => currentPath === to || currentPath.startsWith(to + "/") || (to === "/admin/documentos/fila" && currentPath === "/admin/imoveis");
   const primaryItems = visible.filter(([to]) => ["/admin/painel", "/admin/usuarios", "/admin/conta"].includes(to));
@@ -124,6 +138,7 @@ export function AdminPortalShell({
       return;
     }
     menu.showModal();
+    drawerClose.current?.focus();
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const desktop = matchMedia("(min-width: 768px)");
@@ -142,9 +157,7 @@ export function AdminPortalShell({
     setLeaving(true);
     setLogoutError("");
     try {
-      await api("/v1/auth/logout", { method: "POST", body: "{}" });
-      clearAdminSession();
-      window.dispatchEvent(new Event("hvm:session-cleared"));
+      await logoutCurrentBrowserSessions();
       onNavigate("/admin/entrar");
     } catch {
       setLogoutError("Não foi possível sair. Tente novamente.");
@@ -236,7 +249,11 @@ export function AdminPortalShell({
         const bounds = event.currentTarget.getBoundingClientRect();
         if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) setMenuOpen(false);
       }}>
-        <div className="navigation-drawer-header"><div className="admin-drawer-heading"><span className="admin-drawer-mark"><Leaf aria-hidden="true" /></span><div><h2 id="admin-navigation-title">Administração</h2><small>{roleLabel}</small></div></div><button type="button" className="icon" aria-label="Fechar menu administrativo" autoFocus onClick={() => setMenuOpen(false)}><X aria-hidden="true" /></button></div>
+        <div className="navigation-drawer-header">
+          <h2 id="admin-navigation-title" className="visually-hidden">Administração</h2>
+          {brand}
+          <button ref={drawerClose} type="button" className="icon" aria-label="Fechar menu administrativo" onClick={() => setMenuOpen(false)}><X aria-hidden="true" /></button>
+        </div>
         {menuItems}
         {menuFooter}
       </dialog>

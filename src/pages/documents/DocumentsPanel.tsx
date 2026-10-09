@@ -10,6 +10,7 @@ import {
 import type { ExtractionView } from "../../../shared/contracts/aiExtraction";
 import "./documents.css";
 import { DocumentPreview } from "./DocumentPreview";
+import { useNativeProtectedFile } from "../../hooks/useNativeProtectedFile";
 import {
   parseRuralDocumentText,
   parseRuralLocation,
@@ -314,6 +315,7 @@ export function DocumentsPanel({
   function fileHref(id: string) {
     return `${apiBase()}${base}/${id}/file`;
   }
+  const protectedPreview = useNativeProtectedFile(url);
   async function open(d: DocumentView) {
     editing.current = false;
     const seq = ++generation.current;
@@ -1158,19 +1160,19 @@ export function DocumentsPanel({
           </div>
           <div className="document-original">
             <h3>Documento original</h3>
-            {url ? (
+            {protectedPreview.url ? (
               <>
                 <a
                   className="document-open"
-                  href={url}
+                  href={protectedPreview.url}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
                   Abrir em tela cheia
                 </a>
                 <DocumentPreview
-                  key={`${url}:${previewTick}`}
-                  url={url}
+                  key={`${protectedPreview.url}:${previewTick}`}
+                  url={protectedPreview.url}
                   mime={selected.mime_type}
                   onText={(text) => {
                     const current = readingDoc.current;
@@ -1180,7 +1182,7 @@ export function DocumentsPanel({
                 />
               </>
             ) : (
-              <p>Visualização indisponível.</p>
+              <p>{protectedPreview.loading ? "Abrindo documento…" : "Visualização indisponível."}</p>
             )}
             <button
               type="button"

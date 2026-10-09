@@ -1,0 +1,347 @@
+
+> hortivitalmix@0.1.0 build
+> npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t02:unit && npm run verify:t02:evidence && npm run test:t03:unit && npm run verify:t03:evidence && npm run test:t04:unit && npm run verify:t04:evidence && npm run test:t05:unit && npm run verify:t05:evidence && npm run test:t06:unit && npm run verify:t06:evidence && npm run test:t12:unit && npm run verify:t12:evidence && npm run test:t17:unit && npm run test:t20:unit && vite build && node --import tsx scripts/check-bundle.ts
+
+
+> hortivitalmix@0.1.0 migrations:verify
+> node --import tsx scripts/migrations-manifest.ts
+
+{"schemaVersion":68,"hash":"ae1874579bb17297df3536863b1c01469c278ee3ebd52bb12990e417c7fbe549"}
+
+> hortivitalmix@0.1.0 typecheck:app
+> tsc --noEmit -p tsconfig.build.json
+
+
+> hortivitalmix@0.1.0 security:check
+> node --import tsx scripts/security-check.ts
+
+Cliente sem referências a segredos server-side.
+
+> hortivitalmix@0.1.0 test:t02:unit
+> vitest run tests/unit/redactPII.test.ts tests/unit/configSchema.test.ts tests/integration/configReauth.test.ts tests/integration/configMaliciousPayload.test.ts
+
+
+ RUN  v5.0.1 /workspace/HortVitalMix
+
+◇ injected env (0) from .env.test
+◇ injected env (0) from .env.local
+
+ Test Files  4 passed (4)
+      Tests  20 passed (20)
+   Start at  22:54:37
+   Duration  1.29s (import 54%, transform 27%, setup 9%, tests 6%, worker 3%)
+
+
+> hortivitalmix@0.1.0 verify:t02:evidence
+> node scripts/verify-trilha02-evidence.mjs
+
+{"status":"pass","trail":"02","cases":31,"schemaVersion":68,"t02HistoricalHash":"4df210ea6d4cdb05280f33889280edb1411532b0f24f5da8f7044110ef2617dc","currentMigrationHistoryHash":"ae1874579bb17297df3536863b1c01469c278ee3ebd52bb12990e417c7fbe549"}
+
+> hortivitalmix@0.1.0 test:t03:unit
+> vitest run tests/unit/trilha03AuthContracts.test.ts tests/unit/trilha03Normalization.test.ts tests/unit/trilha03RateLimit.test.ts tests/unit/trilha03Performance.test.ts
+
+
+ RUN  v5.0.1 /workspace/HortVitalMix
+
+◇ injected env (0) from .env.test
+◇ injected env (0) from .env.local
+
+ Test Files  4 passed (4)
+      Tests  16 passed (16)
+   Start at  22:54:39
+   Duration  1.00s (import 36%, transform 28%, tests 14%, worker 13%, setup 9%)
+
+
+> hortivitalmix@0.1.0 verify:t03:evidence
+> node scripts/verify-trilha03-evidence.mjs
+
+{
+  "status": "ok",
+  "checks": {
+    "schemaAtLeast15": true,
+    "identityMigrationRegistered": true,
+    "grantsMigrationRegistered": true,
+    "publicRoleGuard": true,
+    "emailIndex": true,
+    "consistency": true,
+    "emailTrigger": true,
+    "adminEndpoint": true,
+    "publicAdminBlocked": true,
+    "rateLimit": true,
+    "sameSiteLax": true,
+    "adminFrontend": true,
+    "cadastroRoute": true,
+    "sessionHook": true,
+    "directLoginSession": true,
+    "adminPanel": true,
+    "adminSelectorFixed": true,
+    "publicCadastroEntry": true
+  }
+}
+
+> hortivitalmix@0.1.0 test:t04:unit
+> vitest run tests/unit/trilha04Otp.test.ts tests/unit/trilha04Contracts.test.ts tests/unit/authEmailRateLimit.test.ts tests/integration/authRecoveryRootCause.test.ts
+
+
+ RUN  v5.0.1 /workspace/HortVitalMix
+
+◇ injected env (0) from .env.test
+◇ injected env (0) from .env.local
+
+ Test Files  4 passed (4)
+      Tests  14 passed (14)
+   Start at  22:54:41
+   Duration  1.06s (transform 37%, import 30%, setup 17%, tests 10%, worker 6%)
+
+
+> hortivitalmix@0.1.0 verify:t04:evidence
+> node scripts/verify-trilha04-evidence.mjs
+
+{
+  "ok": true,
+  "checks": {
+    "fourTables": true,
+    "forcedRls": true,
+    "supabaseConfirmation": true,
+    "supabaseRecovery": true,
+    "supabaseReauthentication": true,
+    "providerPolicy": true,
+    "noExternalProviderVars": true,
+    "noParallelT04Router": true,
+    "dedicatedT04VisualLayers": true,
+    "recoveryFlowHardening": true,
+    "noParallelContactBackend": true,
+    "visualIdentity": true,
+    "otpVisualReauth": true,
+    "aliasCompatibility": true
+  }
+}
+
+> hortivitalmix@0.1.0 test:t05:unit
+> vitest run tests/unit/adminGovernanceContracts.test.ts tests/unit/trilha05SealRegression.test.ts tests/integration/adminBootstrap.test.ts tests/integration/adminInvites.test.ts tests/integration/adminMfa.test.ts tests/integration/lastSuperAdmin.test.ts tests/integration/e2eAdminFlow.test.ts
+
+
+ RUN  v5.0.1 /workspace/HortVitalMix
+
+◇ injected env (0) from .env.test
+◇ injected env (0) from .env.local
+
+ Test Files  7 passed (7)
+      Tests  34 passed (34)
+   Start at  22:54:43
+   Duration  2.09s (transform 41%, import 35%, setup 14%, tests 7%, worker 4%)
+
+
+> hortivitalmix@0.1.0 verify:t05:evidence
+> node scripts/verify-trilha05-evidence.mjs
+
+{
+  "ok": true,
+  "checks": {
+    "sixTables": true,
+    "forcedRls": true,
+    "canonicalSectors": true,
+    "bootstrapGuard": true,
+    "administrativePasswordLogin": true,
+    "supabaseOnlyDelivery": true,
+    "inviteDigest": true,
+    "identityMigrationHierarchy": true,
+    "persistentRateLimit": true,
+    "sectorInvariant": true,
+    "lastSuperProtection": true,
+    "requiredEndpoints": true,
+    "canonicalInviteRoute": true,
+    "helpDialog": true,
+    "frontendFiles": true,
+    "appIntegration": true,
+    "responsive": true,
+    "brand": true,
+    "legacyAdminBypassClosed": true,
+    "readinessSchema25": true,
+    "remoteMigrationAlias": true,
+    "adminScreenDiscovery": true,
+    "friendlyAdminErrors": true,
+    "adminSecurityUx": true,
+    "adminServerlessAuth": true,
+    "adminMailCooldown": true,
+    "recoveryRootCauseClosed": true,
+    "adminEmailOwnership": true,
+    "publicRegistrationDiscovery": true,
+    "bootstrapDiagnostics": true
+  }
+}
+
+> hortivitalmix@0.1.0 test:t06:unit
+> vitest run tests/unit/profilePrivacyContracts.test.ts tests/unit/recentAuth.test.ts
+
+
+ RUN  v5.0.1 /workspace/HortVitalMix
+
+◇ injected env (0) from .env.test
+◇ injected env (0) from .env.local
+
+ Test Files  2 passed (2)
+      Tests  22 passed (22)
+   Start at  22:54:46
+   Duration  476ms (transform 46%, import 37%, tests 8%, setup 8%, worker 2%)
+
+
+> hortivitalmix@0.1.0 verify:t06:evidence
+> node scripts/verify-trilha06-evidence.mjs
+
+{"trail":"06","status":"evidence-ok","freeTierOnly":true}
+
+> hortivitalmix@0.1.0 test:t12:unit
+> vitest run tests/unit/localityContracts.test.ts tests/unit/accessScope.test.ts tests/integration/adminLocalityRoutes.test.ts
+
+
+ RUN  v5.0.1 /workspace/HortVitalMix
+
+◇ injected env (0) from .env.test
+◇ injected env (0) from .env.local
+
+ Test Files  3 passed (3)
+      Tests  43 passed (43)
+   Start at  22:54:48
+   Duration  2.99s (transform 54%, import 40%, tests 5%, setup 1%)
+
+
+> hortivitalmix@0.1.0 verify:t12:evidence
+> node scripts/verify-locality-evidence.mjs
+
+{"status":"locality-evidence-ok","schemaVersion":68,"migrationCount":75,"items":{"1":"cobertura por município com gestão do Super administrador","2":"trava de cadastro e publicação por localidade","3":"escopo de entrega do produtor","4":"troca de região independente do login","5":"bloqueios parciais por localidade","6":"ícone administrativo sem círculo e sem cor","7":"bloco de configuração inicial dirigido pelo banco"},"scope":"repository-structure-only"}
+
+> hortivitalmix@0.1.0 test:t17:unit
+> vitest run tests/unit/discoveryContracts.test.ts tests/integration/discoveryRoutes.test.ts tests/integration/discoveryMount.test.ts
+
+
+ RUN  v5.0.1 /workspace/HortVitalMix
+
+◇ injected env (0) from .env.test
+◇ injected env (0) from .env.local
+
+ Test Files  3 passed (3)
+      Tests  40 passed (40)
+   Start at  22:54:52
+   Duration  3.75s (transform 57%, import 37%, tests 5%, setup 1%)
+
+
+> hortivitalmix@0.1.0 test:t20:unit
+> vitest run tests/unit/commerceContracts.test.ts tests/integration/commerceRoutes.test.ts tests/unit/mediaCachePersistence.test.ts
+
+
+ RUN  v5.0.1 /workspace/HortVitalMix
+
+◇ injected env (0) from .env.test
+◇ injected env (0) from .env.local
+
+ Test Files  3 passed (3)
+      Tests  23 passed (23)
+   Start at  22:54:56
+   Duration  2.80s (transform 58%, import 32%, tests 9%, setup 1%)
+
+◇ injected env (0) from .env
+vite v8.3.0 building client environment for production...
+transforming...
+✓ 2253 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                         1.64 kB │ gzip:   0.65 kB
+dist/offline-worker.js                                  5.44 kB
+dist/assets/pdf.worker.min-rsCePomN.mjs             1,417.58 kB
+dist/assets/PageLoading-DSaTdORa.css                    1.11 kB │ gzip:   0.51 kB
+dist/assets/deliveryLogistics-DT6Tp1Uu.css              1.38 kB │ gzip:   0.59 kB
+dist/assets/ExecutiveBiDashboardPage-DhXQHaiu.css       1.82 kB │ gzip:   0.67 kB
+dist/assets/InventoryLotsPage-DLhnTXYW.css              2.54 kB │ gzip:   0.80 kB
+dist/assets/ProducerDeliveryAreaPage-ec3awBsS.css       2.82 kB │ gzip:   0.98 kB
+dist/assets/CartPage-iqzYRsEP.css                       2.87 kB │ gzip:   0.92 kB
+dist/assets/storefrontMedia-Cwsbetye.css                2.89 kB │ gzip:   0.98 kB
+dist/assets/reviews-B4HwxJmN.css                        3.12 kB │ gzip:   1.05 kB
+dist/assets/NotificationDetailPage-DmtnVDpZ.css         3.24 kB │ gzip:   0.94 kB
+dist/assets/AdminCategoriesPage-C1S2FQ74.css            3.35 kB │ gzip:   1.01 kB
+dist/assets/AppDownloadsPage-BOE4-Aq0.css               3.63 kB │ gzip:   1.13 kB
+dist/assets/HomeDiscoveryPage-CpqbFj0U.css              3.70 kB │ gzip:   1.12 kB
+dist/assets/CheckoutReviewPage-DwAlCdFl.css             4.07 kB │ gzip:   1.24 kB
+dist/assets/ProducerStoreSettingsPage-Dth3neKG.css      4.08 kB │ gzip:   1.22 kB
+dist/assets/orders-l2I2UcHi.css                         4.46 kB │ gzip:   1.47 kB
+dist/assets/commerce-cLFtyZBg.css                       4.79 kB │ gzip:   1.53 kB
+dist/assets/AdminDepartmentsPage-BI6x14Mf.css           4.81 kB │ gzip:   1.30 kB
+dist/assets/adminOperationsView-DyrR0L4C.css            4.85 kB │ gzip:   1.50 kB
+dist/assets/notifications-upMr9swF.css                  5.82 kB │ gzip:   1.57 kB
+dist/assets/storeCoverSlides-BjtU43_K.css               9.47 kB │ gzip:   2.52 kB
+dist/assets/AdminAppDistributionPage-Dy4u3OWx.css      14.08 kB │ gzip:   3.07 kB
+dist/assets/index-C9HxA8l-.css                        188.36 kB │ gzip:  33.72 kB
+dist/assets/coerce-4Z-yISZy.js                          0.09 kB │ gzip:   0.10 kB
+dist/assets/iso-BoSNZNLv.js                             0.14 kB │ gzip:   0.12 kB
+dist/assets/cloud-Dbho2cW9.js                           0.20 kB │ gzip:   0.19 kB
+dist/assets/chevron-right-DrN4W-2N.js                   0.27 kB │ gzip:   0.21 kB
+dist/assets/rotate-ccw-clock-B4kO9rmp.js                0.30 kB │ gzip:   0.24 kB
+dist/assets/esm-OgpkG8e0.js                             0.33 kB │ gzip:   0.24 kB
+dist/assets/esm-Dz00CgtK.js                             0.34 kB │ gzip:   0.24 kB
+dist/assets/web-pYYS7C6n.js                             0.36 kB │ gzip:   0.24 kB
+dist/assets/shopping-basket-C8uvz2o6.js                 0.45 kB │ gzip:   0.28 kB
+dist/assets/qr-code-BDgsaCDe.js                         0.69 kB │ gzip:   0.33 kB
+dist/assets/web-DaKcY4i_.js                             0.84 kB │ gzip:   0.40 kB
+dist/assets/cart-B-rwyd3_.js                            1.14 kB │ gzip:   0.54 kB
+dist/assets/storeCoverSlides-rB5klPpx.js                1.16 kB │ gzip:   0.61 kB
+dist/assets/storefrontMedia-BFGk-cm5.js                 1.25 kB │ gzip:   0.58 kB
+dist/assets/reviews-96HUUSZ4.js                         1.30 kB │ gzip:   0.59 kB
+dist/assets/discovery-B-rWoFPz.js                       1.32 kB │ gzip:   0.68 kB
+dist/assets/deliveryLogistics-DeLcB3dq.js               1.47 kB │ gzip:   0.80 kB
+dist/assets/producerSales-JFiInL9O.js                   1.59 kB │ gzip:   0.67 kB
+dist/assets/reviews-DqoCajy3.js                         1.66 kB │ gzip:   0.78 kB
+dist/assets/optimizeImage-Jw0LkcwV.js                   2.16 kB │ gzip:   1.10 kB
+dist/assets/subscriptions-DZj6A2XA.js                   2.23 kB │ gzip:   1.11 kB
+dist/assets/producerStore-BJAzyfCE.js                   2.28 kB │ gzip:   1.02 kB
+dist/assets/product-CuqDMtmc.js                         2.47 kB │ gzip:   1.27 kB
+dist/assets/AppDownloadsPage-ve_9iKbD.js                2.84 kB │ gzip:   1.10 kB
+dist/assets/createLucideIcon-B1TzBBuP.js                3.13 kB │ gzip:   1.51 kB
+dist/assets/RefundPolicy-G_fYq6Oc.js                    3.14 kB │ gzip:   1.45 kB
+dist/assets/PosSaleReviewPage-DMxQx7hl.js               3.41 kB │ gzip:   1.50 kB
+dist/assets/RegionalHighlights-BVGPvjNo.js              3.55 kB │ gzip:   1.69 kB
+dist/assets/ProducerCatalogPage-CXKjZfpC.js             3.95 kB │ gzip:   1.58 kB
+dist/assets/ProducerRefundsPage-CouJTTWY.js             4.05 kB │ gzip:   1.52 kB
+dist/assets/useOrderQuery-BMJwNIem.js                   4.19 kB │ gzip:   1.92 kB
+dist/assets/ProductCommandFeedback-DPXfZ28I.js          4.24 kB │ gzip:   1.94 kB
+dist/assets/DeliveryWindowsPage-LmnvoMGE.js             4.75 kB │ gzip:   2.01 kB
+dist/assets/NotificationsPage-CTfQwFXg.js               4.79 kB │ gzip:   1.65 kB
+dist/assets/NotificationDetailPage-DMIdEeyM.js          5.03 kB │ gzip:   1.83 kB
+dist/assets/ProducerSalesPage-B91JfBW5.js               5.23 kB │ gzip:   1.83 kB
+dist/assets/PurchasesPage-D2Rmfqer.js                   5.33 kB │ gzip:   1.87 kB
+dist/assets/AdminReviewsPage-CPvXuclH.js                5.51 kB │ gzip:   2.15 kB
+dist/assets/CartPage-CnpR_2_u.js                        6.22 kB │ gzip:   2.15 kB
+dist/assets/PaymentPreparedPage-W73OZNvO.js             6.25 kB │ gzip:   2.37 kB
+dist/assets/AdminDepartmentsPage-Sh3pBQGh.js            6.52 kB │ gzip:   2.40 kB
+dist/assets/AdminFinancePage-CqvYOjsE.js                7.37 kB │ gzip:   2.52 kB
+dist/assets/AdminCatalogPage-CI1vyuWU.js                7.71 kB │ gzip:   2.38 kB
+dist/assets/adminOperationsView-C-0qHyO1.js             7.76 kB │ gzip:   3.07 kB
+dist/assets/PublicProducerStorePage-CiQarlX6.js         7.95 kB │ gzip:   2.61 kB
+dist/assets/ProducerPosPage-BjkCc-PP.js                 7.96 kB │ gzip:   2.78 kB
+dist/assets/ExecutiveBiDashboardPage-DbRTeACy.js        8.04 kB │ gzip:   3.11 kB
+dist/assets/dist-YEHEm6A4.js                            8.71 kB │ gzip:   3.53 kB
+dist/assets/HomeDiscoveryPage-DcNHiN8r.js               9.19 kB │ gzip:   3.38 kB
+dist/assets/AdminSubscriptionPlansPage-BvcCiydU.js      9.39 kB │ gzip:   3.40 kB
+dist/assets/ProductEditorPage-UesHX1PD.js               9.75 kB │ gzip:   3.35 kB
+dist/assets/AdminCommercePage-Dfw6qG8F.js               9.76 kB │ gzip:   3.49 kB
+dist/assets/SubscriptionPlansPage-CrFRDdN-.js          10.93 kB │ gzip:   3.79 kB
+dist/assets/AdminCategoriesPage-BqrXElK3.js            12.18 kB │ gzip:   4.19 kB
+dist/assets/ProducerDeliveryAreaPage-CZ2TkMT7.js       12.41 kB │ gzip:   4.50 kB
+dist/assets/InventoryLotsPage-CNAq-SKW.js              12.84 kB │ gzip:   4.37 kB
+dist/assets/OrderTrackingPage-B4bt4Z-e.js              13.32 kB │ gzip:   4.09 kB
+dist/assets/CheckoutReviewPage-D0zNUl_i.js             14.48 kB │ gzip:   4.89 kB
+dist/assets/ProducerOrdersPage-BjxfF8Bm.js             14.89 kB │ gzip:   4.93 kB
+dist/assets/CasesPage-CL3bDzry.js                      18.44 kB │ gzip:   6.08 kB
+dist/assets/PageLoading-CfxFT9Xf.js                    18.66 kB │ gzip:   6.92 kB
+dist/assets/ProducerStoreSettingsPage-B5w9a2q2.js      23.11 kB │ gzip:   7.42 kB
+dist/assets/AdminAppDistributionPage-xzrOabY6.js       24.00 kB │ gzip:   7.16 kB
+dist/assets/schemas-DlOyAbQU.js                        95.48 kB │ gzip:  26.86 kB
+dist/assets/pdf-BPNT4S6Y.js                           373.59 kB │ gzip: 111.80 kB
+dist/assets/index-CWi2ZnWq.js                         700.74 kB │ gzip: 198.35 kB
+
+[plugin builtin:vite-reporter]
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 694ms
+Bundle verificado: nenhum segredo detectado.

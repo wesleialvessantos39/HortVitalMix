@@ -1,0 +1,18 @@
+
+Running 11 tests using 1 worker
+
+(node:13132) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/e2e/admin-departments-responsive.spec.ts:554:5 › departamento profissional com conteúdo realista: /admin/usuarios 320px (2.2s)
+  ✓   2 tests/e2e/admin-departments-responsive.spec.ts:554:5 › departamento profissional com conteúdo realista: /admin/bi 320px (1.6s)
+  ✓   3 tests/e2e/admin-departments-responsive.spec.ts:554:5 › departamento profissional com conteúdo realista: /admin/bi 390px (1.5s)
+  ✓   4 tests/e2e/admin-departments-responsive.spec.ts:554:5 › departamento profissional com conteúdo realista: /admin/bi 768px (1.4s)
+  ✓   5 tests/e2e/admin-departments-responsive.spec.ts:554:5 › departamento profissional com conteúdo realista: /admin/bi 1440px (1.4s)
+  ✓   6 tests/e2e/admin-departments-responsive.spec.ts:654:3 › localidades exibem lista compacta e conservam cadastro recolhido: platform_admin (1.3s)
+  ✓   7 tests/e2e/admin-departments-responsive.spec.ts:688:3 › assinaturas exibem lista compacta e conservam edição recolhida: platform_admin (1.4s)
+  ✓   8 tests/e2e/admin-departments-responsive.spec.ts:654:3 › localidades exibem lista compacta e conservam cadastro recolhido: platform_super_admin (1.3s)
+  ✓   9 tests/e2e/admin-departments-responsive.spec.ts:688:3 › assinaturas exibem lista compacta e conservam edição recolhida: platform_super_admin (1.4s)
+  ✓  10 tests/e2e/admin-departments-responsive.spec.ts:814:1 › confirmação que retorna outra conta não repete a decisão (1.4s)
+  ✓  11 tests/e2e/admin-governance-responsive.spec.ts:307:1 › super administrator confirms block, deletion and registration review (1.7s)
+
+  11 passed (18.0s)

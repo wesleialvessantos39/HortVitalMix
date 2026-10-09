@@ -1,0 +1,62 @@
+.admin-distribution-page { max-width: 1060px; margin: 0 auto; color: #1a3926; }
+.admin-distribution-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; margin-bottom: 16px; }
+.admin-distribution-eyebrow { display: inline-flex; align-items: center; gap: 5px; color: #6b7e6e; font-size: .64rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.admin-distribution-header h1 { margin: 5px 0 6px; font-size: clamp(1.35rem, 3vw, 1.8rem); line-height: 1.2; }
+.admin-distribution-header p { margin: 0; color: #718075; font-size: .8rem; line-height: 1.5; }
+.admin-distribution-header > button { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; min-height: 35px; border: 1px solid #d6e0d4; border-radius: 10px; padding: 7px 11px; background: #fff; color: #49634e; font-size: .76rem; }
+.admin-distribution-banner { display: flex; align-items: flex-start; gap: 9px; padding: 12px; margin-bottom: 12px; border-radius: 11px; border: 1px solid #e2c98e; background: #fff8e8; font-size: .8rem; color: #7c612b; }
+.admin-distribution-banner > svg { flex-shrink: 0; }
+.admin-distribution-banner p { margin: 0; line-height: 1.5; }
+.admin-distribution-banner button { padding: 5px 0; background: none; border: 0; color: inherit; font-size: .75rem; text-align: left; text-decoration: underline; min-height: 36px; }
+.admin-distribution-banner.is-success { border-color: #cae2c7; background: #edf7ed; color: #34683c; }
+.admin-distribution-web { display: flex; align-items: center; gap: 12px; padding: 15px 17px; margin-bottom: 14px; border: 1px solid #dce6d8; background: #f5f8f2; border-radius: 14px; }
+.admin-distribution-web-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: #e5efdf; color: #527844; flex-shrink: 0; }
+.admin-distribution-web > div { min-width: 0; }
+.admin-distribution-web strong { font-size: .89rem; }
+.admin-distribution-web p { margin: 4px 0; color: #657761; font-size: .76rem; }
+.admin-distribution-web > div > span { display: block; color: #798675; font-size: .69rem; overflow-wrap: anywhere; }
+.admin-distribution-revision { margin-left: auto; flex-shrink: 0; font-size: .69rem; font-weight: 700; color: #65805b; }
+.admin-distribution-form { padding: 17px; border: 1px solid #e0e5dc; border-radius: 15px; background: #fff; }
+.admin-distribution-platforms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
+.admin-distribution-platforms fieldset { min-width: 0; margin: 0; padding: 0 0 12px; border: 0; }
+.admin-distribution-platforms fieldset legend { display: flex; align-items: center; gap: 6px; padding: 0; font-size: .95rem; font-weight: 800; }
+.admin-distribution-platform-status { display: inline-block; margin: 7px 0 11px; padding: 4px 7px; background: #f2f3f0; border-radius: 6px; font-size: .67rem; color: #7b8276; }
+.admin-distribution-platform-status.is-ready { background: #ebf5e8; color: #4c7741; }
+.admin-distribution-form label { display: grid; gap: 5px; margin: 0 0 10px; font-size: .73rem; font-weight: 700; color: #52654e; }
+.admin-distribution-form :is(input, textarea) { width: 100%; box-sizing: border-box; min-width: 0; border: 1px solid #d7dfd2; background: #fdfefb; padding: 9px 10px; color: #2b3f2a; border-radius: 8px; font-size: 16px; font-family: inherit; font-weight: 400; }
+.admin-distribution-form input { min-height: 44px; }
+.admin-distribution-form textarea { min-height: 77px; resize: vertical; }
+.admin-distribution-help { margin: 0; color: #81907b; font-size: .69rem; font-weight: 400; line-height: 1.5; }
+.admin-distribution-notes { margin-top: 2px !important; }
+.admin-distribution-form-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 7px; }
+.admin-distribution-form-footer > span { display: inline-flex; align-items: center; gap: 5px; color: #7a8873; font-size: .7rem; }
+.admin-distribution-form-footer > button { min-height: 39px; padding: 8px 14px; background: #27533a; border: 1px solid #27533a; color: #fff; border-radius: 9px; font-size: .78rem; font-weight: 700; }
+.admin-distribution-form-footer > button:disabled { background: #e7ece4; color: #7e8c78; border-color: #e0e6dc; cursor: default; }
+.admin-distribution-guidance { padding: 14px 2px; }
+.admin-distribution-guidance strong { font-size: .79rem; }
+.admin-distribution-guidance p { margin: 5px 0; color: #778472; font-size: .73rem; line-height: 1.5; }
+.admin-distribution-guidance button { display: inline-flex; align-items: center; gap: 5px; min-height: 32px; padding: 3px 0; border: 0; background: none; color: #467040; font-size: .72rem; font-weight: 700; }
+.admin-distribution-confirmation { width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); padding: 20px; border: 1px solid #dae2d3; border-radius: 18px; box-sizing: border-box; overflow-y: auto; box-shadow: 0 16px 70px #18331f38; }
+.admin-distribution-confirmation::backdrop { background: #182b25a3; }
+.admin-distribution-confirmation h2 { font-size: 1rem; margin: 0 0 14px; }
+.admin-distribution-confirmation .commerce-card { padding: 0; border: 0; box-shadow: none; }
+.admin-distribution-confirmation .commerce-card > p { color: #687765; font-size: 13px; line-height: 1.5; }
+.admin-distribution-confirmation .commerce-card label { display: grid; gap: 7px; margin: 14px 0; font-size: 13px; font-weight: 700; }
+.admin-distribution-confirmation .commerce-card input { width: 100%; box-sizing: border-box; min-height: 44px; padding: 10px; border: 1px solid #cad9c6; border-radius: 10px; font: inherit; font-size: 16px; }
+.admin-distribution-confirmation .commerce-card button { min-height: 44px; margin: 0 6px 6px 0; padding: 10px 12px; border: 1px solid #cad9c6; border-radius: 10px; background: #fff; color: #345c3b; font: inherit; font-size: 13px; font-weight: 700; }
+.admin-distribution-confirmation .commerce-card .primary { background: #315e3c; border-color: #315e3c; color: #fff; }
+.admin-distribution-confirmation .commerce-card .commerce-error { padding: 10px; border: 1px solid #e1bbaa; background: #fff3ed; border-radius: 10px; color: #914227; }
+.admin-distribution-confirmation .commerce-card button:disabled { opacity: .6; cursor: not-allowed; }
+.admin-distribution-page :is(button, input, textarea):focus-visible { outline: 2px solid #c4944c; outline-offset: 3px; }
+@media (max-width: 650px) {
+  .admin-distribution-header { flex-wrap: wrap; gap: 10px; }
+  .admin-distribution-header > button { min-height: 44px; }
+  .admin-distribution-platforms { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .admin-distribution-platforms fieldset + fieldset { border-top: 1px solid #e7ebdf; padding-top: 13px; }
+  .admin-distribution-form { padding: 14px; }
+  .admin-distribution-form input, .admin-distribution-form-footer > button { min-height: 44px; }
+  .admin-distribution-web { padding: 13px; gap: 9px; flex-wrap: wrap; }
+  .admin-distribution-revision { margin-left: 51px; }
+  .admin-distribution-form-footer { align-items: stretch; flex-direction: column; }
+  .admin-distribution-page button { min-height: 44px; }
+}
