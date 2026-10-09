@@ -3,6 +3,10 @@ import { z } from "zod";
 import {
   MOBILE_CI_AUDIENCE,
   MOBILE_CI_REPOSITORY,
+  MOBILE_CI_REPOSITORY_ID,
+  MOBILE_CI_REPOSITORY_OWNER_ID,
+  MOBILE_CI_ENVIRONMENT,
+  MOBILE_CI_SUBJECT,
   MOBILE_CI_WORKFLOW,
 } from "../../shared/contracts/mobileReleases.ts";
 
@@ -16,9 +20,12 @@ export class MobileCiIdentityError extends Error {
 const ClaimsSchema = z.object({
   iss: z.literal("https://token.actions.githubusercontent.com"),
   aud: z.literal(MOBILE_CI_AUDIENCE),
-  sub: z.literal(`repo:${MOBILE_CI_REPOSITORY}:environment:mobile-release`),
+  sub: z.literal(MOBILE_CI_SUBJECT),
   repository: z.literal(MOBILE_CI_REPOSITORY),
+  repository_id: z.literal(MOBILE_CI_REPOSITORY_ID),
   repository_owner: z.literal("wesleialvessantos39"),
+  repository_owner_id: z.literal(MOBILE_CI_REPOSITORY_OWNER_ID),
+  environment: z.literal(MOBILE_CI_ENVIRONMENT),
   ref: z.literal("refs/heads/main"),
   ref_type: z.literal("branch"),
   workflow_ref: z.literal(

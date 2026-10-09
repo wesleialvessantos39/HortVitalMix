@@ -1,0 +1,15 @@
+{
+  "mainRun": 38005395468,
+  "attempts": 2,
+  "sourceCommit": "3cb103c19a0dcbd4f87095c263e98910f75ed785",
+  "deployment": "dpl_7GNCQKdpjQgnkqQEz269U8qLFYjA",
+  "deploymentState": "READY",
+  "failedJobIds": [
+    114073068974,
+    114073716508
+  ],
+  "scriptDiagnostic": "WEB_SYNC_IDENTITY_REJECTED",
+  "automaticSealWritten": false,
+  "manualSealUsed": false,
+  "diagnosisSource": "https://docs.github.com/en/actions/reference/security/oidc#immutable-subject-claims"
+}

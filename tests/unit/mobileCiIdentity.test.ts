@@ -4,6 +4,10 @@ import { verifyMobileCiToken } from "../../server/security/mobileCiIdentity.ts";
 import {
   MOBILE_CI_AUDIENCE,
   MOBILE_CI_REPOSITORY,
+  MOBILE_CI_REPOSITORY_ID,
+  MOBILE_CI_REPOSITORY_OWNER_ID,
+  MOBILE_CI_ENVIRONMENT,
+  MOBILE_CI_SUBJECT,
   MOBILE_CI_WORKFLOW,
 } from "../../shared/contracts/mobileReleases.ts";
 
@@ -19,9 +23,12 @@ const now = 1800000000000,
 const claims = {
   iss: "https://token.actions.githubusercontent.com",
   aud: MOBILE_CI_AUDIENCE,
-  sub: `repo:${MOBILE_CI_REPOSITORY}:environment:mobile-release`,
+  sub: MOBILE_CI_SUBJECT,
   repository: MOBILE_CI_REPOSITORY,
+  repository_id: MOBILE_CI_REPOSITORY_ID,
   repository_owner: "wesleialvessantos39",
+  repository_owner_id: MOBILE_CI_REPOSITORY_OWNER_ID,
+  environment: MOBILE_CI_ENVIRONMENT,
   ref: "refs/heads/main",
   ref_type: "branch",
   workflow_ref: `${MOBILE_CI_REPOSITORY}/${MOBILE_CI_WORKFLOW}@refs/heads/main`,
@@ -62,7 +69,7 @@ function token(
   );
 }
 describe("GitHub OIDC de publicação mobile", () => {
-  it("valida assinatura e extrai apenas identidade do workflow aprovado", async () => {
+  it("valida assinatura e subject imutável e extrai somente o workflow aprovado", async () => {
     expect(
       await verifyMobileCiToken(token(), async () => [publicJwk], now),
     ).toEqual({ sourceCommit: "b".repeat(40), runId: "12345", runAttempt: 2 });
@@ -72,12 +79,22 @@ describe("GitHub OIDC de publicação mobile", () => {
     { iss: "https://attacker.invalid" },
     { repository: "another-owner/HortVitalMix" },
     { repository_owner: "another-owner" },
+    { repository_id: "1376634640" },
+    { repository_id: undefined },
+    { repository_owner_id: "210783436" },
+    { repository_owner_id: undefined },
+    { environment: "another-environment" },
+    { environment: undefined },
     { ref: "refs/pull/8/merge" },
     { ref_type: "tag" },
     {
       workflow_ref: `${MOBILE_CI_REPOSITORY}/.github/workflows/untrusted.yml@refs/heads/main`,
     },
     { sub: `repo:${MOBILE_CI_REPOSITORY}:ref:refs/heads/main` },
+    { sub: `repo:${MOBILE_CI_REPOSITORY}:environment:mobile-release` },
+    { sub: "repo:wesleialvessantos39@210783436/HortVitalMix@1376634639:environment:mobile-release" },
+    { sub: "repo:wesleialvessantos39@210783435/HortVitalMix@1376634640:environment:mobile-release" },
+    { sub: "repo:wesleialvessantos39@210783435/HortVitalMix@1376634639:environment:another-environment" },
     { event_name: "pull_request" },
     { runner_environment: "self-hosted" },
     { exp: seconds },
