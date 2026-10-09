@@ -1,0 +1,65 @@
+{
+  "functionalSha": "c716df5cb3e9dca09d6676f36ad2df534dccc8f2",
+  "pr": 113,
+  "prRun": 38005929933,
+  "mainRun": 38006199233,
+  "mainJobs": [
+    {
+      "id": 114075447795,
+      "name": "web",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 114075599655,
+      "name": "web_sync",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 114075599739,
+      "name": "android_verify",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 114075599747,
+      "name": "ios_verify",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 114076136903,
+      "name": "ios_release",
+      "status": "completed",
+      "conclusion": "skipped"
+    },
+    {
+      "id": 114076137111,
+      "name": "android_release",
+      "status": "completed",
+      "conclusion": "skipped"
+    }
+  ],
+  "deployment": {
+    "id": "dpl_3iMByaK4rcFcPmysRTbB8suE4QFZ",
+    "state": "READY",
+    "sha": "c716df5cb3e9dca09d6676f36ad2df534dccc8f2",
+    "alias": [
+      "hortvitalmix.vercel.app",
+      "hortvitalmix-wesleialvessantos-projects.vercel.app",
+      "hortvitalmix-git-main-wesleialvessantos-projects.vercel.app"
+    ]
+  },
+  "automaticSeal": {
+    "release_tag": "auto-web-v68-c716df5cb3e9",
+    "commit_sha": "c716df5cb3e9dca09d6676f36ad2df534dccc8f2",
+    "schema_version": 68,
+    "migration_history_hash": "ae1874579bb17297df3536863b1c01469c278ee3ebd52bb12990e417c7fbe549",
+    "deployed_by": "github-actions:38006199233:1",
+    "notes": "{\"source\":\"verified-github-oidc\",\"runId\":\"38006199233\",\"runAttempt\":1,\"operationalDataUnchanged\":true}"
+  },
+  "manualSealUsed": false,
+  "schemaVersion": 68,
+  "migrationHistoryHash": "ae1874579bb17297df3536863b1c01469c278ee3ebd52bb12990e417c7fbe549"
+}

@@ -51,3 +51,5 @@ Testes usam somente o PostgreSQL descartável em `127.0.0.1:55432`, identidades 
 - Streaming: checksum, tamanho, limite, origem fixa, redirecionamento proibido e conteúdo que não é APK.
 
 Evidências de testes estão em `docs/evidence/mobile-release-ledger-2026-10-09/`.
+
+A sincronização web foi comprovada pelo run real de `main` **38006199233**, na SHA `c716df5cb3e9dca09d6676f36ad2df534dccc8f2`: OIDC imutável aceito, selo automático correspondente ao runtime, sem selagem manual. Builds de validação Android/iOS passaram; não constituem liberação assinada ou instalação física. [Evidência de produção](evidence/web-release-sync-2026-10-09/production-publication.json).
