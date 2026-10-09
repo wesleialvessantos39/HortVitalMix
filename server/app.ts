@@ -34,6 +34,7 @@ import { reviewRouter,adminReviewRouter } from "./routes/reviewRoutes.ts";
 import { notificationRouter,adminNotificationRouter } from "./routes/notificationRoutes.ts";
 import { producerSalesRouter } from "./routes/producerSalesRoutes.ts";
 import { offlineRouter,adminBiRouter } from "./routes/offlineBiRoutes.ts";
+import { mobileReleaseRouter } from "./routes/mobileReleaseRoutes.ts";
 export const app = express();
 app.disable("x-powered-by");
 
@@ -116,6 +117,7 @@ app.use("/_hvm_api/v1", ruralPropertyRouter);
 app.use("/v1", localityRouter);
 app.use("/api/v1", localityRouter);
 app.use("/_hvm_api/v1", localityRouter);
+for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) app.use(prefix, mobileReleaseRouter);
 for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
   app.use(prefix, producerStoreRouter);
   app.use(prefix, categoryRouter);
