@@ -31,6 +31,7 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci --no-audit --no-fund
+      - run: npx vitest run tests/unit/mobileReleaseRoutes.test.ts
       - name: Build completo com gates existentes
         env:
           VITE_HVM_MOBILE_BUILD_NUMBER: ${{ github.run_number }}
