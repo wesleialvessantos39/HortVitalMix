@@ -1,0 +1,20 @@
+{"path":"/","width":320,"height":2176,"pageErrors":0}
+{"path":"/entrar/consumidor","width":320,"height":845,"pageErrors":0}
+{"path":"/entrar/produtor","width":320,"height":844,"pageErrors":0}
+{"path":"/entrar/administrador","width":320,"height":866,"pageErrors":0}
+{"path":"/entrar/super-administrador","width":320,"height":882,"pageErrors":0}
+{"path":"/administracao","width":320,"height":844,"pageErrors":0}
+{"path":"/produtos","width":320,"height":1252,"pageErrors":0}
+{"path":"/produtores","width":320,"height":1218,"pageErrors":0}
+{"path":"/planos","width":320,"height":1111,"pageErrors":0}
+{"path":"/carrinho","width":320,"height":851,"pageErrors":0}
+{"path":"/sobre","width":320,"height":844,"pageErrors":0}
+{"path":"/aplicativos","width":320,"height":844,"pageErrors":0}
+file:///workspace/scratch/hvm-production-browser.mjs:31
+   if(path==='/admin/aceitar-convite') { if(await page.getByRole('button',{name:'Ir para o acesso administrativo'}).count())throw Error('Unsafe expired invite CTA'); if(await page.getByRole('button',{name:'Voltar ao site',exact:true}).count()!==1)throw Error('Expected only safe exit'); }
+                                                                                                                                                                                                                                                             ^
+
+Error: Expected only safe exit
+    at file:///workspace/scratch/hvm-production-browser.mjs:31:254
+
+Node.js v24.19.0
