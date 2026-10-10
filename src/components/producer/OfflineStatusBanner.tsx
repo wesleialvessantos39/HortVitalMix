@@ -139,24 +139,6 @@ function ProducerOfflineStatus({
         if (!lifecycle.current.signal.aborted) setBusy(false);
       });
   }, [online, count, reauth, session.userId, attempt]);
-  async function sync() {
-    if (busy || !online) return;
-    setBusy(true);
-    setError("");
-    try {
-      await synchronize(session.userId);
-    } catch (e) {
-      if (
-        ["RECENT_AUTH_REQUIRED", "AUTH_REQUIRED", "SESSION_EXPIRED"].includes(
-          (e as Error).message,
-        )
-      )
-        setReauth(true);
-      setError("Não foi possível sincronizar agora. A fila foi preservada.");
-    } finally {
-      setBusy(false);
-    }
-  }
   async function confirm(event: FormEvent) {
     event.preventDefault();
     if (!online || busy) return;
@@ -217,10 +199,10 @@ function ProducerOfflineStatus({
         {count > 0 && (
           <button
             className="secondary"
-            disabled={!online || busy || reauth}
-            onClick={() => void sync()}
+            disabled={busy || reauth}
+            onClick={() => onNavigate("/conta/atualizacoes")}
           >
-            <RefreshCw size={16} /> Sincronizar
+            <RefreshCw size={16} /> Atualizações da conta
           </button>
         )}
         {entries.length > 0 && (

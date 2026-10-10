@@ -3,6 +3,7 @@ import { Router, type Request } from "express";
 import { z } from "zod";
 import {
   adminSessionMiddleware,
+  requireRecentAuth,
 } from "../middleware/adminSession.ts";
 import { originProtection } from "../security/originProtection.ts";
 import {
@@ -20,9 +21,7 @@ export const adminVerificationRouter = Router();
 // Middleware somente na fila. Não aplicar em /v1/admin/* — isso quebrava o login.
 adminVerificationRouter.use("/verification-queue", adminSessionMiddleware);
 adminVerificationRouter.use("/verification-queue", (req, res, next) => {
-  if (
-    !hasAdminPermission(req.adminActor, "document_verification")
-  ) {
+  if (!hasAdminPermission(req.adminActor, "document_verification")) {
     res.status(403).json({ error: "FORBIDDEN", requestId: req.requestId });
     return;
   }
@@ -32,13 +31,53 @@ adminVerificationRouter.use("/verification-queue", (req, res, next) => {
 function actor(req: Request) {
   return req.adminActor!;
 }
+adminVerificationRouter.delete(
+  "/verification-queue/archives/:id",
+  originProtection,
+  requireRecentAuth,
+  async (req, res) => {
+    res.set("Cache-Control", "private, no-store");
+    const id = z.uuid().safeParse(req.params.id),
+      input = z
+        .object({
+          commandId: z.uuid(),
+          confirmation: z.literal("EXCLUIR ARQUIVO"),
+        })
+        .strict()
+        .safeParse(req.body);
+    if (!id.success || !input.success) {
+      res.status(422).json({ error: "VALIDATION_ERROR" });
+      return;
+    }
+    try {
+      res.json(
+        await VerificationQueueService.deleteAccountArchive(
+          actor(req),
+          id.data,
+          input.data.commandId,
+          req.requestId,
+          req.clientIpHash,
+        ),
+      );
+    } catch {
+      res
+        .status(409)
+        .json({
+          error: "ARCHIVE_PROTECTED_OR_UNAVAILABLE",
+          requestId: req.requestId,
+        });
+    }
+  },
+);
 
 adminVerificationRouter.get("/verification-queue", async (req, res) => {
   const filter = VerificationFilterSchema.safeParse({
     tab: req.query.tab ?? "pending",
   });
   if (!filter.success) {
-    res.status(422).json({ error: "VALIDATION_ERROR", requestId: req.requestId });
+    res
+      .status(422)
+      .json({ error: "VALIDATION_ERROR", requestId: req.requestId });
     return;
   }
   try {
@@ -55,7 +94,9 @@ adminVerificationRouter.get("/verification-queue", async (req, res) => {
 adminVerificationRouter.get("/verification-queue/:id", async (req, res) => {
   const id = z.uuid().safeParse(req.params.id);
   if (!id.success) {
-    res.status(422).json({ error: "VALIDATION_ERROR", requestId: req.requestId });
+    res
+      .status(422)
+      .json({ error: "VALIDATION_ERROR", requestId: req.requestId });
     return;
   }
   try {
@@ -76,7 +117,9 @@ adminVerificationRouter.post(
     const id = z.uuid().safeParse(req.params.id);
     const input = ClaimVerificationRequestSchema.safeParse(req.body);
     if (!id.success || !input.success) {
-      res.status(422).json({ error: "VALIDATION_ERROR", requestId: req.requestId });
+      res
+        .status(422)
+        .json({ error: "VALIDATION_ERROR", requestId: req.requestId });
       return;
     }
     try {
@@ -94,7 +137,9 @@ adminVerificationRouter.post(
         error instanceof VerificationQueueError
           ? error
           : new VerificationQueueError("UNAVAILABLE", 503);
-      res.status(err.status).json({ error: err.code, requestId: req.requestId });
+      res
+        .status(err.status)
+        .json({ error: err.code, requestId: req.requestId });
     }
   },
 );
@@ -106,7 +151,9 @@ adminVerificationRouter.post(
     const id = z.uuid().safeParse(req.params.id);
     const input = DecideVerificationRequestSchema.safeParse(req.body);
     if (!id.success || !input.success) {
-      res.status(422).json({ error: "VALIDATION_ERROR", requestId: req.requestId });
+      res
+        .status(422)
+        .json({ error: "VALIDATION_ERROR", requestId: req.requestId });
       return;
     }
     try {
@@ -124,7 +171,9 @@ adminVerificationRouter.post(
         error instanceof VerificationQueueError
           ? error
           : new VerificationQueueError("UNAVAILABLE", 503);
-      res.status(err.status).json({ error: err.code, requestId: req.requestId });
+      res
+        .status(err.status)
+        .json({ error: err.code, requestId: req.requestId });
     }
   },
 );

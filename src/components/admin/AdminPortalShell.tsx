@@ -59,14 +59,51 @@ const items = [
 ] as const;
 
 const navigationGroups = [
-  { label: "Visão e acessos", paths: ["/admin/painel", "/admin/departamentos", "/admin/bi", "/admin/governanca", "/admin/usuarios", "/admin/documentos/fila", "/admin/conta"] },
-  { label: "Operação", paths: ["/admin/localidades", "/admin/bloqueios", "/admin/financeiro", "/admin/reembolsos", "/admin/politica-reembolso", "/admin/denuncias", "/admin/avaliacoes"] },
-  { label: "Plataforma", paths: ["/admin/configuracao", "/admin/catalogo", "/admin/categorias", "/admin/aplicativos", "/admin/pagamentos", "/admin/assinaturas"] },
+  {
+    label: "Visão e acessos",
+    paths: [
+      "/admin/painel",
+      "/admin/departamentos",
+      "/admin/bi",
+      "/admin/governanca",
+      "/admin/usuarios",
+      "/admin/documentos/fila",
+      "/admin/conta",
+    ],
+  },
+  {
+    label: "Operação",
+    paths: [
+      "/admin/localidades",
+      "/admin/bloqueios",
+      "/admin/financeiro",
+      "/admin/reembolsos",
+      "/admin/politica-reembolso",
+      "/admin/denuncias",
+      "/admin/avaliacoes",
+    ],
+  },
+  {
+    label: "Plataforma",
+    paths: [
+      "/admin/configuracao",
+      "/admin/catalogo",
+      "/admin/categorias",
+      "/admin/aplicativos",
+      "/admin/pagamentos",
+      "/admin/assinaturas",
+    ],
+  },
 ];
 function keepMenuFocus(event: React.KeyboardEvent<HTMLDialogElement>) {
   if (event.key !== "Tab") return;
-  const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>("button:not([disabled]), a[href]"));
-  const first = controls[0], last = controls[controls.length - 1];
+  const controls = Array.from(
+    event.currentTarget.querySelectorAll<HTMLElement>(
+      "button:not([disabled]), a[href]",
+    ),
+  );
+  const first = controls[0],
+    last = controls[controls.length - 1];
   if (event.shiftKey && document.activeElement === first) {
     event.preventDefault();
     last?.focus();
@@ -91,10 +128,7 @@ export function AdminPortalShell({
     if (to === "/admin/aplicativos")
       return hasAdminPermission(access, "platform_configuration");
     if (to === "/admin/categorias")
-      return (
-        access.role === "platform_super_admin" &&
-        hasAdminPermission(access, "catalog_moderation")
-      );
+      return hasAdminPermission(access, "catalog_moderation");
     if (to === "/admin/bi")
       return (
         access.role === "platform_super_admin" &&
@@ -102,11 +136,17 @@ export function AdminPortalShell({
       );
     if (to === "/admin/governanca" || to === "/admin/usuarios")
       return !access.deniedSectors?.includes("account_governance");
-    if (to === "/admin/reembolsos" || to === "/admin/politica-reembolso")
+    if (to === "/admin/politica-reembolso")
+      return hasAdminPermission(access, "refund_policy");
+    if (to === "/admin/reembolsos")
       return hasAdminPermission(access, "refund_management");
-    if (to === "/admin/denuncias" || to === "/admin/avaliacoes")
+    if (to === "/admin/avaliacoes")
+      return hasAdminPermission(access, "review_management");
+    if (to === "/admin/denuncias")
       return hasAdminPermission(access, "complaint_management");
-    if (to === "/admin/pagamentos" || to === "/admin/assinaturas")
+    if (to === "/admin/assinaturas")
+      return hasAdminPermission(access, "subscription_management");
+    if (to === "/admin/pagamentos")
       return hasAdminPermission(access, "payment_configuration");
     if (to === "/admin/configuracao")
       return hasAdminPermission(access, "platform_configuration");
@@ -122,9 +162,17 @@ export function AdminPortalShell({
   const [menuOpen, setMenuOpen] = useState(false);
   const drawer = useRef<HTMLDialogElement>(null);
   const drawerClose = useRef<HTMLButtonElement>(null);
-  const roleLabel = access.role === "platform_super_admin" ? "Super administrador" : "Administrador";
-  const isActive = (to: string) => currentPath === to || currentPath.startsWith(to + "/") || (to === "/admin/documentos/fila" && currentPath === "/admin/imoveis");
-  const primaryItems = visible.filter(([to]) => ["/admin/painel", "/admin/usuarios", "/admin/conta"].includes(to));
+  const roleLabel =
+    access.role === "platform_super_admin"
+      ? "Super administrador"
+      : "Administrador";
+  const isActive = (to: string) =>
+    currentPath === to ||
+    currentPath.startsWith(to + "/") ||
+    (to === "/admin/documentos/fila" && currentPath === "/admin/imoveis");
+  const primaryItems = visible.filter(([to]) =>
+    ["/admin/painel", "/admin/usuarios", "/admin/conta"].includes(to),
+  );
   const navigate = (to: string) => {
     setMenuOpen(false);
     onNavigate(to);
@@ -166,28 +214,92 @@ export function AdminPortalShell({
     }
   }
 
-  const brand = <button type="button" className="admin-brand" onClick={() => navigate("/admin/painel")}>
-    <span className="admin-brand-mark"><Leaf aria-hidden="true" /></span>
-    <span><strong>Horti<span>Vital</span>Mix</strong><small>{roleLabel}</small></span>
-  </button>;
-  const menuItems = <nav className="admin-sidebar-nav admin-nav-scroller" aria-label="Todas as áreas administrativas">
-    {navigationGroups.map(group => {
-      const links = visible.filter(([to]) => group.paths.includes(to));
-      if (!links.length) return null;
-      return <div className="admin-nav-group" key={group.label} role="group" aria-label={group.label}>
-        <h3>{group.label}</h3>
-        <div className="admin-nav-group-items">
-          {links.map(([to, label, Icon]) => <button type="button" key={to} className={"admin-nav-item" + (isActive(to) ? " is-active" : "")} aria-current={isActive(to) ? "page" : undefined} onClick={() => navigate(to)}>
-            <span className="admin-nav-icon" aria-hidden="true">{to === "/admin/conta" ? <AccountStatusIcon session={{ activeRole: access.role }} size={18} /> : <Icon size={18} />}</span><span className="admin-nav-label">{label}</span>
-          </button>)}
-        </div>
-      </div>;
-    })}
-  </nav>;
-  const menuFooter = <div className="admin-sidebar-footer" role="group" aria-label="Ações do portal">
-    <button type="button" className="admin-storefront-entry" onClick={() => navigate("/")}><Store size={17} aria-hidden="true" /> Abrir vitrine</button>
-    <button type="button" className="admin-logout" onClick={logout} disabled={leaving}><LogOut size={17} aria-hidden="true" /> {leaving ? "Saindo…" : "Sair"}</button>
-  </div>;
+  const brand = (
+    <button
+      type="button"
+      className="admin-brand"
+      onClick={() => navigate("/admin/painel")}
+    >
+      <span className="admin-brand-mark">
+        <Leaf aria-hidden="true" />
+      </span>
+      <span>
+        <strong>
+          Horti<span>Vital</span>Mix
+        </strong>
+        <small>{roleLabel}</small>
+      </span>
+    </button>
+  );
+  const menuItems = (
+    <nav
+      className="admin-sidebar-nav admin-nav-scroller"
+      aria-label="Todas as áreas administrativas"
+    >
+      {navigationGroups.map((group) => {
+        const links = visible.filter(([to]) => group.paths.includes(to));
+        if (!links.length) return null;
+        return (
+          <div
+            className="admin-nav-group"
+            key={group.label}
+            role="group"
+            aria-label={group.label}
+          >
+            <h3>{group.label}</h3>
+            <div className="admin-nav-group-items">
+              {links.map(([to, label, Icon]) => (
+                <button
+                  type="button"
+                  key={to}
+                  className={
+                    "admin-nav-item" + (isActive(to) ? " is-active" : "")
+                  }
+                  aria-current={isActive(to) ? "page" : undefined}
+                  onClick={() => navigate(to)}
+                >
+                  <span className="admin-nav-icon" aria-hidden="true">
+                    {to === "/admin/conta" ? (
+                      <AccountStatusIcon
+                        session={{ activeRole: access.role }}
+                        size={18}
+                      />
+                    ) : (
+                      <Icon size={18} />
+                    )}
+                  </span>
+                  <span className="admin-nav-label">{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </nav>
+  );
+  const menuFooter = (
+    <div
+      className="admin-sidebar-footer"
+      role="group"
+      aria-label="Ações do portal"
+    >
+      <button
+        type="button"
+        className="admin-storefront-entry"
+        onClick={() => navigate("/")}
+      >
+        <Store size={17} aria-hidden="true" /> Abrir vitrine
+      </button>
+      <button
+        type="button"
+        className="admin-logout"
+        onClick={logout}
+        disabled={leaving}
+      >
+        <LogOut size={17} aria-hidden="true" /> {leaving ? "Saindo…" : "Sair"}
+      </button>
+    </div>
+  );
 
   return (
     <div className="admin-shell admin-navigation-root">
@@ -197,7 +309,11 @@ export function AdminPortalShell({
         {menuFooter}
       </aside>
       <div className="admin-main">
-        <header className="admin-mobile-bar admin-portal-topbar" role="banner" aria-label="Cabeçalho administrativo">
+        <header
+          className="admin-mobile-bar admin-portal-topbar"
+          role="banner"
+          aria-label="Cabeçalho administrativo"
+        >
           <button
             className="icon"
             aria-label="Abrir menu administrativo"
@@ -208,7 +324,15 @@ export function AdminPortalShell({
           >
             <Menu aria-hidden="true" />
           </button>
-          <button className="admin-brand admin-mobile-heading" onClick={() => navigate("/admin/painel")}><strong>Horti<span>Vital</span>Mix</strong><small>{roleLabel}</small></button>
+          <button
+            className="admin-brand admin-mobile-heading"
+            onClick={() => navigate("/admin/painel")}
+          >
+            <strong>
+              Horti<span>Vital</span>Mix
+            </strong>
+            <small>{roleLabel}</small>
+          </button>
           <NotificationBell onNavigate={navigate} />
         </header>
         {logoutError && (
@@ -221,11 +345,7 @@ export function AdminPortalShell({
           {primaryItems.map(([to, label, Icon]) => (
             <button
               key={to}
-              className={
-                isActive(to)
-                  ? "is-active"
-                  : ""
-              }
+              className={isActive(to) ? "is-active" : ""}
               aria-label={label}
               aria-current={isActive(to) ? "page" : undefined}
               onClick={() => navigate(to)}
@@ -241,18 +361,53 @@ export function AdminPortalShell({
               <span>{label}</span>
             </button>
           ))}
-          <button type="button" aria-label="Mais áreas administrativas" aria-haspopup="dialog" aria-controls="admin-navigation-dialog" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><Menu size={19} aria-hidden="true" /><span>Menu</span></button>
+          <button
+            type="button"
+            aria-label="Mais áreas administrativas"
+            aria-haspopup="dialog"
+            aria-controls="admin-navigation-dialog"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen(true)}
+          >
+            <Menu size={19} aria-hidden="true" />
+            <span>Menu</span>
+          </button>
         </nav>
       </div>
-      <dialog ref={drawer} id="admin-navigation-dialog" className="navigation-drawer admin-navigation-drawer admin-navigation-panel" aria-labelledby="admin-navigation-title" onKeyDown={keepMenuFocus} onCancel={() => setMenuOpen(false)} onClose={() => setMenuOpen(false)} onClick={(event) => {
-        if (event.target !== event.currentTarget) return;
-        const bounds = event.currentTarget.getBoundingClientRect();
-        if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) setMenuOpen(false);
-      }}>
+      <dialog
+        ref={drawer}
+        id="admin-navigation-dialog"
+        className="navigation-drawer admin-navigation-drawer admin-navigation-panel"
+        aria-labelledby="admin-navigation-title"
+        onKeyDown={keepMenuFocus}
+        onCancel={() => setMenuOpen(false)}
+        onClose={() => setMenuOpen(false)}
+        onClick={(event) => {
+          if (event.target !== event.currentTarget) return;
+          const bounds = event.currentTarget.getBoundingClientRect();
+          if (
+            event.clientX < bounds.left ||
+            event.clientX > bounds.right ||
+            event.clientY < bounds.top ||
+            event.clientY > bounds.bottom
+          )
+            setMenuOpen(false);
+        }}
+      >
         <div className="navigation-drawer-header">
-          <h2 id="admin-navigation-title" className="visually-hidden">Administração</h2>
+          <h2 id="admin-navigation-title" className="visually-hidden">
+            Administração
+          </h2>
           {brand}
-          <button ref={drawerClose} type="button" className="icon" aria-label="Fechar menu administrativo" onClick={() => setMenuOpen(false)}><X aria-hidden="true" /></button>
+          <button
+            ref={drawerClose}
+            type="button"
+            className="icon"
+            aria-label="Fechar menu administrativo"
+            onClick={() => setMenuOpen(false)}
+          >
+            <X aria-hidden="true" />
+          </button>
         </div>
         {menuItems}
         {menuFooter}

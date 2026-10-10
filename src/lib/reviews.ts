@@ -1,6 +1,9 @@
 export function reviewMessage(error: unknown): string {
   const code = error instanceof Error ? error.message : "";
   const messages: Record<string, string> = {
+    REVISION_CONFLICT:
+      "Esta avaliação mudou. Atualize a lista antes de decidir.",
+    REVIEW_NOT_MODERATED: "A avaliação já está pública. Atualize a lista.",
     AUTH_REQUIRED: "Entre na sua conta para avaliar seu pedido.",
     ORDER_NOT_FOUND: "Este pedido não está disponível para sua conta.",
     REVIEW_NOT_DELIVERED: "A avaliação fica disponível depois da entrega.",

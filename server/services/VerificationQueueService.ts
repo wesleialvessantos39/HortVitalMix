@@ -4,16 +4,31 @@ import { dbPool } from "../db/pool.ts";
 import { redactPII } from "../security/redactPII.ts";
 import type { DecideVerificationRequest } from "../../shared/contracts/verificationQueue.ts";
 import { propertyIdentityKey } from "../../shared/rural/propertyIdentity.ts";
+import {
+  commerceAdmin,
+  commerceAudit,
+  commerceTransaction,
+} from "./CommerceSupport.ts";
+import type { AdminActorContext } from "../middleware/adminSession.ts";
 
 const STALE_CLAIM_HOURS = 4;
 
 export class VerificationQueueError extends Error {
-  constructor(public code: string, public status: number, message?: string) {
+  constructor(
+    public code: string,
+    public status: number,
+    message?: string,
+  ) {
     super(message ?? code);
   }
 }
 
-type AdminActor = { userId: string; role: string; isSuperAdmin: boolean; sectors: string[] };
+type AdminActor = {
+  userId: string;
+  role: string;
+  isSuperAdmin: boolean;
+  sectors: string[];
+};
 type QueueTab = "pending" | "in_review" | "decided" | "archived";
 
 function requirePool() {
@@ -27,7 +42,11 @@ function assertAuditor(actor: AdminActor) {
   }
 }
 
-export async function enqueueVerificationRequest(client: PoolClient, propertyId: string, producerId: string) {
+export async function enqueueVerificationRequest(
+  client: PoolClient,
+  propertyId: string,
+  producerId: string,
+) {
   await client.query(
     `INSERT INTO public.app_verification_requests(property_id, producer_id, status, priority)
      SELECT $1, $2, 'pending', 0
@@ -71,7 +90,9 @@ function asList(value: unknown) {
   if (typeof value === "string") {
     try {
       const parsed = JSON.parse(value) as unknown;
-      return Array.isArray(parsed) ? (parsed as Array<Record<string, any>>) : [];
+      return Array.isArray(parsed)
+        ? (parsed as Array<Record<string, any>>)
+        : [];
     } catch {
       return [];
     }
@@ -120,8 +141,7 @@ function collapseQueue(rows: Array<Record<string, any>>, tab: QueueTab) {
       wanted = current.filter((row) =>
         ["claimed", "in_review"].includes(row.status),
       );
-    else if (tab === "archived")
-      wanted = approved;
+    else if (tab === "archived") wanted = approved;
     else if (!open.length && !approved.length)
       wanted = current.filter((row) =>
         ["rejected", "adjustments_required", "escalated"].includes(row.status),
@@ -147,9 +167,7 @@ function collapseQueue(rows: Array<Record<string, any>>, tab: QueueTab) {
 
     const history = bucket
       .flatMap((row) => asList(row.decision_history))
-      .sort((a, b) =>
-        String(a.decidedAt).localeCompare(String(b.decidedAt)),
-      );
+      .sort((a, b) => String(a.decidedAt).localeCompare(String(b.decidedAt)));
 
     visible.push({ ...primary, documents, decision_history: history });
   }
@@ -239,30 +257,95 @@ export class VerificationQueueService {
             [ids],
           )
         : { rows: [] };
-      return { requests: collapseQueue(result.rows, tab) };
+      const requests = collapseQueue(result.rows, tab);
+      if (tab === "archived") {
+        const deleted =
+          await client.query(`SELECT a.property_id AS id,a.property_id,a.producer_id,'approved' AS status,
+          coalesce(a.snapshot->'property'->>'property_name','Imóvel arquivado') AS property_name,
+          coalesce(a.snapshot->'property'->>'municipality','') AS municipality,'' AS line_vicinal,
+          'Conta excluída' AS producer_name,a.deleted_at AS archived_at,a.deleted_at AS created_at,a.deleted_at AS updated_at,
+          true AS account_deleted,'[]'::jsonb AS documents,'[]'::jsonb AS decision_history
+          FROM public.app_property_deletion_archive a
+          WHERE (a.account_deleted OR NOT EXISTS(SELECT 1 FROM public.app_producer_profiles pp WHERE pp.id=a.producer_id))
+          AND (a.snapshot->'property'->>'status'='verified' OR a.snapshot->>'accountDeleted'='true') ORDER BY a.deleted_at DESC LIMIT 200`);
+        // Separate UUIDs and no identity grouping: never use these records to
+        // approve, prefill or associate a newly registered property's identity.
+        requests.push(...deleted.rows);
+      }
+      return { requests };
     } finally {
       client.release();
     }
   }
+  static async deleteAccountArchive(
+    actor: AdminActorContext,
+    propertyId: string,
+    commandId: string,
+    requestId: string,
+    ipHash: string,
+  ) {
+    return commerceTransaction(async (c) => {
+      await commerceAdmin(c, actor, "document_verification");
+      await c.query("SELECT public.delete_deleted_account_archive($1,$2,$3)", [
+        propertyId,
+        actor.userId,
+        commandId,
+      ]);
+      const replay = await c.query(
+        "SELECT 1 FROM public.app_audit_events WHERE actor_id=$1 AND command_id=$2 AND action='property.deleted_account_archive_removed'",
+        [actor.userId, commandId],
+      );
+      if (!replay.rowCount)
+        await commerceAudit(
+          c,
+          actor.userId,
+          actor.role,
+          "property.deleted_account_archive_removed",
+          "app_property_deletion_archive",
+          propertyId,
+          { removed: true },
+          { requestId, ipHash },
+          commandId,
+        );
+      return { status: "deleted" };
+    });
+  }
 
   static async getOne(actor: AdminActor, requestId: string) {
     assertAuditor(actor);
-    const result = await requirePool().query(`${LIST_SQL} WHERE r.id = $1`, [requestId]);
+    const result = await requirePool().query(`${LIST_SQL} WHERE r.id = $1`, [
+      requestId,
+    ]);
     if (!result.rows[0]) throw new VerificationQueueError("NOT_FOUND", 404);
     return { request: result.rows[0] };
   }
 
-  static async claimRequest(actor: AdminActor, requestId: string, commandId: string, requestTraceId: string, ipHash: string) {
+  static async claimRequest(
+    actor: AdminActor,
+    requestId: string,
+    commandId: string,
+    requestTraceId: string,
+    ipHash: string,
+  ) {
     assertAuditor(actor);
     const client = await requirePool().connect();
     try {
       await client.query("BEGIN");
-      await client.query("SELECT pg_advisory_xact_lock(hashtext('verification:claim:' || $1))", [requestId]);
+      await client.query(
+        "SELECT pg_advisory_xact_lock(hashtext('verification:claim:' || $1))",
+        [requestId],
+      );
       await this.releaseStaleClaims(client);
-      const replay = await client.query(`SELECT target_id FROM public.app_audit_events WHERE command_id = $1 AND actor_id = $2 AND action = 'verification.claimed'`, [commandId, actor.userId]);
+      const replay = await client.query(
+        `SELECT target_id FROM public.app_audit_events WHERE command_id = $1 AND actor_id = $2 AND action = 'verification.claimed'`,
+        [commandId, actor.userId],
+      );
       if (replay.rows.length) {
         await client.query("COMMIT");
-        return { status: "idempotent_replay" as const, requestId: replay.rows[0].target_id };
+        return {
+          status: "idempotent_replay" as const,
+          requestId: replay.rows[0].target_id,
+        };
       }
       const updated = await client.query(
         `UPDATE public.app_verification_requests SET status = 'in_review', claimed_by = $2, claimed_at = clock_timestamp(), updated_at = clock_timestamp() WHERE id = $1 AND status = 'pending' RETURNING *`,
@@ -287,12 +370,22 @@ export class VerificationQueueService {
       }
       await client.query(
         `INSERT INTO public.app_audit_events(request_id,actor_id,actor_role,action,target_entity,target_id,payload_after,client_ip_hash,command_id) VALUES($1,$2,$3,'verification.claimed','app_verification_requests',$4,$5,$6,$7)`,
-        [requestTraceId, actor.userId, actor.role, requestId, JSON.stringify({ status: "in_review" }), ipHash, commandId],
+        [
+          requestTraceId,
+          actor.userId,
+          actor.role,
+          requestId,
+          JSON.stringify({ status: "in_review" }),
+          ipHash,
+          commandId,
+        ],
       );
       await client.query("COMMIT");
       return { status: "claimed" as const, request: updated.rows[0] };
     } catch (error) {
-      try { await client.query("ROLLBACK"); } catch {}
+      try {
+        await client.query("ROLLBACK");
+      } catch {}
       if (error instanceof VerificationQueueError) throw error;
       throw new VerificationQueueError("UNAVAILABLE", 503);
     } finally {
@@ -300,29 +393,63 @@ export class VerificationQueueService {
     }
   }
 
-  static async decideRequest(actor: AdminActor, requestId: string, input: DecideVerificationRequest, requestTraceId: string, ipHash: string) {
+  static async decideRequest(
+    actor: AdminActor,
+    requestId: string,
+    input: DecideVerificationRequest,
+    requestTraceId: string,
+    ipHash: string,
+  ) {
     assertAuditor(actor);
     const client = await requirePool().connect();
     try {
       await client.query("BEGIN");
-      await client.query("SELECT pg_advisory_xact_lock(hashtext('verification:claim:' || $1))", [requestId]);
-      const replay = await client.query(`SELECT target_id FROM public.app_audit_events WHERE command_id = $1 AND actor_id = $2 AND action = 'verification.decided'`, [input.commandId, actor.userId]);
+      await client.query(
+        "SELECT pg_advisory_xact_lock(hashtext('verification:claim:' || $1))",
+        [requestId],
+      );
+      const replay = await client.query(
+        `SELECT target_id FROM public.app_audit_events WHERE command_id = $1 AND actor_id = $2 AND action = 'verification.decided'`,
+        [input.commandId, actor.userId],
+      );
       if (replay.rows.length) {
         await client.query("COMMIT");
         return { status: "idempotent_replay" as const };
       }
-      const current = await client.query(`SELECT * FROM public.app_verification_requests WHERE id = $1 FOR UPDATE`, [requestId]);
+      const current = await client.query(
+        `SELECT * FROM public.app_verification_requests WHERE id = $1 FOR UPDATE`,
+        [requestId],
+      );
       const row = current.rows[0];
       if (!row) throw new VerificationQueueError("NOT_FOUND", 404);
-      if (!["claimed", "in_review"].includes(row.status)) throw new VerificationQueueError("VERIFICATION_NOT_CLAIMED", 409);
-      if (row.claimed_by && row.claimed_by !== actor.userId && !actor.isSuperAdmin) throw new VerificationQueueError("VERIFICATION_CLAIMED_BY_OTHER", 409);
+      if (!["claimed", "in_review"].includes(row.status))
+        throw new VerificationQueueError("VERIFICATION_NOT_CLAIMED", 409);
+      if (
+        row.claimed_by &&
+        row.claimed_by !== actor.userId &&
+        !actor.isSuperAdmin
+      )
+        throw new VerificationQueueError("VERIFICATION_CLAIMED_BY_OTHER", 409);
       const requestStatus = input.decision;
-      const propertyStatus = input.decision === "approved" ? "verified" : "rejected";
+      const propertyStatus =
+        input.decision === "approved" ? "verified" : "rejected";
       await client.query(
         `INSERT INTO public.app_verification_decisions(request_id, auditor_id, decision, technical_opinion, assigned_trust_level, checklist_environmental_ok, checklist_land_tenure_ok, checklist_water_quality_ok) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-        [requestId, actor.userId, input.decision, input.technicalOpinion, input.assignedTrustLevel, input.checklistEnvironmentalOk, input.checklistLandTenureOk, input.checklistWaterQualityOk],
+        [
+          requestId,
+          actor.userId,
+          input.decision,
+          input.technicalOpinion,
+          input.assignedTrustLevel,
+          input.checklistEnvironmentalOk,
+          input.checklistLandTenureOk,
+          input.checklistWaterQualityOk,
+        ],
       );
-      await client.query(`UPDATE public.app_verification_requests SET status = $2, updated_at = clock_timestamp() WHERE id = $1`, [requestId, requestStatus]);
+      await client.query(
+        `UPDATE public.app_verification_requests SET status = $2, updated_at = clock_timestamp() WHERE id = $1`,
+        [requestId, requestStatus],
+      );
       if (input.decision === "approved") {
         const identityIds = await matchingIdentityPropertyIds(
           client,
@@ -341,22 +468,48 @@ export class VerificationQueueService {
           [requestId, identityIds],
         );
       }
-      await client.query(`UPDATE public.app_properties SET status = $2, updated_at = clock_timestamp(), revision = revision + 1 WHERE id = $1`, [row.property_id, propertyStatus]);
+      await client.query(
+        `UPDATE public.app_properties SET status = $2, updated_at = clock_timestamp(), revision = revision + 1 WHERE id = $1`,
+        [row.property_id, propertyStatus],
+      );
       if (input.decision === "approved") {
-        await client.query(`UPDATE public.app_producer_profiles SET verification_status = 'verified', trust_level = GREATEST(trust_level, $2), updated_at = clock_timestamp() WHERE id = $1`, [row.producer_id, input.assignedTrustLevel]);
+        await client.query(
+          `UPDATE public.app_producer_profiles SET verification_status = 'verified', trust_level = GREATEST(trust_level, $2), updated_at = clock_timestamp() WHERE id = $1`,
+          [row.producer_id, input.assignedTrustLevel],
+        );
       } else if (input.decision === "rejected") {
-        await client.query(`UPDATE public.app_producer_profiles SET verification_status = 'rejected', updated_at = clock_timestamp() WHERE id = $1`, [row.producer_id]);
+        await client.query(
+          `UPDATE public.app_producer_profiles SET verification_status = 'rejected', updated_at = clock_timestamp() WHERE id = $1`,
+          [row.producer_id],
+        );
       }
       await client.query(
         `INSERT INTO public.app_audit_events(request_id,actor_id,actor_role,action,target_entity,target_id,payload_after,client_ip_hash,command_id) VALUES($1,$2,$3,'verification.decided','app_verification_requests',$4,$5,$6,$7)`,
-        [requestTraceId, actor.userId, actor.role, requestId, JSON.stringify(redactPII({ decision: input.decision, assignedTrustLevel: input.assignedTrustLevel, technicalOpinion: input.technicalOpinion.slice(0, 400) })), ipHash, input.commandId],
+        [
+          requestTraceId,
+          actor.userId,
+          actor.role,
+          requestId,
+          JSON.stringify(
+            redactPII({
+              decision: input.decision,
+              assignedTrustLevel: input.assignedTrustLevel,
+              technicalOpinion: input.technicalOpinion.slice(0, 400),
+            }),
+          ),
+          ipHash,
+          input.commandId,
+        ],
       );
       await client.query("COMMIT");
       return { status: input.decision };
     } catch (error) {
-      try { await client.query("ROLLBACK"); } catch {}
+      try {
+        await client.query("ROLLBACK");
+      } catch {}
       if (error instanceof VerificationQueueError) throw error;
-      if ((error as { code?: string }).code === "23514") throw new VerificationQueueError("CHECKLIST_INCOMPLETE", 422);
+      if ((error as { code?: string }).code === "23514")
+        throw new VerificationQueueError("CHECKLIST_INCOMPLETE", 422);
       throw new VerificationQueueError("UNAVAILABLE", 503);
     } finally {
       client.release();

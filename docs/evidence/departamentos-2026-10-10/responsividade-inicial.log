@@ -1,0 +1,217 @@
+
+Running 92 tests using 1 worker
+
+(node:35771) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/e2e/admin-dashboard-live.spec.ts:181:3 › painel e configuração compactos sem transbordar em 320px (7.8s)
+  ✓   2 tests/e2e/admin-dashboard-live.spec.ts:181:3 › painel e configuração compactos sem transbordar em 390px (5.7s)
+  ✓   3 tests/e2e/admin-dashboard-live.spec.ts:181:3 › painel e configuração compactos sem transbordar em 768px (6.4s)
+  ✓   4 tests/e2e/admin-dashboard-live.spec.ts:181:3 › painel e configuração compactos sem transbordar em 1280px (6.1s)
+  ✓   5 tests/e2e/admin-dashboard-live.spec.ts:181:3 › painel e configuração compactos sem transbordar em 1440px (5.4s)
+  ✓   6 tests/e2e/admin-dashboard-live.spec.ts:257:1 › administrador recebe apenas seus setores e super com poder retirado não o exibe (3.5s)
+  ✓   7 tests/e2e/admin-dashboard-live.spec.ts:290:1 › painel atualiza ao receber mudança sem retirar os dados carregados e preserva-os em falha (1.9s)
+  ✓   8 tests/e2e/admin-dashboard-live.spec.ts:338:1 › painel consulta novamente após 30 segundos e ao retornar à janela (1.9s)
+  ✓   9 tests/e2e/admin-dashboard-live.spec.ts:363:1 › carregamento inicial consistente e configuração conserva campos durante sincronização após salvar (2.4s)
+  ✓  10 tests/e2e/admin-dashboard-live.spec.ts:411:1 › configuração valida também valores editados em uma aba que foi fechada (2.1s)
+  ✓  11 tests/e2e/admin-dashboard-live.spec.ts:435:1 › configuração conserva mudanças entre abas e envia revisão com os campos alterados (2.6s)
+  ✓  12 tests/e2e/admin-dashboard-live.spec.ts:486:1 › falha inicial do painel mostra erro recuperável sem inventar contagens (3.3s)
+  ✓  13 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/usuarios 320px (3.3s)
+  ✓  14 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/localidades 320px (3.2s)
+  ✓  15 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/bloqueios 320px (3.4s)
+  ✓  16 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/categorias 320px (2.3s)
+  ✓  17 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/bi 320px (2.3s)
+  ✓  18 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/imoveis 320px (1.9s)
+  ✓  19 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/avaliacoes 320px (2.2s)
+  ✘  20 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/assinaturas 320px (7.1s)
+(node:37561) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  21 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/reembolsos 320px (3.7s)
+  ✓  22 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/denuncias 320px (3.2s)
+  ✓  23 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/politica-reembolso 320px (3.6s)
+  ✓  24 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/pagamentos 320px (3.3s)
+  ✓  25 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/usuarios 390px (3.7s)
+  ✓  26 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/localidades 390px (3.1s)
+  ✓  27 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/bloqueios 390px (3.5s)
+  ✓  28 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/categorias 390px (1.8s)
+  ✓  29 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/bi 390px (3.2s)
+  ✓  30 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/imoveis 390px (2.8s)
+  ✓  31 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/avaliacoes 390px (3.2s)
+  ✘  32 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/assinaturas 390px (6.3s)
+(node:38190) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  33 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/reembolsos 390px (3.3s)
+  ✓  34 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/denuncias 390px (4.0s)
+  ✓  35 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/politica-reembolso 390px (6.3s)
+  ✓  36 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/pagamentos 390px (7.9s)
+  ✓  37 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/usuarios 768px (4.1s)
+  ✓  38 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/localidades 768px (4.0s)
+  ✓  39 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/bloqueios 768px (3.7s)
+  ✓  40 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/categorias 768px (2.9s)
+  ✓  41 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/bi 768px (3.8s)
+  ✓  42 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/imoveis 768px (2.8s)
+  ✓  43 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/avaliacoes 768px (2.0s)
+  ✘  44 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/assinaturas 768px (6.4s)
+(node:40293) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  45 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/reembolsos 768px (2.1s)
+  ✓  46 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/denuncias 768px (3.2s)
+  ✓  47 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/politica-reembolso 768px (1.4s)
+  ✓  48 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/pagamentos 768px (2.0s)
+  ✓  49 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/usuarios 1440px (3.1s)
+  ✓  50 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/localidades 1440px (3.0s)
+  ✓  51 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/bloqueios 1440px (2.1s)
+  ✓  52 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/categorias 1440px (4.5s)
+  ✓  53 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/bi 1440px (4.8s)
+  ✓  54 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/imoveis 1440px (4.5s)
+  ✓  55 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/avaliacoes 1440px (3.5s)
+  ✘  56 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/assinaturas 1440px (7.3s)
+(node:41185) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  57 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/reembolsos 1440px (2.8s)
+  ✓  58 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/denuncias 1440px (2.7s)
+  ✓  59 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/politica-reembolso 1440px (3.4s)
+  ✓  60 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/pagamentos 1440px (2.8s)
+  ✓  61 tests/e2e/admin-departments-responsive.spec.ts:628:1 › filtros de usuários mantêm ações e recuperam a consulta vazia (2.1s)
+  ✓  62 tests/e2e/admin-departments-responsive.spec.ts:649:1 › busca por município conserva o controle de cobertura (2.5s)
+  ✓  63 tests/e2e/admin-departments-responsive.spec.ts:671:3 › localidades exibem lista compacta e conservam cadastro recolhido: platform_admin (2.2s)
+  ✓  64 tests/e2e/admin-departments-responsive.spec.ts:710:3 › assinaturas exibem lista compacta e conservam edição recolhida: platform_admin (1.7s)
+  ✓  65 tests/e2e/admin-departments-responsive.spec.ts:767:3 › bloqueio confirma a mesma conta e preserva o comando: platform_admin (2.4s)
+  ✓  66 tests/e2e/admin-departments-responsive.spec.ts:821:3 › localidade mantém impacto/revisão e permite cancelar confirmação: platform_admin (2.6s)
+  ✓  67 tests/e2e/admin-departments-responsive.spec.ts:671:3 › localidades exibem lista compacta e conservam cadastro recolhido: platform_super_admin (1.6s)
+  ✓  68 tests/e2e/admin-departments-responsive.spec.ts:710:3 › assinaturas exibem lista compacta e conservam edição recolhida: platform_super_admin (2.2s)
+  ✓  69 tests/e2e/admin-departments-responsive.spec.ts:767:3 › bloqueio confirma a mesma conta e preserva o comando: platform_super_admin (2.8s)
+  ✓  70 tests/e2e/admin-departments-responsive.spec.ts:821:3 › localidade mantém impacto/revisão e permite cancelar confirmação: platform_super_admin (2.0s)
+  ✓  71 tests/e2e/admin-departments-responsive.spec.ts:855:1 › confirmação que retorna outra conta não repete a decisão (2.8s)
+  ✓  72 tests/e2e/admin-departments-responsive.spec.ts:891:1 › nova exigência após confirmar encerra retry e conserva o motivo (2.5s)
+  ✓  73 tests/e2e/admin-operations.spec.ts:233:3 › financeiro e catálogo organizados sem transbordamento em 320px (4.3s)
+  ✓  74 tests/e2e/admin-operations.spec.ts:233:3 › financeiro e catálogo organizados sem transbordamento em 390px (6.1s)
+  ✓  75 tests/e2e/admin-operations.spec.ts:233:3 › financeiro e catálogo organizados sem transbordamento em 768px (5.7s)
+  ✓  76 tests/e2e/admin-operations.spec.ts:233:3 › financeiro e catálogo organizados sem transbordamento em 1280px (5.6s)
+  ✓  77 tests/e2e/admin-operations.spec.ts:233:3 › financeiro e catálogo organizados sem transbordamento em 1440px (6.2s)
+  ✓  78 tests/e2e/admin-operations.spec.ts:304:1 › catálogo aplica pesquisa/filtros e pagina mantendo a consulta (2.4s)
+  ✓  79 tests/e2e/admin-operations.spec.ts:339:1 › financeiro mantém filtros editados e dados durante atualização, sem inventar zeros em falha (3.6s)
+  ✓  80 tests/e2e/admin-operations.spec.ts:365:1 › financeiro descarta dados quando o servidor retira o poder no meio da sessão (2.2s)
+  ✓  81 tests/e2e/admin-operations.spec.ts:383:1 › consultas atualizam a cada 30 segundos enquanto a tela está aberta (2.3s)
+  ✓  82 tests/e2e/admin-operations.spec.ts:396:1 › estado inicial usa carregamento padrão e não oculta campos da consulta (2.6s)
+  ✓  83 tests/e2e/admin-operations.spec.ts:414:1 › poderes negados de Super não produzem chamadas de dados nem atalhos para departamento (3.1s)
+  ✓  84 tests/e2e/departments-accounts-subscriptions.spec.ts:37:52 › três departamentos completos e conta responsivos em 320px (11.2s)
+  ✓  85 tests/e2e/departments-accounts-subscriptions.spec.ts:37:52 › três departamentos completos e conta responsivos em 360px (11.5s)
+  ✓  86 tests/e2e/departments-accounts-subscriptions.spec.ts:37:52 › três departamentos completos e conta responsivos em 390px (9.7s)
+  ✓  87 tests/e2e/departments-accounts-subscriptions.spec.ts:37:52 › três departamentos completos e conta responsivos em 430px (8.5s)
+  ✓  88 tests/e2e/departments-accounts-subscriptions.spec.ts:37:52 › três departamentos completos e conta responsivos em 768px (11.7s)
+  ✓  89 tests/e2e/departments-accounts-subscriptions.spec.ts:37:52 › três departamentos completos e conta responsivos em 1024px (8.2s)
+  ✓  90 tests/e2e/departments-accounts-subscriptions.spec.ts:37:52 › três departamentos completos e conta responsivos em 1440px (11.2s)
+  ✓  91 tests/e2e/departments-accounts-subscriptions.spec.ts:51:1 › administradores veem planos como demonstração e não podem contratar (1.9s)
+  ✓  92 tests/e2e/departments-accounts-subscriptions.spec.ts:57:1 › exclusão exige consentimento, senha e identidade confirmada e limpa a sessão (2.1s)
+
+
+  1) tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/assinaturas 320px 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('heading', { name: 'Planos de assinatura', exact: true })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('heading', { name: 'Planos de assinatura', exact: true }) with timeout 5000ms
+      - waiting for getByRole('heading', { name: 'Planos de assinatura', exact: true })
+
+
+      541 |   await expect(
+      542 |     page.getByRole("heading", { name: screen.heading, exact: true }),
+    > 543 |   ).toBeVisible();
+          |     ^
+      544 |   if (screen.path === "/admin/bloqueios") {
+      545 |     await page.getByLabel("CPF ou e-mail").fill("cliente@example.invalid");
+      546 |     await page.getByRole("button", { name: "Localizar", exact: true }).click();
+        at openScreen (/workspace/HortVitalMix/tests/e2e/admin-departments-responsive.spec.ts:543:5)
+        at /workspace/HortVitalMix/tests/e2e/admin-departments-responsive.spec.ts:564:7
+
+    Error Context: test-results/admin-departments-responsi-8ad1d-sta-admin-assinaturas-320px/error-context.md
+
+  2) tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/assinaturas 390px 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('heading', { name: 'Planos de assinatura', exact: true })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('heading', { name: 'Planos de assinatura', exact: true }) with timeout 5000ms
+      - waiting for getByRole('heading', { name: 'Planos de assinatura', exact: true })
+
+
+      541 |   await expect(
+      542 |     page.getByRole("heading", { name: screen.heading, exact: true }),
+    > 543 |   ).toBeVisible();
+          |     ^
+      544 |   if (screen.path === "/admin/bloqueios") {
+      545 |     await page.getByLabel("CPF ou e-mail").fill("cliente@example.invalid");
+      546 |     await page.getByRole("button", { name: "Localizar", exact: true }).click();
+        at openScreen (/workspace/HortVitalMix/tests/e2e/admin-departments-responsive.spec.ts:543:5)
+        at /workspace/HortVitalMix/tests/e2e/admin-departments-responsive.spec.ts:564:7
+
+    Error Context: test-results/admin-departments-responsi-3f987-sta-admin-assinaturas-390px/error-context.md
+
+  3) tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/assinaturas 768px 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('heading', { name: 'Planos de assinatura', exact: true })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('heading', { name: 'Planos de assinatura', exact: true }) with timeout 5000ms
+      - waiting for getByRole('heading', { name: 'Planos de assinatura', exact: true })
+
+
+      541 |   await expect(
+      542 |     page.getByRole("heading", { name: screen.heading, exact: true }),
+    > 543 |   ).toBeVisible();
+          |     ^
+      544 |   if (screen.path === "/admin/bloqueios") {
+      545 |     await page.getByLabel("CPF ou e-mail").fill("cliente@example.invalid");
+      546 |     await page.getByRole("button", { name: "Localizar", exact: true }).click();
+        at openScreen (/workspace/HortVitalMix/tests/e2e/admin-departments-responsive.spec.ts:543:5)
+        at /workspace/HortVitalMix/tests/e2e/admin-departments-responsive.spec.ts:564:7
+
+    Error Context: test-results/admin-departments-responsi-6f988-sta-admin-assinaturas-768px/error-context.md
+
+  4) tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/assinaturas 1440px 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('heading', { name: 'Planos de assinatura', exact: true })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('heading', { name: 'Planos de assinatura', exact: true }) with timeout 5000ms
+      - waiting for getByRole('heading', { name: 'Planos de assinatura', exact: true })
+
+
+      541 |   await expect(
+      542 |     page.getByRole("heading", { name: screen.heading, exact: true }),
+    > 543 |   ).toBeVisible();
+          |     ^
+      544 |   if (screen.path === "/admin/bloqueios") {
+      545 |     await page.getByLabel("CPF ou e-mail").fill("cliente@example.invalid");
+      546 |     await page.getByRole("button", { name: "Localizar", exact: true }).click();
+        at openScreen (/workspace/HortVitalMix/tests/e2e/admin-departments-responsive.spec.ts:543:5)
+        at /workspace/HortVitalMix/tests/e2e/admin-departments-responsive.spec.ts:564:7
+
+    Error Context: test-results/admin-departments-responsi-af09e-ta-admin-assinaturas-1440px/error-context.md
+
+  4 failed
+    tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/assinaturas 320px 
+    tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/assinaturas 390px 
+    tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/assinaturas 768px 
+    tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/assinaturas 1440px 
+  88 passed (6.3m)

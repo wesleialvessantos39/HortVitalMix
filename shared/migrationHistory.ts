@@ -1,6 +1,10 @@
 import manifest from "../supabase/manifest.json" with { type: "json" };
 
 const remoteVersionAliases: Readonly<Record<string, string>> = {
+  // Departamentos, autoexclusão e operações aplicados em produção pelo Supabase.
+  "20261010172735": "20261010143000",
+  "20261010172743": "20261010150000",
+  "20261010172754": "20261010153000",
   // Mobile distribution/release ledger applied with Supabase physical versions.
   "20261009225521": "20261009023420",
   "20261009225532": "20261009170751",

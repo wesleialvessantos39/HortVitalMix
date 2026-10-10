@@ -7,6 +7,10 @@ import {
 } from "../../../shared/contracts/adminOperations";
 import { PageLoading } from "../../components/PageLoading";
 import {
+  CatalogModerationPanel,
+  type ModerationTarget,
+} from "./CatalogModerationPanel";
+import {
   money,
   number,
   when,
@@ -36,6 +40,7 @@ export function AdminCatalogPage({
 }: AdminOperationsPageProps) {
   const [filters, setFilters] = useState(initial);
   const [draft, setDraft] = useState(initial);
+  const [moderation, setModeration] = useState<ModerationTarget | null>(null);
   const path =
     "/v1/admin/catalog/overview?" +
     new URLSearchParams(
@@ -157,6 +162,15 @@ export function AdminCatalogPage({
       {!data && !query.error && <PageLoading label="Carregando catálogo" />}
       {data && (
         <>
+          {moderation && (
+            <CatalogModerationPanel
+              key={moderation.id}
+              target={moderation}
+              access={access}
+              onClose={() => setModeration(null)}
+              onSaved={query.refresh}
+            />
+          )}
           <OperationsMetrics
             items={[
               {
@@ -197,16 +211,15 @@ export function AdminCatalogPage({
                     : "Categorias do catálogo"}
               </h2>
               <span>{number(data.pagination.total)} registros</span>
-              {data.view === "categories" &&
-                access.role === "platform_super_admin" && (
-                  <button
-                    type="button"
-                    className="admin-secondary"
-                    onClick={() => onNavigate("/admin/categorias")}
-                  >
-                    Organizar categorias <ArrowUpRight size={15} />
-                  </button>
-                )}
+              {data.view === "categories" && (
+                <button
+                  type="button"
+                  className="admin-secondary"
+                  onClick={() => onNavigate("/admin/categorias")}
+                >
+                  Organizar categorias <ArrowUpRight size={15} />
+                </button>
+              )}
             </div>
             {data.pagination.total === 0 ? (
               <p className="admin-empty">
@@ -229,6 +242,23 @@ export function AdminCatalogPage({
                     <tr key={item.id}>
                       <td data-label="Produto e categoria">
                         <strong>{item.title}</strong>
+                        <button
+                          type="button"
+                          className="admin-secondary"
+                          onClick={() =>
+                            setModeration({
+                              id: item.id,
+                              title: item.title,
+                              type: "product",
+                              revision: item.revision,
+                              hidden: item.adminHidden,
+                            })
+                          }
+                        >
+                          {item.adminHidden
+                            ? "Liberar restrição"
+                            : "Moderar produto"}
+                        </button>
                         <small>
                           {item.categoryName}
                           {!item.categoryActive && " · Categoria inativa"}
@@ -285,6 +315,23 @@ export function AdminCatalogPage({
                     <tr key={item.id}>
                       <td data-label="Loja">
                         <strong>{item.name}</strong>
+                        <button
+                          type="button"
+                          className="admin-secondary"
+                          onClick={() =>
+                            setModeration({
+                              id: item.id,
+                              title: item.name,
+                              type: "store",
+                              revision: item.revision,
+                              hidden: item.adminHidden,
+                            })
+                          }
+                        >
+                          {item.adminHidden
+                            ? "Liberar restrição"
+                            : "Moderar loja"}
+                        </button>
                         <small>{item.slug}</small>
                       </td>
                       <td data-label="Situação">

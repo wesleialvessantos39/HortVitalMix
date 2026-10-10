@@ -396,3 +396,31 @@ export async function clearProducerSnapshots() {
     finish();
   });
 }
+/** Only after the owner explicitly confirms account erasure; never on update. */
+export async function eraseOwnOfflineData(userId: string) {
+  snapshotRevision++;
+  await transaction<void>(
+    ["pending_commands", "snapshots", "meta"],
+    "readwrite",
+    (tx, finish) => {
+      for (const name of ["pending_commands", "snapshots"]) {
+        const store = tx.objectStore(name),
+          cursor = store.openCursor();
+        cursor.onsuccess = () => {
+          const row = cursor.result;
+          if (!row) return;
+          if (row.value.userId === userId) row.delete();
+          row.continue();
+        };
+      }
+      const meta = tx.objectStore("meta"),
+        session = meta.get("producerSession");
+      session.onsuccess = () => {
+        if (session.result?.session?.userId === userId)
+          meta.delete("producerSession");
+      };
+      finish();
+    },
+  );
+  changed();
+}

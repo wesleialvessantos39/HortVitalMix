@@ -125,8 +125,11 @@ export const ADMIN_NOTIFICATION_CATEGORIES: Partial<
   account_governance: ["account", "administration"],
   platform_configuration: ["administration"],
   refund_management: ["refunds"],
-  complaint_management: ["complaints", "reviews"],
-  payment_configuration: ["subscriptions", "purchases", "administration"],
+  complaint_management: ["complaints"],
+  payment_configuration: ["purchases", "administration"],
+  subscription_management: ["subscriptions"],
+  review_management: ["reviews"],
+  refund_policy: ["refunds", "administration"],
 };
 
 type Destination = {
@@ -144,7 +147,7 @@ const adminDestinations: Destination[] = [
   {
     prefix: "/admin/politica-reembolso",
     label: "Ver política de reembolso",
-    sector: "refund_management",
+    sector: "refund_policy",
   },
   {
     prefix: "/admin/denuncias",
@@ -154,7 +157,7 @@ const adminDestinations: Destination[] = [
   {
     prefix: "/admin/avaliacoes",
     label: "Consultar avaliações",
-    sector: "complaint_management",
+    sector: "review_management",
   },
   {
     prefix: "/admin/pagamentos",
@@ -164,7 +167,7 @@ const adminDestinations: Destination[] = [
   {
     prefix: "/admin/assinaturas",
     label: "Consultar assinaturas",
-    sector: "payment_configuration",
+    sector: "subscription_management",
   },
   {
     prefix: "/admin/documentos/fila",

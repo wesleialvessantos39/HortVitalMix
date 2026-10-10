@@ -55,6 +55,53 @@ async function fixture(page: Page, role: string | null = null, allowed = true) {
 }
 const loadedBuild = (page: Page) =>
   page.locator('meta[name="hvm-pwa-build"]').getAttribute("content");
+test("aviso automático de atualização mantém leitura em desktop, mobile e paisagem", async ({
+  page,
+  request,
+}) => {
+  await fixture(page, "consumer");
+  await controlled(page);
+  const original = await loadedBuild(page);
+  await page.evaluate(() => {
+    const form = document.createElement("form"),
+      input = document.createElement("input");
+    form.id = "responsive-blocker";
+    input.id = "responsive-input";
+    form.append(input);
+    document.body.append(form);
+  });
+  await page.locator("#responsive-input").fill("Formulário ainda não salvo");
+  await request.post("/__pwa_test__/switch", { data: { build: "b" } });
+  await check(page);
+  const notice = page.getByRole("complementary", {
+    name: "Atualização da plataforma",
+  });
+  await expect(notice).toContainText("Atualização aguardando operação");
+  for (const width of [320, 360, 390, 430, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: width === 768 ? 430 : 850 });
+    expect(
+      await page
+        .locator(".hvm-app-update-copy")
+        .evaluate((el) => el.getBoundingClientRect().width),
+    ).toBeGreaterThan(170);
+    expect(
+      await notice.evaluate((el) => el.getBoundingClientRect().height),
+    ).toBeLessThan(160);
+    await expect(notice.getByRole("button")).toHaveCount(0);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+  }
+  expect(await loadedBuild(page)).toBe(original);
+  await page.evaluate(() =>
+    document.getElementById("responsive-blocker")?.remove(),
+  );
+  await expect
+    .poll(() => loadedBuild(page), { timeout: 30000 })
+    .not.toBe(original);
+});
 async function ready(page: Page) {
   await expect(
     page.getByText("Aplicativo atualizado", { exact: true }),

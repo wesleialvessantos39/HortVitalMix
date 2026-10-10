@@ -73,7 +73,7 @@ reviewRouter.post("/reviews", originProtection, (req, res) =>
 adminReviewRouter.use(
   "/reviews",
   adminSessionMiddleware,
-  requireAdminSector("complaint_management"),
+  requireAdminSector("review_management"),
 );
 adminReviewRouter.get("/reviews", (req, res) =>
   run(req, res, true, () => service.adminList(req.adminActor!, listQuery(req))),

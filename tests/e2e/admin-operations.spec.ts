@@ -201,6 +201,18 @@ async function mock(
       options.requests?.push(path + url.search);
       return route.fulfill({ json: catalog(url.searchParams) });
     }
+    if (path === "/v1/admin/finance/registers")
+      return route.fulfill({
+        json: {
+          view: url.searchParams.get("view") ?? "pos",
+          rows: [],
+          total: 0,
+          page: 1,
+          pages: 1,
+          gatewayAvailable: false,
+          pendingCases: 0,
+        },
+      });
     if (path.includes("notifications"))
       return route.fulfill({
         json: {
@@ -409,11 +421,15 @@ test("poderes negados de Super não produzem chamadas de dados nem atalhos para 
     requests,
   });
   await page.goto("/admin/financeiro");
-  await expect(page.getByText("Seu perfil não tem permissão para acessar esta área.")).toBeVisible();
+  await expect(
+    page.getByText("Seu perfil não tem permissão para acessar esta área."),
+  ).toBeVisible();
   await expect(page.locator(".admin-ops-metrics")).toHaveCount(0);
   expect(requests).toEqual([]);
   await page.goto("/admin/catalogo");
-  await expect(page.getByText("Seu perfil não tem permissão para acessar esta área.")).toBeVisible();
+  await expect(
+    page.getByText("Seu perfil não tem permissão para acessar esta área."),
+  ).toBeVisible();
   await expect(page.locator(".admin-ops-metrics")).toHaveCount(0);
   expect(requests).toEqual([]);
   await expect(

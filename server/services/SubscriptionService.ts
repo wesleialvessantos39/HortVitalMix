@@ -4,6 +4,11 @@ import type { AdminActorContext } from "../middleware/adminSession.ts";
 import { getPaymentGateway } from "../payments/gateway.ts";
 import { PaymentService } from "./PaymentService.ts";
 import {
+  currentSubscriptionRefundPolicy,
+  openSubscriptionRefund,
+  quoteSubscriptionCancellation,
+} from "./SubscriptionRefundService.ts";
+import {
   CommerceError,
   commerceTransaction,
   commerceIdentity,
@@ -60,7 +65,7 @@ export function subscriptionPlan(row: Record<string, any>): SubscriptionPlan {
   });
 }
 const iso = (v: Date | string | null) => (v ? new Date(v).toISOString() : null);
-async function views(
+export async function subscriptionViews(
   c: PoolClient,
   userId: string,
   id?: string,
@@ -208,7 +213,7 @@ export const SubscriptionService = {
     return commerceTransaction(async (c) => {
       await commerceIdentity(c, userId);
       return {
-        subscriptions: await views(c, userId),
+        subscriptions: await subscriptionViews(c, userId),
         gatewayAvailable: !!getPaymentGateway(),
       };
     });
@@ -378,6 +383,10 @@ export const SubscriptionService = {
                 JSON.stringify(s.basketTemplate),
               ],
             );
+          await c.query(
+            "UPDATE public.app_subscriptions SET refund_policy_snapshot=$2 WHERE id=$1",
+            [created.id, await currentSubscriptionRefundPolicy(c)],
+          );
           await commerceAudit(
             c,
             userId,
@@ -396,7 +405,7 @@ export const SubscriptionService = {
             context,
             commandId,
           );
-          return (await views(c, userId, created.id))[0];
+          return (await subscriptionViews(c, userId, created.id))[0];
         },
       );
     });
@@ -443,6 +452,7 @@ export const SubscriptionService = {
               [id],
             );
           } else {
+            const quote = await quoteSubscriptionCancellation(c, userId, id);
             await c.query(
               "UPDATE public.app_subscriptions SET status='cancelled',cancelled_at=clock_timestamp(),revision=revision+1,updated_at=clock_timestamp() WHERE id=$1",
               [id],
@@ -451,6 +461,20 @@ export const SubscriptionService = {
               "UPDATE public.app_recurrence_schedules SET is_active=false WHERE subscription_id=$1",
               [id],
             );
+            await c.query(
+              "UPDATE public.app_billing_cycles SET status='failed' WHERE subscription_id=$1 AND status='pending' AND payment_intent_id IS NULL AND payment_creation_state='waiting'",
+              [id],
+            );
+            if (quote.eligibleAmountCents > 0)
+              await openSubscriptionRefund(
+                c,
+                userId,
+                id,
+                quote.eligibleAmountCents,
+                "Solicitação vinculada ao cancelamento da assinatura; elegibilidade calculada pela política contratada.",
+                context,
+                commandId,
+              );
           }
           await commerceAudit(
             c,
@@ -463,7 +487,7 @@ export const SubscriptionService = {
             context,
             commandId,
           );
-          return (await views(c, userId, id))[0];
+          return (await subscriptionViews(c, userId, id))[0];
         },
       );
     });
@@ -596,13 +620,13 @@ export const SubscriptionService = {
       payment,
       subscription: await commerceTransaction(async (c) => {
         await commerceIdentity(c, userId);
-        return (await views(c, userId, id))[0];
+        return (await subscriptionViews(c, userId, id))[0];
       }),
     };
   },
   async adminPlans(actor: AdminActorContext) {
     return commerceTransaction(async (c) => {
-      await commerceAdmin(c, actor, "payment_configuration");
+      await commerceAdmin(c, actor, "subscription_management");
       return {
         plans: (
           await c.query(
@@ -629,7 +653,7 @@ export const SubscriptionService = {
       input = update?.plan ?? PlanInputSchema.parse(raw);
     if (id) z.uuid().parse(id);
     return commerceTransaction(async (c) => {
-      await commerceAdmin(c, actor, "payment_configuration");
+      await commerceAdmin(c, actor, "subscription_management");
       return commerceCommand(
         c,
         actor.userId,

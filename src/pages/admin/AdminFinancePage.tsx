@@ -6,6 +6,7 @@ import {
   type AdminFinanceQuery,
 } from "../../../shared/contracts/adminOperations";
 import { PageLoading } from "../../components/PageLoading";
+import { AdminFinanceRegisters } from "./AdminFinanceRegisters";
 import {
   localToday,
   money,
@@ -101,6 +102,7 @@ export function AdminFinancePage({
         ]}
         onChange={changeView}
       />
+      <AdminFinanceRegisters access={access} onNavigate={onNavigate} />
       <form
         className="admin-card admin-ops-filters"
         onSubmit={(event) => {

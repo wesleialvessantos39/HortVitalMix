@@ -217,9 +217,10 @@ describe.runIf(!!process.env.HVM_T23_LOCAL_DATABASE_URL)(
           ]);
         for (const b of buyers.reverse()) await b.cleanup();
         if (catalog) await catalog.cleanup();
-        await pool().query("DELETE FROM app_plans WHERE id=ANY($1::uuid[])", [
-          planIds,
-        ]);
+        await pool().query(
+          "UPDATE app_plans SET is_active=false WHERE id=ANY($1::uuid[])",
+          [planIds],
+        );
       } finally {
         await dbPool?.end();
       }
@@ -673,7 +674,7 @@ describe.runIf(!!process.env.HVM_T23_LOCAL_DATABASE_URL)(
         (await service.producerTrial(catalog.a.userId)).trial?.isConverted,
       ).toBe(false);
     });
-  it("admin configura/inativa plano com revisão; delegação inexistente é recusada", async () => {
+    it("admin configura/inativa plano com revisão; delegação inexistente é recusada", async () => {
       const body = {
         slug: "admin-" + randomUUID(),
         name: "Plano do operador local",
@@ -717,18 +718,70 @@ describe.runIf(!!process.env.HVM_T23_LOCAL_DATABASE_URL)(
       await expect(
         service.adminPlans({ ...admin, userId: catalog.a.userId }),
       ).rejects.toMatchObject({ code: "FORBIDDEN" });
-  });
-  it("pausa expirada retoma a recorrência e permite uma nova pausa de 14 dias",async()=>{
-    const v=await subscription(),b=await bill(v),paused=await service.pauseSubscription(v.s.id,v.b.userId,{expectedRevision:b.subscription.revision},randomUUID(),checkoutAudit());
-    await pool().query("UPDATE app_subscriptions SET paused_at=statement_timestamp()-interval '15 days',pause_until=statement_timestamp()-interval '1 day' WHERE id=$1",[v.s.id]);
-    const resumed=(await service.mine(v.b.userId)).subscriptions[0];expect(resumed.status).toBe("active");expect(resumed.recurrences[0].isActive).toBe(true);
-    expect((await service.pauseSubscription(v.s.id,v.b.userId,{expectedRevision:paused.revision},randomUUID(),checkoutAudit())).status).toBe("paused");
-  });
-  it("após o trial, apenas a confirmação Pix converte o produtor",async()=>{
-    const p=await plan(4900,"producer"),s=await service.createSubscription(catalog.a.userId,{planId:p},randomUUID(),checkoutAudit());
-    vi.useFakeTimers({toFake:["Date"]});vi.setSystemTime(Date.now()+31*86400000);
-    try{const b=await service.runBillingCycle(s.id,catalog.a.userId,{},randomUUID(),checkoutAudit());expect((await service.producerTrial(catalog.a.userId)).trial?.isConverted).toBe(false);await approve(catalog.a.userId,b.payment!.id);expect((await service.producerTrial(catalog.a.userId)).trial?.isConverted).toBe(true);expect((await service.mine(catalog.a.userId)).subscriptions.find(x=>x.id===s.id)?.status).toBe("active");}finally{vi.useRealTimers();}
-  });
+    });
+    it("pausa expirada retoma a recorrência e permite uma nova pausa de 14 dias", async () => {
+      const v = await subscription(),
+        b = await bill(v),
+        paused = await service.pauseSubscription(
+          v.s.id,
+          v.b.userId,
+          { expectedRevision: b.subscription.revision },
+          randomUUID(),
+          checkoutAudit(),
+        );
+      await pool().query(
+        "UPDATE app_subscriptions SET paused_at=statement_timestamp()-interval '15 days',pause_until=statement_timestamp()-interval '1 day' WHERE id=$1",
+        [v.s.id],
+      );
+      const resumed = (await service.mine(v.b.userId)).subscriptions[0];
+      expect(resumed.status).toBe("active");
+      expect(resumed.recurrences[0].isActive).toBe(true);
+      expect(
+        (
+          await service.pauseSubscription(
+            v.s.id,
+            v.b.userId,
+            { expectedRevision: paused.revision },
+            randomUUID(),
+            checkoutAudit(),
+          )
+        ).status,
+      ).toBe("paused");
+    });
+    it("após o trial, apenas a confirmação Pix converte o produtor", async () => {
+      const p = await plan(4900, "producer"),
+        s = await service.createSubscription(
+          catalog.a.userId,
+          { planId: p },
+          randomUUID(),
+          checkoutAudit(),
+        );
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(Date.now() + 31 * 86400000);
+      try {
+        const b = await service.runBillingCycle(
+          s.id,
+          catalog.a.userId,
+          {},
+          randomUUID(),
+          checkoutAudit(),
+        );
+        expect(
+          (await service.producerTrial(catalog.a.userId)).trial?.isConverted,
+        ).toBe(false);
+        await approve(catalog.a.userId, b.payment!.id);
+        expect(
+          (await service.producerTrial(catalog.a.userId)).trial?.isConverted,
+        ).toBe(true);
+        expect(
+          (await service.mine(catalog.a.userId)).subscriptions.find(
+            (x) => x.id === s.id,
+          )?.status,
+        ).toBe("active");
+      } finally {
+        vi.useRealTimers();
+      }
+    });
     it("exclusão homologada de endereço/conta continua; trial anti-renovação conserva prazo", async () => {
       const v = await subscription();
       await pool().query("DELETE FROM app_user_addresses WHERE id=$1", [
@@ -737,12 +790,18 @@ describe.runIf(!!process.env.HVM_T23_LOCAL_DATABASE_URL)(
       expect(
         (await service.mine(v.b.userId)).subscriptions[0].recurrences,
       ).toHaveLength(1);
-      await v.b.cleanup();
+      await commerceTransaction((c) =>
+        c.query("SELECT erase_public_account($1,'consumer',$2)", [
+          v.b.userId,
+          randomUUID(),
+        ]),
+      );
       expect(
         (
-          await pool().query("SELECT id FROM app_subscriptions WHERE id=$1", [
-            v.s.id,
-          ])
+          await pool().query(
+            "SELECT id FROM app_subscriptions WHERE id=$1 AND user_id IS NOT NULL",
+            [v.s.id],
+          )
         ).rows,
       ).toHaveLength(0);
       expect(

@@ -1,0 +1,61 @@
+
+> hortivitalmix@0.1.0 test:pwa:browser
+> node scripts/prepare-pwa-tests.mjs && playwright test -c playwright.pwa.config.ts
+
+Two local PWA builds prepared; no native package or remote data used.
+[WebServer] (node:40884) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 47 tests using 1 worker
+
+(node:40899) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/pwa/installation-updates.spec.ts:58:1 › aviso automático de atualização mantém leitura em desktop, mobile e paisagem (19.8s)
+  ✓   2 tests/pwa/installation-updates.spec.ts:143:3 › home installation cards fit 320px (2.8s)
+  ✓   3 tests/pwa/installation-updates.spec.ts:143:3 › home installation cards fit 360px (2.8s)
+  ✓   4 tests/pwa/installation-updates.spec.ts:143:3 › home installation cards fit 390px (2.4s)
+  ✓   5 tests/pwa/installation-updates.spec.ts:143:3 › home installation cards fit 430px (3.0s)
+  ✓   6 tests/pwa/installation-updates.spec.ts:143:3 › home installation cards fit 768px (2.6s)
+  ✓   7 tests/pwa/installation-updates.spec.ts:143:3 › home installation cards fit 1024px (2.0s)
+  ✓   8 tests/pwa/installation-updates.spec.ts:143:3 › home installation cards fit 1440px (3.3s)
+  ✓   9 tests/pwa/installation-updates.spec.ts:175:3 › public cards and installation guides fit 320×700 (3.4s)
+  ✓  10 tests/pwa/installation-updates.spec.ts:175:3 › public cards and installation guides fit 360×780 (3.3s)
+  ✓  11 tests/pwa/installation-updates.spec.ts:175:3 › public cards and installation guides fit 390×844 (2.6s)
+  ✓  12 tests/pwa/installation-updates.spec.ts:175:3 › public cards and installation guides fit 430×932 (2.8s)
+  ✓  13 tests/pwa/installation-updates.spec.ts:175:3 › public cards and installation guides fit 768×1024 (3.2s)
+  ✓  14 tests/pwa/installation-updates.spec.ts:175:3 › public cards and installation guides fit 1024×768 (3.8s)
+  ✓  15 tests/pwa/installation-updates.spec.ts:175:3 › public cards and installation guides fit 1440×900 (2.5s)
+  ✓  16 tests/pwa/installation-updates.spec.ts:175:3 › public cards and installation guides fit 844×390 (3.1s)
+  ✓  17 tests/pwa/installation-updates.spec.ts:223:5 › platform_admin with configuration power: PWA central fits 320px (2.9s)
+  ✓  18 tests/pwa/installation-updates.spec.ts:223:5 › platform_admin with configuration power: PWA central fits 390px (3.1s)
+  ✓  19 tests/pwa/installation-updates.spec.ts:223:5 › platform_admin with configuration power: PWA central fits 768px (3.0s)
+  ✓  20 tests/pwa/installation-updates.spec.ts:223:5 › platform_admin with configuration power: PWA central fits 1440px (2.9s)
+  ✓  21 tests/pwa/installation-updates.spec.ts:223:5 › platform_super_admin with configuration power: PWA central fits 320px (1.9s)
+  ✓  22 tests/pwa/installation-updates.spec.ts:223:5 › platform_super_admin with configuration power: PWA central fits 390px (3.0s)
+  ✓  23 tests/pwa/installation-updates.spec.ts:223:5 › platform_super_admin with configuration power: PWA central fits 768px (2.8s)
+  ✓  24 tests/pwa/installation-updates.spec.ts:223:5 › platform_super_admin with configuration power: PWA central fits 1440px (2.9s)
+  ✓  25 tests/pwa/installation-updates.spec.ts:252:3 › platform_admin: explicit power denial protects the department (2.8s)
+  ✓  26 tests/pwa/installation-updates.spec.ts:252:3 › platform_super_admin: explicit power denial protects the department (2.7s)
+  ✓  27 tests/pwa/installation-updates.spec.ts:263:3 › consumer: shared registration works without opening a producer screen (2.2s)
+  ✓  28 tests/pwa/installation-updates.spec.ts:263:3 › producer: shared registration works without opening a producer screen (3.1s)
+  ✓  29 tests/pwa/installation-updates.spec.ts:275:1 › Android button uses a real event contract and treats simulated accept, cancel and browser confirmation separately (4.1s)
+  ✓  30 tests/pwa/installation-updates.spec.ts:319:3 › iphone: Safari assistant and device signals (2.9s)
+  ✓  31 tests/pwa/installation-updates.spec.ts:319:3 › ipad: Safari assistant and device signals (2.9s)
+  ✓  32 tests/pwa/installation-updates.spec.ts:319:3 › internal: Safari assistant and device signals (2.9s)
+  ✓  33 tests/pwa/installation-updates.spec.ts:349:1 › standalone suppresses repeated installation without trusting saved preferences (2.9s)
+  ✓  34 tests/pwa/installation-updates.spec.ts:365:1 › a new complete build applies automatically and preserves IndexedDB (13.5s)
+  ✓  35 tests/pwa/installation-updates.spec.ts:413:3 › update waits for form and resumes automatically (15.9s)
+  ✓  36 tests/pwa/installation-updates.spec.ts:413:3 › update waits for upload and resumes automatically (17.4s)
+  ✓  37 tests/pwa/installation-updates.spec.ts:413:3 › update waits for confirmation and resumes automatically (17.8s)
+  ✓  38 tests/pwa/installation-updates.spec.ts:413:3 › update waits for offline-queue and resumes automatically (16.8s)
+  ✓  39 tests/pwa/installation-updates.spec.ts:526:1 › two tabs wait for the dirty tab before activating either shell (18.3s)
+  ✓  40 tests/pwa/installation-updates.spec.ts:570:1 › failed downloads preserve the old cache and recover after a later verification (12.4s)
+  ✓  41 tests/pwa/installation-updates.spec.ts:599:1 › offline preserves the shell; reconnection checks the new build without reinstalling (11.9s)
+  ✓  42 tests/pwa/installation-updates.spec.ts:624:1 › private/API responses and authorization are absent from static caches (3.9s)
+  ✓  43 tests/pwa/installation-updates.spec.ts:649:1 › checkout remains on the old version until its activity is concluded (16.1s)
+  ✓  44 tests/pwa/installation-updates.spec.ts:676:1 › first registration controls the identical shell for offline use without reloading work (2.7s)
+  ✓  45 tests/pwa/installation-updates.spec.ts:690:1 › a delayed activation message from an already active worker cannot freeze typing (1.5s)
+  ✓  46 tests/pwa/installation-updates.spec.ts:729:1 › the first automatic activation never leases the first user input (2.9s)
+  ✓  47 tests/pwa/installation-updates.spec.ts:758:1 › two already open documents with different build identities transition coherently (17.3s)
+
+  47 passed (4.7m)

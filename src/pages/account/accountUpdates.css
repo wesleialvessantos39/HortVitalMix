@@ -1,0 +1,75 @@
+.account-updates {
+  display: grid;
+  gap: 18px;
+  max-width: 900px;
+  margin: 0 auto;
+  min-width: 0;
+  padding: 20px;
+}
+.account-updates header {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.account-updates header > svg {
+  flex-shrink: 0;
+  color: #315e3c;
+}
+.account-updates h1 {
+  margin: 0;
+  font-size: clamp(1.35rem, 3vw, 1.9rem);
+}
+.account-updates h2 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 1.15rem;
+}
+.account-updates p {
+  line-height: 1.6;
+  overflow-wrap: break-word;
+  color: #526654;
+}
+.account-updates article {
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #d6e3d4;
+  border-radius: 18px;
+  padding: 20px;
+}
+.account-updates dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.account-updates dt {
+  font-size: 0.85rem;
+  color: #667568;
+}
+.account-updates dd {
+  margin: 5px 0;
+  overflow-wrap: anywhere;
+}
+.account-updates button {
+  min-height: 44px;
+  max-width: 100%;
+  white-space: normal;
+}
+.account-updates button:focus-visible {
+  outline: 3px solid #b88036;
+  outline-offset: 3px;
+}
+@media (max-width: 480px) {
+  .account-updates {
+    padding: 12px;
+  }
+  .account-updates article {
+    padding: 16px;
+  }
+  .account-updates dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .account-updates button {
+    width: 100%;
+  }
+}
