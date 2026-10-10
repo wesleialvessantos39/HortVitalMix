@@ -43,7 +43,7 @@ describe("Trilha 05 — regressões de selagem v11", () => {
     expect(adminLogin).not.toContain("invalid_credentials");
     expect(adminLogin).not.toContain("ADMIN_GOVERNANCE_LOGIN_REQUIRED");
     expect(app).toContain('path === "/acesso/administracao"');
-    expect(router).toContain('path==="/acesso/administracao"');
+    expect(router).toMatch(/path\s*===\s*"\/acesso\/administracao"/);
   });
 
   it("reconcilia somente os aliases físicos conhecidos das migrations T05", () => {

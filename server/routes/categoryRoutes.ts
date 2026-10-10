@@ -2,7 +2,6 @@ import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import {
   adminSessionMiddleware,
-  requireSuperAdmin,
   requireAdminSector,
   requireRecentAuth,
 } from "../middleware/adminSession.ts";
@@ -38,8 +37,11 @@ categoryRouter.get("/categories", async (_req, res) => {
 // There is intentionally no public mutation route, including slug edits.
 categoryRouter.use(
   "/admin/categories",
+  (_req, res, next) => {
+    res.set("Cache-Control", "private, no-store");
+    next();
+  },
   adminSessionMiddleware,
-  requireSuperAdmin,
   requireAdminSector("catalog_moderation"),
 );
 categoryRouter.get("/admin/categories", async (req, res) => {

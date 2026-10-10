@@ -4,6 +4,10 @@ import { SubscriptionService as service } from "../services/SubscriptionService.
 import { CommerceError } from "../services/CommerceSupport.ts";
 import { CheckoutCommandIdSchema } from "../../shared/contracts/checkout.ts";
 import { originProtection } from "../security/originProtection.ts";
+import { publicUser } from "../security/publicRole.ts";
+import { businessQuery } from "../security/businessQuery.ts";
+import { SubscriptionRefundService } from "../services/SubscriptionRefundService.ts";
+import { AdminSubscriptionService } from "../services/AdminSubscriptionService.ts";
 import {
   adminSessionMiddleware,
   requireAdminSector,
@@ -18,8 +22,7 @@ const context = (req: Request) => ({
 const command = (req: Request) =>
   CheckoutCommandIdSchema.parse(req.headers["x-command-id"]);
 const user = (req: Request) => {
-  if (!req.actor) throw new CommerceError("AUTH_REQUIRED", 401);
-  return req.actor.userId;
+  return publicUser(req);
 };
 async function run(
   req: Request,
@@ -63,6 +66,125 @@ subscriptionRouter.get("/subscription-options/:storeId", (req, res) =>
 subscriptionRouter.get("/subscriptions", (req, res) =>
   run(req, res, true, () => service.mine(user(req))),
 );
+subscriptionRouter.get("/subscription-refund-policy", (req, res) =>
+  run(req, res, false, () => SubscriptionRefundService.publicPolicy()),
+);
+subscriptionRouter.get("/subscriptions/:id/cancellation", (req, res) =>
+  run(req, res, true, () =>
+    SubscriptionRefundService.cancellationQuote(user(req), req.params.id),
+  ),
+);
+subscriptionRouter.get("/subscription-refunds", (req, res) =>
+  run(req, res, true, () =>
+    SubscriptionRefundService.list(user(req), businessQuery(req)),
+  ),
+);
+subscriptionRouter.post("/subscription-refunds", originProtection, (req, res) =>
+  run(req, res, true, () =>
+    SubscriptionRefundService.request(
+      user(req),
+      req.body,
+      command(req),
+      context(req),
+    ),
+  ),
+);
+subscriptionRouter.post(
+  "/subscription-refunds/:id/messages",
+  originProtection,
+  (req, res) =>
+    run(req, res, true, () =>
+      SubscriptionRefundService.comment(
+        user(req),
+        req.params.id,
+        z.object({ note: z.string() }).strict().parse(req.body).note,
+        command(req),
+        context(req),
+      ),
+    ),
+);
+adminSubscriptionRouter.use(
+  "/subscription-refund-policy",
+  adminSessionMiddleware,
+  requireAdminSector("refund_policy"),
+);
+adminSubscriptionRouter.get("/subscription-refund-policy", (req, res) =>
+  run(req, res, true, () =>
+    SubscriptionRefundService.adminPolicy(req.adminActor!),
+  ),
+);
+adminSubscriptionRouter.post(
+  "/subscription-refund-policy",
+  originProtection,
+  requireRecentAuth,
+  (req, res) =>
+    run(req, res, true, () =>
+      SubscriptionRefundService.savePolicy(
+        req.adminActor!,
+        req.body,
+        command(req),
+        context(req),
+      ),
+    ),
+);
+adminSubscriptionRouter.use(
+  "/subscription-refunds",
+  adminSessionMiddleware,
+  requireAdminSector("refund_management"),
+);
+adminSubscriptionRouter.get("/subscription-refunds", (req, res) =>
+  run(req, res, true, () =>
+    SubscriptionRefundService.list(
+      req.adminActor!.userId,
+      businessQuery(req),
+      req.adminActor!,
+    ),
+  ),
+);
+adminSubscriptionRouter.post(
+  "/subscription-refunds/:id/decision",
+  originProtection,
+  requireRecentAuth,
+  (req, res) =>
+    run(req, res, true, () =>
+      SubscriptionRefundService.decide(
+        req.adminActor!,
+        req.params.id,
+        req.body,
+        command(req),
+        context(req),
+      ),
+    ),
+);
+adminSubscriptionRouter.post(
+  "/subscription-refunds/:id/process",
+  originProtection,
+  requireRecentAuth,
+  (req, res) =>
+    run(req, res, true, () =>
+      SubscriptionRefundService.process(
+        req.adminActor!,
+        req.params.id,
+        context(req),
+      ),
+    ),
+);
+adminSubscriptionRouter.post(
+  "/subscription-refunds/:id/messages",
+  originProtection,
+  requireRecentAuth,
+  (req, res) =>
+    run(req, res, true, () =>
+      SubscriptionRefundService.comment(
+        req.adminActor!.userId,
+        req.params.id,
+        z.object({ note: z.string() }).strict().parse(req.body).note,
+        command(req),
+        context(req),
+        req.adminActor!,
+      ),
+    ),
+);
 subscriptionRouter.get("/producer/trial", (req, res) =>
   run(req, res, true, () => service.producerTrial(user(req))),
 );
@@ -104,7 +226,37 @@ subscriptionRouter.post(
 adminSubscriptionRouter.use(
   "/subscription-plans",
   adminSessionMiddleware,
-  requireAdminSector("payment_configuration"),
+  requireAdminSector("subscription_management"),
+);
+adminSubscriptionRouter.use(
+  "/subscriptions",
+  adminSessionMiddleware,
+  requireAdminSector("subscription_management"),
+);
+adminSubscriptionRouter.get("/subscriptions", (req, res) =>
+  run(req, res, true, () =>
+    AdminSubscriptionService.list(req.adminActor!, businessQuery(req)),
+  ),
+);
+adminSubscriptionRouter.get("/subscriptions/:id", (req, res) =>
+  run(req, res, true, () =>
+    AdminSubscriptionService.detail(req.adminActor!, req.params.id),
+  ),
+);
+adminSubscriptionRouter.post(
+  "/subscriptions/:id/cancel",
+  originProtection,
+  requireRecentAuth,
+  (req, res) =>
+    run(req, res, true, () =>
+      AdminSubscriptionService.cancel(
+        req.adminActor!,
+        req.params.id,
+        req.body,
+        command(req),
+        context(req),
+      ),
+    ),
 );
 adminSubscriptionRouter.get("/subscription-plans", (req, res) =>
   run(req, res, true, () => service.adminPlans(req.adminActor!)),

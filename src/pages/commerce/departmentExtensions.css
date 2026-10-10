@@ -1,0 +1,116 @@
+.department-extension {
+  min-width: 0;
+  padding: 20px;
+  margin: 18px 0;
+  border: 1px solid #d6e3d4;
+  border-radius: 18px;
+  background: #fff;
+  display: grid;
+  gap: 14px;
+}
+.department-extension header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+.department-extension h2,
+.department-extension h3 {
+  margin: 0 0 10px;
+  color: #254e32;
+}
+.department-extension p {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.department-extension label {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+  min-width: 0;
+}
+.department-extension input,
+.department-extension select,
+.department-extension textarea {
+  font: inherit;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 11px;
+  border: 1px solid #cbdacb;
+  border-radius: 9px;
+  min-height: 44px;
+}
+.department-extension textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+.department-extension button {
+  min-height: 44px;
+  white-space: normal;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+.department-extension form {
+  display: grid;
+  gap: 14px;
+}
+.department-extension-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 14px;
+}
+.department-extension article {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #d6e3d4;
+  border-radius: 12px;
+}
+.department-extension nav,
+.department-extension-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.department-extension-check {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 10px;
+}
+.department-extension-check input {
+  width: 22px;
+  min-height: 22px;
+  flex-shrink: 0;
+}
+.department-extension summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.department-extension button:focus-visible,
+.department-extension summary:focus-visible {
+  outline: 3px solid #b88036;
+  outline-offset: 3px;
+}
+@media (max-width: 480px) {
+  .department-extension {
+    padding: 14px;
+  }
+  .department-extension-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .department-extension nav {
+    justify-content: space-between;
+  }
+}
+
+.department-extension-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 14px;
+}

@@ -8,8 +8,11 @@ export const ADMIN_SECTOR_LABELS: Record<AdminSectorCode, string> = {
   account_governance: "Gestão de contas e acessos",
   platform_configuration: "Configuração da plataforma e BI",
   refund_management: "Gestão de reembolsos",
-  complaint_management: "Denúncias e avaliações",
-  payment_configuration: "Pagamentos e assinaturas",
+  complaint_management: "Denúncias e segurança",
+  payment_configuration: "Pagamentos",
+  subscription_management: "Assinaturas e planos",
+  review_management: "Avaliações e reputação",
+  refund_policy: "Política de reembolso",
 };
 
 type Access = {

@@ -55,13 +55,6 @@ export function AppUpdateNotice({
               : "A nova versão será aplicada automaticamente quando for seguro em todas as abas.")}
         </p>
       </div>
-      {!applying && (
-        <div className="hvm-app-update-actions">
-          <button type="button" onClick={() => void pwa.checkUpdates()}>
-            Verificar atualização
-          </button>
-        </div>
-      )}
     </aside>
   );
 }

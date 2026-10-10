@@ -1,0 +1,115 @@
+{
+  "at": "2026-10-10T17:28:00Z",
+  "schema": 71,
+  "migrationCount": 78,
+  "migrationHistoryHash": "636b80e93683ae0af7fb587f902125dfedec42aaf4a29a0a01419eeaa0f32db5",
+  "physicalMigrations": [
+    {
+      "version": "20261010172735",
+      "name": "departments_subscription_refunds"
+    },
+    {
+      "version": "20261010172743",
+      "name": "account_erasure_custody"
+    },
+    {
+      "version": "20261010172754",
+      "name": "catalog_finance_operations"
+    }
+  ],
+  "preservation": {
+    "comparedRelations": 137,
+    "originalRowsPreserved": true,
+    "originalArchivesPreserved": true,
+    "onlyExpectedChange": "app_admin_sectors: 9→12",
+    "newSchemaColumnsExcludedFromComparison": true
+  },
+  "security": {
+    "public_erase": false,
+    "refund_cases": 0,
+    "sector_count": 12,
+    "table_security": [
+      {
+        "rls": true,
+        "force": true,
+        "table": "app_account_erasure_receipts",
+        "anon_read": false,
+        "authenticated_read": false
+      },
+      {
+        "rls": true,
+        "force": true,
+        "table": "app_catalog_moderation_history",
+        "anon_read": false,
+        "authenticated_read": false
+      },
+      {
+        "rls": true,
+        "force": true,
+        "table": "app_erasure_evidence_ids",
+        "anon_read": false,
+        "authenticated_read": false
+      },
+      {
+        "rls": true,
+        "force": true,
+        "table": "app_finance_cases",
+        "anon_read": false,
+        "authenticated_read": false
+      },
+      {
+        "rls": true,
+        "force": true,
+        "table": "app_property_archive_deletions",
+        "anon_read": false,
+        "authenticated_read": false
+      },
+      {
+        "rls": true,
+        "force": true,
+        "table": "app_review_moderation_history",
+        "anon_read": false,
+        "authenticated_read": false
+      },
+      {
+        "rls": true,
+        "force": true,
+        "table": "app_subscription_refund_history",
+        "anon_read": false,
+        "authenticated_read": false
+      },
+      {
+        "rls": true,
+        "force": true,
+        "table": "app_subscription_refund_items",
+        "anon_read": false,
+        "authenticated_read": false
+      },
+      {
+        "rls": true,
+        "force": true,
+        "table": "app_subscription_refund_policies",
+        "anon_read": false,
+        "authenticated_read": false
+      },
+      {
+        "rls": true,
+        "force": true,
+        "table": "app_subscription_refunds",
+        "anon_read": false,
+        "authenticated_read": false
+      }
+    ],
+    "erasure_receipts": 0,
+    "authenticated_erase": false,
+    "public_archive_delete": false
+  },
+  "tests": {
+    "unitAndHttp": 947,
+    "postgres": 80,
+    "pwaBrowser": 47,
+    "responsiveBrowser": 93,
+    "physicalAndroidIos": "not_performed",
+    "paymentProvider": "simulated_locally_only"
+  }
+}

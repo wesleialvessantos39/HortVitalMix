@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 68,
+  "schemaVersion": 71,
   "migrations": [
     {
       "version": "20260919030126",
@@ -375,7 +375,22 @@
       "version": "20261009170751",
       "name": "mobile_release_ledger",
       "file": "20261009170751_mobile_release_ledger.sql"
+    },
+    {
+      "version": "20261010143000",
+      "name": "departments_subscription_refunds",
+      "file": "20261010143000_departments_subscription_refunds.sql"
+    },
+    {
+      "version": "20261010150000",
+      "name": "account_erasure_custody",
+      "file": "20261010150000_account_erasure_custody.sql"
+    },
+    {
+      "version": "20261010153000",
+      "name": "catalog_finance_operations",
+      "file": "20261010153000_catalog_finance_operations.sql"
     }
   ],
-  "migrationHistoryHash": "ae1874579bb17297df3536863b1c01469c278ee3ebd52bb12990e417c7fbe549"
+  "migrationHistoryHash": "636b80e93683ae0af7fb587f902125dfedec42aaf4a29a0a01419eeaa0f32db5"
 }

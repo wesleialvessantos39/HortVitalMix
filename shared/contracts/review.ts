@@ -11,6 +11,8 @@ export const CreateReviewSchema = z
 export const ModerateReviewSchema = z
   .object({
     reason: z.string().trim().min(10).max(500),
+    action: z.enum(["hide", "restore"]).default("hide"),
+    expectedRevision: z.number().int().positive().optional(),
   })
   .strict();
 export const ReviewListQuerySchema = z
@@ -20,6 +22,9 @@ export const ReviewListQuerySchema = z
   .strict();
 export const AdminReviewQuerySchema = ReviewListQuerySchema.extend({
   state: z.enum(["published", "moderated", "all"]).default("published"),
+  search: z.string().trim().max(80).default(""),
+  rating: z.coerce.number().int().min(1).max(5).optional(),
+  storeId: z.uuid().optional(),
 }).strict();
 export const PublicReviewSchema = z
   .object({
@@ -65,6 +70,18 @@ export const AdminReviewSchema = PublicReviewSchema.extend({
   moderationReason: z.string().nullable(),
   moderatedBy: z.uuid().nullable(),
   moderatedAt: z.iso.datetime().nullable(),
+  revision: z.number().int().positive().default(1),
+  history: z
+    .array(
+      z
+        .object({
+          action: z.enum(["hide", "restore"]),
+          reason: z.string(),
+          createdAt: z.iso.datetime(),
+        })
+        .strict(),
+    )
+    .default([]),
 }).strict();
 export const AdminReviewListSchema = z
   .object({
@@ -72,6 +89,13 @@ export const AdminReviewListSchema = z
     page: z.number().int().positive(),
     pages: z.number().int().positive(),
     total: z.number().int().nonnegative(),
+    metrics: z
+      .object({
+        published: z.number().int().nonnegative(),
+        moderated: z.number().int().nonnegative(),
+        averageRating: z.number().min(0).max(5),
+      })
+      .optional(),
   })
   .strict();
 export type PublicReview = z.infer<typeof PublicReviewSchema>;

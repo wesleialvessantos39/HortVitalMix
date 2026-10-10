@@ -17,6 +17,7 @@ import {
 import { AdminReauthentication } from "../../components/commerce/AdminReauthentication";
 import { useSession } from "../../hooks/useSession";
 import { CalendarDays, ChevronUp, Plus } from "lucide-react";
+import { AdminSubscriptionsPanel } from "./AdminSubscriptionsPanel";
 import "../public/subscriptions.css";
 type Draft = {
   slug: string;
@@ -147,6 +148,10 @@ export default function AdminSubscriptionPlansPage() {
       setNotice(
         "Plano salvo. Contratos existentes mantêm as condições contratadas.",
       );
+      editor.current?.dispatchEvent(
+        new Event("hvm:form-saved", { bubbles: true }),
+      );
+      window.dispatchEvent(new Event("hvm:departments-changed"));
       await load();
     } catch (e) {
       if ((e as ApiFailure).message === "ADMIN_REAUTHENTICATION_REQUIRED")
@@ -168,11 +173,12 @@ export default function AdminSubscriptionPlansPage() {
         <div>
           <span className="admin-kicker">Assinaturas e recorrência</span>
           <h1>
-            <CalendarDays aria-hidden="true" /> Planos de assinatura
+            <CalendarDays aria-hidden="true" /> Assinaturas e planos
           </h1>
           <p>
-            Defina nomes, preços e frequências antes de publicar. A cobrança Pix
-            utiliza a conta de recebimento já configurada.
+            Crie planos para consumidores e produtores e acompanhe contratos.
+            Cobranças dependem de um provedor conectado; o cadastro de planos já
+            está disponível.
           </p>
         </div>
         {plans.length > 0 && (
@@ -410,6 +416,7 @@ export default function AdminSubscriptionPlansPage() {
           Nenhum plano foi definido. Cadastre o primeiro acima.
         </p>
       )}
+      <AdminSubscriptionsPanel />
     </section>
   );
 }

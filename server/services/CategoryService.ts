@@ -1,3 +1,5 @@
+import { commerceAdmin, CommerceError } from "./CommerceSupport.ts";
+import { hasAdminPermission } from "../../shared/adminPermissions.ts";
 import { createHash, randomUUID } from "node:crypto";
 import type { PoolClient } from "pg";
 import { dbPool } from "../db/pool.ts";
@@ -62,6 +64,8 @@ function pool() {
   return dbPool;
 }
 function translate(error: unknown): never {
+  if (error instanceof CommerceError)
+    throw new CategoryError(error.code, error.status);
   if (error instanceof CategoryError) throw error;
   if (error instanceof ReauthRequiredError)
     throw new CategoryError(error.code, 401);
@@ -82,22 +86,10 @@ async function authorize(
   actor: AdminActorContext,
   write: boolean,
 ) {
-  if (!actor.isSuperAdmin || actor.role !== "platform_super_admin")
+  if (!hasAdminPermission(actor, "catalog_moderation"))
     throw new CategoryError("FORBIDDEN", 403);
   if (write) await assertRecentAuth(actor);
-  const result = await client.query(
-    `SELECT ap.admin_user_id FROM public.app_admin_principals ap
-     JOIN public.app_users u ON u.id=ap.admin_user_id
-     JOIN public.app_user_role_assignments ra ON ra.user_id=u.id
-     WHERE ap.admin_user_id=$1 AND ap.portal_role='platform_super_admin'
-       AND public.effective_account_status(u.status,u.block_starts_at,u.block_ends_at)='active'
-       AND ra.role_code='platform_super_admin' AND ra.revoked_at IS NULL
-       AND (ra.expires_at IS NULL OR ra.expires_at>clock_timestamp())
-       AND hvm_governance_private.has_permission(u.id,'catalog_moderation')
-     ${write ? "FOR SHARE OF ap,u,ra" : ""}`,
-    [actor.userId],
-  );
-  if (!result.rows[0]) throw new CategoryError("FORBIDDEN", 403);
+  await commerceAdmin(client, actor, "catalog_moderation");
 }
 async function find(client: PoolClient, id: string, lock = false) {
   const result = await client.query<CategoryRow>(
@@ -278,7 +270,7 @@ export const CategoryService = {
   async listAdminCategories(actor: AdminActorContext) {
     const client = await pool().connect();
     try {
-      await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
+      await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ");
       await authorize(client, actor, false);
       const rows = await client.query<CategoryRow>(
         `SELECT ${columns} FROM public.app_categories ORDER BY display_order,name,id`,
@@ -295,7 +287,7 @@ export const CategoryService = {
   async getDeactivationImpact(id: string, actor: AdminActorContext) {
     const client = await pool().connect();
     try {
-      await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
+      await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ");
       await authorize(client, actor, false);
       const result = await impact(client, await find(client, id));
       await client.query("COMMIT");

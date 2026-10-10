@@ -143,7 +143,7 @@ export const AdminOperationsService = {
       "%" + filters.search.replace(/[\\%_]/g, (value) => "\\" + value) + "%";
     const productView = filters.view === "products";
     const storeView = filters.view === "stores";
-    const baseProducts = `SELECT p.id,p.title,p.is_published,p.updated_at,p.category_id,p.store_id,
+    const baseProducts = `SELECT p.id,p.title,p.is_published,p.updated_at,p.category_id,p.store_id,p.revision,p.admin_hidden,
       c.name AS category_name,c.is_active AS category_active,s.store_name,s.status AS store_status,
       (p.is_published AND c.is_active AND s.is_visible) AS is_visible
       FROM public.app_products p JOIN public.app_categories c ON c.id=p.category_id
@@ -153,7 +153,7 @@ export const AdminOperationsService = {
           AND ($2::text='all' OR ($2='published' AND is_published) OR ($2='draft' AND NOT is_published)
             OR ($2='unavailable' AND is_published AND NOT is_visible)) AND ($3::text='all' OR store_status=$3)`
       : storeView
-        ? `SELECT id,store_name AS name,store_slug AS slug,status,updated_at,
+        ? `SELECT id,store_name AS name,store_slug AS slug,status,updated_at,revision,admin_hidden,
             is_visible FROM store_scope
             WHERE (store_name ILIKE $1 OR store_slug ILIKE $1) AND ($3::text='all' OR status=$3)`
         : `SELECT id,name,is_active,updated_at FROM public.app_categories WHERE name ILIKE $1`;
@@ -161,11 +161,11 @@ export const AdminOperationsService = {
       ? `jsonb_build_object('id',r.id,'title',r.title,'storeName',r.store_name,'categoryName',r.category_name,
           'isPublished',r.is_published,'isVisible',r.is_visible,'storeStatus',r.store_status,'categoryActive',r.category_active,
           'priceCents',(SELECT price_cents FROM public.app_price_versions WHERE product_id=r.id AND valid_from<=clock_timestamp() ORDER BY valid_from DESC LIMIT 1),
-          'updatedAt',r.updated_at)`
+          'updatedAt',r.updated_at,'revision',r.revision,'adminHidden',r.admin_hidden)`
       : storeView
         ? `jsonb_build_object('id',r.id,'name',r.name,'slug',r.slug,'status',r.status,'isVisible',r.is_visible,
             'productCount',(SELECT count(*) FROM public.app_products WHERE store_id=r.id),
-            'publishedProductCount',(SELECT count(*) FROM public.app_products WHERE store_id=r.id AND is_published),'updatedAt',r.updated_at)`
+            'publishedProductCount',(SELECT count(*) FROM public.app_products WHERE store_id=r.id AND is_published),'updatedAt',r.updated_at,'revision',r.revision,'adminHidden',r.admin_hidden)`
         : `jsonb_build_object('id',r.id,'name',r.name,'isActive',r.is_active,
             'productCount',(SELECT count(*) FROM public.app_products WHERE category_id=r.id),
             'publishedProductCount',(SELECT count(*) FROM public.app_products WHERE category_id=r.id AND is_published))`;
@@ -175,7 +175,7 @@ export const AdminOperationsService = {
       await commerceAdmin(client, actor, "catalog_moderation");
       const result = await client.query<{ response: unknown }>(
         `WITH requested_filters AS (SELECT $2::text AS publication,$3::text AS store_status),
-       store_scope AS MATERIALIZED (SELECT s.id,s.store_name,s.store_slug,s.status,s.updated_at,
+       store_scope AS MATERIALIZED (SELECT s.id,s.store_name,s.store_slug,s.status,s.updated_at,s.revision,s.admin_hidden,
          hvm_store_private.store_is_visible(s.id) AS is_visible FROM public.app_producer_stores s),
        product_scope AS MATERIALIZED (${baseProducts}), filtered AS (${filtered}), page_rows AS (
          SELECT * FROM filtered ORDER BY updated_at DESC,id DESC LIMIT $4::int OFFSET $5::int

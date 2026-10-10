@@ -168,14 +168,14 @@ export async function reviewFixtures(pool: Pool) {
     );
     if (sector)
       await pool.query(
-        "INSERT INTO app_admin_sector_members(user_id,sector_code) VALUES($1,'complaint_management')",
+        "INSERT INTO app_admin_sector_members(user_id,sector_code) VALUES($1,'review_management')",
         [id],
       );
     return {
       userId: id,
       role,
       isSuperAdmin: role === "platform_super_admin",
-      sectors: sector ? ["complaint_management"] : [],
+      sectors: sector ? ["review_management"] : [],
       sessionIssuedAt: new Date().toISOString(),
     } as AdminActorContext;
   }

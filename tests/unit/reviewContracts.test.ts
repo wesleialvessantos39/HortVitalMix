@@ -70,7 +70,7 @@ describe("T24 contratos de avaliação", () => {
     expect(ReviewListQuerySchema.parse({})).toEqual({ page: 1 });
     expect(
       AdminReviewQuerySchema.parse({ state: "moderated", page: "2" }),
-    ).toEqual({ state: "moderated", page: 2 });
+    ).toEqual({ state: "moderated", page: 2, search: "" });
     for (const page of [0, -1, 1.5, "no", 100001])
       expect(ReviewListQuerySchema.safeParse({ page }).success).toBe(false);
     expect(AdminReviewQuerySchema.safeParse({ state: "deleted" }).success).toBe(

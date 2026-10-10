@@ -1,0 +1,12 @@
+
+Running 5 tests using 1 worker
+
+(node:44347) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/assinaturas 320px (3.6s)
+  ✓  2 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/assinaturas 390px (3.5s)
+  ✓  3 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/assinaturas 768px (3.1s)
+  ✓  4 tests/e2e/admin-departments-responsive.spec.ts:557:5 › departamento profissional com conteúdo realista: /admin/assinaturas 1440px (3.2s)
+  ✓  5 tests/e2e/departments-accounts-subscriptions.spec.ts:264:1 › convite administrativo oferece os doze departamentos e os três poderes independentes (2.2s)
+
+  5 passed (16.7s)

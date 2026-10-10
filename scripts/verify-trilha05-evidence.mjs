@@ -100,8 +100,8 @@ const checks = {
     routes.includes("app_admin_principals") &&
     read("src/pages/admin/AdminAcceptInvitePage.tsx").includes("senha serão independentes dos seus outros cadastros.") &&
     read("src/pages/admin/AdminGovernancePage.tsx").includes("CPF já cadastrado (opcional)") &&
-    read("src/pages/admin/AdminUsersPage.tsx").includes("Perfis vinculados") &&
-    router.includes('path==="/admin/configuracao"') && router.includes('"platform_configuration"') &&
+    read("src/pages/admin/AdminUsersPage.tsx").replace(/\s+/g," ").includes("Perfis vinculados") &&
+    router.replace(/\s+/g,'').includes('path==="/admin/configuracao"') && router.includes('"platform_configuration"') &&
     read("src/components/admin/AdminPortalShell.tsx").includes('hasAdminPermission(access, "platform_configuration")') &&
     read("shared/adminPermissions.ts").includes('access.deniedSectors?.includes(sector)') &&
     adminPrincipalMigration.includes("CREATE TABLE public.app_admin_principals") &&
@@ -132,7 +132,7 @@ const checks = {
   ].every((path) => routes.includes(path)),
   canonicalInviteRoute:
     service.includes("/admin/aceitar-convite?token=") &&
-    router.includes('path==="/admin/aceitar-convite"'),
+    router.replace(/\s+/g,'').includes('path==="/admin/aceitar-convite"'),
   helpDialog:
     read("src/pages/admin/AdminLoginPage.tsx").includes("Como obter acesso administrativo") &&
     css.includes("admin-help-backdrop"),
@@ -172,8 +172,8 @@ const checks = {
     !account.includes("Verificar configuração inicial") &&
     !account.includes("Configuração inicial concluída") &&
     router.includes("intendedRole={intendedRole}") &&
-    router.includes('path==="/acesso/administracao"') &&
-    router.includes('path==="/acesso/super-administracao"') &&
+    router.replace(/\s+/g,'').includes('path==="/acesso/administracao"') &&
+    router.replace(/\s+/g,'').includes('path==="/acesso/super-administracao"') &&
     read("src/pages/admin/AdminLoginPage.tsx").includes("intendedRole"),
   friendlyAdminErrors:
     read("src/pages/admin/AdminLoginPage.tsx").includes(
@@ -188,7 +188,7 @@ const checks = {
     read("src/pages/admin/AdminLoginPage.tsx").includes("Confirmar ou reenviar confirmação do e-mail") &&
     read("src/pages/admin/AdminEmailConfirmationPage.tsx").includes("<OtpInput") &&
     read("src/pages/admin/AdminEmailConfirmationPage.tsx").includes("Enviar código de confirmação") &&
-    router.includes('path==="/admin/confirmar-email"'),
+    router.replace(/\s+/g,'').includes('path==="/admin/confirmar-email"'),
   adminServerlessAuth:
     service.includes('.from("app_admin_auth_attempts")') &&
     service.includes('.from("app_admin_mfa_challenges")') &&

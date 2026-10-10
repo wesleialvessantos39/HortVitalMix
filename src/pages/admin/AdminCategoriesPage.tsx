@@ -1,3 +1,4 @@
+import { hasAdminPermission } from "../../../shared/adminPermissions";
 import { PageLoading } from "../../components/PageLoading";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, type ApiFailure } from "../../lib/api";
@@ -58,7 +59,7 @@ export default function AdminCategoriesPage({ access, onNavigate }: Props) {
   const [confirmedImpact, setConfirmedImpact] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
   const refreshButton = useRef<HTMLButtonElement>(null);
-  const superAdmin = access.role === "platform_super_admin";
+  const superAdmin = hasAdminPermission(access, "catalog_moderation");
   const load = useCallback(async (signal?: AbortSignal) => {
     try {
       const result = AdminCategoriesResponseSchema.parse(
@@ -287,7 +288,9 @@ export default function AdminCategoriesPage({ access, onNavigate }: Props) {
       />
       <section className="admin-card" aria-busy={state === "loading"}>
         <h2>Catálogo global</h2>
-        {state === "loading" && !categories.length && <PageLoading label="Carregando categorias…" compact />}
+        {state === "loading" && !categories.length && (
+          <PageLoading label="Carregando categorias…" compact />
+        )}
         {state === "ready" && categories.length === 0 && (
           <p>Nenhuma categoria cadastrada.</p>
         )}
@@ -430,7 +433,7 @@ export default function AdminCategoriesPage({ access, onNavigate }: Props) {
         </p>
         {confirmingSession && (
           <AdminLoginPage
-            intendedRole="platform_super_admin"
+            intendedRole={access.role ?? "platform_admin"}
             onNavigate={sessionNavigation}
           />
         )}

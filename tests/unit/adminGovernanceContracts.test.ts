@@ -1,17 +1,41 @@
 import { describe, expect, it } from "vitest";
 import {
   AcceptInviteSchema,
+  AdminSectorCodeSchema,
   AdminEmailConfirmationRequestSchema,
   AdminEmailConfirmationVerifySchema,
   AdminLoginSchema,
   BootstrapRequestSchema,
   CreateInviteSchema,
   MfaVerifySchema,
+  UpdateAdminPermissionsSchema,
 } from "../../shared/contracts/adminGovernance.ts";
 
 const strong = "SenhaForte#123";
 
 describe("Trilha 05 — contratos de governança administrativa", () => {
+  it("permite delegar todos os doze departamentos sem aceitar poderes repetidos", () => {
+    const input = {
+      email: "delegate@example.invalid",
+      targetRole: "platform_admin",
+      sectors: AdminSectorCodeSchema.options,
+      commandId: crypto.randomUUID(),
+    };
+    expect(CreateInviteSchema.parse(input).sectors).toHaveLength(12);
+    expect(
+      UpdateAdminPermissionsSchema.parse({
+        sectors: input.sectors,
+        expectedRevision: 1,
+        commandId: crypto.randomUUID(),
+      }).sectors,
+    ).toHaveLength(12);
+    expect(
+      CreateInviteSchema.safeParse({
+        ...input,
+        sectors: [...input.sectors.slice(1), input.sectors[1]],
+      }).success,
+    ).toBe(false);
+  });
   it("valida confirmação administrativa com e-mail e OTP de oito dígitos", () => {
     expect(
       AdminEmailConfirmationRequestSchema.safeParse({
@@ -34,7 +58,10 @@ describe("Trilha 05 — contratos de governança administrativa", () => {
 
   it("mantém login estrito e MFA com oito dígitos", () => {
     expect(
-      AdminLoginSchema.safeParse({ email: "admin@example.com", password: strong }).success,
+      AdminLoginSchema.safeParse({
+        email: "admin@example.com",
+        password: strong,
+      }).success,
     ).toBe(true);
     expect(
       AdminLoginSchema.safeParse({
@@ -102,7 +129,10 @@ describe("Trilha 05 — contratos de governança administrativa", () => {
   });
 
   it("aceita delegação explícita de governança de contas e configuração global", () => {
-    for (const sector of ["account_governance","platform_configuration"] as const) {
+    for (const sector of [
+      "account_governance",
+      "platform_configuration",
+    ] as const) {
       expect(
         CreateInviteSchema.safeParse({
           email: sector + "@example.com",
@@ -123,7 +153,8 @@ describe("Trilha 05 — contratos de governança administrativa", () => {
       commandId: crypto.randomUUID(),
     };
     expect(
-      BootstrapRequestSchema.safeParse({ ...base, email: "admin@example.com" }).success,
+      BootstrapRequestSchema.safeParse({ ...base, email: "admin@example.com" })
+        .success,
     ).toBe(true);
     expect(
       BootstrapRequestSchema.safeParse({
@@ -148,4 +179,3 @@ describe("Trilha 05 — contratos de governança administrativa", () => {
     ).toBe(false);
   });
 });
-

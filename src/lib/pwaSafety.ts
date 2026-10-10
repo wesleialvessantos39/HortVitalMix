@@ -10,6 +10,15 @@ const safeRoutes = new Set([
   "/produtos",
   "/produtores",
   "/sobre",
+  "/conta",
+  "/conta/atualizacoes",
+  "/planos",
+  "/assinaturas",
+  "/assinaturas/minhas",
+  "/produtor/assinaturas",
+  "/admin/assinaturas",
+  "/admin/avaliacoes",
+  "/admin/politica-reembolso",
   "/admin/painel",
   "/admin/departamentos",
   "/admin/catalogo",
@@ -43,7 +52,7 @@ export function appUpdateBlockReason(path = context.path): string | null {
   if (!navigator.onLine) return "Conecte-se à internet para atualizar.";
   if (context.loading) return "Aguarde a verificação da sessão.";
   if (!safeRoutes.has(path))
-    return "Conclua sua atividade e volte ao painel ou à página inicial.";
+    return "A atualização será aplicada automaticamente ao concluir esta atividade.";
   if (
     hasPendingApiMutations() ||
     hasPendingSessionChanges() ||

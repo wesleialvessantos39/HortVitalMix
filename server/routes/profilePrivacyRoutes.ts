@@ -1,9 +1,11 @@
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
+import { drainStorageDeletionQueue } from "../services/StorageDeletionQueueService.ts";
 import { originProtection } from "../security/originProtection.ts";
 import {
   UpdatePreferencesSchema,
   UpdateProfileSchema,
+  DeleteOwnAccountSchema,
 } from "../../shared/contracts/profilePrivacy.ts";
 import {
   CreateAddressAdvancedSchema,
@@ -20,26 +22,103 @@ import {
   AddressManagementService,
 } from "../services/AddressManagementService.ts";
 import { verifyRecentAuthProof } from "../security/recentAuth.ts";
+import { publicRole } from "../security/publicRole.ts";
+import {
+  commerceAudit,
+  commerceIdentity,
+  commerceTransaction,
+  CommerceError,
+} from "../services/CommerceSupport.ts";
 
 export const profilePrivacyRouter = Router();
+profilePrivacyRouter.delete("/account", originProtection, async (req, res) => {
+  res.set("Cache-Control", "private, no-store");
+  try {
+    if (!req.actor) {
+      res.status(401).json({ error: "AUTH_REQUIRED" });
+      return;
+    }
+    const role = publicRole(req),
+      input = DeleteOwnAccountSchema.parse(req.body);
+    if (
+      input.expectedUserId !== req.actor.userId ||
+      input.expectedRole !== role
+    )
+      throw new CommerceError("SESSION_CHANGED", 409);
+    if (!requireRecentAuth(req, res, req.actor.userId)) return;
+    const userId = req.actor.userId;
+    await commerceTransaction(async (c) => {
+      await commerceIdentity(c, userId, role);
+      await commerceAudit(
+        c,
+        userId,
+        role,
+        "account.self_deleted",
+        "app_users",
+        userId,
+        { status: "deleted", retention: "minimum_financial_and_audit_records" },
+        { requestId: req.requestId, ipHash: req.clientIpHash },
+        input.commandId,
+      );
+      await c.query("SELECT public.erase_public_account($1,$2,$3)", [
+        userId,
+        role,
+        input.commandId,
+      ]);
+    });
+    // Erasure already committed. Failed object cleanup remains durably queued.
+    await drainStorageDeletionQueue().catch(() => undefined);
+    for (const name of [
+      "hvm_access",
+      "hvm_refresh",
+      "hvm_portal_role",
+      "hvm_reauth",
+    ])
+      res.clearCookie(name, { path: "/" });
+    res.json({
+      status: "deleted",
+      retention: "minimum_financial_and_audit_records",
+    });
+  } catch (error) {
+    res
+      .status(
+        error instanceof CommerceError
+          ? error.status
+          : error instanceof z.ZodError
+            ? 422
+            : 503,
+      )
+      .json({
+        error:
+          error instanceof CommerceError
+            ? error.code
+            : error instanceof z.ZodError
+              ? "VALIDATION_ERROR"
+              : "ACCOUNT_ERASURE_UNAVAILABLE",
+        requestId: req.requestId,
+      });
+  }
+});
 
 function currentActor(req: Request, res: Response) {
   if (!req.actor) {
-    res
-      .status(401)
-      .json({ error: "AUTH_REQUIRED", requestId: req.requestId });
+    res.status(401).json({ error: "AUTH_REQUIRED", requestId: req.requestId });
     return null;
   }
   const selectedRole = readCookie(req, "hvm_portal_role");
-  if(selectedRole && !req.actor.roles.includes(selectedRole)) {
-    res.status(403).json({error:"PROFILE_SCOPE_CHANGED",requestId:req.requestId}); return null;
+  if (selectedRole && !req.actor.roles.includes(selectedRole)) {
+    res
+      .status(403)
+      .json({ error: "PROFILE_SCOPE_CHANGED", requestId: req.requestId });
+    return null;
   }
-  const role = req.actor.roles.includes(selectedRole) ? selectedRole :
-    req.actor.roles.includes("producer")
+  const role = req.actor.roles.includes(selectedRole)
+    ? selectedRole
+    : req.actor.roles.includes("producer")
       ? "producer"
       : req.actor.roles.includes("consumer")
         ? "consumer"
-        : req.actor.roles[0] ?? "consumer";
+        : (req.actor.roles[0] ?? "consumer");
   return { userId: req.actor.userId, email: req.actor.email, role };
 }
 
@@ -55,12 +134,10 @@ function sendError(res: Response, error: unknown) {
     });
     return;
   }
-  res
-    .status(503)
-    .json({
-      error: "DEPENDENCY_UNAVAILABLE",
-      requestId: res.locals.requestId,
-    });
+  res.status(503).json({
+    error: "DEPENDENCY_UNAVAILABLE",
+    requestId: res.locals.requestId,
+  });
 }
 
 function parseAddressId(req: Request, res: Response) {
@@ -97,10 +174,7 @@ function readAccessToken(req: Request) {
 function requireRecentAuth(req: Request, res: Response, userId: string) {
   const accessToken = readAccessToken(req);
   const proof = readCookie(req, "hvm_reauth");
-  if (
-    !accessToken ||
-    !verifyRecentAuthProof(proof, userId, accessToken)
-  ) {
+  if (!accessToken || !verifyRecentAuthProof(proof, userId, accessToken)) {
     res
       .status(401)
       .json({ error: "RECENT_AUTH_REQUIRED", requestId: req.requestId });
@@ -119,7 +193,9 @@ profilePrivacyRouter.get(
         if (!requireRecentAuth(req, res, actor.userId)) return;
         res
           .status(200)
-          .json(await ProfilePrivacyService.exportData(actor.userId, actor.role));
+          .json(
+            await ProfilePrivacyService.exportData(actor.userId, actor.role),
+          );
         return;
       }
       res

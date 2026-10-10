@@ -49,6 +49,8 @@ function adminReview(r: Record<string, unknown>) {
     moderationReason: r.moderation_reason,
     moderatedBy: r.moderated_by,
     moderatedAt: iso(r.moderated_at as Date | null),
+    revision: r.revision ?? 1,
+    history: r.history ?? [],
   });
 }
 async function ownedOrder(c: PoolClient, userId: string, id: string) {
@@ -180,27 +182,42 @@ export const ReviewService = {
   async adminList(actor: AdminActorContext, rawQuery: unknown) {
     const q = AdminReviewQuerySchema.parse(rawQuery);
     return commerceTransaction(async (c) => {
-      await commerceAdmin(c, actor, "complaint_management");
-      const state = q.state === "all" ? null : q.state === "moderated",
-        total = Number(
-          (
-            await c.query(
-              "SELECT count(*) FROM public.app_reviews WHERE ($1::boolean IS NULL OR is_moderated=$1)",
-              [state],
-            )
-          ).rows[0].count,
-        );
+      await commerceAdmin(c, actor, "review_management");
+      const state = q.state === "all" ? null : q.state === "moderated";
+      const search =
+        "%" + q.search.replace(/[\\%_]/g, (value) => "\\" + value) + "%";
+      const params = [state, q.rating ?? null, q.storeId ?? null, search];
+      const where = `($1::boolean IS NULL OR r.is_moderated=$1) AND ($2::int IS NULL OR r.rating=$2) AND ($3::uuid IS NULL OR r.store_id=$3) AND (s.store_name ILIKE $4 OR coalesce(r.comment,'') ILIKE $4 OR o.order_number::text ILIKE $4)`;
+      const total = Number(
+        (
+          await c.query(
+            `SELECT count(*) FROM public.app_reviews r JOIN public.app_orders o ON o.id=r.order_id JOIN public.app_producer_stores s ON s.id=r.store_id WHERE ${where}`,
+            params,
+          )
+        ).rows[0].count,
+      );
       const rows = (
         await c.query(
-          `SELECT r.*,o.order_number,s.store_name FROM public.app_reviews r JOIN public.app_orders o ON o.id=r.order_id JOIN public.app_producer_stores s ON s.id=r.store_id WHERE ($1::boolean IS NULL OR r.is_moderated=$1) ORDER BY r.created_at DESC,r.id DESC LIMIT $2 OFFSET $3`,
-          [state, PAGE_SIZE, (q.page - 1) * PAGE_SIZE],
+          `SELECT r.*,o.order_number,s.store_name,(SELECT coalesce(jsonb_agg(jsonb_build_object('action',h.action,'reason',h.reason,'createdAt',to_char(h.created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')) ORDER BY h.created_at DESC),'[]') FROM (SELECT * FROM public.app_review_moderation_history WHERE review_id=r.id ORDER BY created_at DESC LIMIT 50) h) AS history FROM public.app_reviews r JOIN public.app_orders o ON o.id=r.order_id JOIN public.app_producer_stores s ON s.id=r.store_id WHERE ${where} ORDER BY r.created_at DESC,r.id DESC LIMIT $5 OFFSET $6`,
+          [...params, PAGE_SIZE, (q.page - 1) * PAGE_SIZE],
         )
       ).rows;
+      const metricsRow = (
+        await c.query(
+          `SELECT count(*) FILTER(WHERE NOT r.is_moderated)::int AS published,count(*) FILTER(WHERE r.is_moderated)::int AS moderated,coalesce(avg(r.rating) FILTER(WHERE NOT r.is_moderated),0)::float8 AS average_rating FROM public.app_reviews r JOIN public.app_orders o ON o.id=r.order_id JOIN public.app_producer_stores s ON s.id=r.store_id WHERE ${where}`,
+          params,
+        )
+      ).rows[0];
       return AdminReviewListSchema.parse({
         reviews: rows.map(adminReview),
         page: q.page,
         pages: Math.max(1, Math.ceil(total / PAGE_SIZE)),
         total,
+        metrics: {
+          published: metricsRow.published,
+          moderated: metricsRow.moderated,
+          averageRating: metricsRow.average_rating,
+        },
       });
     });
   },
@@ -214,7 +231,7 @@ export const ReviewService = {
     const id = ReviewIdSchema.parse(rawId),
       input = ModerateReviewSchema.parse(raw);
     return commerceTransaction(async (c) => {
-      await commerceAdmin(c, actor, "complaint_management");
+      await commerceAdmin(c, actor, "review_management");
       return commerceCommand(
         c,
         actor.userId,
@@ -224,22 +241,39 @@ export const ReviewService = {
         async () => {
           const existing = (
             await c.query(
-              "SELECT id,is_moderated FROM public.app_reviews WHERE id=$1 FOR UPDATE",
+              "SELECT id,is_moderated,revision FROM public.app_reviews WHERE id=$1 FOR UPDATE",
               [id],
             )
           ).rows[0];
           if (!existing) throw new CommerceError("REVIEW_NOT_FOUND", 404);
-          if (existing.is_moderated)
+          if (
+            input.expectedRevision &&
+            input.expectedRevision !== existing.revision
+          )
+            throw new CommerceError("REVISION_CONFLICT", 409);
+          if (input.action === "hide" && existing.is_moderated)
             throw new CommerceError("REVIEW_ALREADY_MODERATED", 409);
+          if (input.action === "restore" && !existing.is_moderated)
+            throw new CommerceError("REVIEW_NOT_MODERATED", 409);
           await c.query(
-            "UPDATE public.app_reviews SET is_moderated=true,moderation_reason=$2,moderated_by=$3,moderated_at=clock_timestamp() WHERE id=$1",
-            [id, input.reason, actor.userId],
+            "INSERT INTO public.app_review_moderation_history(review_id,action,reason,actor_id,revision) VALUES($1,$2,$3,$4,$5)",
+            [
+              id,
+              input.action,
+              input.reason,
+              actor.userId,
+              existing.revision + 1,
+            ],
+          );
+          await c.query(
+            "UPDATE public.app_reviews SET is_moderated=$2,moderation_reason=CASE WHEN $2 THEN $3 ELSE NULL END,moderated_by=CASE WHEN $2 THEN $4::uuid ELSE NULL END,moderated_at=CASE WHEN $2 THEN clock_timestamp() ELSE NULL END,revision=revision+1 WHERE id=$1",
+            [id, input.action === "hide", input.reason, actor.userId],
           );
           await commerceAudit(
             c,
             actor.userId,
             actor.role,
-            "review.moderated",
+            input.action === "hide" ? "review.moderated" : "review.restored",
             "app_reviews",
             id,
             { reason: input.reason },

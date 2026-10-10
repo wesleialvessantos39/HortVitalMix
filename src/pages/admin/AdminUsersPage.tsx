@@ -2,6 +2,7 @@ import { PageLoading } from "../../components/PageLoading";
 import { AdminPermissionEditor } from "./AdminPermissionEditor";
 import {
   adminSectorLabel,
+  ADMIN_SECTOR_LABELS,
   hasAdminPermission,
 } from "../../../shared/adminPermissions";
 import { useEffect, useRef, useState } from "react";
@@ -433,7 +434,8 @@ export function AdminUsersPage({
                       <td data-label="Setores">
                         {u.sectors?.length
                           ? u.role_code === "platform_super_admin" &&
-                            u.sectors.length === 9
+                            u.sectors.length ===
+                              Object.keys(ADMIN_SECTOR_LABELS).length
                             ? "Todos os poderes"
                             : u.sectors.map(adminSectorLabel).join(" • ")
                           : "—"}

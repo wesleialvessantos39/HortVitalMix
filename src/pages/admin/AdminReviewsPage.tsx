@@ -19,6 +19,8 @@ export default function AdminReviewsPage() {
   const [state, setState] = useState<"published" | "moderated" | "all">(
     "published",
   );
+  const [search, setSearch] = useState("");
+  const [rating, setRating] = useState("");
   const [page, setPage] = useState(1),
     [attempt, setAttempt] = useState(0);
   const [data, setData] = useState<ReturnType<
@@ -36,7 +38,10 @@ export default function AdminReviewsPage() {
     const c = new AbortController();
     setData(null);
     setError("");
-    api(`/v1/admin/reviews?state=${state}&page=${page}`, { signal: c.signal })
+    api(
+      `/v1/admin/reviews?state=${state}&page=${page}&search=${encodeURIComponent(search)}${rating ? "&rating=" + rating : ""}`,
+      { signal: c.signal },
+    )
       .then((v) => {
         if (!c.signal.aborted) {
           const result = AdminReviewListSchema.parse(v);
@@ -48,11 +53,15 @@ export default function AdminReviewsPage() {
         if (!c.signal.aborted) setError(reviewMessage(e));
       });
     return () => c.abort();
-  }, [state, page, attempt]);
+  }, [state, page, attempt, search, rating]);
   async function moderate(event: FormEvent) {
     event.preventDefault();
     if (!selected || flight.current || reauth) return;
-    const input = ModerateReviewSchema.safeParse({ reason });
+    const input = ModerateReviewSchema.safeParse({
+      reason,
+      action: selected.isModerated ? "restore" : "hide",
+      expectedRevision: selected.revision,
+    });
     if (!input.success) {
       setError("Explique o motivo da moderação com 10 a 500 caracteres.");
       return;
@@ -74,7 +83,7 @@ export default function AdminReviewsPage() {
       setSelected(null);
       setReason("");
       setNotice(
-        "Avaliação ocultada. O conteúdo e o motivo permanecem no histórico de moderação.",
+        "Moderação registrada. Nota e comentário originais foram preservados; o histórico acompanha a ocultação ou restauração.",
       );
       setAttempt((v) => v + 1);
     } catch (e) {
@@ -105,6 +114,46 @@ export default function AdminReviewsPage() {
           </p>
         </div>
       </header>
+      <div className="review-filters" data-hvm-pwa-ui>
+        <label>
+          Buscar loja, comentário ou pedido
+          <input
+            type="search"
+            maxLength={80}
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+          />
+        </label>
+        <label>
+          Nota
+          <select
+            value={rating}
+            onChange={(e) => {
+              setRating(e.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="">Todas as notas</option>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <option key={n} value={n}>
+                {n} estrelas
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      {data?.metrics && (
+        <div className="review-filters" role="status">
+          <p>
+            {data.metrics.published} publicadas · {data.metrics.moderated}{" "}
+            ocultas · Média pública no filtro:{" "}
+            {data.metrics.averageRating.toFixed(1)}
+          </p>
+        </div>
+      )}
       <label className="review-filter">
         Exibir
         <select
@@ -155,9 +204,13 @@ export default function AdminReviewsPage() {
         <form
           onSubmit={moderate}
           className="review-admin-card review-moderation-form"
+          data-hvm-update-busy="true"
           aria-label="Moderar avaliação"
         >
-          <h2>Ocultar avaliação do pedido #{selected.orderNumber}</h2>
+          <h2>
+            {selected.isModerated ? "Restaurar" : "Ocultar"} avaliação do pedido
+            #{selected.orderNumber}
+          </h2>
           <p>{selected.storeName}</p>
           <ReviewStars rating={selected.rating} />
           {selected.comment && (
@@ -177,12 +230,17 @@ export default function AdminReviewsPage() {
             />
           </label>
           <p className="admin-record-count">
-            A avaliação deixará de compor a nota da loja. Seu conteúdo
-            continuará disponível neste painel.
+            {selected.isModerated
+              ? "A avaliação original voltará a compor a nota pública. O motivo da restauração será registrado."
+              : "A avaliação deixará de compor a nota pública. Conteúdo e motivo ficam no histórico."}
           </p>
           <div className="review-actions">
             <button className="admin-primary" disabled={busy || reauth}>
-              {busy ? "Ocultando…" : "Confirmar moderação"}
+              {busy
+                ? "Registrando…"
+                : selected.isModerated
+                  ? "Confirmar restauração"
+                  : "Confirmar moderação"}
             </button>
             <button
               type="button"
@@ -214,6 +272,18 @@ export default function AdminReviewsPage() {
                 </p>
                 <ReviewStars rating={r.rating} />
                 {r.comment && <p className="review-comment">{r.comment}</p>}
+                {r.history.length > 0 && (
+                  <details>
+                    <summary>Histórico de moderação</summary>
+                    {r.history.map((h, i) => (
+                      <p key={i}>
+                        {h.action === "hide" ? "Ocultação" : "Restauração"} ·{" "}
+                        {new Date(h.createdAt).toLocaleString("pt-BR")} ·{" "}
+                        {h.reason}
+                      </p>
+                    ))}
+                  </details>
+                )}
                 {r.isModerated ? (
                   <div className="review-moderation-record">
                     <strong>Moderada</strong>
@@ -228,20 +298,20 @@ export default function AdminReviewsPage() {
                         : " · Conta do moderador removida"}
                     </p>
                   </div>
-                ) : (
-                  <button
-                    className="admin-secondary"
-                    disabled={busy}
-                    onClick={() => {
-                      setSelected(r);
-                      setReason("");
-                      setError("");
-                      setNotice("");
-                    }}
-                  >
-                    Moderar avaliação do pedido #{r.orderNumber}
-                  </button>
-                )}
+                ) : null}
+                <button
+                  className="admin-secondary"
+                  disabled={busy}
+                  onClick={() => {
+                    setSelected(r);
+                    setReason("");
+                    setError("");
+                    setNotice("");
+                  }}
+                >
+                  {r.isModerated ? "Restaurar" : "Moderar"} avaliação do pedido
+                  #{r.orderNumber}
+                </button>
               </article>
             ))}
           </div>

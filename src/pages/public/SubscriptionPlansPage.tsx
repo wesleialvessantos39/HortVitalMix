@@ -23,6 +23,9 @@ import type {
 } from "../../../shared/contracts/subscription";
 import type { AddressAdvancedView } from "../../../shared/contracts/addressAdvanced";
 import type { PaymentView } from "../../../shared/contracts/commerce";
+import type { SubscriptionCancellationQuote } from "../../../shared/contracts/subscriptionRefund";
+import { SubscriptionRefundsPanel } from "../commerce/SubscriptionRefundsPanel";
+import { RequestSubscriptionRefund } from "../commerce/RequestSubscriptionRefund";
 import "./subscriptions.css";
 type Recurrence = {
   dayOfWeek: number;
@@ -59,6 +62,30 @@ export default function SubscriptionPlansPage({
   const flight = useRef(false),
     pending = useRef<{ key: string; id: string } | null>(null);
   const owner = session?.activeRole === audience;
+  const administrativePreview =
+    session?.activeRole === "platform_admin" ||
+    session?.activeRole === "platform_super_admin";
+  const [cancellationQuote, setCancellationQuote] =
+    useState<SubscriptionCancellationQuote | null>(null);
+  useEffect(() => {
+    if (!confirmedCancel) {
+      setCancellationQuote(null);
+      return;
+    }
+    const controller = new AbortController();
+    setCancellationQuote(null);
+    void api<SubscriptionCancellationQuote>(
+      `/v1/subscriptions/${confirmedCancel}/cancellation`,
+      { signal: controller.signal },
+    )
+      .then((value) => {
+        if (!controller.signal.aborted) setCancellationQuote(value);
+      })
+      .catch((e) => {
+        if (!controller.signal.aborted) setError(subscriptionMessage(e));
+      });
+    return () => controller.abort();
+  }, [confirmedCancel, session?.userId]);
   const load = useCallback(
     async (signal?: AbortSignal) => {
       setLoading(true);
@@ -246,7 +273,9 @@ export default function SubscriptionPlansPage({
           {notice}
         </p>
       )}
-      {loading && !plans.length && !subscriptions.length && <PageLoading label="Carregando assinaturas…" />}
+      {loading && !plans.length && !subscriptions.length && (
+        <PageLoading label="Carregando assinaturas…" />
+      )}
       {!gateway && (
         <p className="subscription-notice">
           O recebimento Pix ainda está em preparação. Planos pagos podem ser
@@ -256,6 +285,26 @@ export default function SubscriptionPlansPage({
       )}
       {!onlyMine && (
         <>
+          {administrativePreview && (
+            <p className="subscription-notice" role="status">
+              Prévia administrativa: planos destinados a consumidor e produtor.
+              Sua conta administrativa não pode contratar.
+            </p>
+          )}
+          <nav className="subscription-actions" aria-label="Público dos planos">
+            <button
+              className="secondary"
+              onClick={() => onNavigate("/planos?publico=consumidor")}
+            >
+              Planos para consumidor
+            </button>
+            <button
+              className="secondary"
+              onClick={() => onNavigate("/planos?publico=produtor")}
+            >
+              Planos para produtor
+            </button>
+          </nav>
           <div className="subscription-grid">
             {plans.map((p) => (
               <article className="subscription-card" key={p.id}>
@@ -276,6 +325,7 @@ export default function SubscriptionPlansPage({
                 <button
                   className="primary"
                   disabled={
+                    administrativePreview ||
                     busy ||
                     subscriptions.some(
                       (s) => s.plan.id === p.id && s.status !== "cancelled",
@@ -287,7 +337,9 @@ export default function SubscriptionPlansPage({
                     (s) => s.plan.id === p.id && s.status !== "cancelled",
                   )
                     ? "Você já tem este plano"
-                    : "Escolher plano"}
+                    : administrativePreview
+                      ? "Prévia — contratação indisponível"
+                      : "Escolher plano"}
                 </button>
               </article>
             ))}
@@ -360,7 +412,7 @@ export default function SubscriptionPlansPage({
                   <label>
                     Horário preferencial
                     <select
-                      aria-label={`Horário preferencial da entrega ${index+1}`}
+                      aria-label={`Horário preferencial da entrega ${index + 1}`}
                       required
                       value={r.preferredWindowId}
                       onChange={(e) => {
@@ -550,15 +602,41 @@ export default function SubscriptionPlansPage({
                 {confirmedCancel === s.id && (
                   <div className="subscription-notice">
                     <p>
-                      Cancelar impede novas recorrências e ciclos. Cobranças já
-                      faturadas não são anuladas.
+                      Cancelar impede novas recorrências e ciclos. Pagamentos já
+                      iniciados precisam de conferência e não são repetidos.
                     </p>
+                    {cancellationQuote ? (
+                      <>
+                        <p>{cancellationQuote.explanation}</p>
+                        <p>
+                          Pagamento confirmado disponível:{" "}
+                          {money(cancellationQuote.paidAmountCents)} · Valor
+                          elegível para análise:{" "}
+                          {money(cancellationQuote.eligibleAmountCents)}
+                        </p>
+                        <p>
+                          Política contratada: versão{" "}
+                          {cancellationQuote.policy.version}. Prazo inicial até{" "}
+                          {new Date(
+                            cancellationQuote.withdrawalDeadline,
+                          ).toLocaleString("pt-BR")}
+                          .
+                        </p>
+                        <p>{cancellationQuote.policy.additionalTerms}</p>
+                      </>
+                    ) : (
+                      <p role="status">
+                        Verificando a política e os pagamentos antes do
+                        cancelamento…
+                      </p>
+                    )}
                     <button
                       className="secondary"
-                      disabled={busy}
+                      disabled={busy || !cancellationQuote}
                       onClick={() => {
                         void mutate(`/v1/subscriptions/${s.id}/cancel`, {
-                          expectedRevision: s.revision,
+                          expectedRevision:
+                            cancellationQuote?.revision ?? s.revision,
                         }).then((r) => {
                           if (r) setConfirmedCancel(null);
                         });
@@ -573,6 +651,9 @@ export default function SubscriptionPlansPage({
                       Manter assinatura
                     </button>
                   </div>
+                )}
+                {s.cycles.some((c) => c.status === "paid") && (
+                  <RequestSubscriptionRefund subscriptionId={s.id} />
                 )}
                 {s.cycles.length > 0 && (
                   <ul className="subscription-cycles">
@@ -627,6 +708,7 @@ export default function SubscriptionPlansPage({
           </button>
         </div>
       )}
+      {owner && <SubscriptionRefundsPanel />}
     </section>
   );
 }

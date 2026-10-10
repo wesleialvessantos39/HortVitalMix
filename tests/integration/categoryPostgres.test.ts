@@ -72,6 +72,14 @@ async function actorFixture(
     "INSERT INTO app_admin_principals(admin_user_id,person_id,admin_email,portal_role) VALUES($1,$2,$3,$4)",
     [userId, personId, userId + "@example.test", role],
   );
+  await pool().query(
+    "UPDATE app_users SET status='active',block_starts_at=NULL,block_ends_at=NULL WHERE id=$1",
+    [userId],
+  );
+  await pool().query(
+    "UPDATE app_people SET registration_review_pending=false WHERE id=$1",
+    [personId],
+  );
   return {
     userId,
     role,
@@ -152,7 +160,7 @@ describe.runIf(Boolean(process.env.HVM_T13_LOCAL_DATABASE_URL))(
     });
     it("seed real contém as cinco categorias canônicas na ordem 1–5", async () => {
       const result = await pool().query(
-        "SELECT slug,name,icon_name,display_order FROM app_categories ORDER BY display_order,name,id",
+        "SELECT slug,name,icon_name,display_order FROM app_categories WHERE slug IN ('hortalicas-folhosas','legumes-picados','mix-prontos','temperos-e-ervas','frutas') ORDER BY display_order,name,id",
       );
       expect(result.rows).toEqual([
         {
@@ -205,7 +213,7 @@ describe.runIf(Boolean(process.env.HVM_T13_LOCAL_DATABASE_URL))(
           (
             await asRole(
               role,
-              "SELECT count(*)::int AS count FROM app_categories",
+              "SELECT count(*)::int AS count FROM app_categories WHERE slug IN ('hortalicas-folhosas','legumes-picados','mix-prontos','temperos-e-ervas','frutas')",
             )
           ).rows[0].count,
         ).toBe(5);
@@ -616,26 +624,50 @@ describe.runIf(Boolean(process.env.HVM_T13_LOCAL_DATABASE_URL))(
       ).toBe(child.id);
     });
     it("relatório futuro conta apenas produtos publicados e revalida impacto na escrita", async () => {
-      const hasProducts = Boolean((await pool().query("SELECT to_regclass('app_products') AS products")).rows[0].products);
+      const hasProducts = Boolean(
+        (await pool().query("SELECT to_regclass('app_products') AS products"))
+          .rows[0].products,
+      );
       const category = await create();
       // T14 supplies the real table now. The legacy branch remains valid when
       // this T13 suite is deliberately run against its pre-T14 local schema.
       let fixtureUser: string | null = null;
-      if (!hasProducts) await pool().query("CREATE TABLE app_products(id uuid DEFAULT gen_random_uuid(),category_id uuid NOT NULL,is_published boolean NOT NULL)");
+      if (!hasProducts)
+        await pool().query(
+          "CREATE TABLE app_products(id uuid DEFAULT gen_random_uuid(),category_id uuid NOT NULL,is_published boolean NOT NULL)",
+        );
       try {
         if (hasProducts) {
           const f = await productFixture(pool());
           fixtureUser = f.userId;
-          const rows = await pool().query<{id:string}>(`INSERT INTO app_products(store_id,category_id,title,description,packaging_type,net_weight_grams,unit_type)
+          const rows = await pool().query<{ id: string }>(
+            `INSERT INTO app_products(store_id,category_id,title,description,packaging_type,net_weight_grams,unit_type)
             VALUES($1,$2,'Couve local','Descrição alimentar local T14','pote_higienizado',250,'pote'),
-            ($1,$2,'Couve rascunho','Descrição alimentar local T14','pote_higienizado',250,'pote') RETURNING id`,[f.store.id,category.id]);
-          for (const row of rows.rows) await pool().query("INSERT INTO app_price_versions(product_id,price_cents,created_by_user_id) VALUES($1,1290,$2)",[row.id,f.userId]);
+            ($1,$2,'Couve rascunho','Descrição alimentar local T14','pote_higienizado',250,'pote') RETURNING id`,
+            [f.store.id, category.id],
+          );
+          for (const row of rows.rows)
+            await pool().query(
+              "INSERT INTO app_price_versions(product_id,price_cents,created_by_user_id) VALUES($1,1290,$2)",
+              [row.id, f.userId],
+            );
           const publishedId = rows.rows[0].id;
-          await pool().query("INSERT INTO app_product_media(product_id,media_url,is_primary) VALUES($1,$2,true)",[
-            publishedId,`https://xipbsazvymkqqfmfegwu.supabase.co/storage/v1/object/product-media/${f.store.id}/${publishedId}/${randomUUID()}-${"a".repeat(64)}.png`,
-          ]);
-          await pool().query("UPDATE app_products SET is_published=true WHERE id=$1",[publishedId]);
-        } else await pool().query("INSERT INTO app_products(category_id,is_published) VALUES($1,true),($1,false)",[category.id]);
+          await pool().query(
+            "INSERT INTO app_product_media(product_id,media_url,is_primary) VALUES($1,$2,true)",
+            [
+              publishedId,
+              `https://xipbsazvymkqqfmfegwu.supabase.co/storage/v1/object/product-media/${f.store.id}/${publishedId}/${randomUUID()}-${"a".repeat(64)}.png`,
+            ],
+          );
+          await pool().query(
+            "UPDATE app_products SET is_published=true WHERE id=$1",
+            [publishedId],
+          );
+        } else
+          await pool().query(
+            "INSERT INTO app_products(category_id,is_published) VALUES($1,true),($1,false)",
+            [category.id],
+          );
         expect(
           await CategoryService.getDeactivationImpact(category.id, actor),
         ).toMatchObject({ activeProducts: 1, requiresConfirmation: true });
@@ -657,7 +689,10 @@ describe.runIf(Boolean(process.env.HVM_T13_LOCAL_DATABASE_URL))(
           context(),
         );
       } finally {
-        if (fixtureUser) await pool().query("DELETE FROM auth.users WHERE id=$1",[fixtureUser]);
+        if (fixtureUser)
+          await pool().query("DELETE FROM auth.users WHERE id=$1", [
+            fixtureUser,
+          ]);
         if (!hasProducts) await pool().query("DROP TABLE app_products");
       }
     });

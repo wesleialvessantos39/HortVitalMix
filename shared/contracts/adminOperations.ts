@@ -139,6 +139,8 @@ export const AdminCatalogProductSchema = z
     isVisible: z.boolean(),
     storeStatus: CatalogStoreStatusSchema,
     categoryActive: z.boolean(),
+    revision: count.positive().default(1),
+    adminHidden: z.boolean().default(false),
     priceCents: count.nullable(),
     updatedAt: dateTime,
   })
@@ -153,6 +155,8 @@ export const AdminCatalogStoreSchema = z
     productCount: count,
     publishedProductCount: count,
     updatedAt: dateTime,
+    revision: count.positive().default(1),
+    adminHidden: z.boolean().default(false),
   })
   .strict();
 export const AdminCatalogCategorySchema = z

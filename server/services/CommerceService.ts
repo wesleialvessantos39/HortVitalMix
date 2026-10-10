@@ -55,7 +55,9 @@ export function orderView(
     storeName: row.store_snapshot.name,
     source: row.source,
     status: row.status,
-    ...(row.fulfillment_status ? { fulfillmentStatus: row.fulfillment_status } : {}),
+    ...(row.fulfillment_status
+      ? { fulfillmentStatus: row.fulfillment_status }
+      : {}),
     totalCents: row.total_cents,
     items: row.items_snapshot,
     createdAt: new Date(row.created_at).toISOString(),
@@ -110,8 +112,8 @@ export const CommerceService = {
       await commerceAdmin(
         client,
         actor,
-        hasAdminPermission(actor, "refund_management")
-          ? "refund_management"
+        hasAdminPermission(actor, "refund_policy")
+          ? "refund_policy"
           : "payment_configuration",
       );
       const row = (
@@ -137,8 +139,8 @@ export const CommerceService = {
       await commerceAdmin(
         client,
         actor,
-        hasAdminPermission(actor, "refund_management")
-          ? "refund_management"
+        hasAdminPermission(actor, "refund_policy")
+          ? "refund_policy"
           : "payment_configuration",
       );
       return commerceCommand(
@@ -170,8 +172,7 @@ export const CommerceService = {
               input.gateway[key as keyof typeof input.gateway] !==
               current.gateway[key],
           );
-          if (changePolicy)
-            await commerceAdmin(client, actor, "refund_management");
+          if (changePolicy) await commerceAdmin(client, actor, "refund_policy");
           if (changeGateway)
             await commerceAdmin(client, actor, "payment_configuration");
           const policy = CommercePolicySchema.parse({

@@ -26,6 +26,9 @@ export const AdminSectorCodeSchema = z.enum([
   "refund_management",
   "complaint_management",
   "payment_configuration",
+  "subscription_management",
+  "review_management",
+  "refund_policy",
 ]);
 export type AdminSectorCode = z.infer<typeof AdminSectorCodeSchema>;
 
@@ -158,7 +161,14 @@ export const CreateInviteSchema = z
     email,
     targetCpf: cpf.optional(),
     targetRole: AdminRoleSchema,
-    sectors: z.array(AdminSectorCodeSchema).max(10).default([]),
+    sectors: z
+      .array(AdminSectorCodeSchema)
+      .max(AdminSectorCodeSchema.options.length)
+      .refine(
+        (values) => new Set(values).size === values.length,
+        "Poder repetido",
+      )
+      .default([]),
     commandId: z.string().uuid(),
   })
   .strict()
@@ -266,7 +276,7 @@ export const UpdateAdminPermissionsSchema = z
   .object({
     sectors: z
       .array(AdminSectorCodeSchema)
-      .max(9)
+      .max(AdminSectorCodeSchema.options.length)
       .refine(
         (values) => new Set(values).size === values.length,
         "Poder repetido",

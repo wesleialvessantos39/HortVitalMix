@@ -27,8 +27,11 @@ const DEPARTMENT_PRESENTATION: Record<string, { title: string; icon: LucideIcon 
   location_management: { title: "Localidades", icon: MapPin },
   platform_configuration: { title: "Plataforma", icon: Settings2 },
   refund_management: { title: "Reembolsos", icon: Ban },
-  complaint_management: { title: "Denúncias e avaliações", icon: ShieldCheck },
+  complaint_management: { title: "Denúncias", icon: ShieldCheck },
   payment_configuration: { title: "Pagamentos", icon: CreditCard },
+  subscription_management: { title: "Assinaturas e planos", icon: CreditCard },
+  review_management: { title: "Avaliações e reputação", icon: ShieldCheck },
+  refund_policy: { title: "Política de reembolso", icon: Ban },
 };
 
 function metricValue(metric: Metric) {

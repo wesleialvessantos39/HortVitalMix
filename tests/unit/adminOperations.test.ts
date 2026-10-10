@@ -232,6 +232,12 @@ describe("Departamentos operacionais: limites e autorização", () => {
 });
 
 describe("HTTP operacional", () => {
+  it.each(["finance", "catalog"] as const)("aceita rewrite da Vercel em %s e rejeita parâmetros comerciais extras",async kind=>{
+    mock.actor=actor({sectors:[kind==="finance"?"finance_ops":"catalog_moderation"]});
+    const url="/api/v1/admin/"+kind+"/overview",headers={Authorization:"Bearer synthetic-operations"};
+    expect((await request(app()).get(url).set(headers).query({path:"v1/admin/"+kind+"/overview",__hvm_path:"v1/admin/"+kind+"/overview"})).status).toBe(200);
+    expect((await request(app()).get(url).set(headers).query({path:"internal",unexpectedField:"forged"})).status).toBe(400);
+  });
   it.each(["/v1/admin", "/api/v1/admin", "/_hvm_api/v1/admin"])(
     "protege os dois endpoints no prefixo %s e todas as respostas são no-store",
     async (prefix) => {

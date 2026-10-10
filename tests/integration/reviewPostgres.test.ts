@@ -325,7 +325,7 @@ describe.runIf(!!process.env.HVM_T24_LOCAL_DATABASE_URL)(
           "UPDATE app_reviews SET is_moderated=false,moderation_reason=NULL,moderated_at=NULL,moderated_by=NULL WHERE id=$1",
           [r.id],
         ),
-      ).rejects.toThrow("REVIEW_MODERATION_IMMUTABLE");
+      ).rejects.toThrow("REVIEW_MODERATION_HISTORY_REQUIRED");
     });
     it("guard SQL impede vínculo forjado de loja/pessoa e pedido sem entrega mesmo como backend", async () => {
       const p = await f.delivered(),
@@ -394,10 +394,10 @@ describe.runIf(!!process.env.HVM_T24_LOCAL_DATABASE_URL)(
     it("administrador sem setor e setor revogado são negados apesar das claims do cliente", async () => {
       const actor = await f.admin("platform_admin");
       await expect(
-        service.adminList({ ...actor, sectors: ["complaint_management"] }, {}),
+        service.adminList({ ...actor, sectors: ["review_management"] }, {}),
       ).rejects.toMatchObject({ status: 403 });
       await pool().query(
-        "INSERT INTO app_admin_sector_members(user_id,sector_code) VALUES($1,'complaint_management')",
+        "INSERT INTO app_admin_sector_members(user_id,sector_code) VALUES($1,'review_management')",
         [actor.userId],
       );
       expect((await service.adminList(actor, {})).total).toBeGreaterThan(0);
@@ -406,7 +406,7 @@ describe.runIf(!!process.env.HVM_T24_LOCAL_DATABASE_URL)(
         [actor.userId],
       );
       await expect(
-        service.adminList({ ...actor, sectors: ["complaint_management"] }, {}),
+        service.adminList({ ...actor, sectors: ["review_management"] }, {}),
       ).rejects.toMatchObject({ status: 403 });
     });
     it("loja pausada deixa de expor avaliações pela policy e pela API pública", async () => {

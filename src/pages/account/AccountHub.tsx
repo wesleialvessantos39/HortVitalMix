@@ -1,10 +1,6 @@
 import { AccountGreeting } from "../../components/AccountGreeting";
 import { accountExperience } from "./accountExperience";
-import {
-  useEffect,
-  useState,
-  type FormEvent,
-} from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import {
   ArrowLeft,
   Check,
@@ -31,6 +27,8 @@ import type {
 import type { AddressAdvancedView } from "../../../shared/contracts/addressAdvanced";
 import { PrivacyExportButton } from "./PrivacyExportButton";
 import { AddressManager } from "./AddressManager";
+import { AccountUpdatesPage } from "./AccountUpdatesPage";
+import { DeleteOwnAccount } from "./DeleteOwnAccount";
 import { PostalLookupService } from "../../services/PostalLookupService";
 // Coordinates AddressManager events: "hortivitalmix:default-address-changed" and PostalLookupService
 
@@ -53,14 +51,17 @@ function commandId() {
 
 export function AccountHub({ path, session, onNavigate }: Props) {
   const experience = accountExperience(session.activeRole);
-  const administrative = session.activeRole === "platform_admin" || session.activeRole === "platform_super_admin";
+  const administrative =
+    session.activeRole === "platform_admin" ||
+    session.activeRole === "platform_super_admin";
   const [profile, setProfile] = useState<ProfileView | null>(null);
-  const [preferences, setPreferences] =
-    useState<PreferencesView | null>(null);
+  const [preferences, setPreferences] = useState<PreferencesView | null>(null);
   const [consents, setConsents] = useState<ConsentView[]>([]);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
-  const [producerApproved, setProducerApproved] = useState<boolean | null>(null);
+  const [producerApproved, setProducerApproved] = useState<boolean | null>(
+    null,
+  );
   const [producerGuideOpen, setProducerGuideOpen] = useState(false);
   const [producerGuideProperty, setProducerGuideProperty] = useState<{
     id: string;
@@ -71,13 +72,33 @@ export function AccountHub({ path, session, onNavigate }: Props) {
   async function load(signal?: AbortSignal) {
     setNotice("");
     const pending: Promise<unknown>[] = [];
-    const failed = () => { if (!signal?.aborted) setNotice("Não foi possível carregar parte dos dados da conta agora."); };
+    const failed = () => {
+      if (!signal?.aborted)
+        setNotice("Não foi possível carregar parte dos dados da conta agora.");
+    };
     // Independent sections must not hold up the identity already returned by the session.
     if (path === "/conta/perfil" || path === "/conta/preferencias")
-      pending.push(api<ProfileView>("/v1/account/profile", { signal }).then((value) => { if (!signal?.aborted) setProfile(value); }).catch(failed));
+      pending.push(
+        api<ProfileView>("/v1/account/profile", { signal })
+          .then((value) => {
+            if (!signal?.aborted) setProfile(value);
+          })
+          .catch(failed),
+      );
     if (path === "/conta/preferencias" || path === "/conta/privacidade")
-      pending.push(api<{ preferences: PreferencesView; consents: ConsentView[] }>("/v1/account/preferences", { signal })
-        .then((result) => { if (!signal?.aborted) { setPreferences(result.preferences); setConsents(result.consents); } }).catch(failed));
+      pending.push(
+        api<{ preferences: PreferencesView; consents: ConsentView[] }>(
+          "/v1/account/preferences",
+          { signal },
+        )
+          .then((result) => {
+            if (!signal?.aborted) {
+              setPreferences(result.preferences);
+              setConsents(result.consents);
+            }
+          })
+          .catch(failed),
+      );
     await Promise.all(pending);
   }
 
@@ -85,7 +106,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
     const controller = new AbortController();
     void load(controller.signal);
     return () => controller.abort();
-  }, [session.userId,session.activeRole, path]);
+  }, [session.userId, session.activeRole, path]);
 
   useEffect(() => {
     if (path !== "/conta" || session.activeRole !== "producer") return;
@@ -124,14 +145,29 @@ export function AccountHub({ path, session, onNavigate }: Props) {
     return () => controller.abort();
   }, [path, session.activeRole, session.userId]);
 
+  if (path === "/conta/atualizacoes" && !administrative)
+    return (
+      <AccountUpdatesPage
+        key={`${session.userId}:${session.activeRole}`}
+        session={session}
+      />
+    );
   if (path === "/conta") {
     return (
       <section className="account-hub">
         <header className="account-hub-heading">
           <div>
-            <span className="eyebrow">{administrative ? "Minha conta e privacidade" : "Minha conta"}</span>
-            <h1><AccountGreeting fullName={profile?.fullName ?? session.fullName ?? undefined} /></h1>
-            <p>{experience.label} · {session.email}</p>
+            <span className="eyebrow">
+              {administrative ? "Minha conta e privacidade" : "Minha conta"}
+            </span>
+            <h1>
+              <AccountGreeting
+                fullName={profile?.fullName ?? session.fullName ?? undefined}
+              />
+            </h1>
+            <p>
+              {experience.label} · {session.email}
+            </p>
             <p>{experience.introduction}</p>
           </div>
         </header>
@@ -140,7 +176,10 @@ export function AccountHub({ path, session, onNavigate }: Props) {
           <section className="producer-onboarding-notice" role="status">
             <div>
               <strong>Seu cadastro de produtor ainda não foi aprovado.</strong>
-              <p>Para continuar, cadastre seu imóvel rural e envie as informações para análise.</p>
+              <p>
+                Para continuar, cadastre seu imóvel rural e envie as informações
+                para análise.
+              </p>
             </div>
             <button
               type="button"
@@ -152,15 +191,24 @@ export function AccountHub({ path, session, onNavigate }: Props) {
               {producerGuideOpen ? "Fechar guia" : "Ver guia passo a passo"}
             </button>
             {producerGuideOpen && (
-              <div id="producer-onboarding-guide" className="producer-onboarding-guide">
+              <div
+                id="producer-onboarding-guide"
+                className="producer-onboarding-guide"
+              >
                 <ol>
                   <li>
                     {producerGuideProperty
                       ? `Existe um imóvel em andamento. O cadastro salvo está na etapa ${Math.max(1, Math.min(6, producerGuideProperty.wizardCurrentStep))} de 6.`
                       : "Abra Imóveis rurais e inicie um novo cadastro."}
                   </li>
-                  <li>A etapa 1 é <strong>Documentos do imóvel</strong>; anexe e confira o CAR ou CCIR.</li>
-                  <li>Ao abrir o imóvel, as etapas pendentes são recalculadas pelos dados reais e ficam disponíveis para acesso direto.</li>
+                  <li>
+                    A etapa 1 é <strong>Documentos do imóvel</strong>; anexe e
+                    confira o CAR ou CCIR.
+                  </li>
+                  <li>
+                    Ao abrir o imóvel, as etapas pendentes são recalculadas
+                    pelos dados reais e ficam disponíveis para acesso direto.
+                  </li>
                   <li>Na etapa 6, confira a ficha e envie para análise.</li>
                 </ol>
                 <button
@@ -174,7 +222,9 @@ export function AccountHub({ path, session, onNavigate }: Props) {
                     )
                   }
                 >
-                  {producerGuideProperty ? "Continuar cadastro do imóvel" : "Ir para Imóveis rurais"}
+                  {producerGuideProperty
+                    ? "Continuar cadastro do imóvel"
+                    : "Ir para Imóveis rurais"}
                 </button>
               </div>
             )}
@@ -182,15 +232,104 @@ export function AccountHub({ path, session, onNavigate }: Props) {
         )}
 
         <div className="account-hub-grid">
-          {session.activeRole === "consumer"&&<>
-            <button className="account-hub-card" onClick={()=>onNavigate("/compras")}><ReceiptText/><span><strong>Minhas compras</strong><small>Revisões, pagamentos e comprovantes da compra</small></span></button>
-            <button className="account-hub-card" onClick={()=>onNavigate("/pedidos")}><Truck/><span><strong>Acompanhar pedidos</strong><small>Do preparo na horta até a entrega</small></span></button>
-            <button className="account-hub-card" onClick={()=>onNavigate("/assinaturas")}><Salad/><span><strong>Clube de hortifrúti</strong><small>Planos e entregas recorrentes</small></span></button>
-            <button className="account-hub-card" onClick={()=>onNavigate("/reembolsos")}><ShieldCheck/><span><strong>Reembolsos</strong><small>Confira a política e acompanhe suas solicitações</small></span></button>
-            <button className="account-hub-card" onClick={()=>onNavigate("/denuncias")}><Flag/><span><strong>Denúncias e segurança</strong><small>Relate problemas e converse com a equipe responsável</small></span></button>
-          </>}
-          {!administrative&&session.activeRole!=="consumer"&&<button className="account-hub-card" onClick={()=>onNavigate("/denuncias")}><Flag/><span><strong>Denúncias e segurança</strong><small>Relate situações de suas vendas à equipe responsável</small></span></button>}
-          {!administrative&&<button className="account-hub-card" onClick={()=>onNavigate("/notificacoes")}><ShieldCheck/><span><strong>Notificações</strong><small>Avisos e atualizações do seu portal</small></span></button>}
+          {!administrative && (
+            <button
+              className="account-hub-card"
+              onClick={() => onNavigate("/conta/atualizacoes")}
+            >
+              <SlidersHorizontal />
+              <span>
+                <strong>Atualizações e sincronização</strong>
+                <small>
+                  Versão do aplicativo e sincronização dos meus dados
+                </small>
+              </span>
+            </button>
+          )}
+          {session.activeRole === "consumer" && (
+            <>
+              <button
+                className="account-hub-card"
+                onClick={() => onNavigate("/compras")}
+              >
+                <ReceiptText />
+                <span>
+                  <strong>Minhas compras</strong>
+                  <small>Revisões, pagamentos e comprovantes da compra</small>
+                </span>
+              </button>
+              <button
+                className="account-hub-card"
+                onClick={() => onNavigate("/pedidos")}
+              >
+                <Truck />
+                <span>
+                  <strong>Acompanhar pedidos</strong>
+                  <small>Do preparo na horta até a entrega</small>
+                </span>
+              </button>
+              <button
+                className="account-hub-card"
+                onClick={() => onNavigate("/assinaturas")}
+              >
+                <Salad />
+                <span>
+                  <strong>Clube de hortifrúti</strong>
+                  <small>Planos e entregas recorrentes</small>
+                </span>
+              </button>
+              <button
+                className="account-hub-card"
+                onClick={() => onNavigate("/reembolsos")}
+              >
+                <ShieldCheck />
+                <span>
+                  <strong>Reembolsos</strong>
+                  <small>
+                    Confira a política e acompanhe suas solicitações
+                  </small>
+                </span>
+              </button>
+              <button
+                className="account-hub-card"
+                onClick={() => onNavigate("/denuncias")}
+              >
+                <Flag />
+                <span>
+                  <strong>Denúncias e segurança</strong>
+                  <small>
+                    Relate problemas e converse com a equipe responsável
+                  </small>
+                </span>
+              </button>
+            </>
+          )}
+          {!administrative && session.activeRole !== "consumer" && (
+            <button
+              className="account-hub-card"
+              onClick={() => onNavigate("/denuncias")}
+            >
+              <Flag />
+              <span>
+                <strong>Denúncias e segurança</strong>
+                <small>
+                  Relate situações de suas vendas à equipe responsável
+                </small>
+              </span>
+            </button>
+          )}
+          {!administrative && (
+            <button
+              className="account-hub-card"
+              onClick={() => onNavigate("/notificacoes")}
+            >
+              <ShieldCheck />
+              <span>
+                <strong>Notificações</strong>
+                <small>Avisos e atualizações do seu portal</small>
+              </span>
+            </button>
+          )}
           {sections.map(([to, label, Icon], index) => (
             <button
               key={to}
@@ -200,16 +339,36 @@ export function AccountHub({ path, session, onNavigate }: Props) {
               <Icon />
               <span>
                 <strong>{label}</strong>
-                <small>
-                  {experience.cards[index]}
-                </small>
+                <small>{experience.cards[index]}</small>
               </span>
             </button>
           ))}
           {session.activeRole === "producer" && (
             <>
-              <button className="account-hub-card" onClick={()=>onNavigate("/produtor/vendas")}><ReceiptText/><span><strong>Minhas vendas</strong><small>Vendas confirmadas, caixa e situação financeira da loja</small></span></button>
-              <button className="account-hub-card" onClick={()=>onNavigate("/produtor/reembolsos")}><ShieldCheck/><span><strong>Reembolsos das vendas</strong><small>Acompanhe o processo conduzido pela administração</small></span></button>
+              <button
+                className="account-hub-card"
+                onClick={() => onNavigate("/produtor/vendas")}
+              >
+                <ReceiptText />
+                <span>
+                  <strong>Minhas vendas</strong>
+                  <small>
+                    Vendas confirmadas, caixa e situação financeira da loja
+                  </small>
+                </span>
+              </button>
+              <button
+                className="account-hub-card"
+                onClick={() => onNavigate("/produtor/reembolsos")}
+              >
+                <ShieldCheck />
+                <span>
+                  <strong>Reembolsos das vendas</strong>
+                  <small>
+                    Acompanhe o processo conduzido pela administração
+                  </small>
+                </span>
+              </button>
               <button
                 className="account-hub-card account-hub-card-rural"
                 onClick={() => onNavigate("/produtor/propriedades")}
@@ -217,20 +376,77 @@ export function AccountHub({ path, session, onNavigate }: Props) {
                 <Sprout />
                 <span>
                   <strong>Imóveis rurais</strong>
-                  <small>Cadastre propriedades, áreas, água e atividades produtivas</small>
+                  <small>
+                    Cadastre propriedades, áreas, água e atividades produtivas
+                  </small>
                 </span>
               </button>
-              <button className="account-hub-card" onClick={() => onNavigate("/produtor/loja")}>
+              <button
+                className="account-hub-card"
+                onClick={() => onNavigate("/produtor/loja")}
+              >
                 <Store />
-                <span><strong>Minha loja</strong><small>Prepare sua vitrine, configure horários e acompanhe a abertura</small></span>
+                <span>
+                  <strong>Minha loja</strong>
+                  <small>
+                    Prepare sua vitrine, configure horários e acompanhe a
+                    abertura
+                  </small>
+                </span>
               </button>
-              <button className="account-hub-card" onClick={()=>onNavigate("/produtor/caixa")}><CreditCard/><span><strong>Caixa do produtor</strong><small>Prepare vendas presenciais com Pix do sistema ou maquininha</small></span></button>
-              <button className="account-hub-card" onClick={()=>onNavigate("/produtor/loja/janelas")}><PackageCheck/><span><strong>Janelas de entrega</strong><small>Horários e vagas para agendar entregas</small></span></button>
-              <button className="account-hub-card" onClick={()=>onNavigate("/produtor/pedidos")}><PackageCheck/><span><strong>Pedidos da minha loja</strong><small>Organize o preparo e acompanhe cada entrega</small></span></button>
-              <button className="account-hub-card" onClick={()=>onNavigate("/produtor/assinaturas")}><Sprout/><span><strong>Plano do produtor</strong><small>Trial e assinatura do clube</small></span></button>
-              <button className="account-hub-card" onClick={() => onNavigate("/produtor/produtos")}>
+              <button
+                className="account-hub-card"
+                onClick={() => onNavigate("/produtor/caixa")}
+              >
+                <CreditCard />
+                <span>
+                  <strong>Caixa do produtor</strong>
+                  <small>
+                    Prepare vendas presenciais com Pix do sistema ou maquininha
+                  </small>
+                </span>
+              </button>
+              <button
+                className="account-hub-card"
+                onClick={() => onNavigate("/produtor/loja/janelas")}
+              >
+                <PackageCheck />
+                <span>
+                  <strong>Janelas de entrega</strong>
+                  <small>Horários e vagas para agendar entregas</small>
+                </span>
+              </button>
+              <button
+                className="account-hub-card"
+                onClick={() => onNavigate("/produtor/pedidos")}
+              >
+                <PackageCheck />
+                <span>
+                  <strong>Pedidos da minha loja</strong>
+                  <small>Organize o preparo e acompanhe cada entrega</small>
+                </span>
+              </button>
+              <button
+                className="account-hub-card"
+                onClick={() => onNavigate("/produtor/assinaturas")}
+              >
+                <Sprout />
+                <span>
+                  <strong>Plano do produtor</strong>
+                  <small>Trial e assinatura do clube</small>
+                </span>
+              </button>
+              <button
+                className="account-hub-card"
+                onClick={() => onNavigate("/produtor/produtos")}
+              >
                 <Salad />
-                <span><strong>Meus produtos</strong><small>Cadastre alimentos, fotos, embalagens e preços de venda</small></span>
+                <span>
+                  <strong>Meus produtos</strong>
+                  <small>
+                    Cadastre alimentos, fotos, embalagens e preços de venda
+                  </small>
+                </span>
               </button>
               {producerApproved && (
                 <button
@@ -240,15 +456,26 @@ export function AccountHub({ path, session, onNavigate }: Props) {
                   <Truck />
                   <span>
                     <strong>Escopo de entrega</strong>
-                    <small>Defina se você entrega no município do imóvel, em todos ou em municípios escolhidos</small>
+                    <small>
+                      Defina se você entrega no município do imóvel, em todos ou
+                      em municípios escolhidos
+                    </small>
                   </span>
                 </button>
               )}
             </>
           )}
         </div>
-        <button className="secondary account-action" type="button" onClick={() => onNavigate(administrative ? "/admin/painel" : "/minha-conta")}>
-          {administrative ? "Voltar ao painel administrativo" : "Segurança e sair da conta"}
+        <button
+          className="secondary account-action"
+          type="button"
+          onClick={() =>
+            onNavigate(administrative ? "/admin/painel" : "/minha-conta")
+          }
+        >
+          {administrative
+            ? "Voltar ao painel administrativo"
+            : "Segurança e sair da conta"}
         </button>
         {notice && (
           <p role="status" className="account-notice">
@@ -266,9 +493,13 @@ export function AccountHub({ path, session, onNavigate }: Props) {
           <ArrowLeft />
         </button>
         <div>
-          <span className="eyebrow">{administrative ? "Minha conta e privacidade" : "Minha conta"}</span>
+          <span className="eyebrow">
+            {administrative ? "Minha conta e privacidade" : "Minha conta"}
+          </span>
           <h1>
-            {path === "/conta/enderecos" ? experience.addressTitle : sections.find(([route]) => route === path)?.[1] ?? "Conta"}
+            {path === "/conta/enderecos"
+              ? experience.addressTitle
+              : (sections.find(([route]) => route === path)?.[1] ?? "Conta")}
           </h1>
         </div>
       </header>
@@ -320,14 +551,19 @@ export function AccountHub({ path, session, onNavigate }: Props) {
             } catch (error) {
               if ((error as ApiFailure).status === 409) {
                 await load();
-                setNotice("Seus dados mudaram em outra sessão. Confira a versão atual e tente novamente.");
+                setNotice(
+                  "Seus dados mudaram em outra sessão. Confira a versão atual e tente novamente.",
+                );
               } else setNotice("Não foi possível atualizar o perfil.");
             } finally {
               setBusy(false);
             }
           }}
         >
-          <div className="account-section-intro"><h2>Identificação e contato</h2><p>{experience.profile}</p></div>
+          <div className="account-section-intro">
+            <h2>Identificação e contato</h2>
+            <p>{experience.profile}</p>
+          </div>
           <label>
             Nome completo
             <input
@@ -377,16 +613,11 @@ export function AccountHub({ path, session, onNavigate }: Props) {
                 {
                   method: "PATCH",
                   body: JSON.stringify({
-                    marketingConsent:
-                      form.get("marketingConsent") === "on",
-                    orderUpdatesChannel:
-                      form.get("orderUpdatesChannel"),
-                    quietHoursEnabled:
-                      form.get("quietHoursEnabled") === "on",
-                    quietHoursStart:
-                      form.get("quietHoursStart") || null,
-                    quietHoursEnd:
-                      form.get("quietHoursEnd") || null,
+                    marketingConsent: form.get("marketingConsent") === "on",
+                    orderUpdatesChannel: form.get("orderUpdatesChannel"),
+                    quietHoursEnabled: form.get("quietHoursEnabled") === "on",
+                    quietHoursStart: form.get("quietHoursStart") || null,
+                    quietHoursEnd: form.get("quietHoursEnd") || null,
                     expectedRevision: preferences.revision,
                     commandId: commandId(),
                   }),
@@ -404,47 +635,89 @@ export function AccountHub({ path, session, onNavigate }: Props) {
             } catch (error) {
               if ((error as ApiFailure).status === 409) {
                 await load();
-                setNotice("Suas preferências mudaram em outra sessão. Confira a versão atual.");
+                setNotice(
+                  "Suas preferências mudaram em outra sessão. Confira a versão atual.",
+                );
               } else setNotice("Não foi possível salvar as preferências.");
             } finally {
               setBusy(false);
             }
           }}
         >
-          <div className="account-section-intro"><h2>Sua conta e suas escolhas</h2><p>{experience.preferences}</p></div>
+          <div className="account-section-intro">
+            <h2>Sua conta e suas escolhas</h2>
+            <p>{experience.preferences}</p>
+          </div>
           <dl className="account-identity-summary">
-            <div><dt>Tipo de conta</dt><dd>{experience.label}</dd></div>
-            <div><dt>E-mail de acesso</dt><dd>{session.email || profile?.email || "Não informado"}</dd></div>
+            <div>
+              <dt>Tipo de conta</dt>
+              <dd>{experience.label}</dd>
+            </div>
+            <div>
+              <dt>E-mail de acesso</dt>
+              <dd>{session.email || profile?.email || "Não informado"}</dd>
+            </div>
           </dl>
-          {administrative && <div className="account-work-tools">
-            <h3>Ferramentas de trabalho</h3>
-            <button type="button" className="secondary" onClick={() => onNavigate("/admin/usuarios")}>Consultar usuários</button>
-            <button type="button" className="secondary" onClick={() => onNavigate("/admin/governanca")}>Gerenciar convites</button>
-            {session.activeRole === "platform_super_admin" && <button type="button" className="secondary" onClick={() => onNavigate("/admin/configuracao")}>Configurações globais</button>}
-          </div>}
-          {session.activeRole === "consumer" ? <fieldset>
-            <legend>Avisos sobre seus pedidos</legend>
-            {(["email", "sms", "both"] as const).map((value) => (
-              <label className="account-radio" key={value}>
-                <input
-                  type="radio"
-                  name="orderUpdatesChannel"
-                  value={value}
-                  defaultChecked={
-                    preferences.orderUpdatesChannel === value
-                  }
-                />
-                <span>
-                  {value === "email"
-                    ? "E-mail"
-                    : value === "sms"
-                      ? "SMS"
-                      : "E-mail e SMS"}
-                </span>
-              </label>
-            ))}
-          </fieldset> : <input type="hidden" name="orderUpdatesChannel" value={preferences.orderUpdatesChannel} />}
-          <p className="account-context-note">Horário de silêncio e novidades são escolhas pessoais. Avisos obrigatórios de segurança continuam ativos.</p>
+          {administrative && (
+            <div className="account-work-tools">
+              <h3>Ferramentas de trabalho</h3>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => onNavigate("/admin/usuarios")}
+              >
+                Consultar usuários
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => onNavigate("/admin/governanca")}
+              >
+                Gerenciar convites
+              </button>
+              {session.activeRole === "platform_super_admin" && (
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => onNavigate("/admin/configuracao")}
+                >
+                  Configurações globais
+                </button>
+              )}
+            </div>
+          )}
+          {session.activeRole === "consumer" ? (
+            <fieldset>
+              <legend>Avisos sobre seus pedidos</legend>
+              {(["email", "sms", "both"] as const).map((value) => (
+                <label className="account-radio" key={value}>
+                  <input
+                    type="radio"
+                    name="orderUpdatesChannel"
+                    value={value}
+                    defaultChecked={preferences.orderUpdatesChannel === value}
+                  />
+                  <span>
+                    {value === "email"
+                      ? "E-mail"
+                      : value === "sms"
+                        ? "SMS"
+                        : "E-mail e SMS"}
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+          ) : (
+            <input
+              type="hidden"
+              name="orderUpdatesChannel"
+              value={preferences.orderUpdatesChannel}
+            />
+          )}
+          <p className="account-context-note">
+            Horário de silêncio e novidades são escolhas pessoais. Avisos
+            obrigatórios de segurança continuam ativos.
+          </p>
           <label className="account-toggle">
             <input
               type="checkbox"
@@ -490,10 +763,36 @@ export function AccountHub({ path, session, onNavigate }: Props) {
           <h2>Privacidade e consentimentos</h2>
           <p>{experience.privacy}</p>
           <div className="account-privacy-summary">
-            <article><ShieldCheck /><h3>Você escolhe</h3><p>Atualize a autorização de novidades em Preferências quando quiser.</p><button type="button" className="secondary" onClick={() => onNavigate("/conta/preferencias")}>Revisar minhas escolhas</button></article>
-            <article><UserRound /><h3>Seus dados com você</h3><p>A exportação reúne seus dados pessoais e exige confirmação recente da senha.</p></article>
+            <article>
+              <ShieldCheck />
+              <h3>Você escolhe</h3>
+              <p>
+                Atualize a autorização de novidades em Preferências quando
+                quiser.
+              </p>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => onNavigate("/conta/preferencias")}
+              >
+                Revisar minhas escolhas
+              </button>
+            </article>
+            <article>
+              <UserRound />
+              <h3>Seus dados com você</h3>
+              <p>
+                A exportação reúne seus dados pessoais e exige confirmação
+                recente da senha.
+              </p>
+            </article>
           </div>
           <PrivacyExportButton session={session} onNotice={setNotice} />
+          <DeleteOwnAccount
+            key={`${session.userId}:${session.activeRole}`}
+            session={session}
+            onNavigate={onNavigate}
+          />
 
           <div className="consent-list">
             {consents.length ? (
@@ -514,9 +813,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
                         consent.policyVersion}
                     </span>
                     <small>
-                      {new Date(
-                        consent.registeredAt,
-                      ).toLocaleString("pt-BR")}
+                      {new Date(consent.registeredAt).toLocaleString("pt-BR")}
                     </small>
                   </div>
                 </article>

@@ -17,6 +17,9 @@ const sectors = [
   "refund_management",
   "complaint_management",
   "payment_configuration",
+  "subscription_management",
+  "review_management",
+  "refund_policy",
 ];
 type Command = { path: string; method: string; body: Record<string, unknown> };
 type Options = {
@@ -508,7 +511,7 @@ const screens = [
   },
   {
     path: "/admin/assinaturas",
-    heading: "Planos de assinatura",
+    heading: "Assinaturas e planos",
     ready: ".subscription-grid .subscription-card",
   },
   {
@@ -595,8 +598,9 @@ for (const width of [320, 390, 768, 1440]) {
         if (width <= 390) {
           const record = page.locator(".admin-data-table tbody tr").first();
           expect(
-            await record.evaluate((element) =>
-              getComputedStyle(element).gridTemplateColumns.split(" ").length,
+            await record.evaluate(
+              (element) =>
+                getComputedStyle(element).gridTemplateColumns.split(" ").length,
             ),
           ).toBe(2);
           const actions = record.locator("td").last();
@@ -674,7 +678,10 @@ for (const role of ["platform_admin", "platform_super_admin"] as const) {
     });
     await page.goto("/admin/localidades");
     const editor = page.locator("#admin-municipality-editor");
-    const open = page.getByRole("button", { name: "Novo município", exact: true });
+    const open = page.getByRole("button", {
+      name: "Novo município",
+      exact: true,
+    });
     await expect(open).toHaveAttribute("aria-expanded", "false");
     await expect(editor).toHaveCount(0);
     await expect(page.locator(".admin-data-table tbody tr")).toHaveCount(1);
@@ -690,11 +697,13 @@ for (const role of ["platform_admin", "platform_super_admin"] as const) {
     await open.click();
     await expect(page.getByLabel("Nome do município")).toHaveValue("Cacoal");
     await expect(page.getByLabel("Código IBGE")).toHaveValue("1100049");
+    expect(commands.filter((command) => command.method !== "GET")).toHaveLength(
+      0,
+    );
     expect(
-      commands.filter((command) => command.method !== "GET"),
-    ).toHaveLength(0);
-    expect(
-      await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
     ).toBe(true);
   });
 
@@ -711,28 +720,47 @@ for (const role of ["platform_admin", "platform_super_admin"] as const) {
     const open = page.getByRole("button", { name: "Novo plano", exact: true });
     await expect(open).toHaveAttribute("aria-expanded", "false");
     await expect(editor).toHaveCount(0);
-    await expect(page.locator(".subscription-grid .subscription-card")).toHaveCount(1);
-    await page.getByRole("button", { name: `Editar ${longName}`, exact: true }).click();
+    await expect(
+      page.locator(".subscription-grid .subscription-card"),
+    ).toHaveCount(1);
+    await page
+      .getByRole("button", { name: `Editar ${longName}`, exact: true })
+      .click();
     await expect(page.getByLabel("Nome do plano")).toBeFocused();
     await expect(page.getByLabel("Nome do plano")).toHaveValue(longName);
-    await expect(page.getByLabel("Preço por ciclo (R$)")).toHaveValue("123456.78");
+    await expect(page.getByLabel("Preço por ciclo (R$)")).toHaveValue(
+      "123456.78",
+    );
     await page.getByLabel("Nome do plano").fill("Rascunho preservado");
     await page
       .getByRole("button", { name: "Recolher formulário", exact: true })
       .click();
     await expect(editor).toHaveCount(0);
-    const resume = page.getByRole("button", { name: "Continuar edição", exact: true });
+    const resume = page.getByRole("button", {
+      name: "Continuar edição",
+      exact: true,
+    });
     await expect(resume).toBeFocused();
     await resume.click();
-    await expect(page.getByLabel("Nome do plano")).toHaveValue("Rascunho preservado");
+    await expect(page.getByLabel("Nome do plano")).toHaveValue(
+      "Rascunho preservado",
+    );
     await expect(page.getByLabel("Loja responsável")).toHaveValue(subjectId);
     await expect(page.getByLabel("Entregas por semana")).toHaveValue("2");
-    await page.getByRole("button", { name: "Cancelar edição", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Cancelar edição", exact: true })
+      .click();
     await expect(page.getByLabel("Nome do plano")).toHaveValue("");
-    await expect(page.getByRole("heading", { name: "Novo plano", exact: true })).toBeVisible();
-    expect(commands.filter((command) => command.method !== "GET")).toHaveLength(0);
+    await expect(
+      page.getByRole("heading", { name: "Novo plano", exact: true }),
+    ).toBeVisible();
+    expect(commands.filter((command) => command.method !== "GET")).toHaveLength(
+      0,
+    );
     expect(
-      await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
     ).toBe(true);
   });
 
