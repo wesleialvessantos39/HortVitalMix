@@ -1,0 +1,32 @@
+{
+  "functionalCommit": "9b86e67f5c7bd3c6e1974f70eaf7fb2ee17c9602",
+  "pullRequest": "https://github.com/wesleialvessantos39/HortVitalMix/pull/122",
+  "deploymentId": "dpl_Ne5AKeXxJPJ7hkNw27aKkugCC4Ry",
+  "deploymentState": "READY",
+  "branch": "main",
+  "target": "production",
+  "regions": [
+    "pdx1"
+  ],
+  "domain": "https://hortvitalmix.vercel.app",
+  "buildId": "85b4f73b501f2cb8e72e424734250f38869dcc8a1babf55a7b3c43ae565b0b97",
+  "verifiedResources": 93,
+  "httpChecks": 123,
+  "browserVisits": 23,
+  "apiFixtures": false,
+  "physicalDeviceInstallation": false,
+  "releaseTag": "ios-install-v71-9b86e67",
+  "schemaVersion": 71,
+  "migrationCount": 78,
+  "migrationHistoryHash": "636b80e93683ae0af7fb587f902125dfedec42aaf4a29a0a01419eeaa0f32db5",
+  "canonicalReleaseRegisteredOnlyAfterReadyAndArtifactVerification": true,
+  "automaticUpdateBetweenActualPublications": true,
+  "remoteBusinessWrites": 0,
+  "sourceSha256": {
+    "src/components/pwa/PwaInstallCards.tsx": "2e642140dd177b4dd0744fc3c3874f0e1e282f8bb8692cdda769dbf4e25e703b",
+    "src/components/pwa/IosInstallGuide.tsx": "692344de0f6a279668ac0c496689b1c970b8e8f0a45e07459ec24186b797a395",
+    "src/components/pwa/pwa.css": "85ad6a130000f5a39a44e27775342716f2c475914eb746db8b9f365dba2ee30a",
+    "src/pages/AppDownloadsPage.tsx": "15595b2c693f36adb4065f006a42bd67497f90ceeacd344adf30cccf38d17b1b"
+  },
+  "initialProductionVerification": "Install-cache readiness must be awaited separately from version-current status; the initial checking notice legitimately permits vertical scrolling in the short viewport. Verified ready layout without relaxing horizontal/viewport/vertical assertions."
+}

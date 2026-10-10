@@ -1,0 +1,30 @@
+{
+  "origin": "https://hortvitalmix.vercel.app",
+  "physicalDeviceInstallation": false,
+  "environment": "real production deployment/Chromium; only dirty form and IndexedDB marker are synthetic browser-local fixtures",
+  "errors": [],
+  "writes": [],
+  "initialGestureAttempts": 1,
+  "baselineDraft": "rascunho de teste somente neste navegador",
+  "before": {
+    "commitSha": "1bb5e2cf824bb7358eef3625d4cde1824c195ec5",
+    "buildId": "d2c58e708d651decc7dd037c4c3cb1f618421b21b6a66c9d8bf1a342381b622a",
+    "startedAt": "2026-10-10T19:08:36.468Z"
+  },
+  "protectedDraft": "rascunho de teste somente neste navegador",
+  "protected": {
+    "newCommitSha": "9b86e67f5c7bd3c6e1974f70eaf7fb2ee17c9602",
+    "newBuildId": "85b4f73b501f2cb8e72e424734250f38869dcc8a1babf55a7b3c43ae565b0b97",
+    "dirtyFormPreserved": true,
+    "oldDocumentPreserved": true
+  },
+  "after": {
+    "commitSha": "9b86e67f5c7bd3c6e1974f70eaf7fb2ee17c9602",
+    "buildId": "85b4f73b501f2cb8e72e424734250f38869dcc8a1babf55a7b3c43ae565b0b97",
+    "indexedDBPreserved": true,
+    "automaticReload": true,
+    "newShellOffline": true,
+    "completedAt": "2026-10-10T19:12:28.066Z"
+  },
+  "status": "verified"
+}
