@@ -1,0 +1,60 @@
+
+> hortivitalmix@0.1.0 test:pwa:browser
+> node scripts/prepare-pwa-tests.mjs && playwright test -c playwright.pwa.config.ts
+
+Two local PWA builds prepared; no native package or remote data used.
+[WebServer] (node:16486) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 46 tests using 1 worker
+
+(node:16494) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/pwa/installation-updates.spec.ts:96:3 › home installation cards fit 320px (3.6s)
+  ✓   2 tests/pwa/installation-updates.spec.ts:96:3 › home installation cards fit 360px (2.9s)
+  ✓   3 tests/pwa/installation-updates.spec.ts:96:3 › home installation cards fit 390px (2.9s)
+  ✓   4 tests/pwa/installation-updates.spec.ts:96:3 › home installation cards fit 430px (2.9s)
+  ✓   5 tests/pwa/installation-updates.spec.ts:96:3 › home installation cards fit 768px (2.8s)
+  ✓   6 tests/pwa/installation-updates.spec.ts:96:3 › home installation cards fit 1024px (2.8s)
+  ✓   7 tests/pwa/installation-updates.spec.ts:96:3 › home installation cards fit 1440px (2.8s)
+  ✓   8 tests/pwa/installation-updates.spec.ts:130:3 › public cards and installation guides fit 320×700 (2.8s)
+  ✓   9 tests/pwa/installation-updates.spec.ts:130:3 › public cards and installation guides fit 360×780 (2.9s)
+  ✓  10 tests/pwa/installation-updates.spec.ts:130:3 › public cards and installation guides fit 390×844 (2.1s)
+  ✓  11 tests/pwa/installation-updates.spec.ts:130:3 › public cards and installation guides fit 430×932 (2.8s)
+  ✓  12 tests/pwa/installation-updates.spec.ts:130:3 › public cards and installation guides fit 768×1024 (2.8s)
+  ✓  13 tests/pwa/installation-updates.spec.ts:130:3 › public cards and installation guides fit 1024×768 (2.7s)
+  ✓  14 tests/pwa/installation-updates.spec.ts:130:3 › public cards and installation guides fit 1440×900 (2.9s)
+  ✓  15 tests/pwa/installation-updates.spec.ts:130:3 › public cards and installation guides fit 844×390 (2.8s)
+  ✓  16 tests/pwa/installation-updates.spec.ts:178:5 › platform_admin with configuration power: PWA central fits 320px (2.7s)
+  ✓  17 tests/pwa/installation-updates.spec.ts:178:5 › platform_admin with configuration power: PWA central fits 390px (2.7s)
+  ✓  18 tests/pwa/installation-updates.spec.ts:178:5 › platform_admin with configuration power: PWA central fits 768px (2.7s)
+  ✓  19 tests/pwa/installation-updates.spec.ts:178:5 › platform_admin with configuration power: PWA central fits 1440px (2.8s)
+  ✓  20 tests/pwa/installation-updates.spec.ts:178:5 › platform_super_admin with configuration power: PWA central fits 320px (2.7s)
+  ✓  21 tests/pwa/installation-updates.spec.ts:178:5 › platform_super_admin with configuration power: PWA central fits 390px (2.6s)
+  ✓  22 tests/pwa/installation-updates.spec.ts:178:5 › platform_super_admin with configuration power: PWA central fits 768px (2.7s)
+  ✓  23 tests/pwa/installation-updates.spec.ts:178:5 › platform_super_admin with configuration power: PWA central fits 1440px (2.8s)
+  ✓  24 tests/pwa/installation-updates.spec.ts:207:3 › platform_admin: explicit power denial protects the department (1.9s)
+  ✓  25 tests/pwa/installation-updates.spec.ts:207:3 › platform_super_admin: explicit power denial protects the department (1.8s)
+  ✓  26 tests/pwa/installation-updates.spec.ts:218:3 › consumer: shared registration works without opening a producer screen (1.2s)
+  ✓  27 tests/pwa/installation-updates.spec.ts:218:3 › producer: shared registration works without opening a producer screen (2.6s)
+  ✓  28 tests/pwa/installation-updates.spec.ts:230:1 › Android button uses a real event contract and treats simulated accept, cancel and browser confirmation separately (3.2s)
+  ✓  29 tests/pwa/installation-updates.spec.ts:274:3 › iphone: Safari assistant and device signals (1.9s)
+  ✓  30 tests/pwa/installation-updates.spec.ts:274:3 › ipad: Safari assistant and device signals (1.8s)
+  ✓  31 tests/pwa/installation-updates.spec.ts:274:3 › internal: Safari assistant and device signals (2.6s)
+  ✓  32 tests/pwa/installation-updates.spec.ts:304:1 › standalone suppresses repeated installation without trusting saved preferences (2.6s)
+  ✓  33 tests/pwa/installation-updates.spec.ts:320:1 › a new complete build applies automatically and preserves IndexedDB (12.9s)
+  ✓  34 tests/pwa/installation-updates.spec.ts:368:3 › update waits for form and resumes automatically (16.9s)
+  ✓  35 tests/pwa/installation-updates.spec.ts:368:3 › update waits for upload and resumes automatically (17.4s)
+  ✓  36 tests/pwa/installation-updates.spec.ts:368:3 › update waits for confirmation and resumes automatically (16.8s)
+  ✓  37 tests/pwa/installation-updates.spec.ts:368:3 › update waits for offline-queue and resumes automatically (17.3s)
+  ✓  38 tests/pwa/installation-updates.spec.ts:483:1 › two tabs wait for the dirty tab before activating either shell (17.5s)
+  ✓  39 tests/pwa/installation-updates.spec.ts:527:1 › failed downloads preserve the old cache and recover after a later verification (11.7s)
+  ✓  40 tests/pwa/installation-updates.spec.ts:556:1 › offline preserves the shell; reconnection checks the new build without reinstalling (12.9s)
+  ✓  41 tests/pwa/installation-updates.spec.ts:581:1 › private/API responses and authorization are absent from static caches (3.9s)
+  ✓  42 tests/pwa/installation-updates.spec.ts:606:1 › checkout remains on the old version until its activity is concluded (16.6s)
+  ✓  43 tests/pwa/installation-updates.spec.ts:633:1 › first registration controls the identical shell for offline use without reloading work (2.7s)
+  ✓  44 tests/pwa/installation-updates.spec.ts:647:1 › a delayed activation message from an already active worker cannot freeze typing (2.8s)
+  ✓  45 tests/pwa/installation-updates.spec.ts:673:1 › the first automatic activation never leases the first user input (2.8s)
+  ✓  46 tests/pwa/installation-updates.spec.ts:691:1 › two already open documents with different build identities transition coherently (17.3s)
+
+  46 passed (4.3m)
