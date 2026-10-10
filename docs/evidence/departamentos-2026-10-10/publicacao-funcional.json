@@ -1,0 +1,27 @@
+{
+  "verifiedAt": "2026-10-10 17:38:05 UTC",
+  "origin": "https://hortvitalmix.vercel.app",
+  "pr": "https://github.com/wesleialvessantos39/HortVitalMix/pull/120",
+  "sha": "2d199f628fbca5077151911e99b2c4e36446e3eb",
+  "deployment": {
+    "id": "dpl_7FFxwXCJ2zTj7d2jeEA7kDaoNxeF",
+    "state": "READY",
+    "branch": "main",
+    "target": "production",
+    "regions": [
+      "pdx1"
+    ],
+    "aliases": [
+      "hortvitalmix.vercel.app",
+      "hortvitalmix-wesleialvessantos-projects.vercel.app",
+      "hortvitalmix-git-main-wesleialvessantos-projects.vercel.app"
+    ]
+  },
+  "schemaVersion": 71,
+  "migrationCount": 78,
+  "canonicalRelease": "departments-v71-2d199f6",
+  "pwaBuild": "b10618ea449a77b008490432f717a33fdb9f0006d5632d0cd21619e7170aa228",
+  "resources": 93,
+  "physicalAndroidIosTested": false,
+  "paymentIntegrationTested": "local-fixtures-only"
+}

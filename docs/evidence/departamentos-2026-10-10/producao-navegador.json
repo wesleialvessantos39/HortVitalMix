@@ -1,0 +1,259 @@
+{
+  "origin": "https://hortvitalmix.vercel.app",
+  "commitSha": "2d199f628fbca5077151911e99b2c4e36446e3eb",
+  "physicalDeviceInstallation": false,
+  "fixture": false,
+  "visits": [
+    {
+      "path": "/",
+      "width": 320,
+      "height": 844,
+      "overflow": false
+    },
+    {
+      "path": "/aplicativos",
+      "width": 320,
+      "height": 844,
+      "overflow": false
+    },
+    {
+      "path": "/",
+      "width": 360,
+      "height": 844,
+      "overflow": false
+    },
+    {
+      "path": "/aplicativos",
+      "width": 360,
+      "height": 844,
+      "overflow": false
+    },
+    {
+      "path": "/",
+      "width": 390,
+      "height": 844,
+      "overflow": false
+    },
+    {
+      "path": "/aplicativos",
+      "width": 390,
+      "height": 844,
+      "overflow": false
+    },
+    {
+      "path": "/",
+      "width": 430,
+      "height": 844,
+      "overflow": false
+    },
+    {
+      "path": "/aplicativos",
+      "width": 430,
+      "height": 844,
+      "overflow": false
+    },
+    {
+      "path": "/",
+      "width": 768,
+      "height": 844,
+      "overflow": false
+    },
+    {
+      "path": "/aplicativos",
+      "width": 768,
+      "height": 844,
+      "overflow": false
+    },
+    {
+      "path": "/",
+      "width": 1024,
+      "height": 844,
+      "overflow": false
+    },
+    {
+      "path": "/aplicativos",
+      "width": 1024,
+      "height": 844,
+      "overflow": false
+    },
+    {
+      "path": "/",
+      "width": 1440,
+      "height": 900,
+      "overflow": false
+    },
+    {
+      "path": "/aplicativos",
+      "width": 1440,
+      "height": 900,
+      "overflow": false
+    },
+    {
+      "path": "/instalar/android",
+      "guide": true
+    },
+    {
+      "path": "/instalar/ios",
+      "guide": true
+    },
+    {
+      "path": "/planos",
+      "width": 320,
+      "producerConsumerTabs": true,
+      "overflow": false
+    },
+    {
+      "path": "/planos",
+      "width": 360,
+      "producerConsumerTabs": true,
+      "overflow": false
+    },
+    {
+      "path": "/planos",
+      "width": 390,
+      "producerConsumerTabs": true,
+      "overflow": false
+    },
+    {
+      "path": "/planos",
+      "width": 430,
+      "producerConsumerTabs": true,
+      "overflow": false
+    },
+    {
+      "path": "/planos",
+      "width": 768,
+      "producerConsumerTabs": true,
+      "overflow": false
+    },
+    {
+      "path": "/planos",
+      "width": 1024,
+      "producerConsumerTabs": true,
+      "overflow": false
+    },
+    {
+      "path": "/planos",
+      "width": 1440,
+      "producerConsumerTabs": true,
+      "overflow": false
+    },
+    {
+      "path": "/aplicativos",
+      "width": 844,
+      "height": 390,
+      "overflow": false
+    },
+    {
+      "path": "/admin/aplicativos",
+      "anonymousProtected": true
+    }
+  ],
+  "errors": [],
+  "writes": [],
+  "cache": {
+    "controller": true,
+    "entries": [
+      {
+        "key": "hvm-rural-assets-b10618ea449a77b008490432f717a33fdb9f0006d5632d0cd21619e7170aa228",
+        "urls": [
+          "/assets/AdminAppDistributionPage-BJDIH5ii.js",
+          "/app-icons/icon-192.png",
+          "/app-icons/icon-512.png",
+          "/assets/AdminAppDistributionPage-DjOGqJPl.css",
+          "/assets/AdminCategoriesPage-mliagd_1.js",
+          "/assets/AdminCommercePage-fm1i1u9N.js",
+          "/assets/AdminCatalogPage-BpJY2QUD.js",
+          "/assets/AdminCategoriesPage-C1S2FQ74.css",
+          "/assets/AdminDepartmentsPage-BI6x14Mf.css",
+          "/assets/AdminDepartmentsPage-ClxqVUJC.js",
+          "/assets/AdminFinancePage-rsacFE7u.js",
+          "/assets/adminOperationsView-DyrR0L4C.css",
+          "/assets/adminOperationsView-xYae8sDy.js",
+          "/assets/AdminReviewsPage-D-e_nWDk.js",
+          "/assets/AdminSubscriptionPlansPage-CrI4MaQZ.js",
+          "/assets/AppDownloadsPage-DnApfaWS.js",
+          "/assets/AppDownloadsPage-eCZuLAEt.css",
+          "/assets/cart-B-rwyd3_.js",
+          "/assets/CartPage-DwmW7lGQ.js",
+          "/assets/CartPage-iqzYRsEP.css",
+          "/assets/CasesPage-DrE0yu4M.js",
+          "/assets/CheckoutReviewPage-DwAlCdFl.css",
+          "/assets/CheckoutReviewPage-DxUNH-CA.js",
+          "/assets/chevron-right-BkzGK-U-.js",
+          "/assets/coerce-4Z-yISZy.js",
+          "/assets/commerce-cLFtyZBg.css",
+          "/assets/createLucideIcon-nEv4H7sH.js",
+          "/assets/deliveryLogistics-DeLcB3dq.js",
+          "/assets/deliveryLogistics-DT6Tp1Uu.css",
+          "/assets/DeliveryWindowsPage-C5TPQyDl.js",
+          "/assets/discovery-BSlmVj68.js",
+          "/assets/dist-YEHEm6A4.js",
+          "/assets/esm-BDUkrCmp.js",
+          "/assets/esm-IkzW7Ujo.js",
+          "/assets/ExecutiveBiDashboardPage-DhXQHaiu.css",
+          "/assets/HomeDiscoveryPage-CpqbFj0U.css",
+          "/assets/ExecutiveBiDashboardPage-Cwo9hh6_.js",
+          "/assets/HomeDiscoveryPage-Cye6GQS7.js",
+          "/assets/index-C6wAcg1x.css",
+          "/assets/InventoryLotsPage-BB9rSSe8.js",
+          "/assets/index-Did_y5co.js",
+          "/assets/iso-BoSNZNLv.js",
+          "/assets/jsx-runtime-wPdcRBxq.js",
+          "/assets/InventoryLotsPage-DLhnTXYW.css",
+          "/assets/NotificationDetailPage-B1MHJU0z.js",
+          "/assets/NotificationDetailPage-DmtnVDpZ.css",
+          "/assets/NotificationsPage-hDNSeXjB.js",
+          "/assets/notifications-upMr9swF.css",
+          "/assets/optimizeImage-BEu_AOs8.js",
+          "/assets/orders-l2I2UcHi.css",
+          "/assets/OrderTrackingPage-ktmNjZ1o.js",
+          "/assets/PaymentPreparedPage-iQ8xFHj7.js",
+          "/assets/PosSaleReviewPage-CJ-XlN0S.js",
+          "/assets/ProducerCatalogPage-BU5B4NLm.js",
+          "/assets/ProducerDeliveryAreaPage-Bol_jVRj.js",
+          "/assets/pdf-DT7fRb8H.js",
+          "/assets/ProducerDeliveryAreaPage-ec3awBsS.css",
+          "/assets/ProducerOrdersPage-kD8Ffk10.js",
+          "/assets/ProducerPosPage-D3paid1m.js",
+          "/assets/ProducerRefundsPage-B0pK__R9.js",
+          "/assets/producerSales-DyL9bCNF.js",
+          "/assets/ProducerSalesPage-CaopfZlZ.js",
+          "/assets/producerStore-BJAzyfCE.js",
+          "/assets/ProducerStoreSettingsPage-CjSRe3AH.js",
+          "/assets/product-CuqDMtmc.js",
+          "/assets/ProducerStoreSettingsPage-Dth3neKG.css",
+          "/assets/ProductCommandFeedback-BgY1dsR4.js",
+          "/assets/PublicProducerStorePage-CuuQUGiE.js",
+          "/assets/ProductEditorPage-C7pJZbQy.js",
+          "/assets/PurchasesPage-DxHuetOn.js",
+          "/assets/PwaVersionPanel-CM4uUiv7.js",
+          "/assets/qr-code-C74KV5mK.js",
+          "/assets/RefundPolicy-DYxtUc4o.js",
+          "/assets/RegionalHighlights-BDOggfRm.js",
+          "/assets/reviews-BUBtWPuV.js",
+          "/assets/reviews-ChQ3-RyW.js",
+          "/assets/reviews-vJp9Wril.css",
+          "/assets/schemas-DlOyAbQU.js",
+          "/assets/shopping-basket-BDzryRcp.js",
+          "/assets/storeCoverSlides-BjtU43_K.css",
+          "/assets/storefrontMedia-CIPkljHt.js",
+          "/assets/storeCoverSlides-DFNf5JQt.js",
+          "/assets/storefrontMedia-Cwsbetye.css",
+          "/assets/SubscriptionRefundsPanel-DjFuwPfB.js",
+          "/assets/SubscriptionPlansPage-BDaT5C_1.js",
+          "/assets/subscriptions-DZj6A2XA.js",
+          "/assets/useOrderQuery-CUR9poA3.js",
+          "/assets/useAutomaticQueryRefresh-48mS7B5U.js",
+          "/assets/web-DaKcY4i_.js",
+          "/assets/web-pYYS7C6n.js",
+          "/favicon.svg",
+          "/index.html",
+          "/manifest.webmanifest"
+        ]
+      }
+    ]
+  },
+  "completedAt": "2026-10-10T17:43:25.461Z",
+  "status": "verified"
+}

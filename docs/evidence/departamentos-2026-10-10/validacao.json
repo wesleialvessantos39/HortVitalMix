@@ -112,5 +112,19 @@
     "physicalAndroidIos": "not_performed",
     "paymentProvider": "simulated_locally_only",
     "postgresIndependentProfiles": 30
+  },
+  "publication": {
+    "commit": "2d199f628fbca5077151911e99b2c4e36446e3eb",
+    "deploymentId": "dpl_7FFxwXCJ2zTj7d2jeEA7kDaoNxeF",
+    "state": "READY",
+    "domain": "https://hortvitalmix.vercel.app",
+    "schema": 71,
+    "release": "departments-v71-2d199f6",
+    "httpChecks": 123,
+    "browserVisits": 25,
+    "twoRealVersionsAutomaticUpdate": true,
+    "indexedDBPreserved": true,
+    "offlineNewShell": true,
+    "realRemoteMutationsInBrowserTests": 0
   }
 }
