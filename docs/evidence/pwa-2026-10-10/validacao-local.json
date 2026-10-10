@@ -21,9 +21,14 @@
     "passed": 48
   },
   "pwaBrowser": {
-    "passed": 44,
+    "passed": 46,
     "criticalFinalRecheck": 8,
-    "realPhysicalInstallation": false
+    "realPhysicalInstallation": false,
+    "firstActivationRegression": {
+      "baselineExpectedFailure": true,
+      "lateMessage": "simulated timing with real active worker/version response",
+      "fixedCompleteSuite": "46 passed"
+    }
   },
   "legacyBrowser": {
     "passed": 14,

@@ -103,12 +103,10 @@ for (const width of [320, 360, 390, 430, 768, 1024, 1440])
         .getByRole("button", { name: "Instalar para Android", exact: true }),
     ).toBeVisible();
     await expect(
-      page
-        .locator(".hvm-app-download")
-        .getByRole("button", {
-          name: "Instalar para iPhone e iPad",
-          exact: true,
-        }),
+      page.locator(".hvm-app-download").getByRole("button", {
+        name: "Instalar para iPhone e iPad",
+        exact: true,
+      }),
     ).toBeVisible();
     expect(
       await page.evaluate(
@@ -412,13 +410,11 @@ for (const blocker of ["form", "upload", "confirmation", "offline-queue"])
     if (blocker === "form")
       await page.locator("#synthetic-input").fill("unsaved value");
     if (blocker === "upload")
-      await page
-        .locator("#synthetic-input")
-        .setInputFiles({
-          name: "synthetic.txt",
-          mimeType: "text/plain",
-          buffer: Buffer.from("synthetic upload"),
-        });
+      await page.locator("#synthetic-input").setInputFiles({
+        name: "synthetic.txt",
+        mimeType: "text/plain",
+        buffer: Buffer.from("synthetic upload"),
+      });
     await request.post("/__pwa_test__/switch", { data: { build: "b" } });
     await check(page);
     await expect(
@@ -642,6 +638,74 @@ test("first registration controls the identical shell for offline use without re
     )
     .toBe(true);
   expect(await loadedBuild(page)).toBe(original);
+});
+
+test("a delayed activation message from an already active worker cannot freeze typing", async ({
+  page,
+}) => {
+  await fixture(page);
+  await page.goto("/aplicativos");
+  await ready(page);
+  await page.waitForFunction(
+    () => navigator.serviceWorker.controller?.state === "activated",
+  );
+  // Explicitly simulate delivery after the worker's natural first activation;
+  // the source and its version response are the real active service worker.
+  await page.evaluate(() =>
+    navigator.serviceWorker.dispatchEvent(
+      new MessageEvent("message", {
+        source: navigator.serviceWorker.controller,
+        data: {
+          type: "HVM_PREPARE_UPDATE",
+          token: "synthetic-delayed-first-activation",
+          buildId: document.querySelector<HTMLMetaElement>(
+            'meta[name="hvm-pwa-build"]',
+          )!.content,
+        },
+      }),
+    ),
+  );
+  await page.waitForTimeout(500);
+  await page.evaluate(() => {
+    const form = document.createElement("form"),
+      input = document.createElement("input");
+    input.id = "late-activation-input";
+    form.append(input);
+    document.body.append(form);
+  });
+  await page.locator("#late-activation-input").fill("typing remains available");
+  await expect(page.locator("#late-activation-input")).toHaveValue(
+    "typing remains available",
+  );
+});
+
+test("the first automatic activation never leases the first user input", async ({
+  page,
+}) => {
+  await fixture(page);
+  await page.goto("/aplicativos");
+  await page.evaluate(() =>
+    navigator.serviceWorker.ready.then(() => undefined),
+  );
+  await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+  await page.evaluate(() => {
+    const form = document.createElement("form"),
+      input = document.createElement("input");
+    input.id = "first-user-input";
+    form.append(input);
+    document.body.append(form);
+  });
+  await page
+    .locator("#first-user-input")
+    .fill("first real gesture after activation");
+  await page.locator("#first-user-input").blur();
+  await expect(page.locator("#first-user-input")).toHaveValue(
+    "first real gesture after activation",
+  );
+  await page.waitForTimeout(1200);
+  await expect(page.locator("#first-user-input")).toHaveValue(
+    "first real gesture after activation",
+  );
 });
 
 test("two already open documents with different build identities transition coherently", async ({

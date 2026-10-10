@@ -1,0 +1,43 @@
+[WebServer] (node:16228) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 1 test using 1 worker
+
+(node:16236) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 tests/pwa/installation-updates.spec.ts:647:1 › a delayed activation message from an already active worker cannot freeze typing (22.2s)
+
+
+  1) tests/pwa/installation-updates.spec.ts:647:1 › a delayed activation message from an already active worker cannot freeze typing
+
+    Error: expect(locator).toHaveValue(expected) failed
+
+    Locator:  locator('#late-activation-input')
+    Expected: "typing remains available"
+    Received: ""
+    Timeout:  20000ms
+
+    Call log:
+      - Expect "toHaveValue" locator('#late-activation-input') with timeout 20000ms
+      - waiting for locator('#late-activation-input')
+        44 × locator resolved to <input id="late-activation-input"/>
+           - unexpected value ""
+
+
+      668 |   });
+      669 |   await page.locator("#late-activation-input").fill("typing remains available");
+    > 670 |   await expect(page.locator("#late-activation-input")).toHaveValue("typing remains available");
+          |                                                        ^
+      671 | });
+      672 |
+      673 | test("the first automatic activation never leases the first user input", async ({ page }) => {
+        at /workspace/HortVitalMix/tests/pwa/installation-updates.spec.ts:670:56
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../scratch/pwa-stale-regression-before/installation-updates-a-del-7a581-worker-cannot-freeze-typing/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../scratch/pwa-stale-regression-before/installation-updates-a-del-7a581-worker-cannot-freeze-typing/error-context.md
+
+  1 failed
+    tests/pwa/installation-updates.spec.ts:647:1 › a delayed activation message from an already active worker cannot freeze typing

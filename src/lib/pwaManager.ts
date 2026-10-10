@@ -187,7 +187,14 @@ async function onWorkerMessage(event: MessageEvent) {
       message.type === "HVM_COMMIT_UPDATE"
         ? String(message.token).replace(/:commit$/, "")
         : message.token;
-    let reason = await inspectPwaSafety();
+    // A first installation activates naturally. An async version query may
+    // finish after that activation; never lease user input for an active worker.
+    let reason =
+      source.state !== "installed"
+        ? "Esta versão já saiu do estado de espera."
+        : await inspectPwaSafety();
+    if (source.state !== "installed")
+      reason = "Esta versão já saiu do estado de espera.";
     if (!reason && (!snapshot.loadedBuildId || !takeTransition(token)))
       reason = "Esta aba ainda está verificando sua atividade.";
     if (!reason) {
@@ -202,7 +209,10 @@ async function onWorkerMessage(event: MessageEvent) {
         reason = "Não foi possível confirmar os arquivos da atualização.";
       }
     }
-    reason = appUpdateBlockReason() ?? reason;
+    reason =
+      (source.state !== "installed"
+        ? "Esta versão já saiu do estado de espera."
+        : appUpdateBlockReason()) ?? reason;
     if (reason && transitioningToken === token) releaseTransition();
     source.postMessage({
       type: "HVM_CLIENT_VOTE",
@@ -260,7 +270,11 @@ export async function tryPwaUpdate() {
   let submitted = false;
   try {
     const worker = registration.waiting;
+    // The browser activates its first worker automatically. Only coordinate a
+    // replacement while a previous active worker and this exact waiter exist.
+    if (!registration.active || worker.state !== "installed") return;
     const version = await workerVersion(worker);
+    if (registration.waiting !== worker || worker.state !== "installed") return;
     // A stale waiting build must not replace the actual published candidate.
     if (!snapshot.version || version.buildId !== snapshot.version.buildId) {
       publish({
@@ -274,6 +288,7 @@ export async function tryPwaUpdate() {
       publish({ updateState: "waiting", reason });
       return;
     }
+    if (registration.waiting !== worker || worker.state !== "installed") return;
     publish({ updateState: "preparing", reason: null });
     worker.postMessage({
       type: "HVM_REQUEST_UPDATE",
