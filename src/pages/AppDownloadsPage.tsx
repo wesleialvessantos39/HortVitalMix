@@ -91,10 +91,11 @@ export default function AppDownloadsPage({
         <details>
           <summary>iPhone e iPad: Safari</summary>
           <p>
-            Use Compartilhar → Adicionar à Tela de Início, ative Abrir como App
-            da Web quando disponível e confirme Adicionar. Depois, abra pelo
-            ícone. O Safari não oferece uma API para a plataforma executar esses
-            passos.
+            Toque em Compartilhar na barra ou no menu do Safari, escolha
+            Adicionar à Tela de Início e confirme Adicionar. Mantenha Abrir como
+            App da Web ativado, se aparecer. Você faz isso uma vez; depois, abra
+            pelo ícone na tela inicial. Se a opção estiver oculta, consulte a
+            ajuda do botão de instalação.
           </p>
         </details>
         <details>

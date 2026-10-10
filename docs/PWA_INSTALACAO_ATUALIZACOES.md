@@ -20,7 +20,9 @@ Sem evento válido, o botão abre ajuda contextual para Chrome, Edge, Samsung In
 
 ## iPhone e iPad
 
-O botão abre imediatamente o assistente: Safari → Compartilhar → Adicionar à Tela de Início → Abrir como App da Web, quando disponível → Adicionar. Os ícones ilustram passos; a interface não imita uma confirmação do iOS nem manipula controles do Safari. WhatsApp/Instagram/Facebook orientam abertura no Safari.
+No Safari, o botão mostra três instruções compactas: Compartilhar → Adicionar à Tela de Início → Adicionar, mantendo Abrir como App da Web ativado quando disponível. Não pede abrir o Safari novamente nem copiar endereço. Em outro navegador iOS reconhecido, orienta seu próprio menu e oferece Safari como alternativa quando necessário. Ajuda recolhida explica Editar Ações e Ver Mais no iPad.
+
+Quando for preciso abrir o endereço, **Abrir instalação** abre diretamente `/instalar/ios#passos` em nova aba com as instruções, sem copiar/colar. `noopener noreferrer` protege a origem; o fragmento controla apenas a apresentação. A cópia permanece recolhida somente para falha de abertura. WhatsApp/Instagram/Facebook recebem orientação de saída externa; o aplicativo que hospeda o navegador decide se o link pode abrir fora dele. O link não promete forçar Safari, instalar ou confirmar a instalação. Não há API equivalente à confirmação Android no Safari atual; [pesquisa em fontes primárias de outubro de 2026](PESQUISA_INSTALACAO_IOS_2026-10-10.md).
 
 UA Client Hints, plataforma, User-Agent e toque identificam o dispositivo sem coleta remota de identificadores. iPad com `MacIntel` e múltiplos pontos de toque é reconhecido. `display-mode: standalone` e `navigator.standalone` identificam execução instalada; nenhuma preferência gravada finge uma instalação. Nesse ambiente, os cartões dão lugar ao estado instalado e à verificação de atualizações.
 

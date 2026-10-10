@@ -214,7 +214,9 @@ for (const [width, height] of [
     await page.screenshot({
       path: info.outputPath(`ios-guide-${width}-${height}.png`),
     });
-    await guide.getByRole("button", { name: "Entendi", exact: true }).click();
+    await guide
+      .getByRole("button", { name: "Fechar instruções", exact: true })
+      .click();
     expect(errors).toEqual([]);
   });
 }
@@ -343,8 +345,282 @@ for (const device of ["iphone", "ipad", "internal"])
     );
     if (device === "internal")
       await expect(page.getByRole("dialog")).toContainText("navegador interno");
+    else {
+      await expect(
+        page.getByRole("dialog").locator(".hvm-pwa-ios-steps > li"),
+      ).toHaveCount(3);
+      await expect(
+        page
+          .getByRole("dialog")
+          .getByRole("button", { name: "Copiar endereço" }),
+      ).toHaveCount(0);
+      await expect(page.getByRole("dialog")).not.toContainText(
+        "Abra no Safari",
+      );
+    }
     await context.close();
   });
+
+const iphoneSafariUA =
+  "Mozilla/5.0 (iPhone; CPU iPhone OS 27_0 like Mac OS X) AppleWebKit/605.1.15 Version/27.0 Mobile/15E148 Safari/605.1.15";
+
+for (const [width, height] of [
+  [320, 568],
+  [360, 640],
+  [390, 844],
+  [430, 932],
+  [768, 1024],
+  [1024, 768],
+  [1440, 900],
+  [844, 390],
+])
+  test(`compact Safari instructions fit ${width}×${height} with simulated iOS signals`, async ({
+    browser,
+  }, info) => {
+    const context = await browser.newContext({
+      userAgent: iphoneSafariUA,
+      viewport: { width, height },
+    });
+    await context.addInitScript(() => {
+      Object.defineProperty(navigator, "platform", { value: "iPhone" });
+      Object.defineProperty(navigator, "maxTouchPoints", { value: 5 });
+      Object.defineProperty(navigator, "share", {
+        value: () => {
+          throw new Error("Sharing a URL is not an installation API");
+        },
+      });
+    });
+    const page = await context.newPage();
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    await fixture(
+      page,
+      width === 320 ? "producer" : width === 390 ? "consumer" : null,
+    );
+    await page.goto("/aplicativos");
+    await ready(page);
+    const button = page.getByRole("button", {
+      name: "Instalar para iPhone e iPad",
+      exact: true,
+    });
+    await button.click();
+    const guide = page.getByRole("dialog");
+    await expect(guide.locator(".hvm-pwa-ios-steps > li")).toHaveCount(3);
+    await expect(guide.getByRole("textbox")).toHaveCount(0);
+    const bounds = await guide.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.y).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
+    expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(height);
+    const metrics = await guide.evaluate((el) => ({
+      horizontal: el.scrollWidth <= el.clientWidth,
+      vertical: el.scrollHeight <= el.clientHeight,
+    }));
+    expect(metrics.horizontal).toBe(true);
+    if (height >= 568) expect(metrics.vertical).toBe(true);
+    const help = guide.getByText("Não encontrou a opção?", { exact: true });
+    expect((await help.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    const close = guide.getByRole("button", { name: "Fechar instruções" });
+    expect((await close.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    await page.screenshot({
+      path: info.outputPath(`safari-compact-${width}-${height}.png`),
+    });
+    await help.click();
+    await expect(guide.getByText(/Editar Ações/)).toBeVisible();
+    await expect(guide.getByText(/Ver Mais/)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(guide).not.toBeVisible();
+    await expect(button).toBeFocused();
+    await expect(
+      page.getByText("Instalado neste dispositivo", { exact: true }),
+    ).toHaveCount(0);
+    expect(errors).toEqual([]);
+    await context.close();
+  });
+
+for (const browserToken of ["CriOS/153", "FxiOS/144", "EdgiOS/153"])
+  test(`iOS ${browserToken} uses its browser menu and reveals Safari fallback only in help`, async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({
+      userAgent: iphoneSafariUA.replace("Version/27.0", browserToken),
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    await fixture(page);
+    await page.goto("/instalar/ios");
+    const guide = page.getByRole("dialog");
+    await expect(
+      guide.getByText("No menu do seu navegador.", { exact: true }),
+    ).toBeVisible();
+    const copy = guide.getByRole("button", { name: "Copiar endereço" });
+    await expect(copy).toBeHidden();
+    await guide.getByText("Não encontrou a opção?", { exact: true }).click();
+    await expect(
+      guide.getByRole("link", { name: "Abrir instalação" }),
+    ).toBeVisible();
+    await expect(copy).toBeHidden();
+    await guide.getByText("Se o endereço não abrir", { exact: true }).click();
+    await expect(copy).toBeVisible();
+    await expect(guide.getByRole("textbox")).toHaveValue(
+      "http://127.0.0.1:4174/instalar/ios",
+    );
+    await context.close();
+  });
+
+test("iOS with an actual install event uses that capability without claiming current Safari support", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({ userAgent: iphoneSafariUA });
+  const page = await context.newPage();
+  await fixture(page);
+  await page.goto("/aplicativos");
+  await ready(page);
+  // Hypothetical browser capability: synthetic event, not evidence of Safari installation.
+  await prompt(page, "accepted");
+  await page
+    .getByRole("button", { name: "Instalar para Android", exact: true })
+    .click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(
+    page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Instalar para Android", exact: true }),
+  ).toHaveCount(0);
+  expect(
+    await page.evaluate(() => (window as any).__syntheticPromptCalls ?? 0),
+  ).toBe(0);
+  await page.getByRole("button", { name: "Fechar instruções" }).click();
+  await page
+    .getByRole("button", { name: "Instalar para iPhone e iPad", exact: true })
+    .click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Solicitação aceita" }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(() => (window as any).__syntheticPromptCalls),
+  ).toBe(1);
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+  await expect(
+    page.getByText("Instalado neste dispositivo", { exact: true }),
+  ).toHaveCount(0);
+  await context.close();
+});
+
+test("copy errors remain visible inside the iOS handoff and never confirm installation", async ({
+  page,
+}) => {
+  await fixture(page);
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      value: {
+        writeText: async () => {
+          throw new Error("Permission denied");
+        },
+      },
+    });
+  });
+  await page.goto("/instalar/ios");
+  const guide = page.getByRole("dialog");
+  await expect(
+    guide.getByRole("link", { name: "Abrir instalação" }),
+  ).toBeVisible();
+  await guide.getByText("Se o endereço não abrir", { exact: true }).click();
+  await guide.getByRole("button", { name: "Copiar endereço" }).click();
+  await expect(guide.getByRole("alert")).toContainText(
+    "Selecione e copie o endereço",
+  );
+  await guide.getByRole("textbox").focus();
+  expect(
+    await guide
+      .getByRole("textbox")
+      .evaluate(
+        (el: HTMLInputElement) => el.selectionEnd! - el.selectionStart!,
+      ),
+  ).toBeGreaterThan(0);
+  await expect(
+    page.getByText("Instalado neste dispositivo", { exact: true }),
+  ).toHaveCount(0);
+});
+
+test("internal iOS browser copies only the canonical installation URL without calling an installer", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({
+    userAgent: iphoneSafariUA + " Instagram",
+    viewport: { width: 320, height: 568 },
+  });
+  await context.addInitScript(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      value: {
+        writeText: async (value: string) => {
+          (window as any).__copiedInstallationAddress = value;
+        },
+      },
+    });
+  });
+  const page = await context.newPage();
+  await fixture(page);
+  await page.goto("/instalar/ios");
+  const guide = page.getByRole("dialog");
+  await expect(
+    guide.locator(".hvm-pwa-ios-handoff .hvm-pwa-guidance"),
+  ).toContainText("navegador interno");
+  await expect(guide.locator(".hvm-pwa-ios-steps")).toBeHidden();
+  await expect(
+    guide.getByRole("link", { name: "Abrir instalação" }),
+  ).toHaveAttribute("href", "http://127.0.0.1:4174/instalar/ios#passos");
+  await guide.getByText("Se o endereço não abrir", { exact: true }).click();
+  await guide.getByRole("button", { name: "Copiar endereço" }).click();
+  await expect(
+    guide.getByRole("button", { name: "Endereço copiado" }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(() => (window as any).__copiedInstallationAddress),
+  ).toBe("http://127.0.0.1:4174/instalar/ios");
+  await expect(
+    page.getByText("Instalação confirmada pelo navegador", { exact: false }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByText("Instalado neste dispositivo", { exact: true }),
+  ).toHaveCount(0);
+  await context.close();
+});
+
+test("Abrir instalação opens the address directly in a new tab with the remaining instructions", async ({
+  page,
+}) => {
+  await fixture(page);
+  await page.goto("/instalar/ios");
+  const open = page
+    .getByRole("dialog")
+    .getByRole("link", { name: "Abrir instalação" });
+  await expect(open).toHaveAttribute("rel", "noopener noreferrer");
+  await expect(
+    page.getByRole("dialog").getByRole("button", { name: "Copiar endereço" }),
+  ).toBeHidden();
+  const [opened] = await Promise.all([
+    page.waitForEvent("popup"),
+    open.click(),
+  ]);
+  await fixture(opened);
+  await opened.waitForURL("**/instalar/ios#passos");
+  await expect(
+    opened.getByRole("dialog").locator(".hvm-pwa-ios-steps > li"),
+  ).toHaveCount(3);
+  await expect(
+    opened.getByRole("dialog").getByText("Compartilhar", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    opened.getByRole("dialog").getByText("Adicionar", { exact: true }),
+  ).toBeVisible();
+  expect(await opened.evaluate(() => window.opener === null)).toBe(true);
+  await expect(
+    opened.getByText("Instalado neste dispositivo", { exact: true }),
+  ).toHaveCount(0);
+  await opened.close();
+});
 
 test("standalone suppresses repeated installation without trusting saved preferences", async ({
   page,

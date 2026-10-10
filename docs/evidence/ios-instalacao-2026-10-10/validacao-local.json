@@ -1,0 +1,326 @@
+{
+  "baseCommit": "1bb5e2cf824bb7358eef3625d4cde1824c195ec5",
+  "status": "verified",
+  "physicalDeviceInstallation": false,
+  "browserEngine": "Chromium; iOS/Safari signals simulated explicitly",
+  "typecheck": "passed",
+  "build": "passed",
+  "securityAndBundleChecks": "passed",
+  "buildGateTests": 213,
+  "pwaUnitTests": 49,
+  "browserCases": [
+    {
+      "name": "aviso automático de atualização mantém leitura em desktop, mobile e paisagem",
+      "status": "expected"
+    },
+    {
+      "name": "home installation cards fit 320px",
+      "status": "expected"
+    },
+    {
+      "name": "home installation cards fit 360px",
+      "status": "expected"
+    },
+    {
+      "name": "home installation cards fit 390px",
+      "status": "expected"
+    },
+    {
+      "name": "home installation cards fit 430px",
+      "status": "expected"
+    },
+    {
+      "name": "home installation cards fit 768px",
+      "status": "expected"
+    },
+    {
+      "name": "home installation cards fit 1024px",
+      "status": "expected"
+    },
+    {
+      "name": "home installation cards fit 1440px",
+      "status": "expected"
+    },
+    {
+      "name": "public cards and installation guides fit 320×700",
+      "status": "expected"
+    },
+    {
+      "name": "public cards and installation guides fit 360×780",
+      "status": "expected"
+    },
+    {
+      "name": "public cards and installation guides fit 390×844",
+      "status": "expected"
+    },
+    {
+      "name": "public cards and installation guides fit 430×932",
+      "status": "expected"
+    },
+    {
+      "name": "public cards and installation guides fit 768×1024",
+      "status": "expected"
+    },
+    {
+      "name": "public cards and installation guides fit 1024×768",
+      "status": "expected"
+    },
+    {
+      "name": "public cards and installation guides fit 1440×900",
+      "status": "expected"
+    },
+    {
+      "name": "public cards and installation guides fit 844×390",
+      "status": "expected"
+    },
+    {
+      "name": "platform_admin with configuration power: PWA central fits 320px",
+      "status": "expected"
+    },
+    {
+      "name": "platform_admin with configuration power: PWA central fits 390px",
+      "status": "expected"
+    },
+    {
+      "name": "platform_admin with configuration power: PWA central fits 768px",
+      "status": "expected"
+    },
+    {
+      "name": "platform_admin with configuration power: PWA central fits 1440px",
+      "status": "expected"
+    },
+    {
+      "name": "platform_super_admin with configuration power: PWA central fits 320px",
+      "status": "expected"
+    },
+    {
+      "name": "platform_super_admin with configuration power: PWA central fits 390px",
+      "status": "expected"
+    },
+    {
+      "name": "platform_super_admin with configuration power: PWA central fits 768px",
+      "status": "expected"
+    },
+    {
+      "name": "platform_super_admin with configuration power: PWA central fits 1440px",
+      "status": "expected"
+    },
+    {
+      "name": "platform_admin: explicit power denial protects the department",
+      "status": "expected"
+    },
+    {
+      "name": "platform_super_admin: explicit power denial protects the department",
+      "status": "expected"
+    },
+    {
+      "name": "consumer: shared registration works without opening a producer screen",
+      "status": "expected"
+    },
+    {
+      "name": "producer: shared registration works without opening a producer screen",
+      "status": "expected"
+    },
+    {
+      "name": "Android button uses a real event contract and treats simulated accept, cancel and browser confirmation separately",
+      "status": "expected"
+    },
+    {
+      "name": "iphone: Safari assistant and device signals",
+      "status": "expected"
+    },
+    {
+      "name": "ipad: Safari assistant and device signals",
+      "status": "expected"
+    },
+    {
+      "name": "internal: Safari assistant and device signals",
+      "status": "expected"
+    },
+    {
+      "name": "compact Safari instructions fit 320×568 with simulated iOS signals",
+      "status": "expected"
+    },
+    {
+      "name": "compact Safari instructions fit 360×640 with simulated iOS signals",
+      "status": "expected"
+    },
+    {
+      "name": "compact Safari instructions fit 390×844 with simulated iOS signals",
+      "status": "expected"
+    },
+    {
+      "name": "compact Safari instructions fit 430×932 with simulated iOS signals",
+      "status": "expected"
+    },
+    {
+      "name": "compact Safari instructions fit 768×1024 with simulated iOS signals",
+      "status": "expected"
+    },
+    {
+      "name": "compact Safari instructions fit 1024×768 with simulated iOS signals",
+      "status": "expected"
+    },
+    {
+      "name": "compact Safari instructions fit 1440×900 with simulated iOS signals",
+      "status": "expected"
+    },
+    {
+      "name": "compact Safari instructions fit 844×390 with simulated iOS signals",
+      "status": "expected"
+    },
+    {
+      "name": "iOS CriOS/153 uses its browser menu and reveals Safari fallback only in help",
+      "status": "expected"
+    },
+    {
+      "name": "iOS FxiOS/144 uses its browser menu and reveals Safari fallback only in help",
+      "status": "expected"
+    },
+    {
+      "name": "iOS EdgiOS/153 uses its browser menu and reveals Safari fallback only in help",
+      "status": "expected"
+    },
+    {
+      "name": "iOS with an actual install event uses that capability without claiming current Safari support",
+      "status": "expected"
+    },
+    {
+      "name": "copy errors remain visible inside the iOS handoff and never confirm installation",
+      "status": "expected"
+    },
+    {
+      "name": "internal iOS browser copies only the canonical installation URL without calling an installer",
+      "status": "expected"
+    },
+    {
+      "name": "Abrir instalação opens the address directly in a new tab with the remaining instructions",
+      "status": "expected"
+    },
+    {
+      "name": "standalone suppresses repeated installation without trusting saved preferences",
+      "status": "expected"
+    },
+    {
+      "name": "a new complete build applies automatically and preserves IndexedDB",
+      "status": "expected"
+    },
+    {
+      "name": "update waits for form and resumes automatically",
+      "status": "expected"
+    },
+    {
+      "name": "update waits for upload and resumes automatically",
+      "status": "expected"
+    },
+    {
+      "name": "update waits for confirmation and resumes automatically",
+      "status": "expected"
+    },
+    {
+      "name": "update waits for offline-queue and resumes automatically",
+      "status": "expected"
+    },
+    {
+      "name": "two tabs wait for the dirty tab before activating either shell",
+      "status": "expected"
+    },
+    {
+      "name": "failed downloads preserve the old cache and recover after a later verification",
+      "status": "expected"
+    },
+    {
+      "name": "offline preserves the shell; reconnection checks the new build without reinstalling",
+      "status": "expected"
+    },
+    {
+      "name": "private/API responses and authorization are absent from static caches",
+      "status": "expected"
+    },
+    {
+      "name": "checkout remains on the old version until its activity is concluded",
+      "status": "expected"
+    },
+    {
+      "name": "first registration controls the identical shell for offline use without reloading work",
+      "status": "expected"
+    },
+    {
+      "name": "a delayed activation message from an already active worker cannot freeze typing",
+      "status": "expected"
+    },
+    {
+      "name": "the first automatic activation never leases the first user input",
+      "status": "expected"
+    },
+    {
+      "name": "two already open documents with different build identities transition coherently",
+      "status": "expected"
+    }
+  ],
+  "browserStats": {
+    "startTime": "2026-10-10T19:03:21.270Z",
+    "duration": 310816.306,
+    "expected": 62,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "pwaResources": 93,
+  "icons": [
+    192,
+    512
+  ],
+  "privateStaticResources": 0,
+  "widths": [
+    320,
+    360,
+    390,
+    430,
+    768,
+    1024,
+    1440
+  ],
+  "landscape": [
+    844,
+    390
+  ],
+  "sourceSha256": {
+    "src/components/pwa/PwaInstallCards.tsx": "2e642140dd177b4dd0744fc3c3874f0e1e282f8bb8692cdda769dbf4e25e703b",
+    "src/components/pwa/IosInstallGuide.tsx": "692344de0f6a279668ac0c496689b1c970b8e8f0a45e07459ec24186b797a395",
+    "src/components/pwa/pwa.css": "85ad6a130000f5a39a44e27775342716f2c475914eb746db8b9f365dba2ee30a",
+    "src/pages/AppDownloadsPage.tsx": "15595b2c693f36adb4065f006a42bd67497f90ceeacd344adf30cccf38d17b1b"
+  },
+  "initialRun": {
+    "stats": {
+      "startTime": "2026-10-10T18:57:40.024Z",
+      "duration": 301758.57999999996,
+      "expected": 60,
+      "skipped": 0,
+      "unexpected": 2,
+      "flaky": 0
+    },
+    "failed": [
+      {
+        "title": "compact Safari instructions fit 320×568 with simulated iOS signals",
+        "errors": [
+          "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  419 |     }));\n  420 |     expect(metrics.horizontal).toBe(true);\n> 421 |     if (height >= 568) expect(metrics.vertical).toBe(true);\n      |                                                 ^\n  422 |     const help = guide.getByText(\"Não encontrou a opção?\", { exact: true });\n  423 |     expect((await help.boundingBox())!.height).toBeGreaterThanOrEqual(44);\n  424 |     const close = guide.getByRole(\"button\", { name: \"Fechar instruções\" });\n    at /workspace/HortVitalMix/tests/pwa/installation-updates.spec.ts:421:49"
+        ]
+      },
+      {
+        "title": "internal iOS browser copies only the canonical installation URL without calling an installer",
+        "errors": [
+          "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('dialog').locator('.hvm-pwa-guidance')\nExpected substring: \u001b[32m\"navegador interno\"\u001b[39m\nError: strict mode violation: getByRole('dialog').locator('.hvm-pwa-guidance') resolved to 2 elements:\n    1) <p class=\"hvm-pwa-guidance\">…</p> aka getByText('Verificando o manifesto e os')\n    2) <p class=\"hvm-pwa-guidance\">…</p> aka getByText('Você está em um navegador')\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" getByRole('dialog').locator('.hvm-pwa-guidance') with timeout 20000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('dialog').locator('.hvm-pwa-guidance')\u001b[22m\n\n\n  560 |   await fixture(page);\n  561 |   await page.goto(\"/instalar/ios\");\n> 562 |   const guide = page.getByRole(\"dialog\");\n      |                                          ^\n  563 |   await expect(guide.locator(\".hvm-pwa-guidance\")).toContainText(\n  564 |     \"navegador interno\",\n  565 |   );\n    at /workspace/HortVitalMix/tests/pwa/installation-updates.spec.ts:562:52"
+        ]
+      }
+    ]
+  },
+  "initialCorrections": [
+    "Reduced compact row padding/gap to fit 320x568 without vertical scrolling",
+    "Scoped internal-browser assertion to its guidance; readiness warning is independent"
+  ],
+  "databaseSchemaVersion": 71,
+  "migrationCount": 78,
+  "dataMigrations": 0,
+  "nativePackages": 0
+}
