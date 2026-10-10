@@ -1,0 +1,995 @@
+{
+  "verifiedAt": "2026-10-10T12:27:33.183Z",
+  "origin": "https://hortvitalmix.vercel.app",
+  "commitSha": "7b2799a60399a0f9b6f8b186577eaf6d27908e07",
+  "buildId": "1b7d87c6480cd3f0fb46782cafb0d6d6592f06807442420b509fa6c1eb76f7d5",
+  "frontendVersion": "0.1.0",
+  "verifiedResources": 91,
+  "icons": [
+    192,
+    512
+  ],
+  "physicalDeviceInstallation": false,
+  "checks": [
+    {
+      "path": "/pwa-version.json",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "cacheControl": "no-store, max-age=0, must-revalidate",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 12486
+    },
+    {
+      "path": "/app-icons/icon-192.png",
+      "status": 200,
+      "contentType": "image/png",
+      "cacheControl": "public, max-age=0, must-revalidate",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 4473
+    },
+    {
+      "path": "/assets/AdminAppDistributionPage-DjOGqJPl.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 2943
+    },
+    {
+      "path": "/assets/AdminAppDistributionPage-BM6uLpaM.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 3738
+    },
+    {
+      "path": "/app-icons/icon-512.png",
+      "status": 200,
+      "contentType": "image/png",
+      "cacheControl": "public, max-age=0, must-revalidate",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 16450
+    },
+    {
+      "path": "/assets/AdminCatalogPage-C2Dg3Rrb.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 7723
+    },
+    {
+      "path": "/assets/AdminCategoriesPage-C1S2FQ74.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 3353
+    },
+    {
+      "path": "/assets/AdminCommercePage-jZDCpzlq.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 9779
+    },
+    {
+      "path": "/assets/AdminCategoriesPage-CkGHZZTh.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 12184
+    },
+    {
+      "path": "/assets/adminOperationsView-D5xxPOMT.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 7760
+    },
+    {
+      "path": "/assets/adminOperationsView-DyrR0L4C.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 4853
+    },
+    {
+      "path": "/assets/AdminDepartmentsPage-CM1vezhr.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 6519
+    },
+    {
+      "path": "/assets/AdminDepartmentsPage-BI6x14Mf.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 4810
+    },
+    {
+      "path": "/assets/AdminFinancePage-BBlltRXX.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 7382
+    },
+    {
+      "path": "/assets/AdminSubscriptionPlansPage-CGsSFYIx.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 9385
+    },
+    {
+      "path": "/assets/AppDownloadsPage-eCZuLAEt.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 2080
+    },
+    {
+      "path": "/assets/AdminReviewsPage-DI35I2sx.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 5507
+    },
+    {
+      "path": "/assets/AppDownloadsPage-BGhuhHQg.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 4322
+    },
+    {
+      "path": "/assets/CartPage-iqzYRsEP.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 2878
+    },
+    {
+      "path": "/assets/cart-B-rwyd3_.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 1140
+    },
+    {
+      "path": "/assets/CartPage-BKjV-Xgb.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 6238
+    },
+    {
+      "path": "/assets/CheckoutReviewPage-DmUsOg4E.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 14494
+    },
+    {
+      "path": "/assets/CheckoutReviewPage-DwAlCdFl.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 4079
+    },
+    {
+      "path": "/assets/chevron-right-BkzGK-U-.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 272
+    },
+    {
+      "path": "/assets/coerce-4Z-yISZy.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 92
+    },
+    {
+      "path": "/assets/CasesPage-BNURmQoy.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 18449
+    },
+    {
+      "path": "/assets/deliveryLogistics-DeLcB3dq.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 1475
+    },
+    {
+      "path": "/assets/deliveryLogistics-DT6Tp1Uu.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 1383
+    },
+    {
+      "path": "/assets/DeliveryWindowsPage-CSxUAL-C.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 4757
+    },
+    {
+      "path": "/assets/commerce-cLFtyZBg.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 4797
+    },
+    {
+      "path": "/assets/discovery-DOZuw9JI.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 1321
+    },
+    {
+      "path": "/assets/createLucideIcon-nEv4H7sH.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 3132
+    },
+    {
+      "path": "/assets/dist-YEHEm6A4.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 8715
+    },
+    {
+      "path": "/assets/esm-BX9sL8ul.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 342
+    },
+    {
+      "path": "/assets/ExecutiveBiDashboardPage-8BTJXBTY.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 8065
+    },
+    {
+      "path": "/assets/HomeDiscoveryPage-BFa54wB2.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 9199
+    },
+    {
+      "path": "/assets/ExecutiveBiDashboardPage-DhXQHaiu.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 1825
+    },
+    {
+      "path": "/assets/HomeDiscoveryPage-CpqbFj0U.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 3701
+    },
+    {
+      "path": "/assets/esm-D67oAwIL.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 330
+    },
+    {
+      "path": "/assets/InventoryLotsPage-BhLA3Hda.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 13034
+    },
+    {
+      "path": "/assets/index-C-0hpQKV.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 193989
+    },
+    {
+      "path": "/assets/iso-BoSNZNLv.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 141
+    },
+    {
+      "path": "/assets/index-fkOhjzM_.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 717449
+    },
+    {
+      "path": "/assets/NotificationDetailPage-CurjMZDP.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 5044
+    },
+    {
+      "path": "/assets/InventoryLotsPage-DLhnTXYW.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 2548
+    },
+    {
+      "path": "/assets/NotificationDetailPage-DmtnVDpZ.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 3249
+    },
+    {
+      "path": "/assets/notifications-upMr9swF.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 5826
+    },
+    {
+      "path": "/assets/jsx-runtime-wPdcRBxq.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 18489
+    },
+    {
+      "path": "/assets/NotificationsPage-CFAgHb4C.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 4803
+    },
+    {
+      "path": "/assets/optimizeImage-BEu_AOs8.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 2164
+    },
+    {
+      "path": "/assets/orders-l2I2UcHi.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 4464
+    },
+    {
+      "path": "/assets/OrderTrackingPage-Cj4JqITz.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 13316
+    },
+    {
+      "path": "/assets/PaymentPreparedPage-nitVSDOF.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 6264
+    },
+    {
+      "path": "/assets/PosSaleReviewPage-rtJ4YiON.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 3424
+    },
+    {
+      "path": "/assets/ProducerCatalogPage-DOZ_cDXa.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 3954
+    },
+    {
+      "path": "/assets/pdf-jRUh0Ce6.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 373598
+    },
+    {
+      "path": "/assets/ProducerDeliveryAreaPage-DG1OkO8d.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 12412
+    },
+    {
+      "path": "/assets/ProducerDeliveryAreaPage-ec3awBsS.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 2822
+    },
+    {
+      "path": "/assets/ProducerOrdersPage-C32Wr6RB.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 14899
+    },
+    {
+      "path": "/assets/ProducerPosPage-CYM_PjlT.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 7972
+    },
+    {
+      "path": "/assets/ProducerRefundsPage-B9HVX3p1.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 4064
+    },
+    {
+      "path": "/assets/ProducerSalesPage-DMjx7afl.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 5236
+    },
+    {
+      "path": "/assets/ProducerStoreSettingsPage-Dth3neKG.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 4083
+    },
+    {
+      "path": "/assets/product-CuqDMtmc.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 2473
+    },
+    {
+      "path": "/assets/producerSales-DrBomQvA.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 1598
+    },
+    {
+      "path": "/assets/producerStore-BJAzyfCE.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 2286
+    },
+    {
+      "path": "/assets/ProductCommandFeedback-BgY1dsR4.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 4245
+    },
+    {
+      "path": "/assets/ProductEditorPage-DOnG6979.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 9768
+    },
+    {
+      "path": "/assets/ProducerStoreSettingsPage-Rg-JRnOX.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 22897
+    },
+    {
+      "path": "/assets/PurchasesPage-CN1SKbvO.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 5338
+    },
+    {
+      "path": "/assets/PwaVersionPanel-D0ni_o6J.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 2023
+    },
+    {
+      "path": "/assets/PublicProducerStorePage-Bcl0zaHW.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 7953
+    },
+    {
+      "path": "/assets/qr-code-C74KV5mK.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 690
+    },
+    {
+      "path": "/assets/RegionalHighlights-DrL3lOd2.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 3565
+    },
+    {
+      "path": "/assets/RefundPolicy-KKwyAnOh.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 3145
+    },
+    {
+      "path": "/assets/reviews-4tajZr5z.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 1660
+    },
+    {
+      "path": "/assets/reviews-B4HwxJmN.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 3126
+    },
+    {
+      "path": "/assets/schemas-DlOyAbQU.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 95482
+    },
+    {
+      "path": "/assets/shopping-basket-BDzryRcp.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 450
+    },
+    {
+      "path": "/assets/storeCoverSlides-B1Y86VfW.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 1167
+    },
+    {
+      "path": "/assets/storeCoverSlides-BjtU43_K.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 9478
+    },
+    {
+      "path": "/assets/storefrontMedia-By3_4ofq.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 1261
+    },
+    {
+      "path": "/assets/reviews-96HUUSZ4.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 1304
+    },
+    {
+      "path": "/assets/subscriptions-DZj6A2XA.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 2234
+    },
+    {
+      "path": "/assets/SubscriptionPlansPage-D0xUpfle.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 10934
+    },
+    {
+      "path": "/assets/useOrderQuery-CNsdWMrU.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 4189
+    },
+    {
+      "path": "/assets/web-DaKcY4i_.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 843
+    },
+    {
+      "path": "/favicon.svg",
+      "status": 200,
+      "contentType": "image/svg+xml",
+      "cacheControl": "public, max-age=0, must-revalidate",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 195
+    },
+    {
+      "path": "/assets/web-pYYS7C6n.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 361
+    },
+    {
+      "path": "/assets/storefrontMedia-Cwsbetye.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 2896
+    },
+    {
+      "path": "/index.html",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "cacheControl": "no-store, max-age=0, must-revalidate",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 1857
+    },
+    {
+      "path": "/manifest.webmanifest",
+      "status": 200,
+      "contentType": "application/manifest+json; charset=utf-8",
+      "cacheControl": "no-cache, max-age=0, must-revalidate",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 584
+    },
+    {
+      "path": "/manifest.webmanifest",
+      "status": 200,
+      "contentType": "application/manifest+json; charset=utf-8",
+      "cacheControl": "no-cache, max-age=0, must-revalidate",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 584
+    },
+    {
+      "path": "/app-icons/icon-192.png",
+      "status": 200,
+      "contentType": "image/png",
+      "cacheControl": "public, max-age=0, must-revalidate",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 4473
+    },
+    {
+      "path": "/app-icons/icon-512.png",
+      "status": 200,
+      "contentType": "image/png",
+      "cacheControl": "public, max-age=0, must-revalidate",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 16450
+    },
+    {
+      "path": "/offline-worker.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "cacheControl": "no-store, max-age=0, must-revalidate",
+      "serviceWorkerAllowed": "/",
+      "cookies": 0,
+      "bytes": 21182
+    },
+    {
+      "path": "/",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "cacheControl": "no-store, max-age=0, must-revalidate",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 1857
+    },
+    {
+      "path": "/aplicativos",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "cacheControl": "no-store, max-age=0, must-revalidate",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 1857
+    },
+    {
+      "path": "/instalar/android",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "cacheControl": "no-store, max-age=0, must-revalidate",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 1857
+    },
+    {
+      "path": "/instalar/ios",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "cacheControl": "no-store, max-age=0, must-revalidate",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 1857
+    },
+    {
+      "path": "/api/v1/admin/app-distribution",
+      "status": 401,
+      "contentType": "application/json; charset=utf-8",
+      "cacheControl": "no-store, max-age=0",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 128
+    },
+    {
+      "path": "/api/v1/account/profile",
+      "status": 401,
+      "contentType": "application/json; charset=utf-8",
+      "cacheControl": "no-store, max-age=0",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 76
+    },
+    {
+      "path": "/api/v1/producer/store/delivery",
+      "status": 401,
+      "contentType": "application/json; charset=utf-8",
+      "cacheControl": "no-store, max-age=0",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 76
+    },
+    {
+      "path": "/downloads/android",
+      "status": 404,
+      "contentType": "application/json; charset=utf-8",
+      "cacheControl": "no-store, max-age=0",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 72
+    },
+    {
+      "path": "/downloads/ios",
+      "status": 404,
+      "contentType": "application/json; charset=utf-8",
+      "cacheControl": "no-store, max-age=0",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 72
+    },
+    {
+      "path": "/api/health",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "cacheControl": "no-store, max-age=0",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 127
+    },
+    {
+      "path": "/api/ready",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "cacheControl": "no-store, max-age=0",
+      "serviceWorkerAllowed": null,
+      "cookies": 0,
+      "bytes": 144
+    },
+    {
+      "path": "/api/v1/app-distribution",
+      "status": 200,
+      "cacheControl": "no-store, max-age=0",
+      "cookies": 0,
+      "canonicalCommitSha": "7b2799a60399a0f9b6f8b186577eaf6d27908e07"
+    },
+    {
+      "path": "/api/v1/producer/sync",
+      "method": "POST",
+      "status": 403,
+      "cacheControl": "no-store, max-age=0",
+      "origin": "https://synthetic.example.invalid",
+      "rejectedBeforeMutation": true
+    }
+  ],
+  "readinessVerifiedAt": "2026-10-10T12:29:45.672Z",
+  "releaseTag": "pwa-v68-7b2799a"
+}

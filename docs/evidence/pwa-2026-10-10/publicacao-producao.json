@@ -1,0 +1,37 @@
+{
+  "verifiedAt": "2026-10-10T12:31:58.699Z",
+  "pullRequest": "https://github.com/wesleialvessantos39/HortVitalMix/pull/115",
+  "functionalCommitSha": "7b2799a60399a0f9b6f8b186577eaf6d27908e07",
+  "deploymentId": "dpl_ACwqmQKP9m34zA4ah9un86oA9DEe",
+  "readyState": "READY",
+  "readyAt": "2026-10-10T12:26:13.260Z",
+  "target": "production",
+  "branch": "main",
+  "regions": [
+    "pdx1"
+  ],
+  "productionDomain": "https://hortvitalmix.vercel.app",
+  "aliases": [
+    "hortvitalmix.vercel.app",
+    "hortvitalmix-wesleialvessantos-projects.vercel.app",
+    "hortvitalmix-git-main-wesleialvessantos-projects.vercel.app"
+  ],
+  "buildId": "1b7d87c6480cd3f0fb46782cafb0d6d6592f06807442420b509fa6c1eb76f7d5",
+  "verifiedResources": 91,
+  "httpChecks": 109,
+  "productionBrowserVisits": 18,
+  "actionsUsed": false,
+  "nativeBuildPerformed": false,
+  "supabaseMigrationApplied": false,
+  "canonicalRelease": {
+    "release_tag": "pwa-v68-7b2799a",
+    "environment": "production",
+    "commit_sha": "7b2799a60399a0f9b6f8b186577eaf6d27908e07",
+    "schema_version": 68,
+    "migration_history_hash": "ae1874579bb17297df3536863b1c01469c278ee3ebd52bb12990e417c7fbe549",
+    "deployed_by": "operator:pwa-production-verified",
+    "is_current": true
+  },
+  "physicalInstallationPerformed": false,
+  "documentaryClosure": "Subsequent documentary commit preserves functional code; current actual SHA is read from pwa-version.json after its deployment."
+}

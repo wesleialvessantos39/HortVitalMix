@@ -1,0 +1,32 @@
+{
+  "revision": 1,
+  "updatedAt": "2026-10-09T22:55:22.047Z",
+  "releaseNotes": "",
+  "web": {
+    "version": "pwa-v68-7b2799a",
+    "commitSha": "7b2799a60399a0f9b6f8b186577eaf6d27908e07",
+    "schemaVersion": 68,
+    "available": true,
+    "updatedAt": "2026-10-10T12:28:17.325Z",
+    "updateMode": "hosted_web",
+    "requiresStoreUpdateForNativeChanges": true
+  },
+  "android": {
+    "available": false,
+    "version": null,
+    "url": null,
+    "downloadUrl": null,
+    "channel": null,
+    "updatedAt": null,
+    "managedBy": "none"
+  },
+  "ios": {
+    "available": false,
+    "version": null,
+    "url": null,
+    "downloadUrl": null,
+    "channel": null,
+    "updatedAt": null,
+    "managedBy": "none"
+  }
+}
