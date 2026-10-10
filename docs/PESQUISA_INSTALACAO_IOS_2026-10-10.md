@@ -42,4 +42,4 @@ Base inspecionada: main `1bb5e2cf824bb7358eef3625d4cde1824c195ec5`. Livro Raiz e
 
 ## Validação e publicação
 
-Resultados, arquivos modificados, commit e deployment serão registrados no Livro Raiz após execução e confirmação. Testes de sinais iOS em Chromium verificam a lógica e a interface; **não comprovam instalação física no Safari ou ícone real no iPhone/iPad**.
+Resultados, arquivos modificados, commit e deployment confirmados estão na nova entrada do Livro Raiz e nas [evidências](evidence/ios-instalacao-2026-10-10/publicacao-funcional.json): TypeScript/build/gates, 49 testes PWA, 62 cenários de navegador, 123 verificações HTTP e 23 visitas ao domínio real. A abertura da URL em nova aba foi executada de fato no Chromium; não há fixtures de API na verificação pública. A prontidão do primeiro cache foi aguardada separadamente do estado de versão atual, preservando as verificações de layout. Testes de sinais iOS em Chromium verificam a lógica e a interface; **não comprovam instalação física no Safari ou ícone real no iPhone/iPad**.

@@ -1,0 +1,162 @@
+{
+  "origin": "https://hortvitalmix.vercel.app",
+  "commitSha": "9b86e67f5c7bd3c6e1974f70eaf7fb2ee17c9602",
+  "physicalDeviceInstallation": false,
+  "apiFixtures": false,
+  "visits": [
+    {
+      "path": "/",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "path": "/aplicativos",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "path": "/",
+      "width": 360,
+      "overflow": false
+    },
+    {
+      "path": "/aplicativos",
+      "width": 360,
+      "overflow": false
+    },
+    {
+      "path": "/",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "path": "/aplicativos",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "path": "/",
+      "width": 430,
+      "overflow": false
+    },
+    {
+      "path": "/aplicativos",
+      "width": 430,
+      "overflow": false
+    },
+    {
+      "path": "/",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "path": "/aplicativos",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "path": "/",
+      "width": 1024,
+      "overflow": false
+    },
+    {
+      "path": "/aplicativos",
+      "width": 1024,
+      "overflow": false
+    },
+    {
+      "path": "/",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "path": "/aplicativos",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "path": "/instalar/ios#passos",
+      "newTab": true,
+      "instructionsVisible": true,
+      "opener": null
+    },
+    {
+      "path": "/instalar/ios",
+      "width": 320,
+      "height": 568,
+      "simulatedIOSSignals": true,
+      "horizontal": true,
+      "vertical": true
+    },
+    {
+      "path": "/instalar/ios",
+      "width": 360,
+      "height": 640,
+      "simulatedIOSSignals": true,
+      "horizontal": true,
+      "vertical": true
+    },
+    {
+      "path": "/instalar/ios",
+      "width": 390,
+      "height": 844,
+      "simulatedIOSSignals": true,
+      "horizontal": true,
+      "vertical": true
+    },
+    {
+      "path": "/instalar/ios",
+      "width": 430,
+      "height": 932,
+      "simulatedIOSSignals": true,
+      "horizontal": true,
+      "vertical": true
+    },
+    {
+      "path": "/instalar/ios",
+      "width": 768,
+      "height": 1024,
+      "simulatedIOSSignals": true,
+      "horizontal": true,
+      "vertical": true
+    },
+    {
+      "path": "/instalar/ios",
+      "width": 1024,
+      "height": 768,
+      "simulatedIOSSignals": true,
+      "horizontal": true,
+      "vertical": true
+    },
+    {
+      "path": "/instalar/ios",
+      "width": 1440,
+      "height": 900,
+      "simulatedIOSSignals": true,
+      "horizontal": true,
+      "vertical": true
+    },
+    {
+      "path": "/instalar/ios",
+      "width": 844,
+      "height": 390,
+      "simulatedIOSSignals": true,
+      "horizontal": true,
+      "vertical": false
+    }
+  ],
+  "errors": [],
+  "writes": [],
+  "version": {
+    "commitSha": "9b86e67f5c7bd3c6e1974f70eaf7fb2ee17c9602",
+    "buildId": "85b4f73b501f2cb8e72e424734250f38869dcc8a1babf55a7b3c43ae565b0b97",
+    "resources": 93
+  },
+  "registrations": [
+    {
+      "scope": "https://hortvitalmix.vercel.app/",
+      "script": "https://hortvitalmix.vercel.app/offline-worker.js"
+    }
+  ],
+  "status": "verified"
+}
