@@ -2,10 +2,14 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import type { Request, Response } from "express";
 import { offlineWorkerPlugin } from "./scripts/offline-worker-plugin.ts";
+import { execFileSync } from "node:child_process";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   for (const [k, v] of Object.entries(env))
     if (process.env[k] === undefined) process.env[k] = v;
+  if (!process.env.VERCEL_GIT_COMMIT_SHA && !process.env.HVM_BUILD_COMMIT_SHA) {
+    try { process.env.HVM_BUILD_COMMIT_SHA = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(); } catch { /* Source archive has no Git identity. */ }
+  }
   return {
     define: {
       __HVM_BUILD_COMMIT_SHA__: JSON.stringify(

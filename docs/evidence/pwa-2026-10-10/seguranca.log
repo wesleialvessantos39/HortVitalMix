@@ -1,0 +1,5 @@
+
+> hortivitalmix@0.1.0 security:check
+> node --import tsx scripts/security-check.ts
+
+Cliente sem referências a segredos server-side.

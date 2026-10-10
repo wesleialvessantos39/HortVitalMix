@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-10",
+  "environment": "local Linux/Chromium, API/Auth synthetic fixtures; PWA service workers, build resources, Cache Storage and IndexedDB real",
+  "typeScript": "passed",
+  "completeViteBuild": "passed, pre-existing gates retained",
+  "security": "passed",
+  "resourceIntegrity": {
+    "resources": 91,
+    "icons": [
+      192,
+      512
+    ],
+    "privateResources": 0
+  },
+  "unit": {
+    "files": 80,
+    "passed": 893
+  },
+  "http": {
+    "files": 4,
+    "passed": 48
+  },
+  "pwaBrowser": {
+    "passed": 44,
+    "criticalFinalRecheck": 8,
+    "realPhysicalInstallation": false
+  },
+  "legacyBrowser": {
+    "passed": 14,
+    "preservedNativeComponent": "isolated local-only harness; product has PWA central"
+  },
+  "nativePreservationNode": {
+    "passed": 15,
+    "noNativeBuildPerformed": true
+  },
+  "responsiveWidths": [
+    320,
+    360,
+    390,
+    430,
+    768,
+    1024,
+    1440
+  ],
+  "landscape": [
+    844,
+    390
+  ],
+  "suiteOverlap": true,
+  "physicalPending": [
+    "Android Chrome/Edge/Samsung real prompt, confirmation, cancellation, home-screen icon and standalone",
+    "iPhone/iPad Safari Add to Home Screen and standalone",
+    "installed app login/session for consumer, producer, administrator and super administrator",
+    "offline rural sync, suspended tabs and OS background policies on physical Android/iOS"
+  ],
+  "publication": "pending actual main deployment, recorded separately only after READY"
+}

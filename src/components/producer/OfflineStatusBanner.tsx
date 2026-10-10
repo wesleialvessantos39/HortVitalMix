@@ -19,6 +19,7 @@ import {
   type OrderStatus,
 } from "../../../shared/contracts/order";
 import "./offline.css";
+import { usePwa } from "../../hooks/usePwa";
 const actionName = (row: PendingCommand) =>
   row.command.commandType === "inventory.harvest"
     ? "Colheita"
@@ -66,6 +67,7 @@ function ProducerOfflineStatus({
   session: ShellSession;
   onNavigate: (path: string) => void;
 }) {
+  const { workerReady: ready } = usePwa();
   const lifecycle = useRef(new AbortController());
   const [headerHeight, setHeaderHeight] = useState(80);
   useEffect(() => {
@@ -94,8 +96,7 @@ function ProducerOfflineStatus({
     [error, setError] = useState(""),
     [expanded, setExpanded] = useState(false),
     [reauth, setReauth] = useState(false),
-    [password, setPassword] = useState(""),
-    [ready, setReady] = useState(false);
+    [password, setPassword] = useState("");
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
     const visible = () => {
@@ -110,23 +111,6 @@ function ProducerOfflineStatus({
       window.removeEventListener("offline", update);
       document.removeEventListener("visibilitychange", visible);
       window.removeEventListener("focus", visible);
-    };
-  }, []);
-  useEffect(() => {
-    if (!import.meta.env.PROD || !("serviceWorker" in navigator)) return;
-    let stopped = false;
-    const timer = setTimeout(() => {
-      void navigator.serviceWorker
-        .register("/offline-worker.js", { scope: "/", updateViaCache: "none" })
-        .then(() => navigator.serviceWorker.ready)
-        .then(() => {
-          if (!stopped) setReady(true);
-        })
-        .catch(() => {});
-    }, 1200);
-    return () => {
-      stopped = true;
-      clearTimeout(timer);
     };
   }, []);
   useEffect(() => {

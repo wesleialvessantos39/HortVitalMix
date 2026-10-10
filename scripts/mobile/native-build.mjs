@@ -23,7 +23,7 @@ export function validateVersion(build, version) {
 export function classifyChanges(files) {
   const relevant = files.filter((name) => !name.startsWith('docs/') && !name.endsWith('.md'));
   return {
-    nativeRequired: relevant.some((name) => /^(src\/|public\/|shared\/|packaging\/capacitor\/|scripts\/mobile\/|index\.html$|vite\.config\.ts$|package(-lock)?\.json$|\.github\/workflows\/hvm-mobile-build\.yml$)/.test(name)),
+    nativeRequired: relevant.some((name) => /^(src\/|public\/|shared\/|packaging\/capacitor\/|scripts\/mobile\/|index\.html$|vite\.config\.ts$|package(-lock)?\.json$)/.test(name)),
     reason: relevant.some((name) => name.startsWith('packaging/capacitor/')) ? 'native-runtime-changed' : 'bundled-web-or-build-changed',
   };
 }

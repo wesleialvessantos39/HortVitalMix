@@ -1,3 +1,5 @@
+> Registro histórico anterior a 10/10/2026. Os workflows foram removidos por determinação do proprietário; as instruções de CI/empacotamento abaixo não integram o fluxo atual. Consulte [o guia PWA](PWA_INSTALACAO_ATUALIZACOES.md). Canais e registros nativos permanecem preservados para eventual uso futuro.
+
 # Trilha 02 - Selagem gratuita e evidencias
 
 Fonte normativa: **MANUAL MESTRE TECNICO v10 - TRILHAS 01 A 06**.

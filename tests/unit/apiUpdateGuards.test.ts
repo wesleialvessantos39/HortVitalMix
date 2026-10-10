@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api, hasPendingApiMutations, hasPendingSessionChanges, withAdminIdentityConfirmation } from "../../src/lib/api";
+import { holdPwaTransition, releasePwaTransition } from "../../src/lib/pwaTransition";
 
 const fetchMock = vi.fn<typeof fetch>();
 beforeEach(() => {
@@ -11,6 +12,16 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("safe application update guards", () => {
+  it("holds new writes during an activation vote and resumes each exactly once on abort", async () => {
+    holdPwaTransition("synthetic-vote");
+    fetchMock.mockResolvedValueOnce(Response.json({ status: "success" }));
+    const write = api("/v1/cart/items", { method: "POST", body: "{}" });
+    await Promise.resolve();
+    expect(fetchMock).not.toHaveBeenCalled();
+    releasePwaTransition("synthetic-vote");
+    await write;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
   it("holds reload while either of two writes is pending, including a failed write", async () => {
     let completeFirst!: (value: Response) => void;
     let completeSecond!: (value: Response) => void;

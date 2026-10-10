@@ -452,7 +452,7 @@ export default function App() {
         />}
       </header>
       <OfflineStatusBanner session={shellSession} onNavigate={go}/>
-      <AppUpdateNotice path={path} session={shellSession}/>
+      <AppUpdateNotice path={path} session={shellSession} sessionLoading={sessionLoading}/>
       <NativeUpdateNotice session={shellSession}/>
       {shellSession?.activeRole === "producer" && (path.startsWith("/produtor/") || path === "/conta") && <ProducerTrialBanner key={shellSession.userId} userId={shellSession.userId} onNavigate={go}/>}
       <main id="conteudo" className={isAdminRoute || publicLoginRole ? "layout admin-route-layout" : isProducerPropertyRoute ? "layout producer-route-layout rural-property-layout" : isProducerScopeRoute || isProducerStoreRoute || isProducerProductRoute || path === "/carrinho" || path === "/checkout" ? "layout producer-route-layout" : "layout"}>
@@ -465,8 +465,8 @@ export default function App() {
           <PublicLoginPage key={publicLoginRole} role={publicLoginRole} onNavigate={go} onSessionAdopt={adoptSession}/>
         ) : isAdminRoute ? (
           <AdminRouter path={path} onNavigate={go} onSessionRefresh={refreshSession} />
-        ) : path === "/aplicativos" ? (
-          <Suspense fallback={<PageLoading label="Carregando aplicativos…" />}><AppDownloadsPage onNavigate={go}/></Suspense>
+        ) : path === "/aplicativos" || path === "/instalar/android" || path === "/instalar/ios" ? (
+          <Suspense fallback={<PageLoading label="Carregando aplicativos…" />}><AppDownloadsPage onNavigate={go} initialPlatform={path === "/instalar/android" ? "android" : path === "/instalar/ios" ? "ios" : undefined}/></Suspense>
         ) : path === "/confirmar-contato" || path === "/confirmarcontato" ? (
           <ContactConfirmationPage
             session={shellSession}

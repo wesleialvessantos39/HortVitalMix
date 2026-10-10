@@ -1,3 +1,5 @@
+> Registro histórico anterior a 10/10/2026. Os workflows foram removidos por determinação do proprietário; as instruções de CI/empacotamento abaixo não integram o fluxo atual. Consulte [o guia PWA](PWA_INSTALACAO_ATUALIZACOES.md). Canais e registros nativos permanecem preservados para eventual uso futuro.
+
 # Registro e sincronização de versões Android/iOS
 
 O backend registra cada pacote produzido pelo workflow confiável, mantém a versão pública de cada plataforma e guarda o histórico de publicação, retirada e restauração. Metadados do pacote são imutáveis: nem o papel `service_role` pode alterar checksum, certificado, commit, tamanho ou número de build depois do registro. A alteração da publicação usa revisão, recibo de comando e auditoria, sem alterar produtos, pedidos, usuários ou dados operacionais.

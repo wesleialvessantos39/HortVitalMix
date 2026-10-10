@@ -1,0 +1,17 @@
+[WebServer] (node:11810) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 8 tests using 1 worker
+
+(node:11839) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/pwa/installation-updates.spec.ts:230:1 › Android button uses a real event contract and treats simulated accept, cancel and browser confirmation separately (4.5s)
+  ✓  2 tests/pwa/installation-updates.spec.ts:320:1 › a new complete build applies automatically and preserves IndexedDB (13.1s)
+  ✓  3 tests/pwa/installation-updates.spec.ts:483:1 › two tabs wait for the dirty tab before activating either shell (17.4s)
+  ✓  4 tests/pwa/installation-updates.spec.ts:527:1 › failed downloads preserve the old cache and recover after a later verification (11.7s)
+  ✓  5 tests/pwa/installation-updates.spec.ts:556:1 › offline preserves the shell; reconnection checks the new build without reinstalling (12.5s)
+  ✓  6 tests/pwa/installation-updates.spec.ts:606:1 › checkout remains on the old version until its activity is concluded (17.3s)
+  ✓  7 tests/pwa/installation-updates.spec.ts:633:1 › first registration controls the identical shell for offline use without reloading work (2.7s)
+  ✓  8 tests/pwa/installation-updates.spec.ts:647:1 › two already open documents with different build identities transition coherently (17.6s)
+
+  8 passed (1.6m)
