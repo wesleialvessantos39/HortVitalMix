@@ -3,11 +3,8 @@ import {
   Apple,
   Check,
   CheckCircle2,
-  Copy,
   Download,
   ExternalLink,
-  PlusSquare,
-  Share,
   Smartphone,
   X,
 } from "lucide-react";
@@ -18,6 +15,7 @@ import {
 import { usePwa } from "../../hooks/usePwa";
 import { requestPwaInstallation } from "../../lib/pwaManager";
 import { nativeBackendOrigin } from "../../lib/nativeTransport";
+import { IosInstallGuide, PwaInstallAddress } from "./IosInstallGuide";
 import "./pwa.css";
 
 export function PwaInstallCards({
@@ -31,29 +29,36 @@ export function PwaInstallCards({
   const [guide, setGuide] = useState<PwaPlatform | null>(null);
   const [feedback, setFeedback] = useState("");
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState("");
   const dialog = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   useEffect(() => {
     if (initialPlatform && !pwa.device.standalone) setGuide(initialPlatform);
   }, [initialPlatform, pwa.device.standalone]);
   useEffect(() => {
-    if (pwa.installState === "confirmed") setFeedback("");
+    if (pwa.installState === "confirmed") {
+      setFeedback("");
+      setGuide(null);
+    }
   }, [pwa.installState]);
   useEffect(() => {
     const element = dialog.current;
     if (guide && element && !element.open) element.showModal();
     if (!guide && element?.open) element.close();
     setCopied(false);
+    setCopyError("");
   }, [guide]);
-  async function install(platform: PwaPlatform) {
-    setFeedback("");
-    if (
-      platform === "android" &&
-      ["android", "unknown"].includes(pwa.device.platform) &&
+  function canPrompt(platform: PwaPlatform) {
+    return (
+      (pwa.device.platform === platform || pwa.device.platform === "unknown") &&
       pwa.promptAvailable &&
       pwa.readiness === "ready" &&
       !pwa.device.internalBrowser
-    ) {
+    );
+  }
+  async function install(platform: PwaPlatform) {
+    setFeedback("");
+    if (canPrompt(platform)) {
       const result = await requestPwaInstallation();
       if (result === "guide") setGuide(platform);
       else
@@ -71,11 +76,12 @@ export function PwaInstallCards({
       ).href
     : "";
   async function copy() {
+    setCopyError("");
     try {
       await navigator.clipboard.writeText(address);
       setCopied(true);
     } catch {
-      setFeedback(
+      setCopyError(
         "Selecione e copie o endereço abaixo para abrir no seu celular.",
       );
     }
@@ -110,10 +116,7 @@ export function PwaInstallCards({
             pwa.readiness === "checking"
               ? "Verificando requisitos de instalação"
               : pwa.readiness === "ready"
-                ? android &&
-                  ["android", "unknown"].includes(pwa.device.platform) &&
-                  pwa.promptAvailable &&
-                  !pwa.device.internalBrowser
+                ? canPrompt(platform)
                   ? "Disponível para instalar"
                   : "Abrir instruções de instalação"
                 : pwa.readiness === "error"
@@ -188,7 +191,7 @@ export function PwaInstallCards({
       )}
       <dialog
         ref={dialog}
-        className="hvm-pwa-guide"
+        className={"hvm-pwa-guide" + (guide === "ios" ? " is-ios" : "")}
         aria-labelledby={titleId}
         onCancel={() => setGuide(null)}
         onClose={() => setGuide(null)}
@@ -197,7 +200,9 @@ export function PwaInstallCards({
           <div>
             <span className="hvm-pwa-eyebrow">Na sua tela inicial</span>
             <h2 id={titleId}>
-              Instalar para {guide === "android" ? "Android" : "iPhone e iPad"}
+              {guide === "ios"
+                ? "Instalar no iPhone e iPad"
+                : "Instalar para Android"}
             </h2>
           </div>
           <button
@@ -210,26 +215,26 @@ export function PwaInstallCards({
             <X size={21} />
           </button>
         </header>
-        <p>
-          Uma instalação gratuita do mesmo HortiVitalMix que você já utiliza. A
-          confirmação acontece no próprio navegador.
-        </p>
-        {pwa.device.internalBrowser && (
+        {guide !== "ios" && (
+          <p>
+            Uma instalação gratuita do mesmo HortiVitalMix que você já utiliza.
+            A confirmação acontece no próprio navegador.
+          </p>
+        )}
+        {guide !== "ios" && pwa.device.internalBrowser && (
           <p className="hvm-pwa-guidance">
             Você está em um navegador interno de aplicativo. Abra o menu e
-            escolha abrir em{" "}
-            {guide === "ios"
-              ? "Safari"
-              : "Chrome ou outro navegador compatível"}
-            . Se essa opção não existir, copie o endereço abaixo.
+            escolha abrir em Chrome ou outro navegador compatível. Se essa opção
+            não existir, copie o endereço abaixo.
           </p>
         )}
-        {!["android", "ios"].includes(pwa.device.platform) && (
-          <p className="hvm-pwa-guidance">
-            Abra este endereço no seu celular ou tablet para instalar. As duas
-            opções continuam disponíveis aqui.
-          </p>
-        )}
+        {guide !== "ios" &&
+          !["android", "ios"].includes(pwa.device.platform) && (
+            <p className="hvm-pwa-guidance">
+              Abra este endereço no seu celular ou tablet para instalar. As duas
+              opções continuam disponíveis aqui.
+            </p>
+          )}
         {pwa.readiness !== "ready" && (
           <p className="hvm-pwa-guidance">
             {pwa.readiness === "checking"
@@ -241,52 +246,17 @@ export function PwaInstallCards({
             </button>
           </p>
         )}
-        <ol className="hvm-pwa-steps">
-          {guide === "ios" ? (
-            <>
-              <li>
-                <ExternalLink aria-hidden="true" />
-                <div>
-                  <strong>Abra no Safari</strong>
-                  <p>
-                    Use o Safari no iPhone ou iPad para abrir o endereço do
-                    HortiVitalMix.
-                  </p>
-                </div>
-              </li>
-              <li>
-                <Share aria-hidden="true" />
-                <div>
-                  <strong>Toque em Compartilhar</strong>
-                  <p>
-                    Procure o ícone de compartilhamento na barra do Safari ou no
-                    menu do navegador.
-                  </p>
-                </div>
-              </li>
-              <li>
-                <PlusSquare aria-hidden="true" />
-                <div>
-                  <strong>Adicionar à Tela de Início</strong>
-                  <p>
-                    Selecione essa opção. Ative “Abrir como App da Web”, quando
-                    estiver disponível.
-                  </p>
-                </div>
-              </li>
-              <li>
-                <CheckCircle2 aria-hidden="true" />
-                <div>
-                  <strong>Confirme Adicionar</strong>
-                  <p>
-                    Depois, abra o HortiVitalMix pelo novo ícone na tela
-                    inicial.
-                  </p>
-                </div>
-              </li>
-            </>
-          ) : (
-            <>
+        {guide === "ios" ? (
+          <IosInstallGuide
+            device={pwa.device}
+            address={address}
+            copied={copied}
+            copyError={copyError}
+            onCopy={() => void copy()}
+          />
+        ) : (
+          <>
+            <ol className="hvm-pwa-steps">
               <li>
                 <ExternalLink aria-hidden="true" />
                 <div>
@@ -323,51 +293,39 @@ export function PwaInstallCards({
                   </p>
                 </div>
               </li>
-            </>
-          )}
-        </ol>
-        <div className="hvm-pwa-address">
-          <label htmlFor={titleId + "-url"}>Endereço de instalação</label>
-          <input
-            id={titleId + "-url"}
-            readOnly
-            value={address}
-            onFocus={(event) => event.currentTarget.select()}
-          />
-          <button type="button" onClick={() => void copy()}>
-            <Copy size={16} />
-            {copied ? "Endereço copiado" : "Copiar endereço"}
-          </button>
-        </div>
-        <p className="hvm-pwa-limit">
-          A confirmação de instalação é fornecida pelo navegador. No iOS, os
-          passos do Safari são necessários; a plataforma não pode executá-los
-          por você.
-        </p>
-        <footer>
-          {guide === "android" &&
-            pwa.promptAvailable &&
-            pwa.readiness === "ready" &&
-            !pwa.device.internalBrowser && (
+            </ol>
+            <PwaInstallAddress
+              address={address}
+              copied={copied}
+              copyError={copyError}
+              onCopy={() => void copy()}
+            />
+            <p className="hvm-pwa-limit">
+              A confirmação de instalação é fornecida pelo navegador.
+            </p>
+            <footer>
+              {guide === "android" && canPrompt("android") && (
+                <button
+                  type="button"
+                  className="hvm-pwa-primary"
+                  onClick={() => {
+                    setGuide(null);
+                    void install("android");
+                  }}
+                >
+                  Instalar para Android
+                </button>
+              )}
               <button
                 type="button"
-                className="hvm-pwa-primary"
-                onClick={() => {
-                  setGuide(null);
-                  void install("android");
-                }}
+                className="hvm-pwa-secondary"
+                onClick={() => setGuide(null)}
               >
-                Instalar para Android
+                Entendi
               </button>
-            )}
-          <button
-            type="button"
-            className="hvm-pwa-secondary"
-            onClick={() => setGuide(null)}
-          >
-            Entendi
-          </button>
-        </footer>
+            </footer>
+          </>
+        )}
       </dialog>
     </div>
   );

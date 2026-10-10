@@ -239,6 +239,92 @@
 .hvm-pwa-steps p {
   margin: 5px 0 0;
 }
+.hvm-pwa-guide.is-ios {
+  width: min(460px, calc(100vw - 24px));
+  padding: 20px;
+}
+.hvm-pwa-ios-steps {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 14px 0;
+}
+.hvm-pwa-ios-steps li {
+  display: grid;
+  grid-template-columns: 24px 22px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  padding: 10px;
+  border: 1px solid #dce8d8;
+  border-radius: 12px;
+  background: #f7fbf4;
+  min-width: 0;
+}
+.hvm-pwa-ios-steps li > svg {
+  width: 22px;
+  height: 22px;
+  color: #327448;
+  margin-top: 1px;
+}
+.hvm-pwa-step-number {
+  display: grid;
+  place-items: center;
+  min-height: 24px;
+  border-radius: 7px;
+  background: #e5f0df;
+  color: #285d38;
+  font-size: 12px;
+  font-weight: 750;
+}
+.hvm-pwa-ios-steps strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.hvm-pwa-ios-steps p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.hvm-pwa-guide .hvm-pwa-ios-intro,
+.hvm-pwa-guide .hvm-pwa-ios-finish {
+  margin: 10px 0;
+  line-height: 1.5;
+}
+.hvm-pwa-ios-help {
+  border-top: 1px solid #dce5d8;
+  margin-top: 12px;
+  font-size: 12px;
+}
+.hvm-pwa-ios-help summary {
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 12px 2px;
+  color: #285d38;
+  font-weight: 700;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.hvm-pwa-ios-help summary:focus-visible {
+  outline: 3px solid #c38a36;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+.hvm-pwa-ios-handoff .hvm-pwa-guidance {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.hvm-pwa-ios-handoff .hvm-pwa-guidance svg {
+  flex: 0 0 20px;
+  margin-top: 2px;
+}
+.hvm-pwa-ios-open > .hvm-pwa-primary {
+  width: 100%;
+  min-height: 46px;
+}
 .hvm-pwa-address {
   display: grid;
   gap: 9px;
@@ -364,6 +450,9 @@
   }
   .hvm-pwa-guide h2 {
     font-size: 20px;
+  }
+  .hvm-pwa-guide.is-ios {
+    padding: 16px;
   }
   .hvm-pwa-guide footer > * {
     flex: 1 1 130px;
