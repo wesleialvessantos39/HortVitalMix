@@ -1,0 +1,28 @@
+{
+  "verifiedAt": "2026-10-10T12:44:26.733Z",
+  "pullRequest": "https://github.com/wesleialvessantos39/HortVitalMix/pull/116",
+  "commitSha": "8b30f8fc0882b24a5265073945951a271916e65b",
+  "deploymentId": "dpl_6Vu3USGEP4wVVHKgk8AZDNgvM3te",
+  "state": "READY",
+  "readyAt": "2026-10-10T12:37:26.523Z",
+  "branch": "main",
+  "target": "production",
+  "regions": [
+    "pdx1"
+  ],
+  "domain": "https://hortvitalmix.vercel.app",
+  "buildId": "ecc5fdd56fb36328ee0ffb0370d40c7196bffbc9bd0efa93096675ebfda0645e",
+  "resources": 91,
+  "healthReadyConfig": "passed",
+  "canonicalRelease": {
+    "release_tag": "pwa-docs-v68-8b30f8f",
+    "commit_sha": "8b30f8fc0882b24a5265073945951a271916e65b",
+    "schema_version": 68,
+    "migration_history_hash": "ae1874579bb17297df3536863b1c01469c278ee3ebd52bb12990e417c7fbe549",
+    "is_current": true
+  },
+  "codeUnchanged": true,
+  "actionsUsed": false,
+  "migrationApplied": false,
+  "physicalInstallationPerformed": false
+}
