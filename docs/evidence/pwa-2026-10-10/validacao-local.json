@@ -58,5 +58,5 @@
     "installed app login/session for consumer, producer, administrator and super administrator",
     "offline rural sync, suspended tabs and OS background policies on physical Android/iOS"
   ],
-  "publication": "functional main 7b2799a60399a0f9b6f8b186577eaf6d27908e07 confirmed READY, hashes and production visits; see publicacao-producao.json"
+  "publication": "final functional PR #118/bf9626b462a52e21bbf68bbea9aa60abcdf796d9 READY, production first gesture, safe transition/offline and hashes verified; documentary closure preserves code"
 }

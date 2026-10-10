@@ -1,0 +1,86 @@
+{
+  "checkedAt": "2026-10-10T13:07:28.468Z",
+  "relations": 137,
+  "unchanged": 131,
+  "differences": [
+    {
+      "relation": "auth.mfa_amr_claims",
+      "before": {
+        "relation": "auth.mfa_amr_claims",
+        "rows": 36,
+        "digest": "43480022e4ccebb69c40fe9e82cc4536"
+      },
+      "after": {
+        "relation": "auth.mfa_amr_claims",
+        "rows": 37,
+        "digest": "1d94dc5a7f632b7b70bfd2493d38fe11"
+      }
+    },
+    {
+      "relation": "auth.refresh_tokens",
+      "before": {
+        "relation": "auth.refresh_tokens",
+        "rows": 43,
+        "digest": "c3281da123c76d6224a89dadddc4741b"
+      },
+      "after": {
+        "relation": "auth.refresh_tokens",
+        "rows": 44,
+        "digest": "e4c223fb4034b1a95f866774435c775c"
+      }
+    },
+    {
+      "relation": "auth.sessions",
+      "before": {
+        "relation": "auth.sessions",
+        "rows": 36,
+        "digest": "b62a937e5e788be956c5a000b2019dba"
+      },
+      "after": {
+        "relation": "auth.sessions",
+        "rows": 37,
+        "digest": "40e1b40c65330b027df6d8b2bd7729a3"
+      }
+    },
+    {
+      "relation": "auth.users",
+      "before": {
+        "relation": "auth.users",
+        "rows": 5,
+        "digest": "0cb972a977b80d318359a302d15dba36"
+      },
+      "after": {
+        "relation": "auth.users",
+        "rows": 5,
+        "digest": "b296a1db74ef04cca595b3084292b854"
+      }
+    },
+    {
+      "relation": "public.app_admin_auth_attempts",
+      "before": {
+        "relation": "public.app_admin_auth_attempts",
+        "rows": 214,
+        "digest": "6e81f1a4340bb9143d5e5a162d569292"
+      },
+      "after": {
+        "relation": "public.app_admin_auth_attempts",
+        "rows": 216,
+        "digest": "2c31b13f6e48ee2494fc9d5f48d67e77"
+      }
+    },
+    {
+      "relation": "public.app_releases",
+      "before": {
+        "relation": "public.app_releases",
+        "rows": 113,
+        "digest": "46b817f7fadd4c7d3483ed1bc133d301"
+      },
+      "after": {
+        "relation": "public.app_releases",
+        "rows": 117,
+        "digest": "822f2b054f1059b5d5f89f1e238a4b37"
+      }
+    }
+  ],
+  "scope": "Aggregate relation counts/digests, no personal rows; release metadata changes and concurrent auth activity separated"
+}
