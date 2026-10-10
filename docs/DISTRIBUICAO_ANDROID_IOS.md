@@ -1,3 +1,5 @@
+> Registro histórico anterior a 10/10/2026. Os workflows foram removidos por determinação do proprietário; as instruções de CI/empacotamento abaixo não integram o fluxo atual. Consulte [o guia PWA](PWA_INSTALACAO_ATUALIZACOES.md). Canais e registros nativos permanecem preservados para eventual uso futuro.
+
 # Android, iOS e atualizações do HortiVitalMix
 
 A arquitetura selecionada é **Capacitor 8 com HTML, CSS e JavaScript embarcados**, usando a mesma API da Vercel e o mesmo Supabase do site. Não há um segundo banco de dados e o aplicativo não executa migrações. O projeto nativo reproduzível está em `packaging/capacitor`; as propostas anteriores de TWA e de um shell Swift remoto foram retiradas para manter uma única estratégia.

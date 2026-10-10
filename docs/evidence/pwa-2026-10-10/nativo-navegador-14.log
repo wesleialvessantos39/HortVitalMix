@@ -1,0 +1,21 @@
+
+Running 14 tests using 1 worker
+
+(node:12653) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/e2e/app-distribution-departments.spec.ts:6:1 › public application department prioritizes the same PWA for both platforms (1.9s)
+  ✓   2 tests/e2e/mobile-release-center.spec.ts:95:3 › central de versões assinadas permanece organizada em 320px (3.0s)
+  ✓   3 tests/e2e/mobile-release-center.spec.ts:95:3 › central de versões assinadas permanece organizada em 390px (2.9s)
+  ✓   4 tests/e2e/mobile-release-center.spec.ts:95:3 › central de versões assinadas permanece organizada em 768px (2.9s)
+  ✓   5 tests/e2e/mobile-release-center.spec.ts:95:3 › central de versões assinadas permanece organizada em 1440px (3.0s)
+  ✓   6 tests/e2e/mobile-release-center.spec.ts:117:3 › platform_admin: confirma a mesma identidade e publica exatamente a versão revisada (1.9s)
+  ✓   7 tests/e2e/mobile-release-center.spec.ts:117:3 › platform_super_admin: confirma a mesma identidade e publica exatamente a versão revisada (1.8s)
+  ✓   8 tests/e2e/mobile-release-center.spec.ts:150:1 › conflito conserva a política editada até descarte explícito e a Apple continua sob revisão (1.8s)
+  ✓   9 tests/e2e/mobile-release-center.spec.ts:167:1 › retirada não escolhe uma versão antiga automaticamente e restauração mantém a política mínima (2.9s)
+  ✓  10 tests/e2e/mobile-release-center.spec.ts:189:1 › negação explícita do super oculta a central e evita consultar configurações protegidas (2.0s)
+  ✓  11 tests/e2e/mobile-release-center.spec.ts:198:3 › android: usa o pacote instalado e abre a atualização somente por ação explícita (2.6s)
+  ✓  12 tests/e2e/mobile-release-center.spec.ts:198:3 › ios: usa o pacote instalado e abre a atualização somente por ação explícita (3.3s)
+  ✓  13 tests/e2e/mobile-release-center.spec.ts:223:1 › aviso opcional pode ser adiado; retirada não oferece instalação antiga e mínimo conhecido continua visível (2.1s)
+  ✓  14 tests/e2e/mobile-release-center.spec.ts:245:1 › atualização instalada conserva o rascunho e a fila durável do produtor (2.2s)
+
+  14 passed (35.3s)

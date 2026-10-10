@@ -1,29 +1,128 @@
-import { ArrowLeft, Cloud, RefreshCw, ShieldCheck, Smartphone } from "lucide-react";
-import { AppPlatformDownloads } from "../components/AppDownloadSection";
-import { PageLoading } from "../components/PageLoading";
-import { useAppDistribution } from "../hooks/useAppDistribution";
+import { ArrowLeft, Cloud, ShieldCheck, Smartphone } from "lucide-react";
+import type { PwaPlatform } from "../../shared/contracts/pwa";
+import { PwaInstallCards } from "../components/pwa/PwaInstallCards";
+import { PwaVersionPanel } from "../components/pwa/PwaVersionPanel";
 import "./appDownloads.css";
 
-export default function AppDownloadsPage({ onNavigate }: { onNavigate: (path: string) => void }) {
-  const { data, error, loading, reload } = useAppDistribution();
-  return <section className="app-downloads-page" aria-labelledby="app-downloads-title">
-    <a href="/" className="app-downloads-back" onClick={(event) => { event.preventDefault(); onNavigate("/"); }}><ArrowLeft size={16} aria-hidden="true" /> Voltar para o site</a>
-    <header className="app-downloads-header">
-      <span className="app-downloads-mark"><Smartphone size={29} aria-hidden="true" /></span>
-      <span className="app-downloads-eyebrow">HortiVitalMix com você</span>
-      <h1 id="app-downloads-title">Aplicativos e atualizações</h1>
-      <p>Acompanhe a publicação dos aplicativos e instale sempre a versão atual por este canal.</p>
-    </header>
-    {loading ? <PageLoading label="Verificando aplicativos" /> : <>
-      {error && <div className="app-downloads-alert" role="alert"><p>Não foi possível verificar as versões agora.</p><button type="button" onClick={reload}><RefreshCw size={15} aria-hidden="true" /> Tentar novamente</button></div>}
-      <AppPlatformDownloads data={data} unavailable={error} />
+export default function AppDownloadsPage({
+  onNavigate,
+  initialPlatform,
+}: {
+  onNavigate: (path: string) => void;
+  initialPlatform?: PwaPlatform;
+}) {
+  return (
+    <section
+      className="app-downloads-page"
+      aria-labelledby="app-downloads-title"
+    >
+      <a
+        href="/"
+        className="app-downloads-back"
+        onClick={(event) => {
+          event.preventDefault();
+          onNavigate("/");
+        }}
+      >
+        <ArrowLeft size={16} aria-hidden="true" />
+        Voltar para o site
+      </a>
+      <header className="app-downloads-header">
+        <span className="app-downloads-mark">
+          <Smartphone size={29} aria-hidden="true" />
+        </span>
+        <span className="app-downloads-eyebrow">HortiVitalMix com você</span>
+        <h1 id="app-downloads-title">Aplicativos e atualizações</h1>
+        <p>
+          Instale o HortiVitalMix no seu dispositivo e receba automaticamente as
+          melhorias da plataforma.
+        </p>
+      </header>
+      <PwaInstallCards initialPlatform={initialPlatform} />
       <div className="app-downloads-benefits">
-        <article><Cloud size={20} aria-hidden="true" /><h2>Dados sempre atuais</h2><p>Catálogo, pedidos e serviços sincronizados ao conectar.</p></article>
-        <article><ShieldCheck size={20} aria-hidden="true" /><h2>Uma conta, seus dados</h2><p>Seus registros no celular e no navegador.</p></article>
+        <article>
+          <Cloud size={22} aria-hidden="true" />
+          <h2>Um único HortiVitalMix</h2>
+          <p>
+            A mesma conta, os mesmos cadastros e o mesmo sistema, no celular e
+            no navegador.
+          </p>
+        </article>
+        <article>
+          <ShieldCheck size={22} aria-hidden="true" />
+          <h2>Seu trabalho protegido</h2>
+          <p>
+            As atualizações aguardam formulários, operações importantes e a
+            sincronização das ações offline.
+          </p>
+        </article>
       </div>
-      <details className="app-downloads-note"><summary>Como funcionam as atualizações</summary><p>Os dados e serviços da plataforma são atualizados ao conectar. Android, iPhone e navegador utilizam seus mesmos cadastros; registros e pedidos permanecem no sistema.</p><p>Quando uma nova versão do aplicativo precisar ser instalada, você receberá um aviso. Este canal sempre oferece a versão publicada mais recente. No iOS, a instalação utiliza um canal autorizado da Apple.</p></details>
-      {data?.web.available && <p className="app-downloads-current"><span className="app-downloads-current-dot" aria-hidden="true" /> Plataforma conectada à versão atual</p>}
-      {data?.releaseNotes && <details className="app-downloads-changes"><summary>O que mudou na versão atual</summary><p>{data.releaseNotes}</p></details>}
-    </>}
-  </section>;
+      <PwaVersionPanel />
+      <section className="app-downloads-note">
+        <h2>Atualizações automáticas</h2>
+        <p>
+          O HortiVitalMix utiliza tecnologia de aplicativo web instalável.
+          Quando publicamos melhorias, seu aplicativo verifica a disponibilidade
+          da nova versão e atualiza os recursos automaticamente quando estiver
+          conectado e for seguro fazê-lo.
+        </p>
+        <p>
+          Se você estiver preenchendo um formulário ou realizando uma operação
+          importante, a atualização aguardará o momento adequado. Não será
+          necessário reinstalar o aplicativo após cada melhoria.
+        </p>
+        <p>
+          As atualizações continuam sujeitas à conexão e às regras de execução
+          do navegador e do sistema operacional. O aplicativo verifica novamente
+          ao abrir, retornar ao primeiro plano e recuperar a conexão.
+        </p>
+      </section>
+      <section className="app-downloads-compatibility">
+        <h2>Compatibilidade e ajuda</h2>
+        <details>
+          <summary>Android: Chrome, Edge e Samsung Internet</summary>
+          <p>
+            O botão abre a confirmação do navegador quando a instalação
+            programática estiver disponível. Caso contrário, o assistente mostra
+            a opção de instalação do menu. A instalação sempre depende da sua
+            confirmação.
+          </p>
+        </details>
+        <details>
+          <summary>iPhone e iPad: Safari</summary>
+          <p>
+            Use Compartilhar → Adicionar à Tela de Início, ative Abrir como App
+            da Web quando disponível e confirme Adicionar. Depois, abra pelo
+            ícone. O Safari não oferece uma API para a plataforma executar esses
+            passos.
+          </p>
+        </details>
+        <details>
+          <summary>WhatsApp, Instagram e outros navegadores internos</summary>
+          <p>
+            Escolha abrir no navegador externo. No iPhone/iPad, prefira Safari;
+            no Android, Chrome ou outro navegador compatível. O assistente
+            permite copiar o endereço de instalação.
+          </p>
+        </details>
+        <details>
+          <summary>Computador ou dispositivo não identificado</summary>
+          <p>
+            As duas opções ficam acessíveis. Abra as instruções e copie o
+            endereço para o celular. Windows, macOS e Linux também podem
+            oferecer instalação do aplicativo web pelo próprio navegador.
+          </p>
+        </details>
+        <details>
+          <summary>Uso sem internet</summary>
+          <p>
+            A estrutura do aplicativo fica disponível após a preparação do
+            cache. As funções offline já existentes do produtor preservam ações
+            salvas e sincronizam ao reconectar. Login, consultas atualizadas e
+            outras funções podem precisar de conexão.
+          </p>
+        </details>
+      </section>
+    </section>
+  );
 }

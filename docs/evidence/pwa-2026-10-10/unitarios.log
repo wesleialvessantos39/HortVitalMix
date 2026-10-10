@@ -1,0 +1,14 @@
+
+> hortivitalmix@0.1.0 test:unit
+> vitest run tests/unit
+
+
+ RUN  v5.0.1 /workspace/HortVitalMix
+
+◇ injected env (0) from .env.test
+◇ injected env (0) from .env.local
+
+ Test Files  80 passed (80)
+      Tests  893 passed (893)
+   Start at  12:12:17
+   Duration  14.25s (import 40%, tests 37%, transform 15%, setup 5%, worker 3%)

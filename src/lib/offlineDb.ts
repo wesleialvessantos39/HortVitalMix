@@ -8,6 +8,7 @@ import {
 } from "../../shared/contracts/offlineSync";
 import { api, type ApiFailure } from "./api";
 import type { ShellSession } from "../hooks/useSession";
+import { pwaTransitionHeld, waitForPwaTransition } from "./pwaTransition";
 
 const NAME = "hvm-rural-v1",
   TTL = 24 * 60 * 60 * 1000;
@@ -27,6 +28,10 @@ type Snapshot = {
 };
 let connection: Promise<IDBDatabase> | null = null;
 let snapshotRevision = 0;
+let pendingWrites = 0;
+export function hasPendingOfflineWrites() {
+  return pendingWrites > 0 || flights.size > 0;
+}
 const changed = () => window.dispatchEvent(new Event("hvm:offline-changed"));
 function open(): Promise<IDBDatabase> {
   if (!globalThis.indexedDB)
@@ -69,22 +74,44 @@ async function transaction<T>(
   mode: IDBTransactionMode,
   work: (tx: IDBTransaction, finish: (value: T) => void) => void,
 ): Promise<T> {
-  const db = await open();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(stores, mode);
-    let value: T;
-    tx.oncomplete = () => resolve(value);
-    tx.onerror = tx.onabort = () =>
-      reject(new Error("OFFLINE_STORAGE_UNAVAILABLE"));
-    try {
-      work(tx, (v) => {
-        value = v;
-      });
-    } catch (e) {
-      tx.abort();
-      reject(e);
+  if (mode === "readwrite" && pwaTransitionHeld()) await waitForPwaTransition();
+  if (mode === "readwrite") pendingWrites++;
+  try {
+    const db = await open();
+    return await new Promise<T>((resolve, reject) => {
+      const tx = db.transaction(stores, mode);
+      let value: T;
+      tx.oncomplete = () => resolve(value);
+      tx.onerror = tx.onabort = () =>
+        reject(new Error("OFFLINE_STORAGE_UNAVAILABLE"));
+      try {
+        work(tx, (v) => {
+          value = v;
+        });
+      } catch (e) {
+        tx.abort();
+        reject(e);
+      }
+    });
+  } finally {
+    if (mode === "readwrite") {
+      pendingWrites--;
+      changed();
     }
-  });
+  }
+}
+/** Read only counts, across local accounts; never exposes another user's data. */
+export async function hasOfflineWork() {
+  if (hasPendingOfflineWrites()) return true;
+  return transaction<boolean>(
+    ["pending_commands"],
+    "readonly",
+    (tx, finish) => {
+      const request = tx.objectStore("pending_commands").count();
+      request.onsuccess = () =>
+        finish(request.result > 0 || hasPendingOfflineWrites());
+    },
+  );
 }
 export async function deviceFingerprint() {
   return transaction<string>(["meta"], "readwrite", (tx, finish) => {
@@ -259,7 +286,10 @@ export async function cacheSnapshot(
 ) {
   const revision = snapshotRevision;
   await transaction<void>(["snapshots"], "readwrite", (tx, finish) => {
-    if (revision !== snapshotRevision) { finish(); return; }
+    if (revision !== snapshotRevision) {
+      finish();
+      return;
+    }
     const store = tx.objectStore("snapshots");
     store.put({
       key: userId + ":" + path,
@@ -320,7 +350,10 @@ export async function producerRead<T>(
 export async function saveProducerSession(session: ShellSession | null) {
   const revision = snapshotRevision;
   await transaction<void>(["meta"], "readwrite", (tx, finish) => {
-    if (revision !== snapshotRevision) { finish(); return; }
+    if (revision !== snapshotRevision) {
+      finish();
+      return;
+    }
     const store = tx.objectStore("meta");
     if (
       session?.activeRole === "producer" &&

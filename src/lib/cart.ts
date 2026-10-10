@@ -1,6 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, type ApiFailure } from "./api";
 import { CartResponseSchema, type Cart } from "../../shared/contracts/cart";
+import { blockPwaUpdate } from "./pwaTransition";
 
 let sessionReady = false;
 let queue: Promise<void> = Promise.resolve();
@@ -60,11 +61,25 @@ export function useCartMutation(onSaved?: (cart: Cart) => void) {
     [error, setError] = useState(""),
     [uncertain, setUncertain] = useState(false);
   const flight = useRef(false),
+    mounted = useRef(true),
+    releaseUpdateBlock = useRef<(() => void) | null>(null),
     pending = useRef<{ path: string; body: object; method: string } | null>(
       null,
     ),
     saved = useRef(onSaved);
   saved.current = onSaved;
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      // Queued/in-flight intents stay protected until they settle, even when
+      // their product card unmounts. Do not leave a blocker after it settles.
+      if (!flight.current) {
+        releaseUpdateBlock.current?.();
+        releaseUpdateBlock.current = null;
+      }
+    };
+  }, []);
   async function retry() {
     if (flight.current || !pending.current) return null;
     flight.current = true;
@@ -84,6 +99,8 @@ export function useCartMutation(onSaved?: (cart: Cart) => void) {
         );
       });
       pending.current = null;
+      releaseUpdateBlock.current?.();
+      releaseUpdateBlock.current = null;
       setUncertain(false);
       notifyCart(cart);
       saved.current?.(cart);
@@ -92,17 +109,28 @@ export function useCartMutation(onSaved?: (cart: Cart) => void) {
       const status = (failure as ApiFailure).status;
       const retryable = status === undefined || status >= 500;
       setUncertain(retryable);
-      if (!retryable) pending.current = null;
+      if (!retryable) {
+        pending.current = null;
+        releaseUpdateBlock.current?.();
+        releaseUpdateBlock.current = null;
+      }
       setError(cartErrorMessage(failure));
       return null;
     } finally {
       flight.current = false;
+      if (!mounted.current) {
+        releaseUpdateBlock.current?.();
+        releaseUpdateBlock.current = null;
+      }
       setBusy(false);
     }
   }
   async function send(path: string, body: object, method = "POST") {
     if (flight.current || pending.current) return null;
     pending.current = { path, body, method };
+    releaseUpdateBlock.current = blockPwaUpdate(
+      "Confirme a alteração da cesta antes de atualizar.",
+    );
     return retry();
   }
   return { busy, error, uncertain, send, retry };

@@ -1,0 +1,14 @@
+
+ RUN  v5.0.1 /workspace/HortVitalMix
+
+◇ injected env (0) from .env.test
+◇ injected env (0) from .env.local
+
+ Test Files  4 passed (4)
+      Tests  48 passed (48)
+   Start at  12:03:47
+   Duration  4.02s (transform 59%, import 33%, tests 7%, setup 1%)
+
+  Transform  transforming modules took 2.18s · 59% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns

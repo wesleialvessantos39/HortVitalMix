@@ -28,10 +28,23 @@ async function fixture(page: Page, options: {
   command?: (body: MobileReleaseCommand) => { status: number; data: unknown };
   reauth?: (body: { password: string }) => { status: number; data: unknown };
 } = {}) {
+  page.on("pageerror", (error) => console.warn("LOCAL_LEGACY_COMPONENT_ERROR", error.message));
   const commands: MobileReleaseCommand[] = [];
   let adminReads = 0;
   const role = options.role ?? "platform_super_admin";
   await page.addInitScript(() => localStorage.setItem("hvm.admin.session", JSON.stringify({ accessToken: "synthetic-mobile-admin", refreshToken: "synthetic-mobile-refresh", expiresAt: Date.now() + 3600000 })));
+  // Native management is retained as a legacy component, no longer presented
+  // in the PWA department. Verify it in an isolated LOCAL Vite harness.
+  if (!options.denied) await page.route("**/admin/aplicativos", (route) => route.fulfill({ contentType: "text/html", body: `<!doctype html><html lang="pt-BR"><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="root"></div><script type="module">
+    import RefreshRuntime from '/@react-refresh';
+    RefreshRuntime.injectIntoGlobalHook(window);window.$RefreshReg$=()=>{};window.$RefreshSig$=()=>type=>type;window.__vite_plugin_react_preamble_installed__=true;
+    import React from '/node_modules/.vite/deps/react.js';
+    import ReactDOM from '/node_modules/.vite/deps/react-dom_client.js';const {createRoot}=ReactDOM;
+    const {AdminMobileReleaseCenter}=await import('/src/pages/admin/AdminMobileReleaseCenter.tsx');
+    const {NotificationProvider}=await import('/src/components/notifications/NotificationProvider.tsx');
+    import '/src/index.css';import '/src/pages/admin/admin.css';
+    createRoot(document.getElementById('root')).render(React.createElement(NotificationProvider,{session:${JSON.stringify({ userId: actorId, email: 'synthetic@example.invalid', roles: [role], activeRole: role, portalKind: 'administrative' })}},React.createElement(AdminMobileReleaseCenter,{access:${JSON.stringify({ authorized: true, role, sectors: ["platform_configuration"], deniedSectors: [], requiresReauth: false })}})));
+    </script></body></html>` }));
   await page.route("**/*", async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname.replace(/^\/(?:api|_hvm_api)/, "");

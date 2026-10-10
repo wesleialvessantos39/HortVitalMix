@@ -12,6 +12,7 @@ import {
   nativeBackendOrigin,
   waitForNativeSessionChanges,
 } from "./nativeTransport";
+import { pwaTransitionHeld, waitForPwaTransition } from "./pwaTransition";
 
 let refreshing: Promise<boolean> | null = null;
 let confirmingIdentity: Promise<void> | null = null;
@@ -22,7 +23,10 @@ export function hasPendingApiMutations() {
 }
 
 export function hasPendingSessionChanges() {
-  return Boolean(refreshing || confirmingIdentity) || hasPendingNativeSessionChanges();
+  return (
+    Boolean(refreshing || confirmingIdentity) ||
+    hasPendingNativeSessionChanges()
+  );
 }
 
 function publishMutationState() {
@@ -120,7 +124,13 @@ async function fetchApiPath(
   for (let index = 0; index < bases.length; index++) {
     const response = await doFetch(bases[index] + path, options, credentials);
     lastResponse = response;
-    if (index < bases.length - 1 && (await shouldTryAlternateBase(response, (options.method ?? "GET").toUpperCase())))
+    if (
+      index < bases.length - 1 &&
+      (await shouldTryAlternateBase(
+        response,
+        (options.method ?? "GET").toUpperCase(),
+      ))
+    )
       continue;
     return { response, base: bases[index] };
   }
@@ -167,27 +177,39 @@ export async function fetchApiFile(path: string, options: RequestInit = {}) {
   const url = path.startsWith("/v1/") ? base + path : path;
   const headers = new Headers(options.headers);
   const nativeOrigin = nativeBackendOrigin();
-  const browserOrigin = nativeOrigin ??
+  const browserOrigin =
+    nativeOrigin ??
     (typeof location === "undefined" ? "http://localhost" : location.origin);
   const resolved = new URL(url, browserOrigin);
   const expected = new URL(base + "/", browserOrigin);
-  if (resolved.origin !== expected.origin || !/^\/(?:api|_hvm_api)\/v1\//.test(resolved.pathname))
+  if (
+    resolved.origin !== expected.origin ||
+    !/^\/(?:api|_hvm_api)\/v1\//.test(resolved.pathname)
+  )
     throw failure("API_FILE_URL_REJECTED");
-  const token = resolved.pathname.startsWith(expected.pathname.replace(/\/$/, "") + "/v1/admin/")
-    ? readAdminAccessToken() : "";
+  const token = resolved.pathname.startsWith(
+    expected.pathname.replace(/\/$/, "") + "/v1/admin/",
+  )
+    ? readAdminAccessToken()
+    : "";
   if (token) headers.set("Authorization", "Bearer " + token);
   headers.set("X-HVM-Request", "1");
-  return fetchAppApi(url, {
-    ...options,
-    headers,
-    credentials: "same-origin",
-    signal: options.signal ?? AbortSignal.timeout(20000),
-  }, true);
+  return fetchAppApi(
+    url,
+    {
+      ...options,
+      headers,
+      credentials: "same-origin",
+      signal: options.signal ?? AbortSignal.timeout(20000),
+    },
+    true,
+  );
 }
 
 export async function withAdminIdentityConfirmation<T>(
   confirm: () => Promise<T>,
 ): Promise<T> {
+  if (pwaTransitionHeld()) await waitForPwaTransition();
   // As respostas de renovação também gravam cookies HttpOnly. Aguarde-as
   // antes da confirmação e impeça outra renovação durante a troca de sessão.
   await refreshing;
@@ -217,6 +239,7 @@ export async function api<T>(
     (options.method ?? "GET").toUpperCase(),
   );
   if (mutation) {
+    if (pwaTransitionHeld()) await waitForPwaTransition();
     pendingApiMutations++;
     publishMutationState();
   }
@@ -299,6 +322,7 @@ async function performApi<T>(
     const refreshToken = readAdminRefreshToken();
     const identityVersion = readAdminSessionIdentityVersion();
     if (refreshToken) {
+      if (pwaTransitionHeld()) await waitForPwaTransition();
       refreshing ??= fetchAppApi(base + "/v1/auth/refresh", {
         method: "POST",
         credentials: "same-origin",
@@ -357,6 +381,7 @@ async function performApi<T>(
       .catch(() => ({}) as { error?: string });
 
     if (sessionFailure?.error === "SESSION_EXPIRED") {
+      if (pwaTransitionHeld()) await waitForPwaTransition();
       refreshing ??= fetchAppApi(base + "/v1/auth/refresh", {
         method: "POST",
         credentials: "same-origin",

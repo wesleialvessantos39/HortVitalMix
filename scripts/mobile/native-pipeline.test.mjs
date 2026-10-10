@@ -127,28 +127,12 @@ test('OIDC token is requested only from the GitHub-controlled endpoint for the f
   if(priorToken===undefined)delete process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN;else process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN=priorToken;
  }
 });
-test('workflow reuses producer artifacts on failed-job retries and isolates signing from pull requests',async()=>{
- const workflow=await readFile(new URL('../../.github/workflows/hvm-mobile-build.yml',import.meta.url),'utf8');
- assert.equal(/name: (native-web|android-unsigned)-.*github.run_attempt/.test(workflow),false);
- assert.equal((workflow.match(/name: native-web-\$\{\{ github.run_id \}\}/g)||[]).length,4);
- assert.match(workflow,/android_release:[\s\S]*environment: mobile-release[\s\S]*id-token: write/);
- assert.match(workflow,/Install signing tools on this fresh runner[\s\S]*build-tools;36.0.0/);
- assert.match(workflow,/apksigner" verify --verbose --print-certs/);
- assert.match(workflow,/github.ref == 'refs\/heads\/main'/);
- assert.equal(/pull_request_target/.test(workflow),false);
-});
-test('every main deployment synchronizes web identity while signing remains separately gated',async()=>{
- const workflow=await readFile(new URL('../../.github/workflows/hvm-mobile-build.yml',import.meta.url),'utf8');
- const push=workflow.split('  push:')[1].split('  pull_request:')[0];
- assert.equal(push.includes('paths-ignore'),false,'docs-only main commits also change the Vercel runtime SHA');
- const sync=workflow.split('  web_sync:')[1].split('  android_verify:')[0];
- assert.match(sync,/needs: web/);
- assert.match(sync,/github.ref == 'refs\/heads\/main'/);
- assert.match(sync,/github.event_name == 'push'.*github.event_name == 'workflow_dispatch'/);
- assert.match(sync,/environment: mobile-release/);
- assert.match(sync,/id-token: write/);
- assert.match(sync,/node scripts\/mobile\/sync-web-release.mjs/);
- assert.equal(sync.includes('secrets.'),false,'web synchronization uses temporary OIDC without database or Vercel credentials');
- assert.equal((workflow.match(/needs: \[web, web_sync, android_verify, ios_verify\]/g)||[]).length,2);
- for (const platform of ['ANDROID','IOS']) assert.match(workflow,new RegExp(`vars.HVM_${platform}_RELEASE_ENABLED == 'true' && vars.HVM_${platform}_NATIVE_VERIFIED == 'true'`));
+test('active Actions workflows are absent; native distribution remains preserved',async()=>{
+ const { readdir } = await import('node:fs/promises');
+ const workflows = await readdir(new URL('../../.github/workflows/',import.meta.url)).catch(error=>{
+  if(error.code==='ENOENT')return [];throw error;
+ });
+ assert.equal(workflows.some(name=>/\.ya?ml$/.test(name)),false);
+ for(const file of ['android/app/build.gradle','ios/App/App.xcodeproj/project.pbxproj'])
+  assert.ok((await readFile(new URL('../../packaging/capacitor/'+file,import.meta.url),'utf8')).length);
 });
