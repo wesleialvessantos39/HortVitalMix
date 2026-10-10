@@ -1,0 +1,13 @@
+{
+  "origin": "https://hortvitalmix.vercel.app",
+  "commitSha": "bf9626b462a52e21bbf68bbea9aa60abcdf796d9",
+  "physicalInstallation": false,
+  "writes": [],
+  "errors": [],
+  "firstGestureAccepted": true,
+  "attempts": 1,
+  "buildId": "9e91b202731c3bd2e191be5c2085cd03df35be4ede25b59b81d87d68a067b33e",
+  "resources": 91,
+  "status": "verified",
+  "verifiedAt": "2026-10-10T13:05:37.536Z"
+}

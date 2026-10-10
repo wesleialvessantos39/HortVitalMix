@@ -1,0 +1,5 @@
+
+> hortivitalmix@0.1.0 verify:deploy
+> node --import tsx scripts/verify-deploy.ts --url https://hortvitalmix.vercel.app --sha bf9626b462a52e21bbf68bbea9aa60abcdf796d9 --schema 68
+
+Deployment verificado: health, ready e config.
