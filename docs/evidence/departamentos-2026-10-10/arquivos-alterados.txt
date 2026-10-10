@@ -2,6 +2,7 @@ LIVRO_RAIZ_HORTIVITALMIX.md
 docs/AUDITORIA_DEPARTAMENTOS_CONTAS_2026-10-10.md
 docs/evidence/departamentos-2026-10-10/arquivos-alterados.txt
 docs/evidence/departamentos-2026-10-10/build-completo.log
+docs/evidence/departamentos-2026-10-10/perfis-independentes-postgresql.log
 docs/evidence/departamentos-2026-10-10/postgresql.log
 docs/evidence/departamentos-2026-10-10/pwa-navegador.log
 docs/evidence/departamentos-2026-10-10/replay-migrations.log

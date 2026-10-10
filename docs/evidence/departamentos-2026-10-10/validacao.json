@@ -106,10 +106,11 @@
   },
   "tests": {
     "unitAndHttp": 947,
-    "postgres": 80,
+    "postgres": 110,
     "pwaBrowser": 47,
     "responsiveBrowser": 93,
     "physicalAndroidIos": "not_performed",
-    "paymentProvider": "simulated_locally_only"
+    "paymentProvider": "simulated_locally_only",
+    "postgresIndependentProfiles": 30
   }
 }
