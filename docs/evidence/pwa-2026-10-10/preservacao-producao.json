@@ -1,0 +1,88 @@
+{
+  "checkedAt": "2026-10-10T12:28:51.167Z",
+  "scope": "public/auth/storage aggregate counts and sorted row digests; no personal rows",
+  "relations": 137,
+  "unchanged": 131,
+  "differences": [
+    {
+      "relation": "auth.mfa_amr_claims",
+      "before": {
+        "relation": "auth.mfa_amr_claims",
+        "rows": 36,
+        "digest": "43480022e4ccebb69c40fe9e82cc4536"
+      },
+      "after": {
+        "relation": "auth.mfa_amr_claims",
+        "rows": 37,
+        "digest": "ddab969877e30978859b9271b8bb76aa"
+      }
+    },
+    {
+      "relation": "auth.refresh_tokens",
+      "before": {
+        "relation": "auth.refresh_tokens",
+        "rows": 43,
+        "digest": "c3281da123c76d6224a89dadddc4741b"
+      },
+      "after": {
+        "relation": "auth.refresh_tokens",
+        "rows": 44,
+        "digest": "5470008285d6ea1720d2ff9d83b880cb"
+      }
+    },
+    {
+      "relation": "auth.sessions",
+      "before": {
+        "relation": "auth.sessions",
+        "rows": 36,
+        "digest": "b62a937e5e788be956c5a000b2019dba"
+      },
+      "after": {
+        "relation": "auth.sessions",
+        "rows": 37,
+        "digest": "25659c24270e6d48ff55e2ac24c7684f"
+      }
+    },
+    {
+      "relation": "auth.users",
+      "before": {
+        "relation": "auth.users",
+        "rows": 5,
+        "digest": "0cb972a977b80d318359a302d15dba36"
+      },
+      "after": {
+        "relation": "auth.users",
+        "rows": 5,
+        "digest": "bd2f746490c1b0c7b3ec816970889f40"
+      }
+    },
+    {
+      "relation": "public.app_admin_auth_attempts",
+      "before": {
+        "relation": "public.app_admin_auth_attempts",
+        "rows": 214,
+        "digest": "6e81f1a4340bb9143d5e5a162d569292"
+      },
+      "after": {
+        "relation": "public.app_admin_auth_attempts",
+        "rows": 215,
+        "digest": "0f3da031a22f02613926ad74d592a852"
+      }
+    },
+    {
+      "relation": "public.app_releases",
+      "before": {
+        "relation": "public.app_releases",
+        "rows": 113,
+        "digest": "46b817f7fadd4c7d3483ed1bc133d301"
+      },
+      "after": {
+        "relation": "public.app_releases",
+        "rows": 114,
+        "digest": "90c48fb3ecc2fca8657b365dea8aec3d"
+      }
+    }
+  ],
+  "expectedReleaseMetadataChange": "app_releases receives one true web release after READY; no DDL or commercial writes performed",
+  "notes": "Observed preservation is for this window; concurrent legitimate user activity, if any, is reported as differences."
+}
