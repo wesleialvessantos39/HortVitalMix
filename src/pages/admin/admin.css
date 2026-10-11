@@ -85,6 +85,10 @@
 .admin-table th{font-size:11px}
 .admin-table-action{min-height:40px;font-size:12px}
 .admin-form,.admin-form-grid{min-width:0}
+.admin-sectors-fieldset{min-inline-size:0;max-width:100%;box-sizing:border-box}
+.admin-sector-checkbox{min-width:0;box-sizing:border-box}
+.admin-sector-checkbox input{flex:0 0 20px}
+.admin-sector-checkbox span{min-width:0;grid-template-columns:minmax(0,1fr);white-space:normal;overflow-wrap:anywhere}
 .admin-form label,.admin-form-grid label{min-width:0}
 .admin-form input:not(:where([type="checkbox"],[type="radio"])),.admin-form select,.admin-form textarea,.admin-form-grid input:not(:where([type="checkbox"],[type="radio"])),.admin-form-grid select{box-sizing:border-box;min-width:0;font-size:16px}
 .admin-form textarea{border:1px solid #cfdad1;border-radius:12px;padding:12px;resize:vertical}

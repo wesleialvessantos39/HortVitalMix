@@ -1,3 +1,8 @@
+import {
+  consumePortalEmailFlow,
+  issuePortalEmailFlow,
+  portalConfirmationState,
+} from "../services/PublicPortalCredentialsService.ts";
 import { Router } from "express";
 import { z } from "zod";
 import {
@@ -18,6 +23,7 @@ const Input = z
     accessToken: z.string().max(8192).optional(),
     resend: z.boolean().optional(),
     portalRole: z.enum(["consumer", "producer"]).optional(),
+    flowToken: z.string().min(32).max(256).optional(),
   })
   .strict();
 confirmationRouter.post("/confirmation", loginRateLimit, async (req, res) => {
@@ -42,14 +48,32 @@ confirmationRouter.post("/confirmation", loginRateLimit, async (req, res) => {
     const user = auth?.data.user;
     if (auth?.error || !user) {
       if (auth?.error && (!auth.error.status || auth.error.status >= 500)) {
-        res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" }); return;
+        res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
+        return;
       }
       res.status(401).json({ error: "CONFIRMATION_LINK_INVALID" });
       return;
     }
-    const account=await supabaseAdmin.from("app_users").select("status").eq("id",user.id).single();
-    if(account.error){res.status(503).json({error:"DEPENDENCY_UNAVAILABLE"});return;}
-    if(account.data.status!=="active"){res.status(403).json({error:account.data.status==="pending"?"ACCOUNT_REVIEW_PENDING":"ACCOUNT_UNAVAILABLE"});return;}
+    const account = await supabaseAdmin
+      .from("app_users")
+      .select("status")
+      .eq("id", user.id)
+      .single();
+    if (account.error) {
+      res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
+      return;
+    }
+    if (account.data.status !== "active") {
+      res
+        .status(403)
+        .json({
+          error:
+            account.data.status === "pending"
+              ? "ACCOUNT_REVIEW_PENDING"
+              : "ACCOUNT_UNAVAILABLE",
+        });
+      return;
+    }
     const [person, roles] = await Promise.all([
       supabaseAdmin
         .from("app_people")
@@ -75,7 +99,24 @@ confirmationRouter.post("/confirmation", loginRateLimit, async (req, res) => {
       res.status(403).json({ error: "ROLE_NOT_ALLOWED_FOR_PORTAL" });
       return;
     }
-    if (user.email_confirmed_at) {
+    const portalRole = role as "consumer" | "producer";
+    if (input.data.flowToken) {
+      await consumePortalEmailFlow(
+        user.id,
+        portalRole,
+        "confirmation",
+        input.data.flowToken,
+      );
+    }
+    const portalConfirmed = await portalConfirmationState(user.id, portalRole);
+    if (portalConfirmed && !user.email_confirmed_at) {
+      const updated = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+        email_confirm: true,
+      });
+      if (updated.error) throw new Error("CONFIRMATION_UNAVAILABLE");
+      user.email_confirmed_at = updated.data.user.email_confirmed_at;
+    }
+    if (user.email_confirmed_at && portalConfirmed) {
       // Link proof only; never create a login session or trust a name from the URL.
       res.json({
         status: "confirmed",
@@ -97,17 +138,22 @@ confirmationRouter.post("/confirmation", loginRateLimit, async (req, res) => {
         return;
       }
       const fresh = issueConfirmationContext(user.id, context.role);
-      const result = await client.auth.resend({
-        type: "signup",
-        email: user.email!,
-        options: {
-          emailRedirectTo:
-            origin +
-            "/confirmar-contato?portal=" +
-            role +
-            "&context=" +
-            encodeURIComponent(fresh),
-        },
+      const flow = await issuePortalEmailFlow(
+        user.id,
+        portalRole,
+        "confirmation",
+      );
+      const target =
+        origin +
+        "/confirmar-contato?portal=" +
+        role +
+        "&context=" +
+        encodeURIComponent(fresh) +
+        "&flow=" +
+        encodeURIComponent(flow);
+      const result = await client.auth.signInWithOtp({
+        email: person.data.email_normalized,
+        options: { shouldCreateUser: true, emailRedirectTo: target },
       });
       if (result.error) {
         res

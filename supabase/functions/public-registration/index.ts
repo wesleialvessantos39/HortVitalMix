@@ -364,6 +364,8 @@ Deno.serve(async (req) => {
   }
 
   if (existing) {
+    const memberships = await admin.from("app_user_role_assignments").select("role_code").eq("user_id", existing.user_id).in("role_code", ["consumer", "producer"]);
+    if (memberships.error) return safeFailure(503, "DATABASE_UNAVAILABLE", requestId, origin);
     const account = await admin
       .from("app_users")
       .select("status")
@@ -371,7 +373,7 @@ Deno.serve(async (req) => {
       .single();
     if (account.error)
       return safeFailure(503, "DATABASE_UNAVAILABLE", requestId, origin);
-    if (["blocked", "suspended", "pending"].includes(account.data.status)) {
+    if (memberships.data?.length && ["blocked", "suspended", "pending"].includes(account.data.status)) {
       if (
         existing.email_normalized !== data.email &&
         existing.cpf_normalized === data.cpf
@@ -417,143 +419,47 @@ Deno.serve(async (req) => {
         origin,
       );
 
-    const verified = await publicClient.auth.signInWithPassword({
-      email: data.email,
-      password: data.password,
-    });
-
-    if (verified.error || !verified.data.user) {
-      const authCode = String(verified.error?.code ?? "");
-      const authMessage = String(verified.error?.message ?? "").toLowerCase();
-      if (
-        authCode === "email_not_confirmed" ||
-        authMessage.includes("email not confirmed")
-      )
-        return safeFailure(
-          409,
-          "EXISTING_ACCOUNT_CONFIRM_REQUIRED",
-          requestId,
-          origin,
-        );
-
-      return safeFailure(
-        409,
-        "EXISTING_ACCOUNT_CREDENTIALS_INVALID",
-        requestId,
-        origin,
-      );
-    }
-
-    try {
-      if (!verified.data.user.email_confirmed_at)
-        return safeFailure(
-          409,
-          "EXISTING_ACCOUNT_CONFIRM_REQUIRED",
-          requestId,
-          origin,
-        );
-      if (verified.data.user.id !== existing.user_id)
-        return safeFailure(409, "IDENTITY_CONFLICT", requestId, origin);
-
-      const account = await admin
-        .from("app_users")
-        .select("status")
-        .eq("id", existing.user_id)
-        .single();
-      if (account.error)
-        return safeFailure(503, "DATABASE_UNAVAILABLE", requestId, origin);
-      if (account.data.status === "deleted") {
-        const requested = await admin.rpc("request_account_reactivation", {
-          p_user_id: existing.user_id,
-          p_role: role,
-        });
-        if (requested.error)
-          return safeFailure(
-            409,
-            "REACTIVATION_NOT_ALLOWED",
-            requestId,
-            origin,
-          );
-        return json(
-          201,
-          {
-            userId: existing.user_id,
-            reviewRequired: true,
-            confirmationRequired: false,
-            confirmationDispatchAccepted: false,
-            existingIdentity: true,
-            roleAdded: false,
-            role,
-            requestId,
-          },
-          origin,
-        );
+    const blocked = await assertLocalityActive(admin, data.state, data.municipality, requestId, origin);
+    if (blocked) return blocked;
+    const membership = await admin.from("app_user_role_assignments").select("role_code").eq("user_id", existing.user_id).in("role_code", ["consumer", "producer"]);
+    if (membership.error) return safeFailure(503, "DATABASE_UNAVAILABLE", requestId, origin);
+    let publicUserId = existing.user_id;
+    let attached = false;
+    if (!membership.data?.length) {
+      const mailbox = await admin.rpc("fn_unassigned_mailbox_identity", { p_email: data.email });
+      if (mailbox.error) return safeFailure(503, "DATABASE_UNAVAILABLE", requestId, origin);
+      publicUserId = null;
+      if (!publicUserId) {
+        const created = await admin.auth.admin.createUser({ email: `hvm-public-${crypto.randomUUID()}@auth.hortvitalmix.invalid`, password: data.password, email_confirm: false, user_metadata: { full_name: data.fullName, hvm_portal: "public", hvm_registration_role: role } });
+        if (created.error || !created.data.user) return safeFailure(503, "AUTH_UNAVAILABLE", requestId, origin);
+        publicUserId = created.data.user.id;
       }
-      if (account.data.status === "pending")
-        return json(
-          201,
-          {
-            userId: existing.user_id,
-            reviewRequired: true,
-            confirmationRequired: false,
-            confirmationDispatchAccepted: false,
-            existingIdentity: true,
-            roleAdded: false,
-            role,
-            requestId,
-          },
-          origin,
-        );
-
-      const blocked = await assertLocalityActive(
-        admin,
-        data.state,
-        data.municipality,
-        requestId,
-        origin,
-      );
-      if (blocked) return blocked;
-
-      const added = await admin.rpc("add_public_role_to_existing_identity", {
-        p_user_id: existing.user_id,
-        p_cpf_normalized: data.cpf,
-        p_email_normalized: data.email,
-        p_role: role,
-      });
-
-      if (added.error) return mapRpcError(added.error, requestId, origin);
-
-      return json(
-        201,
-        {
-          userId: existing.user_id,
-          confirmationRequired: false,
-          confirmationDispatchAccepted: false,
-          confirmationDispatchDeferred: false,
-          existingIdentity: true,
-          roleAdded: true,
-          ...(envelope.data.consent ? {
-            consentProof: await registrationConsentProof(existing.user_id, data.email, envelope.data.consent.policyVersion, serviceRole),
-          } : {}),
-          role,
-          requestId,
-          transport: "supabase_edge",
-        },
-        origin,
-      );
-    } finally {
-      await publicClient.auth
-        .signOut({ scope: "local" })
-        .catch(() => undefined);
+      const result = await admin.rpc("fn_attach_public_identity", { p_person: existing.id, p_user: publicUserId, p_cpf: data.cpf, p_email: data.email, p_role: role, p_name: data.fullName, p_phone: data.phone, p_password: data.password });
+      if (result.error || !result.data) return safeFailure(409, "IDENTITY_CONFLICT", requestId, origin);
+      attached = true;
     }
+    const added = attached ? { data: true, error: null } : await admin.rpc("fn_register_independent_public_role", {
+      p_user: publicUserId, p_cpf: data.cpf, p_email: data.email, p_role: role,
+      p_name: data.fullName, p_phone: data.phone, p_password: data.password,
+    });
+    if (added.error) return mapRpcError(added.error, requestId, origin);
+    if (!added.data) return safeFailure(409, "ROLE_ALREADY_ASSIGNED", requestId, origin);
+    return json(201, {
+      userId: publicUserId, confirmationRequired: true,
+      confirmationDispatchAccepted: false, confirmationDispatchDeferred: true,
+      existingIdentity: true, roleAdded: true, role, requestId, transport: "supabase_edge",
+      ...(envelope.data.consent ? { consentProof: await registrationConsentProof(publicUserId, data.email, envelope.data.consent.policyVersion, serviceRole) } : {}),
+    }, origin);
   }
 
   // Mantém a mesma ordem transacional já homologada no Express:
   // 1) identidade não confirmada, 2) domínio atômico, 3) confirmação por e-mail.
   // Assim uma falha do domínio nunca deixa um link de confirmação para uma
   // identidade que será compensada.
+  const mailbox = await admin.rpc("fn_unassigned_mailbox_identity", { p_email: data.email });
+  if (mailbox.error) return safeFailure(503, "DATABASE_UNAVAILABLE", requestId, origin);
   const created = await admin.auth.admin.createUser({
-    email: data.email,
+    email: mailbox.data ? `hvm-public-${crypto.randomUUID()}@auth.hortvitalmix.invalid` : data.email,
     password: data.password,
     email_confirm: false,
     user_metadata: {
@@ -605,12 +511,6 @@ Deno.serve(async (req) => {
     Array.from(new Uint8Array(mac), (b) =>
       b.toString(16).padStart(2, "0"),
     ).join("");
-  const redirectTo =
-    CANONICAL_APP_ORIGIN +
-    "/confirmar-contato?portal=" +
-    role +
-    "&context=" +
-    encodeURIComponent(context);
 
   const consent = envelope.data.consent;
   const ipBytes = consent
@@ -686,12 +586,22 @@ Deno.serve(async (req) => {
       },
       origin,
     );
+  const flow = Array.from(crypto.getRandomValues(new Uint8Array(32)), value => value.toString(16).padStart(2, "0")).join("");
+  const flowDigest = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(flow))), value => value.toString(16).padStart(2, "0")).join("");
+  const issuedFlow = await admin.rpc("fn_issue_public_portal_email_flow", { p_user: userId, p_role: role, p_purpose: "confirmation", p_digest: flowDigest });
+  if (issuedFlow.error || !issuedFlow.data) return safeFailure(503, "DATABASE_UNAVAILABLE", requestId, origin);
+  const redirectTo =
+    CANONICAL_APP_ORIGIN +
+    "/confirmar-contato?portal=" +
+    role +
+    "&context=" +
+    encodeURIComponent(context) + "&flow=" + encodeURIComponent(flow);
+
   const sendConfirmation = async () => {
     try {
-      const sent = await publicClient.auth.resend({
-        type: "signup",
+      const sent = await publicClient.auth.signInWithOtp({
         email: data.email,
-        options: { emailRedirectTo: redirectTo },
+        options: { emailRedirectTo: redirectTo, shouldCreateUser: true },
       });
       if (sent.error)
         logFailure(

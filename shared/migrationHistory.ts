@@ -1,6 +1,8 @@
 import manifest from "../supabase/manifest.json" with { type: "json" };
 
 const remoteVersionAliases: Readonly<Record<string, string>> = {
+  // Senhas e sessões públicas independentes: timestamp físico do Supabase.
+  "20261011135735": "20261011032631",
   // Identidades administrativas independentes: timestamp físico do Supabase.
   "20261011024748": "20261010214547",
   // Departamentos, autoexclusão e operações aplicados em produção pelo Supabase.

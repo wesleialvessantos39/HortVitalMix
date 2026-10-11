@@ -21,12 +21,13 @@ requireTokens(
     'z.enum(["consumer", "producer"])',
     ".strict()",
     "admin.auth.admin.createUser",
-    "publicClient.auth.resend",
+    "publicClient.auth.signInWithOtp",
     "complete_public_registration",
-    "add_public_role_to_existing_identity",
+    "fn_register_independent_public_role",
+    "fn_issue_public_portal_email_flow",
     "SUPABASE_SERVICE_ROLE_KEY",
     "REGISTRATION_RATE_LIMITED",
-    "EXISTING_ACCOUNT_CREDENTIALS_INVALID",
+    "ROLE_ALREADY_ASSIGNED",
     'hvm_portal: "public"',
   ],
   "REGISTRATION_EDGE_EVIDENCE_MISSING",
@@ -39,6 +40,9 @@ if (
 )
   throw new Error("REGISTRATION_EDGE_SCOPE_VIOLATION");
 
+if (edge.includes("signInWithPassword") || edge.includes("add_public_role_to_existing_identity"))
+  throw new Error("REGISTRATION_SHARED_PUBLIC_PASSWORD_REGRESSION");
+
 requireTokens(
   transport,
   [
@@ -46,7 +50,7 @@ requireTokens(
     "credentials: \"omit\"",
     "[401, 403, 404, 405, 500, 502, 503, 504]",
     "shouldUseExpressFallback",
-    "return await edgeRegistration(role, data)",
+    "return await edgeRegistration(role, data, consent)",
     "PUBLIC_REGISTRATION_EDGE_URL",
   ],
   "REGISTRATION_TRANSPORT_EVIDENCE_MISSING",

@@ -1,17 +1,27 @@
 import { blockMessages } from "../../../shared/accountBlock";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { KeyRound, Leaf, ShoppingBag, Sprout, Plus } from "lucide-react";
 import { PasswordInput } from "../../components/forms/PasswordInput";
 import { api, type ApiFailure } from "../../lib/api";
 import type { ShellSession } from "../../hooks/useSession";
 import "../admin/admin.css";
 
-export function PublicLoginPage({ role, onNavigate, onSessionAdopt }: {
+export function PublicLoginPage({
+  role,
+  onNavigate,
+  onSessionAdopt,
+}: {
   role: "consumer" | "producer";
   onNavigate: (path: string) => void;
   onSessionAdopt: (session: ShellSession) => void;
 }) {
-  const [email, setEmail] = useState(() => { try { return sessionStorage.getItem("hvm:login-email:" + role) || ""; } catch { return ""; } });
+  const [email, setEmail] = useState(() => {
+    try {
+      return sessionStorage.getItem("hvm:login-email:" + role) || "";
+    } catch {
+      return "";
+    }
+  });
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -19,23 +29,69 @@ export function PublicLoginPage({ role, onNavigate, onSessionAdopt }: {
   const label = producer ? "Produtor" : "Consumidor";
   const Icon = producer ? Sprout : ShoppingBag;
   const params = new URLSearchParams(location.search);
+  const importRequest = useRef<Promise<ShellSession> | null>(null);
+  useEffect(() => {
+    const query = new URLSearchParams(location.search),
+      hash = new URLSearchParams(location.hash.slice(1));
+    const flowToken = query.get("flow"),
+      accessToken = hash.get("access_token"),
+      refreshToken = hash.get("refresh_token");
+    if (!flowToken || !accessToken || !refreshToken) return;
+    let active = true;
+    setBusy(true);
+    importRequest.current ??= api<ShellSession>("/v1/auth/import-session", {
+      method: "POST",
+      body: JSON.stringify({
+        accessToken,
+        refreshToken,
+        portalRole: role,
+        flowToken,
+      }),
+    });
+    void importRequest.current
+      .then((session) => {
+        if (active) {
+          history.replaceState({}, "", location.pathname);
+          onSessionAdopt(session);
+          onNavigate("/");
+        }
+      })
+      .catch(() => {
+        if (active)
+          setError(
+            "Este link expirou ou já foi usado. Entre com a senha deste portal.",
+          );
+      })
+      .finally(() => {
+        if (active) setBusy(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [role, onNavigate, onSessionAdopt]);
   const notice =
     params.get("review") === "1"
       ? "Devido às circunstâncias, sua conta foi enviada para aprovação. Você receberá a confirmação de e-mail somente depois da aprovação. Dúvidas, entre em contato conosco: hortivitalmix@gmail.com."
       : params.get("approved") === "1"
         ? "Sua conta foi aprovada. Confirme seu e-mail agora para liberar o acesso."
         : params.get("roleAdded") === "1"
-          ? "Novo perfil adicionado à sua conta. Você já pode entrar."
+          ? "Cadastro deste portal criado. Confirme o e-mail e entre com a senha escolhida para ele."
           : params.get("registered") === "1"
             ? "Cadastro realizado. Confira a confirmação enviada ao seu e-mail."
             : "";
   async function login(event: FormEvent) {
     event.preventDefault();
     if (busy) return;
-    setBusy(true); setError("");
+    setBusy(true);
+    setError("");
     try {
       const session = await api<ShellSession>("/v1/auth/login", {
-        method: "POST", body: JSON.stringify({ email: email.trim(), password, portalRole: role }),
+        method: "POST",
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          portalRole: role,
+        }),
       });
       onSessionAdopt(session);
       onNavigate("/");
@@ -43,41 +99,131 @@ export function PublicLoginPage({ role, onNavigate, onSessionAdopt }: {
       const e = failure as ApiFailure;
       const messages: Record<string, string> = {
         INVALID_CREDENTIALS: "E-mail ou senha incorretos.",
-        EMAIL_CONFIRMATION_REQUIRED: "Confirme seu e-mail antes de entrar. Use a opção de confirmação abaixo.",
-        ROLE_NOT_ALLOWED_FOR_PORTAL: "Esta conta não possui o perfil selecionado. Confira o tipo de acesso.",
-        ACCOUNT_UNAVAILABLE: "Esta conta está indisponível. Entre em contato com o suporte.",
+        EMAIL_CONFIRMATION_REQUIRED:
+          "Confirme seu e-mail antes de entrar. Use a opção de confirmação abaixo.",
+        ROLE_NOT_ALLOWED_FOR_PORTAL:
+          "Esta conta não possui o perfil selecionado. Confira o tipo de acesso.",
+        ACCOUNT_UNAVAILABLE:
+          "Esta conta está indisponível. Entre em contato com o suporte.",
       };
-      setError(blockMessages[e.message] ?? messages[e.message] ?? (e.status === 429 ? "Aguarde alguns instantes antes de tentar novamente." : "Não foi possível entrar agora. Confira sua conexão e tente novamente."));
-    } finally { setBusy(false); }
+      setError(
+        blockMessages[e.message] ??
+          messages[e.message] ??
+          (e.status === 429
+            ? "Aguarde alguns instantes antes de tentar novamente."
+            : "Não foi possível entrar agora. Confira sua conexão e tente novamente."),
+      );
+    } finally {
+      setBusy(false);
+    }
   }
-  return <section className="admin-login-page public-login-page">
-    <header className="admin-login-header">
-      <button className="admin-back" onClick={() => onNavigate("/entrar")}>← Escolher outro perfil</button>
-      <button className="admin-login-brand" aria-label="HortiVitalMix — início" onClick={() => onNavigate("/")}>
-        <span className="admin-brand-mark"><Leaf /></span><strong>Horti<span>Vital</span>Mix</strong>
-      </button>
-    </header>
-    <div className="admin-login-layout">
-      <div className="admin-login-copy">
-        <span className="admin-kicker"><Icon size={15}/>{producer ? "Portal do produtor" : "Portal do consumidor"}</span>
-        <h1>Entrar como {label}.</h1>
-        <p>{producer ? "Acesse sua conta de produtor e mantenha seus dados organizados para participar do HortiVitalMix." : "Acesse sua conta para cuidar dos seus dados e dos locais onde prefere receber suas compras."}</p>
+  return (
+    <section className="admin-login-page public-login-page">
+      <header className="admin-login-header">
+        <button className="admin-back" onClick={() => onNavigate("/entrar")}>
+          ← Escolher outro perfil
+        </button>
+        <button
+          className="admin-login-brand"
+          aria-label="HortiVitalMix — início"
+          onClick={() => onNavigate("/")}
+        >
+          <span className="admin-brand-mark">
+            <Leaf />
+          </span>
+          <strong>
+            Horti<span>Vital</span>Mix
+          </strong>
+        </button>
+      </header>
+      <div className="admin-login-layout">
+        <div className="admin-login-copy">
+          <span className="admin-kicker">
+            <Icon size={15} />
+            {producer ? "Portal do produtor" : "Portal do consumidor"}
+          </span>
+          <h1>Entrar como {label}.</h1>
+          <p>
+            {producer
+              ? "Acesse sua conta de produtor e mantenha seus dados organizados para participar do HortiVitalMix."
+              : "Acesse sua conta para cuidar dos seus dados e dos locais onde prefere receber suas compras."}
+          </p>
+        </div>
+        <div className="admin-login-card">
+          <form onSubmit={login}>
+            <div className="admin-login-icon">
+              <KeyRound />
+            </div>
+            <h2>Entrar como {label}</h2>
+            <p className="admin-muted">
+              Use o e-mail confirmado e a senha do seu perfil de{" "}
+              {label.toLowerCase()}. Cada portal tem sua própria senha, mesmo
+              com o mesmo e-mail.
+            </p>
+            {error && (
+              <div className="admin-alert admin-alert--error" role="alert">
+                {error}
+                {Object.values(blockMessages).includes(error) && (
+                  <span>
+                    {" "}
+                    Dúvidas, entre em contato com o suporte{" "}
+                    <a href="mailto:hortivitalmix@gmail.com">
+                      hortivitalmix@gmail.com
+                    </a>
+                    .
+                  </span>
+                )}
+              </div>
+            )}
+            {notice && (
+              <div className="admin-alert" role="status">
+                {notice}
+              </div>
+            )}
+            <label>
+              E-mail
+              <input
+                name="email"
+                type="email"
+                autoComplete="username"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </label>
+            <PasswordInput value={password} onChange={setPassword} />
+            <button className="admin-primary" disabled={busy}>
+              {busy ? "Validando…" : "Entrar"}
+            </button>
+            <button
+              type="button"
+              className="admin-link"
+              onClick={() => onNavigate(`/recuperar-senha?portal=${role}`)}
+            >
+              Esqueci minha senha
+            </button>
+            <button
+              type="button"
+              className="admin-link"
+              onClick={() => onNavigate(`/confirmar-contato?portal=${role}`)}
+            >
+              Reenviar confirmação
+            </button>
+            <button
+              type="button"
+              className="admin-secondary"
+              onClick={() =>
+                onNavigate(
+                  producer ? "/cadastro/produtor" : "/cadastro/consumidor",
+                )
+              }
+            >
+              <Plus size={17} />
+              Criar cadastro de {label.toLowerCase()}
+            </button>
+          </form>
+        </div>
       </div>
-      <div className="admin-login-card">
-        <form onSubmit={login}>
-          <div className="admin-login-icon"><KeyRound /></div>
-          <h2>Entrar como {label}</h2>
-          <p className="admin-muted">Use o e-mail confirmado e a senha do seu perfil de {label.toLowerCase()}.</p>
-          {error && <div className="admin-alert admin-alert--error" role="alert">{error}{Object.values(blockMessages).includes(error) && <span> Dúvidas, entre em contato com o suporte <a href="mailto:hortivitalmix@gmail.com">hortivitalmix@gmail.com</a>.</span>}</div>}
-          {notice && <div className="admin-alert" role="status">{notice}</div>}
-          <label>E-mail<input name="email" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required /></label>
-          <PasswordInput value={password} onChange={setPassword}/>
-          <button className="admin-primary" disabled={busy}>{busy ? "Validando…" : "Entrar"}</button>
-          <button type="button" className="admin-link" onClick={() => onNavigate(`/recuperar-senha?portal=${role}`)}>Esqueci minha senha</button>
-          <button type="button" className="admin-link" onClick={() => onNavigate(`/confirmar-contato?portal=${role}`)}>Reenviar confirmação</button>
-          <button type="button" className="admin-secondary" onClick={() => onNavigate(producer ? "/cadastro/produtor" : "/cadastro/consumidor")}><Plus size={17}/>Criar cadastro de {label.toLowerCase()}</button>
-        </form>
-      </div>
-    </div>
-  </section>;
+    </section>
+  );
 }

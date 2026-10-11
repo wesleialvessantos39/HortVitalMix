@@ -1,6 +1,23 @@
+import {
+  createPublicPortalSession,
+  resolvePortalEmailFlow,
+  authSessionId,
+  bindPublicPortalSession,
+  loginPublicPortal,
+  isPublicPortalRole,
+  resetPublicPortalPassword,
+  changePublicPortalPassword,
+  issuePortalEmailFlow,
+  consumePortalEmailFlow,
+} from "../services/PublicPortalCredentialsService.ts";
 // Auth flow: resetPasswordForEmail dispatches before challenge finalization
 import { hasConfirmedEmail } from "../../shared/securityCodes.ts";
-import { Router, type NextFunction, type Request, type Response } from "express";
+import {
+  Router,
+  type NextFunction,
+  type Request,
+  type Response,
+} from "express";
 import {
   LoginSchema,
   RegisterConsumerSchema,
@@ -13,14 +30,20 @@ import {
   SessionImportSchema,
   type PortalRole,
 } from "../../shared/contracts/auth.ts";
-import { LgpdCadastroAcceptanceSchema, RegistrationConsentSchema } from "../../shared/lgpdCadastro.ts";
+import {
+  LgpdCadastroAcceptanceSchema,
+  RegistrationConsentSchema,
+} from "../../shared/lgpdCadastro.ts";
 import { runtime } from "../config/runtime.ts";
 import {
   createSupabasePublicClient,
   supabaseAdmin,
   supabasePublic,
 } from "../supabase/client.ts";
-import { register, recordLgpdCadastroAcceptance } from "../services/AuthService.ts";
+import {
+  register,
+  recordLgpdCadastroAcceptance,
+} from "../services/AuthService.ts";
 import { dbPool } from "../db/pool.ts";
 import { resolveIdentityAccess } from "../services/IdentityAccessService.ts";
 import { classifyDbError, reportFailure } from "../config/reportFailure.ts";
@@ -39,12 +62,21 @@ import {
   resolveRecoveryChallenge,
   validateSecurityCodeChallenge,
 } from "../services/RoleSecurityService.ts";
-import { loginRateLimit, resetLoginRateLimit } from "../security/loginRateLimit.ts";
+import {
+  loginRateLimit,
+  resetLoginRateLimit,
+} from "../security/loginRateLimit.ts";
 import { authEmailRetryAfter } from "../security/authEmailRateLimit.ts";
-import { issueRecentAuthProof, RECENT_AUTH_WINDOW_MS } from "../security/recentAuth.ts";
+import {
+  issueRecentAuthProof,
+  RECENT_AUTH_WINDOW_MS,
+} from "../security/recentAuth.ts";
 
 import { issueConfirmationContext } from "../security/confirmationContext.ts";
-import { issueRegistrationConsentProof, verifyRegistrationConsentProof } from "../security/registrationConsent.ts";
+import {
+  issueRegistrationConsentProof,
+  verifyRegistrationConsentProof,
+} from "../security/registrationConsent.ts";
 import {
   LOCALITY_DISABLED_MESSAGE,
   LOCALITY_NOT_COVERED_MESSAGE,
@@ -69,7 +101,12 @@ export function cookie(req: Request, name: string) {
 }
 
 function clear(res: Response) {
-  for (const name of ["hvm_access", "hvm_refresh", "hvm_portal_role", "hvm_reauth"])
+  for (const name of [
+    "hvm_access",
+    "hvm_refresh",
+    "hvm_portal_role",
+    "hvm_reauth",
+  ])
     res.clearCookie(name, {
       path: "/",
       httpOnly: true,
@@ -105,11 +142,7 @@ function setSession(
     });
 }
 
-function setRecentAuth(
-  res: Response,
-  userId: string,
-  accessToken: string,
-) {
+function setRecentAuth(res: Response, userId: string, accessToken: string) {
   const proof = issueRecentAuthProof(userId, accessToken);
   res.cookie("hvm_reauth", proof, {
     httpOnly: true,
@@ -126,9 +159,7 @@ function isLoopbackOrigin(origin: string) {
   try {
     const hostname = new URL(origin).hostname;
     return (
-      hostname === "localhost" ||
-      hostname === "127.0.0.1" ||
-      hostname === "::1"
+      hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1"
     );
   } catch {
     return false;
@@ -151,10 +182,10 @@ export function redirectUrl(req: Request, path: string) {
 
 async function accountLocalityWarning(userId: string) {
   if (!dbPool) return null;
-  const result=await dbPool.query<{
-    municipality_id:string|null;
-    is_active:boolean|null;
-    impacted:boolean;
+  const result = await dbPool.query<{
+    municipality_id: string | null;
+    is_active: boolean | null;
+    impacted: boolean;
   }>(
     `SELECT p.municipality_id,m.is_active,
             EXISTS(
@@ -168,10 +199,11 @@ async function accountLocalityWarning(userId: string) {
       LIMIT 1`,
     [userId],
   );
-  const row=result.rows[0];
-  if(!row)return null;
-  if(row.municipality_id && row.is_active===false)return LOCALITY_DISABLED_MESSAGE;
-  if(!row.municipality_id && row.impacted)return LOCALITY_NOT_COVERED_MESSAGE;
+  const row = result.rows[0];
+  if (!row) return null;
+  if (row.municipality_id && row.is_active === false)
+    return LOCALITY_DISABLED_MESSAGE;
+  if (!row.municipality_id && row.impacted) return LOCALITY_NOT_COVERED_MESSAGE;
   return null;
 }
 
@@ -296,72 +328,91 @@ async function handlePublicLoginRequest(
            ) AS deleted`,
         [email],
       );
-      const state=known.rows[0];
-      if(state?.deleted){
+      const state = known.rows[0];
+      if (state?.deleted) {
         clear(res);
-        res.status(403).json({error:"ACCOUNT_DELETED"});
+        res.status(403).json({ error: "ACCOUNT_DELETED" });
         return;
       }
-      if(state?.status==="pending"){
+      if (state?.status === "pending") {
         clear(res);
-        res.status(403).json({error:"ACCOUNT_REVIEW_PENDING"});
+        res.status(403).json({ error: "ACCOUNT_REVIEW_PENDING" });
         return;
       }
-      if(state?.status==="blocked"){
-        const now=Date.now();
-        const starts=state.block_starts_at?Date.parse(state.block_starts_at):null;
-        const ends=state.block_ends_at?Date.parse(state.block_ends_at):null;
-        if((starts===null || starts<=now) && (ends===null || ends>now)){
+      if (state?.status === "blocked") {
+        const now = Date.now();
+        const starts = state.block_starts_at
+          ? Date.parse(state.block_starts_at)
+          : null;
+        const ends = state.block_ends_at
+          ? Date.parse(state.block_ends_at)
+          : null;
+        if (
+          (starts === null || starts <= now) &&
+          (ends === null || ends > now)
+        ) {
           clear(res);
-          res.status(403).json({error:ends?"ACCOUNT_BLOCKED_TEMPORARY":"ACCOUNT_BLOCKED_INDEFINITE"});
+          res
+            .status(403)
+            .json({
+              error: ends
+                ? "ACCOUNT_BLOCKED_TEMPORARY"
+                : "ACCOUNT_BLOCKED_INDEFINITE",
+            });
           return;
         }
       }
     }
 
-    const response = await tokenGrant({ email, password }, "password");
-    if (!response.ok) {
-      const failure = await response.json().catch(() => ({}));
-      if (failure.error_code === "email_not_confirmed" || failure.code === "email_not_confirmed") {
-        clear(res);
-        res.status(403).json({ error: "EMAIL_CONFIRMATION_REQUIRED" });
-        return;
-      }
-      res.status(response.status === 400 ? 401 : 503).json({
-        error: response.status === 400 ? "INVALID_CREDENTIALS" : "DEPENDENCY_UNAVAILABLE",
-      });
+    const login = await loginPublicPortal(email, portalRole, password);
+    if ("error" in login) {
+      clear(res);
+      res
+        .status(login.error === "EMAIL_CONFIRMATION_REQUIRED" ? 403 : 401)
+        .json({ error: login.error });
       return;
     }
-
-    const data = await response.json();
+    const data = login.data;
     if (!hasConfirmedEmail(data.user)) {
       if (supabaseAdmin && data.access_token)
-        await supabaseAdmin.auth.admin.signOut(data.access_token, "local").catch(() => undefined);
+        await supabaseAdmin.auth.admin
+          .signOut(data.access_token, "local")
+          .catch(() => undefined);
       clear(res);
       res.status(403).json({ error: "EMAIL_CONFIRMATION_REQUIRED" });
       return;
     }
     const access = await resolveIdentityAccess(
       data.user.id,
-      null,
+      authSessionId(data.access_token),
       data.access_token,
     );
     if (!access) {
       if (supabaseAdmin && data.access_token)
-        await supabaseAdmin.auth.admin.signOut(data.access_token, "local").catch(() => undefined);
+        await supabaseAdmin.auth.admin
+          .signOut(data.access_token, "local")
+          .catch(() => undefined);
       res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
       return;
     }
     if (access.status !== "active") {
       if (supabaseAdmin && data.access_token)
-        await supabaseAdmin.auth.admin.signOut(data.access_token, "local").catch(() => undefined);
-      res.status(403).json({ error: access.blockCode ?? "ACCOUNT_UNAVAILABLE" });
+        await supabaseAdmin.auth.admin
+          .signOut(data.access_token, "local")
+          .catch(() => undefined);
+      res
+        .status(403)
+        .json({ error: access.blockCode ?? "ACCOUNT_UNAVAILABLE" });
       return;
     }
     if (!access.roles.includes(portalRole)) {
       if (supabaseAdmin && data.access_token)
-        await supabaseAdmin.auth.admin.signOut(data.access_token, "local").catch(() => undefined);
-      res.status(403).json({ error: "ROLE_NOT_ALLOWED_FOR_PORTAL", portalRole });
+        await supabaseAdmin.auth.admin
+          .signOut(data.access_token, "local")
+          .catch(() => undefined);
+      res
+        .status(403)
+        .json({ error: "ROLE_NOT_ALLOWED_FOR_PORTAL", portalRole });
       return;
     }
 
@@ -369,12 +420,15 @@ async function handlePublicLoginRequest(
     setSession(res, data, portalRole);
     setRecentAuth(res, data.user.id, data.access_token);
     resetLoginRateLimit(req.clientIpHash);
-    res.setHeader("Server-Timing", "auth-login;dur=" + Math.max(0, Date.now() - startedAt));
-    const localityWarning=await accountLocalityWarning(data.user.id);
+    res.setHeader(
+      "Server-Timing",
+      "auth-login;dur=" + Math.max(0, Date.now() - startedAt),
+    );
+    const localityWarning = await accountLocalityWarning(data.user.id);
     res.json({
       status: "authenticated",
       userId: data.user.id,
-      email: data.user.email ?? null,
+      email: access.email ?? data.user.email ?? null,
       fullName: access.profileNames?.[portalRole] ?? access.fullName,
       roles: access.roles,
       activeRole: portalRole,
@@ -403,7 +457,9 @@ authRouter.post("/admin-login", (_req, res) => {
 authRouter.post("/refresh", async (req, res, next) => {
   try {
     const bodyToken =
-      req.body && typeof req.body === "object" && typeof req.body.refreshToken === "string"
+      req.body &&
+      typeof req.body === "object" &&
+      typeof req.body.refreshToken === "string"
         ? req.body.refreshToken
         : "";
     const refresh = cookie(req, "hvm_refresh") || bodyToken;
@@ -438,7 +494,7 @@ authRouter.post("/refresh", async (req, res, next) => {
 
     const access = await resolveIdentityAccess(
       data.user.id,
-      null,
+      authSessionId(data.access_token),
       data.access_token,
     );
     if (!access) {
@@ -447,7 +503,9 @@ authRouter.post("/refresh", async (req, res, next) => {
     }
     if (access.status !== "active") {
       clear(res);
-      res.status(403).json({ error: access.blockCode ?? "ACCOUNT_UNAVAILABLE" });
+      res
+        .status(403)
+        .json({ error: access.blockCode ?? "ACCOUNT_UNAVAILABLE" });
       return;
     }
 
@@ -459,11 +517,11 @@ authRouter.post("/refresh", async (req, res, next) => {
     }
 
     setSession(res, data, requestedRole);
-    const localityWarning=await accountLocalityWarning(data.user.id);
+    const localityWarning = await accountLocalityWarning(data.user.id);
     res.json({
       status: "authenticated",
       userId: data.user.id,
-      email: data.user.email ?? null,
+      email: access.email ?? data.user.email ?? null,
       roles: access.roles,
       activeRole: requestedRole,
       portalKind: portalKindForRole(requestedRole),
@@ -492,7 +550,10 @@ authRouter.post("/import-session", async (req, res, next) => {
       return;
     }
 
-    if (input.data.portalRole === "platform_admin" || input.data.portalRole === "platform_super_admin") {
+    if (
+      input.data.portalRole === "platform_admin" ||
+      input.data.portalRole === "platform_super_admin"
+    ) {
       res.status(403).json({ error: "ADMIN_GOVERNANCE_LOGIN_REQUIRED" });
       return;
     }
@@ -524,12 +585,54 @@ authRouter.post("/import-session", async (req, res, next) => {
       return;
     }
 
+    let importedSession = restored.data.session;
+    let importedUser = restored.data.user;
+    if (
+      input.data.flowToken &&
+      input.data.portalRole &&
+      isPublicPortalRole(input.data.portalRole)
+    ) {
+      const flow = await resolvePortalEmailFlow(
+        input.data.portalRole,
+        "login",
+        input.data.flowToken,
+      );
+      if (!flow || flow.email !== restored.data.user.email?.toLowerCase()) {
+        res.status(410).json({ error: "SECURITY_CONTEXT_MISMATCH" });
+        return;
+      }
+      const accepted = await consumePortalEmailFlow(
+        flow.userId,
+        input.data.portalRole,
+        "login",
+        input.data.flowToken,
+      );
+      if (!accepted || !supabaseAdmin) {
+        res.status(410).json({ error: "SECURITY_CONTEXT_MISMATCH" });
+        return;
+      }
+      const canonical = await supabaseAdmin.auth.admin.getUserById(flow.userId);
+      if (canonical.error || !canonical.data.user?.email) {
+        res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
+        return;
+      }
+      importedSession = await createPublicPortalSession(
+        flow.userId,
+        canonical.data.user.email,
+        input.data.portalRole,
+      );
+      importedUser = importedSession.user;
+      await client.auth.signOut({ scope: "local" }).catch(() => undefined);
+    }
     const access = await resolveIdentityAccess(
-      restored.data.user.id,
-      sessionId,
-      restored.data.session.access_token,
+      importedUser.id,
+      authSessionId(importedSession.access_token),
+      importedSession.access_token,
     );
-    if (access && !access.roles.some((role) => role === "consumer" || role === "producer")) {
+    if (
+      access &&
+      !access.roles.some((role) => role === "consumer" || role === "producer")
+    ) {
       await client.auth.signOut({ scope: "local" }).catch(() => undefined);
       res.status(403).json({ error: "ADMIN_GOVERNANCE_LOGIN_REQUIRED" });
       return;
@@ -548,12 +651,13 @@ authRouter.post("/import-session", async (req, res, next) => {
       return;
     }
 
-    if ((input.data.portalRole ?? access.roles[0]) === "consumer") await mergeLoginCart(req, restored.data.session.user.id);
-    setSession(res, restored.data.session, input.data.portalRole ?? null);
+    if ((input.data.portalRole ?? access.roles[0]) === "consumer")
+      await mergeLoginCart(req, importedUser.id);
+    setSession(res, importedSession, input.data.portalRole ?? null);
     res.json({
       status: "imported",
-      userId: restored.data.user.id,
-      email: restored.data.user.email ?? null,
+      userId: importedUser.id,
+      email: access.email ?? importedUser.email ?? null,
       roles: access.roles,
       activeRole: input.data.portalRole ?? null,
       portalKind: portalKindForRole(input.data.portalRole ?? null),
@@ -570,7 +674,7 @@ authRouter.get("/session", async (req, res, next) => {
       const activeRole =
         selected && req.actor.roles.includes(selected)
           ? selected
-          : req.actor.roles[0] ?? null;
+          : (req.actor.roles[0] ?? null);
       res.json({
         userId: req.actor.userId,
         email: req.actor.email,
@@ -617,7 +721,9 @@ authRouter.get("/session", async (req, res, next) => {
       return;
     }
     if (access.status !== "active") {
-      res.status(403).json({ error: access.blockCode ?? "ACCOUNT_UNAVAILABLE" });
+      res
+        .status(403)
+        .json({ error: access.blockCode ?? "ACCOUNT_UNAVAILABLE" });
       return;
     }
 
@@ -625,10 +731,10 @@ authRouter.get("/session", async (req, res, next) => {
     const activeRole =
       selected && access.roles.includes(selected as PortalRole)
         ? (selected as PortalRole)
-        : access.roles[0] ?? null;
+        : (access.roles[0] ?? null);
     res.json({
       userId: id,
-      email: result.data.user.email,
+      email: access.email ?? result.data.user.email,
       fullName: access.profileNames?.[activeRole ?? ""] ?? access.fullName,
       roles: access.roles,
       activeRole,
@@ -643,7 +749,10 @@ authRouter.get("/session", async (req, res, next) => {
 authRouter.post("/logout", async (req, res, next) => {
   try {
     const refreshToken = req.body?.refreshToken;
-    if (refreshToken !== undefined && (typeof refreshToken !== "string" || refreshToken.length > 4096)) {
+    if (
+      refreshToken !== undefined &&
+      (typeof refreshToken !== "string" || refreshToken.length > 4096)
+    ) {
       res.status(400).json({ error: "VALIDATION_ERROR" });
       return;
     }
@@ -651,7 +760,10 @@ authRouter.post("/logout", async (req, res, next) => {
       ? req.headers.authorization.slice(7).trim()
       : "";
     const revoked = await revokeBrowserSessions([
-      { accessToken: cookie(req, "hvm_access"), refreshToken: cookie(req, "hvm_refresh") },
+      {
+        accessToken: cookie(req, "hvm_access"),
+        refreshToken: cookie(req, "hvm_refresh"),
+      },
       { accessToken: bearer, refreshToken },
     ]);
     if (!revoked) {
@@ -668,35 +780,41 @@ authRouter.post("/logout", async (req, res, next) => {
 });
 
 authRouter.post("/resend-confirmation", async (req, res) => {
-  const input = RoleScopedEmailRequestSchema.partial({ portalRole: true }).safeParse(req.body);
+  const input = RoleScopedEmailRequestSchema.partial({
+    portalRole: true,
+  }).safeParse(req.body);
   if (!input.success) {
     res.status(400).json({
-        error: "VALIDATION_ERROR",
-        fields: input.error.issues.map((issue) => ({
-          field: String(issue.path[0] ?? "request"),
-          message: issue.message,
-        })),
-        requestId: res.locals.requestId,
-      });
+      error: "VALIDATION_ERROR",
+      fields: input.error.issues.map((issue) => ({
+        field: String(issue.path[0] ?? "request"),
+        message: issue.message,
+      })),
+      requestId: res.locals.requestId,
+    });
     return;
   }
 
-  const role = input.data.portalRole ?? await publicConfirmationRole(input.data.email);
-  const identity = role ? await findActiveIdentityForRole(
-    input.data.email,
-    role,
-  ) : null;
+  const role =
+    input.data.portalRole ?? (await publicConfirmationRole(input.data.email));
+  const identity = role
+    ? await findActiveIdentityForRole(input.data.email, role)
+    : null;
 
   if (identity && supabasePublic) {
+    const flow = await issuePortalEmailFlow(
+      identity.user_id,
+      role as "consumer" | "producer",
+      "confirmation",
+    );
     const target = redirectUrl(
       req,
-      `/confirmar-contato?portal=${encodeURIComponent(role!)}&context=${encodeURIComponent(issueConfirmationContext(identity.user_id, role as "consumer" | "producer"))}`,
+      `/confirmar-contato?portal=${role}&context=${encodeURIComponent(issueConfirmationContext(identity.user_id, role as "consumer" | "producer"))}&flow=${encodeURIComponent(flow)}`,
     );
     if (target) {
-      const { error } = await supabasePublic.auth.resend({
-        type: "signup",
+      const { error } = await supabasePublic.auth.signInWithOtp({
         email: input.data.email,
-        options: { emailRedirectTo: target },
+        options: { shouldCreateUser: false, emailRedirectTo: target },
       });
       if (error)
         reportFailure(
@@ -714,13 +832,13 @@ authRouter.post("/request-password-reset", async (req, res) => {
   const input = RoleScopedEmailRequestSchema.safeParse(req.body);
   if (!input.success) {
     res.status(400).json({
-        error: "VALIDATION_ERROR",
-        fields: input.error.issues.map((issue) => ({
-          field: String(issue.path[0] ?? "request"),
-          message: issue.message,
-        })),
-        requestId: res.locals.requestId,
-      });
+      error: "VALIDATION_ERROR",
+      fields: input.error.issues.map((issue) => ({
+        field: String(issue.path[0] ?? "request"),
+        message: issue.message,
+      })),
+      requestId: res.locals.requestId,
+    });
     return;
   }
 
@@ -773,10 +891,17 @@ authRouter.post("/request-password-reset", async (req, res) => {
     return;
   }
 
-  const { error } = await supabasePublic.auth.resetPasswordForEmail(
-    input.data.email,
-    { redirectTo: target },
-  );
+  const { error } =
+    isPublicPortalRole(input.data.portalRole) ||
+    identity.email_normalized.endsWith("@auth.hortvitalmix.invalid")
+      ? await supabasePublic.auth.signInWithOtp({
+          email: input.data.email,
+          options: { emailRedirectTo: target, shouldCreateUser: true },
+        })
+      : await supabasePublic.auth.resetPasswordForEmail(
+          identity.email_normalized,
+          { redirectTo: target },
+        );
 
   if (error) {
     await invalidateChallenge(challenge.id);
@@ -808,13 +933,13 @@ authRouter.post("/password/recovery/validate", async (req, res) => {
   const input = RoleScopedRecoveryFlowSchema.safeParse(req.body);
   if (!input.success) {
     res.status(400).json({
-        error: "VALIDATION_ERROR",
-        fields: input.error.issues.map((issue) => ({
-          field: String(issue.path[0] ?? "request"),
-          message: issue.message,
-        })),
-        requestId: res.locals.requestId,
-      });
+      error: "VALIDATION_ERROR",
+      fields: input.error.issues.map((issue) => ({
+        field: String(issue.path[0] ?? "request"),
+        message: issue.message,
+      })),
+      requestId: res.locals.requestId,
+    });
     return;
   }
 
@@ -834,13 +959,13 @@ authRouter.post("/magic-link", async (req, res) => {
   const input = RoleScopedEmailRequestSchema.safeParse(req.body);
   if (!input.success) {
     res.status(400).json({
-        error: "VALIDATION_ERROR",
-        fields: input.error.issues.map((issue) => ({
-          field: String(issue.path[0] ?? "request"),
-          message: issue.message,
-        })),
-        requestId: res.locals.requestId,
-      });
+      error: "VALIDATION_ERROR",
+      fields: input.error.issues.map((issue) => ({
+        field: String(issue.path[0] ?? "request"),
+        message: issue.message,
+      })),
+      requestId: res.locals.requestId,
+    });
     return;
   }
 
@@ -858,11 +983,14 @@ authRouter.post("/magic-link", async (req, res) => {
   );
 
   if (identity && supabasePublic) {
+    const flow = await issuePortalEmailFlow(
+      identity.user_id,
+      input.data.portalRole,
+      "login",
+    );
     const target = redirectUrl(
       req,
-      `${loginPathForRole(input.data.portalRole)}?portal=${encodeURIComponent(
-        input.data.portalRole,
-      )}`,
+      `${loginPathForRole(input.data.portalRole)}?portal=${input.data.portalRole}&flow=${encodeURIComponent(flow)}`,
     );
     if (target) {
       const { error } = await supabasePublic.auth.signInWithOtp({
@@ -938,7 +1066,17 @@ authRouter.post("/reauthenticate", async (req, res, next) => {
     }
 
     setSession(res, restored.data.session, input.data.portalRole);
-    const { error } = await client.auth.reauthenticate();
+    const internalAdministrativeIdentity = restored.data.user?.email?.endsWith(
+      "@auth.hortvitalmix.invalid",
+    );
+    const { error } =
+      isPublicPortalRole(input.data.portalRole) ||
+      internalAdministrativeIdentity
+        ? await client.auth.signInWithOtp({
+            email: req.actor.email!,
+            options: { shouldCreateUser: true },
+          })
+        : await client.auth.reauthenticate();
     if (error) {
       await invalidateChallenge(challenge.id);
       reportFailure("reauthentication_not_dispatched", res.locals.requestId);
@@ -985,6 +1123,22 @@ authRouter.post("/reset-password", async (req, res, next) => {
     );
     if (!challenge) {
       res.status(410).json({ error: "RECOVERY_CONTEXT_INVALID" });
+      return;
+    }
+
+    if (isPublicPortalRole(input.data.portalRole)) {
+      const changed = await resetPublicPortalPassword(
+        challenge.userId,
+        input.data.portalRole,
+        input.data.password,
+        input.data.flowToken,
+      );
+      if (!changed) {
+        res.status(409).json({ error: "RECOVERY_CONTEXT_ALREADY_USED" });
+        return;
+      }
+      clear(res);
+      res.status(204).end();
       return;
     }
 
@@ -1112,6 +1266,79 @@ authRouter.post("/change-password", async (req, res, next) => {
       return;
     }
 
+    if (isPublicPortalRole(input.data.portalRole)) {
+      const otpClient = createSupabasePublicClient();
+      if (!otpClient) {
+        res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
+        return;
+      }
+      const checked = await otpClient.auth.verifyOtp({
+        email: req.actor.email!,
+        token: input.data.nonce,
+        type: "email",
+      });
+      if (
+        checked.error ||
+        checked.data.user?.email?.toLowerCase() !==
+          req.actor.email?.toLowerCase()
+      ) {
+        await recordSecurityCodeFailure(input.data.challengeId);
+        res.status(400).json({ error: "SECURITY_CODE_REJECTED" });
+        return;
+      }
+      await otpClient.auth.signOut({ scope: "local" }).catch(() => undefined);
+      const changed = await changePublicPortalPassword(
+        req.actor.userId,
+        input.data.portalRole,
+        input.data.password,
+        input.data.challengeId,
+      );
+      if (!changed) {
+        res.status(410).json({ error: "SECURITY_CODE_CONTEXT_INVALID" });
+        return;
+      }
+      clear(res);
+      res.status(204).end();
+      return;
+    }
+
+    if (restored.data.user?.email?.endsWith("@auth.hortvitalmix.invalid")) {
+      const verified = await client.auth.verifyOtp({
+        email: req.actor.email!,
+        token: input.data.nonce,
+        type: "email",
+      });
+      if (
+        verified.error ||
+        verified.data.user?.email?.toLowerCase() !==
+          req.actor.email?.toLowerCase()
+      ) {
+        await recordSecurityCodeFailure(input.data.challengeId);
+        res.status(400).json({ error: "SECURITY_CODE_REJECTED" });
+        return;
+      }
+      await client.auth.signOut({ scope: "local" }).catch(() => undefined);
+      const updated = await supabaseAdmin?.auth.admin.updateUserById(
+        req.actor.userId,
+        { password: input.data.password },
+      );
+      if (!updated || updated.error) {
+        res.status(400).json({ error: "PASSWORD_UPDATE_REJECTED" });
+        return;
+      }
+      const revoked = await supabaseAdmin!.rpc("fn_revoke_auth_sessions", {
+        p_user_id: req.actor.userId,
+      });
+      if (revoked.error) {
+        res.status(503).json({ error: "SESSION_REVOCATION_FAILED" });
+        return;
+      }
+      await consumeSecurityCodeChallenge(input.data.challengeId);
+      clear(res);
+      res.status(204).end();
+      return;
+    }
+
     const updated = await client.auth.updateUser({
       password: input.data.password,
       nonce: input.data.nonce,
@@ -1135,27 +1362,43 @@ authRouter.post("/change-password", async (req, res, next) => {
 authRouter.post("/lgpd-acceptance", async (req, res, next) => {
   const parsed = LgpdCadastroAcceptanceSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(422).json({ error: "VALIDATION_ERROR", requestId: res.locals.requestId });
+    res
+      .status(422)
+      .json({ error: "VALIDATION_ERROR", requestId: res.locals.requestId });
     return;
   }
-  if (req.actor?.userId !== parsed.data.userId &&
-      !verifyRegistrationConsentProof(parsed.data.consentProof, parsed.data)) {
-    res.status(401).json({ error: "CONSENT_PROOF_REQUIRED", requestId: res.locals.requestId });
+  if (
+    req.actor?.userId !== parsed.data.userId &&
+    !verifyRegistrationConsentProof(parsed.data.consentProof, parsed.data)
+  ) {
+    res
+      .status(401)
+      .json({
+        error: "CONSENT_PROOF_REQUIRED",
+        requestId: res.locals.requestId,
+      });
     return;
   }
   try {
-  const result = await recordLgpdCadastroAcceptance({
-    userId: parsed.data.userId,
-    email: parsed.data.email,
-    ipHash: req.clientIpHash || "",
-    userAgent: String(req.headers["user-agent"] ?? "unknown"),
-  });
-  if (result.status === "unavailable") {
-    res.status(503).json({ error: "DATABASE_UNAVAILABLE", requestId: res.locals.requestId });
-    return;
+    const result = await recordLgpdCadastroAcceptance({
+      userId: parsed.data.userId,
+      email: parsed.data.email,
+      ipHash: req.clientIpHash || "",
+      userAgent: String(req.headers["user-agent"] ?? "unknown"),
+    });
+    if (result.status === "unavailable") {
+      res
+        .status(503)
+        .json({
+          error: "DATABASE_UNAVAILABLE",
+          requestId: res.locals.requestId,
+        });
+      return;
+    }
+    res.status(204).end();
+  } catch (error) {
+    next(error);
   }
-  res.status(204).end();
-  } catch (error) { next(error); }
 });
 
 for (const role of ["consumer", "producer"] as const)
@@ -1163,7 +1406,9 @@ for (const role of ["consumer", "producer"] as const)
     const startedAt = Date.now();
     const parsed = (
       role === "producer" ? RegisterProducerSchema : RegisterConsumerSchema
-    ).extend({ consent: RegistrationConsentSchema.optional() }).safeParse(req.body);
+    )
+      .extend({ consent: RegistrationConsentSchema.optional() })
+      .safeParse(req.body);
 
     if (!parsed.success) {
       res.status(400).json({
@@ -1183,43 +1428,79 @@ for (const role of ["consumer", "producer"] as const)
         registrationData,
         role,
         res.locals.requestId,
-        parsed.data.consent ? { policyVersion: parsed.data.consent.policyVersion, ipHash: req.clientIpHash || "0".repeat(64), userAgent: String(req.headers["user-agent"] ?? "unknown") } : undefined,
+        parsed.data.consent
+          ? {
+              policyVersion: parsed.data.consent.policyVersion,
+              ipHash: req.clientIpHash || "0".repeat(64),
+              userAgent: String(req.headers["user-agent"] ?? "unknown"),
+            }
+          : undefined,
       );
       // A previous browser session is not proof that this new account was confirmed.
       clear(res);
       let confirmationDispatchAccepted = Boolean(
         result.confirmationDispatchAccepted,
       );
-      const confirmationContext = ("confirmationContext" in result ? result.confirmationContext : undefined) || (result.userId && result.confirmationRequired && !result.reviewRequired ? issueConfirmationContext(result.userId, role) : undefined);
-      if (!parsed.data.consent &&
+      const confirmationContext =
+        ("confirmationContext" in result
+          ? result.confirmationContext
+          : undefined) ||
+        (result.userId && result.confirmationRequired && !result.reviewRequired
+          ? issueConfirmationContext(result.userId, role)
+          : undefined);
+      if (
+        !parsed.data.consent &&
+        result.userId &&
         result.confirmationRequired &&
         !result.reviewRequired &&
         !confirmationDispatchAccepted &&
         supabasePublic
       ) {
-        const context = result.userId ? issueConfirmationContext(result.userId, role) : "";
-        const target = redirectUrl(req, `/confirmar-contato?portal=${role}&context=${encodeURIComponent(context)}`);
+        const context = result.userId
+          ? issueConfirmationContext(result.userId, role)
+          : "";
+        const flow = await issuePortalEmailFlow(
+          result.userId,
+          role,
+          "confirmation",
+        );
+        const target = redirectUrl(
+          req,
+          `/confirmar-contato?portal=${role}&context=${encodeURIComponent(context)}&flow=${encodeURIComponent(flow)}`,
+        );
         if (target) {
           try {
-            const sent = await supabasePublic.auth.resend({
-              type: "signup",
+            const sent = await supabasePublic.auth.signInWithOtp({
               email: parsed.data.email,
-              options: { emailRedirectTo: target },
+              options: { emailRedirectTo: target, shouldCreateUser: true },
             });
             confirmationDispatchAccepted = !sent.error;
           } catch {
-            reportFailure("registration_confirmation_not_dispatched", res.locals.requestId);
+            reportFailure(
+              "registration_confirmation_not_dispatched",
+              res.locals.requestId,
+            );
           }
         }
       }
-      res.setHeader("Server-Timing", "auth-register;dur=" + Math.max(0, Date.now() - startedAt));
+      res.setHeader(
+        "Server-Timing",
+        "auth-register;dur=" + Math.max(0, Date.now() - startedAt),
+      );
       res.status(201).json({
         ...result,
-        ...(consent && runtime.serviceKey && result.userId && !result.reviewRequired ? {
-          consentProof: issueRegistrationConsentProof({
-            userId: result.userId, email: registrationData.email, policyVersion: consent.policyVersion,
-          }),
-        } : {}),
+        ...(consent &&
+        runtime.serviceKey &&
+        result.userId &&
+        !result.reviewRequired
+          ? {
+              consentProof: issueRegistrationConsentProof({
+                userId: result.userId,
+                email: registrationData.email,
+                policyVersion: consent.policyVersion,
+              }),
+            }
+          : {}),
         confirmationContext,
         confirmationDispatchAccepted,
         confirmationDispatchDeferred:
@@ -1238,32 +1519,35 @@ for (const role of ["consumer", "producer"] as const)
           : message === "REGISTRATION_LOCALITY_NOT_COVERED"
             ? "LOCALITY_NOT_COVERED"
             : message === "REGISTRATION_IDENTITY_CONFLICT"
-          ? "IDENTITY_CONFLICT"
-          : message === "REGISTRATION_ROLE_ALREADY_ASSIGNED"
-            ? "ROLE_ALREADY_ASSIGNED"
-            : message === "REGISTRATION_CPF_LINKED_TO_EXISTING_ACCOUNT"
-              ? "CPF_LINKED_TO_EXISTING_ACCOUNT"
-              : message === "REGISTRATION_EXISTING_ACCOUNT_CREDENTIALS_INVALID"
-                ? "EXISTING_ACCOUNT_CREDENTIALS_INVALID"
-                : message === "REGISTRATION_EXISTING_ACCOUNT_CONFIRM_REQUIRED"
-                  ? "EXISTING_ACCOUNT_CONFIRM_REQUIRED"
-          : message === "REGISTRATION_RATE_LIMITED"
-            ? "REGISTRATION_RATE_LIMITED"
-            : message === "REGISTRATION_AUTH_UNAVAILABLE"
-              ? "AUTH_UNAVAILABLE"
-              : message === "REGISTRATION_DATABASE_UNAVAILABLE"
-                ? "DATABASE_UNAVAILABLE"
-                : message === "REGISTRATION_SCHEMA_OUTDATED"
-                  ? "REGISTRATION_SCHEMA_OUTDATED"
-                  : message === "REGISTRATION_DATA_REJECTED"
-                    ? "REGISTRATION_DATA_REJECTED"
-                    : message === "REGISTRATION_STATUS_UNKNOWN"
-                      ? "REGISTRATION_STATUS_UNKNOWN"
-                      : message === "REGISTRATION_UNEXPECTED_FAILURE"
-                        ? "REGISTRATION_INTERNAL_ERROR"
-                        : status === 409
-                        ? "IDENTITY_CONFLICT"
-                        : "DEPENDENCY_UNAVAILABLE";
+              ? "IDENTITY_CONFLICT"
+              : message === "REGISTRATION_ROLE_ALREADY_ASSIGNED"
+                ? "ROLE_ALREADY_ASSIGNED"
+                : message === "REGISTRATION_CPF_LINKED_TO_EXISTING_ACCOUNT"
+                  ? "CPF_LINKED_TO_EXISTING_ACCOUNT"
+                  : message ===
+                      "REGISTRATION_EXISTING_ACCOUNT_CREDENTIALS_INVALID"
+                    ? "EXISTING_ACCOUNT_CREDENTIALS_INVALID"
+                    : message ===
+                        "REGISTRATION_EXISTING_ACCOUNT_CONFIRM_REQUIRED"
+                      ? "EXISTING_ACCOUNT_CONFIRM_REQUIRED"
+                      : message === "REGISTRATION_RATE_LIMITED"
+                        ? "REGISTRATION_RATE_LIMITED"
+                        : message === "REGISTRATION_AUTH_UNAVAILABLE"
+                          ? "AUTH_UNAVAILABLE"
+                          : message === "REGISTRATION_DATABASE_UNAVAILABLE"
+                            ? "DATABASE_UNAVAILABLE"
+                            : message === "REGISTRATION_SCHEMA_OUTDATED"
+                              ? "REGISTRATION_SCHEMA_OUTDATED"
+                              : message === "REGISTRATION_DATA_REJECTED"
+                                ? "REGISTRATION_DATA_REJECTED"
+                                : message === "REGISTRATION_STATUS_UNKNOWN"
+                                  ? "REGISTRATION_STATUS_UNKNOWN"
+                                  : message ===
+                                      "REGISTRATION_UNEXPECTED_FAILURE"
+                                    ? "REGISTRATION_INTERNAL_ERROR"
+                                    : status === 409
+                                      ? "IDENTITY_CONFLICT"
+                                      : "DEPENDENCY_UNAVAILABLE";
 
       reportFailure({
         category: "registration_failed",

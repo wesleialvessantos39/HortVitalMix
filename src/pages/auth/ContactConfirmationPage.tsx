@@ -25,6 +25,7 @@ export function ContactConfirmationPage({
       hash = new URLSearchParams(location.hash.slice(1));
     return {
       context: query.get("context") || undefined,
+      flowToken: query.get("flow") || undefined,
       accessToken: hash.get("access_token") || undefined,
       portalRole:
         query.get("portal") === "producer"
@@ -85,6 +86,7 @@ export function ContactConfirmationPage({
       method: "POST",
       body: JSON.stringify({
         context: link.context,
+        flowToken: link.flowToken,
         accessToken: link.accessToken,
         portalRole: link.portalRole,
         ...(send ? { resend: true } : {}),

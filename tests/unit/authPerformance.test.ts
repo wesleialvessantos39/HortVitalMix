@@ -61,11 +61,11 @@ describe("authentication request performance without authorization bypass", () =
  it.each(["consumer", "producer"] as const)("registers %s with bounded parallel identity checks and still requires confirmation",async role=>{
   mocks.from.mockImplementation(table=>chain(table==="app_users"?{status:"active"}:null));
   mocks.createUser.mockResolvedValue({data:{user:{id:"new-user"}},error:null});
-  mocks.rpc.mockResolvedValue({data:{},error:null});
+  mocks.rpc.mockImplementation(async name=>({data:name==="fn_unassigned_mailbox_identity"?null:{},error:null}));
   const result=await register({fullName:"Test Person",cpf:"12345678909",email:"test@example.invalid",password:"unused-test-password",phone:"+5569999999999"} as any,role,"test-request");
   expect(mocks.from.mock.calls.map(([table])=>table)).toEqual(["app_people","app_people","app_users"]);
   expect(mocks.createUser).toHaveBeenCalledWith(expect.objectContaining({email_confirm:false}));
-  expect(result.confirmationRequired).toBe(true); expect(mocks.rpc).toHaveBeenCalledOnce();
+  expect(result.confirmationRequired).toBe(true); expect(mocks.rpc).toHaveBeenCalledWith("fn_unassigned_mailbox_identity",{p_email:"test@example.invalid"});
  });
  it("does not create an account when CPF and email belong to different people",async()=>{
   mocks.from.mockReturnValueOnce(chain({user_id:"one"})).mockReturnValueOnce(chain({user_id:"two"}));

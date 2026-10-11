@@ -4,6 +4,8 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const auth = vi.hoisted(() => ({
   inviteUserByEmail: vi.fn(),
+  createUser: vi.fn(),
+  signInWithOtp: vi.fn(),
   deleteUser: vi.fn(),
   updateUserById: vi.fn(),
 }));
@@ -25,7 +27,7 @@ vi.mock("../../server/db/pool.ts", async () => {
 vi.mock("../../server/supabase/client.ts", () => ({
   supabaseAdmin: { auth: { admin: auth } },
   supabasePublic: null,
-  createSupabasePublicClient: vi.fn(),
+  createSupabasePublicClient: () => ({ auth: { signInWithOtp: auth.signInWithOtp } }),
 }));
 
 import { dbPool } from "../../server/db/pool.ts";
@@ -147,6 +149,8 @@ describe.runIf(!!process.env.HVM_ADMIN_INVITES_LOCAL_DATABASE_URL)(
           return { data: { user: { id, email } }, error: null };
         },
       );
+      auth.createUser.mockImplementation(async (input: { email: string; user_metadata: unknown }) => auth.inviteUserByEmail(input.email, { data: input.user_metadata }));
+      auth.signInWithOtp.mockResolvedValue({ data: {}, error: null });
       auth.deleteUser.mockImplementation(async (id: string) => {
         const deleted = await pool().query(
           "DELETE FROM auth.users WHERE id=$1 RETURNING id",
@@ -174,7 +178,7 @@ describe.runIf(!!process.env.HVM_ADMIN_INVITES_LOCAL_DATABASE_URL)(
     it("cancela o link antigo e permite convidar novamente o mesmo e-mail", async () => {
       const email = randomUUID() + "@example.invalid";
       const first = await issue(email);
-      const firstDelivery = auth.inviteUserByEmail.mock.calls[0][1];
+      const firstDelivery = { redirectTo: auth.signInWithOtp.mock.calls[0]?.[0].options.emailRedirectTo ?? auth.inviteUserByEmail.mock.calls[0][1].redirectTo };
       const token = new URL(firstDelivery.redirectTo).searchParams.get(
         "token",
       )!;
@@ -223,9 +227,9 @@ describe.runIf(!!process.env.HVM_ADMIN_INVITES_LOCAL_DATABASE_URL)(
       ).toBe(1);
     });
 
-    for (const publicRole of ["consumer", "producer"] as const) {
-      it(`convida Gmail de ${publicRole} sem CPF prévio e ativa outra credencial`, async () => {
-        const email = randomUUID() + "@gmail.com";
+    for (const publicRole of ["consumer", "producer"] as const) for (const provider of ["gmail.com", "outlook.com"]) {
+      it(`convida ${provider} de ${publicRole} sem CPF prévio e ativa outra credencial`, async () => {
+        const email = randomUUID() + "@" + provider;
         const publicId = await authUser(email);
         const personId = randomUUID();
         await pool().query(
@@ -239,9 +243,10 @@ describe.runIf(!!process.env.HVM_ADMIN_INVITES_LOCAL_DATABASE_URL)(
         await pool().query("UPDATE app_users SET status='active' WHERE id=$1", [publicId]);
         const issued = await issue(email);
         expect(issued.identityMode).toBe("existing");
-        const [authEmail, delivery] = auth.inviteUserByEmail.mock.calls[0];
+        const [authEmail, originalDelivery] = auth.inviteUserByEmail.mock.calls[0];
+        const delivery = provider === "gmail.com" ? originalDelivery : { redirectTo: auth.signInWithOtp.mock.calls[0][0].options.emailRedirectTo };
         expect(authEmail).not.toBe(email);
-        expect(authEmail).toContain("+hvm-admin-");
+        expect(authEmail).toContain(provider === "gmail.com" ? "+hvm-admin-" : "@auth.hortvitalmix.invalid");
         const token = new URL(delivery.redirectTo).searchParams.get("token")!;
         const accept = (cpf: string) =>
           AdminGovernanceService.acceptInvite(
@@ -378,7 +383,7 @@ describe.runIf(!!process.env.HVM_ADMIN_INVITES_LOCAL_DATABASE_URL)(
     it("não altera a senha ao aceitar convite antigo ligado a um consumidor", async () => {
       const issued = await issue();
       const token = new URL(
-        auth.inviteUserByEmail.mock.calls[0][1].redirectTo,
+        auth.signInWithOtp.mock.calls[0]?.[0].options.emailRedirectTo ?? auth.inviteUserByEmail.mock.calls[0][1].redirectTo,
       ).searchParams.get("token")!;
       const credential = (
         await pool().query(
@@ -410,7 +415,7 @@ describe.runIf(!!process.env.HVM_ADMIN_INVITES_LOCAL_DATABASE_URL)(
     it("arquiva o convite aceito preservando Auth, perfil e poderes administrativos", async () => {
       const issued = await issue();
       const token = new URL(
-        auth.inviteUserByEmail.mock.calls[0][1].redirectTo,
+        auth.signInWithOtp.mock.calls[0]?.[0].options.emailRedirectTo ?? auth.inviteUserByEmail.mock.calls[0][1].redirectTo,
       ).searchParams.get("token")!;
       const accepted = await AdminGovernanceService.acceptInvite(
         {
@@ -606,7 +611,7 @@ describe.runIf(!!process.env.HVM_ADMIN_INVITES_LOCAL_DATABASE_URL)(
       expect(second.id).not.toBe(first.id);
       expect(auth.deleteUser).toHaveBeenCalledTimes(2);
       expect(
-        (await pool().query("SELECT 1 FROM auth.users WHERE email=$1", [email]))
+        (await pool().query("SELECT 1 FROM auth.users WHERE id=(SELECT auth_user_id FROM app_admin_invites WHERE email=$1 AND invalidated_at IS NULL)", [email]))
           .rowCount,
       ).toBe(1);
     });

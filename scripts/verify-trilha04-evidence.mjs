@@ -39,8 +39,10 @@ const checks = {
   ].every((name) => migration.includes(`CREATE TABLE public.${name}`)),
   forcedRls: (migration.match(/FORCE ROW LEVEL SECURITY/g) ?? []).length === 4,
   supabaseConfirmation:
-    authRoutes.includes('auth.resend({') &&
-    authRoutes.includes('type: "signup"'),
+    authRoutes.includes('auth.signInWithOtp({') &&
+    authRoutes.includes('issuePortalEmailFlow') &&
+    authRoutes.includes('"confirmation"') &&
+    authRoutes.includes('"/resend-confirmation"'),
   supabaseRecovery:
     authRoutes.includes("auth.resetPasswordForEmail("),
   supabaseReauthentication:

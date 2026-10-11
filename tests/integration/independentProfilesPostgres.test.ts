@@ -60,6 +60,10 @@ vi.mock("../../server/supabase/client.ts", () => {
       },
       admin: { signOut: async () => ({ error: null }) },
     },
+    rpc: async (name: string, args: Record<string, unknown>) => {
+      try { const values = Object.values(args); const result = await local.pool.query(`SELECT public.${name}(${values.map((_, i) => "$"+(i+1)).join(",")}) AS result`, values); return { data: result.rows[0].result, error: null }; }
+      catch { return { data: null, error: { message: "local RPC unavailable" } }; }
+    },
     from: (table: string) => {
       const where: string[] = [],
         args: any[] = [];
@@ -196,6 +200,10 @@ async function cookies(id: string, role: string) {
     sid,
     id,
   ]);
+  if (role === "consumer" || role === "producer") {
+    await db.query("UPDATE app_public_portal_credentials SET email_verified_at=now() WHERE user_id=$1 AND role_code=$2", [id, role]);
+    await db.query("SELECT fn_bind_public_portal_session($1,$2,$3)", [id, sid, role]);
+  }
   const token =
     "header." +
     Buffer.from(JSON.stringify({ session_id: sid })).toString("base64url") +

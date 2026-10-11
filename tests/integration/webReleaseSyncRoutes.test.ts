@@ -10,6 +10,7 @@ import { verifyMobileCiToken, MobileCiIdentityError } from "../../server/securit
 import { WebReleaseSyncService, WebReleaseSyncError } from "../../server/services/WebReleaseSyncService.ts";
 import { mobileCiRouter } from "../../server/routes/mobileReleaseRoutes.ts";
 import { app as realApp } from "../../server/app.ts";
+import { FOUNDATION_SCHEMA_VERSION } from "../../shared/contracts/foundation.ts";
 const sha = "b".repeat(40);
 const identity = { sourceCommit: sha, runId: "9002", runAttempt: 1 };
 const output = { status: "synced" as const, releaseTag: "auto-web-v68-bbbbbbbbbbbb", sourceCommit: sha, schemaVersion: 68, migrationHistoryHash: "a".repeat(64) };
@@ -79,7 +80,7 @@ describe("Callback web de CI antes da autenticação Supabase", () => {
     const write = vi.spyOn(WebReleaseSyncService, "sync");
     const response = await request(realApp).get(prefix + "/mobile-ci/web-release/status");
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ appEnv: expect.any(String), sourceCommit: expect.any(String), schemaVersion: 68, migrationHistoryHash: expect.stringMatching(/^[a-f0-9]{64}$/) });
+    expect(response.body).toEqual({ appEnv: expect.any(String), sourceCommit: expect.any(String), schemaVersion: FOUNDATION_SCHEMA_VERSION, migrationHistoryHash: expect.stringMatching(/^[a-f0-9]{64}$/) });
     expect(response.headers["cache-control"]).toContain("no-store");
     expect(response.headers["set-cookie"]).toBeUndefined();
     expect(write).not.toHaveBeenCalled();

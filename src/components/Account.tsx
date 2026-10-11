@@ -325,6 +325,7 @@ export function Account({
             accessToken,
             refreshToken,
             portalRole: emailPortalRole ?? undefined,
+            flowToken: new URLSearchParams(location.search).get("flow") ?? undefined,
           }),
         });
 
@@ -638,7 +639,7 @@ export function Account({
               : code === "ROLE_ALREADY_ASSIGNED"
                 ? "Este perfil já está ativo nessa conta. Use a tela de login correspondente."
                 : code === "CPF_LINKED_TO_EXISTING_ACCOUNT"
-                  ? "Este CPF já pertence a uma conta existente. Use o mesmo e-mail e a mesma senha dessa conta para adicionar o novo perfil."
+                  ? "Este CPF já pertence a uma conta existente. Use o mesmo e-mail e confirme a propriedade da caixa para criar uma senha independente neste portal."
                   : code === "EXISTING_ACCOUNT_CREDENTIALS_INVALID"
                     ? "O CPF já existe, mas a senha informada não confirma a conta atual. Use a senha da conta existente."
                     : code === "EXISTING_ACCOUNT_CONFIRM_REQUIRED"

@@ -15,8 +15,8 @@ describe("Cadastro Edge: confirmação fora do caminho crítico", () => {
       };
       const background: Promise<unknown>[] = [];
       const send = vi.fn(() => new Promise(() => {}));
-      const rpc = vi.fn(async () => ({
-        data: { status: "active", lgpdRecorded: true },
+      const rpc = vi.fn(async (name: string) => ({
+        data: name === "fn_unassigned_mailbox_identity" ? null : { status: "active", lgpdRecorded: true },
         error: null,
       }));
       const createUser = vi.fn(async () => ({
@@ -42,7 +42,7 @@ describe("Cadastro Edge: confirmação fora do caminho crítico", () => {
         createClient: () => ({
           from: () => query,
           rpc,
-          auth: { admin: { createUser }, resend: send },
+          auth: { admin: { createUser }, signInWithOtp: send },
         }),
         Deno: {
           env: {

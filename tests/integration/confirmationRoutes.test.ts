@@ -7,13 +7,15 @@ const mocks = vi.hoisted(() => ({
   from: vi.fn(),
   resend: vi.fn(),
   read: vi.fn(),
+  rpc: vi.fn(),
 }));
 vi.mock("../../server/supabase/client.ts", () => ({
   supabaseAdmin: {
     auth: { getUser: mocks.getUser, admin: { getUserById: mocks.getUserById } },
     from: mocks.from,
+    rpc: mocks.rpc,
   },
-  createSupabasePublicClient: () => ({ auth: { resend: mocks.resend } }),
+  createSupabasePublicClient: () => ({ auth: { signInWithOtp: mocks.resend } }),
 }));
 vi.mock("../../server/security/confirmationContext.ts", () => ({
   readConfirmationContext: mocks.read,
@@ -62,6 +64,7 @@ beforeEach(() => {
     return q;
   });
   mocks.resend.mockResolvedValue({ error: null });
+  mocks.rpc.mockImplementation(async (name: string) => ({ data: true, error: null }));
 });
 it("recognizes already confirmed proof, returns database name and never sets login cookies", async () => {
   const r = await request(app)
@@ -85,6 +88,7 @@ it("refuses arbitrary user identification without a valid proof", async () => {
   expect(mocks.getUserById).not.toHaveBeenCalled();
 });
 it("resends to the signed identity without requiring another email entry", async () => {
+  mocks.rpc.mockImplementation(async (name: string) => ({ data: name !== "fn_public_portal_confirmed", error: null }));
   mocks.getUserById.mockResolvedValue({
     data: {
       user: {
@@ -102,6 +106,7 @@ it("resends to the signed identity without requiring another email entry", async
     expect.objectContaining({
       email: "person@example.com",
       options: {
+        shouldCreateUser: true,
         emailRedirectTo: expect.stringContaining("context=signed-context"),
       },
     }),

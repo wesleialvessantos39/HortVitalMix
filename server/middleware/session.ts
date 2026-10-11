@@ -96,7 +96,7 @@ export async function sessionMiddleware(
 
     req.actor = {
       userId: data.user.id,
-      email: data.user.email ?? null,
+      email: access.email ?? data.user.email ?? null,
       roles: access.roles,
       personId: access.personId,
       fullName: access.profileNames?.[readCookie(req, "hvm_portal_role") ?? access.roles[0]] ?? access.fullName,

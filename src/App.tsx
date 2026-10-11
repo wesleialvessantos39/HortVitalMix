@@ -249,14 +249,15 @@ export default function App() {
       : path === "/entrar/consumidor"
         ? "consumer"
         : null;
-  const guestAccessRoute =
+  const scopedLoginCallback = Boolean(publicLoginRole && new URLSearchParams(location.search).get("flow") && new URLSearchParams(location.hash.slice(1)).get("access_token"));
+  const guestAccessRoute = !scopedLoginCallback && (
     path === "/entrar" ||
     path.startsWith("/entrar/") ||
     path === "/cadastro" ||
     path.startsWith("/cadastro/") ||
     path === "/administracao" ||
     path === "/admin/entrar" ||
-    path.startsWith("/acesso/");
+    path.startsWith("/acesso/"));
   const administrativeSession =
     shellSession?.activeRole === "platform_admin" ||
     shellSession?.activeRole === "platform_super_admin";

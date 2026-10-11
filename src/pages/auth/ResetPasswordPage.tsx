@@ -197,8 +197,8 @@ export function ResetPasswordPage({
         ) : (
           <>
             <p className="t04-lead">
-              Escolha uma senha forte. A redefinição encerra as sessões
-              anteriores da conta.
+              Escolha uma senha forte para este portal. A redefinição encerra
+              as sessões deste acesso e preserva as senhas dos outros portais.
             </p>
             {notice && <div className="t04-banner" role="status">{notice}</div>}
             <form className="t04-form" onSubmit={submit}>

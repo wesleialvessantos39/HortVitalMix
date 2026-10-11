@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 72,
+  "schemaVersion": 73,
   "migrations": [
     {
       "version": "20260919030126",
@@ -395,7 +395,12 @@
       "version": "20261010214547",
       "name": "enforce_administrative_portal_identity",
       "file": "20261010214547_enforce_administrative_portal_identity.sql"
+    },
+    {
+      "version": "20261011032631",
+      "name": "independent_public_portal_credentials",
+      "file": "20261011032631_independent_public_portal_credentials.sql"
     }
   ],
-  "migrationHistoryHash": "d7946e03fc9a4c4444b9efe935cd732e6a06a65dbe55596867fde9e7987a6b69"
+  "migrationHistoryHash": "918d9c007a7e6c4fe97ea6239e92943c80e784b2915e3379b5ce54431e7b6234"
 }

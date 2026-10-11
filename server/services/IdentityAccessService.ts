@@ -1,3 +1,4 @@
+import { publicSessionRole } from "./PublicPortalCredentialsService.ts";
 import {
   effectiveAccountStatus,
   accountBlockCode,
@@ -8,6 +9,7 @@ import { resolveLiveAuthSession } from "../security/liveSession.ts";
 
 export type IdentityAccessSnapshot = {
   status: string;
+  email?: string | null;
   blockCode?: string;
   block_starts_at?: string;
   block_ends_at?: string;
@@ -47,12 +49,12 @@ async function resolveViaDataApi(
       .is("revoked_at", null),
     dataClient
       .from("app_admin_principals")
-      .select("person_id")
+      .select("person_id,admin_email")
       .eq("admin_user_id", userId)
       .maybeSingle(),
     dataClient
       .from("app_people")
-      .select("id,full_name")
+      .select("id,full_name,email_normalized")
       .eq("user_id", userId)
       .maybeSingle(),
     dataClient
@@ -77,6 +79,7 @@ async function resolveViaDataApi(
   const personId = principal.data?.person_id ?? person.data?.id ?? null;
 
   return {
+    email: person.data?.email_normalized ?? principal.data?.admin_email ?? null,
     status: effectiveAccountStatus(user),
     blockCode: accountBlockCode(user),
     roles: activeRoles,
@@ -99,17 +102,32 @@ export async function resolveIdentityAccess(
   sessionId: string | null = null,
   accessToken: string | null = null,
 ): Promise<IdentityAccessSnapshot | null> {
+  const binding = sessionId ? await publicSessionRole(userId, sessionId) : null;
+  const scoped = (snapshot: IdentityAccessSnapshot | null) => {
+    if (
+      !snapshot ||
+      !sessionId ||
+      !snapshot.roles.some((role) => role === "consumer" || role === "producer")
+    )
+      return snapshot;
+    return {
+      ...snapshot,
+      roles: binding && snapshot.roles.includes(binding) ? [binding] : [],
+      liveSession: snapshot.liveSession && Boolean(binding),
+    };
+  };
   // A fresh password grant has just been validated by Auth. Resolve its roles
   // through the Data API without first waiting for a cold/unreachable pooler.
   // Existing sessions still use the auth.sessions check below.
   if (!sessionId && accessToken) {
     const fresh = await resolveViaDataApi(userId, accessToken);
-    if (fresh) return fresh;
+    if (fresh) return scoped(fresh);
   }
   if (dbPool) {
     try {
       const result = await dbPool.query<{
         status: string;
+        email: string | null;
         person_id: string | null;
         full_name: string | null;
         profile_names: Record<string, string>;
@@ -118,6 +136,7 @@ export async function resolveIdentityAccess(
       }>(
         `SELECT
            u.status,u.block_starts_at,u.block_ends_at,
+           COALESCE(public_person.email_normalized,ap.admin_email,admin_person.email_normalized) AS email,
            coalesce((SELECT jsonb_object_agg(p.role_code,p.full_name) FROM public.app_account_profiles p WHERE p.user_id=u.id),'{}'::jsonb) AS profile_names,
            COALESCE(public_person.id, admin_person.id)::text AS person_id,
            COALESCE(public_person.full_name, admin_person.full_name) AS full_name,
@@ -152,13 +171,15 @@ export async function resolveIdentityAccess(
           u.id,
           u.status,
           public_person.id,
+          ap.admin_email,
           admin_person.id`,
         [userId, sessionId],
       );
 
       const row = result.rows[0];
       if (row)
-        return {
+        return scoped({
+          email: row.email,
           status: effectiveAccountStatus(row),
           blockCode: accountBlockCode(row),
           roles: row.roles ?? [],
@@ -166,7 +187,7 @@ export async function resolveIdentityAccess(
           fullName: row.full_name ?? null,
           profileNames: row.profile_names ?? {},
           liveSession: row.live_session,
-        };
+        });
     } catch {
       // Runtime serverless pode operar sem acesso ao Pooler. A autenticação
       // Supabase já foi verificada pelo middleware e a Data API mantém o
@@ -174,5 +195,5 @@ export async function resolveIdentityAccess(
     }
   }
 
-  return resolveViaDataApi(userId, accessToken, sessionId);
+  return scoped(await resolveViaDataApi(userId, accessToken, sessionId));
 }

@@ -201,7 +201,7 @@ function roleScopedInviteAuthEmail(
     const tag = role === "platform_admin" ? "admin" : "super";
     return `${local}+hvm-${tag}-${inviteId.slice(0, 8)}@${domain}`;
   }
-  return normalized;
+  return `hvm-${role === "platform_admin" ? "admin" : "super"}-${inviteId}@auth.hortvitalmix.invalid`;
 }
 
 const normalizeBootstrapAdminEmail = (value: string | undefined) => {
@@ -742,8 +742,8 @@ export class AdminGovernanceService {
     if (!client) return { status: "unavailable" };
     const authEmail = principal.auth_email || normalized;
     const sent = await client.auth.signInWithOtp({
-      email: authEmail,
-      options: { shouldCreateUser: false },
+      email: authEmail.endsWith("@auth.hortvitalmix.invalid") ? normalized : authEmail,
+      options: { shouldCreateUser: authEmail.endsWith("@auth.hortvitalmix.invalid") },
     });
     if (sent.error) {
       const retryAfterSeconds = authEmailRetryAfter(sent.error);
@@ -781,7 +781,7 @@ export class AdminGovernanceService {
     if (!client) return { status: "unavailable" };
     const authEmail = principal.auth_email || normalized;
     const verified = await client.auth.verifyOtp({
-      email: authEmail,
+      email: authEmail.endsWith("@auth.hortvitalmix.invalid") ? normalized : authEmail,
       token: otp,
       type: "email",
     });
@@ -789,13 +789,17 @@ export class AdminGovernanceService {
     if (
       verified.error ||
       !verified.data.user ||
-      verified.data.user.id !== principal.admin_user_id
+      (authEmail.endsWith("@auth.hortvitalmix.invalid") ? verified.data.user.email?.toLowerCase() !== normalized : verified.data.user.id !== principal.admin_user_id)
     ) {
       await client.auth.signOut({ scope: "local" }).catch(() => undefined);
       return { status: "invalid_code" };
     }
 
     await client.auth.signOut({ scope: "local" }).catch(() => undefined);
+    if (authEmail.endsWith("@auth.hortvitalmix.invalid")) {
+      const updated = await supabaseAdmin?.auth.admin.updateUserById(principal.admin_user_id, { email_confirm: true });
+      if (!updated || updated.error) return { status: "unavailable" };
+    }
     const verifiedAt = new Date().toISOString();
 
     if (supabaseAdmin) {
@@ -1181,6 +1185,7 @@ export class AdminGovernanceService {
     let authEmail = input.email;
     let needsAuthAlias = false;
     let prepared = false;
+    let issuedAuthUserId: string | null = null;
 
     try {
       // Keep one transaction through delivery: the invite becomes visible only
@@ -1364,17 +1369,7 @@ export class AdminGovernanceService {
       const digest = sha256(token);
       inviteId = randomUUID();
       authEmail =
-        needsAuthAlias || /@(gmail|googlemail)\.com$/.test(input.email)
-          ? roleScopedInviteAuthEmail(input.email, input.targetRole, inviteId)
-          : input.email;
-      if (needsAuthAlias && authEmail === input.email) {
-        await client.query("ROLLBACK");
-        return {
-          status: "conflict",
-          message:
-            "Para manter duas senhas no mesmo endereço de e-mail, o provedor precisa aceitar alias. Use uma conta Gmail/Googlemail ou outro e-mail administrativo.",
-        };
-      }
+        roleScopedInviteAuthEmail(input.email, input.targetRole, inviteId);
       expiresAt = new Date(Date.now() + INVITE_TTL_HOURS * 60 * 60_000);
       const inserted = await client.query<{ created_at: Date | string }>(
         `INSERT INTO public.app_admin_invites
@@ -1440,16 +1435,33 @@ export class AdminGovernanceService {
       } catch {}
       const redirectTo = `${base}/admin/aceitar-convite?token=${encodeURIComponent(token)}`;
 
-      const sent = await supabaseAdmin.auth.admin.inviteUserByEmail(authEmail, {
-        redirectTo,
-        data: {
+      const metadata = {
           hvm_admin_invite_id: inviteId,
           hvm_admin_role: input.targetRole,
           hvm_identity_mode: identityMode,
           hvm_admin_sectors: input.sectors.map(adminSectorLabel).join(", "),
           hvm_invite_expires_at: expiresAt.toISOString(),
-        },
-      });
+      };
+      const separateDelivery = authEmail.endsWith("@auth.hortvitalmix.invalid");
+      const sent = separateDelivery
+        ? await supabaseAdmin.auth.admin.createUser({ email: authEmail, email_confirm: false, user_metadata: metadata })
+        : await supabaseAdmin.auth.admin.inviteUserByEmail(authEmail, { redirectTo, data: metadata });
+      issuedAuthUserId = sent.data.user?.id ?? null;
+      if (issuedAuthUserId) await client.query("UPDATE public.app_admin_invites SET auth_user_id=$2 WHERE id=$1", [inviteId, issuedAuthUserId]);
+      if (!sent.error && sent.data.user && separateDelivery) {
+        const delivery = createSupabasePublicClient();
+        if (!delivery) throw new Error("INVITE_DELIVERY_UNAVAILABLE");
+        const result = await delivery.auth.signInWithOtp({ email: input.email, options: { shouldCreateUser: true, emailRedirectTo: redirectTo } });
+        if (result.error) {
+          // Keep the abandoned isolated identity attached for safe cancellation
+          // and cleanup retry. Never delete an established mailbox identity.
+          await client.query("UPDATE public.app_admin_invites SET auth_user_id=$2 WHERE id=$1", [inviteId, sent.data.user.id]);
+          await client.query("UPDATE public.app_admin_invites SET invalidated_at=clock_timestamp(),revision=revision+1 WHERE id=$1", [inviteId]);
+          await releaseInvalidatedInviteAuth(client, input.email);
+          await client.query("COMMIT");
+          return { status: "unavailable" };
+        }
+      }
       if (sent.error || !sent.data.user) {
         await client.query(
           `UPDATE public.app_admin_invites
@@ -1510,9 +1522,9 @@ export class AdminGovernanceService {
     } catch {
       await client
         .query(
-          `UPDATE public.app_admin_invites SET invalidated_at=coalesce(invalidated_at,clock_timestamp()),revision=revision+1
+          `UPDATE public.app_admin_invites SET invalidated_at=coalesce(invalidated_at,clock_timestamp()),revision=revision+1,auth_user_id=coalesce(auth_user_id,$2)
           WHERE id=$1 AND is_accepted=false`,
-          [inviteId],
+          [inviteId, issuedAuthUserId],
         )
         .catch(() => undefined);
       await client.query("COMMIT").catch(async () => {

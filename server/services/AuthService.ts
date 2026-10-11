@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+import { registerIndependentPublicRole } from "./PublicPortalCredentialsService.ts";
 import {
   createSupabasePublicClient,
   supabaseAdmin,
@@ -394,9 +396,11 @@ async function addRoleToExistingIdentity(
   const person = await findExistingPerson(data, requestId);
   if (!person) return null;
 
+  const membership = await supabaseAdmin.from("app_user_role_assignments").select("role_code").eq("user_id", person.user_id).in("role_code", ["consumer", "producer"]);
+  if (membership.error) throw registrationError("REGISTRATION_DATABASE_UNAVAILABLE", 503);
   const state=await supabaseAdmin.from("app_users").select("status").eq("id",person.user_id).single();
   if(state.error)throw registrationError("REGISTRATION_DATABASE_UNAVAILABLE",503);
-  if(["blocked","suspended","pending"].includes(state.data.status)) {
+  if(membership.data?.length && ["blocked","suspended","pending"].includes(state.data.status)) {
     if(person.email_normalized!==data.email && person.cpf_normalized===data.cpf)return null;
     if(person.email_normalized===data.email && person.cpf_normalized===data.cpf){
       const queued=await supabaseAdmin.rpc("request_blocked_registration_review",{p_user_id:person.user_id,p_role:role});
@@ -414,95 +418,35 @@ async function addRoleToExistingIdentity(
       409,
     );
 
-  const client = createSupabasePublicClient();
-  if (!client)
-    throw registrationError("REGISTRATION_AUTH_UNAVAILABLE", 503);
-
-  const verified = await client.auth.signInWithPassword({
-    email: data.email,
-    password: data.password,
+  // Legacy administrative people keep their legal reference, but their Auth
+  // identity must never receive a public role. Adopt an unused SMTP mailbox
+  // identity (or create it) for the new public account only.
+  await assertLocalityActive(data.state, data.municipality, requestId);
+  if (!membership.data?.length) {
+    const mailbox = await supabaseAdmin.rpc("fn_unassigned_mailbox_identity", { p_email: data.email });
+    if (mailbox.error) throw registrationError("REGISTRATION_DATABASE_UNAVAILABLE", 503);
+    let publicUserId: string | null = null;
+    if (!publicUserId) {
+      const created = await supabaseAdmin.auth.admin.createUser({ email: `hvm-public-${randomUUID()}@auth.hortvitalmix.invalid`, password: data.password, email_confirm: false, user_metadata: { full_name: data.fullName, hvm_portal: "public", hvm_registration_role: role } });
+      if (created.error || !created.data.user) throw registrationError("REGISTRATION_AUTH_UNAVAILABLE", 503);
+      publicUserId = created.data.user.id;
+    }
+    const attached = await supabaseAdmin.rpc("fn_attach_public_identity", { p_person: person.id, p_user: publicUserId, p_cpf: data.cpf, p_email: data.email, p_role: role, p_name: data.fullName, p_phone: data.phone, p_password: data.password });
+    if (attached.error || !attached.data) throw registrationError("REGISTRATION_IDENTITY_CONFLICT", 409);
+    return { userId: publicUserId, confirmationRequired: true, confirmationDispatchAccepted: false, confirmationDispatchDeferred: true, existingIdentity: true, roleAdded: true, role };
+  }
+  // A second portal chooses its own password and must prove ownership by
+  // e-mail. It never validates or replaces the other portal's password.
+  const added = await registerIndependentPublicRole({
+    userId: person.user_id, cpf: data.cpf, email: data.email, role,
+    fullName: data.fullName, phone: data.phone, password: data.password,
   });
-
-  if (verified.error || !verified.data.user) {
-    const code = verified.error?.code ?? "";
-    const message = verified.error?.message?.toLowerCase() ?? "";
-    if (code === "email_not_confirmed" || message.includes("email not confirmed"))
-      throw registrationError(
-        "REGISTRATION_EXISTING_ACCOUNT_CONFIRM_REQUIRED",
-        409,
-      );
-
-    throw registrationError(
-      "REGISTRATION_EXISTING_ACCOUNT_CREDENTIALS_INVALID",
-      409,
-    );
-  }
-
-  try {
-    if (!verified.data.user.email_confirmed_at)
-      throw registrationError("REGISTRATION_EXISTING_ACCOUNT_CONFIRM_REQUIRED", 409);
-    if (verified.data.user.id !== person.user_id)
-      throw registrationError("REGISTRATION_IDENTITY_CONFLICT", 409);
-
-    const account = await supabaseAdmin.from("app_users").select("status").eq("id",person.user_id).single();
-    if(account.error) throw registrationError("REGISTRATION_DATABASE_UNAVAILABLE",503);
-    if(account.data.status === "deleted") {
-      const requested = await supabaseAdmin.rpc("request_account_reactivation", {p_user_id:person.user_id,p_role:role});
-      if(requested.error) throw registrationError("REGISTRATION_DATA_REJECTED",409);
-      return {userId:person.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role};
-    }
-    if(account.data.status === "pending") return {userId:person.user_id,reviewRequired:true,confirmationRequired:false,confirmationDispatchAccepted:false,existingIdentity:true,roleAdded:false,role};
-
-    // Acrescentar papel a uma identidade existente também respeita a trava de
-    // cobertura: nenhum perfil novo nasce em região fora de operação.
-    await assertLocalityActive(data.state, data.municipality, requestId);
-
-    const added = await supabaseAdmin.rpc(
-      "add_public_role_with_profile",
-      {
-        p_user_id: person.user_id,
-        p_cpf_normalized: data.cpf,
-        p_email_normalized: data.email,
-        p_role: role,
-        p_full_name: data.fullName,
-        p_phone_e164: data.phone,
-      },
-    );
-
-    if (added.error) {
-      reportFailure({
-        category: "registration_existing_role_rpc_failed",
-        requestId,
-        detail: added.error.code ?? "unknown",
-      });
-
-      if (
-        added.error.code === "23505" ||
-        added.error.message?.includes("ROLE_ALREADY_ASSIGNED")
-      )
-        throw registrationError("REGISTRATION_ROLE_ALREADY_ASSIGNED", 409);
-
-      if (added.error.code === "22023")
-        throw registrationError("REGISTRATION_DATA_REJECTED", 400);
-
-      if (added.error.code === "PGRST202" || added.error.code === "42883")
-        throw registrationError("REGISTRATION_SCHEMA_OUTDATED", 503);
-
-      throw registrationError("REGISTRATION_DATABASE_UNAVAILABLE", 503);
-    }
-
-
-    return {
-      userId: person.user_id,
-      confirmationRequired: false,
-      confirmationDispatchAccepted: false,
-      existingIdentity: true,
-      roleAdded: true,
-      role,
-    };
-  } finally {
-    await client.auth.signOut({ scope: "local" }).catch(() => undefined);
-  }
+  if (!added) throw registrationError("REGISTRATION_ROLE_ALREADY_ASSIGNED", 409);
+  return {
+    userId: person.user_id, confirmationRequired: true,
+    confirmationDispatchAccepted: false, confirmationDispatchDeferred: true,
+    existingIdentity: true, roleAdded: true, role,
+  };
 }
 
 export async function recordLgpdCadastroAcceptance(input: {
@@ -599,8 +543,10 @@ export async function register(
   let completedStatus: string | undefined;
 
   try {
+    const mailbox = await supabaseAdmin.rpc("fn_unassigned_mailbox_identity", { p_email: data.email });
+    if (mailbox.error) throw registrationError("REGISTRATION_DATABASE_UNAVAILABLE", 503);
     const created = await supabaseAdmin.auth.admin.createUser({
-      email: data.email,
+      email: mailbox.data ? `hvm-public-${randomUUID()}@auth.hortvitalmix.invalid` : data.email,
       password: data.password,
       email_confirm: false,
       user_metadata: { full_name: data.fullName, hvm_portal: "public", hvm_registration_role: role },
