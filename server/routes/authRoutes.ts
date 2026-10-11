@@ -1127,6 +1127,17 @@ authRouter.post("/reset-password", async (req, res, next) => {
     }
 
     if (isPublicPortalRole(input.data.portalRole)) {
+      // Recovery already proves ownership of the portal's real mailbox. The
+      // transport identity may use an internal address and must also be ready
+      // before consuming the proof or changing the scoped credential.
+      const confirmed = await supabaseAdmin.auth.admin.updateUserById(
+        challenge.userId,
+        { email_confirm: true },
+      );
+      if (confirmed.error) {
+        res.status(503).json({ error: "DEPENDENCY_UNAVAILABLE" });
+        return;
+      }
       const changed = await resetPublicPortalPassword(
         challenge.userId,
         input.data.portalRole,
