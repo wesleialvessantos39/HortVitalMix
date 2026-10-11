@@ -1,0 +1,41 @@
+{
+  "domain": "https://hortvitalmix.vercel.app",
+  "commitSha": "043da2a6b1f6f85f74516e5a12650cf5c398b14c",
+  "buildId": "19898c2014137a1f59a203047d90273623d837a7267e0f647d8e10a256f4be25",
+  "assetsVerified": 89,
+  "privateAssets": 0,
+  "httpChecks": [
+    {
+      "path": "/api/health",
+      "status": 200
+    },
+    {
+      "path": "/api/ready",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/config",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/mobile-ci/web-release/status",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/account/profile",
+      "forgedScopeRole": "consumer",
+      "status": 401
+    },
+    {
+      "path": "/api/v1/producer/properties",
+      "forgedScopeRole": "producer",
+      "status": 401
+    },
+    {
+      "path": "/api/v1/admin/categories",
+      "forgedScopeRole": "platform_admin",
+      "status": 401
+    }
+  ],
+  "businessWrites": 0
+}

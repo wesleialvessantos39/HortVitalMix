@@ -1,0 +1,86 @@
+{
+  "domain": "https://hortvitalmix.vercel.app",
+  "apiFixtures": false,
+  "visits": 12,
+  "businessMutations": 0,
+  "results": [
+    {
+      "path": "/entrar/consumidor",
+      "width": 320,
+      "fits": true,
+      "javascriptErrors": 0
+    },
+    {
+      "path": "/entrar/produtor",
+      "width": 320,
+      "fits": true,
+      "javascriptErrors": 0
+    },
+    {
+      "path": "/aplicativos",
+      "width": 320,
+      "fits": true,
+      "javascriptErrors": 0
+    },
+    {
+      "path": "/aplicativos",
+      "width": 320,
+      "simulatedStandalone": true,
+      "installedStatus": 1,
+      "updateButtons": 1,
+      "privateStaticCacheEntries": 0
+    },
+    {
+      "path": "/entrar/consumidor",
+      "width": 390,
+      "fits": true,
+      "javascriptErrors": 0
+    },
+    {
+      "path": "/entrar/produtor",
+      "width": 390,
+      "fits": true,
+      "javascriptErrors": 0
+    },
+    {
+      "path": "/aplicativos",
+      "width": 390,
+      "fits": true,
+      "javascriptErrors": 0
+    },
+    {
+      "path": "/aplicativos",
+      "width": 390,
+      "simulatedStandalone": true,
+      "installedStatus": 1,
+      "updateButtons": 1,
+      "privateStaticCacheEntries": 0
+    },
+    {
+      "path": "/entrar/consumidor",
+      "width": 1440,
+      "fits": true,
+      "javascriptErrors": 0
+    },
+    {
+      "path": "/entrar/produtor",
+      "width": 1440,
+      "fits": true,
+      "javascriptErrors": 0
+    },
+    {
+      "path": "/aplicativos",
+      "width": 1440,
+      "fits": true,
+      "javascriptErrors": 0
+    },
+    {
+      "path": "/aplicativos",
+      "width": 1440,
+      "simulatedStandalone": true,
+      "installedStatus": 1,
+      "updateButtons": 1,
+      "privateStaticCacheEntries": 0
+    }
+  ]
+}

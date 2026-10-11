@@ -74,11 +74,30 @@
     "businessWritesDuringValidation": 0
   },
   "publication": {
-    "status": "pending domain verification",
+    "status": "verified",
     "projectId": "prj_I45qiWMbm1O2BVML983JL0WlRtY5",
     "teamId": "team_ESpPjHpD1m2by7mz0fNAJiXu",
     "domain": "https://hortvitalmix.vercel.app",
-    "branch": "main"
+    "branch": "main",
+    "functionalCommitSha": "043da2a6b1f6f85f74516e5a12650cf5c398b14c",
+    "functionalDeploymentId": "dpl_7K8KAhK1Q1qLpSSDkMK9SK4GEfYc",
+    "deploymentState": "READY",
+    "region": "pdx1",
+    "functionalReleaseTag": "offline-portais-v74-043da2a",
+    "functionalBuildId": "19898c2014137a1f59a203047d90273623d837a7267e0f647d8e10a256f4be25",
+    "assetsVerified": 89,
+    "productionHttpChecks": 7,
+    "productionBrowserVisits": 12,
+    "productionBrowserWidths": [
+      320,
+      390,
+      1440
+    ],
+    "productionJavascriptErrors": 0,
+    "productionRuntimeErrorsFiveMinutes": 0,
+    "currentCommitEndpoint": "https://hortvitalmix.vercel.app/api/v1/mobile-ci/web-release/status",
+    "currentReadinessEndpoint": "https://hortvitalmix.vercel.app/api/ready",
+    "documentationClosure": "Documentation-only closing commits may advance the current source SHA; functional evidence above identifies the tested implementation commit."
   },
   "limits": [
     "Automatic synchronization runs when the browser allows execution; opening the app resumes saved work.",
