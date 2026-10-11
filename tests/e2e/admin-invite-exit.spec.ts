@@ -38,7 +38,7 @@ async function privateSnapshot(page: Page) {
   return page.evaluate(
     (userId) =>
       new Promise<unknown>((resolve, reject) => {
-        const open = indexedDB.open("hvm-rural-v1", 1);
+        const open = indexedDB.open("hvm-rural-v1");
         open.onerror = () => reject(open.error);
         open.onsuccess = () => {
           const db = open.result;

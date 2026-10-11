@@ -1,6 +1,7 @@
 import pg from "pg";
 import { runtime } from "../config/runtime.ts";
 import { reportFailure } from "../config/reportFailure.ts";
+import { scopedDatabasePool } from "./offlineTransaction.ts";
 
 function databaseHostname() {
   try {
@@ -16,7 +17,7 @@ const isSupabaseCloud = Boolean(
   runtime.dbUrl?.includes("supabase.co") || runtime.dbUrl?.includes("pooler.supabase.com"),
 );
 
-export const dbPool = runtime.dbUrl
+export const rawDbPool = runtime.dbUrl
   ? new pg.Pool({
       connectionString: runtime.dbUrl,
       max: 5,
@@ -31,5 +32,7 @@ export const dbPool = runtime.dbUrl
           },
     })
   : null;
+
+export const dbPool = rawDbPool ? scopedDatabasePool(rawDbPool) : null;
 
 dbPool?.on("error", () => reportFailure("db_unavailable"));

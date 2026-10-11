@@ -1,3 +1,4 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
 import { PageLoading } from "../../components/PageLoading";
 import { useRef, useState, type FormEvent } from "react";
 import {
@@ -87,7 +88,7 @@ export default function DeliveryWindowsPage({
       form.reset();
       refresh();
     } catch (e) {
-      setError(deliveryMessage(e));
+      setError(offlineSavedMessage(e) ?? (deliveryMessage(e)));
       const status = (e as ApiFailure).status ?? 0;
       if (status >= 400 && status < 500 && status !== 429 && status !== 401)
         pending.current = null;

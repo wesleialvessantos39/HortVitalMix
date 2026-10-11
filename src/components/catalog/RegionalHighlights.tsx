@@ -1,3 +1,4 @@
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Sprout } from "lucide-react";
 import { PageLoading } from "../PageLoading";
@@ -22,6 +23,7 @@ export default function RegionalHighlights({
   blocked: boolean;
   onNavigate: (path: string) => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [products, setProducts] = useState<HighlightProduct[]>([]),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(false),
@@ -100,7 +102,7 @@ export default function RegionalHighlights({
       window.removeEventListener("focus", refresh);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, [municipalityId, blocked, attempt]);
+  }, [municipalityId, blocked, attempt, offlineDataRevision]);
   const nextPage = useCallback(async () => {
     const p = current.current;
     await read.current?.(p.hasMore ? p.page + 1 : 1);

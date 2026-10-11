@@ -1,0 +1,11 @@
+[WebServer] (node:24447) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] ◇ injected env (0) from .env
+
+Running 1 test using 1 worker
+
+(node:24471) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/e2e/offline-transport.spec.ts:264:1 › passwords, tokens and login never enter the durable queue (1.7s)
+
+  1 passed (4.3s)

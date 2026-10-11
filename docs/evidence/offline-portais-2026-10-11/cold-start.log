@@ -1,0 +1,6 @@
+
+> hortivitalmix@0.1.0 verify:t12:store:runtime
+> node scripts/check-api-cold-start.mjs
+
+◇ injected env (0) from .env
+API_COLD_START_OK_WITHOUT_REQUIRE_ESM

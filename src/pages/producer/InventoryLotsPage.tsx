@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import {
   useCallback,
@@ -60,6 +62,7 @@ export default function InventoryLotsPage({
   session: ShellSession;
   onNavigate: (path: string) => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [inventory, setInventory] = useState<Inventory | null>(null);
   const [loading, setLoading] = useState(true),
     [loadError, setLoadError] = useState("");
@@ -114,8 +117,8 @@ export default function InventoryLotsPage({
     const abort = new AbortController();
     void load(abort.signal);
     return () => abort.abort();
-  }, [load, session.userId]);
-  useEffect(()=> {const refresh=()=>void load();window.addEventListener("hvm:offline-synchronized",refresh);window.addEventListener("offline",refresh);return()=>{window.removeEventListener("hvm:offline-synchronized",refresh);window.removeEventListener("offline",refresh);};},[load]);
+  }, [load, session.userId, offlineDataRevision]);
+  useEffect(()=> {const refresh=()=>void load();window.addEventListener("hvm:offline-synchronized",refresh);window.addEventListener("offline",refresh);return()=>{window.removeEventListener("hvm:offline-synchronized",refresh);window.removeEventListener("offline",refresh);};},[load, offlineDataRevision]);
   async function queue(input:RegisterHarvest) {
     if(!inventory?.product.revision)throw new Error("OFFLINE_SNAPSHOT_MISSING");
     const {commandId,...harvest}=input;
@@ -148,14 +151,14 @@ export default function InventoryLotsPage({
       );
     } catch (failure) {
       if(offlineTransport(failure)) {
-        try{await queue(input);}catch(storageError){setError(message(storageError));}
+        try{await queue(input);}catch(storageError){setError(offlineSavedMessage(storageError) ?? (message(storageError)));}
         return;
       }
       const fault = failure as ApiFailure;
       if (["AUTH_REQUIRED", "RECENT_AUTH_REQUIRED"].includes(fault.message)) {
         pending.current = input;
         setReauth(true);
-      } else setError(message(failure));
+      } else setError(offlineSavedMessage(failure) ?? (message(failure)));
     } finally {
       setBusy(false);
     }

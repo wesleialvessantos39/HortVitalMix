@@ -5,6 +5,7 @@ import { foundationRouter } from "./routes/foundationRoutes.ts";
 import { authRouter } from "./routes/authRoutes.ts";
 import { reportFailure } from "./config/reportFailure.ts";
 import { sessionMiddleware } from "./middleware/session.ts";
+import { offlineRequestMiddleware } from "./middleware/offlineRequests.ts";
 import { isAllowedRequestOrigin } from "./security/origin.ts";
 import { adminConfigRouter } from "./routes/adminConfigRoutes.ts";
 import { adminDashboardRouter } from "./routes/adminDashboardRoutes.ts";
@@ -61,8 +62,9 @@ app.use((req, res, next) => {
     res.set({
       "Access-Control-Allow-Origin": origin,
       "Access-Control-Allow-Credentials": "true",
-      "Access-Control-Allow-Methods": "GET,HEAD,POST,PATCH,DELETE,OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, X-Requested-With, Authorization, X-HVM-Request, X-Command-Id",
+      "Access-Control-Expose-Headers": "X-HVM-Offline-Receipt, X-Request-Id",
+      "Access-Control-Allow-Methods": "GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, X-Requested-With, Authorization, X-HVM-Request, X-Command-Id, X-HVM-Offline-Scope, X-HVM-Offline-Id",
       Vary: "Origin",
     });
     if (req.method === "OPTIONS") {
@@ -98,7 +100,8 @@ app.use((req, _res, next) => {
 });
 app.use((req,res,next)=> {
   const evidence=/^\/(?:api\/|_hvm_api\/)?v1\/(?:admin\/)?commerce\/evidence\/?$/.test(req.path);
-  return express.json({limit:evidence?"3mb":"32kb"})(req,res,next);
+  const ruralWorkflow = /^\/(?:api\/|_hvm_api\/)?v1\/producer\/properties\/wizard\/complete\/?$/.test(req.path);
+  return express.json({limit:evidence?"3mb":ruralWorkflow?"256kb":"32kb"})(req,res,next);
 });
 // Public immutable photo variants have their own SQL visibility gate.
 // Serve before sessions to avoid auth refresh cookies on shared CDN images.
@@ -106,6 +109,7 @@ app.use((req,res,next)=> {
 for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) app.use(prefix, mobileCiRouter);
 for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) app.use(prefix, publicMediaRouter);
 app.use(sessionMiddleware);
+app.use(offlineRequestMiddleware);
 app.use("/downloads", appDownloadRouter);
 app.use(foundationRouter);
 app.use("/api", foundationRouter);

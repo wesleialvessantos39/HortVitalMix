@@ -1,3 +1,4 @@
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../../lib/api";
 import { commerceMessage } from "../../lib/commerce";
@@ -25,6 +26,7 @@ export function CatalogModerationPanel({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [reason, setReason] = useState(""),
     [error, setError] = useState(""),
     [history, setHistory] = useState<
@@ -49,7 +51,7 @@ export function CatalogModerationPanel({
         if (!c.signal.aborted) setError(commerceMessage(e));
       });
     return () => c.abort();
-  }, [target.id, target.type]);
+  }, [target.id, target.type, offlineDataRevision]);
   function save(form: HTMLFormElement) {
     const body = {
       targetType: target.type,

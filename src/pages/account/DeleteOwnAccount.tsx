@@ -1,3 +1,4 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
 import { useEffect, useId, useRef, useState } from "react";
 import {
   AlertTriangle,
@@ -103,7 +104,7 @@ export function DeleteOwnAccount({
       });
       form.dispatchEvent(new Event("hvm:form-saved", { bubbles: true }));
       window.dispatchEvent(new Event("hvm:session-ending"));
-      const cleared = await rememberConfirmedAccountErasure(session.userId);
+      const cleared = await rememberConfirmedAccountErasure(session.userId, session.activeRole);
       announceBrowserSessionExit();
       onNavigate(
         cleared ? "/?conta=excluida" : "/?conta=excluida&limpeza=pendente",
@@ -112,11 +113,11 @@ export function DeleteOwnAccount({
       if (lifecycle.current?.signal.aborted) return;
       const code = (e as Error).message;
       setError(
-        code === "INVALID_CREDENTIALS"
+        offlineSavedMessage(e) ?? (code === "INVALID_CREDENTIALS"
           ? "Senha incorreta. Sua conta foi preservada."
           : code === "RECENT_AUTH_REQUIRED"
             ? "Confirme sua senha novamente para excluir."
-            : "Não foi possível confirmar a exclusão agora. Confira sua sessão antes de tentar novamente; uma falha de conexão pode exigir entrar para consultar o resultado.",
+            : "Não foi possível confirmar a exclusão agora. Confira sua sessão antes de tentar novamente; uma falha de conexão pode exigir entrar para consultar o resultado."),
       );
     } finally {
       flight.current = false;

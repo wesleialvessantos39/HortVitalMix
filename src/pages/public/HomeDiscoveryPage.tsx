@@ -1,3 +1,4 @@
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -70,6 +71,7 @@ export default function HomeDiscoveryPage({
   blocked: boolean;
   onNavigate: (path: string) => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [draft, setDraft] = useState(""),
     [query, setQuery] = useState(""),
     [categorySlug, setCategorySlug] = useState(""),
@@ -116,7 +118,7 @@ export default function HomeDiscoveryPage({
         if (!abort.signal.aborted) setCategoryError(true);
       });
     return () => abort.abort();
-  }, [attempt]);
+  }, [attempt, offlineDataRevision]);
   useEffect(() => {
     setPage(1);
   }, [query, categorySlug, municipalityId, coordinates]);
@@ -163,7 +165,7 @@ export default function HomeDiscoveryPage({
     page,
     blocked,
     attempt,
-  ]);
+  , offlineDataRevision]);
   useEffect(() => {
     commands.current.clear();
     setPending(new Set());
@@ -196,7 +198,7 @@ export default function HomeDiscoveryPage({
           setFavoriteError("Não foi possível consultar seus favoritos.");
       });
     return () => abort.abort();
-  }, [session?.userId, result, favoriteAttempt]);
+  }, [session?.userId, result, favoriteAttempt, offlineDataRevision]);
   function locate() {
     if (!navigator.geolocation) {
       setLocationMessage(

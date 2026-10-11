@@ -1,3 +1,4 @@
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { useCallback, useEffect, useState } from "react";
 import { ChevronRight, Package } from "lucide-react";
 import { api } from "../../lib/api";
@@ -20,6 +21,7 @@ export function CategoryNavSection({
   onSelect,
   onSelectionRefresh,
 }: Props) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [categories, setCategories] = useState<Category[]>([]);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [retry, setRetry] = useState(0);
@@ -56,7 +58,7 @@ export function CategoryNavSection({
       document.removeEventListener("visibilitychange", refresh);
       removeEventListener("hvm:categories-changed", refresh);
     };
-  }, [retry]);
+  }, [retry, offlineDataRevision]);
   useEffect(() => {
     if (state === "ready")
       onSelectionRefresh(

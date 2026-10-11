@@ -1,0 +1,110 @@
+[WebServer] (node:17689) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 74 tests using 1 worker
+
+(node:17725) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/pwa/installation-updates.spec.ts:58:1 › atualização silenciosa aguarda formulário e aplica a versão sem interação (15.2s)
+  ✓   2 tests/pwa/installation-updates.spec.ts:138:3 › home installation cards fit 320px (1.3s)
+  ✓   3 tests/pwa/installation-updates.spec.ts:138:3 › home installation cards fit 360px (894ms)
+  ✓   4 tests/pwa/installation-updates.spec.ts:138:3 › home installation cards fit 390px (710ms)
+  ✓   5 tests/pwa/installation-updates.spec.ts:138:3 › home installation cards fit 430px (1.0s)
+  ✓   6 tests/pwa/installation-updates.spec.ts:138:3 › home installation cards fit 768px (1.0s)
+  ✓   7 tests/pwa/installation-updates.spec.ts:138:3 › home installation cards fit 1024px (782ms)
+  ✓   8 tests/pwa/installation-updates.spec.ts:138:3 › home installation cards fit 1440px (1.5s)
+  ✓   9 tests/pwa/installation-updates.spec.ts:170:3 › public cards and installation guides fit 320×700 (1.2s)
+  ✓  10 tests/pwa/installation-updates.spec.ts:170:3 › public cards and installation guides fit 360×780 (1.4s)
+  ✓  11 tests/pwa/installation-updates.spec.ts:170:3 › public cards and installation guides fit 390×844 (1.2s)
+  ✓  12 tests/pwa/installation-updates.spec.ts:170:3 › public cards and installation guides fit 430×932 (1.2s)
+  ✓  13 tests/pwa/installation-updates.spec.ts:170:3 › public cards and installation guides fit 768×1024 (1.3s)
+  ✓  14 tests/pwa/installation-updates.spec.ts:170:3 › public cards and installation guides fit 1024×768 (1.0s)
+  ✓  15 tests/pwa/installation-updates.spec.ts:170:3 › public cards and installation guides fit 1440×900 (1.3s)
+  ✓  16 tests/pwa/installation-updates.spec.ts:170:3 › public cards and installation guides fit 844×390 (1.1s)
+  ✓  17 tests/pwa/installation-updates.spec.ts:220:5 › platform_admin with configuration power: PWA central fits 320px (842ms)
+  ✓  18 tests/pwa/installation-updates.spec.ts:220:5 › platform_admin with configuration power: PWA central fits 390px (894ms)
+  ✓  19 tests/pwa/installation-updates.spec.ts:220:5 › platform_admin with configuration power: PWA central fits 768px (1.3s)
+  ✓  20 tests/pwa/installation-updates.spec.ts:220:5 › platform_admin with configuration power: PWA central fits 1440px (1.0s)
+  ✓  21 tests/pwa/installation-updates.spec.ts:220:5 › platform_super_admin with configuration power: PWA central fits 320px (1.3s)
+  ✓  22 tests/pwa/installation-updates.spec.ts:220:5 › platform_super_admin with configuration power: PWA central fits 390px (942ms)
+  ✓  23 tests/pwa/installation-updates.spec.ts:220:5 › platform_super_admin with configuration power: PWA central fits 768px (1.8s)
+  ✓  24 tests/pwa/installation-updates.spec.ts:220:5 › platform_super_admin with configuration power: PWA central fits 1440px (1.4s)
+  ✓  25 tests/pwa/installation-updates.spec.ts:249:3 › platform_admin: explicit power denial protects the department (1.1s)
+  ✓  26 tests/pwa/installation-updates.spec.ts:249:3 › platform_super_admin: explicit power denial protects the department (875ms)
+  ✓  27 tests/pwa/installation-updates.spec.ts:260:3 › consumer: shared registration works without opening a producer screen (851ms)
+  ✓  28 tests/pwa/installation-updates.spec.ts:260:3 › producer: shared registration works without opening a producer screen (734ms)
+  ✓  29 tests/pwa/installation-updates.spec.ts:272:1 › Android button uses a real event contract and treats simulated accept, cancel and browser confirmation separately (1.2s)
+  ✓  30 tests/pwa/installation-updates.spec.ts:316:3 › iphone: Safari assistant and device signals (977ms)
+  ✓  31 tests/pwa/installation-updates.spec.ts:316:3 › ipad: Safari assistant and device signals (642ms)
+  ✓  32 tests/pwa/installation-updates.spec.ts:316:3 › internal: Safari assistant and device signals (948ms)
+  ✘  33 tests/pwa/installation-updates.spec.ts:372:3 › compact Safari instructions fit 320×568 with simulated iOS signals (1.1s)
+(node:19163) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  34 tests/pwa/installation-updates.spec.ts:372:3 › compact Safari instructions fit 360×640 with simulated iOS signals (1.3s)
+  ✓  35 tests/pwa/installation-updates.spec.ts:372:3 › compact Safari instructions fit 390×844 with simulated iOS signals (1.2s)
+  ✓  36 tests/pwa/installation-updates.spec.ts:372:3 › compact Safari instructions fit 430×932 with simulated iOS signals (962ms)
+  ✓  37 tests/pwa/installation-updates.spec.ts:372:3 › compact Safari instructions fit 768×1024 with simulated iOS signals (1.8s)
+  ✓  38 tests/pwa/installation-updates.spec.ts:372:3 › compact Safari instructions fit 1024×768 with simulated iOS signals (1.8s)
+  ✓  39 tests/pwa/installation-updates.spec.ts:372:3 › compact Safari instructions fit 1440×900 with simulated iOS signals (2.2s)
+  ✓  40 tests/pwa/installation-updates.spec.ts:372:3 › compact Safari instructions fit 844×390 with simulated iOS signals (1.6s)
+  ✓  41 tests/pwa/installation-updates.spec.ts:438:3 › iOS CriOS/153 uses its browser menu and reveals Safari fallback only in help (892ms)
+  ✓  42 tests/pwa/installation-updates.spec.ts:438:3 › iOS FxiOS/144 uses its browser menu and reveals Safari fallback only in help (1.2s)
+  ✓  43 tests/pwa/installation-updates.spec.ts:438:3 › iOS EdgiOS/153 uses its browser menu and reveals Safari fallback only in help (841ms)
+  ✓  44 tests/pwa/installation-updates.spec.ts:467:1 › iOS with an actual install event uses that capability without claiming current Safari support (1.1s)
+  ✓  45 tests/pwa/installation-updates.spec.ts:506:1 › copy errors remain visible inside the iOS handoff and never confirm installation (798ms)
+  ✓  46 tests/pwa/installation-updates.spec.ts:542:1 › internal iOS browser copies only the canonical installation URL without calling an installer (815ms)
+  ✓  47 tests/pwa/installation-updates.spec.ts:586:1 › Abrir instalação opens the address directly in a new tab with the remaining instructions (1.5s)
+  ✓  48 tests/pwa/installation-updates.spec.ts:621:3 › android instalado mostra um único status e uma ação de atualização (1.4s)
+  ✓  49 tests/pwa/installation-updates.spec.ts:621:3 › ios instalado mostra um único status e uma ação de atualização (2.1s)
+  ✓  50 tests/pwa/installation-updates.spec.ts:677:1 › a new complete build applies automatically and preserves IndexedDB (10.5s)
+  ✓  51 tests/pwa/installation-updates.spec.ts:725:3 › update waits for form and resumes automatically (14.5s)
+  ✓  52 tests/pwa/installation-updates.spec.ts:725:3 › update waits for upload and resumes automatically (14.4s)
+  ✓  53 tests/pwa/installation-updates.spec.ts:725:3 › update waits for confirmation and resumes automatically (14.7s)
+  ✓  54 tests/pwa/installation-updates.spec.ts:725:3 › update waits for offline-queue and resumes automatically (14.9s)
+  ✓  55 tests/pwa/installation-updates.spec.ts:838:1 › two tabs wait for the dirty tab before activating either shell (14.9s)
+  ✓  56 tests/pwa/installation-updates.spec.ts:882:1 › failed downloads preserve the old cache and recover after a later verification (9.7s)
+  ✓  57 tests/pwa/installation-updates.spec.ts:911:1 › offline preserves the shell; reconnection checks the new build without reinstalling (10.1s)
+  ✓  58 tests/pwa/installation-updates.spec.ts:936:1 › private/API responses and authorization are absent from static caches (1.1s)
+  ✓  59 tests/pwa/installation-updates.spec.ts:961:1 › checkout remains on the old version until its activity is concluded (9.6s)
+  ✓  60 tests/pwa/installation-updates.spec.ts:987:1 › first registration controls the identical shell for offline use without reloading work (1.1s)
+  ✓  61 tests/pwa/installation-updates.spec.ts:1001:1 › a delayed activation message from an already active worker cannot freeze typing (1.2s)
+  ✓  62 tests/pwa/installation-updates.spec.ts:1040:1 › the first automatic activation never leases the first user input (1.8s)
+  ✓  63 tests/pwa/installation-updates.spec.ts:1069:1 › two already open documents with different build identities transition coherently (15.0s)
+  ✓  64 tests/pwa/offline-portals.spec.ts:184:3 › consumer: offline reload, durable edits and automatic reconciliation (1.3s)
+  ✓  65 tests/pwa/offline-portals.spec.ts:184:3 › producer: offline reload, durable edits and automatic reconciliation (1.5s)
+  ✓  66 tests/pwa/offline-portals.spec.ts:184:3 › platform_admin: offline reload, durable edits and automatic reconciliation (1.4s)
+  ✓  67 tests/pwa/offline-portals.spec.ts:184:3 › platform_super_admin: offline reload, durable edits and automatic reconciliation (1.1s)
+  ✓  68 tests/pwa/offline-portals.spec.ts:241:1 › a lost response recovers the same action without duplicate server writes (2.9s)
+  ✓  69 tests/pwa/offline-portals.spec.ts:260:1 › offline conflict preserves the local action and the newer server value (1.0s)
+  ✓  70 tests/pwa/offline-portals.spec.ts:291:1 › consumer and producer caches and queues remain separate for the same email and user (1.1s)
+  ✓  71 tests/pwa/offline-portals.spec.ts:325:1 › permission loss rejects the admin action and preserves it locally (869ms)
+  ✓  72 tests/pwa/offline-portals.spec.ts:348:1 › connected changes are pulled automatically and refresh the current screen (2.5s)
+  ✓  73 tests/pwa/offline-portals.spec.ts:364:1 › a connected refresh never overwrites a form being edited (2.6s)
+  ✓  74 tests/pwa/offline-portals.spec.ts:390:1 › offline reload restores distinct radio choices and checkboxes (904ms)
+
+
+  1) tests/pwa/installation-updates.spec.ts:372:3 › compact Safari instructions fit 320×568 with simulated iOS signals 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      414 |     }));
+      415 |     expect(metrics.horizontal).toBe(true);
+    > 416 |     if (height >= 568) expect(metrics.vertical).toBe(true);
+          |                                                 ^
+      417 |     const help = guide.getByText("Não encontrou a opção?", { exact: true });
+      418 |     expect((await help.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+      419 |     const close = guide.getByRole("button", { name: "Fechar instruções" });
+        at /workspace/HortVitalMix/tests/pwa/installation-updates.spec.ts:416:49
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/installation-updates-compa-54bd3--with-simulated-iOS-signals/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/installation-updates-compa-54bd3--with-simulated-iOS-signals/error-context.md
+
+  1 failed
+    tests/pwa/installation-updates.spec.ts:372:3 › compact Safari instructions fit 320×568 with simulated iOS signals 
+  73 passed (3.8m)

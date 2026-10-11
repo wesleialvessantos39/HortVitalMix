@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import { RefundPolicy } from "../../components/commerce/RefundPolicy";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -51,6 +53,7 @@ export default function CheckoutReviewPage({
   userId: string | null;
   onNavigate: (path: string) => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [state, setState] = useState<State>("loading"),
     [cart, setCart] = useState<Cart | null>(null),
     [context, setContext] = useState<CheckoutContext | null>(null),
@@ -150,17 +153,17 @@ export default function CheckoutReviewPage({
         );
       } catch (e) {
         if (signal?.aborted || !alive.current) return;
-        setError(checkoutErrorMessage(e));
+        setError(offlineSavedMessage(e) ?? (checkoutErrorMessage(e)));
         setState("error");
       }
     },
-    [userId],
+    [userId, offlineDataRevision],
   );
   useEffect(() => {
     const c = new AbortController();
     void load(c.signal);
     return () => c.abort();
-  }, [load]);
+  }, [load, offlineDataRevision]);
   const remaining = quote ? Date.parse(quote.expiresAt) - now : 0;
   const expired = !!quote && remaining <= 0 && !confirmed;
   const locked = busy || uncertain || !!confirmed;
@@ -188,7 +191,7 @@ export default function CheckoutReviewPage({
       pendingRef.current = null;
     } catch (e) {
       if (alive.current) {
-        setError(checkoutErrorMessage(e));
+        setError(offlineSavedMessage(e) ?? (checkoutErrorMessage(e)));
         setState((e as ApiFailure).status === 409 ? "conflict" : "error");
       }
     } finally {
@@ -235,7 +238,7 @@ export default function CheckoutReviewPage({
       const status = (e as ApiFailure).status;
       const unknown = status === undefined || status < 400 || status >= 500;
       setUncertain(unknown);
-      setError(checkoutErrorMessage(e));
+      setError(offlineSavedMessage(e) ?? (checkoutErrorMessage(e)));
       if (!unknown) {
         clearPendingCheckout(userId);
         setPending(null);

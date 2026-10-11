@@ -1,0 +1,89 @@
+{
+  "date": "2026-10-11",
+  "scope": [
+    "consumer",
+    "producer",
+    "platform_admin",
+    "platform_super_admin"
+  ],
+  "schemaVersion": 74,
+  "migrations": 81,
+  "migrationHistoryHash": "3eb3a0f0f4e56ec4a813c0a3e7cefcfc056451b05bdd443cc5c8c6ae0bf49b2c",
+  "canonicalMigration": "20261011164621_portal_offline_receipts.sql",
+  "supabasePhysicalMigration": "20261011180615",
+  "localDatabase": "new disposable PostgreSQL 17; external Auth/SMTP/Storage/payment are declared fixtures",
+  "validation": {
+    "general": {
+      "passed": 1352,
+      "skipped": 533,
+      "filesPassed": 127,
+      "filesSkipped": 54
+    },
+    "postgresAndPolicy": {
+      "passed": 110,
+      "files": 7,
+      "realSqlHttpCases": 88,
+      "policyCases": 22
+    },
+    "transportBrowser": {
+      "passedDistinct": 12,
+      "credentialDraftCaseRepeatedAfterAdditionalOTPCheck": 1
+    },
+    "pwaBrowser": {
+      "passedDistinct": 74,
+      "realViteBuilds": 2,
+      "initialWideRunPassed": 73,
+      "initialWideRunFailed": 1,
+      "targetedFinalRunPassed": 19,
+      "reasonForRepeat": "Fixed six pixels of iOS guide overflow at 320x568 and repeated eight guide widths plus eleven portal offline cases."
+    },
+    "fullTypeScript": "passed",
+    "buildExistingGates": "passed",
+    "apiColdStart": "passed",
+    "migrationManifest": "verified",
+    "remoteHistory": "81 migrations validated through canonical aliases",
+    "bundleSecrets": "none",
+    "serviceWorker": {
+      "staticResources": 89,
+      "privateResources": 0
+    }
+  },
+  "productionDatabase": {
+    "project": "xipbsazvymkqqfmfegwu",
+    "before": {
+      "profiles": 6,
+      "activeRoles": 6,
+      "invites": 5,
+      "properties": 2,
+      "documents": 8,
+      "orders": 0
+    },
+    "after": {
+      "profiles": 6,
+      "activeRoles": 6,
+      "invites": 5,
+      "properties": 2,
+      "documents": 8,
+      "orders": 0
+    },
+    "offlineReceiptsAfterMigration": 0,
+    "receiptsRlsEnabled": true,
+    "receiptsRlsForced": true,
+    "receiptsAnonReadable": false,
+    "receiptsAuthenticatedReadable": false,
+    "businessWritesDuringValidation": 0
+  },
+  "publication": {
+    "status": "pending domain verification",
+    "projectId": "prj_I45qiWMbm1O2BVML983JL0WlRtY5",
+    "teamId": "team_ESpPjHpD1m2by7mz0fNAJiXu",
+    "domain": "https://hortvitalmix.vercel.app",
+    "branch": "main"
+  },
+  "limits": [
+    "Automatic synchronization runs when the browser allows execution; opening the app resumes saved work.",
+    "Visited data and established identity required for offline access.",
+    "Credentials never queued; payment execution, refunds and final erasure require connected confirmation.",
+    "Browser API fixtures do not prove physical iPhone/Android installation or real SMTP/payment delivery."
+  ]
+}

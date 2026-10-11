@@ -1,3 +1,4 @@
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Bell, CheckCheck, Info } from "lucide-react";
 import {
@@ -15,6 +16,7 @@ export default function NotificationDetailPage({ id, onNavigate }: {
   id: string;
   onNavigate: (to: string) => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const state = useNotifications();
   const role = state?.session?.activeRole;
   const actor = `${state?.session?.userId ?? ""}:${role ?? ""}`;
@@ -61,7 +63,7 @@ export default function NotificationDetailPage({ id, onNavigate }: {
       }
     })();
     return () => controller.abort();
-  }, [actor, apiBase, enabled, id, role, revision, validId]);
+  }, [actor, apiBase, enabled, id, role, revision, validId, offlineDataRevision]);
 
   if (!state?.session) return <section className="account-notice"><h1>Notificação</h1><p>Entre na sua conta para consultar este aviso.</p><button className="primary" onClick={() => onNavigate("/entrar")}>Entrar</button></section>;
   return <section className={`hvm-notification-detail${role === "platform_super_admin" ? " is-super-admin" : ""}`} aria-labelledby="notification-detail-title">

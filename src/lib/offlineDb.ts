@@ -11,7 +11,7 @@ import type { ShellSession } from "../hooks/useSession";
 import { pwaTransitionHeld, waitForPwaTransition } from "./pwaTransition";
 
 const NAME = "hvm-rural-v1",
-  TTL = 24 * 60 * 60 * 1000;
+  TTL = 7 * 24 * 60 * 60 * 1000;
 export type PendingCommand = {
   commandId: string;
   userId: string;
@@ -37,13 +37,14 @@ function open(): Promise<IDBDatabase> {
   if (!globalThis.indexedDB)
     return Promise.reject(new Error("OFFLINE_STORAGE_UNAVAILABLE"));
   connection ??= new Promise((resolve, reject) => {
-    const request = indexedDB.open(NAME, 1);
+    const request = indexedDB.open(NAME, 2);
     const timer = setTimeout(() => {
       connection = null;
       reject(new Error("OFFLINE_STORAGE_UNAVAILABLE"));
     }, 4000);
     request.onupgradeneeded = () => {
       const db = request.result;
+      if (!db.objectStoreNames.contains("pending_commands")) {
       const queue = db.createObjectStore("pending_commands", {
         keyPath: "commandId",
       });
@@ -51,6 +52,12 @@ function open(): Promise<IDBDatabase> {
       const snapshots = db.createObjectStore("snapshots", { keyPath: "key" });
       snapshots.createIndex("user", "userId");
       db.createObjectStore("meta");
+      }
+      for (const name of ["portal_requests", "portal_cache", "portal_drafts", "portal_uploads"]) {
+        if (db.objectStoreNames.contains(name)) continue;
+        const store = db.createObjectStore(name, { keyPath: "key" });
+        store.createIndex("scope", "scope");
+      }
     };
     request.onsuccess = () => {
       clearTimeout(timer);
@@ -69,7 +76,7 @@ function open(): Promise<IDBDatabase> {
   });
   return connection;
 }
-async function transaction<T>(
+export async function offlineTransaction<T>(
   stores: string[],
   mode: IDBTransactionMode,
   work: (tx: IDBTransaction, finish: (value: T) => void) => void,
@@ -100,16 +107,19 @@ async function transaction<T>(
     }
   }
 }
+const transaction = offlineTransaction;
 /** Read only counts, across local accounts; never exposes another user's data. */
 export async function hasOfflineWork() {
   if (hasPendingOfflineWrites()) return true;
   return transaction<boolean>(
-    ["pending_commands"],
+    ["pending_commands", "portal_requests", "portal_uploads"],
     "readonly",
     (tx, finish) => {
-      const request = tx.objectStore("pending_commands").count();
-      request.onsuccess = () =>
-        finish(request.result > 0 || hasPendingOfflineWrites());
+      let count = 0, remaining = 3;
+      for (const name of ["pending_commands", "portal_requests", "portal_uploads"]) {
+        const request = tx.objectStore(name).count();
+        request.onsuccess = () => { count += request.result; if (--remaining === 0) finish(count > 0 || hasPendingOfflineWrites()); };
+      }
     },
   );
 }
@@ -185,6 +195,7 @@ export async function enqueueCommand(userId: string, input: SyncCommand) {
     },
   );
   changed();
+  window.dispatchEvent(new Event("hvm:offline-work"));
 }
 export async function dismissCommand(userId: string, commandId: string) {
   // Only resolved conflict/rejection may be dismissed; pending actions cannot be
@@ -356,8 +367,9 @@ export async function saveProducerSession(session: ShellSession | null) {
     }
     const store = tx.objectStore("meta");
     if (
-      session?.activeRole === "producer" &&
-      session.roles.includes("producer")
+      session?.activeRole &&
+      ["consumer", "producer", "platform_admin", "platform_super_admin"].includes(session.activeRole) &&
+      session.roles.includes(session.activeRole)
     )
       store.put(
         {
@@ -365,9 +377,9 @@ export async function saveProducerSession(session: ShellSession | null) {
             userId: session.userId,
             email: session.email,
             fullName: session.fullName,
-            activeRole: "producer",
-            roles: ["producer"],
-            portalKind: "public",
+            activeRole: session.activeRole,
+            roles: [session.activeRole],
+            portalKind: session.portalKind,
           },
           savedAt: Date.now(),
         },
@@ -390,33 +402,34 @@ export async function readProducerSession(): Promise<ShellSession | null> {
 }
 export async function clearProducerSnapshots() {
   snapshotRevision++;
-  await transaction<void>(["meta", "snapshots"], "readwrite", (tx, finish) => {
+  await transaction<void>(["meta", "snapshots", "portal_cache"], "readwrite", (tx, finish) => {
     tx.objectStore("meta").delete("producerSession");
     tx.objectStore("snapshots").clear();
+    tx.objectStore("portal_cache").clear();
     finish();
   });
 }
 /** Only after the owner explicitly confirms account erasure; never on update. */
-export async function eraseOwnOfflineData(userId: string) {
+export async function eraseOwnOfflineData(userId: string, role?: string) {
   snapshotRevision++;
   await transaction<void>(
-    ["pending_commands", "snapshots", "meta"],
+    ["pending_commands", "snapshots", "meta", "portal_requests", "portal_cache", "portal_drafts", "portal_uploads"],
     "readwrite",
     (tx, finish) => {
-      for (const name of ["pending_commands", "snapshots"]) {
+      for (const name of ["pending_commands", "snapshots", "portal_requests", "portal_cache", "portal_drafts", "portal_uploads"]) {
         const store = tx.objectStore(name),
           cursor = store.openCursor();
         cursor.onsuccess = () => {
           const row = cursor.result;
           if (!row) return;
-          if (row.value.userId === userId) row.delete();
+          if ((row.value.userId === userId && (!role || role === "producer")) || (role ? row.value.scope === userId + ":" + role : row.value.scope?.startsWith(userId + ":"))) row.delete();
           row.continue();
         };
       }
       const meta = tx.objectStore("meta"),
         session = meta.get("producerSession");
       session.onsuccess = () => {
-        if (session.result?.session?.userId === userId)
+        if (session.result?.session?.userId === userId && (!role || session.result.session.activeRole === role))
           meta.delete("producerSession");
       };
       finish();

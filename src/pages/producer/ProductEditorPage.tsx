@@ -1,3 +1,4 @@
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import {
   useCallback,
@@ -75,6 +76,7 @@ export default function ProductEditorPage({
   session: ShellSession;
   onNavigate: (path: string) => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [product, setProduct] = useState<Product | null>(null),
     [draft, setDraft] = useState<Draft>(empty),
     [categories, setCategories] = useState<Category[]>([]);
@@ -121,13 +123,13 @@ export default function ProductEditorPage({
         if (!signal?.aborted) setLoading(false);
       }
     },
-    [id],
+    [id, offlineDataRevision],
   );
   useEffect(() => {
     const abort = new AbortController();
     void load(abort.signal);
     return () => abort.abort();
-  }, [load, session.userId]);
+  }, [load, session.userId, offlineDataRevision]);
   function patch<K extends keyof Draft>(key: K, value: Draft[K]) {
     setDraft((current) => ({ ...current, [key]: value }));
   }

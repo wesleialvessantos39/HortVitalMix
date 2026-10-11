@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 73,
+  "schemaVersion": 74,
   "migrations": [
     {
       "version": "20260919030126",
@@ -400,7 +400,12 @@
       "version": "20261011032631",
       "name": "independent_public_portal_credentials",
       "file": "20261011032631_independent_public_portal_credentials.sql"
+    },
+    {
+      "version": "20261011164621",
+      "name": "portal_offline_receipts",
+      "file": "20261011164621_portal_offline_receipts.sql"
     }
   ],
-  "migrationHistoryHash": "918d9c007a7e6c4fe97ea6239e92943c80e784b2915e3379b5ce54431e7b6234"
+  "migrationHistoryHash": "3eb3a0f0f4e56ec4a813c0a3e7cefcfc056451b05bdd443cc5c8c6ae0bf49b2c"
 }

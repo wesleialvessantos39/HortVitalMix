@@ -1,3 +1,4 @@
+import { offlineSavedMessage } from "./portalOffline";
 import { z } from "zod";
 import {
   OrderIdSchema,
@@ -71,6 +72,7 @@ export async function sendOrderTransition(
   }catch(e){if(offlineTransport(e))return queue();throw e;}
 }
 export function orderMessage(error: unknown) {
+  const saved = offlineSavedMessage(error); if (saved) return saved;
   const messages: Record<string, string> = {
     CONSUMER_REQUIRED: "Cadastre-se e entre como consumidor para comprar.",
     AUTH_REQUIRED:

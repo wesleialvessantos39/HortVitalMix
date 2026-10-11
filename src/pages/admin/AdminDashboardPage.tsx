@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle, ArrowUpRight, Ban, CreditCard, FileCheck2, Landmark,
@@ -41,6 +43,7 @@ function metricValue(metric: Metric) {
 }
 
 export function AdminDashboardPage({ access, onNavigate }: Props) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [data, setData] = useState<AdminDashboardResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -73,8 +76,8 @@ export function AdminDashboardPage({ access, onNavigate }: Props) {
           if (status === 401 || status === 403) {
             setData(null);
             setSelectedSector(null);
-            setError("Sua sessão ou seus poderes mudaram. Confirme seu acesso para consultar os indicadores.");
-          } else setError("Não foi possível atualizar os indicadores. Tente novamente.");
+            setError(offlineSavedMessage(cause) ?? ("Sua sessão ou seus poderes mudaram. Confirme seu acesso para consultar os indicadores."));
+          } else setError(offlineSavedMessage(cause) ?? ("Não foi possível atualizar os indicadores. Tente novamente."));
         }
       } finally {
         inFlight = false;
@@ -103,7 +106,7 @@ export function AdminDashboardPage({ access, onNavigate }: Props) {
       window.removeEventListener("hvm:notifications-updated", reloadVisible);
       window.removeEventListener("hvm:departments-changed", reloadVisible);
     };
-  }, [scopeKey]);
+  }, [scopeKey, offlineDataRevision]);
 
   // The endpoint enforces permissions; filtering again also avoids displaying
   // a previously loaded department after access is changed in this session.

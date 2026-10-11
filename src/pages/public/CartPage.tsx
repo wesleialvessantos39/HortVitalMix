@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -23,6 +25,7 @@ export default function CartPage({
   signedIn: boolean;
   onNavigate: (path: string) => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [cart, setCart] = useState<Cart | null>(null),
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
@@ -34,7 +37,7 @@ export default function CartPage({
       const next = await loadCart(signal);
       if (!signal?.aborted) setCart(next);
     } catch (failure) {
-      if (!signal?.aborted) setError(cartErrorMessage(failure));
+      if (!signal?.aborted) setError(offlineSavedMessage(failure) ?? (cartErrorMessage(failure)));
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
@@ -43,7 +46,7 @@ export default function CartPage({
     const controller = new AbortController();
     void load(controller.signal);
     return () => controller.abort();
-  }, [load]);
+  }, [load, offlineDataRevision]);
   const locked = command.busy || command.uncertain;
   useEffect(() => {
     if (loading || locked || !cart) return;
@@ -73,7 +76,7 @@ export default function CartPage({
       window.removeEventListener("focus", refresh);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, [loading, locked, !!cart]);
+  }, [loading, locked, !!cart, offlineDataRevision]);
   return (
     <section className="hvm-cart">
       <button

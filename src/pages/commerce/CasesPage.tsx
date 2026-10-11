@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Flag, MessageSquare, ShieldCheck } from "lucide-react";
@@ -48,6 +50,7 @@ export default function CasesPage({
   onNavigate: (path: string) => void;
   adminAccess?: AdminVerifySessionResponse;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const isAdmin = !!adminAccess,
     plural = kind === "refund" ? "refunds" : "complaints",
     base = `/v1/${isAdmin ? "admin/" : ""}commerce`,
@@ -116,7 +119,7 @@ export default function CasesPage({
           if (!controller.signal.aborted) setError(commerceMessage(e));
         });
     return () => controller.abort();
-  }, [userId, base, plural, isAdmin, kind, page, filter]);
+  }, [userId, base, plural, isAdmin, kind, page, filter, offlineDataRevision]);
   useEffect(() => {
     if (isAdmin || kind !== "complaint" || !userId) return;
     const controller = new AbortController();
@@ -144,7 +147,7 @@ export default function CasesPage({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [userId, isAdmin, kind, targetType, targetSearch]);
+  }, [userId, isAdmin, kind, targetType, targetSearch, offlineDataRevision]);
   useEffect(() => {
     if (!selectedId || !userId) return;
     const controller = new AbortController();
@@ -163,7 +166,7 @@ export default function CasesPage({
         if (!controller.signal.aborted) setError(commerceMessage(e));
       });
     return () => controller.abort();
-  }, [userId, base, plural, selectedId]);
+  }, [userId, base, plural, selectedId, offlineDataRevision]);
   useEffect(() => {
     if (!userId) return;
     const controller=new AbortController();let running=false;
@@ -179,14 +182,14 @@ export default function CasesPage({
           if(!controller.signal.aborted)setSelected(detail);
         }
       } catch(e) {
-        if(!controller.signal.aborted){setError(commerceMessage(e));if([401,403,404].includes((e as ApiFailure).status??0))setSelected(null);}
+        if(!controller.signal.aborted){setError(offlineSavedMessage(e) ?? (commerceMessage(e)));if([401,403,404].includes((e as ApiFailure).status??0))setSelected(null);}
       } finally {running=false;}
     }
     const sync=()=>void update(),timer=setInterval(sync,30000);
     window.addEventListener("hvm:notifications-updated",sync);
     window.addEventListener("focus",sync);window.addEventListener("online",sync);document.addEventListener("visibilitychange",sync);
     return()=>{controller.abort();clearInterval(timer);window.removeEventListener("hvm:notifications-updated",sync);window.removeEventListener("focus",sync);window.removeEventListener("online",sync);document.removeEventListener("visibilitychange",sync);};
-  }, [userId,base,plural,page,filter,selectedId]);
+  }, [userId,base,plural,page,filter,selectedId, offlineDataRevision]);
   useEffect(() => {
     const order = orders.find((value) => value.id === orderId);
     if (order) setAmount((order.totalCents / 100).toFixed(2));

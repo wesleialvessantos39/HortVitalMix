@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ImagePlus, Layers, Package, Trash2 } from "lucide-react";
 import { api, type ApiFailure } from "../../lib/api";
@@ -34,6 +36,7 @@ export function StoreMediaSettings({
   onReload: () => Promise<void>;
   onBusyChange: (busy: boolean) => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [mode, setMode] = useState(store.coverMode),
     [name, setName] = useState(store.publicProducerName ?? ""),
     [busy, setBusy] = useState(false),
@@ -93,7 +96,7 @@ export function StoreMediaSettings({
       window.removeEventListener("focus", refresh);
       window.clearInterval(timer);
     };
-  }, [store.id, productAttempt]);
+  }, [store.id, productAttempt, offlineDataRevision]);
   function command(key: string) {
     if (!commands.current.has(key)) commands.current.set(key, uuid());
     return commands.current.get(key)!;
@@ -117,7 +120,7 @@ export function StoreMediaSettings({
         onRecentAuth(() => run(operation, message));
       } else {
         setError(
-          fault.message === "STORE_REVISION_CONFLICT"
+          offlineSavedMessage(failure) ?? (fault.message === "STORE_REVISION_CONFLICT"
             ? "A loja mudou em outro dispositivo. Recarregue antes de tentar novamente."
             : fault.message === "STORE_MEDIA_LIMIT"
               ? "A capa aceita até seis fotos. Remova uma antes de adicionar outra."
@@ -127,7 +130,7 @@ export function StoreMediaSettings({
                   ? "A imagem não pôde ser validada. Escolha uma foto JPEG, PNG ou WebP."
                   : fault.status
                     ? "Não foi possível salvar agora. Tente novamente."
-                    : fault.message || "Não foi possível preparar a imagem.",
+                    : fault.message || "Não foi possível preparar a imagem."),
         );
         setConflict(
           fault.message === "STORE_REVISION_CONFLICT" ||

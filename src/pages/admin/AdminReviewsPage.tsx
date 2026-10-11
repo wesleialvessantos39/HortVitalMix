@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api, type ApiFailure } from "../../lib/api";
@@ -15,6 +17,7 @@ import { useSession } from "../../hooks/useSession";
 import "../../components/reviews/reviews.css";
 
 export default function AdminReviewsPage() {
+  const offlineDataRevision = useOfflineDataRevision();
   const { session } = useSession();
   const [state, setState] = useState<"published" | "moderated" | "all">(
     "published",
@@ -53,7 +56,7 @@ export default function AdminReviewsPage() {
         if (!c.signal.aborted) setError(reviewMessage(e));
       });
     return () => c.abort();
-  }, [state, page, attempt, search, rating]);
+  }, [state, page, attempt, search, rating, offlineDataRevision]);
   async function moderate(event: FormEvent) {
     event.preventDefault();
     if (!selected || flight.current || reauth) return;
@@ -94,7 +97,7 @@ export default function AdminReviewsPage() {
         ((e as ApiFailure).status ?? 0) < 500
       )
         pending.current = null;
-      setError(reviewMessage(e));
+      setError(offlineSavedMessage(e) ?? (reviewMessage(e)));
     } finally {
       flight.current = false;
       setBusy(false);

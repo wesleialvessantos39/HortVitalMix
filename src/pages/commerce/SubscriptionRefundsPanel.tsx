@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAutomaticQueryRefresh } from "../../hooks/useAutomaticQueryRefresh";
 import { api, type ApiFailure } from "../../lib/api";
@@ -39,6 +41,7 @@ function ScopedSubscriptionRefundsPanel({
   session: ShellSession;
   administrative: boolean;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [data, setData] = useState<Result | null>(null),
     [error, setError] = useState("");
   const [status, setStatus] = useState("all"),
@@ -96,7 +99,7 @@ function ScopedSubscriptionRefundsPanel({
         }
       });
     return () => controller.abort();
-  }, [prefix, status, page, attempt, session?.userId]);
+  }, [prefix, status, page, attempt, session?.userId, offlineDataRevision]);
   async function action(action: string) {
     if (!selected || flight.current || busy || reauth) return;
     if (action !== "process" && note.trim().length < 10) {
@@ -156,7 +159,7 @@ function ScopedSubscriptionRefundsPanel({
         AbortSignal.any([lifecycle.current.signal, AbortSignal.timeout(20000)]),
       );
     } catch (e) {
-      if (!lifecycle.current.signal.aborted) setError(commerceMessage(e));
+      if (!lifecycle.current.signal.aborted) setError(offlineSavedMessage(e) ?? (commerceMessage(e)));
     } finally {
       flight.current = false;
       if (!lifecycle.current.signal.aborted) setPublicBusy(false);

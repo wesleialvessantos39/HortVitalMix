@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import {
   useCallback,
   useEffect,
@@ -72,6 +74,7 @@ function LocationStatus({ address, administrative }: { address: AddressAdvancedV
 }
 
 export function AddressManager({ title, help, initialAddresses, administrative = false }: Props) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [addresses, setAddresses] = useState<AddressAdvancedView[]>(initialAddresses ?? []);
   const [state, setState] = useState<AddressState>(initialAddresses ? (initialAddresses.length ? "ready" : "empty") : "loading");
   const [notice, setNotice] = useState("");
@@ -97,11 +100,11 @@ export function AddressManager({ title, help, initialAddresses, administrative =
     } catch {
       setState("error");
     }
-  }, []);
+  }, [offlineDataRevision]);
 
   useEffect(() => {
     void load();
-  }, [load]);
+  }, [load, offlineDataRevision]);
 
   const limitReached = addresses.length >= 10;
 
@@ -128,7 +131,7 @@ export function AddressManager({ title, help, initialAddresses, administrative =
       if ((error as ApiFailure).status === 409) {
         await handleConflict();
       } else {
-        setNotice(mutationMessage(error));
+        setNotice(offlineSavedMessage(error) ?? (mutationMessage(error)));
       }
     } finally {
       setBusyId(null);
@@ -155,7 +158,7 @@ export function AddressManager({ title, help, initialAddresses, administrative =
       if ((error as ApiFailure).status === 409) {
         await handleConflict();
       } else {
-        setNotice(mutationMessage(error));
+        setNotice(offlineSavedMessage(error) ?? (mutationMessage(error)));
       }
     } finally {
       setBusyId(null);
@@ -544,7 +547,7 @@ function AddressEditorSheet({
         return;
       }
       const message = mutationMessage(caught);
-      setError(message);
+      setError(offlineSavedMessage(caught) ?? (message));
       if (failure.status === 422) onNotice(message);
     } finally {
       submission.current = false;

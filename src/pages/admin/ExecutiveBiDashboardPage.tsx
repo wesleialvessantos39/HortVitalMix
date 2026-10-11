@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useState, type FormEvent } from "react";
 import { BarChart3, RefreshCw } from "lucide-react";
@@ -32,6 +34,7 @@ function errorMessage(e: unknown) {
       : "Não foi possível consultar ou calcular agora. Tente novamente.";
 }
 export default function ExecutiveBiDashboardPage() {
+  const offlineDataRevision = useOfflineDataRevision();
   const session = usePortalSession();
   const [reauth, setReauth] = useState(false);
   const today = iso(new Date()),
@@ -63,7 +66,7 @@ export default function ExecutiveBiDashboardPage() {
         if (!abort.signal.aborted) setError(errorMessage(e));
       });
     return () => abort.abort();
-  }, [period, version]);
+  }, [period, version, offlineDataRevision]);
   function select(event: FormEvent) {
     event.preventDefault();
     const p = KpiPeriodSchema.safeParse(draft);
@@ -102,7 +105,7 @@ export default function ExecutiveBiDashboardPage() {
         )
       )
         setReauth(true);
-      setError(errorMessage(e));
+      setError(offlineSavedMessage(e) ?? (errorMessage(e)));
     } finally {
       setBusy(false);
       setProgress("");

@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import {
   useCallback,
@@ -78,6 +80,7 @@ export default function ProducerStoreSettingsPage({
   session,
   onNavigate,
 }: Props) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [settings, setSettings] = useState<StoreSettings | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [tab, setTab] = useState<"settings" | "hours" | "media">("settings");
@@ -111,11 +114,11 @@ export default function ProducerStoreSettingsPage({
       setDraft(result.store ? draftFrom(result.store) : null);
       setConflict(false);
     } catch (failure) {
-      if (!signal?.aborted) setError(errorMessage(failure as ApiFailure));
+      if (!signal?.aborted) setError(offlineSavedMessage(failure) ?? (errorMessage(failure as ApiFailure)));
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
-  }, []);
+  }, [offlineDataRevision]);
   useEffect(() => {
     const controller = new AbortController();
     void hydrate(controller.signal);
@@ -157,7 +160,7 @@ export default function ProducerStoreSettingsPage({
           pending.current = run;
           setReauthOpen(true);
         } else {
-          setError(errorMessage(fault));
+          setError(offlineSavedMessage(failure) ?? (errorMessage(fault)));
           setConflict(
             fault.message === "STORE_REVISION_CONFLICT" ||
               fault.message === "STORE_TRANSITION_FORBIDDEN",

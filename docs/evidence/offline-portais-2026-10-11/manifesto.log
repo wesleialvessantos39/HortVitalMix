@@ -1,0 +1,5 @@
+
+> hortivitalmix@0.1.0 migrations:verify
+> node --import tsx scripts/migrations-manifest.ts
+
+{"schemaVersion":74,"hash":"3eb3a0f0f4e56ec4a813c0a3e7cefcfc056451b05bdd443cc5c8c6ae0bf49b2c"}

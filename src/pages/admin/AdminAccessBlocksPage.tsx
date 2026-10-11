@@ -1,3 +1,4 @@
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import {
   useCallback,
   useEffect,
@@ -52,6 +53,7 @@ const subjectLabels: Record<PartialBlockSubject, string> = {
 };
 
 export function AdminAccessBlocksPage({ access }: Props) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [identifier, setIdentifier] = useState("");
   const [subject, setSubject] = useState<PartialBlockSubject>(
     "producer_publishing",
@@ -86,7 +88,7 @@ export function AdminAccessBlocksPage({ access }: Props) {
           setError("Não foi possível listar os bloqueios deste titular.");
       }
     },
-    [],
+    [offlineDataRevision],
   );
 
   useEffect(() => {
@@ -99,7 +101,7 @@ export function AdminAccessBlocksPage({ access }: Props) {
       })
       .catch(() => {});
     return () => controller.abort();
-  }, []);
+  }, [offlineDataRevision]);
 
   function handleFailure(failure: unknown) {
     const code = (failure as ApiFailure).message;

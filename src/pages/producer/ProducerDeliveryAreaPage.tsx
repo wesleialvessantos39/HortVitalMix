@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import {
   useCallback,
@@ -72,6 +74,7 @@ export default function ProducerDeliveryAreaPage({
   session: ShellSession;
   onNavigate: (path: string) => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [settings, setSettings] = useState<DeliverySettings | null>(null),
     [draft, setDraft] = useState<Draft | null>(null);
   const [loading, setLoading] = useState(true),
@@ -103,12 +106,12 @@ export default function ProducerDeliveryAreaPage({
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
-  }, []);
+  }, [offlineDataRevision]);
   useEffect(() => {
     const abort = new AbortController();
     void load(abort.signal);
     return () => abort.abort();
-  }, [load, session.userId]);
+  }, [load, session.userId, offlineDataRevision]);
   function patch<K extends keyof Draft>(key: K, value: Draft[K]) {
     setDraft((old) => (old ? { ...old, [key]: value } : old));
     setNotice("");
@@ -140,7 +143,7 @@ export default function ProducerDeliveryAreaPage({
         pending.current = input;
         setReauth(true);
       } else {
-        setError(errorMessage(e));
+        setError(offlineSavedMessage(e) ?? (errorMessage(e)));
         if (fault.message === "DELIVERY_REVISION_CONFLICT") setConflict(true);
       }
     } finally {

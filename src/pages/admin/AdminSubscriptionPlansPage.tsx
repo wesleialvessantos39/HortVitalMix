@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import {
   useCallback,
@@ -42,6 +44,7 @@ const empty = (): Draft => ({
   isActive: false,
 });
 export default function AdminSubscriptionPlansPage() {
+  const offlineDataRevision = useOfflineDataRevision();
   const { session } = useSession(),
     [plans, setPlans] = useState<SubscriptionPlan[]>([]),
     [stores, setStores] = useState<Array<{ id: string; name: string }>>([]),
@@ -77,16 +80,16 @@ export default function AdminSubscriptionPlansPage() {
         setStores(v.stores);
       }
     } catch (e) {
-      if (!signal?.aborted) setError(subscriptionMessage(e));
+      if (!signal?.aborted) setError(offlineSavedMessage(e) ?? (subscriptionMessage(e)));
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
-  }, []);
+  }, [offlineDataRevision]);
   useEffect(() => {
     const c = new AbortController();
     void load(c.signal);
     return () => c.abort();
-  }, [load]);
+  }, [load, offlineDataRevision]);
   function edit(p: SubscriptionPlan) {
     setEditorOpen(true);
     focusEditor();
@@ -161,7 +164,7 @@ export default function AdminSubscriptionPlansPage() {
         ((e as ApiFailure).status ?? 0) < 500
       )
         pending.current = null;
-      setError(subscriptionMessage(e));
+      setError(offlineSavedMessage(e) ?? (subscriptionMessage(e)));
     } finally {
       flight.current = false;
       setBusy(false);

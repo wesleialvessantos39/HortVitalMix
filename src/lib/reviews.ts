@@ -1,4 +1,6 @@
+import { offlineSavedMessage } from "./portalOffline";
 export function reviewMessage(error: unknown): string {
+  const saved = offlineSavedMessage(error); if (saved) return saved;
   const code = error instanceof Error ? error.message : "";
   const messages: Record<string, string> = {
     REVISION_CONFLICT:

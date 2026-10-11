@@ -1,3 +1,4 @@
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAutomaticQueryRefresh } from "../../hooks/useAutomaticQueryRefresh";
 import { api, type ApiFailure } from "../../lib/api";
@@ -41,6 +42,7 @@ export function AdminSubscriptionsPanel() {
   );
 }
 function ScopedAdminSubscriptionsPanel({ session }: { session: ShellSession }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [page, setPage] = useState(1),
     [search, setSearch] = useState(""),
     [status, setStatus] = useState("all"),
@@ -94,7 +96,7 @@ function ScopedAdminSubscriptionsPanel({ session }: { session: ShellSession }) {
         if (!c.signal.aborted) failed(e);
       });
     return () => c.abort();
-  }, [page, search, status, audience, tick, session?.userId]);
+  }, [page, search, status, audience, tick, session?.userId, offlineDataRevision]);
   async function open(id: string) {
     if (
       flight.current ||

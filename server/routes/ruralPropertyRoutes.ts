@@ -4,9 +4,12 @@ import {
   SaveRuralDraftSchema,
   SaveWizardStepSchema,
   SubmitPropertySchema,
+  CompleteRuralWorkflowSchema,
 } from "../../shared/contracts/ruralProperty.ts";
 import { originProtection } from "../security/originProtection.ts";
+import { offlineTransactionClient } from "../db/offlineTransaction.ts";
 import { verifyRecentAuthProof } from "../security/recentAuth.ts";
+import { reportFailure } from "../config/reportFailure.ts";
 import {
   RuralPropertyError,
   RuralPropertyService,
@@ -99,6 +102,7 @@ function sendError(res: Response, error: unknown) {
     });
     return;
   }
+  reportFailure({ category: "rural_property_database", requestId: res.locals.requestId, detail: String((error as { code?: string }).code ?? "unknown") });
   res.status(503).json({
     error: "DEPENDENCY_UNAVAILABLE",
     requestId: res.locals.requestId,
@@ -192,6 +196,23 @@ ruralPropertyRouter.post(
     }
   },
 );
+
+ruralPropertyRouter.post("/producer/properties/wizard/complete", originProtection, async (req, res) => {
+  const actor = requireProducer(req, res);
+  if (!actor || !requireRecentAuth(req, res, actor.userId)) return;
+  const parsed = CompleteRuralWorkflowSchema.safeParse(req.body);
+  if (!parsed.success) { res.status(422).json({ error: "VALIDATION_ERROR" }); return; }
+  if (!offlineTransactionClient()) { res.status(409).json({ error: "OFFLINE_TRANSACTION_REQUIRED" }); return; }
+  try {
+    let revision = parsed.data.expectedRevision;
+    let result: Awaited<ReturnType<typeof RuralPropertyService.saveWizardStep>> | undefined;
+    for (const step of parsed.data.steps) {
+      result = await RuralPropertyService.saveWizardStep(actor.userId, actor.role, { ...step, expectedRevision: revision }, req.requestId, req.clientIpHash);
+      revision = result.property.revision;
+    }
+    res.json(result);
+  } catch (error) { sendError(res, error); }
+});
 
 ruralPropertyRouter.post(
   "/producer/properties/:id/submit",

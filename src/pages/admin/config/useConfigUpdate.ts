@@ -1,3 +1,4 @@
+import { offlineSavedMessage } from "../../../lib/portalOffline";
 import { useCallback, useState } from "react";
 import { api, type ApiFailure } from "../../../lib/api.ts";
 import type { UpdateGlobalConfigInput } from "../../../../shared/contracts/adminConfig.ts";
@@ -55,11 +56,11 @@ export function useConfigUpdate() {
           next = {
             kind: "error",
             message:
-              failure.status === 422
+              offlineSavedMessage(failure) ?? (failure.status === 422
                 ? "Dados inválidos. Revise os campos informados."
                 : failure.message === "NETWORK_UNAVAILABLE"
                   ? "Falha de rede ao salvar configuração."
-                  : "Falha ao salvar configuração.",
+                  : "Falha ao salvar configuração."),
           };
         }
         setOutcome(next);

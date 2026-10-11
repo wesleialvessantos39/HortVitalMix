@@ -1,3 +1,4 @@
+import { useOfflineDataRevision } from "./hooks/useOfflineDataRevision";
 import {
   lazy,
   Suspense,
@@ -67,6 +68,7 @@ import { PageLoading } from "./components/PageLoading";
 import { AppDownloadSection } from "./components/AppDownloadSection";
 import { AppUpdateNotice } from "./components/AppUpdateNotice";
 import { AutomaticAccountSync } from "./components/AutomaticAccountSync";
+import { OfflineDraftPersistence } from "./components/OfflineDraftPersistence";
 import { NativeUpdateNotice } from "./components/NativeUpdateNotice";
 const AppDownloadsPage = lazy(() => import("./pages/AppDownloadsPage"));
 const ProducerCatalogPage = lazy(
@@ -201,6 +203,7 @@ function keepMenuFocus(event: React.KeyboardEvent<HTMLDialogElement>) {
   }
 }
 export default function App() {
+  const offlineDataRevision = useOfflineDataRevision();
   const [config, setConfig] = useState<GlobalConfigPublic | null>(null),
     [path, setPath] = useState(location.pathname),
     [modal, setModal] = useState<string | null>(null),
@@ -317,7 +320,7 @@ export default function App() {
       .then((v) => setConfig(GlobalConfigPublicSchema.parse(v)))
       .catch(() => {});
     return () => abort.abort();
-  }, []);
+  }, [offlineDataRevision]);
   useEffect(() => {
     const fn = () => {
       setPath(location.pathname);
@@ -389,7 +392,7 @@ export default function App() {
       cancelled = true;
       window.removeEventListener("hortivitalmix:default-address-changed", sync);
     };
-  }, [publicPortalSession, shellSession?.userId]);
+  }, [publicPortalSession, shellSession?.userId, offlineDataRevision]);
   const go = useCallback((to: string) => {
     setMenuOpen(false);
     const next = new URL(to, location.origin);
@@ -577,6 +580,7 @@ export default function App() {
           sessionLoading={sessionLoading}
         />
         <AutomaticAccountSync session={sessionLoading ? null : shellSession} />
+        <OfflineDraftPersistence path={path} session={sessionLoading ? null : shellSession} />
         {["/aplicativos", "/conta/atualizacoes"].includes(path) && <NativeUpdateNotice session={shellSession} />}
         {shellSession?.activeRole === "producer" &&
           (path.startsWith("/produtor/") || path === "/conta") && (
@@ -610,6 +614,7 @@ export default function App() {
           {(sessionLoading &&
             (guestAccessRoute ||
               isAccountDataRoute ||
+              isAdminRoute ||
               isProducerPropertyRoute ||
               isProducerStoreRoute ||
               isProducerProductRoute ||

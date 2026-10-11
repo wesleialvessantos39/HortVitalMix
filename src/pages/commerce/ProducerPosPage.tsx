@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { useEffect, useRef, useState } from "react";
 import { CreditCard, QrCode, ShoppingBasket } from "lucide-react";
 import type { PosSale, OrderView } from "../../../shared/contracts/commerce";
@@ -32,6 +34,7 @@ export default function ProducerPosPage({
   userId: string;
   onNavigate: (path: string) => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [context, setContext] = useState<PosContext | null>(null),
     [quantities, setQuantities] = useState<Record<string, number>>({}),
     [method, setMethod] = useState<"pix" | "credit_card" | "debit_card">("pix"),
@@ -51,7 +54,7 @@ export default function ProducerPosPage({
         if (!controller.signal.aborted) setError(commerceMessage(e));
       });
     return () => controller.abort();
-  }, [userId]);
+  }, [userId, offlineDataRevision]);
   const total =
     context?.products.reduce(
       (sum, product) =>
@@ -83,7 +86,7 @@ export default function ProducerPosPage({
         "Venda preparada. Compartilhe a revisão com o cliente. Ela ainda não foi paga.",
       );
     } catch (e) {
-      setError(commerceMessage(e));
+      setError(offlineSavedMessage(e) ?? (commerceMessage(e)));
     } finally {
       flight.current = false;
       setBusy(false);
@@ -103,7 +106,7 @@ export default function ProducerPosPage({
       setContext(await api<PosContext>("/v1/producer/pos"));
       if (prepared?.id === sale.id) setPrepared(null);
     } catch (e) {
-      setError(commerceMessage(e));
+      setError(offlineSavedMessage(e) ?? (commerceMessage(e)));
     } finally {
       flight.current = false;
       setBusy(false);

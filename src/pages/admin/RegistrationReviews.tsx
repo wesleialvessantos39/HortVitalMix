@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useState } from "react";
 import { api, type ApiFailure } from "../../lib/api";
@@ -18,6 +20,7 @@ export function RegistrationReviews({
   refreshKey: number;
   onChanged: () => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [rows, setRows] = useState<Review[]>([]),
     [error, setError] = useState(""),
     [loading, setLoading] = useState(true);
@@ -48,7 +51,7 @@ export function RegistrationReviews({
     return () => {
       current = false;
     };
-  }, [refreshKey]);
+  }, [refreshKey, offlineDataRevision]);
   async function submit() {
     if (!selected || busy) return;
     setBusy(true);
@@ -63,11 +66,11 @@ export function RegistrationReviews({
     } catch (err) {
       const e = err as ApiFailure;
       setError(
-        e.message === "IDENTITY_ALREADY_IN_USE"
+        offlineSavedMessage(err) ?? (e.message === "IDENTITY_ALREADY_IN_USE"
           ? "Já existe outro cadastro vigente com este CPF ou e-mail. Verifique as identidades antes de aprovar."
           : e.status === 401
             ? "Entre novamente para confirmar esta operação."
-            : "A decisão não pôde ser concluída. Atualize a lista e tente novamente.",
+            : "A decisão não pôde ser concluída. Atualize a lista e tente novamente."),
       );
     } finally {
       setBusy(false);

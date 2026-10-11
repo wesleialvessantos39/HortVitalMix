@@ -78,7 +78,7 @@ describe.runIf(!!process.env.HVM_T25_LOCAL_DATABASE_URL)(
         if (f) await f.cleanup();
         await p().query("DELETE FROM app_kpi_metrics");
         for (const id of plans)
-          await p().query("DELETE FROM app_plans WHERE id=$1", [id]);
+          await p().query("DELETE FROM app_plans WHERE id=$1 AND NOT EXISTS (SELECT 1 FROM app_subscriptions WHERE plan_id=$1)", [id]);
       } finally {
         await dbPool?.end();
       }

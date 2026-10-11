@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import {
   useCallback,
@@ -43,6 +45,7 @@ export default function SubscriptionPlansPage({
   onNavigate: (path: string) => void;
   onlyMine?: boolean;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]),
     [subscriptions, setSubscriptions] = useState<SubscriptionView[]>([]),
     [gateway, setGateway] = useState(false),
@@ -85,7 +88,7 @@ export default function SubscriptionPlansPage({
         if (!controller.signal.aborted) setError(subscriptionMessage(e));
       });
     return () => controller.abort();
-  }, [confirmedCancel, session?.userId]);
+  }, [confirmedCancel, session?.userId, offlineDataRevision]);
   const load = useCallback(
     async (signal?: AbortSignal) => {
       setLoading(true);
@@ -119,12 +122,12 @@ export default function SubscriptionPlansPage({
       try {
         await Promise.all(requests);
       } catch (e) {
-        if (!signal?.aborted) setError(subscriptionMessage(e));
+        if (!signal?.aborted) setError(offlineSavedMessage(e) ?? (subscriptionMessage(e)));
       } finally {
         if (!signal?.aborted) setLoading(false);
       }
     },
-    [audience, owner, session?.userId],
+    [audience, owner, session?.userId, offlineDataRevision],
   );
   useEffect(() => {
     const c = new AbortController();
@@ -132,7 +135,7 @@ export default function SubscriptionPlansPage({
     setError("");
     void load(c.signal);
     return () => c.abort();
-  }, [load]);
+  }, [load, offlineDataRevision]);
   useEffect(() => {
     if (!selected || selected.targetAudience !== "consumer") return;
     const c = new AbortController();
@@ -161,7 +164,7 @@ export default function SubscriptionPlansPage({
         if (!c.signal.aborted) setError(subscriptionMessage(e));
       });
     return () => c.abort();
-  }, [selected?.id]);
+  }, [selected?.id, offlineDataRevision]);
   async function mutate<T = SubscriptionView>(path: string, body: unknown) {
     if (flight.current) return null;
     flight.current = true;
@@ -184,7 +187,7 @@ export default function SubscriptionPlansPage({
     } catch (e) {
       const status = (e as ApiFailure).status;
       if (status && status >= 400 && status < 500) pending.current = null;
-      setError(subscriptionMessage(e));
+      setError(offlineSavedMessage(e) ?? (subscriptionMessage(e)));
       await load();
       return null;
     } finally {

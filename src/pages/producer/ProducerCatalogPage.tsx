@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import { useCallback, useEffect, useState } from "react";
 import { MediaImage } from "../../components/catalog/MediaImage";
@@ -23,6 +25,7 @@ export default function ProducerCatalogPage({
   session: ShellSession;
   onNavigate: (path: string) => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [catalog, setCatalog] = useState<ProducerCatalog | null>(null),
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
@@ -45,7 +48,7 @@ export default function ProducerCatalogPage({
       const result = await producerRead(session.userId,"/v1/producer/products",ProducerCatalogResponseSchema,signal);
       if (!signal?.aborted) setCatalog(result);
     } catch (failure) {
-      if (!signal?.aborted) setError(productErrorMessage(failure));
+      if (!signal?.aborted) setError(offlineSavedMessage(failure) ?? (productErrorMessage(failure)));
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
@@ -54,7 +57,7 @@ export default function ProducerCatalogPage({
     const abort = new AbortController();
     void load(abort.signal);
     return () => abort.abort();
-  }, [load, session.userId]);
+  }, [load, session.userId, offlineDataRevision]);
   return (
     <section className="hvm-products">
       <button className="text-button" onClick={() => onNavigate("/conta")}>

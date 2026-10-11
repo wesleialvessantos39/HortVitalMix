@@ -1,4 +1,6 @@
-import { useRef, useState, type FormEvent } from "react";
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { hasUnsavedPwaInput } from "../../lib/pwaSafety";
 import { api, type ApiFailure } from "../../lib/api";
 import type { ShellSession } from "../../hooks/useSession";
 import {
@@ -49,6 +51,20 @@ export function useProductCommands(
   const [reauthError, setReauthError] = useState("");
   const ids = useRef(new Map<string, string>()),
     pending = useRef<null | (() => Promise<void>)>(null);
+  const savedCallback = useRef(onSaved);
+  savedCallback.current = onSaved;
+  useEffect(() => {
+    const confirmed = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      if (detail?.scope !== session.userId + ":producer" || detail.sourcePath !== location.pathname + location.search || !/^\/v1\/producer\/products(?:\/|$)/.test(detail.path) || hasUnsavedPwaInput()) return;
+      const result = ProductMutationResponseSchema.safeParse(detail.result);
+      if (!result.success) return;
+      pending.current = null; ids.current.clear(); setError(""); setConflict(false); setReauth(false); setNotice("Alteração sincronizada.");
+      savedCallback.current(result.data.product);
+    };
+    window.addEventListener("hvm:offline-confirmed", confirmed);
+    return () => window.removeEventListener("hvm:offline-confirmed", confirmed);
+  }, [session.userId]);
   function command(payload: unknown) {
     const key = JSON.stringify(payload);
     let id = ids.current.get(key);
@@ -93,7 +109,7 @@ export function useProductCommands(
           pending.current = run;
           setReauth(true);
         } else {
-          setError(productErrorMessage(fault));
+          setError(offlineSavedMessage(failure) ?? (productErrorMessage(fault)));
           setConflict(fault.status === 409);
         }
       } finally {

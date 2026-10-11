@@ -1,3 +1,4 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
 import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
@@ -90,7 +91,7 @@ export default function ProducerOrdersPage({
       );
       refresh();
     } catch (e) {
-      setError(orderMessage(e));
+      setError(offlineSavedMessage(e) ?? (orderMessage(e)));
       setCancelling(null);
       const status = (e as ApiFailure).status ?? 0;
       if (status >= 400 && status < 500 && status !== 401 && status !== 429) {

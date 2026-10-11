@@ -1,3 +1,4 @@
+import { offlineSavedMessage } from "./portalOffline";
 import type { ApiFailure } from "./api";
 export const weekdays = [
   "Domingo",
@@ -9,6 +10,7 @@ export const weekdays = [
   "Sábado",
 ];
 export function deliveryMessage(e: unknown) {
+  const saved = offlineSavedMessage(e); if (saved) return saved;
   const messages: Record<string, string> = {
     CAPACITY_EXCEEDED: "Essa janela ficou lotada. Escolha outro horário.",
     WINDOW_UNAVAILABLE: "Essa janela não está disponível para este pedido.",

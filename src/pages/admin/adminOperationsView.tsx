@@ -1,3 +1,4 @@
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   AlertTriangle,
@@ -46,6 +47,7 @@ export function useOperationsQuery<T>(
   path: string,
   parse: (input: unknown) => T,
 ) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [result, setResult] = useState<{ key: string; value: T } | null>(null);
   const [failure, setFailure] = useState<{
     key: string;
@@ -117,7 +119,7 @@ export function useOperationsQuery<T>(
       window.removeEventListener("hvm:departments-changed", visible);
       document.removeEventListener("visibilitychange", visible);
     };
-  }, [key, permitted, identity, path, parse]);
+  }, [key, permitted, identity, path, parse, offlineDataRevision]);
   return {
     data: permitted && result?.key === key ? result.value : null,
     error: failure?.key === key ? failure.message : null,

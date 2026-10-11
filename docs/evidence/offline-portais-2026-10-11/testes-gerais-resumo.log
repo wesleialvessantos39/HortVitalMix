@@ -1,0 +1,7 @@
+ ↓ tests/integration/webReleaseSyncPostgres.test.ts > Sincronização web em PostgreSQL descartável real > run atrasado não ultrapassa high-water e dispatch novo não reativa SHA antiga
+
+ Test Files  127 passed | 54 skipped (181)
+      Tests  1352 passed | 533 skipped (1885)
+   Start at  18:01:06
+   Duration  68.16s (import 64%, transform 16%, tests 15%, setup 3%, worker 2%)
+

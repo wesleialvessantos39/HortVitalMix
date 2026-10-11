@@ -1,3 +1,4 @@
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
 import {
@@ -7,6 +8,7 @@ import {
 import { ReviewStars } from "./ReviewStars";
 import "./reviews.css";
 export function StoreReputationBlock({ storeSlug }: { storeSlug: string }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [data, setData] = useState<StoreReviews | null>(null),
     [page, setPage] = useState(1),
     [error, setError] = useState(false),
@@ -30,7 +32,7 @@ export function StoreReputationBlock({ storeSlug }: { storeSlug: string }) {
         if (!c.signal.aborted) setError(true);
       });
     return () => c.abort();
-  }, [storeSlug, page, attempt]);
+  }, [storeSlug, page, attempt, offlineDataRevision]);
   return (
     <section
       className="review-reputation"

@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../../components/PageLoading";
 import {
   useCallback,
@@ -41,6 +43,7 @@ type Props = {
 type LoadState = "loading" | "ready" | "error";
 
 export function AdminLocalitiesPage({ access }: Props) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [state, setState] = useState<LoadState>("loading");
   const [municipalities, setMunicipalities] = useState<AdminMunicipality[]>([]);
   const [search, setSearch] = useState("");
@@ -92,19 +95,19 @@ export function AdminLocalitiesPage({ access }: Props) {
       if (signal?.aborted) return;
       const code = (failure as ApiFailure).message;
       if (code === "FORBIDDEN") {
-        setError("Seu perfil não tem o setor de gestão de localidades.");
+        setError(offlineSavedMessage(failure) ?? ("Seu perfil não tem o setor de gestão de localidades."));
       } else {
-        setError("Não foi possível carregar as localidades agora.");
+        setError(offlineSavedMessage(failure) ?? ("Não foi possível carregar as localidades agora."));
       }
       setState("error");
     }
-  }, []);
+  }, [offlineDataRevision]);
 
   useEffect(() => {
     const controller = new AbortController();
     void load(controller.signal);
     return () => controller.abort();
-  }, [load]);
+  }, [load, offlineDataRevision]);
 
   function handleFailure(failure: unknown) {
     const code = (failure as ApiFailure).message;

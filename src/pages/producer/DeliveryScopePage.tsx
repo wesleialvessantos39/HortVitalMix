@@ -1,3 +1,4 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
 import { PageLoading } from "../../components/PageLoading";
 import "./deliveryScope.css";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
@@ -70,9 +71,9 @@ export function DeliveryScopePage({ session, onNavigate }: Props) {
     } catch (failure) {
       if (signal?.aborted) return;
       setError(
-        (failure as ApiFailure).message === "PRODUCER_PROFILE_REQUIRED"
+        offlineSavedMessage(failure) ?? ((failure as ApiFailure).message === "PRODUCER_PROFILE_REQUIRED"
           ? "Esta área é exclusiva do perfil produtor."
-          : "Não foi possível carregar seu escopo de entrega agora.",
+          : "Não foi possível carregar seu escopo de entrega agora."),
       );
     } finally {
       if (!signal?.aborted) setLoading(false);
@@ -115,14 +116,14 @@ export function DeliveryScopePage({ session, onNavigate }: Props) {
       const code = (failure as ApiFailure).message;
       if (code === "REAUTH_REQUIRED" || code === "ADMIN_REAUTHENTICATION_REQUIRED") {
         setReauthOpen(true);
-        setNotice("");
+        setNotice(offlineSavedMessage(failure) ?? (""));
       } else if (code === "REVISION_CONFLICT" || code === "LOCALITY_REVISION_CONFLICT") {
-        setError("O escopo mudou em outro dispositivo. Recarregue antes de salvar.");
+        setError(offlineSavedMessage(failure) ?? ("O escopo mudou em outro dispositivo. Recarregue antes de salvar."));
         await hydrate();
       } else if (code === "INVALID_MUNICIPALITY") {
-        setError("Um dos municípios escolhidos não está mais ativo. Revise a seleção.");
+        setError(offlineSavedMessage(failure) ?? ("Um dos municípios escolhidos não está mais ativo. Revise a seleção."));
       } else {
-        setError("Não foi possível salvar o escopo de entrega agora.");
+        setError(offlineSavedMessage(failure) ?? ("Não foi possível salvar o escopo de entrega agora."));
       }
     } finally {
       setBusy(false);

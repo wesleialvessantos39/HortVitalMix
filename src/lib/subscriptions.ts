@@ -1,3 +1,4 @@
+import { offlineSavedMessage } from "./portalOffline";
 import type { ApiFailure } from "./api";
 export const billingLabels = {
   weekly: "semana",
@@ -12,6 +13,7 @@ export const subscriptionLabels = {
   cancelled: "Cancelada",
 };
 export function subscriptionMessage(e: unknown) {
+  const saved = offlineSavedMessage(e); if (saved) return saved;
   const messages: Record<string, string> = {
     GATEWAY_NOT_CONFIGURED:
       "O recebimento Pix ainda não está conectado. Nenhuma cobrança foi criada.",

@@ -1,0 +1,28 @@
+[WebServer] (node:24008) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 19 tests using 1 worker
+
+(node:24016) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/pwa/installation-updates.spec.ts:372:3 › compact Safari instructions fit 320×568 with simulated iOS signals (1.2s)
+  ✓   2 tests/pwa/installation-updates.spec.ts:372:3 › compact Safari instructions fit 360×640 with simulated iOS signals (1.3s)
+  ✓   3 tests/pwa/installation-updates.spec.ts:372:3 › compact Safari instructions fit 390×844 with simulated iOS signals (1.1s)
+  ✓   4 tests/pwa/installation-updates.spec.ts:372:3 › compact Safari instructions fit 430×932 with simulated iOS signals (985ms)
+  ✓   5 tests/pwa/installation-updates.spec.ts:372:3 › compact Safari instructions fit 768×1024 with simulated iOS signals (1.3s)
+  ✓   6 tests/pwa/installation-updates.spec.ts:372:3 › compact Safari instructions fit 1024×768 with simulated iOS signals (1.3s)
+  ✓   7 tests/pwa/installation-updates.spec.ts:372:3 › compact Safari instructions fit 1440×900 with simulated iOS signals (1.0s)
+  ✓   8 tests/pwa/installation-updates.spec.ts:372:3 › compact Safari instructions fit 844×390 with simulated iOS signals (1.1s)
+  ✓   9 tests/pwa/offline-portals.spec.ts:184:3 › consumer: offline reload, durable edits and automatic reconciliation (1.3s)
+  ✓  10 tests/pwa/offline-portals.spec.ts:184:3 › producer: offline reload, durable edits and automatic reconciliation (1.4s)
+  ✓  11 tests/pwa/offline-portals.spec.ts:184:3 › platform_admin: offline reload, durable edits and automatic reconciliation (1.2s)
+  ✓  12 tests/pwa/offline-portals.spec.ts:184:3 › platform_super_admin: offline reload, durable edits and automatic reconciliation (1.3s)
+  ✓  13 tests/pwa/offline-portals.spec.ts:241:1 › a lost response recovers the same action without duplicate server writes (2.6s)
+  ✓  14 tests/pwa/offline-portals.spec.ts:260:1 › offline conflict preserves the local action and the newer server value (1.2s)
+  ✓  15 tests/pwa/offline-portals.spec.ts:291:1 › consumer and producer caches and queues remain separate for the same email and user (976ms)
+  ✓  16 tests/pwa/offline-portals.spec.ts:325:1 › permission loss rejects the admin action and preserves it locally (884ms)
+  ✓  17 tests/pwa/offline-portals.spec.ts:348:1 › connected changes are pulled automatically and refresh the current screen (2.7s)
+  ✓  18 tests/pwa/offline-portals.spec.ts:364:1 › a connected refresh never overwrites a form being edited (3.0s)
+  ✓  19 tests/pwa/offline-portals.spec.ts:390:1 › offline reload restores older drafts, distinct radio choices and checkboxes (922ms)
+
+  19 passed (27.7s)

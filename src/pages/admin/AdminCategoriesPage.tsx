@@ -1,3 +1,4 @@
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { hasAdminPermission } from "../../../shared/adminPermissions";
 import { PageLoading } from "../../components/PageLoading";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -42,6 +43,7 @@ const messages: Record<string, string> = {
 };
 
 export default function AdminCategoriesPage({ access, onNavigate }: Props) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [categories, setCategories] = useState<Category[]>([]);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [editing, setEditing] = useState<Category | null>(null);
@@ -76,13 +78,13 @@ export default function AdminCategoriesPage({ access, onNavigate }: Props) {
       }
       return null;
     }
-  }, []);
+  }, [offlineDataRevision]);
   useEffect(() => {
     if (!superAdmin) return;
     const controller = new AbortController();
     void load(controller.signal);
     return () => controller.abort();
-  }, [load, superAdmin]);
+  }, [load, superAdmin, offlineDataRevision]);
   useEffect(() => {
     if (pending) dialog.current?.showModal();
     else dialog.current?.close();

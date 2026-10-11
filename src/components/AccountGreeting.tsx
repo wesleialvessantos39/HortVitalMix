@@ -1,3 +1,4 @@
+import { useOfflineDataRevision } from "../hooks/useOfflineDataRevision";
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 
@@ -7,6 +8,7 @@ export function greetingForHour(hour: number) {
 
 // The visitor's device supplies the local time; never guess a name from email.
 export function AccountGreeting({ fullName }: { fullName?: string }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [name, setName] = useState("");
   const [hour, setHour] = useState(() => new Date().getHours());
   useEffect(() => {
@@ -22,7 +24,7 @@ export function AccountGreeting({ fullName }: { fullName?: string }) {
       .then((profile) => setName(typeof profile.fullName === "string" ? profile.fullName : ""))
       .catch(() => {});
     return () => controller.abort();
-  }, [fullName]);
+  }, [fullName, offlineDataRevision]);
   const displayName = (fullName ?? name).trim();
   return <>{greetingForHour(hour)}{displayName ? `, ${displayName}` : ""}</>;
 }

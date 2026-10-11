@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Star } from "lucide-react";
 import { api, type ApiFailure } from "../../lib/api";
@@ -66,7 +68,7 @@ export default function OrderReviewModal({
     } catch (e) {
       const status = (e as ApiFailure).status;
       if (status && status >= 400 && status < 500) pending.current = null;
-      setError(reviewMessage(e));
+      setError(offlineSavedMessage(e) ?? (reviewMessage(e)));
     } finally {
       flight.current = false;
       setBusy(false);
@@ -149,6 +151,7 @@ export default function OrderReviewModal({
   );
 }
 export function OrderReviewPanel({ orderId }: { orderId: string }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [state, setState] = useState<ReviewEligibility | null>(null),
     [error, setError] = useState(""),
     [open, setOpen] = useState(false),
@@ -166,7 +169,7 @@ export function OrderReviewPanel({ orderId }: { orderId: string }) {
         if (!c.signal.aborted) setError(reviewMessage(e));
       });
     return () => c.abort();
-  }, [orderId, attempt]);
+  }, [orderId, attempt, offlineDataRevision]);
   return (
     <article className="commerce-card review-owner">
       <h2>Sua avaliação</h2>

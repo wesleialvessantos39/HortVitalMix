@@ -1,0 +1,22 @@
+[WebServer] (node:16558) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] ◇ injected env (0) from .env
+
+Running 12 tests using 1 worker
+
+(node:16597) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/e2e/offline-transport.spec.ts:167:1 › raw image bytes persist and are sent unchanged after reconnect (1.7s)
+  ✓   2 tests/e2e/offline-transport.spec.ts:208:1 › documents retain the file, obtain a fresh signed URL and confirm automatically (1.9s)
+  ✓   3 tests/e2e/offline-transport.spec.ts:264:1 › passwords, tokens and login never enter the durable queue (1.2s)
+  ✓   4 tests/e2e/offline-transport.spec.ts:286:1 › charging stays as a saved review until an explicit connected action (1.6s)
+  ✓   5 tests/e2e/offline-transport.spec.ts:311:1 › a transient server failure retries with the same persisted ID (1.6s)
+  ✓   6 tests/e2e/offline-transport.spec.ts:334:1 › authentication failure keeps the original action for confirmation (1.4s)
+  ✓   7 tests/e2e/offline-transport.spec.ts:349:1 › pending actions keep their order (1.8s)
+  ✓   8 tests/e2e/offline-transport.spec.ts:361:1 › a retry delay also preserves order for later queued actions (2.0s)
+  ✓   9 tests/e2e/offline-transport.spec.ts:387:1 › an unconfirmed success response never removes a persisted action (2.7s)
+  ✓  10 tests/e2e/offline-transport.spec.ts:402:1 › an observed permission denial invalidates the private cached read (1.5s)
+  ✓  11 tests/e2e/offline-transport.spec.ts:438:1 › unavailable device storage never reports a saved action (1.7s)
+  ✓  12 tests/e2e/offline-transport.spec.ts:452:1 › erasing consumer local data preserves the producer pending work (1.8s)
+
+  12 passed (23.8s)

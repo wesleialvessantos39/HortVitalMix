@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useRef, useState } from "react";
 import type { PosSale } from "../../../shared/contracts/commerce";
@@ -20,6 +22,7 @@ export default function PosSaleReviewPage({
   userId: string | null;
   onNavigate: (path: string) => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [sale, setSale] = useState<PosSale | null>(null),
     [agree, setAgree] = useState(false),
     [busy, setBusy] = useState(false),
@@ -42,7 +45,7 @@ export default function PosSaleReviewPage({
         if (!controller.signal.aborted) setError(commerceMessage(e));
       });
     return () => controller.abort();
-  }, [code, userId]);
+  }, [code, userId, offlineDataRevision]);
   async function accept() {
     if (!sale || !userId || flight.current) return;
     flight.current = true;
@@ -62,7 +65,7 @@ export default function PosSaleReviewPage({
         sessionStorage.removeItem("hvm:pos-review");
       } catch {}
     } catch (e) {
-      setError(commerceMessage(e));
+      setError(offlineSavedMessage(e) ?? (commerceMessage(e)));
     } finally {
       flight.current = false;
       setBusy(false);

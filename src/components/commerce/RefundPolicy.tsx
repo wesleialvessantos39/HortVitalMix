@@ -1,3 +1,4 @@
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { useEffect, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import type { CommercePolicy } from "../../../shared/contracts/commerce";
@@ -16,6 +17,7 @@ export function RefundPolicy({
   problemDeadline?: string | null;
   onNavigate?: (path: string) => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [loaded, setLoaded] = useState<CommercePolicy | null>(null);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
@@ -31,7 +33,7 @@ export function RefundPolicy({
         if (!controller.signal.aborted) setFailed(true);
       });
     return () => controller.abort();
-  }, [provided]);
+  }, [provided, offlineDataRevision]);
   const policy = provided ?? loaded;
   return (
     <aside className="commerce-policy" aria-label="Política de reembolso">

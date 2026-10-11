@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import {
   createContext,
   useCallback,
@@ -67,6 +69,7 @@ export function NotificationProvider({ session, children }: {
   session: ShellSession | null;
   children: ReactNode;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [previewSnapshot, setPreviewSnapshot] = useState<Snapshot | null>(null);
   const [error, setError] = useState("");
@@ -136,7 +139,7 @@ export function NotificationProvider({ session, children }: {
         }
       } catch (e) {
         if (!controller.signal.aborted && currentActor.current === actor) {
-          setError("Não foi possível atualizar as notificações. Tente novamente.");
+          setError(offlineSavedMessage(e) ?? ("Não foi possível atualizar as notificações. Tente novamente."));
           failures++;
           if ([401, 403].includes((e as ApiFailure).status ?? 0)) {
             setSnapshot(null);
@@ -166,7 +169,7 @@ export function NotificationProvider({ session, children }: {
       window.removeEventListener("online", sync);
       window.removeEventListener("hvm:notifications-changed", sync);
     };
-  }, [actor, enabled, base, filters, key, revision]);
+  }, [actor, enabled, base, filters, key, revision, offlineDataRevision]);
 
   const updateRead = (id: string | null, through?: string) => {
     const mark = (value: Snapshot | null) => {
@@ -193,8 +196,8 @@ export function NotificationProvider({ session, children }: {
       updateRead(id);
       refresh();
       return true;
-    } catch {
-      if (currentActor.current === actor) setError("Não foi possível marcar a notificação como lida.");
+    } catch (error) {
+      if (currentActor.current === actor) setError(offlineSavedMessage(error) ?? "Não foi possível marcar a notificação como lida.");
       return false;
     } finally {
       if (mutation.current === token) { mutation.current = null; setBusy(false); }
@@ -208,8 +211,8 @@ export function NotificationProvider({ session, children }: {
     try {
       await api(base + "/read-all", { method: "POST", body: JSON.stringify({ through: preview.asOf }) });
       if (currentActor.current === actor) { updateRead(null, preview.asOf); refresh(); }
-    } catch {
-      if (currentActor.current === actor) setError("Não foi possível marcar as notificações como lidas.");
+    } catch (error) {
+      if (currentActor.current === actor) setError(offlineSavedMessage(error) ?? "Não foi possível marcar as notificações como lidas.");
     } finally {
       if (mutation.current === token) { mutation.current = null; setBusy(false); }
     }

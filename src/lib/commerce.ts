@@ -1,3 +1,4 @@
+import { offlineSavedMessage } from "./portalOffline";
 import { api, type ApiFailure } from "./api";
 export const money = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
@@ -34,6 +35,7 @@ export const statusLabels: Record<string, string> = {
   released: "Repassado",
 };
 export function commerceMessage(error: unknown) {
+  const saved = offlineSavedMessage(error); if (saved) return saved;
   const code = (error as ApiFailure)?.message;
   const messages: Record<string, string> = {
     CONSUMER_REQUIRED: "Cadastre-se e entre como consumidor para comprar.",

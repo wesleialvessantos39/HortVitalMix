@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useState, useRef, type FormEvent } from "react";
 import { api, type ApiFailure } from "../../lib/api";
@@ -17,6 +19,7 @@ export function AdminPermissionEditor({
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [view, setView] = useState<AdminPermissionsView | null>(null);
   const [selected, setSelected] = useState<AdminSectorCode[]>([]);
   const [busy, setBusy] = useState(false),
@@ -42,7 +45,7 @@ export function AdminPermissionEditor({
           setError("Não foi possível consultar os poderes desta conta.");
       });
     return () => abort.abort();
-  }, [userId]);
+  }, [userId, offlineDataRevision]);
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!view || busy) return;
@@ -66,7 +69,7 @@ export function AdminPermissionEditor({
       const failure = cause as ApiFailure;
       if (failure.status && failure.status < 500) pending.current = null;
       setError(
-        failure.message === "AUTHORIZATION_CONFLICT"
+        offlineSavedMessage(cause) ?? (failure.message === "AUTHORIZATION_CONFLICT"
           ? "Os poderes foram alterados em outra sessão. Feche e abra novamente para consultar a versão atual."
           : failure.status === 409
             ? "A gestão do próprio acesso e o último Super administrador disponível são protegidos."
@@ -74,7 +77,7 @@ export function AdminPermissionEditor({
               ? "Confirme seu acesso novamente para salvar os poderes."
               : failure.status === 403
                 ? "Você não tem mais permissão para gerir acessos."
-                : "Não foi possível salvar. Tente novamente; esta operação não será duplicada.",
+                : "Não foi possível salvar. Tente novamente; esta operação não será duplicada."),
       );
     } finally {
       setBusy(false);

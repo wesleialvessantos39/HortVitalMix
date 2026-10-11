@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { hasAdminPermission } from "../../../shared/adminPermissions";
 import { SubscriptionRefundsPanel } from "./SubscriptionRefundsPanel";
 import { SubscriptionRefundPolicyEditor } from "./SubscriptionRefundPolicyEditor";
@@ -32,6 +34,7 @@ export default function AdminCommercePage({
   access: AdminVerifySessionResponse;
   onNavigate: (path: string) => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const { session, loading } = useSession();
   const [settings, setSettings] = useState<SettingsView | null>(null),
     [error, setError] = useState(""),
@@ -56,7 +59,7 @@ export default function AdminCommercePage({
         if (!controller.signal.aborted) setError(commerceMessage(e));
       });
     return () => controller.abort();
-  }, [configuration, session?.userId]);
+  }, [configuration, session?.userId, offlineDataRevision]);
   async function save(event: FormEvent) {
     event.preventDefault();
     if (!session || !settings || flight.current) return;
@@ -81,7 +84,7 @@ export default function AdminCommercePage({
         "Configuração salva e auditada. Novas regras valem para novos aceites; compras anteriores mantêm seus termos.",
       );
     } catch (e) {
-      setError(commerceMessage(e));
+      setError(offlineSavedMessage(e) ?? (commerceMessage(e)));
       if (
         ["ADMIN_REAUTH_REQUIRED", "REAUTH_REQUIRED"].includes(
           (e as ApiFailure).message,

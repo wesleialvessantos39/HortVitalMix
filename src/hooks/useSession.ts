@@ -7,6 +7,7 @@ import {
   saveProducerSession,
 } from "../lib/offlineDb";
 import "../lib/sessionExit";
+import { setOfflineIdentity } from "../lib/portalOffline";
 
 export type ShellSession = {
   userId: string;
@@ -25,6 +26,7 @@ export function useSession() {
 
   const adoptSession = useCallback((next: ShellSession | null) => {
     revision.current++;
+    setOfflineIdentity(next);
     setSession(next);
     setLoading(false);
     void saveProducerSession(next).catch(() => {});
@@ -35,22 +37,24 @@ export function useSession() {
     try {
       if (!navigator.onLine) {
         const cached = await readProducerSession().catch(() => null);
-        if (request === revision.current && cached) setSession(cached);
+        if (request === revision.current && cached) { setOfflineIdentity(cached); setSession(cached); }
         return;
       }
       const next = await api<ShellSession>("/v1/auth/session");
       if (request === revision.current) {
         setSession(next);
+        setOfflineIdentity(next);
         void saveProducerSession(next).catch(() => {});
       }
     } catch (error) {
       const status = (error as ApiFailure).status;
       if (request === revision.current && (status === 401 || status === 403)) {
         setSession(null);
+        setOfflineIdentity(null);
         void clearProducerSnapshots().catch(() => {});
       } else if (request === revision.current && offlineTransport(error)) {
         const cached = await readProducerSession().catch(() => null);
-        if (request === revision.current && cached) setSession(cached);
+        if (request === revision.current && cached) { setOfflineIdentity(cached); setSession(cached); }
       }
     } finally {
       if (request === revision.current) setLoading(false);

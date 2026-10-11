@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import { adminSectorLabel } from "../../../shared/adminPermissions";
 import { useEffect, useRef, useState } from "react";
@@ -55,6 +57,7 @@ const adminRoleLabel = (role: string) =>
     : "Administrador setorial";
 
 export function AdminGovernancePage({ onNavigate, access }: Props) {
+  const offlineDataRevision = useOfflineDataRevision();
   const isSuper = access.role === "platform_super_admin";
   const [sectors, setSectors] = useState<Sector[]>([]);
   const [invites, setInvites] = useState<InviteResponse[]>([]);
@@ -118,7 +121,7 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
   }
   useEffect(() => {
     void load();
-  }, []);
+  }, [offlineDataRevision]);
   useEffect(() => {
     const dialog = confirmation.current;
     if (action && dialog && !dialog.open) dialog.showModal();
@@ -168,7 +171,7 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
       clearInterval(timer);
       document.removeEventListener("visibilitychange", sync);
     };
-  }, [hasPending]);
+  }, [hasPending, offlineDataRevision]);
 
   async function lookupIdentity() {
     const cpf = targetCpf.replace(/\D/g, "");
@@ -280,7 +283,7 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
           return;
         }
         setError(
-          "Não foi possível validar a confirmação desta operação. Seus dados foram preservados; tente novamente.",
+          offlineSavedMessage(err) ?? ("Não foi possível validar a confirmação desta operação. Seus dados foram preservados; tente novamente."),
         );
         return;
       }
@@ -288,7 +291,7 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
       if (status && status < 500) lastCommand.current = null;
       if (status === 401) setSessionExpired(true);
       setError(
-        status === 401
+        offlineSavedMessage(err) ?? (status === 401
           ? "Sua sessão administrativa expirou. Entre novamente para continuar. Seus dados foram preservados."
           : status === 403
             ? operation.kind === "create"
@@ -301,7 +304,7 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
                 : "O convite foi atualizado. Atualize o histórico antes de tentar novamente."
               : operation.kind === "create"
                 ? "Não foi possível emitir o convite. Seus dados foram preservados."
-                : "Não foi possível concluir a operação. Tente novamente.",
+                : "Não foi possível concluir a operação. Tente novamente."),
       );
       setAction(null);
     } finally {

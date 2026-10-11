@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { AccountGreeting } from "../../components/AccountGreeting";
 import { accountExperience } from "./accountExperience";
 import { useEffect, useState, type FormEvent } from "react";
@@ -50,6 +52,7 @@ function commandId() {
 }
 
 export function AccountHub({ path, session, onNavigate }: Props) {
+  const offlineDataRevision = useOfflineDataRevision();
   const experience = accountExperience(session.activeRole);
   const administrative =
     session.activeRole === "platform_admin" ||
@@ -106,7 +109,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
     const controller = new AbortController();
     void load(controller.signal);
     return () => controller.abort();
-  }, [session.userId, session.activeRole, path]);
+  }, [session.userId, session.activeRole, path, offlineDataRevision]);
 
   useEffect(() => {
     if (path !== "/conta" || session.activeRole !== "producer") return;
@@ -143,9 +146,9 @@ export function AccountHub({ path, session, onNavigate }: Props) {
         }
       });
     return () => controller.abort();
-  }, [path, session.activeRole, session.userId]);
+  }, [path, session.activeRole, session.userId, offlineDataRevision]);
 
-  if (path === "/conta/atualizacoes" && !administrative)
+  if (path === "/conta/atualizacoes")
     return (
       <AccountUpdatesPage
         key={`${session.userId}:${session.activeRole}`}
@@ -232,7 +235,7 @@ export function AccountHub({ path, session, onNavigate }: Props) {
         )}
 
         <div className="account-hub-grid">
-          {!administrative && (
+          {(
             <button
               className="account-hub-card"
               onClick={() => onNavigate("/conta/atualizacoes")}
@@ -552,9 +555,9 @@ export function AccountHub({ path, session, onNavigate }: Props) {
               if ((error as ApiFailure).status === 409) {
                 await load();
                 setNotice(
-                  "Seus dados mudaram em outra sessão. Confira a versão atual e tente novamente.",
+                  offlineSavedMessage(error) ?? ("Seus dados mudaram em outra sessão. Confira a versão atual e tente novamente."),
                 );
-              } else setNotice("Não foi possível atualizar o perfil.");
+              } else setNotice(offlineSavedMessage(error) ?? ("Não foi possível atualizar o perfil."));
             } finally {
               setBusy(false);
             }
@@ -636,9 +639,9 @@ export function AccountHub({ path, session, onNavigate }: Props) {
               if ((error as ApiFailure).status === 409) {
                 await load();
                 setNotice(
-                  "Suas preferências mudaram em outra sessão. Confira a versão atual.",
+                  offlineSavedMessage(error) ?? ("Suas preferências mudaram em outra sessão. Confira a versão atual."),
                 );
-              } else setNotice("Não foi possível salvar as preferências.");
+              } else setNotice(offlineSavedMessage(error) ?? ("Não foi possível salvar as preferências."));
             } finally {
               setBusy(false);
             }

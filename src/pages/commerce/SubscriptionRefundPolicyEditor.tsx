@@ -1,3 +1,4 @@
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../../lib/api";
 import { commerceMessage } from "../../lib/commerce";
@@ -25,6 +26,7 @@ function ScopedSubscriptionRefundPolicyEditor({
 }: {
   session: ShellSession;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [policy, setPolicy] = useState<SubscriptionRefundPolicy | null>(null),
     [history, setHistory] = useState<
       Array<{ policy: SubscriptionRefundPolicy; created_at: string }>
@@ -53,7 +55,7 @@ function ScopedSubscriptionRefundPolicyEditor({
       if (!c.signal.aborted) setError(commerceMessage(e));
     });
     return () => c.abort();
-  }, [session?.userId]);
+  }, [session?.userId, offlineDataRevision]);
   async function save(form: HTMLFormElement) {
     if (!policy || busy || reauth) return;
     const { version, ...fields } = policy,

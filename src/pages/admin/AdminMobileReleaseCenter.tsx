@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AlertTriangle, CheckCircle2, Cloud, GitBranch, History, RefreshCw, ShieldCheck, Smartphone } from "lucide-react";
 import { hasAdminPermission } from "../../../shared/adminPermissions";
@@ -28,6 +30,7 @@ function date(value: string | null) {
 function formatSize(size: number) { return `${(size / 1024 / 1024).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} MB`; }
 
 export function AdminMobileReleaseCenter({ access }: { access: AdminVerifySessionResponse }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const allowed = hasAdminPermission(access, "platform_configuration");
   const scopeKey = JSON.stringify([access.role, [...access.sectors].sort(), [...(access.deniedSectors ?? [])].sort()]);
   const [data, setData] = useState<AdminMobileReleases | null>(null);
@@ -98,7 +101,7 @@ export function AdminMobileReleaseCenter({ access }: { access: AdminVerifySessio
       const failure = cause as ApiFailure;
       // An old successful response is not proof that synchronization still works.
       setData(null);
-      setError(failure.status === 403 ? "Seu acesso não permite consultar as versões assinadas." : "Não foi possível verificar a sincronização. Nenhuma situação de publicação foi presumida.");
+      setError(offlineSavedMessage(cause) ?? (failure.status === 403 ? "Seu acesso não permite consultar as versões assinadas." : "Não foi possível verificar a sincronização. Nenhuma situação de publicação foi presumida."));
     } finally {
       if (mounted.current && !controller.signal.aborted) setLoading(false);
     }
@@ -129,7 +132,7 @@ export function AdminMobileReleaseCenter({ access }: { access: AdminVerifySessio
       window.removeEventListener("hvm:mobile-releases-changed", inspect);
       document.removeEventListener("visibilitychange", inspect);
     };
-  }, [scopeKey, allowed]);
+  }, [scopeKey, allowed, offlineDataRevision]);
 
   function execute(command: MobileReleaseCommand) {
     if (!allowed || commands.busy || commands.confirmation || conflict) return;

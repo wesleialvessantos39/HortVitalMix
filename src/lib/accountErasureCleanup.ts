@@ -7,7 +7,7 @@ function remembered() {
     const ids: unknown = JSON.parse(localStorage.getItem(key) ?? "[]");
     if (Array.isArray(ids))
       for (const id of ids)
-        if (typeof id === "string" && /^[a-f0-9-]{36}$/i.test(id))
+        if (typeof id === "string" && /^[a-f0-9-]{36}(?::(?:consumer|producer))?$/i.test(id))
           pending.add(id);
   } catch {
     /* Memory cleanup still works when persistent storage is unavailable. */
@@ -22,9 +22,9 @@ function save() {
   }
 }
 /** Called only after the server confirms a consented account deletion. */
-export async function rememberConfirmedAccountErasure(userId: string) {
+export async function rememberConfirmedAccountErasure(userId: string, role?: string | null) {
   remembered();
-  pending.add(userId);
+  pending.add(role ? userId + ":" + role : userId);
   save();
   return drainAccountErasureCleanup();
 }
@@ -34,7 +34,8 @@ export async function drainAccountErasureCleanup(): Promise<boolean> {
   flight = (async () => {
     for (const id of [...pending]) {
       try {
-        await eraseOwnOfflineData(id);
+        const [userId, role] = id.split(":");
+        await eraseOwnOfflineData(userId, role);
         pending.delete(id);
         save();
       } catch {

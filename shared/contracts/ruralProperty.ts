@@ -208,6 +208,13 @@ export const SaveWizardStepSchema = z.discriminatedUnion("step", [
     .strict(),
 ]);
 
+export const CompleteRuralWorkflowSchema = z.object({
+  propertyId: z.uuid(), expectedRevision: z.number().int().positive(),
+  steps: z.array(SaveWizardStepSchema).length(5),
+}).strict().superRefine((value, ctx) => {
+  if (value.steps.map((step) => step.step).join(",") !== "2,3,4,5,6" || new Set(value.steps.map((step) => step.commandId)).size !== 5 || value.steps.some((step) => step.propertyId !== value.propertyId || step.expectedRevision !== value.expectedRevision)) ctx.addIssue({ code: "custom", path: ["steps"], message: "As etapas devem pertencer ao mesmo imóvel e à mesma revisão inicial." });
+});
+
 export const SubmitPropertySchema = z
   .object({
     expectedRevision: z.number().int().positive(),

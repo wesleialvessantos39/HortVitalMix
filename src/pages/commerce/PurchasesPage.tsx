@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useRef, useState } from "react";
 import type { OrderView, PosSale } from "../../../shared/contracts/commerce";
@@ -28,6 +30,7 @@ export default function PurchasesPage({
   userId: string | null;
   onNavigate: (path: string) => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [result, setResult] = useState<Purchases | null>(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
@@ -50,7 +53,7 @@ export default function PurchasesPage({
         if (!controller.signal.aborted) setError(commerceMessage(e));
       });
     return () => controller.abort();
-  }, [userId]);
+  }, [userId, offlineDataRevision]);
   async function received(order: OrderView) {
     if (
       !userId ||
@@ -71,7 +74,7 @@ export default function PurchasesPage({
       );
       setResult(await api<Purchases>("/v1/commerce/purchases"));
     } catch (e) {
-      setError(commerceMessage(e));
+      setError(offlineSavedMessage(e) ?? (commerceMessage(e)));
     } finally {
       flight.current = false;
       setBusy(false);

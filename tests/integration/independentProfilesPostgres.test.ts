@@ -8,7 +8,7 @@ const local = vi.hoisted(() => ({
 }));
 vi.mock("../../server/db/pool.ts", async () => {
   const value = process.env.HVM_PROFILES_LOCAL_DATABASE_URL;
-  if (!value) return { dbPool: null };
+  if (!value) return { dbPool: null, rawDbPool: null };
   const url = new URL(value);
   if (
     url.hostname !== "127.0.0.1" ||
@@ -17,7 +17,9 @@ vi.mock("../../server/db/pool.ts", async () => {
   )
     throw Error("PROFILES_LOCAL_DATABASE_REQUIRED");
   const pg = (await import("pg")).default;
-  return { dbPool: new pg.Pool({ connectionString: value, max: 8 }) };
+  const rawDbPool = new pg.Pool({ connectionString: value, max: 8 });
+  const { scopedDatabasePool } = await import("../../server/db/offlineTransaction.ts");
+  return { rawDbPool, dbPool: scopedDatabasePool(rawDbPool) };
 });
 vi.mock("../../server/config/runtime.ts", async (original) => {
   const value = await original<any>();
@@ -893,7 +895,7 @@ describe.runIf(!!process.env.HVM_PROFILES_LOCAL_DATABASE_URL)(
           [
             invite,
             "email.administrativo.extenso.para.testar@example.test",
-            "f".repeat(64),
+            invite.replace(/-/g, "").repeat(2),
             rootId,
           ],
         );
@@ -931,13 +933,13 @@ describe.runIf(!!process.env.HVM_PROFILES_LOCAL_DATABASE_URL)(
         await producer.context().setOffline(true);
         await check(
           producer.getByRole("complementary", {
-            name: "Conexão e ações do produtor",
+            name: "Conexão e sincronização",
           }),
         ).toBeVisible();
         await producer.context().setOffline(false);
         await check(
           producer.getByRole("complementary", {
-            name: "Conexão e ações do produtor",
+            name: "Conexão e sincronização",
           }),
         ).toHaveCount(0);
         expect(errors).toEqual([]);

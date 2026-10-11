@@ -31,6 +31,10 @@ let context = { path: "", loading: true, userId: "", role: "" };
 let revision = 0;
 let started = false;
 const visible = (element: Element) => element.getClientRects().length > 0;
+export function hasUnsavedPwaInput() {
+  const focused = document.activeElement;
+  return uncontainedEdit || [...document.forms].some((form) => dirtyForms.has(form) || form.dataset.hvmUpdateDirty === "true") || Boolean(focused instanceof HTMLElement && focused.matches("input,textarea,select,[contenteditable=true]")) || [...document.querySelectorAll("dialog[open],[aria-modal=true]")].some(visible);
+}
 
 export function setPwaSafetyContext(
   path: string,

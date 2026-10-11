@@ -1,3 +1,4 @@
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useState } from "react";
 import {
@@ -33,6 +34,7 @@ export default function PublicProducerStorePage({
   slug: string;
   onNavigate: (path: string) => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const catalog = usePublicProducts({ storeSlug: slug });
   const [store, setStore] = useState<StorePublic | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "missing" | "error">(
@@ -62,7 +64,7 @@ export default function PublicProducerStorePage({
           setState(failure.status === 404 ? "missing" : "error");
       });
     return () => controller.abort();
-  }, [slug, attempt]);
+  }, [slug, attempt, offlineDataRevision]);
   if (state === "loading")
     return (
       <section className="hvm-store">

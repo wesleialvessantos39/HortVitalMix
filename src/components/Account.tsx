@@ -1,3 +1,4 @@
+import { offlineSavedMessage } from "../lib/portalOffline";
 import { accountExperience } from "../pages/account/accountExperience";
 import { AccountGreeting } from "./AccountGreeting";
 import { useEffect, useState, type FormEvent } from "react";
@@ -608,7 +609,7 @@ export function Account({
       const code = failure.message;
 
       if (code === "VALIDATION_ERROR" && !failure.fields?.length) {
-        setNotice("Não foi possível validar os dados enviados. Revise o e-mail e o perfil selecionado.");
+        setNotice(offlineSavedMessage(error) ?? ("Não foi possível validar os dados enviados. Revise o e-mail e o perfil selecionado."));
         return;
       }
 
@@ -626,7 +627,7 @@ export function Account({
       }
 
       setNotice(
-        code === "LOCALITY_DISABLED"
+        offlineSavedMessage(error) ?? (code === "LOCALITY_DISABLED"
           ? LOCALITY_DISABLED_MESSAGE
           : code === "LOCALITY_NOT_COVERED"
             ? LOCALITY_NOT_COVERED_MESSAGE
@@ -706,7 +707,7 @@ export function Account({
                                                                   ? "Não foi possível concluir a solicitação. Verifique os dados informados e tente novamente."
                                                                   : code === "ADMIN_GOVERNANCE_LOGIN_REQUIRED"
                                                                     ? "Dados inválidos ou cadastro não autorizado."
-                                                                    : "Não foi possível concluir a solicitação. Verifique os dados informados e tente novamente.",
+                                                                    : "Não foi possível concluir a solicitação. Verifique os dados informados e tente novamente."),
       );
     } finally {
       setBusy(false);
@@ -738,9 +739,9 @@ export function Account({
       );
     } catch (error) {
       setNotice(
-        (error as Error).message === "SECURITY_CONTEXT_MISMATCH"
+        offlineSavedMessage(error) ?? ((error as Error).message === "SECURITY_CONTEXT_MISMATCH"
           ? "O perfil desta sessão não corresponde ao portal atual."
-          : "Não foi possível enviar o código de segurança agora.",
+          : "Não foi possível enviar o código de segurança agora."),
       );
     } finally {
       setBusy(false);
@@ -788,12 +789,12 @@ export function Account({
     } catch (error) {
       const code = (error as Error).message;
       setNotice(
-        code === "SECURITY_CODE_REJECTED"
+        offlineSavedMessage(error) ?? (code === "SECURITY_CODE_REJECTED"
           ? "Código inválido ou expirado. Solicite um novo código para este perfil."
           : code === "SECURITY_CODE_CONTEXT_INVALID" ||
               code === "SECURITY_CONTEXT_MISMATCH"
             ? "Este código não pertence a este perfil. Solicite um código no portal correto."
-            : "Não foi possível alterar a senha agora.",
+            : "Não foi possível alterar a senha agora."),
       );
     } finally {
       setBusy(false);

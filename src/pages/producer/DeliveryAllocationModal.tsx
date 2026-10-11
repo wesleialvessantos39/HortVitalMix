@@ -1,3 +1,4 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   AllocateDeliverySchema,
@@ -79,7 +80,7 @@ export function DeliveryAllocationModal({
       pending.current = null;
       onClose();
     } catch (e) {
-      setError(deliveryMessage(e));
+      setError(offlineSavedMessage(e) ?? (deliveryMessage(e)));
       const status = (e as ApiFailure).status ?? 0;
       if (status >= 400 && status < 500 && status !== 401 && status !== 429) {
         pending.current = null;

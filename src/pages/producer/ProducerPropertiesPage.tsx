@@ -1,3 +1,6 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { portalRequests } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import {
   useEffect,
@@ -357,6 +360,7 @@ function PropertyList({
   session,
   onNavigate,
 }: Omit<Props, "path">) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [state, setState] = useState<PageState>("loading");
   const [listNotice,setListNotice]=useState("");
   const [busyId,setBusyId]=useState<string|null>(null);
@@ -388,7 +392,7 @@ function PropertyList({
       window.removeEventListener("focus", refresh);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, [session.userId]);
+  }, [session.userId, offlineDataRevision]);
 
   async function deleteDraft(property: RuralPropertySummary) {
     setBusyId(property.id);setListNotice("");
@@ -640,6 +644,7 @@ function RuralPropertyWizard({
   session,
   onNavigate,
 }: Omit<Props, "path">) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [requestedId] = useState(() =>
     typeof location === "undefined"
       ? null
@@ -786,7 +791,7 @@ function RuralPropertyWizard({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [offlineDataRevision]);
 
   useEffect(() => {
     let cancelled = false;
@@ -921,7 +926,7 @@ function RuralPropertyWizard({
     return () => {
       cancelled = true;
     };
-  }, [requestedId, requestedStep, session.userId]);
+  }, [requestedId, requestedStep, session.userId, offlineDataRevision]);
 
   useEffect(() => {
     if (
@@ -949,7 +954,7 @@ function RuralPropertyWizard({
     return () => {
       cancelled = true;
     };
-  }, [draft.activityCategory, requestedId]);
+  }, [draft.activityCategory, requestedId, offlineDataRevision]);
 
   useEffect(() => {
     if (!hydrated.current || viewOnlyRef.current) return;
@@ -1062,6 +1067,7 @@ function RuralPropertyWizard({
   if(!pendingLoaded.current){pendingLoaded.current=true;try{const stored=JSON.parse(localStorage.getItem(pendingKey)||"null");if(stored?.payload?.commandId)pendingDraft.current={payload:stored.payload,version:-1};}catch{}}
 
   async function saveStep(_targetStep:number, automatic=false){
+    if (draft.propertyId && (await portalRequests(session.userId + ":producer")).some((row) => row.path === "/v1/producer/properties/wizard/complete" && ["pending", "authentication"].includes(row.state) && typeof row.body === "string" && JSON.parse(row.body).propertyId === draft.propertyId)) { persistLocal(); return false; }
     if (viewOnlyRef.current) return false;
     if(saving.current || state!=="ready")return false;
     if(!online){persistLocal();return false;}
@@ -1080,7 +1086,7 @@ function RuralPropertyWizard({
       localStorage.removeItem(localKey(session.userId,null));
       persistLocal({...draft,propertyId:result.property.id,revision:result.property.revision},false);
       dirty.current=changed;setSaveState("saved");if(!automatic)setNotice("Rascunho salvo na sua conta.");return !changed;
-    }catch(e){const failure=e as ApiFailure;if(failure.status && failure.status>=400 && failure.status<500){pendingDraft.current=null;try{localStorage.removeItem(pendingKey);}catch{}}if(failure.status===409)setState("conflict");persistLocal();setSaveState("error");setNotice(messageForFailure(e));return false;}
+    }catch(e){const failure=e as ApiFailure;if(failure.status && failure.status>=400 && failure.status<500){pendingDraft.current=null;try{localStorage.removeItem(pendingKey);}catch{}}if(failure.status===409)setState("conflict");persistLocal();setSaveState("error");setNotice(offlineSavedMessage(e) ?? (messageForFailure(e)));return false;}
     finally{saving.current=false;}
   }
 
@@ -1099,43 +1105,43 @@ function RuralPropertyWizard({
     return () => clearTimeout(timer);
   }, [signature, online, state, saveState]);
 
+  useEffect(() => {
+    const confirmed = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      if (detail?.scope !== session.userId + ":producer" || detail.path !== "/v1/producer/properties/wizard/complete" || detail.sourcePath !== location.pathname + location.search || dirty.current) return;
+      try { localStorage.removeItem(localKey(session.userId, null)); localStorage.removeItem(localKey(session.userId, detail.result?.property?.id)); } catch {}
+      setSaveState("saved"); onNavigate("/produtor/propriedades");
+    };
+    window.addEventListener("hvm:offline-confirmed", confirmed);
+    return () => window.removeEventListener("hvm:offline-confirmed", confirmed);
+  }, [session.userId, onNavigate]);
+
   async function submitAll(completeOnly=false) {
     const missing = [1,2,3,4,5].filter(n => !buildStepData(n).success);
     if (missing.length || !draft.agroecologicalCommitment) {
       setNotice(missing.length ? "Complete as etapas pendentes: " + missing.join(", ") + ". Você pode voltar a elas pelos botões acima." : "Confirme o compromisso antes de enviar.");
       return;
     }
-    if (!online) { persistLocal(); setNotice("Conecte-se à internet para enviar o imóvel."); return; }
     if (saving.current || state !== "ready") return;
-    if(pendingDraft.current){setNotice("Salve o rascunho novamente antes de concluir.");return;}
+    if (!draft.propertyId || !draft.revision) { persistLocal(); setNotice("Salve e confira os documentos do imóvel antes de concluir."); return; }
+    if (pendingDraft.current) { setNotice("Salve o rascunho novamente antes de concluir."); return; }
+    const version = editVersion.current;
     saving.current = true; setSaveState("saving"); setNotice("");
-    let propertyId = draft.propertyId, revision = draft.revision;
-    async function send(payload: Record<string,unknown>) {
-      pendingSave.current = {payload,version:editVersion.current};
-      const result = await api<{property:RuralPropertyView}>("/v1/producer/properties/wizard/save-step",{method:"POST",body:JSON.stringify(payload)});
-      pendingSave.current = null;
-      propertyId=result.property.id;revision=result.property.revision;
-      setDraft(current=>({...current,propertyId,revision}));
-      persistLocal({...draft,propertyId,revision},false);
-      history.replaceState(history.state,"","/produtor/propriedades/novo?id="+propertyId);
-    }
     try {
-      // Recover an uncertain response with its original command before sending new edits.
-      if (pendingSave.current) await send(pendingSave.current.payload);
-      for (const n of [2,3,4,5,6]) {
-        const parsed=buildStepData(n);
+      const steps = [2, 3, 4, 5, 6].map((n) => {
+        const parsed = buildStepData(n);
         if (!parsed.success) throw new Error("PROPERTY_INCOMPLETE");
-        await send({propertyId:propertyId??undefined,expectedRevision:propertyId?revision:undefined,step:n,stepData:parsed.data,completeOnly:n===6?completeOnly:undefined,commandId:commandId()});
-      }
-      try {localStorage.removeItem(localKey(session.userId,null));localStorage.removeItem(localKey(session.userId,propertyId))}catch{}
-      dirty.current=false;setSaveState("saved");onNavigate("/produtor/propriedades");
-    } catch(error) {
-      const failure=error as ApiFailure;
-      if(failure.message==="RECENT_AUTH_REQUIRED")setReauth(true);
-      if(failure.status && failure.status>=400 && failure.status<500)pendingSave.current=null;
-      if(failure.status===409)setState("conflict");
-      setSaveState("error");setNotice(messageForFailure(error));
-    } finally {saving.current=false;}
+        return { propertyId: draft.propertyId, expectedRevision: draft.revision, step: n, stepData: parsed.data, completeOnly: n === 6 ? completeOnly : undefined, commandId: commandId() };
+      });
+      await api<{ property: RuralPropertyView }>("/v1/producer/properties/wizard/complete", { method: "POST", body: JSON.stringify({ propertyId: draft.propertyId, expectedRevision: draft.revision, steps }) });
+      try { localStorage.removeItem(localKey(session.userId, null)); localStorage.removeItem(localKey(session.userId, draft.propertyId)); } catch {}
+      dirty.current = false; setSaveState("saved"); onNavigate("/produtor/propriedades");
+    } catch (error) {
+      const failure = error as ApiFailure;
+      if (failure.status === 202) { persistLocal(draft, false); if (editVersion.current === version) dirty.current = false; setSaveState("local"); }
+      else { if (failure.message === "RECENT_AUTH_REQUIRED") setReauth(true); if (failure.status === 409) setState("conflict"); setSaveState("error"); }
+      setNotice(offlineSavedMessage(error) ?? messageForFailure(error));
+    } finally { saving.current = false; }
   }
 
   async function next() {

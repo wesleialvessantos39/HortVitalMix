@@ -1,3 +1,4 @@
+import { useOfflineDataRevision } from "./useOfflineDataRevision";
 import { useCallback, useEffect, useState } from "react";
 import type { z } from "zod";
 import { api, type ApiFailure } from "../lib/api";
@@ -10,6 +11,7 @@ export function useOrderQuery<T>(
   userId: string | null,
   schema: z.ZodType<T>,
 ) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [data, setData] = useState<T | null>(null),
     [error, setError] = useState(""),
     [version, setVersion] = useState(0);
@@ -83,6 +85,6 @@ export function useOrderQuery<T>(
       window.removeEventListener("online",visible);
       window.removeEventListener("offline",visible);
     };
-  }, [path, userId, schema, version]);
+  }, [path, userId, schema, version, offlineDataRevision]);
   return { data, error, refresh };
 }

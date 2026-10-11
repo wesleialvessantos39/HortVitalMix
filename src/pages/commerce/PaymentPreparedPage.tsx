@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useState } from "react";
 import { CreditCard, QrCode, ShieldCheck, Clock3 } from "lucide-react";
@@ -15,6 +17,7 @@ export default function PaymentPreparedPage({
   userId: string | null;
   onNavigate: (path: string) => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [payment, setPayment] = useState<PaymentView | null>(null),
     [error, setError] = useState(""),
     [agree, setAgree] = useState(false),
@@ -34,7 +37,7 @@ export default function PaymentPreparedPage({
         if (!controller.signal.aborted) setError(commerceMessage(e));
       });
     return () => controller.abort();
-  }, [id, userId]);
+  }, [id, userId, offlineDataRevision]);
   useEffect(() => {
     if (!payment || payment.status !== "pending") return;
     const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -64,7 +67,7 @@ export default function PaymentPreparedPage({
       clearInterval(timer);
       controller.abort();
     };
-  }, [id, userId, payment?.gatewayAvailable, payment?.status, onNavigate]);
+  }, [id, userId, payment?.gatewayAvailable, payment?.status, onNavigate, offlineDataRevision]);
   async function accept() {
     if (!payment || busy) return;
     setBusy(true);
@@ -76,7 +79,7 @@ export default function PaymentPreparedPage({
       });
       setAccepted(true);
     } catch (e) {
-      setError(commerceMessage(e));
+      setError(offlineSavedMessage(e) ?? (commerceMessage(e)));
     } finally {
       setBusy(false);
     }

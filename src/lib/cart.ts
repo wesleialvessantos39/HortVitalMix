@@ -1,3 +1,4 @@
+import { offlineSavedMessage } from "./portalOffline";
 import { useEffect, useRef, useState } from "react";
 import { api, type ApiFailure } from "./api";
 import { CartResponseSchema, type Cart } from "../../shared/contracts/cart";
@@ -22,6 +23,7 @@ if (typeof window !== "undefined") {
 }
 
 export const cartErrorMessage = (failure: unknown) => {
+  const saved = offlineSavedMessage(failure); if (saved) return saved;
   const code = (failure as Error)?.message;
   return (
     (

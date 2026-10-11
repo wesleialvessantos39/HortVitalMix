@@ -1,9 +1,13 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
 import { useEffect, useRef, useState } from "react";
 import { RefreshCw, ShieldCheck, WifiOff } from "lucide-react";
 import type { ShellSession } from "../../hooks/useSession";
 import { usePwa } from "../../hooks/usePwa";
 import { synchronizeOwnAccount } from "../../lib/accountSync";
 import { listPending } from "../../lib/offlineDb";
+import { portalRequests } from "../../lib/portalOffline";
+import { offlineScope } from "../../../shared/offlinePolicy";
+import { documentUploads } from "../../lib/offlineDocuments";
 import "./accountUpdates.css";
 
 const labels = {
@@ -33,8 +37,11 @@ export function AccountUpdatesPage({ session }: { session: ShellSession }) {
           ? await listPending(session.userId)
           : [];
       if (!controller.signal.aborted) {
-        setPending(rows.filter((row) => !row.result).length);
-        setConflicts(rows.filter((row) => row.result).length);
+        const scope = offlineScope(session.userId, session.activeRole!);
+        const [requests, uploads] = await Promise.all([portalRequests(scope), documentUploads(scope)]);
+        if (controller.signal.aborted) return;
+        setPending(rows.filter((row) => !row.result).length + requests.filter((row) => row.state === "pending" || row.state === "authentication").length + uploads.length);
+        setConflicts(rows.filter((row) => row.result).length + requests.filter((row) => ["conflict", "rejected", "review"].includes(row.state)).length);
       }
     };
     const refresh = () =>
@@ -71,9 +78,9 @@ export function AccountUpdatesPage({ session }: { session: ShellSession }) {
     } catch (error) {
       if (controller.signal.aborted) return;
       setNotice(
-        (error as Error).message === "OFFLINE"
+        offlineSavedMessage(error) ?? ((error as Error).message === "OFFLINE"
           ? "Conecte-se à internet. As ações locais continuam salvas."
-          : "Não foi possível concluir agora. Sua fila foi preservada; confirme sua sessão e tente novamente.",
+          : "Não foi possível concluir agora. Sua fila foi preservada; confirme sua sessão e tente novamente."),
       );
     } finally {
       flight.current = false;
@@ -141,7 +148,7 @@ export function AccountUpdatesPage({ session }: { session: ShellSession }) {
           A sincronização automática usa apenas sua conta. A verificação manual
           não repete pagamentos nem altera dados de outra pessoa.
         </p>
-        {session.activeRole === "producer" && (
+        {(
           <p>
             {pending} ações aguardando envio · {conflicts} ações precisam de
             revisão.

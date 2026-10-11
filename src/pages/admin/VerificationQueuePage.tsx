@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useMemo, useState } from "react";
 import { api, apiBase, fetchApiFile } from "../../lib/api";
@@ -84,6 +86,7 @@ const documentTypeLabel: Record<string, string> = {
 };
 
 export function VerificationQueuePage() {
+  const offlineDataRevision = useOfflineDataRevision();
   const session = usePortalSession();
   const archiveCommand = useAdminConfirmedCommand(
     session?.activeRole ?? null,
@@ -129,7 +132,7 @@ export function VerificationQueuePage() {
   }
   useEffect(() => {
     void load(tab);
-  }, [tab]);
+  }, [tab, offlineDataRevision]);
 
   useEffect(() => {
     const docs = active?.documents ?? [];
@@ -205,13 +208,13 @@ export function VerificationQueuePage() {
     } catch (e) {
       const err = e as { status?: number };
       setNotice(
-        err.status === 403
+        offlineSavedMessage(e) ?? (err.status === 403
           ? "Sem permissão no setor de verificação documental."
           : err.status === 409
             ? "Este chamado já está em análise."
             : err.status === 401
               ? "Entre novamente com e-mail e senha. O acesso de administrador vale em qualquer aparelho."
-              : "Não foi possível colocar em análise.",
+              : "Não foi possível colocar em análise."),
       );
     } finally {
       setBusy("");
@@ -252,11 +255,11 @@ export function VerificationQueuePage() {
       await load(nextTab);
     } catch (e) {
       setNotice(
-        (e as { status?: number }).status === 422
+        offlineSavedMessage(e) ?? ((e as { status?: number }).status === 422
           ? "Aprovação exige checklist completo e parecer."
           : (e as { status?: number }).status === 409
             ? "Abra o chamado em análise antes de decidir."
-            : "Não foi possível registrar a decisão.",
+            : "Não foi possível registrar a decisão."),
       );
     } finally {
       setBusy("");

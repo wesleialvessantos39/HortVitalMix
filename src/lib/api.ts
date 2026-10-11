@@ -13,6 +13,9 @@ import {
   waitForNativeSessionChanges,
 } from "./nativeTransport";
 import { pwaTransitionHeld, waitForPwaTransition } from "./pwaTransition";
+import { assertOfflineIdentity, cachePortalRead, currentOfflineIdentity, invalidatePortalCache, queuedError, readPortalCache, savePortalRequest, updatePortalRequest, type PortalRequest } from "./portalOffline";
+import { offlineReadAllowed, offlineMutationMode } from "../../shared/offlinePolicy";
+export type ApiOptions = RequestInit & { timeoutMs?: number; offlineBypass?: boolean };
 
 let refreshing: Promise<boolean> | null = null;
 let confirmingIdentity: Promise<void> | null = null;
@@ -145,6 +148,9 @@ async function doFetch(
   credentials: RequestCredentials,
 ) {
   const adminToken = url.includes("/admin/") ? readAdminAccessToken() : "";
+  const requestHeaders: Record<string, string> = {};
+  const names: Record<string, string> = { authorization: "Authorization", "content-type": "Content-Type", "x-hvm-request": "X-HVM-Request", "x-command-id": "X-Command-Id", "x-hvm-offline-scope": "X-HVM-Offline-Scope", "x-hvm-offline-id": "X-HVM-Offline-Id" };
+  new Headers(options.headers).forEach((value, key) => { requestHeaders[names[key] ?? key] = value; });
   try {
     return await fetchAppApi(url, {
       ...options,
@@ -153,7 +159,7 @@ async function doFetch(
         "Content-Type": "application/json",
         "X-HVM-Request": "1",
         ...(adminToken ? { Authorization: "Bearer " + adminToken } : {}),
-        ...options.headers,
+        ...requestHeaders,
       },
       signal: options.signal ?? AbortSignal.timeout(20000),
     });
@@ -233,7 +239,7 @@ export async function withAdminIdentityConfirmation<T>(
 
 export async function api<T>(
   path: string,
-  options: RequestInit & { timeoutMs?: number } = {},
+  options: ApiOptions = {},
   retried = false,
 ): Promise<T> {
   const mutation = !["GET", "HEAD", "OPTIONS"].includes(
@@ -244,8 +250,36 @@ export async function api<T>(
     pendingApiMutations++;
     publishMutationState();
   }
+  const owner = currentOfflineIdentity();
+  let saved: PortalRequest | null = null;
   try {
-    return await performApi<T>(path, options, retried);
+    if (options.signal?.aborted) throw failure("REQUEST_ABORTED");
+    const offlineRead = !mutation && offlineReadAllowed(path, owner?.role);
+    if (mutation && owner && !options.offlineBypass && !retried) {
+      // Persist before sending: even a lost response/reload retains the same ID.
+      saved = await savePortalRequest(path, options, owner);
+      if (saved && navigator.onLine === false) throw queuedError(saved);
+    }
+    if (navigator.onLine === false && offlineRead && !options.offlineBypass) return await readPortalCache<T>(path, owner);
+    const headers = new Headers(options.headers);
+    if (owner && (mutation || !offlineReadAllowed(path)) && !/^\/v1\/(?:auth|admin\/auth)(?:\/|$)/.test(path)) headers.set("X-HVM-Offline-Scope", owner.scope);
+    if (saved && offlineMutationMode(path, owner!.role) !== "online") headers.set("X-HVM-Offline-Id", saved.key);
+    const result = await performApi<T>(path, { ...options, headers }, retried);
+    if (owner && path !== "/v1/auth/session") assertOfflineIdentity(owner);
+    if (saved) await updatePortalRequest(saved, "confirmed");
+    if (offlineRead && !options.signal?.aborted) await cachePortalRead(path, result, owner).catch(() => {});
+    return result;
+  } catch (error) {
+    if (options.signal?.aborted || (error as Error).message === "SESSION_CHANGED") throw error;
+    const f = error as ApiFailure;
+    if (!mutation && [401, 403, 404].includes(f.status ?? 0) && offlineReadAllowed(path, owner?.role)) await invalidatePortalCache(path, owner).catch(() => {});
+    if (saved && f.status !== 202) {
+      if (!f.status || f.status >= 500 || f.status === 429) throw queuedError(saved);
+      if (f.status === 401) await updatePortalRequest(saved, { state: "authentication", code: f.message });
+      else await updatePortalRequest(saved, { state: f.status === 409 ? "conflict" : "rejected", code: f.message, currentRevision: f.currentRevision });
+    }
+    if (!mutation && !options.offlineBypass && !f.status && ["NETWORK_UNAVAILABLE", "REQUEST_TIMEOUT"].includes(f.message) && offlineReadAllowed(path, owner?.role)) return await readPortalCache<T>(path, owner);
+    throw error;
   } finally {
     if (mutation) {
       pendingApiMutations--;
@@ -256,11 +290,11 @@ export async function api<T>(
 
 async function performApi<T>(
   path: string,
-  options: RequestInit & { timeoutMs?: number },
+  options: ApiOptions,
   retried: boolean,
 ): Promise<T> {
   const requestIdentityVersion = readAdminSessionIdentityVersion();
-  const { timeoutMs, ...init } = options;
+  const { timeoutMs, offlineBypass: _offlineBypass, ...init } = options;
   const requestInit: RequestInit = {
     ...init,
     signal: init.signal ?? AbortSignal.timeout(timeoutMs ?? 20000),
@@ -304,7 +338,7 @@ async function performApi<T>(
       requestIdentityVersion !== readAdminSessionIdentityVersion()
     )
       throw failure("SESSION_CHANGED", { status: 401 });
-    return api<T>(path, options, true);
+    return api<T>(path, { ...options, offlineBypass: true }, true);
   }
   const canRefreshAdminEndpoint =
     !path.startsWith("/v1/admin/auth/") ||
@@ -370,7 +404,7 @@ async function performApi<T>(
       if (await refreshing) {
         if (requestIdentityVersion !== readAdminSessionIdentityVersion())
           throw failure("SESSION_CHANGED", { status: 401 });
-        return api<T>(path, options, true);
+        return api<T>(path, { ...options, offlineBypass: true }, true);
       }
     }
   }
@@ -394,10 +428,13 @@ async function performApi<T>(
         .finally(() => {
           refreshing = null;
         });
-      if (await refreshing) return api<T>(path, options, true);
+      if (await refreshing) return api<T>(path, { ...options, offlineBypass: true }, true);
     }
   }
 
+  const expectedReceipt = new Headers(requestInit.headers).get("X-HVM-Offline-Id");
+  if (response.ok && expectedReceipt && typeof requestInit.body === "string" && response.headers.get("X-HVM-Offline-Receipt") !== expectedReceipt)
+    throw failure("OFFLINE_RECEIPT_MISSING", { status: 503, requestId: response.headers.get("x-request-id") ?? undefined });
   if (response.status === 204) return undefined as T;
 
   const parsed = await parseResponse(response);

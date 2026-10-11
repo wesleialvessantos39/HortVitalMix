@@ -1,3 +1,4 @@
+import { useOfflineDataRevision } from "../../../hooks/useOfflineDataRevision";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, type ApiFailure } from "../../../lib/api.ts";
 import {
@@ -9,6 +10,7 @@ type Status = "loading" | "ready" | "error" | "empty";
 type State = { status: Status; config: GlobalConfigAdminResponse | null; errorMessage: string | null };
 
 export function useConfigAdmin() {
+  const offlineDataRevision = useOfflineDataRevision();
   const [state, setState] = useState<State>({ status: "loading", config: null, errorMessage: null });
   const [refreshing, setRefreshing] = useState(false);
   const mounted = useRef(false);
@@ -61,7 +63,7 @@ export function useConfigAdmin() {
       requestVersion.current++;
       pending.current?.abort();
     };
-  }, [load]);
+  }, [load, offlineDataRevision]);
 
   return { state, reload: load, refreshing };
 }

@@ -402,6 +402,7 @@ for (const [width, height] of [
     const guide = page.getByRole("dialog");
     await expect(guide.locator(".hvm-pwa-ios-steps > li")).toHaveCount(3);
     await expect(guide.getByRole("textbox")).toHaveCount(0);
+    await page.evaluate(() => document.fonts.ready);
     const bounds = await guide.boundingBox();
     expect(bounds).not.toBeNull();
     expect(bounds!.x).toBeGreaterThanOrEqual(0);
@@ -411,9 +412,11 @@ for (const [width, height] of [
     const metrics = await guide.evaluate((el) => ({
       horizontal: el.scrollWidth <= el.clientWidth,
       vertical: el.scrollHeight <= el.clientHeight,
+      scrollHeight: el.scrollHeight,
+      clientHeight: el.clientHeight,
     }));
     expect(metrics.horizontal).toBe(true);
-    if (height >= 568) expect(metrics.vertical).toBe(true);
+    if (height >= 568) expect(metrics.vertical, JSON.stringify(metrics)).toBe(true);
     const help = guide.getByText("Não encontrou a opção?", { exact: true });
     expect((await help.boundingBox())!.height).toBeGreaterThanOrEqual(44);
     const close = guide.getByRole("button", { name: "Fechar instruções" });
@@ -733,7 +736,7 @@ for (const blocker of ["form", "upload", "confirmation", "offline-queue"])
       await page.evaluate(
         () =>
           new Promise<void>((resolve) => {
-            const open = indexedDB.open("hvm-rural-v1", 1);
+            const open = indexedDB.open("hvm-rural-v1");
             open.onsuccess = () => {
               const tx = open.result.transaction(
                 "pending_commands",

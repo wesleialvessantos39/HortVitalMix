@@ -1,3 +1,4 @@
+import { offlineSavedMessage } from "./portalOffline";
 import { api } from "./api";
 import {
   CheckoutCommandIdSchema,
@@ -86,6 +87,7 @@ export async function confirmCheckout(command: PendingCheckout) {
   );
 }
 export const checkoutErrorMessage = (error: unknown) => {
+  const saved = offlineSavedMessage(error); if (saved) return saved;
   const code = (error as Error)?.message;
   return (
     (

@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import { AdminPermissionEditor } from "./AdminPermissionEditor";
 import {
@@ -35,6 +37,7 @@ export function AdminUsersPage({
 }: {
   access: AdminVerifySessionResponse;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [powers, setPowers] = useState<UserRow | null>(null);
   const [success, setSuccess] = useState("");
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -99,7 +102,7 @@ export function AdminUsersPage({
   }
   useEffect(() => {
     void load();
-  }, []);
+  }, [offlineDataRevision]);
 
   async function changeStatus(user: UserRow, unblock = false) {
     if (!canGovernAccounts) return;
@@ -130,7 +133,7 @@ export function AdminUsersPage({
     } catch (err) {
       const e = err as { status?: number; message?: string };
       setError(
-        e.message === "ACCOUNT_REQUIRES_REVIEW"
+        offlineSavedMessage(err) ?? (e.message === "ACCOUNT_REQUIRES_REVIEW"
           ? "Esta conta exige análise; não é possível desbloqueá-la por esta ação."
           : e.status === 422
             ? "Confira as datas: o término deve ser futuro e posterior ao início."
@@ -138,7 +141,7 @@ export function AdminUsersPage({
               ? "O último Super administrador ativo é protegido e não pode ser bloqueado."
               : e.status === 401
                 ? "Entre novamente para confirmar esta operação."
-                : "A alteração não pôde ser concluída.",
+                : "A alteração não pôde ser concluída."),
       );
     } finally {
       setBusy(null);
@@ -159,11 +162,11 @@ export function AdminUsersPage({
     } catch (err) {
       const e = err as { status?: number };
       setError(
-        e.status === 409
+        offlineSavedMessage(err) ?? (e.status === 409
           ? "Esta conta administrativa é protegida."
           : e.status === 401
             ? "Entre novamente para confirmar esta operação."
-            : "A exclusão não pôde ser concluída. Atualize a lista e tente novamente.",
+            : "A exclusão não pôde ser concluída. Atualize a lista e tente novamente."),
       );
     } finally {
       setBusy(null);

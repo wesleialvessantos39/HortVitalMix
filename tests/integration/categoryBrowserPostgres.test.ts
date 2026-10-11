@@ -8,7 +8,7 @@ import type { Pool } from "pg";
 const auth = vi.hoisted(() => ({ userId: "", sessionId: "", token: "" }));
 vi.mock("../../server/db/pool.ts", async () => {
   const value = process.env.HVM_T13_LOCAL_DATABASE_URL;
-  if (!value) return { dbPool: null };
+  if (!value) return { dbPool: null, rawDbPool: null };
   const url = new URL(value);
   if (
     url.hostname !== "127.0.0.1" ||
@@ -17,7 +17,9 @@ vi.mock("../../server/db/pool.ts", async () => {
   )
     throw new Error("T13_LOCAL_DATABASE_REQUIRED");
   const { default: pg } = await import("pg");
-  return { dbPool: new pg.Pool({ connectionString: value, max: 5 }) };
+  const rawDbPool = new pg.Pool({ connectionString: value, max: 5 });
+  const { scopedDatabasePool } = await import("../../server/db/offlineTransaction.ts");
+  return { rawDbPool, dbPool: scopedDatabasePool(rawDbPool) };
 });
 // Only Supabase Auth's external getUser is adapted. Real HTTP middleware,
 // Zod, CategoryService, PostgreSQL/RLS and the built React application run here.

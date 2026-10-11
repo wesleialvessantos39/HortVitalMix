@@ -1,3 +1,6 @@
+import { uploadDocumentDurably } from "../../lib/offlineDocuments";
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { PageLoading } from "../../components/PageLoading";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Camera, FileText, FileUp } from "lucide-react";
@@ -145,6 +148,7 @@ export function DocumentsPanel({
     requiredReady: boolean;
   }) => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const base = admin ? "/v1/admin/documents" : "/v1/producer/documents";
   const [docs, setDocs] = useState<DocumentView[]>([]),
     [loading, setLoading] = useState(true),
@@ -286,7 +290,7 @@ export function DocumentsPanel({
   function showError(e: unknown) {
     const code = e instanceof Error ? e.message : "";
     setNotice(
-      errors[code] ??
+      offlineSavedMessage(e) ?? errors[code] ??
         "Não foi possível concluir. Verifique sua conexão e tente novamente.",
     );
   }
@@ -302,7 +306,7 @@ export function DocumentsPanel({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [offlineDataRevision]);
   useEffect(() => {
     void load().then((rows) => {
       const d = rows.find((d) => d.id === initialDocumentId);
@@ -311,7 +315,7 @@ export function DocumentsPanel({
     return () => {
       generation.current++;
     };
-  }, [propertyId, base]);
+  }, [propertyId, base, offlineDataRevision]);
   function fileHref(id: string) {
     return `${apiBase()}${base}/${id}/file`;
   }
@@ -518,40 +522,8 @@ export function DocumentsPanel({
         fileHashSha256: hash,
         commandId: attempt.commandId,
       });
-      const signed = await api<{
-        documentId: string;
-        signedUrl: string | null;
-        status: string;
-      }>(`${base}/upload-url`, {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-      attempt.documentId = signed.documentId;
-      if (signed.signedUrl) {
-        const form = new FormData();
-        form.append("cacheControl", "0");
-        form.append("", file);
-        const r = await fetch(signed.signedUrl, {
-          method: "PUT",
-          body: form,
-          credentials: "omit",
-        });
-        if (!r.ok) {
-          const body = await r.json().catch(() => ({}));
-          if (
-            !["Duplicate", "409"].includes(String(body.error)) &&
-            String(body.statusCode) !== "409"
-          )
-            throw new Error("UPLOAD_FAILED");
-        }
-      }
-      const confirmed = await api<{ status: string }>(
-        `${base}/${signed.documentId}/confirm`,
-        {
-          method: "POST",
-          body: JSON.stringify({ commandId: crypto.randomUUID() }),
-        },
-      );
+      const confirmed = await uploadDocumentDurably(base, payload, file);
+      const signed = { documentId: confirmed.documentId };
       const rows = await load();
       uploadAttempt.current = null;
       const created = rows.find((row) => row.id === signed.documentId);

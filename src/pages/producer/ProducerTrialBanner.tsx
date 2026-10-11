@@ -1,3 +1,4 @@
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
 import type { TrialView } from "../../../shared/contracts/subscription";
@@ -9,6 +10,7 @@ export function ProducerTrialBanner({
   userId: string;
   onNavigate: (path: string) => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [trial, setTrial] = useState<TrialView | null>(null),
     [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -21,7 +23,7 @@ export function ProducerTrialBanner({
       })
       .catch(() => {});
     return () => c.abort();
-  }, [userId]);
+  }, [userId, offlineDataRevision]);
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60000);
     return () => clearInterval(timer);

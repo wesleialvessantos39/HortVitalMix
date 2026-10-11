@@ -1,3 +1,5 @@
+import { offlineSavedMessage } from "../../lib/portalOffline";
+import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
@@ -121,6 +123,7 @@ export default function AdminDepartmentsPage({
   access: AdminVerifySessionResponse;
   onNavigate: (path: string) => void;
 }) {
+  const offlineDataRevision = useOfflineDataRevision();
   const [data, setData] = useState<AdminDashboardResponse | null>(null);
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
@@ -155,11 +158,11 @@ export default function AdminDepartmentsPage({
         if (status === 401 || status === 403) {
           setData(null);
           setError(
-            "Sua sessão ou seus poderes mudaram. Confirme o acesso para consultar os departamentos.",
+            offlineSavedMessage(cause) ?? ("Sua sessão ou seus poderes mudaram. Confirme o acesso para consultar os departamentos."),
           );
         } else
           setError(
-            "Não foi possível atualizar os departamentos. Tente novamente.",
+            offlineSavedMessage(cause) ?? ("Não foi possível atualizar os departamentos. Tente novamente."),
           );
       } finally {
         inFlight = false;
@@ -183,7 +186,7 @@ export default function AdminDepartmentsPage({
       window.removeEventListener("hvm:departments-changed", visible);
       document.removeEventListener("visibilitychange", visible);
     };
-  }, [scopeKey]);
+  }, [scopeKey, offlineDataRevision]);
 
   const departments =
     data?.departments.filter((department) =>
