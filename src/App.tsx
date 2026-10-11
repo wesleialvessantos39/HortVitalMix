@@ -576,7 +576,7 @@ export default function App() {
           sessionLoading={sessionLoading}
         />
         <AutomaticAccountSync session={sessionLoading ? null : shellSession} />
-        <NativeUpdateNotice session={shellSession} />
+        {["/aplicativos", "/conta/atualizacoes"].includes(path) && <NativeUpdateNotice session={shellSession} />}
         {shellSession?.activeRole === "producer" &&
           (path.startsWith("/produtor/") || path === "/conta") && (
             <ProducerTrialBanner

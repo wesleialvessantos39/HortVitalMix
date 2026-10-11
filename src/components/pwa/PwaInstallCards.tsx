@@ -16,25 +16,34 @@ import { usePwa } from "../../hooks/usePwa";
 import { requestPwaInstallation } from "../../lib/pwaManager";
 import { nativeBackendOrigin } from "../../lib/nativeTransport";
 import { IosInstallGuide, PwaInstallAddress } from "./IosInstallGuide";
+import { pwaStateLabels } from "./PwaVersionPanel";
 import "./pwa.css";
 
 export function PwaInstallCards({
   compact = false,
   initialPlatform,
+  showUpdateCheck = true,
 }: {
   compact?: boolean;
   initialPlatform?: PwaPlatform;
+  showUpdateCheck?: boolean;
 }) {
   const pwa = usePwa();
   const [guide, setGuide] = useState<PwaPlatform | null>(null);
   const [feedback, setFeedback] = useState("");
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState("");
+  const [checkedUpdates, setCheckedUpdates] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   useEffect(() => {
-    if (initialPlatform && !pwa.device.standalone) setGuide(initialPlatform);
-  }, [initialPlatform, pwa.device.standalone]);
+    if (
+      initialPlatform &&
+      !pwa.device.standalone &&
+      pwa.installState !== "confirmed"
+    )
+      setGuide(initialPlatform);
+  }, [initialPlatform, pwa.device.standalone, pwa.installState]);
   useEffect(() => {
     if (pwa.installState === "confirmed") {
       setFeedback("");
@@ -86,19 +95,29 @@ export function PwaInstallCards({
       );
     }
   }
-  if (pwa.device.standalone)
+  if (pwa.device.standalone || pwa.installState === "confirmed")
     return (
       <div className="hvm-pwa-installed" data-hvm-pwa-ui role="status">
         <CheckCircle2 size={25} aria-hidden="true" />
         <div>
           <strong>Instalado neste dispositivo</strong>
-          <p>
-            Você abriu o HortiVitalMix pelo aplicativo. As melhorias chegam pela
-            atualização web, sem reinstalação.
-          </p>
-          <button type="button" onClick={() => void pwa.checkUpdates()}>
-            Verificar atualizações
-          </button>
+          {showUpdateCheck && (
+            <button
+              type="button"
+              disabled={["checking", "applying"].includes(pwa.updateState)}
+              onClick={() => {
+                setCheckedUpdates(true);
+                void pwa.checkUpdates();
+              }}
+            >
+              Verificar atualizações
+            </button>
+          )}
+          {checkedUpdates && (
+            <p className="hvm-pwa-manual-result" role="status">
+              {pwaStateLabels[pwa.updateState]}
+            </p>
+          )}
         </div>
       </div>
     );
@@ -178,12 +197,6 @@ export function PwaInstallCards({
           );
         })}
       </div>
-      {pwa.installState === "confirmed" && (
-        <p className="hvm-pwa-feedback" role="status">
-          Instalação confirmada pelo navegador. Abra o HortiVitalMix pelo ícone
-          da tela inicial.
-        </p>
-      )}
       {feedback && (
         <p className="hvm-pwa-feedback" role="status">
           {feedback}

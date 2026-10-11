@@ -47,11 +47,23 @@ async function authUser(email = randomUUID() + "@example.invalid") {
   return id;
 }
 
-async function issue(email = randomUUID() + "@example.invalid") {
+function syntheticCpf() {
+  const digits = [...randomBytes(9)].map(value => value % 10);
+  for (let length = 9; length < 11; length++) {
+    const remainder = (digits.reduce((sum, digit, index) => sum + digit * (length + 1 - index), 0) * 10) % 11;
+    digits.push(remainder === 10 ? 0 : remainder);
+  }
+  return digits.join("");
+}
+
+async function issue(
+  email = randomUUID() + "@example.invalid",
+  targetRole: "platform_admin" | "platform_super_admin" = "platform_admin",
+) {
   const result = await AdminGovernanceService.createInvite(
     {
       email,
-      targetRole: "platform_admin",
+      targetRole,
       sectors: ["document_verification"],
       commandId: randomUUID(),
     },
@@ -211,6 +223,190 @@ describe.runIf(!!process.env.HVM_ADMIN_INVITES_LOCAL_DATABASE_URL)(
       ).toBe(1);
     });
 
+    for (const publicRole of ["consumer", "producer"] as const) {
+      it(`convida Gmail de ${publicRole} sem CPF prévio e ativa outra credencial`, async () => {
+        const email = randomUUID() + "@gmail.com";
+        const publicId = await authUser(email);
+        const personId = randomUUID();
+        await pool().query(
+          "INSERT INTO app_people(id,user_id,full_name,cpf_normalized,email_normalized,phone_e164) VALUES($1,$2,'Pessoa sintética','11144477735',$3,'+5569988888888')",
+          [personId, publicId, email],
+        );
+        await pool().query(
+          "INSERT INTO app_user_role_assignments(user_id,role_code) VALUES($1,$2)",
+          [publicId, publicRole],
+        );
+        await pool().query("UPDATE app_users SET status='active' WHERE id=$1", [publicId]);
+        const issued = await issue(email);
+        expect(issued.identityMode).toBe("existing");
+        const [authEmail, delivery] = auth.inviteUserByEmail.mock.calls[0];
+        expect(authEmail).not.toBe(email);
+        expect(authEmail).toContain("+hvm-admin-");
+        const token = new URL(delivery.redirectTo).searchParams.get("token")!;
+        const accept = (cpf: string) =>
+          AdminGovernanceService.acceptInvite(
+            {
+              token,
+              cpf,
+              password: "SyntheticLocal!Pass123",
+              commandId: randomUUID(),
+            },
+            randomUUID(),
+            ipHash,
+          );
+        expect(await accept("52998224725")).toMatchObject({
+          status: "identity_conflict",
+        });
+        expect(auth.updateUserById).not.toHaveBeenCalled();
+        const accepted = await accept("11144477735");
+        expect(accepted, JSON.stringify(accepted)).toMatchObject({ status: "accepted" });
+        if (accepted.status !== "accepted") throw new Error("ACCEPT_FAILED");
+        expect(accepted.userId).not.toBe(publicId);
+        expect(auth.updateUserById.mock.calls[0][0]).toBe(accepted.userId);
+        expect(
+          (
+            await pool().query(
+              "SELECT role_code FROM app_user_role_assignments WHERE user_id=$1 AND revoked_at IS NULL",
+              [publicId],
+            )
+          ).rows,
+        ).toEqual([{ role_code: publicRole }]);
+        expect(
+          (
+            await pool().query(
+              "SELECT admin_user_id,person_id FROM app_admin_principals WHERE admin_user_id=$1",
+              [accepted.userId],
+            )
+          ).rows,
+        ).toEqual([{ admin_user_id: accepted.userId, person_id: personId }]);
+        await expect(
+          pool().query(
+            "INSERT INTO app_user_role_assignments(user_id,role_code) VALUES($1,'platform_admin')",
+            [publicId],
+          ),
+        ).rejects.toMatchObject({ code: "23514" });
+        await expect(
+          pool().query(
+            "INSERT INTO app_user_role_assignments(user_id,role_code) VALUES($1,'consumer')",
+            [accepted.userId],
+          ),
+        ).rejects.toMatchObject({ code: "23514" });
+        await expect(
+          pool().query(
+            "INSERT INTO app_user_role_assignments(user_id,role_code) VALUES($1,'platform_super_admin')",
+            [accepted.userId],
+          ),
+        ).rejects.toMatchObject({ code: "23514" });
+        // Remove only these synthetic credentials before the next CPF fixture.
+        await pool().query("DELETE FROM app_admin_principals WHERE admin_user_id=$1", [accepted.userId]);
+        await pool().query("DELETE FROM auth.users WHERE id=ANY($1::uuid[])", [
+          [accepted.userId, publicId],
+        ]);
+      });
+    }
+
+    it("mantém convites simultâneos de admin e super independentes no mesmo Gmail", async () => {
+      const email = randomUUID() + "@gmail.com";
+      await issue(email, "platform_admin");
+      await issue(email, "platform_super_admin");
+      const ids: string[] = [];
+      const cpf = syntheticCpf();
+      const fullName = "Pessoa sintética " + randomUUID();
+      for (const [, delivery] of auth.inviteUserByEmail.mock.calls) {
+        const accepted = await AdminGovernanceService.acceptInvite(
+          {
+            token: new URL(delivery.redirectTo).searchParams.get("token")!,
+            fullName,
+            cpf,
+            phone: "+5569988888888",
+            password: "SyntheticLocal!Pass123",
+            commandId: randomUUID(),
+          },
+          randomUUID(),
+          ipHash,
+        );
+        expect(accepted.status, JSON.stringify(accepted)).toBe("accepted");
+        if (accepted.status !== "accepted") throw new Error("ACCEPT_FAILED");
+        ids.push(accepted.userId);
+      }
+      expect(new Set(ids).size).toBe(2);
+      const roles = await pool().query(
+        "SELECT user_id,role_code FROM app_user_role_assignments WHERE user_id=ANY($1::uuid[]) AND revoked_at IS NULL",
+        [ids],
+      );
+      expect(roles.rows).toEqual(
+        expect.arrayContaining([
+          { user_id: ids[0], role_code: "platform_admin" },
+          { user_id: ids[1], role_code: "platform_super_admin" },
+        ]),
+      );
+      // Deleting principals first avoids a synthetic person-reference FK.
+      await pool().query(
+        "DELETE FROM app_admin_principals WHERE admin_user_id=ANY($1::uuid[])",
+        [ids],
+      );
+      await pool().query("DELETE FROM auth.users WHERE id=ANY($1::uuid[])", [
+        ids,
+      ]);
+    });
+
+    it("recupera o histórico arquivado sem reativar links nem esconder pendentes antigos", async () => {
+      const pending = [];
+      for (let index = 0; index < 105; index++)
+        pending.push(await seedInvite());
+      const removed = await seedInvite();
+      await remove(removed, 1);
+      const visible = await AdminGovernanceService.listInvites(
+        actorId,
+        "platform_admin",
+      );
+      expect(visible).toHaveLength(105);
+      expect(visible.map((invite) => invite.id)).toEqual(
+        expect.arrayContaining(pending),
+      );
+      const history = await AdminGovernanceService.listInvites(
+        actorId,
+        "platform_admin",
+        true,
+      );
+      expect(history).toHaveLength(106);
+      expect(history.find((invite) => invite.id === removed)).toMatchObject({
+        archived: true,
+      });
+    });
+
+    it("não altera a senha ao aceitar convite antigo ligado a um consumidor", async () => {
+      const issued = await issue();
+      const token = new URL(
+        auth.inviteUserByEmail.mock.calls[0][1].redirectTo,
+      ).searchParams.get("token")!;
+      const credential = (
+        await pool().query(
+          "SELECT auth_user_id FROM app_admin_invites WHERE id=$1",
+          [issued.id],
+        )
+      ).rows[0].auth_user_id;
+      await pool().query(
+        "INSERT INTO app_user_role_assignments(user_id,role_code) VALUES($1,'consumer')",
+        [credential],
+      );
+      expect(
+        await AdminGovernanceService.acceptInvite(
+          {
+            token,
+            cpf: "11144477735",
+            fullName: "Teste local",
+            phone: "+5569988888888",
+            password: "SyntheticLocal!Pass123",
+            commandId: randomUUID(),
+          },
+          randomUUID(),
+          ipHash,
+        ),
+      ).toMatchObject({ status: "identity_conflict" });
+      expect(auth.updateUserById).not.toHaveBeenCalled();
+    });
+
     it("arquiva o convite aceito preservando Auth, perfil e poderes administrativos", async () => {
       const issued = await issue();
       const token = new URL(
@@ -228,7 +424,7 @@ describe.runIf(!!process.env.HVM_ADMIN_INVITES_LOCAL_DATABASE_URL)(
         randomUUID(),
         ipHash,
       );
-      expect(accepted.status).toBe("accepted");
+      expect(accepted.status, JSON.stringify(accepted)).toBe("accepted");
       if (accepted.status !== "accepted")
         throw new Error("SYNTHETIC_ACCEPT_FAILED");
       const current = await pool().query(

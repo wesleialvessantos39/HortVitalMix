@@ -2,8 +2,25 @@
   margin-bottom: 14px;
 }
 .admin-invite-governance .admin-governance-grid {
-  grid-template-columns: minmax(300px, 0.78fr) minmax(0, 1.22fr);
+  grid-template-columns: minmax(0, 1fr);
 }
+.admin-invite-independence { display: flex; gap: 10px; padding: 14px; border: 1px solid #d9e6d9; border-radius: 12px; background: #f3f8f0; font-size: 13px; line-height: 1.6; color: #365b3e; }
+.admin-invite-independence > span { min-width: 0; }
+.admin-invite-governance .admin-invite-inputs { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 18px; }
+.admin-invite-inputs > :is(fieldset, button, .admin-alert, .admin-invite-role-preview) { grid-column: 1 / -1; }
+.admin-invite-governance .admin-sectors-fieldset { min-inline-size: 0; display: block; margin: 4px 0; padding: 16px; background: #fcfdfb; }
+.admin-invite-governance .admin-sectors-fieldset legend { font-size: 14px; padding-inline: 8px; }
+.admin-sectors-help { font-size: 13px; color: #637064; line-height: 1.5; margin: 0 0 14px; }
+.admin-sectors-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 10px; }
+.admin-invite-governance .admin-sector-checkbox { min-width: 0; min-height: 74px; margin: 0; padding: 14px; border: 1px solid #dae3d7; background: #fff; border-radius: 12px; cursor: pointer; }
+.admin-invite-governance .admin-sector-checkbox:has(input:checked) { border-color: #598465; background: #eef7ec; }
+.admin-sector-checkbox input[type="checkbox"] { flex: 0 0 20px; width: 20px !important; height: 20px; min-height: 20px !important; padding: 0; margin: 2px 0 0; accent-color: #285d39; }
+.admin-sector-checkbox > span { min-width: 0; flex: 1; line-height: 1.5; overflow-wrap: break-word; }
+.admin-invite-governance .admin-sector-checkbox strong { font-size: 14px; line-height: 1.4; }
+.admin-invite-governance .admin-sector-checkbox small { font-size: 12px; line-height: 1.5; }
+.admin-sectors-count { display: block; margin-top: 14px; color: #3c6445; font-size: 12px; font-weight: 700; }
+.admin-invite-history-note { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin: 14px 0; font-size: 13px; line-height: 1.6; color: #5b6a5f; }
+.admin-invite-history-note button { min-height: 44px; color: #245a34; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 .admin-invite-role-preview {
   display: flex;
   align-items: flex-start;
@@ -237,6 +254,8 @@
   }
 }
 @media (max-width: 480px) {
+  .admin-invite-governance .admin-invite-inputs { grid-template-columns: minmax(0, 1fr); }
+  .admin-invite-governance .admin-sectors-fieldset { padding: 12px; }
   .admin-invite-governance .admin-card {
     padding: 16px;
   }

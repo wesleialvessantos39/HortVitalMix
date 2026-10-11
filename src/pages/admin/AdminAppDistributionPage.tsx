@@ -84,7 +84,7 @@ export default function AdminAppDistributionPage({
           {pwa.device.standalone ? "Modo instalado" : "Modo navegador"}
         </span>
       </div>
-      <PwaVersionPanel />
+      <PwaVersionPanel technical />
       <section
         className="admin-pwa-health"
         aria-labelledby="admin-pwa-health-title"
@@ -110,7 +110,7 @@ export default function AdminAppDistributionPage({
           instalação como disponível. A confirmação final pertence ao navegador.
         </p>
       </section>
-      <PwaInstallCards />
+      <PwaInstallCards showUpdateCheck={false} />
       <section className="admin-pwa-policy">
         <h2>Como as atualizações são aplicadas</h2>
         <p>

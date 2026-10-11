@@ -114,10 +114,6 @@ export function AccountUpdatesPage({ session }: { session: ShellSession }) {
             <dd>{pwa.version?.frontendVersion ?? "Consultando"}</dd>
           </div>
           <div>
-            <dt>Build aberto</dt>
-            <dd>{pwa.loadedBuildId.slice(0, 12) || "Em desenvolvimento"}</dd>
-          </div>
-          <div>
             <dt>Última verificação</dt>
             <dd>
               {pwa.lastCheckedAt

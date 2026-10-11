@@ -1322,19 +1322,28 @@ export class AdminGovernanceService {
         identityMode = "existing";
         targetPersonId = existing.id;
       } else {
-        const publicEmail = await client.query(
-          `SELECT 1 FROM public.app_people WHERE archived_at IS NULL AND email_normalized=$1 LIMIT 1`,
+        const publicEmail = await client.query<{ id: string }>(
+          `SELECT id FROM public.app_people WHERE archived_at IS NULL AND email_normalized=$1 LIMIT 1`,
           [input.email],
         );
-        if (publicEmail.rowCount) {
-          await client.query("ROLLBACK");
-          return {
-            status: "conflict",
-            message:
-              "Informe o CPF do cadastro existente para vinculá-lo ao acesso administrativo.",
-          };
+        if (publicEmail.rows[0]) {
+          // Reuse only the person's reference, never their Auth identity,
+          // password, public roles or session. CPF is confirmed at acceptance.
+          identityMode = "existing";
+          targetPersonId = publicEmail.rows[0].id;
+          needsAuthAlias = true;
         }
       }
+
+      // Another pending portal or a legacy, unaccepted Auth invitation can own
+      // the base address too. Never attach that identity to a different portal.
+      const otherInvite = await client.query(
+        `SELECT 1 FROM public.app_admin_invites
+          WHERE lower(email)=$1 AND target_role<>$2 AND auth_user_id IS NOT NULL
+          LIMIT 1`,
+        [input.email, input.targetRole],
+      );
+      needsAuthAlias ||= Boolean(otherInvite.rowCount);
 
       if (input.targetRole === "platform_admin") {
         const valid = await client.query<{ code: string }>(
@@ -1354,9 +1363,10 @@ export class AdminGovernanceService {
       token = randomBytes(32).toString("hex");
       const digest = sha256(token);
       inviteId = randomUUID();
-      authEmail = needsAuthAlias
-        ? roleScopedInviteAuthEmail(input.email, input.targetRole, inviteId)
-        : input.email;
+      authEmail =
+        needsAuthAlias || /@(gmail|googlemail)\.com$/.test(input.email)
+          ? roleScopedInviteAuthEmail(input.email, input.targetRole, inviteId)
+          : input.email;
       if (needsAuthAlias && authEmail === input.email) {
         await client.query("ROLLBACK");
         return {
@@ -1442,11 +1452,11 @@ export class AdminGovernanceService {
       });
       if (sent.error || !sent.data.user) {
         await client.query(
-            `UPDATE public.app_admin_invites
+          `UPDATE public.app_admin_invites
             SET invalidated_at=clock_timestamp(),revision=revision+1
           WHERE id=$1 AND is_accepted=false`,
-            [inviteId],
-          );
+          [inviteId],
+        );
         await client.query("COMMIT");
         return {
           status: sent.error?.status === 422 ? "conflict" : "unavailable",
@@ -1469,12 +1479,12 @@ export class AdminGovernanceService {
       } catch {
         await client.query("ROLLBACK TO SAVEPOINT invite_auth_attach");
         await client.query(
-            `UPDATE public.app_admin_invites
+          `UPDATE public.app_admin_invites
             SET invalidated_at=coalesce(invalidated_at,clock_timestamp()),revision=revision+1,
                 auth_user_id=coalesce(auth_user_id,$2)
           WHERE id=$1 AND is_accepted=false`,
-            [inviteId, sent.data.user.id],
-          );
+          [inviteId, sent.data.user.id],
+        );
         await releaseInvalidatedInviteAuth(client, input.email);
         await client.query("COMMIT");
         return { status: "unavailable" };
@@ -1687,10 +1697,13 @@ export class AdminGovernanceService {
   static async listInvites(
     actorId: string,
     actorRole: AdminRole,
+    includeArchived = false,
   ): Promise<InviteResponse[]> {
     if (!dbPool) return [];
     const params: unknown[] = [];
-    let where = `WHERE NOT EXISTS(SELECT 1 FROM public.app_audit_events archived
+    let where = includeArchived
+      ? "WHERE true"
+      : `WHERE NOT EXISTS(SELECT 1 FROM public.app_audit_events archived
       WHERE archived.target_entity='app_admin_invites' AND archived.target_id=i.id
         AND archived.action='admin.invite.archived')`;
     if (actorRole === "platform_admin") {
@@ -1708,15 +1721,19 @@ export class AdminGovernanceService {
       created_at: Date | string;
       invalidated_at: Date | string | null;
       invited_by: string;
+      archived: boolean;
       sectors: AdminSectorCode[] | null;
     }>(
       `SELECT i.id,i.email,i.target_role,i.identity_mode,i.revision,i.is_accepted,i.expires_at,
               i.created_at,i.invalidated_at,i.invited_by,
+              EXISTS(SELECT 1 FROM public.app_audit_events archived
+                WHERE archived.target_entity='app_admin_invites' AND archived.target_id=i.id
+                  AND archived.action='admin.invite.archived') AS archived,
               COALESCE(array_agg(s.sector_code) FILTER (WHERE s.sector_code IS NOT NULL),'{}') AS sectors
          FROM public.app_admin_invites i
          LEFT JOIN public.app_admin_invite_sectors s ON s.invite_id=i.id
          ${where}
-        GROUP BY i.id ORDER BY i.created_at DESC LIMIT 100`,
+        GROUP BY i.id ORDER BY (NOT i.is_accepted AND i.invalidated_at IS NULL AND i.expires_at>now()) DESC, i.created_at DESC`,
       params,
     );
     return result.rows.map((row) => ({
@@ -1730,6 +1747,7 @@ export class AdminGovernanceService {
       expiresAt: new Date(row.expires_at).toISOString(),
       createdAt: new Date(row.created_at).toISOString(),
       invitedBy: row.invited_by,
+      archived: row.archived ?? false,
       invalidatedAt: row.invalidated_at
         ? new Date(row.invalidated_at).toISOString()
         : null,
@@ -1843,26 +1861,26 @@ export class AdminGovernanceService {
         return { status: "unavailable" };
       }
 
+      // A legacy invite must never change the password of an established
+      // public account or of another administrative portal.
+      const existingCredential = await client.query(
+        `SELECT 1 FROM public.app_user_role_assignments WHERE user_id=$1
+         UNION ALL SELECT 1 FROM public.app_admin_principals WHERE admin_user_id=$1
+         UNION ALL SELECT 1 FROM public.app_people WHERE user_id=$1
+         LIMIT 1`,
+        [invite.auth_user_id],
+      );
+      if (existingCredential.rowCount) {
+        await client.query("ROLLBACK");
+        return {
+          status: "identity_conflict",
+          message:
+            "Este convite antigo aponta para um acesso já existente. Exclua o convite e envie um novo para criar uma credencial independente.",
+        };
+      }
+
       const targetUserId = invite.auth_user_id;
       let personId = invite.target_person_id;
-
-      const updated = await supabaseAdmin.auth.admin.updateUserById(
-        targetUserId,
-        {
-          password: input.password,
-          email_confirm: true,
-          user_metadata: {
-            full_name: input.fullName ?? undefined,
-            hvm_portal: "administrative",
-            hvm_admin_role: invite.target_role,
-            hvm_identity_mode: invite.identity_mode,
-          },
-        },
-      );
-      if (updated.error) {
-        await client.query("ROLLBACK");
-        return { status: "unavailable" };
-      }
 
       await client.query(
         `INSERT INTO public.app_users(id,status) VALUES ($1,'active')
@@ -1903,7 +1921,8 @@ export class AdminGovernanceService {
           await client.query("ROLLBACK");
           return {
             status: "identity_conflict",
-            message: "Os dados não correspondem ao cadastro público selecionado.",
+            message:
+              "Os dados não correspondem ao cadastro público selecionado.",
           };
         }
 
@@ -1918,7 +1937,8 @@ export class AdminGovernanceService {
           await client.query("ROLLBACK");
           return {
             status: "identity_conflict",
-            message: "A pessoa já possui credencial para este mesmo portal administrativo.",
+            message:
+              "A pessoa já possui credencial para este mesmo portal administrativo.",
           };
         }
       } else {
@@ -1926,32 +1946,77 @@ export class AdminGovernanceService {
           await client.query("ROLLBACK");
           return {
             status: "validation_failed",
-            message: "Nome e celular são obrigatórios para uma nova identidade.",
+            message:
+              "Nome e celular são obrigatórios para uma nova identidade.",
           };
         }
 
-        const duplicate = await client.query(
-          `SELECT 1 FROM public.app_people
-            WHERE archived_at IS NULL AND (cpf_normalized=$1 OR email_normalized=$2)
-            LIMIT 1`,
+        // Two independent portal invitations may be accepted in either order.
+        // Reuse the person only after matching both verified address and CPF.
+        const duplicate = await client.query<{
+          id: string;
+          cpf_normalized: string;
+          email_normalized: string;
+          status: string;
+        }>(
+          `SELECT p.id,p.cpf_normalized,p.email_normalized,u.status
+             FROM public.app_people p JOIN public.app_users u ON u.id=p.user_id
+            WHERE p.archived_at IS NULL AND (p.cpf_normalized=$1 OR p.email_normalized=$2)
+            FOR UPDATE OF p`,
           [input.cpf, invite.email],
         );
-        if (duplicate.rowCount) {
-          await client.query("ROLLBACK");
-          return { status: "identity_conflict", message: "CPF ou e-mail já vinculado." };
+        const person = duplicate.rows[0];
+        if (person) {
+          if (
+            duplicate.rowCount !== 1 ||
+            person.status !== "active" ||
+            person.cpf_normalized !== input.cpf ||
+            person.email_normalized !== invite.email
+          ) {
+            await client.query("ROLLBACK");
+            return {
+              status: "identity_conflict",
+              message: "CPF ou e-mail já vinculado a outro cadastro.",
+            };
+          }
+          personId = person.id;
+        } else {
+          const createdPerson = await client.query<{ id: string }>(
+            `INSERT INTO public.app_people
+              (user_id,full_name,cpf_normalized,email_normalized,phone_e164,email_verified_at)
+             VALUES ($1,$2,$3,$4,$5,clock_timestamp())
+             RETURNING id`,
+            [
+              targetUserId,
+              input.fullName,
+              input.cpf,
+              invite.email,
+              input.phone,
+            ],
+          );
+          personId = createdPerson.rows[0]?.id ?? null;
         }
-
-        const createdPerson = await client.query<{ id: string }>(
-          `INSERT INTO public.app_people
-            (user_id,full_name,cpf_normalized,email_normalized,phone_e164,email_verified_at)
-           VALUES ($1,$2,$3,$4,$5,clock_timestamp())
-           RETURNING id`,
-          [targetUserId, input.fullName, input.cpf, invite.email, input.phone],
-        );
-        personId = createdPerson.rows[0]?.id ?? null;
       }
 
       if (!personId) {
+        await client.query("ROLLBACK");
+        return { status: "unavailable" };
+      }
+
+      const updated = await supabaseAdmin.auth.admin.updateUserById(
+        targetUserId,
+        {
+          password: input.password,
+          email_confirm: true,
+          user_metadata: {
+            full_name: input.fullName ?? undefined,
+            hvm_portal: "administrative",
+            hvm_admin_role: invite.target_role,
+            hvm_identity_mode: invite.identity_mode,
+          },
+        },
+      );
+      if (updated.error) {
         await client.query("ROLLBACK");
         return { status: "unavailable" };
       }
@@ -1988,7 +2053,12 @@ export class AdminGovernanceService {
       await client.query(
         `UPDATE public.app_account_profiles SET full_name=coalesce($3,full_name),phone_e164=coalesce($4,phone_e164),updated_at=clock_timestamp()
          WHERE user_id=$1 AND role_code=$2`,
-        [targetUserId,invite.target_role,input.fullName ?? null,input.phone ?? null],
+        [
+          targetUserId,
+          invite.target_role,
+          input.fullName ?? null,
+          input.phone ?? null,
+        ],
       );
 
       if (invite.target_role === "platform_super_admin") {
@@ -2056,9 +2126,10 @@ export class AdminGovernanceService {
         requestId,
         actorId: targetUserId,
         actorRole: invite.target_role,
-        action: invite.identity_mode === "existing"
-          ? "admin.identity.linked"
-          : "admin.invite.accepted",
+        action:
+          invite.identity_mode === "existing"
+            ? "admin.identity.linked"
+            : "admin.invite.accepted",
         targetEntity: "app_admin_principals",
         targetId: targetUserId,
         after: {
@@ -2074,7 +2145,9 @@ export class AdminGovernanceService {
       await client.query("COMMIT");
       return { status: "accepted", userId: targetUserId };
     } catch {
-      try { await client.query("ROLLBACK"); } catch {}
+      try {
+        await client.query("ROLLBACK");
+      } catch {}
       return { status: "unavailable" };
     } finally {
       client.release();

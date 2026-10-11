@@ -79,7 +79,7 @@ const screens = [
   {path: "/notificacoes", role: "consumer", heading: "Notificações", ready: "Marcar todas como lidas"},
   {path: "/planos", role: "consumer", heading: "Clube de hortifrúti", ready: plan.name},
   {path: "/admin/notificacoes", role: "platform_super_admin", heading: "Notificações", ready: "Marcar todas como lidas"},
-  {path: "/admin/assinaturas", role: "platform_super_admin", heading: "Planos de assinatura", ready: plan.name},
+  {path: "/admin/assinaturas", role: "platform_super_admin", heading: "Assinaturas e planos", ready: plan.name},
   {path: "/admin/avaliacoes", role: "platform_super_admin", heading: "Moderação de avaliações", ready: "HVM-2026-001"},
   {path: "/admin/bi", role: "platform_super_admin", heading: "BI executivo", ready: "GMV de alimentos"},
 ];

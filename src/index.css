@@ -3077,7 +3077,7 @@ textarea { min-width: 0; }
 @media (max-width: 768px), (pointer: coarse) {
   input, select, textarea { font-size: 16px !important; }
   button, a { touch-action: manipulation; }
-  input, select, button { min-height: 44px; }
+  input:not(:where([type="checkbox"], [type="radio"])), select, button { min-height: 44px; }
   body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
   dialog { max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y: auto; }
 }

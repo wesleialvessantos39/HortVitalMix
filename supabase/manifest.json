@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 71,
+  "schemaVersion": 72,
   "migrations": [
     {
       "version": "20260919030126",
@@ -390,7 +390,12 @@
       "version": "20261010153000",
       "name": "catalog_finance_operations",
       "file": "20261010153000_catalog_finance_operations.sql"
+    },
+    {
+      "version": "20261010214547",
+      "name": "enforce_administrative_portal_identity",
+      "file": "20261010214547_enforce_administrative_portal_identity.sql"
     }
   ],
-  "migrationHistoryHash": "636b80e93683ae0af7fb587f902125dfedec42aaf4a29a0a01419eeaa0f32db5"
+  "migrationHistoryHash": "d7946e03fc9a4c4444b9efe935cd732e6a06a65dbe55596867fde9e7987a6b69"
 }

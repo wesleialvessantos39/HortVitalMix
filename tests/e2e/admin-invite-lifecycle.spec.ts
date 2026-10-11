@@ -181,7 +181,7 @@ test("resposta antiga da atualização não restaura convite excluído", async (
   const gate = new Promise<void>((resolve) => { resume = resolve; });
   const requested = new Promise<void>((resolve) => { started = resolve; });
   let delayed = false;
-  await page.route("**/v1/admin/invites", async (route) => {
+  await page.route("**/v1/admin/invites?includeArchived=true", async (route) => {
     if (route.request().method() !== "GET" || delayed) return route.fallback();
     delayed = true;
     started();

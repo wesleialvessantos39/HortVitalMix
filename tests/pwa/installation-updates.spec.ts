@@ -55,7 +55,7 @@ async function fixture(page: Page, role: string | null = null, allowed = true) {
 }
 const loadedBuild = (page: Page) =>
   page.locator('meta[name="hvm-pwa-build"]').getAttribute("content");
-test("aviso automático de atualização mantém leitura em desktop, mobile e paisagem", async ({
+test("atualização silenciosa aguarda formulário e aplica a versão sem interação", async ({
   page,
   request,
 }) => {
@@ -76,18 +76,13 @@ test("aviso automático de atualização mantém leitura em desktop, mobile e pa
   const notice = page.getByRole("complementary", {
     name: "Atualização da plataforma",
   });
-  await expect(notice).toContainText("Atualização aguardando operação");
+  await expect(page.locator(".hvm-pwa-version")).toContainText(
+    "Atualização aguardando operação",
+  );
+  await expect(notice).toHaveCount(0);
   for (const width of [320, 360, 390, 430, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: width === 768 ? 430 : 850 });
-    expect(
-      await page
-        .locator(".hvm-app-update-copy")
-        .evaluate((el) => el.getBoundingClientRect().width),
-    ).toBeGreaterThan(170);
-    expect(
-      await notice.evaluate((el) => el.getBoundingClientRect().height),
-    ).toBeLessThan(160);
-    await expect(notice.getByRole("button")).toHaveCount(0);
+    await expect(notice).toHaveCount(0);
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -304,7 +299,7 @@ test("Android button uses a real event contract and treats simulated accept, can
   ).toHaveCount(0);
   await page.evaluate(() => window.dispatchEvent(new Event("appinstalled")));
   await expect(
-    page.getByText("Instalação confirmada pelo navegador.", { exact: false }),
+    page.getByText("Instalado neste dispositivo", { exact: true }),
   ).toBeVisible();
   expect(
     await page.evaluate(() => (window as any).__syntheticPromptCalls),
@@ -622,21 +617,62 @@ test("Abrir instalação opens the address directly in a new tab with the remain
   await opened.close();
 });
 
-test("standalone suppresses repeated installation without trusting saved preferences", async ({
-  page,
-}) => {
-  await page.addInitScript(() => {
-    Object.defineProperty(navigator, "standalone", { value: true });
+for (const platform of ["android", "ios"] as const) {
+  test(`${platform} instalado mostra um único status e uma ação de atualização`, async ({
+    page,
+  }) => {
+    await page.addInitScript((platform) => {
+      if (platform === "ios")
+        Object.defineProperty(navigator, "standalone", { value: true });
+      else {
+        const original = window.matchMedia.bind(window);
+        window.matchMedia = (query) =>
+          query === "(display-mode: standalone)"
+            ? Object.defineProperty(original(query), "matches", {value:true})
+            : original(query);
+      }
+    }, platform);
+    await fixture(page);
+    await page.goto("/");
+    const installed = page.locator(".hvm-app-download");
+    await expect(
+      installed.getByText("Instalado neste dispositivo", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      installed.getByRole("button", {
+        name: "Verificar atualizações",
+        exact: true,
+      }),
+    ).toHaveCount(1);
+    await expect(
+      installed.getByRole("button", { name: /Instalar para/ }),
+    ).toHaveCount(0);
+    await expect(installed.locator(".hvm-app-download-copy")).toHaveCount(0);
+    await expect(installed.locator(".hvm-pwa-manual-result")).toHaveCount(0);
+    await installed
+      .getByRole("button", { name: "Verificar atualizações", exact: true })
+      .click();
+    await expect(installed.locator(".hvm-pwa-manual-result")).toBeVisible();
+    await page.goto("/aplicativos");
+    await expect(
+      page.getByText("Instalado neste dispositivo", { exact: true }),
+    ).toHaveCount(1);
+    await expect(
+      page.getByRole("button", { name: /Instalar para/ }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Verificar atualizações", exact: true }),
+    ).toHaveCount(1);
+    await expect(
+      page.locator(
+        ".app-downloads-benefits, .app-downloads-compatibility, .app-downloads-note",
+      ),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("complementary", { name: "Atualização da plataforma" }),
+    ).toHaveCount(0);
   });
-  await fixture(page);
-  await page.goto("/aplicativos");
-  await expect(
-    page.getByText("Instalado neste dispositivo", { exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Instalar para Android", exact: true }),
-  ).toHaveCount(0);
-});
+}
 
 test("a new complete build applies automatically and preserves IndexedDB", async ({
   page,
@@ -741,7 +777,7 @@ for (const blocker of ["form", "upload", "confirmation", "offline-queue"])
     await request.post("/__pwa_test__/switch", { data: { build: "b" } });
     await check(page);
     await expect(
-      page.getByRole("complementary", { name: "Atualização da plataforma" }),
+      page.locator(".hvm-pwa-version"),
     ).toContainText("Atualização aguardando operação");
     expect(await loadedBuild(page)).toBe(original);
     if (blocker === "form")
@@ -821,7 +857,7 @@ test("two tabs wait for the dirty tab before activating either shell", async ({
   await request.post("/__pwa_test__/switch", { data: { build: "b" } });
   await check(page);
   await expect(
-    page.getByRole("complementary", { name: "Atualização da plataforma" }),
+    page.locator(".hvm-pwa-version"),
   ).toContainText("Atualização aguardando operação");
   expect(await loadedBuild(page)).toBe(original);
   expect(await loadedBuild(other)).toBe(original);
@@ -936,9 +972,8 @@ test("checkout remains on the old version until its activity is concluded", asyn
   await expect(page).toHaveURL(/\/checkout$/);
   await request.post("/__pwa_test__/switch", { data: { build: "b" } });
   await check(page);
-  await expect(
-    page.getByRole("complementary", { name: "Atualização da plataforma" }),
-  ).toContainText("Atualização aguardando operação");
+  await expect.poll(() => page.evaluate(async () => Boolean((await navigator.serviceWorker.getRegistration())?.waiting))).toBe(true);
+  await expect(page.getByRole("complementary", {name:"Atualização da plataforma"})).toHaveCount(0);
   expect(await loadedBuild(page)).toBe(original);
   await page.evaluate(() => {
     history.pushState({}, "", "/aplicativos");
@@ -1060,7 +1095,7 @@ test("two already open documents with different build identities transition cohe
   expect(newer).not.toBe(original);
   await check(other);
   await expect(
-    other.getByRole("complementary", { name: "Atualização da plataforma" }),
+    other.locator(".hvm-pwa-version"),
   ).toContainText("Atualização aguardando operação");
   await expect(page.locator("#old-build-edit")).toHaveValue(
     "protected old build",

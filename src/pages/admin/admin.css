@@ -17,7 +17,7 @@
 .admin-login-card h2{font-size:23px;margin:10px 0 5px;color:var(--admin-green)}.admin-login-card h1{font-size:31px;letter-spacing:-.8px;margin:8px 0 10px}
 .admin-login-icon{width:48px;height:48px;border-radius:15px;background:var(--admin-green-soft);display:grid;place-items:center;color:var(--admin-green-2)}.admin-muted{color:var(--admin-muted);font-size:13px;line-height:1.55}
 .admin-login-card form{display:grid;gap:15px;margin-top:20px}.admin-login-card label,.admin-form label,.admin-form-grid label{display:grid;gap:7px;font-size:12px;font-weight:800;color:#35513d}
-.admin-login-card input,.admin-login-card select,.admin-form input,.admin-form select,.admin-form-grid input,.admin-form-grid select{width:100%;min-height:46px;border:1px solid #cfdad1;border-radius:12px;padding:0 13px;background:#fff;color:#203c29;font:inherit;outline:none}
+.admin-login-card input:not(:where([type="checkbox"],[type="radio"])),.admin-login-card select,.admin-form input:not(:where([type="checkbox"],[type="radio"])),.admin-form select,.admin-form-grid input:not(:where([type="checkbox"],[type="radio"])),.admin-form-grid select{width:100%;min-height:46px;border:1px solid #cfdad1;border-radius:12px;padding:0 13px;background:#fff;color:#203c29;font:inherit;outline:none}
 .admin-login-card input:focus,.admin-login-card select:focus,.admin-form input:focus,.admin-form select:focus,.admin-form-grid input:focus{border-color:#6aaa78;box-shadow:0 0 0 3px rgba(105,170,120,.14)}
 .admin-primary,.admin-secondary{border-radius:12px;min-height:46px;padding:0 18px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}.admin-primary{border:1px solid var(--admin-green-2);background:var(--admin-green-2);color:#fff}.admin-primary:hover{background:#143f27}.admin-secondary{border:1px solid #cad8cd;background:#fff;color:var(--admin-green-2)}.admin-primary:disabled,.admin-secondary:disabled{opacity:.55;cursor:not-allowed}.compact{min-height:40px;padding:0 14px}
 .admin-alert{border:1px solid #d9e4d9;background:#f3f8f2;border-radius:12px;padding:11px 13px;color:#35513d;font-size:12px;line-height:1.5}.admin-alert--error{border-color:#efc7c2;background:#fff4f2;color:#8b3228}.admin-alert--success{border-color:#bcdcc4;background:#eff9f1;color:#24633a}
@@ -86,7 +86,7 @@
 .admin-table-action{min-height:40px;font-size:12px}
 .admin-form,.admin-form-grid{min-width:0}
 .admin-form label,.admin-form-grid label{min-width:0}
-.admin-form input,.admin-form select,.admin-form textarea,.admin-form-grid input,.admin-form-grid select{box-sizing:border-box;min-width:0;font-size:16px}
+.admin-form input:not(:where([type="checkbox"],[type="radio"])),.admin-form select,.admin-form textarea,.admin-form-grid input:not(:where([type="checkbox"],[type="radio"])),.admin-form-grid select{box-sizing:border-box;min-width:0;font-size:16px}
 .admin-form textarea{border:1px solid #cfdad1;border-radius:12px;padding:12px;resize:vertical}
 .admin-confirm-checkbox{display:flex!important;align-items:center;gap:10px!important}
 .admin-confirm-checkbox input{width:20px!important;min-height:20px!important;flex:0 0 20px}

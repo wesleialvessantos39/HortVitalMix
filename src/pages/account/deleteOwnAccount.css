@@ -1,0 +1,253 @@
+.account-erasure {
+  min-width: 0;
+  margin: 24px 0;
+  border: 1px solid #ecd4cc;
+  border-radius: 18px;
+  padding: clamp(16px, 3vw, 26px);
+  background: #fffdfb;
+}
+.account-erasure-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.account-erasure-heading > div {
+  min-width: 0;
+}
+.account-erasure-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #fbece6;
+  color: #a3412f;
+}
+.account-erasure-eyebrow {
+  display: block;
+  font-size: 11px;
+  font-weight: 750;
+  color: #915342;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.account-erasure .account-erasure-heading h2 {
+  margin: 0 0 6px;
+  color: #6f3327;
+  font-size: 21px;
+  line-height: 1.3;
+}
+.account-erasure p {
+  font-size: 14px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+  color: #665d56;
+  margin: 0;
+}
+.account-erasure-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 46px;
+  margin-top: 20px;
+  padding: 11px 16px;
+  border: 1px solid #dcb8ac;
+  border-radius: 11px;
+  color: #8c3a29;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+}
+.account-erasure-form {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #efded7;
+}
+.account-erasure-warning {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #fff3eb;
+  color: #955329;
+}
+.account-erasure-warning > div {
+  min-width: 0;
+}
+.account-erasure-warning strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 15px;
+  color: #713d22;
+}
+.account-erasure-retention {
+  border: 1px solid #e6e2db;
+  border-radius: 12px;
+  background: #fff;
+}
+.account-erasure-retention summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 12px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  color: #4f594f;
+}
+.account-erasure-retention[open] summary {
+  border-bottom: 1px solid #ebe7e0;
+}
+.account-erasure-retention p {
+  padding: 14px;
+}
+.account-erasure .account-erasure-consents {
+  min-inline-size: 0;
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+.account-erasure-consents legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 750;
+  color: #354d3d;
+}
+.account-erasure .account-erasure-check {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  min-height: 48px;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid #dce4dc;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: #394a3e;
+  cursor: pointer;
+}
+.account-erasure-check:has(input:checked) {
+  border-color: #729b79;
+  background: #f2f8f0;
+}
+.account-erasure .account-erasure-check input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  min-height: 22px;
+  max-width: 22px;
+  margin: 1px 0 0;
+  padding: 0;
+  accent-color: #285d39;
+}
+.account-erasure-check span {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+.account-erasure-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.account-erasure .account-erasure-field {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  margin: 0;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #3d4b40;
+  font-weight: 700;
+}
+.account-erasure .account-erasure-field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #cdd8ce;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 16px;
+}
+.account-erasure-actions {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+  padding-top: 18px;
+  border-top: 1px solid #efded7;
+}
+.account-erasure-actions p {
+  font-size: 12px;
+}
+.account-erasure-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 48px;
+  border-radius: 11px;
+  padding: 13px 18px;
+  background: #a03e2d;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.5;
+  white-space: normal;
+}
+.account-erasure-submit:hover:not(:disabled) {
+  background: #802d20;
+}
+.account-erasure .account-erasure-local {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f2f4ef;
+  color: #53614f;
+}
+.account-erasure .account-erasure-error {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fce9e4;
+  color: #8e3226;
+}
+.account-erasure :is(button, summary):focus-visible {
+  outline: 3px solid #a87629;
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .account-erasure-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .account-erasure-toggle,
+  .account-erasure-submit {
+    width: 100%;
+  }
+  .account-erasure-heading {
+    gap: 10px;
+  }
+  .account-erasure-icon {
+    flex-basis: 38px;
+    height: 38px;
+    border-radius: 11px;
+  }
+  .account-erasure .account-erasure-check {
+    padding: 12px;
+  }
+}

@@ -102,7 +102,9 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
     try {
       const [s, i] = await Promise.all([
         api<{ sectors: Sector[] }>("/v1/admin/sectors"),
-        api<{ invites: InviteResponse[] }>("/v1/admin/invites"),
+        api<{ invites: InviteResponse[] }>(
+          "/v1/admin/invites?includeArchived=true",
+        ),
       ]);
       setSectors(s.sectors);
       if (revision === inviteListRevision.current) setInvites(i.invites);
@@ -143,7 +145,7 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
       const revision = inviteListRevision.current;
       try {
         const result = await api<{ invites: InviteResponse[] }>(
-          "/v1/admin/invites",
+          "/v1/admin/invites?includeArchived=true",
           { signal: abort.signal },
         );
         if (!abort.signal.aborted && revision === inviteListRevision.current) {
@@ -212,7 +214,7 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
         inviteListRevision.current++;
         setSuccess(
           result.invite.identityMode === "existing"
-            ? "Convite enviado. O cadastro existente será preservado e receberá apenas o novo acesso administrativo."
+            ? "Convite enviado. O novo login administrativo terá senha e permissões próprias. Os acessos existentes foram preservados."
             : "Convite enviado. O novo acesso administrativo poderá ser ativado pelo link recebido.",
         );
         setEmail("");
@@ -294,7 +296,8 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
               : "Seu acesso não permite alterar este convite."
             : status === 409
               ? operation.kind === "create"
-                ? "Já existe acesso ou convite pendente para este mesmo papel administrativo."
+                ? (failure.userMessage ??
+                  "Já existe acesso ou convite pendente para este mesmo papel administrativo. Confira os convites pendentes abaixo.")
                 : "O convite foi atualizado. Atualize o histórico antes de tentar novamente."
               : operation.kind === "create"
                 ? "Não foi possível emitir o convite. Seus dados foram preservados."
@@ -338,7 +341,9 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
           : "pending";
   const visibleInvites = invites.filter(
     (i) =>
-      (filter === "all" || inviteStatus(i) === filter) &&
+      (filter === "archived"
+        ? i.archived
+        : !i.archived && (filter === "all" || inviteStatus(i) === filter)) &&
       i.email.toLowerCase().includes(query.trim().toLowerCase()),
   );
 
@@ -423,6 +428,14 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
           <p className="admin-muted">
             Escolha o papel e os poderes antes do envio. O destinatário receberá
             um convite válido por 24 horas.
+          </p>
+          <p className="admin-invite-independence">
+            <ShieldCheck size={18} aria-hidden="true" />
+            <span>
+              Cada portal mantém seu perfil e suas permissões. Este convite
+              cria um login administrativo independente, com senha própria,
+              mesmo quando a pessoa já possui cadastro público.
+            </span>
           </p>
           <form onSubmit={createInvite} className="admin-form">
             <fieldset
@@ -523,19 +536,31 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
               {targetRole === "platform_admin" && (
                 <fieldset className="admin-sectors-fieldset">
                   <legend>Setores obrigatórios</legend>
-                  {sectors.map((s) => (
-                    <label key={s.code} className="admin-sector-checkbox">
-                      <input
-                        type="checkbox"
-                        checked={selected.includes(s.code)}
-                        onChange={() => toggle(s.code)}
-                      />
-                      <span>
-                        <strong>{s.name}</strong>
-                        <small>{s.description}</small>
-                      </span>
-                    </label>
-                  ))}
+                  <p className="admin-sectors-help">
+                    Selecione pelo menos um setor. O acesso ficará limitado às
+                    áreas marcadas.
+                  </p>
+                  <div className="admin-sectors-options">
+                    {sectors.map((s) => (
+                      <label key={s.code} className="admin-sector-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={selected.includes(s.code)}
+                          onChange={() => toggle(s.code)}
+                        />
+                        <span>
+                          <strong>{s.name}</strong>
+                          <small>{s.description}</small>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  <span className="admin-sectors-count" role="status">
+                    {selected.length}{" "}
+                    {selected.length === 1
+                      ? "setor selecionado"
+                      : "setores selecionados"}
+                  </span>
                 </fieldset>
               )}
 
@@ -593,13 +618,40 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
             >
-              <option value="all">Todos ({invites.length})</option>
+              <option value="all">
+                Ativos e histórico ({invites.filter((i) => !i.archived).length})
+              </option>
               <option value="pending">Pendentes</option>
               <option value="accepted">Aceitos</option>
               <option value="expired">Expirados</option>
               <option value="cancelled">Cancelados</option>
+              <option value="archived">
+                Excluídos anteriormente (
+                {invites.filter((i) => i.archived).length})
+              </option>
             </select>
           </div>
+          {invites.some((i) => i.archived) && (
+            <p className="admin-invite-history-note">
+              Há convites excluídos anteriormente disponíveis para consulta.{" "}
+              <button
+                type="button"
+                onClick={() =>
+                  setFilter(filter === "archived" ? "all" : "archived")
+                }
+              >
+                {filter === "archived"
+                  ? "Voltar aos convites"
+                  : "Consultar excluídos anteriormente"}
+              </button>
+            </p>
+          )}
+          {filter === "archived" && (
+            <p className="admin-muted">
+              Estes convites já foram removidos do histórico. Links cancelados
+              continuam inválidos; acessos já aceitos permanecem independentes.
+            </p>
+          )}
           {hasPending && (
             <p className="admin-muted" role="status">
               Acompanhando a aceitação dos convites automaticamente.
@@ -646,17 +698,19 @@ export function AdminGovernancePage({ onNavigate, access }: Props) {
                       <tr key={i.id}>
                         <td data-label="E-mail">
                           <span className="admin-invite-email">{i.email}</span>
-                          <button
-                            type="button"
-                            className="admin-invite-remove"
-                            disabled={
-                              acting || busy || Boolean(pendingConfirmation)
-                            }
-                            aria-label={`Excluir convite para ${i.email}`}
-                            onClick={() => setAction(i)}
-                          >
-                            <Trash2 size={14} /> Excluir convite
-                          </button>
+                          {!i.archived && (
+                            <button
+                              type="button"
+                              className="admin-invite-remove"
+                              disabled={
+                                acting || busy || Boolean(pendingConfirmation)
+                              }
+                              aria-label={`Excluir convite para ${i.email}`}
+                              onClick={() => setAction(i)}
+                            >
+                              <Trash2 size={14} /> Excluir convite
+                            </button>
+                          )}
                         </td>
                         <td data-label="Papel">
                           <span

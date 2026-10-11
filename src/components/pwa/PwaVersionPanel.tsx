@@ -12,7 +12,11 @@ export const pwaStateLabels = {
   error: "Não foi possível verificar agora",
   unsupported: "Verifique no navegador compatível",
 } as const;
-export function PwaVersionPanel() {
+export function PwaVersionPanel({
+  technical = false,
+}: {
+  technical?: boolean;
+}) {
   const pwa = usePwa();
   const commit =
     typeof __HVM_BUILD_COMMIT_SHA__ === "string"
@@ -35,22 +39,26 @@ export function PwaVersionPanel() {
       </header>
       {pwa.reason && <p className="hvm-pwa-version-reason">{pwa.reason}</p>}
       <dl>
-        <div>
-          <dt>Versão em uso</dt>
-          <dd>
-            {commit
-              ? `Web · ${commit.slice(0, 12)}`
-              : "Identidade web não disponível"}
-          </dd>
-        </div>
-        <div>
-          <dt>Versão publicada</dt>
-          <dd>
-            {pwa.version
-              ? `${pwa.version.frontendVersion} · ${pwa.version.commitSha ? pwa.version.commitSha.slice(0, 12) : pwa.version.buildId.slice(0, 12)}`
-              : "Aguardando verificação"}
-          </dd>
-        </div>
+        {technical && (
+          <>
+            <div>
+              <dt>Versão em uso</dt>
+              <dd>
+                {commit
+                  ? `Web · ${commit.slice(0, 12)}`
+                  : "Identidade web não disponível"}
+              </dd>
+            </div>
+            <div>
+              <dt>Versão publicada</dt>
+              <dd>
+                {pwa.version
+                  ? `${pwa.version.frontendVersion} · ${pwa.version.commitSha ? pwa.version.commitSha.slice(0, 12) : pwa.version.buildId.slice(0, 12)}`
+                  : "Aguardando verificação"}
+              </dd>
+            </div>
+          </>
+        )}
         <div>
           <dt>Última verificação</dt>
           <dd>

@@ -41,6 +41,7 @@ export type ApiFailure = Error & {
   currentRevision?: number;
   retryAfterSeconds?: number;
   actorId?: string;
+  userMessage?: string;
 };
 
 function failure(code: string, details: Partial<ApiFailure> = {}): ApiFailure {
@@ -402,6 +403,7 @@ async function performApi<T>(
   const parsed = await parseResponse(response);
   const body = (parsed.json ?? {}) as {
     error?: string;
+    message?: string;
     status?: string;
     fields?: Array<{ field: string; message: string }>;
     requestId?: string;
@@ -420,6 +422,7 @@ async function performApi<T>(
           : `HTTP_${response.status}`),
       {
         status: response.status,
+        userMessage: typeof body.message === "string" ? body.message.slice(0, 500) : undefined,
         fields: body.fields,
         requestId: body.requestId ?? requestId,
         currentRevision:

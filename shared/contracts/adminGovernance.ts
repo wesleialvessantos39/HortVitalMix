@@ -201,6 +201,7 @@ export const InviteResponseSchema = z.object({
   createdAt: z.string().datetime(),
   invitedBy: z.string().uuid(),
   invalidatedAt: z.string().datetime().nullable(),
+  archived: z.boolean().optional(),
 });
 export type InviteResponse = z.infer<typeof InviteResponseSchema>;
 

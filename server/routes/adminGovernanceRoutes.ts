@@ -369,6 +369,7 @@ adminGovernanceRouter.get(
       invites: await AdminGovernanceService.listInvites(
         req.adminActor.userId,
         req.adminActor.role,
+        req.query.includeArchived === "true",
       ),
     });
   },

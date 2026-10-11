@@ -1,5 +1,6 @@
 import { ArrowUpRight, Smartphone } from "lucide-react";
 import { PwaInstallCards } from "./pwa/PwaInstallCards";
+import { usePwa } from "../hooks/usePwa";
 import "./appDownloadSection.css";
 
 export function AppDownloadSection({
@@ -7,6 +8,9 @@ export function AppDownloadSection({
 }: {
   onNavigate?: (path: string) => void;
 }) {
+  const pwa = usePwa();
+  if (pwa.device.standalone || pwa.installState === "confirmed")
+    return <section className="hvm-app-download is-installed" aria-label="Aplicativo instalado"><PwaInstallCards compact /></section>;
   return (
     <section
       className="hvm-app-download"

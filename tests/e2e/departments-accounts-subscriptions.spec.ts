@@ -315,3 +315,52 @@ test("exclusão exige consentimento, senha e identidade confirmada e limpa a ses
     acknowledgeRetention: true,
   });
 });
+
+for (const role of ["consumer", "producer"]) {
+  for (const width of [320, 390, 768, 1440]) {
+    test(`exclusão legível, alinhada e sem cortes: ${role} ${width}px`, async ({page}, info) => {
+      await fixture(page, role);
+      await page.setViewportSize({width, height: 900});
+      await page.goto("/conta/privacidade");
+      await page.getByRole("button", {name:"Solicitar exclusão da minha conta"}).click();
+      const form = page.locator(".account-erasure-form");
+      await expect(form).toBeVisible();
+      for (const checkbox of await form.getByRole("checkbox").all()) {
+        const rect = await checkbox.boundingBox();
+        expect(rect!.width).toBeGreaterThanOrEqual(20);
+        expect(rect!.width).toBeLessThanOrEqual(24);
+        expect(rect!.height).toBeLessThanOrEqual(24);
+        const label = checkbox.locator("..");
+        const spanWidth = await label.locator("span").evaluate(el => el.getBoundingClientRect().width);
+        expect(spanWidth).toBeGreaterThan(100);
+        await label.click();
+        await expect(checkbox).toBeChecked();
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      expect(await form.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+      await page.evaluate(() => window.scrollTo({top:0,behavior:"instant"}));
+      await page.screenshot({path:info.outputPath(`exclusao-${role}-${width}.png`),fullPage:true});
+    });
+  }
+}
+for (const width of [320, 390, 768, 1440]) {
+  test(`setores com caixas compactas e texto legível: ${width}px`, async ({page}, info) => {
+    await fixture(page);
+    await page.setViewportSize({width,height:900});
+    await page.goto("/admin/governanca");
+    const sectors = page.getByRole("group", {name:"Setores obrigatórios"});
+    await expect(sectors.getByRole("checkbox")).toHaveCount(12);
+    for (const input of await sectors.getByRole("checkbox").all()) {
+      const box = await input.boundingBox();
+      expect(box!.width).toBeGreaterThanOrEqual(18);
+      expect(box!.width).toBeLessThanOrEqual(24);
+      expect(box!.height).toBeLessThanOrEqual(24);
+      expect(await input.locator("..").locator("span").evaluate(el=>el.getBoundingClientRect().width)).toBeGreaterThan(100);
+    }
+    await sectors.getByRole("checkbox").first().check();
+    await expect(sectors.getByRole("status")).toHaveText("1 setor selecionado");
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.evaluate(() => window.scrollTo({top:0,behavior:"instant"}));
+    await page.screenshot({path:info.outputPath(`governanca-${width}.png`),fullPage:true});
+  });
+}
