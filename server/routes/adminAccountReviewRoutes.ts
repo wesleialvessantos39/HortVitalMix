@@ -1,3 +1,4 @@
+import { issuePortalEmailFlow } from "../services/PublicPortalCredentialsService.ts";
 import { Router } from "express";
 import { z } from "zod";
 import type { PoolClient } from "pg";
@@ -284,7 +285,8 @@ async function sendApprovalConfirmation(reviewId:string) {
  try {
   const client=createSupabasePublicClient();if(!client)return false;
   const context=issueConfirmationContext(row.user_id,row.role);
-  const sent=await client.auth.resend({type:"signup",email:row.email_normalized,options:{emailRedirectTo:(runtime.origins[0]||"https://hortvitalmix.vercel.app")+"/confirmar-contato?portal="+row.role+"&context="+encodeURIComponent(context)}});
+  const flow = await issuePortalEmailFlow(row.user_id, row.role, "confirmation");
+  const sent=await client.auth.signInWithOtp({email:row.email_normalized,options:{shouldCreateUser:true,emailRedirectTo:(runtime.origins[0]||"https://hortvitalmix.vercel.app")+"/confirmar-contato?portal="+row.role+"&context="+encodeURIComponent(context)+"&flow="+encodeURIComponent(flow)}});
   if(sent.error)return false;
   await dbPool.query("UPDATE public.app_registration_reviews SET confirmation_sent_at=now() WHERE id=$1",[reviewId]);return true;
  }catch{return false;}
