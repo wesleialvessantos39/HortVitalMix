@@ -20,7 +20,7 @@ export const PwaVersionSchema = z
             url: z
               .string()
               .regex(
-                /^\/(?:index\.html|manifest\.webmanifest|favicon\.svg|app-icons\/[a-zA-Z0-9_.-]+\.png|assets\/[a-zA-Z0-9_.-]+\.(?:js|css))$/,
+                /^\/(?:index\.html|manifest\.webmanifest|favicon\.svg|theme-init\.js|splash\/[a-zA-Z0-9_.-]+\.(?:webp|svg)|app-icons\/[a-zA-Z0-9_.-]+\.png|assets\/[a-zA-Z0-9_.-]+\.(?:js|css))$/,
               ),
             sha256: z.string().regex(/^[a-f0-9]{64}$/),
             bytes: z.number().int().positive(),
@@ -46,3 +46,4 @@ export const PwaVersionSchema = z
       ctx.addIssue({ code: "custom", message: "INVALID_PWA_RESOURCES" });
   });
 export type PwaVersion = z.infer<typeof PwaVersionSchema>;
+

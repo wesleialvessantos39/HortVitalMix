@@ -1,10 +1,10 @@
 /* Property screens: visual reference supplied by the owner, scoped to T08. */
 .rural-properties-reference,
 .rural-wizard-reference {
-  --rural-ink: #174730;
-  --rural-soft: #eff8f3;
-  --rural-border: #e5ebe7;
-  color: #243d2d;
+  --rural-ink: var(--theme-green-ink, #174730);
+  --rural-soft: var(--theme-green-soft, #eff8f3);
+  --rural-border: var(--theme-line, #e5ebe7);
+  color: var(--theme-ink, #243d2d);
 }
 
 .rural-properties-reference .rural-page-heading {
@@ -20,8 +20,8 @@
   width: 44px;
   height: 44px;
   border: 1px solid var(--rural-border);
-  background: #fff;
-  color: #52645a;
+  background: var(--theme-surface, #fff);
+  color: var(--theme-muted, #52645a);
 }
 
 .rural-properties-reference .rural-page-heading h1 {
@@ -42,7 +42,7 @@
   margin-bottom: 24px;
   padding: 30px 32px;
   background: var(--rural-soft);
-  border: 1px solid #deede3;
+  border: 1px solid var(--theme-line, #deede3);
   border-radius: 18px;
 }
 
@@ -82,12 +82,12 @@
   padding: 24px;
   border-color: var(--rural-border);
   border-radius: 20px;
-  box-shadow: 0 1px 4px #173d2310;
+  box-shadow: 0 1px 4px var(--theme-shadow, #173d2310);
 }
 
 .rural-properties-reference .rural-property-card:hover {
   transform: none;
-  box-shadow: 0 3px 12px #173d2310;
+  box-shadow: 0 3px 12px var(--theme-shadow, #173d2310);
 }
 
 .rural-properties-reference .rural-property-badge-wrap {
@@ -103,7 +103,7 @@
 }
 
 .rural-properties-reference .rural-property-card h2 {
-  color: #182f22;
+  color: var(--theme-green-ink, #182f22);
   font-size: 18px;
 }
 
@@ -123,7 +123,7 @@
 
 .rural-properties-reference .rural-progress-line {
   height: 8px;
-  background: #f1f3f5;
+  background: var(--theme-surface-alt, #f1f3f5);
 }
 
 .rural-properties-reference .rural-progress-line > span {
@@ -148,7 +148,7 @@
 }
 
 .rural-properties-reference .rural-property-card-actions > button.secondary {
-  background: #fff;
+  background: var(--theme-surface, #fff);
 }
 
 .rural-properties-reference .rural-property-subactions {
@@ -161,13 +161,13 @@
   width: 100%;
   min-width: 0;
   border: 1px solid var(--rural-border);
-  background: #fff;
+  background: var(--theme-surface, #fff);
   margin: 0;
 }
 
 .rural-properties-reference .rural-delete-btn {
-  border-color: #efd9dc !important;
-  color: #b34b53 !important;
+  border-color: var(--theme-danger-line, #efd9dc) !important;
+  color: var(--theme-danger-ink, #b34b53) !important;
 }
 
 .rural-action-mobile {
@@ -208,7 +208,7 @@
 }
 
 .rural-wizard-reference .rural-completion-count {
-  color: #287453;
+  color: var(--theme-green-ink, #287453);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
@@ -229,7 +229,7 @@
   padding: 8px;
   border: 1px solid var(--rural-border);
   border-radius: 10px;
-  background: #fff;
+  background: var(--theme-surface, #fff);
 }
 
 .rural-wizard-reference
@@ -255,7 +255,7 @@
 .rural-wizard-reference .rural-step-progress.account-section-nav .is-current {
   background: var(--rural-ink);
   border-color: var(--rural-ink);
-  color: #fff;
+  color: var(--on-brand, #fff);
 }
 
 .rural-wizard-reference
@@ -272,16 +272,16 @@
 .rural-wizard-reference
   .rural-step-progress.account-section-nav
   .is-complete:not(.is-current) {
-  color: #287453;
-  border-color: #cee4d7;
+  color: var(--theme-green-ink, #287453);
+  border-color: var(--theme-line, #cee4d7);
 }
 
 .rural-wizard-reference .rural-pending-steps {
   gap: 6px;
   margin: 0 0 22px;
   padding: 16px 18px;
-  background: #fffcf2;
-  border-color: #eee7cd;
+  background: var(--theme-warm-soft, #fffcf2);
+  border-color: var(--theme-warm-line, #eee7cd);
 }
 
 .rural-wizard-reference .rural-pending-list {
@@ -293,7 +293,7 @@
   min-height: 44px;
   padding: 6px 10px;
   font-size: 12px;
-  border-color: #eee7cd;
+  border-color: var(--theme-warm-line, #eee7cd);
   border-radius: 9px;
 }
 
@@ -307,7 +307,7 @@
   padding: clamp(18px, 2.5vw, 30px);
   border-color: var(--rural-border);
   border-radius: 18px;
-  box-shadow: 0 1px 4px #173d2308;
+  box-shadow: 0 1px 4px var(--theme-shadow, #173d2308);
 }
 
 .rural-wizard-reference .rural-step-copy {
@@ -433,7 +433,7 @@
   height: clamp(340px, 48vh, 520px);
   border-radius: 10px;
   border-color: var(--rural-border);
-  background: #f7f9fa;
+  background: var(--theme-info-soft, #f7f9fa);
 }
 
 .rural-wizard-reference .documents-panel--embedded .document-data dl {
@@ -446,7 +446,7 @@
   grid-column: span 6;
   padding: 10px 12px;
   border-radius: 8px;
-  background: #f5f6f8;
+  background: var(--theme-surface-alt, #f5f6f8);
 }
 
 .rural-wizard-reference
@@ -466,7 +466,7 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.035em;
-  color: #6d7972;
+  color: var(--theme-muted, #6d7972);
 }
 
 .rural-wizard-reference .documents-panel--embedded .document-data dd {
@@ -480,14 +480,14 @@
 
 .rural-wizard-reference .documents-panel--embedded .document-data details {
   padding: 14px;
-  background: #fff;
+  background: var(--theme-surface, #fff);
   border-color: var(--rural-border);
 }
 
 .rural-wizard-reference .rural-document-readiness {
   margin: 20px 0 0;
   font-size: 12px;
-  color: #69796f;
+  color: var(--theme-muted, #69796f);
 }
 
 .rural-wizard-reference .rural-wizard-actions {
@@ -504,7 +504,7 @@
 
 .rural-properties-reference button:focus-visible,
 .rural-wizard-reference button:focus-visible {
-  outline: 3px solid #6ca486;
+  outline: 3px solid var(--theme-green-line, #6ca486);
   outline-offset: 3px;
 }
 
@@ -731,9 +731,9 @@
     padding: 10px max(12px, env(safe-area-inset-left))
       calc(10px + env(safe-area-inset-bottom))
       max(12px, env(safe-area-inset-right));
-    background: #fff;
+    background: var(--theme-surface, #fff);
     border-top: 1px solid var(--rural-border);
-    box-shadow: 0 -3px 14px #173d2308;
+    box-shadow: 0 -3px 14px var(--theme-shadow, #173d2308);
   }
 
   .rural-wizard-reference .rural-wizard-actions > button {
@@ -809,3 +809,4 @@
     transition: none;
   }
 }
+

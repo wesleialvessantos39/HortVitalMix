@@ -26,10 +26,10 @@
   width: 100%;
   box-sizing: border-box;
   padding: 10px;
-  border: 1px solid #b8cdbc;
+  border: 1px solid var(--theme-line, #b8cdbc);
   border-radius: 8px;
   font: inherit;
-  background: #fff;
+  background: var(--theme-surface, #fff);
 }
 .logistics-form .logistics-check {
   display: flex;
@@ -53,7 +53,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 12px 0;
-  border-top: 1px solid #e1eae3;
+  border-top: 1px solid var(--theme-line, #e1eae3);
 }
 .logistics-window > span {
   flex: 1 1 160px;
@@ -90,3 +90,4 @@
     flex-wrap: wrap;
   }
 }
+

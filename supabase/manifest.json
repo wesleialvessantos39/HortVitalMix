@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 74,
+  "schemaVersion": 75,
   "migrations": [
     {
       "version": "20260919030126",
@@ -405,7 +405,12 @@
       "version": "20261011164621",
       "name": "portal_offline_receipts",
       "file": "20261011164621_portal_offline_receipts.sql"
+    },
+    {
+      "version": "20261012010106",
+      "name": "appearance_theme_preferences",
+      "file": "20261012010106_appearance_theme_preferences.sql"
     }
   ],
-  "migrationHistoryHash": "3eb3a0f0f4e56ec4a813c0a3e7cefcfc056451b05bdd443cc5c8c6ae0bf49b2c"
+  "migrationHistoryHash": "5f91f7ceef715e31c4ce7aefc2a68c5a409a5ca40aeb8b25519310f324e01a96"
 }

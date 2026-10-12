@@ -1,13 +1,13 @@
 .hvm-mix {
-  border: 1px solid #dbe7d8;
+  border: 1px solid var(--theme-line, #dbe7d8);
   border-radius: 16px;
-  background: #f6faf4;
+  background: var(--theme-green-soft, #f6faf4);
   margin: 0 0 24px;
-  color: #244936;
+  color: var(--theme-green-ink, #244936);
   min-width: 0;
 }
 .header-actions .icon:has(.hvm-cart-count){position:relative}
-.hvm-cart-count{position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;padding:0 4px;border-radius:10px;background:#1b4d2e;color:white;font-size:11px;display:grid;place-items:center}
+.hvm-cart-count{position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;padding:0 4px;border-radius:10px;background:#1b4d2e;color:var(--on-brand, white);font-size:11px;display:grid;place-items:center}
 .hvm-mix > summary {
   display: flex;
   gap: 10px;
@@ -18,7 +18,7 @@
   min-height: 52px;
 }
 .hvm-mix > summary:focus-visible {
-  outline: 3px solid #71a468;
+  outline: 3px solid var(--theme-green-line, #71a468);
   outline-offset: 2px;
   border-radius: 16px;
 }
@@ -48,10 +48,10 @@
 .hvm-mix select {
   width: 100%;
   min-width: 0;
-  border: 1px solid #cadbc7;
+  border: 1px solid var(--theme-line, #cadbc7);
   border-radius: 10px;
   padding: 11px;
-  background: white;
+  background: var(--theme-surface, white);
   min-height: 44px;
 }
 .hvm-mix ul {
@@ -64,7 +64,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 12px 0;
-  border-bottom: 1px solid #dbe7d8;
+  border-bottom: 1px solid var(--theme-line, #dbe7d8);
   overflow-wrap: anywhere;
 }
 .hvm-mix li button {
@@ -106,3 +106,4 @@
     padding: 0 14px 14px;
   }
 }
+

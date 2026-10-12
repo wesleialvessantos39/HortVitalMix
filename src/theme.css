@@ -1,0 +1,165 @@
+/* Theme colors are semantic. Existing declarations keep their exact light color
+   as the var() fallback; only dark mode supplies the shared theme overrides.
+   Filled brand buttons and photo overlays keep a stable color and white ink. */
+:root {
+  color-scheme: light;
+  --brand-primary: #1b4d2e;
+  --brand-dark: #143d24;
+  --brand-leaf: #2e7d32;
+  --brand-accent: #e65100;
+  --admin-brand-green: #123f22;
+  --admin-brand-orange: #ef7d18;
+  --on-brand: #fff;
+  --surface: var(--theme-surface, #fff);
+  --surface-alt: var(--theme-surface-alt, #f4f6f4);
+  --page-background: var(--theme-page, #f8f9fa);
+  --text: var(--theme-ink, #26372b);
+  --text-muted: var(--theme-muted, #637067);
+  --border: var(--theme-line, #e1e7e1);
+  --focus-ring: var(--theme-warm-ink, #e65100);
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --theme-page: #101e17;
+  --theme-surface: #192b22;
+  --theme-surface-alt: #22362b;
+  --theme-ink: #e7f3e9;
+  --theme-muted: #b0c5b7;
+  --theme-line: #3a5344;
+  --theme-green-soft: #213d2c;
+  --theme-green-ink: #a4dfb1;
+  --theme-green-line: #5a8b68;
+  --theme-warm-soft: #42301f;
+  --theme-warm-ink: #ffc18c;
+  --theme-warm-line: #9b7549;
+  --theme-danger-soft: #432b29;
+  --theme-danger-ink: #ffb8ad;
+  --theme-danger-line: #a26861;
+  --theme-info-soft: #213744;
+  --theme-info-ink: #a7dbf6;
+  --theme-info-line: #588ca9;
+  --theme-violet-soft: #362d47;
+  --theme-violet-ink: #d8bef5;
+  --theme-violet-line: #9175b1;
+  --theme-shadow: rgb(0 0 0 / 28%);
+  --theme-backdrop: rgb(3 12 8 / 72%);
+  --dark: #e7f3e9;
+  --primary: #a4dfb1;
+  --leaf: #9fd49e;
+  --light: #213d2c;
+  --accent: #ffac70;
+  --line: #3a5344;
+  --muted: #b0c5b7;
+}
+
+/* Low specificity gives each screen its own layout and status styles while
+   supplying missing native-control colors (including date inputs and dialogs). */
+:where(html[data-theme="dark"]) :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+  textarea,
+  select,
+  option,
+  dialog
+) {
+  background-color: var(--surface);
+  color: var(--text);
+}
+
+:where(html[data-theme="dark"]) :where(input, textarea)::placeholder {
+  color: #a2b7a9;
+  opacity: 1;
+}
+
+:where(input[type="checkbox"], input[type="radio"], input[type="range"]) {
+  accent-color: var(--brand-leaf);
+}
+
+:where(html[data-theme="dark"]) :where(input[type="checkbox"], input[type="radio"], input[type="range"]) {
+  accent-color: #80bf8c;
+}
+
+:where(html[data-theme="dark"]) ::selection {
+  background: #397a4c;
+  color: #fff;
+}
+
+/* A global, accessible switch remains usable in catalog and independent portals. */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  gap: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--primary);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.theme-toggle svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+.theme-toggle:hover {
+  background: var(--surface-alt);
+  border-color: var(--primary);
+}
+.theme-toggle:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+.theme-toggle--floating {
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: calc(22px + env(safe-area-inset-bottom));
+  z-index: 45;
+  box-shadow: 0 4px 20px var(--theme-shadow, rgb(20 61 36 / 16%));
+}
+@media (max-width: 767px) {
+  .theme-toggle--floating {
+    right: max(12px, env(safe-area-inset-right));
+    bottom: calc(84px + env(safe-area-inset-bottom));
+    max-width: calc(100vw - 24px);
+  }
+  .theme-toggle--floating > span {
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .theme-toggle {
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+  }
+}
+@media (max-width: 359px) {
+  .mobile-header .brand { gap: 4px; }
+  .mobile-header .brand-icon { width: 28px; height: 28px; flex: 0 0 28px; }
+  .mobile-header .brand strong { font-size: 14px; letter-spacing: -0.5px; }
+  .mobile-header .header-actions { gap: 2px; }
+}
+@media (max-width: 767px) {
+  .app-shell--standalone :is(.admin-login-layout, .admin-bootstrap-wrap, .admin-main, .t04-auth-layout) {
+    padding-bottom: calc(144px + env(safe-area-inset-bottom));
+  }
+}
+@media (forced-colors: active) {
+  .theme-toggle {
+    border-color: ButtonText;
+    background: ButtonFace;
+    color: ButtonText;
+    box-shadow: none;
+  }
+}

@@ -14,6 +14,7 @@ import { appDistributionRouter, appDownloadRouter } from "./routes/appDistributi
 import { mobileCiRouter, mobileReleaseRouter } from "./routes/mobileReleaseRoutes.ts";
 import { adminGovernanceRouter } from "./routes/adminGovernanceRoutes.ts";
 import { profilePrivacyRouter } from "./routes/profilePrivacyRoutes.ts";
+import { appearanceRouter, adminAppearanceRouter } from "./routes/appearanceRoutes.ts";
 import { ruralPropertyRouter } from "./routes/ruralPropertyRoutes.ts";
 import { clientIpHashMiddleware, requestIdMiddleware } from "./middleware/contextEnrichers.ts";
 import { documentRouter, adminDocumentRouter } from "./routes/documentRoutes.ts";
@@ -110,6 +111,10 @@ for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) app.use(prefix, mobileC
 for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) app.use(prefix, publicMediaRouter);
 app.use(sessionMiddleware);
 app.use(offlineRequestMiddleware);
+for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
+  app.use(prefix, appearanceRouter);
+  app.use(prefix, adminAppearanceRouter);
+}
 app.use("/downloads", appDownloadRouter);
 app.use(foundationRouter);
 app.use("/api", foundationRouter);
@@ -194,3 +199,4 @@ app.use(
       });
   },
 );
+

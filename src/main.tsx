@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 import "./accountPrivacy.css";
+import "./theme.css";
 import { startPwaManager } from "./lib/pwaManager";
 import { startAccountErasureCleanup } from "./lib/accountErasureCleanup";
 startAccountErasureCleanup();
@@ -12,3 +13,4 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </React.StrictMode>,
 );
+

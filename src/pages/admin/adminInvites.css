@@ -4,32 +4,32 @@
 .admin-invite-governance .admin-governance-grid {
   grid-template-columns: minmax(0, 1fr);
 }
-.admin-invite-independence { display: flex; gap: 10px; padding: 14px; border: 1px solid #d9e6d9; border-radius: 12px; background: #f3f8f0; font-size: 13px; line-height: 1.6; color: #365b3e; }
+.admin-invite-independence { display: flex; gap: 10px; padding: 14px; border: 1px solid var(--theme-line, #d9e6d9); border-radius: 12px; background: var(--theme-green-soft, #f3f8f0); font-size: 13px; line-height: 1.6; color: var(--theme-muted, #365b3e); }
 .admin-invite-independence > span { min-width: 0; }
 .admin-invite-governance .admin-invite-inputs { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 18px; }
 .admin-invite-inputs > :is(fieldset, button, .admin-alert, .admin-invite-role-preview) { grid-column: 1 / -1; }
-.admin-invite-governance .admin-sectors-fieldset { min-inline-size: 0; display: block; margin: 4px 0; padding: 16px; background: #fcfdfb; }
+.admin-invite-governance .admin-sectors-fieldset { min-inline-size: 0; display: block; margin: 4px 0; padding: 16px; background: var(--theme-surface, #fcfdfb); }
 .admin-invite-governance .admin-sectors-fieldset legend { font-size: 14px; padding-inline: 8px; }
-.admin-sectors-help { font-size: 13px; color: #637064; line-height: 1.5; margin: 0 0 14px; }
+.admin-sectors-help { font-size: 13px; color: var(--theme-muted, #637064); line-height: 1.5; margin: 0 0 14px; }
 .admin-sectors-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 10px; }
-.admin-invite-governance .admin-sector-checkbox { min-width: 0; min-height: 74px; margin: 0; padding: 14px; border: 1px solid #dae3d7; background: #fff; border-radius: 12px; cursor: pointer; }
-.admin-invite-governance .admin-sector-checkbox:has(input:checked) { border-color: #598465; background: #eef7ec; }
-.admin-sector-checkbox input[type="checkbox"] { flex: 0 0 20px; width: 20px !important; height: 20px; min-height: 20px !important; padding: 0; margin: 2px 0 0; accent-color: #285d39; }
+.admin-invite-governance .admin-sector-checkbox { min-width: 0; min-height: 74px; margin: 0; padding: 14px; border: 1px solid var(--theme-line, #dae3d7); background: var(--theme-surface, #fff); border-radius: 12px; cursor: pointer; }
+.admin-invite-governance .admin-sector-checkbox:has(input:checked) { border-color: var(--theme-green-line, #598465); background: var(--theme-green-soft, #eef7ec); }
+.admin-sector-checkbox input[type="checkbox"] { flex: 0 0 20px; width: 20px !important; height: 20px; min-height: 20px !important; padding: 0; margin: 2px 0 0; accent-color: var(--theme-green-line, #285d39); }
 .admin-sector-checkbox > span { min-width: 0; flex: 1; line-height: 1.5; overflow-wrap: break-word; }
 .admin-invite-governance .admin-sector-checkbox strong { font-size: 14px; line-height: 1.4; }
 .admin-invite-governance .admin-sector-checkbox small { font-size: 12px; line-height: 1.5; }
-.admin-sectors-count { display: block; margin-top: 14px; color: #3c6445; font-size: 12px; font-weight: 700; }
-.admin-invite-history-note { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin: 14px 0; font-size: 13px; line-height: 1.6; color: #5b6a5f; }
-.admin-invite-history-note button { min-height: 44px; color: #245a34; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.admin-sectors-count { display: block; margin-top: 14px; color: var(--theme-muted, #3c6445); font-size: 12px; font-weight: 700; }
+.admin-invite-history-note { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin: 14px 0; font-size: 13px; line-height: 1.6; color: var(--theme-muted, #5b6a5f); }
+.admin-invite-history-note button { min-height: 44px; color: var(--theme-green-ink, #245a34); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 .admin-invite-role-preview {
   display: flex;
   align-items: flex-start;
   gap: 12px;
   padding: 14px;
-  border: 1px solid #cee2d2;
-  background: #f1f8f2;
+  border: 1px solid var(--theme-line, #cee2d2);
+  background: var(--theme-green-soft, #f1f8f2);
   border-radius: 14px;
-  color: #245a34;
+  color: var(--theme-green-ink, #245a34);
 }
 .admin-invite-role-preview > svg {
   flex: none;
@@ -45,9 +45,9 @@
   font-weight: 400;
 }
 .admin-invite-role-preview.is-super {
-  border-color: #ddd5f4;
-  background: #f6f3fc;
-  color: #514070;
+  border-color: var(--theme-violet-line, #ddd5f4);
+  background: var(--theme-violet-soft, #f6f3fc);
+  color: var(--theme-violet-ink, #514070);
 }
 .admin-invite-governance .admin-card-heading {
   align-items: flex-start;
@@ -66,10 +66,10 @@
   gap: 9px;
   flex: 1 1 190px;
   min-width: 0;
-  border: 1px solid #cfdad1;
+  border: 1px solid var(--theme-line, #cfdad1);
   border-radius: 11px;
   padding: 0 11px;
-  color: #68736b;
+  color: var(--theme-muted, #68736b);
 }
 .admin-invite-search input {
   min-width: 0;
@@ -80,20 +80,20 @@
   background: transparent;
   font: inherit;
   font-size: 13px;
-  color: #203c29;
+  color: var(--theme-green-ink, #203c29);
 }
 .admin-invite-search:focus-within {
-  outline: 2px solid #6aaa78;
+  outline: 2px solid var(--theme-green-line, #6aaa78);
   outline-offset: 2px;
 }
 .admin-invite-filters select {
   min-height: 42px;
   max-width: 100%;
   padding: 0 10px;
-  border: 1px solid #cfdad1;
+  border: 1px solid var(--theme-line, #cfdad1);
   border-radius: 11px;
-  background: white;
-  color: #35513d;
+  background: var(--theme-surface, white);
+  color: var(--theme-muted, #35513d);
   font: inherit;
   font-size: 12px;
 }
@@ -112,7 +112,7 @@
   margin-top: 4px;
   border: 0;
   background: none;
-  color: #993c35;
+  color: var(--theme-danger-ink, #993c35);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
@@ -129,28 +129,28 @@
   display: inline-flex;
   padding: 5px 8px;
   border-radius: 8px;
-  color: #285b37;
-  background: #eef6ef;
+  color: var(--theme-green-ink, #285b37);
+  background: var(--theme-green-soft, #eef6ef);
   line-height: 1.4;
   font-weight: 700;
 }
 .admin-invite-role-tag.is-super {
-  background: #f1ecf9;
-  color: #634581;
+  background: var(--theme-violet-soft, #f1ecf9);
+  color: var(--theme-violet-ink, #634581);
 }
 .admin-invite-confirmation {
   width: min(460px, calc(100vw - 32px));
   max-height: calc(100dvh - 32px);
   overflow: auto;
   padding: 24px;
-  border: 1px solid #d6e1d7;
+  border: 1px solid var(--theme-line, #d6e1d7);
   border-radius: 18px;
-  color: #193321;
-  background: white;
-  box-shadow: 0 24px 80px #0c291c40;
+  color: var(--theme-green-ink, #193321);
+  background: var(--theme-surface, white);
+  box-shadow: 0 24px 80px var(--theme-shadow, #0c291c40);
 }
 .admin-invite-confirmation::backdrop {
-  background: #102b1cd1;
+  background: var(--theme-backdrop, #102b1cd1);
 }
 .admin-invite-inputs {
   min-width: 0;
@@ -184,14 +184,14 @@
   min-width: 0;
   width: 100%;
   min-height: 46px;
-  border: 1px solid #cfdad1;
+  border: 1px solid var(--theme-line, #cfdad1);
   border-radius: 12px;
   padding: 0 13px;
   font: inherit;
   font-size: 16px;
 }
 .admin-invite-session-confirmation .commerce-error {
-  color: #993c35;
+  color: var(--theme-danger-ink, #993c35);
 }
 .admin-invite-session-confirmation button {
   min-height: 46px;
@@ -208,7 +208,7 @@
 .admin-invite-confirmation p {
   font-size: 14px;
   line-height: 1.6;
-  color: #536359;
+  color: var(--theme-muted, #536359);
   margin: 0 0 16px;
 }
 .admin-invite-confirm-actions {
@@ -219,7 +219,7 @@
   margin-top: 22px;
 }
 .admin-invite-accept .admin-login-card {
-  border-top: 5px solid #2d7041;
+  border-top: 5px solid var(--theme-green-line, #2d7041);
   min-width: 0;
 }
 .admin-invite-accept .admin-muted {
@@ -229,18 +229,18 @@
   min-width: 0;
 }
 .admin-invite-accept.is-super .admin-login-card {
-  border-top-color: #6b4d97;
+  border-top-color: var(--theme-violet-line, #6b4d97);
 }
 .admin-invite-accept.is-super .admin-login-icon {
-  background: #f1ecf9;
-  color: #634581;
+  background: var(--theme-violet-soft, #f1ecf9);
+  color: var(--theme-violet-ink, #634581);
 }
 .admin-invite-accept .admin-invite-role-preview {
   margin: 18px 0;
 }
 .admin-invite-accept .admin-invite-validity {
   font-size: 12px;
-  color: #68736b;
+  color: var(--theme-muted, #68736b);
   margin: 12px 0;
 }
 @media (max-width: 1250px) {
@@ -276,3 +276,4 @@
     line-height: 1.2;
   }
 }
+

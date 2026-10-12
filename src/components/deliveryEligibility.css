@@ -10,8 +10,9 @@
   margin-top: 3px;
 }
 .hvm-delivery-eligibility.eligible {
-  color: #34692d;
+  color: var(--theme-green-ink, #34692d);
 }
 .hvm-delivery-eligibility.outside {
-  color: #7b541c;
+  color: var(--theme-warm-ink, #7b541c);
 }
+

@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 3000",
-    "build": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t02:unit && npm run verify:t02:evidence && npm run test:t03:unit && npm run verify:t03:evidence && npm run test:t04:unit && npm run verify:t04:evidence && npm run test:t05:unit && npm run verify:t05:evidence && npm run test:t06:unit && npm run verify:t06:evidence && npm run test:t12:unit && npm run verify:t12:evidence && npm run test:t17:unit && npm run test:t20:unit && vite build && node --import tsx scripts/check-bundle.ts && npm run pwa:verify",
+    "build": "npm run test:appearance && npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run test:t02:unit && npm run verify:t02:evidence && npm run test:t03:unit && npm run verify:t03:evidence && npm run test:t04:unit && npm run verify:t04:evidence && npm run test:t05:unit && npm run verify:t05:evidence && npm run test:t06:unit && npm run verify:t06:evidence && npm run test:t12:unit && npm run verify:t12:evidence && npm run test:t17:unit && npm run test:t20:unit && vite build && node --import tsx scripts/check-bundle.ts && npm run pwa:verify",
     "preview": "vite preview --host 0.0.0.0",
     "typecheck": "tsc --noEmit",
     "lint": "npm run typecheck && npm run security:check",
@@ -131,7 +131,8 @@
     "mobile:fingerprint": "node scripts/mobile/native-build.mjs fingerprint",
     "pwa:verify": "node --import tsx scripts/verify-pwa.ts",
     "test:pwa": "vitest run tests/unit/pwa*.test.ts tests/unit/apiUpdateGuards.test.ts",
-    "test:pwa:browser": "node scripts/prepare-pwa-tests.mjs && playwright test -c playwright.pwa.config.ts"
+    "test:pwa:browser": "node scripts/prepare-pwa-tests.mjs && playwright test -c playwright.pwa.config.ts",
+    "test:appearance": "node --import tsx tests/appearance.test.mjs"
   },
   "dependencies": {
     "@capacitor/app": "8.1.2",

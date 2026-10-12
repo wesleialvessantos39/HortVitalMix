@@ -13,7 +13,7 @@
 }
 .account-updates header > svg {
   flex-shrink: 0;
-  color: #315e3c;
+  color: var(--theme-green-ink, #315e3c);
 }
 .account-updates h1 {
   margin: 0;
@@ -28,12 +28,12 @@
 .account-updates p {
   line-height: 1.6;
   overflow-wrap: break-word;
-  color: #526654;
+  color: var(--theme-muted, #526654);
 }
 .account-updates article {
   min-width: 0;
-  background: #fff;
-  border: 1px solid #d6e3d4;
+  background: var(--theme-surface, #fff);
+  border: 1px solid var(--theme-line, #d6e3d4);
   border-radius: 18px;
   padding: 20px;
 }
@@ -44,7 +44,7 @@
 }
 .account-updates dt {
   font-size: 0.85rem;
-  color: #667568;
+  color: var(--theme-muted, #667568);
 }
 .account-updates dd {
   margin: 5px 0;
@@ -56,7 +56,7 @@
   white-space: normal;
 }
 .account-updates button:focus-visible {
-  outline: 3px solid #b88036;
+  outline: 3px solid var(--theme-warm-line, #b88036);
   outline-offset: 3px;
 }
 @media (max-width: 480px) {
@@ -73,3 +73,4 @@
     width: 100%;
   }
 }
+

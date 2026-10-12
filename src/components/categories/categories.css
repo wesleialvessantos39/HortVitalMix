@@ -27,7 +27,7 @@
   display: block;
   height: 48px;
   border-radius: 11px;
-  background: linear-gradient(100deg, #edf2ed 30%, #f8faf8 50%, #edf2ed 70%);
+  background: linear-gradient(100deg, var(--theme-surface-alt, #edf2ed) 30%, var(--theme-surface-alt, #f8faf8) 50%, var(--theme-surface-alt, #edf2ed) 70%);
   background-size: 200% 100%;
   animation: hvm-category-shimmer 1.5s ease-in-out infinite;
 }
@@ -39,7 +39,7 @@
 @media (min-width: 768px) {
   .categories.hvm-category-nav {
     padding: 18px 12px;
-    background: white;
+    background: var(--theme-surface, white);
     border: 1px solid var(--line);
     border-radius: 16px;
   }
@@ -115,3 +115,4 @@
     animation: none;
   }
 }
+

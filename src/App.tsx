@@ -65,6 +65,9 @@ import {
 } from "./components/notifications/NotificationProvider";
 import { LocationSelector } from "./components/LocationSelector";
 import { PageLoading } from "./components/PageLoading";
+import { ThemeToggle } from "./components/ThemeToggle";
+import { AppSplash } from "./components/AppSplash";
+import { AppearancePreferenceSync } from "./components/AppearancePreferenceSync";
 import { AppDownloadSection } from "./components/AppDownloadSection";
 import { AppUpdateNotice } from "./components/AppUpdateNotice";
 import { AutomaticAccountSync } from "./components/AutomaticAccountSync";
@@ -476,6 +479,9 @@ export default function App() {
           (isAdminRoute || publicLoginRole ? " app-shell--standalone" : "")
         }
       >
+        <AppSplash />
+        <AppearancePreferenceSync session={sessionLoading ? null : shellSession} />
+        {(isAdminRoute || publicLoginRole) && <ThemeToggle floating />}
         <a className="skip" href="#conteudo">
           Ir para conteúdo
         </a>
@@ -498,6 +504,7 @@ export default function App() {
               ))}
             </nav>
             <div className="header-actions">
+              <ThemeToggle />
               <LocationSelector
                 region={locality.label}
                 expanded={modal === "Localização"}
@@ -544,6 +551,7 @@ export default function App() {
           <div className="mobile-top">
             {logo}
             <div className="header-actions">
+              <ThemeToggle />
               <NotificationBell onNavigate={go} />
               {canShop && (
                 <button
@@ -1600,3 +1608,4 @@ export default function App() {
     </NotificationProvider>
   );
 }
+

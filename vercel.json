@@ -1,6 +1,6 @@
 {
   "framework": "vite",
-  "buildCommand": "npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run verify:t12:store:runtime && vite build && node --import tsx scripts/check-bundle.ts && npm run pwa:verify",
+  "buildCommand": "npm run test:appearance && npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run verify:t12:store:runtime && vite build && node --import tsx scripts/check-bundle.ts && npm run pwa:verify",
   "installCommand": "npm ci --no-audit --no-fund",
   "ignoreCommand": "node scripts/vercel-main-only.mjs",
   "outputDirectory": "dist",
@@ -55,7 +55,7 @@
       "destination": "/api?__hvm_path=v1/app-distribution/download/:platform"
     },
     {
-      "source": "/((?!api(?:/|$)|assets/|app-icons/|native-downloads/|manifest.webmanifest|offline-worker.js|pwa-version.json|favicon.svg).*)",
+      "source": "/((?!api(?:/|$)|assets/|app-icons/|splash/|theme-init.js|native-downloads/|manifest.webmanifest|offline-worker.js|pwa-version.json|favicon.svg).*)",
       "destination": "/index.html"
     }
   ],
@@ -445,3 +445,4 @@
     }
   ]
 }
+

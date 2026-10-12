@@ -39,10 +39,10 @@
   min-width: 0;
   box-sizing: border-box;
   padding: 11px;
-  border: 1px solid #ccd8ce;
+  border: 1px solid var(--theme-line, #ccd8ce);
   border-radius: 9px;
-  background: white;
-  color: #25382b;
+  background: var(--theme-surface, white);
+  color: var(--theme-ink, #25382b);
   font: inherit;
   font-weight: 400;
 }
@@ -50,7 +50,7 @@
   resize: vertical;
 }
 .hvm-category-fields small {
-  color: #5b6d60;
+  color: var(--theme-muted, #5b6d60);
   font-size: 12px;
   font-weight: 400;
 }
@@ -61,7 +61,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #357444;
+  color: var(--theme-green-ink, #357444);
 }
 .hvm-category-icon-field select {
   flex: 1;
@@ -87,7 +87,7 @@
   align-items: flex-start;
   gap: 12px;
   padding: 18px 0;
-  border-bottom: 1px solid #e1e8e2;
+  border-bottom: 1px solid var(--theme-line, #e1e8e2);
 }
 .hvm-category-list li:last-child {
   border-bottom: 0;
@@ -96,8 +96,8 @@
   display: flex;
   padding: 10px;
   border-radius: 10px;
-  background: #edf6ef;
-  color: #357444;
+  background: var(--theme-green-soft, #edf6ef);
+  color: var(--theme-green-ink, #357444);
 }
 .hvm-category-list-details {
   display: grid;
@@ -108,7 +108,7 @@
 }
 .hvm-category-list-details > span,
 .hvm-category-list-details > small {
-  color: #5b6d60;
+  color: var(--theme-muted, #5b6d60);
   font-size: 12px;
 }
 .hvm-category-list .hvm-category-actions {
@@ -121,25 +121,25 @@
   font-weight: 700;
 }
 .hvm-category-badge.active {
-  background: #e5f4e9;
-  color: #225c32;
+  background: var(--theme-green-soft, #e5f4e9);
+  color: var(--theme-green-ink, #225c32);
 }
 .hvm-category-badge.inactive {
-  background: #f1f2f1;
-  color: #57635a;
+  background: var(--theme-surface-alt, #f1f2f1);
+  color: var(--theme-muted, #57635a);
 }
 .hvm-category-dialog {
   width: min(480px, calc(100vw - 32px));
   max-height: calc(100dvh - 32px);
   box-sizing: border-box;
   overflow-y: auto;
-  border: 1px solid #ccd8ce;
+  border: 1px solid var(--theme-line, #ccd8ce);
   border-radius: 16px;
   padding: 24px;
-  color: #25382b;
+  color: var(--theme-ink, #25382b);
 }
 .hvm-category-dialog::backdrop {
-  background: #122d1d80;
+  background: var(--theme-backdrop, #122d1d80);
 }
 .hvm-category-reauth-dialog {
   width: min(600px, calc(100vw - 32px));
@@ -212,3 +212,4 @@
     padding: 18px;
   }
 }
+
