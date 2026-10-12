@@ -1,6 +1,7 @@
+import { PortalAccessHeader } from "../../components/PortalAccessHeader";
 import { blockMessages } from "../../../shared/accountBlock";
 import { useEffect, useState } from "react";
-import { KeyRound, Leaf, ShieldCheck } from "lucide-react";
+import { KeyRound, ShieldCheck } from "lucide-react";
 import { api, type ApiFailure } from "../../lib/api";
 import { getBootstrapStatus } from "../../lib/adminBootstrapTransport";
 import { primeAdminAccess } from "../../lib/adminAccessHandoff";
@@ -158,18 +159,7 @@ export function AdminLoginPage({
 
   return (
     <section className="admin-login-page">
-      <header className="admin-login-header">
-        <button
-          className="admin-back"
-          onClick={() => onNavigate(intendedRole ? "/administracao" : "/")}
-        >
-          {intendedRole ? "← Voltar para Administração" : "← Voltar ao site"}
-        </button>
-        <div className="admin-login-brand">
-          <span className="admin-brand-mark"><Leaf /></span>
-          <strong>Horti<span>Vital</span>Mix</strong>
-        </div>
-      </header>
+      <PortalAccessHeader onNavigate={onNavigate} backTo={intendedRole ? "/administracao" : "/"} backLabel={intendedRole ? "Voltar para Administração" : "Voltar ao site"} />
       <div className="admin-login-layout">
         <div className="admin-login-copy">
           <span className="admin-kicker">
@@ -307,3 +297,4 @@ export function AdminLoginPage({
     </section>
   );
 }
+

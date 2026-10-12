@@ -91,11 +91,13 @@ html[data-theme="dark"] {
   justify-content: center;
   flex: 0 0 auto;
   gap: 8px;
+  width: 44px;
   min-width: 44px;
+  height: 44px;
   min-height: 44px;
-  padding: 10px;
+  padding: 0;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 50%;
   background: var(--surface);
   color: var(--primary);
   font: inherit;
@@ -110,6 +112,9 @@ html[data-theme="dark"] {
   width: 20px;
   height: 20px;
   flex: 0 0 auto;
+  display: block;
+  margin: 0;
+  padding: 0;
 }
 .theme-toggle:hover {
   background: var(--surface-alt);
@@ -119,25 +124,92 @@ html[data-theme="dark"] {
   outline: 3px solid var(--focus-ring);
   outline-offset: 3px;
 }
-.theme-toggle--floating {
-  position: fixed;
-  right: max(20px, env(safe-area-inset-right));
-  bottom: calc(22px + env(safe-area-inset-bottom));
-  z-index: 45;
-  box-shadow: 0 4px 20px var(--theme-shadow, rgb(20 61 36 / 16%));
+/* Every portal keeps the same rightmost controls in its actual top bar. */
+.hvm-topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+  gap: 8px;
+  min-height: 44px;
+}
+.hvm-topbar-actions > .theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  max-width: 44px;
+  max-height: 44px;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+}
+.portal-access-header.admin-login-header {
+  --admin-green: var(--theme-green-ink, #123f22);
+  --admin-orange: var(--theme-warm-ink, #ef7d18);
+  position: sticky;
+  top: 0;
+  z-index: 28;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 72px;
+  background: var(--page-background);
+}
+.portal-access-header > .admin-login-brand { min-width: 0; flex: 0 1 auto; }
+.portal-access-header .admin-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  margin: 0;
+  padding: 8px;
+  white-space: nowrap;
+}
+.admin-main { --portal-page-pad-x: 32px; --portal-page-pad-top: 28px; }
+.admin-main > .admin-portal-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 28;
+  min-height: 72px;
+  margin: calc(-1 * var(--portal-page-pad-top)) calc(-1 * var(--portal-page-pad-x)) 24px;
+  padding: 12px var(--portal-page-pad-x);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+@media (min-width: 768px) and (max-width: 1199px) {
+  .admin-main { --portal-page-pad-x: 24px; --portal-page-pad-top: 24px; }
+}
+@media (min-width: 768px) and (max-width: 1000px) {
+  .admin-main { --portal-page-pad-x: 18px; }
 }
 @media (max-width: 767px) {
-  .theme-toggle--floating {
-    right: max(12px, env(safe-area-inset-right));
-    bottom: calc(84px + env(safe-area-inset-bottom));
-    max-width: calc(100vw - 24px);
+  .admin-main { --portal-page-pad-x: 14px; --portal-page-pad-top: 0px; }
+  .admin-main > .admin-portal-topbar {
+    min-height: 64px;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding-block: calc(8px + env(safe-area-inset-top)) 8px;
   }
-  .theme-toggle--floating > span {
-    max-width: 130px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+  .portal-access-header.admin-login-header { min-height: 64px; }
+  .mobile-header .hvm-topbar-actions { gap: 4px; }
+}
+@media (max-width: 479px) {
+  .portal-access-header .admin-back { width: 44px; min-width: 44px; padding: 0; }
+  .portal-access-header .admin-back > span { display: none; }
+}
+@media (max-width: 359px) {
+  .portal-access-header .admin-brand-mark { width: 28px; height: 28px; flex: 0 0 28px; }
+  .portal-access-header .admin-login-brand { gap: 5px; }
+  .portal-access-header .admin-login-brand strong,
+  .admin-portal-topbar .admin-mobile-heading strong { font-size: 14px; }
+  .portal-access-header .hvm-topbar-actions,
+  .admin-portal-topbar .hvm-topbar-actions { gap: 4px; }
+  .admin-main > .admin-portal-topbar { gap: 6px; }
 }
 @media (prefers-reduced-motion: no-preference) {
   .theme-toggle {
@@ -149,11 +221,6 @@ html[data-theme="dark"] {
   .mobile-header .brand-icon { width: 28px; height: 28px; flex: 0 0 28px; }
   .mobile-header .brand strong { font-size: 14px; letter-spacing: -0.5px; }
   .mobile-header .header-actions { gap: 2px; }
-}
-@media (max-width: 767px) {
-  .app-shell--standalone :is(.admin-login-layout, .admin-bootstrap-wrap, .admin-main, .t04-auth-layout) {
-    padding-bottom: calc(144px + env(safe-area-inset-bottom));
-  }
 }
 @media (forced-colors: active) {
   .theme-toggle {

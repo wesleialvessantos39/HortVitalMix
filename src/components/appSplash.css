@@ -133,6 +133,60 @@
   .app-splash__signature p { margin: 6px 0 9px; font-size: 11px; }
   .app-splash__light { background: linear-gradient(180deg, rgb(247 244 234 / 35%), transparent 25%, transparent 50%, rgb(247 244 234 / 94%) 82%, var(--splash-paper)); }
 }
+@media (min-width: 768px) {
+  .app-splash {
+    --splash-footer-height: 164px;
+    --splash-scene-height: calc(100vh - var(--splash-footer-height));
+    --splash-scene-height: calc(100dvh - var(--splash-footer-height));
+  }
+  /* The scene and signature occupy separate rectangles on desktop. */
+  .app-splash::before {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    inset: 0 0 var(--splash-footer-height);
+    pointer-events: none;
+    background: url('/splash/farmhouse-kitchen.webp') center / cover no-repeat;
+    filter: blur(18px);
+    opacity: .46;
+  }
+  .app-splash__scene {
+    z-index: 1;
+    right: auto;
+    bottom: var(--splash-footer-height);
+    left: 50%;
+    /* Limit the crop in wide windows so every product stays on the table. */
+    width: min(100%, calc(var(--splash-scene-height) * 2.4));
+    transform: translateX(-50%);
+  }
+  .app-splash__light {
+    background: linear-gradient(180deg, rgb(247 244 234 / 18%), transparent 24%, transparent 82%, rgb(247 244 234 / 20%));
+  }
+  .app-splash__signature {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: var(--splash-footer-height);
+    justify-content: center;
+    overflow: hidden;
+    padding: 18px 24px max(18px, env(safe-area-inset-bottom));
+    background: var(--splash-paper);
+    border-top: 1px solid rgb(27 77 46 / 10%);
+  }
+  :root[data-theme='dark'] .app-splash::before {
+    filter: brightness(.66) saturate(.82) blur(18px);
+  }
+  :root[data-theme='dark'] .app-splash__light {
+    background: linear-gradient(180deg, rgb(17 31 23 / 24%), transparent 24%, transparent 82%, rgb(17 31 23 / 24%));
+  }
+  :root[data-theme='dark'] .app-splash__signature {
+    border-top-color: rgb(238 244 233 / 12%);
+  }
+}
+@media (min-width: 768px) and (max-height: 520px) {
+  .app-splash { --splash-footer-height: 112px; }
+  .app-splash__signature { padding: 12px 24px max(12px, env(safe-area-inset-bottom)); }
+}
 @media (prefers-reduced-motion: reduce) {
   .app-splash { transition-duration: 0ms; }
   .app-splash__kitchen,

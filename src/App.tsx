@@ -68,6 +68,7 @@ import { PageLoading } from "./components/PageLoading";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { AppSplash } from "./components/AppSplash";
 import { AppearancePreferenceSync } from "./components/AppearancePreferenceSync";
+import { PortalAccessHeader } from "./components/PortalAccessHeader";
 import { AppDownloadSection } from "./components/AppDownloadSection";
 import { AppUpdateNotice } from "./components/AppUpdateNotice";
 import { AutomaticAccountSync } from "./components/AutomaticAccountSync";
@@ -481,7 +482,10 @@ export default function App() {
       >
         <AppSplash />
         <AppearancePreferenceSync session={sessionLoading ? null : shellSession} />
-        {(isAdminRoute || publicLoginRole) && <ThemeToggle floating />}
+        {((sessionLoading && (isAdminRoute || (publicLoginRole && !scopedLoginCallback))) ||
+          ((isAdminRoute || publicLoginRole) && shellSession && guestAccessRoute)) &&
+          <PortalAccessHeader onNavigate={go}
+            disabled={path === "/admin/aceitar-convite" || path === "/admin/convite"} />}
         <a className="skip" href="#conteudo">
           Ir para conteúdo
         </a>
@@ -503,14 +507,12 @@ export default function App() {
                 </a>
               ))}
             </nav>
-            <div className="header-actions">
-              <ThemeToggle />
+            <div className="header-actions hvm-topbar-actions">
               <LocationSelector
                 region={locality.label}
                 expanded={modal === "Localização"}
                 onOpen={openLocality}
               />
-              <NotificationBell onNavigate={go} />
               {showAdministrationEntry && (
                 <button
                   className="icon admin-home-entry"
@@ -544,15 +546,15 @@ export default function App() {
                   )}
                 </button>
               )}
+              <NotificationBell onNavigate={go} />
+              <ThemeToggle />
             </div>
           </div>
         </header>
         <header className="mobile-header">
           <div className="mobile-top">
             {logo}
-            <div className="header-actions">
-              <ThemeToggle />
-              <NotificationBell onNavigate={go} />
+            <div className="header-actions hvm-topbar-actions">
               {canShop && (
                 <button
                   className="icon"
@@ -567,6 +569,8 @@ export default function App() {
                   )}
                 </button>
               )}
+              <NotificationBell onNavigate={go} />
+              <ThemeToggle />
             </div>
           </div>
           {path === "/produtos" && search}

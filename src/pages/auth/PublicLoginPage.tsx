@@ -1,6 +1,7 @@
+import { PortalAccessHeader } from "../../components/PortalAccessHeader";
 import { blockMessages } from "../../../shared/accountBlock";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { KeyRound, Leaf, ShoppingBag, Sprout, Plus } from "lucide-react";
+import { KeyRound, ShoppingBag, Sprout, Plus } from "lucide-react";
 import { PasswordInput } from "../../components/forms/PasswordInput";
 import { api, type ApiFailure } from "../../lib/api";
 import type { ShellSession } from "../../hooks/useSession";
@@ -119,23 +120,7 @@ export function PublicLoginPage({
   }
   return (
     <section className="admin-login-page public-login-page">
-      <header className="admin-login-header">
-        <button className="admin-back" onClick={() => onNavigate("/entrar")}>
-          ← Escolher outro perfil
-        </button>
-        <button
-          className="admin-login-brand"
-          aria-label="HortiVitalMix — início"
-          onClick={() => onNavigate("/")}
-        >
-          <span className="admin-brand-mark">
-            <Leaf />
-          </span>
-          <strong>
-            Horti<span>Vital</span>Mix
-          </strong>
-        </button>
-      </header>
+      <PortalAccessHeader onNavigate={onNavigate} backTo="/entrar" backLabel="Escolher outro perfil" homeLink />
       <div className="admin-login-layout">
         <div className="admin-login-copy">
           <span className="admin-kicker">
@@ -227,3 +212,4 @@ export function PublicLoginPage({
     </section>
   );
 }
+

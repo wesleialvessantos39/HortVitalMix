@@ -1,7 +1,8 @@
+import { PortalAccessHeader } from "../../components/PortalAccessHeader";
 import { PageLoading } from "../../components/PageLoading";
 import { adminSectorLabel } from "../../../shared/adminPermissions";
 import { useEffect, useRef, useState } from "react";
-import { Crown, Leaf, ShieldCheck } from "lucide-react";
+import { Crown, ShieldCheck } from "lucide-react";
 import "./adminInvites.css";
 import { api } from "../../lib/api";
 import { cryptoRandomUUID } from "../../lib/uuid";
@@ -173,24 +174,7 @@ export function AdminAcceptInvitePage({ onNavigate }: Props) {
     <section
       className={`admin-login-page admin-invite-accept ${isSuper ? "is-super" : ""}`}
     >
-      <header className="admin-login-header">
-        <button
-          type="button"
-          className="admin-back"
-          onClick={returnToSite}
-          disabled={leaving || busy}
-        >
-          {leaving ? "Encerrando sessões…" : "← Voltar ao site"}
-        </button>
-        <div className="admin-login-brand">
-          <span className="admin-brand-mark">
-            <Leaf />
-          </span>
-          <strong>
-            Horti<span>Vital</span>Mix
-          </strong>
-        </div>
-      </header>
+      <PortalAccessHeader onNavigate={onNavigate} onBack={returnToSite} disabled={leaving || busy} backLabel={leaving ? "Encerrando sessões…" : "Voltar ao site"} />
       <div className="admin-bootstrap-wrap">
         <div className="admin-login-card admin-login-card--wide">
           <div className="admin-login-icon">
@@ -336,3 +320,4 @@ export function AdminAcceptInvitePage({ onNavigate }: Props) {
     </section>
   );
 }
+

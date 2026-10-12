@@ -1,6 +1,7 @@
+import { PortalAccessHeader } from "../../components/PortalAccessHeader";
 import { PageLoading } from "../../components/PageLoading";
 import { useEffect,useState } from "react";
-import { Leaf,ShieldPlus } from "lucide-react";
+import { ShieldPlus } from "lucide-react";
 import { api, type ApiFailure } from "../../lib/api";
 import { getBootstrapStatus, runBootstrap } from "../../lib/adminBootstrapTransport";
 import { cryptoRandomUUID } from "../../lib/uuid";
@@ -144,10 +145,7 @@ export function AdminBootstrapPage({onNavigate}:Props){
  }
 
  return <section className="admin-login-page">
-  <header className="admin-login-header">
-   <button className="admin-back" onClick={()=>onNavigate("/admin/entrar")}>← Acesso administrativo</button>
-   <div className="admin-login-brand"><span className="admin-brand-mark"><Leaf/></span><strong>Horti<span>Vital</span>Mix</strong></div>
-  </header>
+  <PortalAccessHeader onNavigate={onNavigate} backTo="/admin/entrar" backLabel="Acesso administrativo" />
   <div className="admin-bootstrap-wrap">
    <div className="admin-login-card admin-login-card--wide">
     <div className="admin-login-icon"><ShieldPlus/></div>
@@ -214,3 +212,4 @@ export function AdminBootstrapPage({onNavigate}:Props){
   </div>
  </section>
 }
+

@@ -1,5 +1,6 @@
 import { hasAdminPermission } from "../../../shared/adminPermissions";
 import { NotificationBell } from "../notifications/NotificationProvider";
+import { ThemeToggle } from "../ThemeToggle";
 import {
   LayoutDashboard,
   ShieldCheck,
@@ -333,7 +334,10 @@ export function AdminPortalShell({
             </strong>
             <small>{roleLabel}</small>
           </button>
-          <NotificationBell onNavigate={navigate} />
+          <div className="hvm-topbar-actions">
+            <NotificationBell onNavigate={navigate} />
+            <ThemeToggle />
+          </div>
         </header>
         {logoutError && (
           <p role="alert" className="admin-alert admin-alert--error">
@@ -415,3 +419,4 @@ export function AdminPortalShell({
     </div>
   );
 }
+

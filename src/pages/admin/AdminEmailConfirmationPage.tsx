@@ -1,5 +1,6 @@
+import { PortalAccessHeader } from "../../components/PortalAccessHeader";
 import { useEffect, useMemo, useState } from "react";
-import { Leaf, MailCheck, RefreshCw } from "lucide-react";
+import { MailCheck, RefreshCw } from "lucide-react";
 import { api } from "../../lib/api";
 import { OtpInput } from "../../components/forms/OtpInput";
 import { PROVIDER_OTP_LENGTH, validProviderOtp } from "../../../shared/securityCodes";
@@ -142,18 +143,7 @@ export function AdminEmailConfirmationPage({
 
   return (
     <section className="admin-login-page">
-      <header className="admin-login-header">
-        <button
-          className="admin-back"
-          onClick={() => onNavigate(loginPath)}
-        >
-          ← Acesso administrativo
-        </button>
-        <div className="admin-login-brand">
-          <span className="admin-brand-mark"><Leaf /></span>
-          <strong>Horti<span>Vital</span>Mix</strong>
-        </div>
-      </header>
+      <PortalAccessHeader onNavigate={onNavigate} backTo={loginPath} backLabel="Acesso administrativo" />
 
       <div className="admin-bootstrap-wrap">
         <div className="admin-login-card admin-login-card--wide">
@@ -247,3 +237,4 @@ export function AdminEmailConfirmationPage({
     </section>
   );
 }
+

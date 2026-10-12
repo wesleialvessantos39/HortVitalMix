@@ -254,9 +254,10 @@ export function NotificationBell({ onNavigate, onClick }: {
   return <>
     <button ref={trigger} type="button" className={`icon hvm-notification-bell${count ? " has-unread" : ""}`}
       aria-label={count ? `Notificações, ${count} não lidas` : "Notificações"}
+      title="Notificações"
       aria-haspopup="dialog" aria-expanded={open}
       onClick={() => { if (onNavigate) { setOpenFor(actor); state?.refresh(); } else onClick?.(); }}>
-      <Bell aria-hidden="true" />
+      <Bell size={22} strokeWidth={1.8} aria-hidden="true" focusable="false" />
       {count > 0 && <span className="hvm-notification-count" aria-hidden="true">{count > 99 ? "99+" : count}</span>}
     </button>
     {open && createPortal(<dialog ref={dialog} className="hvm-notification-preview" aria-label="Notificações"
@@ -285,3 +286,4 @@ export function NotificationBell({ onNavigate, onClick }: {
     </dialog>, document.body)}
   </>;
 }
+

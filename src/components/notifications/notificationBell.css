@@ -1,21 +1,55 @@
-.hvm-notification-bell {
+/* Keep the touch target and icon geometry independent of each portal's buttons. */
+button.icon.hvm-notification-bell {
   position: relative;
-  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px;
+  min-width: 44px;
+  max-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
+  padding: 0;
+  margin: 0;
+  gap: 0;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--theme-green-ink, #245b38);
+  line-height: 1;
+  vertical-align: middle;
+  appearance: none;
   overflow: visible;
-  color: inherit;
+  cursor: pointer;
 }
-.hvm-notification-bell.has-unread {
+button.icon.hvm-notification-bell > svg {
+  display: block;
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  margin: 0;
+}
+button.icon.hvm-notification-bell:hover {
+  background: var(--theme-green-soft, #eaf4e7);
+}
+button.icon.hvm-notification-bell.has-unread {
   background: var(--theme-green-soft, #eaf4e7);
   color: var(--theme-green-ink, #245b38);
-  box-shadow: inset 0 0 0 1px var(--theme-green-line, #c1d7bc);
+  border-color: var(--theme-green-line, #c1d7bc);
 }
-.hvm-notification-count {
+button.hvm-notification-bell > .hvm-notification-count {
   position: absolute;
-  top: -3px;
-  right: -4px;
-  min-width: 19px;
-  height: 19px;
-  padding: 0 4px;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 3px;
+  box-sizing: border-box;
   display: grid;
   place-items: center;
   border: 2px solid var(--theme-surface, #fff);
@@ -25,6 +59,10 @@
   font-size: 10px;
   font-weight: 800;
   line-height: 1;
+  letter-spacing: 0;
+  white-space: nowrap;
+  text-align: center;
+  pointer-events: none;
 }
 .hvm-notification-preview {
   position: fixed;
@@ -61,7 +99,20 @@
   letter-spacing: .025em;
 }
 .hvm-notification-preview h2 { font-size: 19px; margin: 3px 0 0; }
-.hvm-notification-preview .icon { border: 1px solid var(--theme-line, #e0e8e1); background: var(--theme-surface, #fff); color: var(--theme-muted, #3c5746); }
+.hvm-notification-preview-heading > button.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--theme-line, #e0e8e1);
+  background: var(--theme-surface, #fff);
+  color: var(--theme-muted, #3c5746);
+}
+.hvm-notification-preview-heading > button.icon > svg { display: block; width: 20px; height: 20px; }
 .hvm-notification-preview-summary { flex-shrink: 0; margin: 9px 18px 13px; color: var(--theme-muted, #617365); font-size: 12px; }
 .hvm-notification-preview-content { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 .hvm-notification-preview-list { list-style: none; padding: 0; margin: 0; }

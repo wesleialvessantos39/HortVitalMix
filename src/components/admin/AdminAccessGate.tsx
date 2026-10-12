@@ -1,3 +1,4 @@
+import { PortalAccessHeader } from "../PortalAccessHeader";
 import { hasAdminPermission } from "../../../shared/adminPermissions";
 import { PageLoading } from "../PageLoading";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -125,10 +126,12 @@ export function AdminAccessGate({
   }, []);
 
   if (state.kind === "loading")
-    return <PageLoading label="Validando acesso administrativo…" />;
+    return <><PortalAccessHeader onNavigate={onNavigate} backTo="/admin/entrar" backLabel="Acesso administrativo" /><PageLoading label="Validando acesso administrativo…" /></>;
 
   if (state.kind === "error")
     return (
+      <>
+      <PortalAccessHeader onNavigate={onNavigate} backTo="/admin/entrar" backLabel="Acesso administrativo" />
       <section className="admin-loading">
         <strong>Não foi possível validar a sessão.</strong>
         <p>Sua sessão será verificada novamente sem solicitar outro código.</p>
@@ -139,6 +142,7 @@ export function AdminAccessGate({
           Tentar novamente
         </button>
       </section>
+      </>
     );
 
   const permissionDenied =
@@ -148,10 +152,14 @@ export function AdminAccessGate({
       (requiredSector && !hasAdminPermission(state.access, requiredSector)));
   if (state.kind === "denied" || permissionDenied)
     return (
+      <>
+      <PortalAccessHeader onNavigate={onNavigate} backTo="/admin/entrar" backLabel="Acesso administrativo" />
       <section className="admin-loading">
         <strong>Seu perfil não tem permissão para acessar esta área.</strong>
       </section>
+      </>
     );
 
   return <>{children(state.access)}</>;
 }
+
