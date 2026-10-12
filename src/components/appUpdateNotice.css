@@ -10,11 +10,11 @@
   max-width: min(560px, calc(100vw - 32px));
   box-sizing: border-box;
   padding: 13px 15px;
-  border: 1px solid #c8ddcd;
+  border: 1px solid var(--theme-line, #c8ddcd);
   border-radius: 15px;
-  background: #fbfff9;
-  color: #234d31;
-  box-shadow: 0 9px 34px #153d2526;
+  background: var(--theme-green-soft, #fbfff9);
+  color: var(--theme-green-ink, #234d31);
+  box-shadow: 0 9px 34px var(--theme-shadow, #153d2526);
 }
 .hvm-app-update-mark {
   display: grid;
@@ -22,8 +22,8 @@
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: #e7f3e5;
-  color: #4c7d48;
+  background: var(--theme-green-soft, #e7f3e5);
+  color: var(--theme-muted, #4c7d48);
   flex-shrink: 0;
 }
 .hvm-app-update-copy {
@@ -37,7 +37,7 @@
 }
 .hvm-app-update-notice p {
   margin: 3px 0 0;
-  color: #667568;
+  color: var(--theme-muted, #667568);
   font-size: 12px;
   line-height: 1.4;
   overflow-wrap: anywhere;
@@ -60,3 +60,4 @@
     flex: 1;
   }
 }
+

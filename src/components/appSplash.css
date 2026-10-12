@@ -1,0 +1,142 @@
+.app-splash {
+  --splash-paper: #f7f4ea;
+  --splash-ink: #1b4d2e;
+  --splash-accent: #e65100;
+  position: fixed;
+  z-index: 12000;
+  inset: 0;
+  min-width: 320px;
+  overflow: hidden;
+  isolation: isolate;
+  color: var(--splash-ink);
+  background: var(--splash-paper);
+  transition: opacity 180ms ease-out, visibility 180ms ease-out;
+}
+
+.app-splash--leaving { opacity: 0; visibility: hidden; pointer-events: none; }
+.app-splash__scene { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.app-splash__kitchen {
+  position: absolute;
+  inset: 0;
+  background-image: url('/splash/farmhouse-kitchen.webp'), url('/splash/farmhouse-kitchen.svg');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  animation: splash-kitchen-enter 1550ms ease-out both;
+}
+.app-splash__light {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, rgb(247 244 234 / 48%) 0%, transparent 24%, transparent 61%, rgb(247 244 234 / 80%) 83%, var(--splash-paper) 100%);
+}
+.app-splash__produce { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; }
+.app-splash__item { transform-box: fill-box; transform-origin: 50% 100%; animation: splash-table-assemble 520ms cubic-bezier(.2,.78,.3,1) both; }
+.app-splash__item--basket { animation-delay: 160ms; }
+.app-splash__item--greens { animation-delay: 310ms; }
+.app-splash__item--juice { animation-delay: 460ms; }
+.app-splash__item--fresh { animation-delay: 610ms; }
+
+.app-splash__topline {
+  position: absolute;
+  z-index: 4;
+  top: max(32px, env(safe-area-inset-top));
+  left: max(40px, env(safe-area-inset-left));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 13px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 55%);
+  background: rgb(247 244 234 / 85%);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .05em;
+}
+.app-splash__topline-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--splash-accent); }
+.app-splash__skip {
+  position: absolute;
+  z-index: 4;
+  top: max(28px, env(safe-area-inset-top));
+  right: max(36px, env(safe-area-inset-right));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 88px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid rgb(27 77 46 / 18%);
+  border-radius: 999px;
+  background: rgb(247 244 234 / 92%);
+  color: var(--splash-ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.app-splash__skip:focus-visible { outline: 3px solid var(--splash-accent); outline-offset: 4px; }
+.app-splash__signature {
+  position: absolute;
+  z-index: 3;
+  right: 20px;
+  bottom: max(38px, calc(env(safe-area-inset-bottom) + 22px));
+  left: 20px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+  animation: splash-signature-enter 500ms 80ms ease-out both;
+}
+.app-splash__brand { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.app-splash__brandmark { display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; border: 1px solid rgb(27 77 46 / 20%); border-radius: 16px; background: rgb(247 244 234 / 70%); }
+.app-splash__brandmark svg { width: 39px; height: 39px; }
+.app-splash__brandname { font-size: clamp(26px, 3.2vw, 38px); font-weight: 850; letter-spacing: -.065em; }
+.app-splash__brandname > span { color: var(--splash-accent); }
+.app-splash__signature p { margin: 12px 0 19px; color: var(--splash-ink); opacity: .8; font-size: clamp(12px, 1.25vw, 14px); line-height: 1.5; letter-spacing: .015em; }
+.app-splash__progress { width: 102px; height: 3px; overflow: hidden; border-radius: 3px; background: rgb(27 77 46 / 12%); }
+.app-splash__progress span { display: block; width: 100%; height: 100%; border-radius: inherit; background: var(--splash-accent); transform-origin: left center; animation: splash-progress 1550ms linear both; }
+
+:root[data-theme='dark'] .app-splash { --splash-paper: #111f17; --splash-ink: #eef4e9; --splash-accent: #ff9b54; }
+:root[data-theme='dark'] .app-splash__kitchen { filter: brightness(.66) saturate(.82); }
+:root[data-theme='dark'] .app-splash__light { background: linear-gradient(180deg, rgb(17 31 23 / 50%), transparent 27%, rgb(17 31 23 / 10%) 55%, rgb(17 31 23 / 84%) 83%, var(--splash-paper)); }
+:root[data-theme='dark'] .app-splash__produce { filter: brightness(.84) saturate(.9); }
+:root[data-theme='dark'] .app-splash__topline,
+:root[data-theme='dark'] .app-splash__skip { background: rgb(17 31 23 / 92%); border-color: rgb(238 244 233 / 18%); }
+:root[data-theme='dark'] .app-splash__brandmark { border-color: rgb(238 244 233 / 20%); background: rgb(17 31 23 / 65%); }
+:root[data-theme='dark'] .app-splash__progress { background: rgb(238 244 233 / 18%); }
+
+@keyframes splash-kitchen-enter { from { transform: scale(1.025); } to { transform: scale(1); } }
+@keyframes splash-table-assemble { from { opacity: 0; transform: translateY(-32px) scale(.92); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes splash-signature-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes splash-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+@media (max-width: 600px) {
+  .app-splash__spread { transform: scale(.8); transform-origin: 768px 745px; }
+  .app-splash__topline { top: max(20px, env(safe-area-inset-top)); left: max(16px, env(safe-area-inset-left)); padding: 8px 10px; gap: 7px; font-size: 10px; letter-spacing: .01em; }
+  .app-splash__skip { top: max(16px, env(safe-area-inset-top)); right: max(16px, env(safe-area-inset-right)); min-width: 80px; font-size: 12px; padding: 10px 13px; }
+  .app-splash__signature { bottom: max(32px, calc(env(safe-area-inset-bottom) + 20px)); }
+  .app-splash__brand { gap: 10px; }
+  .app-splash__brandmark { width: 45px; height: 45px; border-radius: 14px; }
+  .app-splash__brandmark svg { width: 34px; height: 34px; }
+  .app-splash__signature p { max-width: 280px; margin: 12px 0 18px; }
+}
+@media (max-width: 600px) and (max-aspect-ratio: 2/5) {
+  .app-splash__spread { transform: scale(.66); }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  .app-splash__topline { top: max(12px, env(safe-area-inset-top)); left: 20px; }
+  .app-splash__skip { top: max(10px, env(safe-area-inset-top)); right: 20px; }
+  .app-splash__signature { bottom: max(14px, env(safe-area-inset-bottom)); }
+  .app-splash__brandname { font-size: 26px; }
+  .app-splash__brandmark { width: 38px; height: 38px; border-radius: 12px; }
+  .app-splash__brandmark svg { width: 29px; height: 29px; }
+  .app-splash__signature p { margin: 6px 0 9px; font-size: 11px; }
+  .app-splash__light { background: linear-gradient(180deg, rgb(247 244 234 / 35%), transparent 25%, transparent 50%, rgb(247 244 234 / 94%) 82%, var(--splash-paper)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-splash { transition-duration: 0ms; }
+  .app-splash__kitchen,
+  .app-splash__item,
+  .app-splash__signature,
+  .app-splash__progress span { animation: none; }
+}

@@ -59,7 +59,7 @@
   align-items: center;
   gap: 14px;
   padding: 16px 18px;
-  background: white;
+  background: var(--theme-surface, white);
   border: 1px solid var(--line);
   border-radius: 16px;
   cursor: pointer;
@@ -68,7 +68,7 @@
 }
 
 .delivery-scope-option:hover {
-  border-color: #c8dccf;
+  border-color: var(--theme-line, #c8dccf);
 }
 
 .delivery-scope-option.is-selected {
@@ -89,8 +89,8 @@
   margin: 0;
   display: grid;
   place-items: center;
-  background: white;
-  border: 2px solid #c3d1c6;
+  background: var(--theme-surface, white);
+  border: 2px solid var(--theme-line, #c3d1c6);
   border-radius: 50%;
   cursor: pointer;
 }
@@ -100,7 +100,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--leaf);
+  background: var(--brand-leaf);
   transform: scale(0);
   transition: transform 0.15s ease;
 }
@@ -185,7 +185,7 @@
   align-items: center;
   gap: 9px;
   padding: 11px 13px;
-  background: white;
+  background: var(--theme-surface, white);
   border: 1px solid var(--line);
   border-radius: 12px;
   font-size: 12px;
@@ -222,8 +222,8 @@
   min-height: 0;
   margin: 0;
   padding: 0;
-  background: white;
-  border: 2px solid #c3d1c6;
+  background: var(--theme-surface, white);
+  border: 2px solid var(--theme-line, #c3d1c6);
   border-radius: 5px;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
@@ -238,7 +238,7 @@
   left: 50%;
   width: 3px;
   height: 7px;
-  border: solid white;
+  border: solid var(--on-brand, white);
   border-width: 0 2px 2px 0;
   transform: translate(-50%, -62%) rotate(45deg) scale(0);
   transform-origin: center;
@@ -246,7 +246,7 @@
 }
 
 .delivery-scope-municipalities input[type="checkbox"]:checked {
-  background: var(--leaf);
+  background: var(--brand-leaf);
   border-color: var(--leaf);
 }
 
@@ -272,7 +272,7 @@
 
 .delivery-scope-page .account-sheet {
   border: 1px solid var(--line);
-  box-shadow: 0 1px 2px #143d2405;
+  box-shadow: 0 1px 2px var(--theme-shadow, #143d2405);
 }
 
 /* ------------------------------------------------------------------ */
@@ -323,3 +323,4 @@
     min-width: 0;
   }
 }
+

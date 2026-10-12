@@ -10,14 +10,14 @@
   color: inherit;
 }
 .account-status-icon.is-connected {
-  background: #e4f1d9;
-  color: #275b31;
-  outline: 1px solid #bad8ab;
+  background: var(--theme-green-soft, #e4f1d9);
+  color: var(--theme-green-ink, #275b31);
+  outline: 1px solid var(--theme-green-line, #bad8ab);
 }
 .account-status-icon.is-administrative {
-  background: #f8edcc;
-  color: #805c16;
-  outline-color: #e2cc83;
+  background: var(--theme-warm-soft, #f8edcc);
+  color: var(--theme-warm-ink, #805c16);
+  outline-color: var(--theme-warm-line, #e2cc83);
 }
 .account-connected-mark {
   position: absolute;
@@ -27,10 +27,10 @@
   align-items: center;
   justify-content: center;
   background: #34793d;
-  color: white;
+  color: var(--on-brand, white);
   width: 14px;
   height: 14px;
-  border: 2px solid white;
+  border: 2px solid var(--theme-surface, white);
   border-radius: 50%;
 }
 .is-administrative .account-connected-mark {
@@ -48,3 +48,4 @@
 .commerce-account-card svg {
   flex-shrink: 0;
 }
+

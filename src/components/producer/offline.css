@@ -6,17 +6,17 @@
   z-index: 19;
   align-self: start;
   max-width: 1280px;
-  background: #eef6ef;
-  border: 1px solid #c7dfcb;
+  background: var(--theme-green-soft, #eef6ef);
+  border: 1px solid var(--theme-line, #c7dfcb);
   border-radius: 16px;
   padding: 15px 18px;
-  color: #254a30;
+  color: var(--theme-green-ink, #254a30);
   overflow-wrap: anywhere;
 }
 .hvm-offline-banner.is-offline {
-  background: #fff7e6;
-  border-color: #eddaaa;
-  color: #71521e;
+  background: var(--theme-warm-soft, #fff7e6);
+  border-color: var(--theme-warm-line, #eddaaa);
+  color: var(--theme-warm-ink, #71521e);
 }
 .subscription-trial {
   width: calc(100% - 32px);
@@ -55,8 +55,8 @@
   gap: 12px;
 }
 .hvm-offline-list li {
-  background: #fff;
-  border: 1px solid #e1e7df;
+  background: var(--theme-surface, #fff);
+  border: 1px solid var(--theme-line, #e1e7df);
   border-radius: 12px;
   padding: 14px;
   display: flex;
@@ -97,7 +97,7 @@
 }
 .hvm-offline-reauth input {
   max-width: 100%;
-  border: 1px solid #c6d6c7;
+  border: 1px solid var(--theme-line, #c6d6c7);
   border-radius: 8px;
   padding: 10px;
 }
@@ -115,3 +115,4 @@
     width: 100%;
   }
 }
+

@@ -84,13 +84,13 @@
 .admin-navigation-root .admin-nav-item:hover {
   border-color: #ffffff12;
   background: #ffffff0c;
-  color: #fff;
+  color: var(--on-brand, #fff);
 }
 .admin-navigation-root .admin-nav-item.is-active,
 .admin-navigation-root .admin-nav-item[aria-current="page"] {
   border-color: #6f9b7b69;
   background: #285b3e;
-  color: #fff !important;
+  color: var(--on-brand, #fff) !important;
   box-shadow: inset 3px 0 0 #f79436;
 }
 .admin-navigation-root .admin-nav-icon {
@@ -192,3 +192,4 @@
   .admin-navigation-root .admin-navigation-rail button:focus-visible,
   .admin-navigation-root .admin-navigation-panel button:focus-visible { outline-color: Highlight; }
 }
+

@@ -2,9 +2,9 @@
   min-width: 0;
   padding: 20px;
   margin: 18px 0;
-  border: 1px solid #d6e3d4;
+  border: 1px solid var(--theme-line, #d6e3d4);
   border-radius: 18px;
-  background: #fff;
+  background: var(--theme-surface, #fff);
   display: grid;
   gap: 14px;
 }
@@ -18,7 +18,7 @@
 .department-extension h2,
 .department-extension h3 {
   margin: 0 0 10px;
-  color: #254e32;
+  color: var(--theme-green-ink, #254e32);
 }
 .department-extension p {
   line-height: 1.6;
@@ -39,7 +39,7 @@
   min-width: 0;
   max-width: 100%;
   padding: 11px;
-  border: 1px solid #cbdacb;
+  border: 1px solid var(--theme-line, #cbdacb);
   border-radius: 9px;
   min-height: 44px;
 }
@@ -65,7 +65,7 @@
 .department-extension article {
   min-width: 0;
   padding: 16px;
-  border: 1px solid #d6e3d4;
+  border: 1px solid var(--theme-line, #d6e3d4);
   border-radius: 12px;
 }
 .department-extension nav,
@@ -87,7 +87,7 @@
   margin: 2px 0 0;
   padding: 0;
   flex-shrink: 0;
-  accent-color: #245c37;
+  accent-color: var(--theme-green-line, #245c37);
 }
 .department-extension summary {
   cursor: pointer;
@@ -97,7 +97,7 @@
 }
 .department-extension button:focus-visible,
 .department-extension summary:focus-visible {
-  outline: 3px solid #b88036;
+  outline: 3px solid var(--theme-warm-line, #b88036);
   outline-offset: 3px;
 }
 @media (max-width: 480px) {
@@ -118,3 +118,4 @@
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 14px;
 }
+

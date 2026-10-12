@@ -7,14 +7,14 @@
   padding: 8px 10px;
   border: 1px solid var(--line);
   border-radius: 13px;
-  background: #f7faf7;
+  background: var(--theme-green-soft, #f7faf7);
   color: var(--primary);
   text-align: left;
 }
 
 .location-selector:hover,
 .location-selector[aria-expanded="true"] {
-  border-color: #b9d5c0;
+  border-color: var(--theme-line, #b9d5c0);
   background: var(--light);
 }
 
@@ -25,7 +25,7 @@
   width: 28px;
   height: 28px;
   border-radius: 9px;
-  background: #e8f2e9;
+  background: var(--theme-green-soft, #e8f2e9);
 }
 
 .location-selector-text {
@@ -73,3 +73,4 @@
     font-size: 13px;
   }
 }
+

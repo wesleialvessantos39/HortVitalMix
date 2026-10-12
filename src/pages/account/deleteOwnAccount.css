@@ -1,10 +1,10 @@
 .account-erasure {
   min-width: 0;
   margin: 24px 0;
-  border: 1px solid #ecd4cc;
+  border: 1px solid var(--theme-danger-line, #ecd4cc);
   border-radius: 18px;
   padding: clamp(16px, 3vw, 26px);
-  background: #fffdfb;
+  background: var(--theme-warm-soft, #fffdfb);
 }
 .account-erasure-heading {
   display: flex;
@@ -20,21 +20,21 @@
   flex: 0 0 46px;
   height: 46px;
   border-radius: 14px;
-  background: #fbece6;
-  color: #a3412f;
+  background: var(--theme-danger-soft, #fbece6);
+  color: var(--theme-danger-ink, #a3412f);
 }
 .account-erasure-eyebrow {
   display: block;
   font-size: 11px;
   font-weight: 750;
-  color: #915342;
+  color: var(--theme-danger-ink, #915342);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   margin-bottom: 6px;
 }
 .account-erasure .account-erasure-heading h2 {
   margin: 0 0 6px;
-  color: #6f3327;
+  color: var(--theme-danger-ink, #6f3327);
   font-size: 21px;
   line-height: 1.3;
 }
@@ -42,7 +42,7 @@
   font-size: 14px;
   line-height: 1.65;
   overflow-wrap: anywhere;
-  color: #665d56;
+  color: var(--theme-muted, #665d56);
   margin: 0;
 }
 .account-erasure-toggle {
@@ -53,10 +53,10 @@
   min-height: 46px;
   margin-top: 20px;
   padding: 11px 16px;
-  border: 1px solid #dcb8ac;
+  border: 1px solid var(--theme-danger-line, #dcb8ac);
   border-radius: 11px;
-  color: #8c3a29;
-  background: #fff;
+  color: var(--theme-danger-ink, #8c3a29);
+  background: var(--theme-surface, #fff);
   font-size: 14px;
   font-weight: 700;
   text-align: left;
@@ -67,15 +67,15 @@
   min-width: 0;
   margin-top: 24px;
   padding-top: 24px;
-  border-top: 1px solid #efded7;
+  border-top: 1px solid var(--theme-danger-line, #efded7);
 }
 .account-erasure-warning {
   display: flex;
   gap: 12px;
   padding: 16px;
   border-radius: 12px;
-  background: #fff3eb;
-  color: #955329;
+  background: var(--theme-warm-soft, #fff3eb);
+  color: var(--theme-warm-ink, #955329);
 }
 .account-erasure-warning > div {
   min-width: 0;
@@ -84,12 +84,12 @@
   display: block;
   margin-bottom: 5px;
   font-size: 15px;
-  color: #713d22;
+  color: var(--theme-warm-ink, #713d22);
 }
 .account-erasure-retention {
-  border: 1px solid #e6e2db;
+  border: 1px solid var(--theme-line, #e6e2db);
   border-radius: 12px;
-  background: #fff;
+  background: var(--theme-surface, #fff);
 }
 .account-erasure-retention summary {
   display: flex;
@@ -100,10 +100,10 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: 700;
-  color: #4f594f;
+  color: var(--theme-muted, #4f594f);
 }
 .account-erasure-retention[open] summary {
-  border-bottom: 1px solid #ebe7e0;
+  border-bottom: 1px solid var(--theme-line, #ebe7e0);
 }
 .account-erasure-retention p {
   padding: 14px;
@@ -124,7 +124,7 @@
   margin-bottom: 12px;
   font-size: 14px;
   font-weight: 750;
-  color: #354d3d;
+  color: var(--theme-muted, #354d3d);
 }
 .account-erasure .account-erasure-check {
   display: grid;
@@ -134,18 +134,18 @@
   min-height: 48px;
   margin: 0;
   padding: 14px;
-  border: 1px solid #dce4dc;
+  border: 1px solid var(--theme-line, #dce4dc);
   border-radius: 12px;
-  background: #fff;
+  background: var(--theme-surface, #fff);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.6;
-  color: #394a3e;
+  color: var(--theme-muted, #394a3e);
   cursor: pointer;
 }
 .account-erasure-check:has(input:checked) {
-  border-color: #729b79;
-  background: #f2f8f0;
+  border-color: var(--theme-green-line, #729b79);
+  background: var(--theme-green-soft, #f2f8f0);
 }
 .account-erasure .account-erasure-check input[type="checkbox"] {
   width: 22px;
@@ -154,7 +154,7 @@
   max-width: 22px;
   margin: 1px 0 0;
   padding: 0;
-  accent-color: #285d39;
+  accent-color: var(--theme-green-line, #285d39);
 }
 .account-erasure-check span {
   min-width: 0;
@@ -173,7 +173,7 @@
   min-width: 0;
   font-size: 13px;
   line-height: 1.5;
-  color: #3d4b40;
+  color: var(--theme-muted, #3d4b40);
   font-weight: 700;
 }
 .account-erasure .account-erasure-field input {
@@ -182,9 +182,9 @@
   min-height: 48px;
   margin: 0;
   padding: 12px;
-  border: 1px solid #cdd8ce;
+  border: 1px solid var(--theme-line, #cdd8ce);
   border-radius: 10px;
-  background: #fff;
+  background: var(--theme-surface, #fff);
   font-size: 16px;
 }
 .account-erasure-actions {
@@ -192,7 +192,7 @@
   gap: 12px;
   justify-items: start;
   padding-top: 18px;
-  border-top: 1px solid #efded7;
+  border-top: 1px solid var(--theme-danger-line, #efded7);
 }
 .account-erasure-actions p {
   font-size: 12px;
@@ -206,7 +206,7 @@
   border-radius: 11px;
   padding: 13px 18px;
   background: #a03e2d;
-  color: #fff;
+  color: var(--on-brand, #fff);
   font-size: 14px;
   font-weight: 750;
   line-height: 1.5;
@@ -218,17 +218,17 @@
 .account-erasure .account-erasure-local {
   padding: 12px 14px;
   border-radius: 10px;
-  background: #f2f4ef;
-  color: #53614f;
+  background: var(--theme-surface-alt, #f2f4ef);
+  color: var(--theme-muted, #53614f);
 }
 .account-erasure .account-erasure-error {
   padding: 12px 14px;
   border-radius: 10px;
-  background: #fce9e4;
-  color: #8e3226;
+  background: var(--theme-danger-soft, #fce9e4);
+  color: var(--theme-danger-ink, #8e3226);
 }
 .account-erasure :is(button, summary):focus-visible {
-  outline: 3px solid #a87629;
+  outline: 3px solid var(--theme-warm-line, #a87629);
   outline-offset: 3px;
 }
 @media (max-width: 600px) {
@@ -251,3 +251,4 @@
     padding: 12px;
   }
 }
+

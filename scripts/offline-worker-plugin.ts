@@ -24,6 +24,10 @@ export function offlineWorkerPlugin(): Plugin {
         "index.html",
         "manifest.webmanifest",
         "favicon.svg",
+        "theme-init.js",
+        "splash/farmhouse-kitchen.webp",
+        "splash/farmhouse-kitchen.svg",
+        "splash/produce-atlas.webp",
         "app-icons/icon-192.png",
         "app-icons/icon-512.png",
         ...readdirSync(resolve(out, "assets"))
@@ -95,3 +99,4 @@ export function offlineWorkerPlugin(): Plugin {
     },
   };
 }
+

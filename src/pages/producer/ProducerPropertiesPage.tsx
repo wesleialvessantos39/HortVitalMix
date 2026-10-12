@@ -132,12 +132,12 @@ function PerimeterSketch({ sideMeters }: { sideMeters: number }) {
   return (
     <figure className="rural-perimeter-sketch">
       <svg viewBox="0 0 220 168" role="img" aria-label={`Contorno de ${label} de lado, centrado na sede`}>
-        <rect x="48" y="28" width="124" height="112" rx="3" fill="#e8f5e9" stroke="#1b4d2e" strokeWidth="2" />
-        <circle cx="110" cy="84" r="5" fill="#1b4d2e" />
-        <text x="110" y="18" textAnchor="middle" fontSize="12" fill="#143d24" fontFamily="Inter, sans-serif">
+        <rect x="48" y="28" width="124" height="112" rx="3" fill="var(--light)" stroke="var(--primary)" strokeWidth="2" />
+        <circle cx="110" cy="84" r="5" fill="var(--primary)" />
+        <text x="110" y="18" textAnchor="middle" fontSize="12" fill="var(--dark)" fontFamily="Inter, sans-serif">
           {label}
         </text>
-        <text x="110" y="158" textAnchor="middle" fontSize="11" fill="#52645a" fontFamily="Inter, sans-serif">
+        <text x="110" y="158" textAnchor="middle" fontSize="11" fill="var(--theme-muted, #52645a)" fontFamily="Inter, sans-serif">
           sede no centro
         </text>
       </svg>
@@ -1762,3 +1762,4 @@ function RuralPropertyWizard({
     </section>
   );
 }
+

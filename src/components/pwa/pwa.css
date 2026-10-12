@@ -13,18 +13,18 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  border: 1px solid #d9e4d9;
+  border: 1px solid var(--theme-line, #d9e4d9);
   border-radius: 20px;
   padding: 24px;
-  background: #fff;
-  color: #193e27;
+  background: var(--theme-surface, #fff);
+  color: var(--theme-green-ink, #193e27);
   box-sizing: border-box;
   overflow-wrap: anywhere;
 }
 .hvm-pwa-card.is-recommended {
-  border-color: #43845a;
-  background: linear-gradient(150deg, #f2faf0, #fff);
-  box-shadow: 0 0 0 1px #43845a;
+  border-color: var(--theme-green-line, #43845a);
+  background: linear-gradient(150deg, var(--theme-green-soft, #f2faf0), var(--theme-surface, #fff));
+  box-shadow: 0 0 0 1px var(--theme-green-line, #43845a);
 }
 .hvm-pwa-card header,
 .hvm-pwa-version header {
@@ -39,13 +39,13 @@
   width: 46px;
   height: 46px;
   flex: 0 0 46px;
-  background: #e8f2e5;
+  background: var(--theme-green-soft, #e8f2e5);
   border-radius: 14px;
-  color: #27633b;
+  color: var(--theme-green-ink, #27633b);
 }
 .hvm-pwa-card small,
 .hvm-pwa-eyebrow {
-  color: #476d50;
+  color: var(--theme-muted, #476d50);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.035em;
@@ -56,7 +56,7 @@
   margin: 4px 0 0;
 }
 .hvm-pwa-card p {
-  color: #566758;
+  color: var(--theme-muted, #566758);
   font-size: 14px;
   line-height: 1.65;
   margin: 18px 0;
@@ -78,11 +78,11 @@
 .hvm-pwa-card li svg {
   flex: 0 0 15px;
   margin-top: 2px;
-  color: #397b49;
+  color: var(--theme-green-ink, #397b49);
 }
 .hvm-pwa-install-status {
   font-size: 12px;
-  color: #526656;
+  color: var(--theme-muted, #526656);
   margin-top: auto;
   margin-bottom: 9px;
   line-height: 1.5;
@@ -106,17 +106,17 @@
   overflow-wrap: anywhere;
 }
 .hvm-pwa-primary {
-  border: 1px solid #245c37;
+  border: 1px solid var(--theme-green-line, #245c37);
   background: #245c37;
-  color: #fff;
+  color: var(--on-brand, #fff);
 }
 .hvm-pwa-primary:hover {
   background: #18482a;
 }
 .hvm-pwa-secondary {
-  border: 1px solid #cadaca;
-  background: #fff;
-  color: #245c37;
+  border: 1px solid var(--theme-line, #cadaca);
+  background: var(--theme-surface, #fff);
+  color: var(--theme-green-ink, #245c37);
 }
 .hvm-pwa-primary:disabled,
 .hvm-pwa-secondary:disabled {
@@ -125,15 +125,15 @@
 }
 .hvm-pwa-install :is(button, a, input):focus-visible,
 .hvm-pwa-version button:focus-visible {
-  outline: 3px solid #c38a36;
+  outline: 3px solid var(--theme-warm-line, #c38a36);
   outline-offset: 3px;
 }
 .hvm-pwa-feedback,
 .hvm-pwa-guidance {
   padding: 14px;
   border-radius: 12px;
-  background: #eff7ed;
-  color: #325b3a;
+  background: var(--theme-green-soft, #eff7ed);
+  color: var(--theme-green-ink, #325b3a);
   font-size: 13px;
   line-height: 1.6;
   overflow-wrap: anywhere;
@@ -142,10 +142,10 @@
   display: flex;
   gap: 14px;
   padding: 24px;
-  border: 1px solid #c5ddc5;
+  border: 1px solid var(--theme-line, #c5ddc5);
   border-radius: 18px;
-  background: #eff7ed;
-  color: #285336;
+  background: var(--theme-green-soft, #eff7ed);
+  color: var(--theme-green-ink, #285336);
   min-width: 0;
 }
 .hvm-pwa-installed > svg {
@@ -162,21 +162,21 @@
   font: inherit;
   font-size: 13px;
   font-weight: 750;
-  color: #245c37;
+  color: var(--theme-green-ink, #245c37);
 }
 .hvm-pwa-guide {
   width: min(580px, calc(100vw - 24px));
   max-width: 580px;
   max-height: calc(100dvh - 24px);
   padding: 25px;
-  border: 1px solid #d6e2d5;
+  border: 1px solid var(--theme-line, #d6e2d5);
   border-radius: 22px;
-  color: #193e27;
+  color: var(--theme-green-ink, #193e27);
   overflow-y: auto;
   box-sizing: border-box;
 }
 .hvm-pwa-guide::backdrop {
-  background: #102c22a6;
+  background: var(--theme-backdrop, #102c22a6);
 }
 .hvm-pwa-guide > header {
   display: flex;
@@ -195,22 +195,22 @@
   flex: 0 0 44px;
   min-width: 44px;
   min-height: 44px;
-  border: 1px solid #d5e0d3;
+  border: 1px solid var(--theme-line, #d5e0d3);
   border-radius: 12px;
-  background: #f4f8f1;
-  color: #315d3a;
+  background: var(--theme-green-soft, #f4f8f1);
+  color: var(--theme-green-ink, #315d3a);
 }
 .hvm-pwa-guide p {
   font-size: 13px;
   line-height: 1.65;
-  color: #566758;
+  color: var(--theme-muted, #566758);
   overflow-wrap: anywhere;
 }
 .hvm-pwa-guidance button {
   display: block;
   font: inherit;
   font-weight: 750;
-  color: #245c37;
+  color: var(--theme-green-ink, #245c37);
   min-height: 44px;
 }
 .hvm-pwa-steps {
@@ -225,13 +225,13 @@
   gap: 12px;
   align-items: flex-start;
   padding: 14px;
-  border: 1px solid #e0e9dc;
+  border: 1px solid var(--theme-line, #e0e9dc);
   border-radius: 14px;
-  background: #fafcf8;
+  background: var(--theme-green-soft, #fafcf8);
 }
 .hvm-pwa-steps li > svg {
   flex: 0 0 23px;
-  color: #377b49;
+  color: var(--theme-green-ink, #377b49);
 }
 .hvm-pwa-steps strong {
   font-size: 14px;
@@ -256,15 +256,15 @@
   gap: 8px;
   align-items: start;
   padding: 10px;
-  border: 1px solid #dce8d8;
+  border: 1px solid var(--theme-line, #dce8d8);
   border-radius: 12px;
-  background: #f7fbf4;
+  background: var(--theme-green-soft, #f7fbf4);
   min-width: 0;
 }
 .hvm-pwa-ios-steps li > svg {
   width: 22px;
   height: 22px;
-  color: #327448;
+  color: var(--theme-green-ink, #327448);
   margin-top: 1px;
 }
 .hvm-pwa-step-number {
@@ -272,8 +272,8 @@
   place-items: center;
   min-height: 24px;
   border-radius: 7px;
-  background: #e5f0df;
-  color: #285d38;
+  background: var(--theme-green-soft, #e5f0df);
+  color: var(--theme-green-ink, #285d38);
   font-size: 12px;
   font-weight: 750;
 }
@@ -294,7 +294,7 @@
   line-height: 1.5;
 }
 .hvm-pwa-ios-help {
-  border-top: 1px solid #dce5d8;
+  border-top: 1px solid var(--theme-line, #dce5d8);
   margin-top: 12px;
   font-size: 12px;
 }
@@ -307,13 +307,13 @@
   min-height: 44px;
   box-sizing: border-box;
   padding: 12px 2px;
-  color: #285d38;
+  color: var(--theme-green-ink, #285d38);
   font-weight: 700;
   cursor: pointer;
   overflow-wrap: anywhere;
 }
 .hvm-pwa-ios-help summary:focus-visible {
-  outline: 3px solid #c38a36;
+  outline: 3px solid var(--theme-warm-line, #c38a36);
   outline-offset: 2px;
   border-radius: 6px;
 }
@@ -342,11 +342,11 @@
 .hvm-pwa-address input {
   width: 100%;
   min-width: 0;
-  border: 1px solid #ccdccc;
+  border: 1px solid var(--theme-line, #ccdccc);
   border-radius: 10px;
   padding: 12px;
   font-size: 12px;
-  background: #f8faf6;
+  background: var(--theme-green-soft, #f8faf6);
   box-sizing: border-box;
 }
 .hvm-pwa-address button {
@@ -355,11 +355,11 @@
   align-items: center;
   justify-content: center;
   min-height: 44px;
-  border: 1px solid #ccdccc;
+  border: 1px solid var(--theme-line, #ccdccc);
   border-radius: 10px;
   font: inherit;
   font-size: 13px;
-  color: #245c37;
+  color: var(--theme-green-ink, #245c37);
 }
 .hvm-pwa-guide footer {
   display: flex;
@@ -373,10 +373,10 @@
 }
 .hvm-pwa-version {
   padding: 24px;
-  border: 1px solid #d7e4d4;
+  border: 1px solid var(--theme-line, #d7e4d4);
   border-radius: 18px;
-  background: #f9fcf6;
-  color: #234c2e;
+  background: var(--theme-green-soft, #f9fcf6);
+  color: var(--theme-green-ink, #234c2e);
   margin: 22px 0;
 }
 .hvm-pwa-version h2 {
@@ -385,7 +385,7 @@
 }
 .hvm-pwa-version header strong {
   font-size: 13px;
-  color: #45734d;
+  color: var(--theme-muted, #45734d);
 }
 .hvm-pwa-version-reason {
   font-size: 13px;
@@ -399,7 +399,7 @@
 }
 .hvm-pwa-version dt {
   font-size: 11px;
-  color: #657967;
+  color: var(--theme-muted, #657967);
   margin-bottom: 7px;
 }
 .hvm-pwa-version dd {
@@ -480,3 +480,4 @@
     transition: none !important;
   }
 }
+
