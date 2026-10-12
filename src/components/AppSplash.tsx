@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import "./appSplash.css";
 
 const INTRO_DURATION_MS = 1550;
@@ -9,6 +9,17 @@ export function AppSplash({ brandName = "HortiVitalMix" }: { brandName?: string 
   const [phase, setPhase] = useState<"visible" | "leaving" | "finished">("visible");
   const skipButton = useRef<HTMLButtonElement>(null);
   const isLeaving = useRef(false);
+  const showing = phase !== "finished";
+
+  useLayoutEffect(() => {
+    if (!showing) return;
+    const elements = [document.documentElement, document.body];
+    const previousOverflow = elements.map((element) => ({ element, overflow: element.style.overflow }));
+    elements.forEach((element) => { element.style.overflow = "hidden"; });
+    return () => {
+      previousOverflow.forEach(({ element, overflow }) => { element.style.overflow = overflow; });
+    };
+  }, [showing]);
 
   const dismiss = useCallback(() => {
     if (isLeaving.current) return;

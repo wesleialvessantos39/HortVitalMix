@@ -134,58 +134,51 @@
   .app-splash__light { background: linear-gradient(180deg, rgb(247 244 234 / 35%), transparent 25%, transparent 50%, rgb(247 244 234 / 94%) 82%, var(--splash-paper)); }
 }
 @media (min-width: 768px) {
-  .app-splash {
-    --splash-footer-height: 164px;
-    --splash-scene-height: calc(100vh - var(--splash-footer-height));
-    --splash-scene-height: calc(100dvh - var(--splash-footer-height));
-  }
-  /* The scene and signature occupy separate rectangles on desktop. */
-  .app-splash::before {
-    content: '';
-    position: absolute;
-    z-index: 0;
-    inset: 0 0 var(--splash-footer-height);
-    pointer-events: none;
-    background: url('/splash/farmhouse-kitchen.webp') center / cover no-repeat;
-    filter: blur(18px);
-    opacity: .46;
-  }
-  .app-splash__scene {
-    z-index: 1;
+  /* The photograph covers the entire viewport; only the produce has a width limit. */
+  .app-splash__produce {
     right: auto;
-    bottom: var(--splash-footer-height);
     left: 50%;
-    /* Limit the crop in wide windows so every product stays on the table. */
-    width: min(100%, calc(var(--splash-scene-height) * 2.4));
+    width: min(100%, calc(100vh * 2.1));
+    width: min(100%, calc(100dvh * 2.1));
     transform: translateX(-50%);
   }
   .app-splash__light {
-    background: linear-gradient(180deg, rgb(247 244 234 / 18%), transparent 24%, transparent 82%, rgb(247 244 234 / 20%));
+    background: linear-gradient(180deg, rgb(247 244 234 / 34%), rgb(247 244 234 / 8%) 34%, transparent 58%);
   }
   .app-splash__signature {
-    right: 0;
-    bottom: 0;
-    left: 0;
-    height: var(--splash-footer-height);
-    justify-content: center;
-    overflow: hidden;
-    padding: 18px 24px max(18px, env(safe-area-inset-bottom));
-    background: var(--splash-paper);
-    border-top: 1px solid rgb(27 77 46 / 10%);
+    top: max(84px, calc(env(safe-area-inset-top) + 68px));
+    right: 24px;
+    bottom: auto;
+    left: 24px;
+    width: min(440px, calc(100% - 48px));
+    margin-inline: auto;
+    isolation: isolate;
+    text-shadow: 0 1px 2px rgb(247 244 234 / 85%);
   }
-  :root[data-theme='dark'] .app-splash::before {
-    filter: brightness(.66) saturate(.82) blur(18px);
+  .app-splash__signature::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: -28px -48px;
+    pointer-events: none;
+    background: radial-gradient(ellipse, rgb(247 244 234 / 94%) 8%, rgb(247 244 234 / 72%) 36%, transparent 72%);
+    filter: blur(10px);
   }
   :root[data-theme='dark'] .app-splash__light {
-    background: linear-gradient(180deg, rgb(17 31 23 / 24%), transparent 24%, transparent 82%, rgb(17 31 23 / 24%));
+    background: linear-gradient(180deg, rgb(17 31 23 / 40%), rgb(17 31 23 / 12%) 34%, transparent 58%);
   }
   :root[data-theme='dark'] .app-splash__signature {
-    border-top-color: rgb(238 244 233 / 12%);
+    text-shadow: 0 1px 2px rgb(17 31 23 / 85%);
+  }
+  :root[data-theme='dark'] .app-splash__signature::before {
+    background: radial-gradient(ellipse, rgb(17 31 23 / 92%) 8%, rgb(17 31 23 / 68%) 36%, transparent 72%);
   }
 }
 @media (min-width: 768px) and (max-height: 520px) {
-  .app-splash { --splash-footer-height: 112px; }
-  .app-splash__signature { padding: 12px 24px max(12px, env(safe-area-inset-bottom)); }
+  .app-splash__signature { top: max(68px, calc(env(safe-area-inset-top) + 58px)); }
+}
+@media (min-width: 768px) and (min-aspect-ratio: 3/1) {
+  .app-splash__kitchen { background-position: center 60%; }
 }
 @media (prefers-reduced-motion: reduce) {
   .app-splash { transition-duration: 0ms; }
