@@ -15,7 +15,7 @@ export const BRAZIL_STATES = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA",
 export const FOOD_RIGHTS_NOTICE = "Este aceite não exclui direitos do consumidor, nem responsabilidades civis, sanitárias, ambientais ou legais do produtor ou do HortiVitalMix. A responsabilidade de cada participante será apurada conforme a legislação e sua atuação no caso concreto.";
 export const FOOD_RESPONSIBILITY_TERMS = "Declaro que as informações deste alimento são verdadeiras e que sou responsável por sua origem, preparo, higiene, segurança, embalagem, conservação, validade, transporte sob minha responsabilidade e cumprimento das exigências aplicáveis. Manterei os documentos e a rastreabilidade, prestarei atendimento ao consumidor e colaborarei com correções e recolhimentos. O HortiVitalMix oferece a intermediação e as ferramentas da plataforma; este aceite não representa licença sanitária, inspeção oficial ou garantia automática de conformidade.";
 export function normalizeFoodCity(value: string) {
-  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase().replace(/\s+/g," ");
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
 }
 export function youtubeVideoId(value: string): string | null {
   try {
@@ -40,10 +40,12 @@ export function safeFoodLink(value: string) {
 export type FoodSelector = {
   scope: "national" | "state" | "municipality"; state: string | null; municipality: string | null;
   families: readonly string[]; processes: readonly string[]; categoryIds: readonly string[];
+  matchMode?: "all" | "any";
 };
 export function foodRuleMatches(rule: FoodSelector, product: { family: string; process: string; categoryId: string; state: string; municipality: string }) {
-  return (!rule.families.length || rule.families.includes(product.family)) &&
-    (!rule.processes.length || rule.processes.includes(product.process)) &&
+  const foodMatch = rule.matchMode === "any" ? (!rule.families.length && !rule.processes.length) || rule.families.includes(product.family) || rule.processes.includes(product.process) :
+    (!rule.families.length || rule.families.includes(product.family)) && (!rule.processes.length || rule.processes.includes(product.process));
+  return foodMatch &&
     (!rule.categoryIds.length || rule.categoryIds.includes(product.categoryId)) &&
     (rule.scope === "national" || rule.state === product.state) &&
     (rule.scope !== "municipality" || normalizeFoodCity(rule.municipality ?? "") === normalizeFoodCity(product.municipality));

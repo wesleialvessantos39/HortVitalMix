@@ -24,7 +24,9 @@ foodSafetyRouter.get("/producer/food/products/:id",(req,res)=>{
   return run(req,res,()=>FoodSafetyService.ownerRequirements(String(req.params.id),req.actor!.userId));
 });
 foodSafetyRouter.use("/admin/food",adminSessionMiddleware,requireAdminSector("food_legislation"));
-foodSafetyRouter.get("/admin/food/overview",(req,res)=>run(req,res,()=>FoodSafetyService.overview(req.adminActor!)));
+foodSafetyRouter.get("/admin/food/overview",(req,res)=>run(req,res,()=>FoodSafetyService.overview(req.adminActor!,businessQuery(req))));
+foodSafetyRouter.get("/admin/food/acceptances/:id",(req,res)=>run(req,res,()=>FoodSafetyService.acceptanceRecord(req.adminActor!,String(req.params.id))));
+foodSafetyRouter.get("/admin/food/products/:id/history",(req,res)=>run(req,res,()=>FoodSafetyService.productHistory(req.adminActor!,String(req.params.id))));
 foodSafetyRouter.post("/admin/food/rules",originProtection,requireRecentAuth,(req,res)=>run(req,res,()=>FoodSafetyService.saveRule(req.adminActor!,req.body,context(req))));
 foodSafetyRouter.post("/admin/food/materials",originProtection,requireRecentAuth,(req,res)=>run(req,res,()=>FoodSafetyService.saveMaterial(req.adminActor!,req.body,context(req))));
 foodSafetyRouter.post("/admin/food/holds",originProtection,requireRecentAuth,(req,res)=>run(req,res,()=>FoodSafetyService.hold(req.adminActor!,req.body,context(req))));

@@ -37,5 +37,5 @@ export const ApiReadyResponseSchema = z
     reason: z.string().optional(),
   })
   .strict();
-export const FOUNDATION_SCHEMA_VERSION = 75;
+export const FOUNDATION_SCHEMA_VERSION = 77;
 

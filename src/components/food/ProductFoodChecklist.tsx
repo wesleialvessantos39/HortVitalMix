@@ -5,7 +5,7 @@ import { FoodRequirementsSchema, type FoodAcceptanceInput, type FoodRequirements
 import { FoodIllustration } from "./FoodIllustration";
 import { FoodSources } from "./FoodLearningCards";
 import "./foodSafety.css";
-export function ProductFoodChecklist({productId,revision,disabled,onChange,onNavigate}:{productId:string;revision:number;disabled:boolean;onChange:(value:FoodAcceptanceInput|null)=>void;onNavigate:(path:string)=>void}) {
+export function ProductFoodChecklist({productId,revision,disabled,onChange}:{productId:string;revision:number;disabled:boolean;onChange:(value:FoodAcceptanceInput|null)=>void}) {
   const [data,setData]=useState<FoodRequirements|null>(null),[error,setError]=useState(""),[checked,setChecked]=useState<string[]>([]),[responsibility,setResponsibility]=useState(false),[terms,setTerms]=useState(false);
   const [attempt,setAttempt]=useState(0);
   const [loading,setLoading]=useState(true);
@@ -28,7 +28,7 @@ export function ProductFoodChecklist({productId,revision,disabled,onChange,onNav
   useEffect(()=>{const reload=()=>setAttempt(n=>n+1);window.addEventListener("focus",reload);return()=>window.removeEventListener("focus",reload);},[]);
   return <div className="food-safety food-checklist">
     <div className="food-heading"><div><h3>Vamos conferir os cuidados?</h3><p>Confirme apenas o que você já faz. Se precisar aprender, abra a explicação ou visite os ensinamentos.</p></div>
-      <button type="button" className="secondary" onClick={()=>onNavigate("/produtor/legislacoes")}><BookOpen size={17}/> Aprender</button></div>
+      <a className="secondary food-learn-link" href="/produtor/legislacoes" target="_blank" rel="noopener noreferrer"><BookOpen size={17}/> Aprender</a></div>
     {error && <p className="food-notice" role="alert">{error}</p>}
     <button type="button" className="text-button" disabled={disabled} onClick={()=>setAttempt(n=>n+1)}><RefreshCw size={15}/> Atualizar cuidados</button>
     {!data && !error && <p role="status">Buscando os cuidados deste alimento…</p>}

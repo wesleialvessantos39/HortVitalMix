@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { foodRuleMatches, foodAcceptanceState, youtubeVideoId, safeFoodLink } from '../shared/foodSafety.ts';
+import { hasAdminPermission } from '../shared/adminPermissions.ts';
 const nationwide={scope:'national',state:null,municipality:null,families:[],processes:[],categoryIds:[]};
 const food={family:'leafy',process:'washed_cut',categoryId:'cat',state:'RO',municipality:'Ariquemes'};
 test('national requirements reach products from every state',()=>{for(const state of ['RO','MT','SP','AC'])assert.equal(foodRuleMatches(nationwide,{...food,state}),true);});
@@ -12,6 +13,12 @@ test('state and municipal rules do not spill into other jurisdictions',()=>{
 test('food, processing and category restrictions must all match',()=>{
  const r={...nationwide,families:['leafy'],processes:['washed_cut'],categoryIds:['cat']};
  assert.equal(foodRuleMatches(r,food),true);for(const patch of [{family:'juices_pulps'},{process:'fresh'},{categoryId:'another'}])assert.equal(foodRuleMatches(r,{...food,...patch}),false);
+});
+test('beverage rules reach juices by family and extracted drinks by processing without duplicate rules',()=>{
+ const r={...nationwide,families:['juices_pulps'],processes:['pressed_pulped'],matchMode:'any'};
+ assert.equal(foodRuleMatches(r,{...food,family:'juices_pulps',process:'frozen'}),true);
+ assert.equal(foodRuleMatches(r,{...food,family:'fruits',process:'pressed_pulped'}),true);
+ assert.equal(foodRuleMatches(r,food),false);
 });
 const requirements={token:'current',keys:['rule-v1:hygiene','rule-v2:cold'],held:false,classified:true};
 const accepted={requirementsToken:'current',checkedKeys:[...requirements.keys],acceptResponsibility:true,acceptTerms:true};
@@ -35,4 +42,10 @@ test('YouTube links are reduced to validated video identifiers',()=>{
 test('teaching links reject executable schemes, credentials and private literal addresses',()=>{
  assert.equal(safeFoodLink('https://www.gov.br/anvisa/pt-br/assuntos/alimentos/legislacao'),true);
  for(const url of ['javascript:alert(1)','data:text/html,hello','http://www.gov.br','https://user:secret@example.com','https://127.0.0.1/file','https://[::1]/file','https://localhost/file'])assert.equal(safeFoodLink(url),false);
+});
+test('food department access requires its own permission and respects explicit denial even for superadministrators',()=>{
+ assert.equal(hasAdminPermission({role:'platform_admin',sectors:['catalog_moderation']},'food_legislation'),false);
+ assert.equal(hasAdminPermission({role:'platform_admin',sectors:['food_legislation']},'food_legislation'),true);
+ assert.equal(hasAdminPermission({role:'platform_super_admin',sectors:[]},'food_legislation'),true);
+ assert.equal(hasAdminPermission({role:'platform_super_admin',sectors:[],deniedSectors:['food_legislation']},'food_legislation'),false);
 });

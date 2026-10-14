@@ -2,7 +2,7 @@ import type { FoodRuleBody, FoodMaterialBody } from "./contracts/foodSafety.ts";
 const reviewedAt = "2026-10-13";
 const anvisa = "https://www.gov.br/anvisa/pt-br/assuntos/alimentos/legislacao";
 const source = (title: string, url: string = anvisa, authority = "Anvisa") => ({ title, url, authority, reviewedAt });
-const selectors = { scope:"national" as const, state:null,municipality:null,families:[],processes:[],categoryIds:[] };
+const selectors = { scope:"national" as const, state:null,municipality:null,families:[],processes:[],categoryIds:[],matchMode:"all" as const };
 const care = (key:string,title:string,explanation:string,illustration:FoodRuleBody["checklist"][number]["illustration"]) => ({key,title,explanation,illustration});
 const build = (title:string,summary:string,checklist:FoodRuleBody["checklist"],sources:FoodRuleBody["sources"],consumerGuidance:string,extra:Partial<FoodRuleBody> = {}): FoodRuleBody => ({title,summary,...selectors,checklist,sources,consumerGuidance,producerTerms:"",...extra});
 export const FOOD_RULE_SEEDS = [
@@ -44,7 +44,7 @@ export const FOOD_RULE_SEEDS = [
     source("Bebidas e produtos vegetais: Decreto 12.709/2025", "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/decreto/d12709.htm","Planalto / MAPA"),
     source("Bebidas: Lei 8.918/1994", "https://www.planalto.gov.br/ccivil_03/leis/l8918.htm","Planalto"),
     source("Sucos e polpas artesanais: Lei 13.648/2018 e Decreto 10.026/2019", "https://www.gov.br/agricultura/pt-br/assuntos/inspecao/produtos-vegetal/legislacao-programas-nacionais-e-seguranca-dos-alimentos-1/legislacao/bebidas","MAPA"),
-  ],"Observe se é suco, polpa ou outra bebida, os ingredientes e a necessidade de refrigeração ou congelamento. Siga as orientações depois da abertura ou descongelamento.",{families:["juices_pulps"]})},
+  ],"Observe se é suco, polpa ou outra bebida, os ingredientes e a necessidade de refrigeração ou congelamento. Siga as orientações depois da abertura ou descongelamento.",{families:["juices_pulps"],processes:["pressed_pulped"],matchMode:"any"})},
   {slug:"ervas-chas",core:false,body:build("Ervas, especiarias e chás","A espécie e a parte vegetal usadas como alimento precisam ser adequadas e autorizadas ao uso pretendido.",[
     care("edible_species","Espécie e parte vegetal apropriadas","Identifico corretamente as espécies e utilizo somente partes adequadas ou autorizadas para a finalidade alimentar. Verifico os requisitos para chás, especiarias e temperos; não anuncio efeitos medicinais não autorizados.","label"),
   ],[source("Chás, especiarias e temperos: RDC 716/2022 e IN 159/2022, com alterações")],"Confira a espécie, os ingredientes e o modo de preparo. Alegações de tratamento de doenças não devem ser presumidas para alimentos.",{families:["herbs"]})},

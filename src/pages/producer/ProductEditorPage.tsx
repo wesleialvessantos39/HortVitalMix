@@ -535,7 +535,7 @@ export default function ProductEditorPage({
                     ? "Este produto está publicado na vitrine da sua loja."
                     : "Adicione uma foto principal e confirme os cuidados deste alimento para disponibilizá-lo na vitrine."}
                 </p>
-                {(!product.isPublished || !product.foodCompliant) && <ProductFoodChecklist productId={product.id} revision={product.revision} disabled={blocked || detailsChanged} onChange={setAcceptance} onNavigate={onNavigate}/>}
+                {(!product.isPublished || !product.foodCompliant) && <ProductFoodChecklist productId={product.id} revision={product.revision} disabled={blocked || detailsChanged} onChange={setAcceptance}/>}
                 {detailsChanged && <p className="food-notice">Salve as informações do alimento antes de confirmar a publicação.</p>}
                 <button
                   className={product.isPublished && product.foodCompliant ? "secondary" : "primary"}

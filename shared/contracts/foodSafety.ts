@@ -10,6 +10,7 @@ const selector = {
   state: z.enum(BRAZIL_STATES).nullable().default(null), municipality: text(120).nullable().default(null),
   families: z.array(FoodFamilySchema).max(10).default([]), processes: z.array(FoodProcessSchema).max(6).default([]),
   categoryIds: z.array(z.uuid()).max(100).default([]),
+  matchMode:z.enum(["all","any"]).default("all"),
 };
 const checkScope = (v: { scope: string; state: string | null; municipality: string | null }, c: z.RefinementCtx) => {
   if (v.scope !== "national" && !v.state) c.addIssue({code:"custom",path:["state"],message:"Informe o estado."});
@@ -58,7 +59,9 @@ export const FoodLearningQuerySchema = z.object({state:z.enum(BRAZIL_STATES).opt
 export const FoodLearningResponseSchema = z.object({rules:z.array(FoodRuleSchema),materials:z.array(FoodMaterialSchema),responsibilityTerms:z.string(),rightsNotice:z.string(),scopeNote:z.string()}).strict();
 export type FoodLearning = z.infer<typeof FoodLearningResponseSchema>;
 export const FoodHoldSchema = z.object({productId:z.uuid(),hold:z.boolean(),reason:text(1500).min(10),commandId:z.uuid()}).strict();
+export const FoodAdminQuerySchema=z.object({search:text(100).default(""),status:z.enum(["all","pending","held","ready"]).default("all"),page:z.coerce.number().int().min(1).max(100000).default(1)}).strict();
 export const FoodAdminOverviewSchema = z.object({
+  pagination:z.object({page:z.number().int().positive(),pageSize:z.number().int().positive(),total:z.number().int().nonnegative()}).strict(),
   rules:z.array(FoodRuleSchema),materials:z.array(FoodMaterialSchema),
   products:z.array(z.object({id:z.uuid(),title:z.string(),storeName:z.string(),family:FoodFamilySchema.nullable(),process:FoodProcessSchema.nullable(),published:z.boolean(),compliant:z.boolean(),held:z.boolean(),holdReason:z.string().nullable(),state:z.string(),municipality:z.string()}).strict()),
   categories:z.array(z.object({id:z.uuid(),name:z.string()}).strict()),

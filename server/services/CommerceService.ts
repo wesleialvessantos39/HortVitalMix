@@ -77,6 +77,7 @@ export function orderView(
   };
 }
 async function posOwner(client: PoolClient, userId: string) {
+  await client.query("SELECT pg_advisory_xact_lock_shared(76,hashtext('food-rules'))");
   const actor = await commerceIdentity(client, userId);
   if (!actor.roles.includes("producer"))
     throw new CommerceError("PRODUCER_REQUIRED", 403);
@@ -216,7 +217,7 @@ export const CommerceService = {
           `SELECT p.id,p.title,p.unit_type,price.price_cents,
       coalesce((SELECT sum(l.current_quantity)::int FROM public.app_inventory_lots l WHERE l.product_id=p.id AND l.expiration_date>=CURRENT_DATE),0) AS available_quantity
       FROM public.app_products p JOIN LATERAL(SELECT price_cents FROM public.app_price_versions v WHERE v.product_id=p.id AND v.valid_from<=clock_timestamp() ORDER BY v.valid_from DESC,id DESC LIMIT 1) price ON true
-      WHERE p.store_id=$1 AND p.is_published ORDER BY p.title,p.id LIMIT 500`,
+      WHERE p.store_id=$1 AND p.is_published AND hvm_food_private.product_is_compliant(p.id) ORDER BY p.title,p.id LIMIT 500`,
           [store.id],
         )
       ).rows.map((row) => ({
@@ -288,7 +289,7 @@ export const CommerceService = {
                 `SELECT p.id,p.title,p.unit_type,price.id AS price_id,price.price_cents,
           coalesce((SELECT sum(l.current_quantity)::int FROM public.app_inventory_lots l WHERE l.product_id=p.id AND l.expiration_date>=CURRENT_DATE),0) AS available_quantity
           FROM public.app_products p JOIN LATERAL(SELECT id,price_cents FROM public.app_price_versions v WHERE v.product_id=p.id AND v.valid_from<=clock_timestamp() ORDER BY v.valid_from DESC,id DESC LIMIT 1) price ON true
-          WHERE p.id=$1 AND p.store_id=$2 AND p.is_published FOR SHARE OF p`,
+          WHERE p.id=$1 AND p.store_id=$2 AND p.is_published AND hvm_food_private.product_is_compliant(p.id) FOR SHARE OF p`,
                 [item.productId, store.id],
               )
             ).rows[0];
@@ -412,6 +413,10 @@ export const CommerceService = {
             throw new CommerceError("POS_SALE_EXPIRED");
           if (sale.policy_snapshot.version !== input.policyVersion)
             throw new CommerceError("POLICY_CHANGED");
+          await client.query("SELECT pg_advisory_xact_lock_shared(76,hashtext('food-rules'))");
+          const ids=(sale.items_snapshot as Array<{productId:string}>).map(i=>i.productId);
+          const available=await client.query("SELECT id FROM public.app_products WHERE id=ANY($1::uuid[]) AND is_published AND hvm_food_private.product_is_compliant(id)",[ids]);
+          if(available.rowCount!==new Set(ids).size)throw new CommerceError("POS_PRODUCT_UNAVAILABLE",409);
           await client.query(
             "UPDATE public.app_pos_sales SET customer_user_id=$2,status='accepted',accepted_at=coalesce(accepted_at,clock_timestamp()) WHERE id=$1",
             [sale.id, userId],
@@ -570,3 +575,4 @@ export const CommerceService = {
     });
   },
 };
+

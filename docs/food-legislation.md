@@ -32,7 +32,7 @@ As normas Anvisa e suas alterações devem ser consultadas no [AnvisaLegis](http
 ## Funcionamento do departamento
 
 - Acesso `/admin/legislacoes`, com poder `food_legislation`. Superadministrador tem acesso conforme a governança existente; administradores precisam receber esse poder, respeitando bloqueios explícitos.
-- Regras selecionadas por família, processo, categoria e local de produção. Todas as restrições preenchidas precisam coincidir. O município usa comparação normalizada, sem diferenciar acentos e maiúsculas.
+- Regras selecionadas por família, processo, categoria e local de produção. Por padrão, família e preparo devem coincidir; o departamento pode optar por atender a qualquer uma dessas duas condições. Categoria e localidade sempre permanecem restrições conjuntas. O município usa comparação normalizada, sem diferenciar acentos e maiúsculas.
 - Salvar rascunho preserva a regra publicada anterior. Publicar cria uma versão imutável; os produtos atingidos precisam aceitar os cuidados vigentes. A regra geral permanece ativa.
 - Materiais educativos admitem desenhos, texto, imagens, vídeos enviados e YouTube, com escolha de público e abrangência. Arquivos ficam em bucket privado, com upload autorizado e exibição após publicação.
 - Acompanhamento permite pausar e liberar oferta com justificativa auditada. A liberação não dispensa um aceite ainda pendente.

@@ -8,7 +8,7 @@ import { commerceAdmin, commerceAudit, commerceCommand, commerceIdentity, commer
 import type { AdminActorContext } from "../middleware/adminSession.ts";
 import { FOOD_RESPONSIBILITY_TERMS, FOOD_RIGHTS_NOTICE, foodRuleMatches, foodAcceptanceState, type FoodSelector } from "../../shared/foodSafety.ts";
 import {
-  FoodAdminOverviewSchema, FoodLearningQuerySchema, FoodLearningResponseSchema, FoodMaterialBodySchema,
+  FoodAdminOverviewSchema, FoodAdminQuerySchema, FoodLearningQuerySchema, FoodLearningResponseSchema,
   FoodMaterialCommandSchema, FoodMaterialSchema, FoodRequirementsSchema, FoodRuleBodySchema, FoodRuleCommandSchema,
   FoodRuleSchema, FoodUploadSchema, FoodHoldSchema, FoodAcceptanceSchema,
   type FoodAcceptanceInput, type FoodRule, type FoodMaterial,
@@ -19,11 +19,12 @@ const ruleSelect = `SELECT r.id,r.revision,r.status,r.current_version_id AS vers
 function rule(row: Record<string, any>, published = false): FoodRule {
   return FoodRuleSchema.parse({id:row.id,revision:row.revision,status:published ? "published" : row.status,versionId:row.version_id ?? null,body:row.body,updatedAt:new Date(row.updated_at).toISOString()});
 }
-async function materials(c: PoolClient, admin = false, audience = "consumer"): Promise<FoodMaterial[]> {
+async function materials(c: PoolClient, admin = false, audience = "consumer",target:{state?:string;municipality?:string}={}): Promise<FoodMaterial[]> {
   const rows = (await c.query(`SELECT m.*,a.object_path FROM public.app_food_materials m
     LEFT JOIN public.app_food_assets a ON a.id=(m.body->>'assetId')::uuid AND a.status='ready'
-    WHERE ($1::boolean OR (m.status='published' AND m.body->>'audience' IN ('both',$2)))
-    ORDER BY m.updated_at DESC,m.id LIMIT 300`,[admin,audience])).rows;
+    WHERE ($1::boolean OR (m.status='published' AND m.body->>'audience' IN ('both',$2)
+      AND (m.body->>'scope'='national' OR (m.body->>'state'=$3 AND (m.body->>'scope'<>'municipality' OR public.fn_locality_normalize(m.body->>'municipality')=public.fn_locality_normalize($4))))))
+    ORDER BY m.updated_at DESC,m.id LIMIT 300`,[admin,audience,target.state ?? null,target.municipality ?? ""])).rows;
   const urls = await signedMediaUrls(BUCKET,rows.map(r=>r.object_path).filter(Boolean));
   return rows.map(r=>FoodMaterialSchema.parse({id:r.id,revision:r.revision,status:r.status,body:r.body,mediaUrl:r.object_path ? urls.get(r.object_path) : null,updatedAt:r.updated_at.toISOString()}));
 }
@@ -64,9 +65,9 @@ export async function recordFoodAcceptance(c: PoolClient,id:string,userId:string
   if(state!=="valid" || !req.rules.length)throw new CommerceError("PRODUCT_FOOD_CHECKLIST_REQUIRED",422);
   const p = await productContext(c,id);
   if(p.owner_id!==userId)throw new CommerceError("FORBIDDEN",403);
-  await c.query(`INSERT INTO public.app_food_acceptances(product_id,actor_id,product_title,food_revision,rule_version_ids,requirements_token,checked_keys,rule_snapshot,terms_snapshot,client_ip_hash,command_id)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,[id,userId,p.title,p.food_revision,req.rules.map(r=>r.versionId),req.token,value.checkedKeys,
-      JSON.stringify(req.rules),JSON.stringify({responsibility:req.responsibilityTerms,rights:req.rightsNotice,additional:req.additionalTerms}),ctx.ipHash,commandId]);
+  await c.query(`INSERT INTO public.app_food_acceptances(product_id,actor_id,product_title,food_revision,rule_version_ids,requirements_token,checked_keys,rule_snapshot,terms_snapshot,client_ip_hash,command_id,location_state,location_municipality)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,[id,userId,p.title,p.food_revision,req.rules.map(r=>r.versionId),req.token,value.checkedKeys,
+      JSON.stringify(req.rules),JSON.stringify({responsibility:req.responsibilityTerms,rights:req.rightsNotice,additional:req.additionalTerms}),ctx.ipHash,commandId,p.state,p.municipality]);
 }
 function published(c:PoolClient) {
   return c.query(`SELECT r.id,r.revision,r.current_version_id AS version_id,v.body,v.created_at AS updated_at
@@ -93,7 +94,7 @@ export const FoodSafetyService = {
       const req=await foodRequirements(c,id);
       // Never disclose the producer's acceptance, IP, account identity or token.
       return {productId:id,location:req.location,guidance:req.rules.map(r=>({title:r.body.title,text:r.body.consumerGuidance,sources:r.body.sources})),rightsNotice:FOOD_RIGHTS_NOTICE,
-        declarationNotice:"O produtor declarou os cuidados aplicáveis. Isso não representa certificação ou inspeção oficial."};
+        declarationNotice:"O aceite do checklist é uma declaração do produtor e não representa certificação sanitária ou inspeção oficial."};
     });
   },
   async learning(raw:unknown,userId?:string) {
@@ -109,28 +110,35 @@ export const FoodSafetyService = {
           if(loc){state=loc.state;municipality=loc.municipality;}
         }
       }
-      const applies=(v:FoodSelector)=> (!query.family || !v.families.length || v.families.includes(query.family)) &&
-        (!query.process || !v.processes.length || v.processes.includes(query.process)) &&
-        (v.scope==="national" || (!!state && v.state===state && (v.scope!=="municipality" || foodRuleMatches({...v,families:[],processes:[],categoryIds:[]},
+      const applies=(v:FoodSelector)=> {
+        const families=!query.family || !v.families.length || v.families.includes(query.family);
+        const processes=!query.process || !v.processes.length || v.processes.includes(query.process);
+        const foodMatch=v.matchMode==="any" ? (!v.families.length && !v.processes.length) || (v.families.length>0 && families) || (v.processes.length>0 && processes) : families && processes;
+        return foodMatch && (v.scope==="national" || (!!state && v.state===state && (v.scope!=="municipality" || foodRuleMatches({...v,families:[],processes:[],categoryIds:[]},
           {family:"",process:"",categoryId:"",state,municipality:municipality ?? ""}))));
+      };
       const rules=(await published(c)).rows.map(r=>rule(r,true)).filter(r=>applies(r.body));
-      const educational=(await materials(c,false,userId ? "producer" : "consumer")).filter(m=>applies(m.body));
+      const educational=(await materials(c,false,userId ? "producer" : "consumer",{state,municipality})).filter(m=>applies(m.body));
       return FoodLearningResponseSchema.parse({rules,materials:educational,responsibilityTerms:FOOD_RESPONSIBILITY_TERMS,rightsNotice:FOOD_RIGHTS_NOTICE,
         scopeNote:"Referências nacionais e complementos locais publicados pelo departamento. As exigências variam por produto, processo e local de produção; confira a autoridade sanitária competente. A biblioteca não é uma lista exaustiva de todas as normas do país."});
     });
   },
-  async overview(actor:AdminActorContext) {
+  async overview(actor:AdminActorContext,raw:unknown={}) {
+    const filters=FoodAdminQuerySchema.parse(raw);
+    const productScope=`SELECT p.id,p.title,s.store_name,p.food_family,p.food_process,p.is_published,p.food_hold,p.food_hold_reason,l.state,l.municipality,p.updated_at,
+      hvm_food_private.product_is_compliant(p.id) AS compliant FROM public.app_products p JOIN public.app_producer_stores s ON s.id=p.store_id JOIN public.app_properties l ON l.id=s.property_id`;
+    const productFilter=`(title ILIKE $1 OR store_name ILIKE $1) AND ($2='all' OR ($2='pending' AND NOT compliant AND NOT food_hold) OR ($2='held' AND food_hold) OR ($2='ready' AND compliant))`;
+    const parameters=["%"+filters.search+"%",filters.status];
     return commerceTransaction(async c=>{
       await commerceAdmin(c,actor,"food_legislation");
-      const [rs,ps,cs,acs]=await Promise.all([
+      const [rs,ps,cs,acs,total]=await Promise.all([
         c.query(`${ruleSelect} ORDER BY r.is_core DESC,r.updated_at DESC LIMIT 300`),
-        c.query(`SELECT p.id,p.title,s.store_name,p.food_family,p.food_process,p.is_published,p.food_hold,p.food_hold_reason,l.state,l.municipality,
-          hvm_food_private.product_is_compliant(p.id) AS compliant FROM public.app_products p JOIN public.app_producer_stores s ON s.id=p.store_id
-          JOIN public.app_properties l ON l.id=s.property_id ORDER BY p.food_hold DESC,p.updated_at DESC,p.id LIMIT 300`),
+        c.query(`WITH products AS (${productScope}) SELECT * FROM products WHERE ${productFilter} ORDER BY food_hold DESC,updated_at DESC,id LIMIT 50 OFFSET $3`,[...parameters,(filters.page-1)*50]),
         c.query("SELECT id,name FROM public.app_categories ORDER BY name"),
         c.query("SELECT id,product_title,accepted_at,cardinality(rule_version_ids) AS rule_count,food_revision FROM public.app_food_acceptances ORDER BY accepted_at DESC LIMIT 50"),
+        c.query(`WITH products AS (${productScope}) SELECT count(*)::integer AS total FROM products WHERE ${productFilter}`,parameters),
       ]);
-      return FoodAdminOverviewSchema.parse({rules:rs.rows.map(r=>rule(r)),materials:await materials(c,true),categories:cs.rows,
+      return FoodAdminOverviewSchema.parse({pagination:{page:filters.page,pageSize:50,total:total.rows[0].total},rules:rs.rows.map(r=>rule(r)),materials:await materials(c,true),categories:cs.rows,
         products:ps.rows.map(p=>({id:p.id,title:p.title,storeName:p.store_name,family:p.food_family,process:p.food_process,published:p.is_published,compliant:p.compliant,held:p.food_hold,holdReason:p.food_hold_reason,state:p.state,municipality:p.municipality})),
         recentAcceptances:acs.rows.map(a=>({id:a.id,productTitle:a.product_title,acceptedAt:a.accepted_at.toISOString(),ruleCount:a.rule_count,foodRevision:a.food_revision}))});
     });
@@ -143,7 +151,7 @@ export const FoodSafetyService = {
         const old=input.id ? (await c.query("SELECT * FROM public.app_food_rules WHERE id=$1 FOR UPDATE",[input.id])).rows[0] : null;
         if(input.id && !old)throw new CommerceError("FOOD_RULE_NOT_FOUND",404);
         if(old && old.revision!==input.expectedRevision)throw new CommerceError("FOOD_REVISION_CHANGED",409);
-        if(old?.is_core && input.status==="archived")throw new CommerceError("FOOD_BASE_RULE_REQUIRED",422);
+        if(old?.is_core && (input.status==="archived" || input.body.scope!=="national" || input.body.families.length || input.body.processes.length || input.body.categoryIds.length))throw new CommerceError("FOOD_BASE_RULE_REQUIRED",422);
         const id=old?.id ?? randomUUID();
         if(!old)await c.query("INSERT INTO public.app_food_rules(id,slug,draft_body,status) VALUES($1,$2,$3,'draft')",[id,"custom-"+id,JSON.stringify(input.body)]);
         let versionId=old?.current_version_id ?? null;
@@ -216,6 +224,24 @@ export const FoodSafetyService = {
       await c.query("UPDATE public.app_food_assets SET status='ready' WHERE id=$1",[id]);
       await commerceAudit(c,actor.userId,actor.role,"food.asset.ready","app_food_assets",id,{mimeType:row.mime_type,size:row.bytes},ctx);
       return {assetId:id};
+    });
+  },
+  async acceptanceRecord(actor:AdminActorContext,id:string) {
+    return commerceTransaction(async c=>{
+      await commerceAdmin(c,actor,"food_legislation");
+      const row=(await c.query(`SELECT id,product_title,food_revision,rule_snapshot,terms_snapshot,checked_keys,accepted_at,location_state,location_municipality
+        FROM public.app_food_acceptances WHERE id=$1`,[z.uuid().parse(id)])).rows[0];
+      if(!row)throw new CommerceError("FOOD_ACCEPTANCE_NOT_FOUND",404);
+      return {id:row.id,productTitle:row.product_title,foodRevision:row.food_revision,rules:row.rule_snapshot,terms:row.terms_snapshot,checkedKeys:row.checked_keys,
+        acceptedAt:row.accepted_at.toISOString(),location:{state:row.location_state,municipality:row.location_municipality}};
+    });
+  },
+  async productHistory(actor:AdminActorContext,id:string) {
+    return commerceTransaction(async c=>{
+      await commerceAdmin(c,actor,"food_legislation");
+      const rows=(await c.query(`SELECT occurred_at,actor_role,action,payload_after FROM public.app_audit_events
+        WHERE target_entity='app_products' AND target_id=$1 AND action IN ('food.product.held','food.product.released') ORDER BY occurred_at DESC LIMIT 100`,[z.uuid().parse(id)])).rows;
+      return {events:rows.map(r=>({at:r.occurred_at.toISOString(),role:r.actor_role,action:r.action,reason:r.payload_after?.reason ?? ""}))};
     });
   },
 };
