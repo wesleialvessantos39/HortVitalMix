@@ -116,6 +116,7 @@ async function transaction<T>(run: (c: PoolClient) => Promise<T>): Promise<T> {
   const c = await dbPool.connect();
   try {
     await c.query("BEGIN");
+    await c.query("SELECT pg_advisory_xact_lock_shared(76,hashtext('food-rules'))");
     await c.query("SET LOCAL ROLE service_role");
     const result = await run(c);
     await c.query("COMMIT");
@@ -185,7 +186,7 @@ async function response(row: QuoteRow) {
   const ids = stores.flatMap((s) => s.items.map((i) => i.productId));
   const visible = await dbPool!.query<{ id: string }>(
     `SELECT p.id FROM public.app_products p JOIN public.app_categories c ON c.id=p.category_id
-    WHERE p.id=ANY($1::uuid[]) AND p.is_published AND c.is_active AND hvm_store_private.store_is_visible(p.store_id)`,
+    WHERE p.id=ANY($1::uuid[]) AND p.is_published AND c.is_active AND hvm_store_private.store_is_visible(p.store_id) AND hvm_food_private.product_is_compliant(p.id)`,
     [ids],
   );
   const allowed = new Set(visible.rows.map((r) => r.id));
@@ -310,7 +311,7 @@ export const CheckoutService = {
         await c.query<Row>(
           `SELECT i.*,p.title,p.unit_type,p.net_weight_grams,s.store_name,s.store_slug,
         v.id AS price_id,v.price_cents,m.media_url,(p.is_published AND cat.is_active AND p.store_id=i.store_id
-          AND hvm_store_private.store_is_visible(s.id)) AS available
+          AND hvm_store_private.store_is_visible(s.id) AND hvm_food_private.product_is_compliant(p.id)) AS available
         FROM public.app_cart_items i JOIN public.app_products p ON p.id=i.product_id
         JOIN public.app_categories cat ON cat.id=p.category_id JOIN public.app_producer_stores s ON s.id=i.store_id
         LEFT JOIN LATERAL (SELECT id,price_cents FROM public.app_price_versions WHERE product_id=p.id
@@ -614,3 +615,4 @@ export const CheckoutService = {
     });
   },
 };
+

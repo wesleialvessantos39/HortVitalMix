@@ -203,7 +203,7 @@ export const SubscriptionService = {
       })),
       products: (
         await c.query(
-          `SELECT p.id,p.store_id,p.title FROM public.app_products p JOIN public.app_categories cat ON cat.id=p.category_id WHERE p.store_id=$1 AND p.is_published AND cat.is_active AND hvm_store_private.store_is_visible(p.store_id) AND EXISTS(SELECT 1 FROM public.app_price_versions v WHERE v.product_id=p.id AND v.valid_from<=clock_timestamp()) ORDER BY p.title,p.id LIMIT 500`,
+          `SELECT p.id,p.store_id,p.title FROM public.app_products p JOIN public.app_categories cat ON cat.id=p.category_id WHERE p.store_id=$1 AND p.is_published AND cat.is_active AND hvm_store_private.store_is_visible(p.store_id) AND hvm_food_private.product_is_compliant(p.id) AND EXISTS(SELECT 1 FROM public.app_price_versions v WHERE v.product_id=p.id AND v.valid_from<=clock_timestamp()) ORDER BY p.title,p.id LIMIT 500`,
           [storeId],
         )
       ).rows.map((p) => ({ id: p.id, storeId: p.store_id, title: p.title })),
@@ -260,6 +260,7 @@ export const SubscriptionService = {
   ) {
     const input = CreateSubscriptionSchema.parse(raw);
     return commerceTransaction(async (c) => {
+      await c.query("SELECT pg_advisory_xact_lock_shared(76,hashtext('food-rules'))");
       const actor = await commerceIdentity(c, userId);
       return commerceCommand(
         c,
@@ -328,7 +329,7 @@ export const SubscriptionService = {
             if (!w) throw new CommerceError("WINDOW_UNAVAILABLE", 422);
             const products = (
               await c.query(
-                `SELECT p.id FROM public.app_products p JOIN public.app_categories cat ON cat.id=p.category_id WHERE p.id=ANY($1::uuid[]) AND p.store_id=$2 AND p.is_published AND cat.is_active AND EXISTS(SELECT 1 FROM public.app_price_versions v WHERE v.product_id=p.id AND v.valid_from<=clock_timestamp()) FOR SHARE OF p,cat`,
+                `SELECT p.id FROM public.app_products p JOIN public.app_categories cat ON cat.id=p.category_id WHERE p.id=ANY($1::uuid[]) AND p.store_id=$2 AND p.is_published AND cat.is_active AND hvm_food_private.product_is_compliant(p.id) AND EXISTS(SELECT 1 FROM public.app_price_versions v WHERE v.product_id=p.id AND v.valid_from<=clock_timestamp()) FOR SHARE OF p,cat`,
                 [s.basketTemplate, plan.storeId],
               )
             ).rows;
@@ -736,3 +737,4 @@ export const SubscriptionService = {
     });
   },
 };
+

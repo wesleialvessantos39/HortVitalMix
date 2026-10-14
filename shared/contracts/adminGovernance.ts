@@ -29,6 +29,7 @@ export const AdminSectorCodeSchema = z.enum([
   "subscription_management",
   "review_management",
   "refund_policy",
+  "food_legislation",
 ]);
 export type AdminSectorCode = z.infer<typeof AdminSectorCodeSchema>;
 
@@ -313,3 +314,4 @@ export const AdminErrorCode = {
   UNAVAILABLE: "UNAVAILABLE",
   INTERNAL: "INTERNAL_ERROR",
 } as const;
+

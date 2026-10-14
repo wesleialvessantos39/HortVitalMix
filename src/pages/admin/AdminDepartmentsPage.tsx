@@ -3,6 +3,7 @@ import { useOfflineDataRevision } from "../../hooks/useOfflineDataRevision";
 import { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
+  BookOpen,
   ArrowUpRight,
   Ban,
   CreditCard,
@@ -57,6 +58,10 @@ const presentation: Record<
       { label: "Catálogo", path: "/admin/catalogo" },
       { label: "Categorias", path: "/admin/categorias" },
     ],
+  },
+  food_legislation: {
+    icon: BookOpen,
+    destinations: [{label:"Regras, ensinamentos e acompanhamento",path:"/admin/legislacoes"}],
   },
   finance_ops: {
     icon: Landmark,
@@ -358,3 +363,4 @@ export default function AdminDepartmentsPage({
     </section>
   );
 }
+

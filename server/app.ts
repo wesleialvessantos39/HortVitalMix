@@ -27,6 +27,7 @@ import { categoryRouter } from "./routes/categoryRoutes.ts";
 import { inventoryRouter } from "./routes/inventoryRoutes.ts";
 import { deliveryRouter } from "./routes/deliveryRoutes.ts";
 import { productRouter } from "./routes/productRoutes.ts";
+import { foodSafetyRouter } from "./routes/foodSafetyRoutes.ts";
 import { discoveryRouter } from "./routes/discoveryRoutes.ts";
 import { cartRouter } from "./routes/cartRoutes.ts";
 import { checkoutRouter } from "./routes/checkoutRoutes.ts";
@@ -102,7 +103,8 @@ app.use((req, _res, next) => {
 app.use((req,res,next)=> {
   const evidence=/^\/(?:api\/|_hvm_api\/)?v1\/(?:admin\/)?commerce\/evidence\/?$/.test(req.path);
   const ruralWorkflow = /^\/(?:api\/|_hvm_api\/)?v1\/producer\/properties\/wizard\/complete\/?$/.test(req.path);
-  return express.json({limit:evidence?"3mb":ruralWorkflow?"256kb":"32kb"})(req,res,next);
+  const foodWorkflow = /^\/(?:api\/|_hvm_api\/)?v1\/(?:admin\/food\/(?:rules|materials)|producer\/products\/[^/]+\/publish)\/?$/.test(req.path);
+  return express.json({limit:evidence?"3mb":ruralWorkflow||foodWorkflow?"256kb":"32kb"})(req,res,next);
 });
 // Public immutable photo variants have their own SQL visibility gate.
 // Serve before sessions to avoid auth refresh cookies on shared CDN images.
@@ -138,6 +140,7 @@ for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
   app.use(prefix + "/admin", adminOperationsRouter);
   app.use(prefix, categoryRouter);
   app.use(prefix, productRouter);
+  app.use(prefix, foodSafetyRouter);
   app.use(prefix, inventoryRouter);
   app.use(prefix, deliveryRouter);
   app.use(prefix, discoveryRouter);

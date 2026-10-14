@@ -1,4 +1,6 @@
 import { Leaf, Salad } from "lucide-react";
+import { ConsumerFoodInformation } from "../food/ConsumerFoodInformation";
+import "../food/foodSafety.css";
 import { PageLoading } from "../PageLoading";
 import {
   PACKAGING_LABELS,
@@ -133,6 +135,7 @@ export function PublicProductGrid({
                 <p>Validade: {product.shelfLifeDays} dias.</p>
                 <p>{product.conservationNotes}</p>
               </details>
+              <ConsumerFoodInformation productId={product.id}/>
               {!storeSlug && (
                 <button
                   className="text-button"
@@ -155,3 +158,4 @@ export function PublicProductGrid({
     </>
   );
 }
+

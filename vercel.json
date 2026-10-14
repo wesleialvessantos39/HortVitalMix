@@ -1,6 +1,6 @@
 {
   "framework": "vite",
-  "buildCommand": "npm run test:appearance && npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run verify:t12:store:runtime && vite build && node --import tsx scripts/check-bundle.ts && npm run pwa:verify",
+  "buildCommand": "npm run test:food-safety && npm run test:appearance && npm run migrations:verify && npm run typecheck:app && npm run security:check && npm run verify:t12:store:runtime && vite build && node --import tsx scripts/check-bundle.ts && npm run pwa:verify",
   "installCommand": "npm ci --no-audit --no-fund",
   "ignoreCommand": "node scripts/vercel-main-only.mjs",
   "outputDirectory": "dist",
@@ -345,7 +345,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://xipbsazvymkqqfmfegwu.supabase.co https://tile.openstreetmap.org; connect-src 'self' https://*.supabase.co https://viacep.com.br; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; frame-src 'self' https://xipbsazvymkqqfmfegwu.supabase.co; object-src 'none'"
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://xipbsazvymkqqfmfegwu.supabase.co https://tile.openstreetmap.org; connect-src 'self' https://*.supabase.co https://viacep.com.br; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; frame-src 'self' https://xipbsazvymkqqfmfegwu.supabase.co https://www.youtube-nocookie.com; media-src 'self' https://xipbsazvymkqqfmfegwu.supabase.co; object-src 'none'"
         }
       ]
     },
@@ -445,4 +445,3 @@
     }
   ]
 }
-

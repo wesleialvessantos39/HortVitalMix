@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { FoodAcceptanceSchema, FoodFamilySchema, FoodProcessSchema } from "./foodSafety.ts";
 
 export const PackagingTypeEnum = z.enum([
   "pote_higienizado",
@@ -12,6 +13,8 @@ export const PRODUCT_MEDIA_ORIGIN = "https://xipbsazvymkqqfmfegwu.supabase.co";
 export const PRODUCT_MEDIA_MAX_BYTES = 2 * 1024 * 1024;
 const positiveInt = z.number().int().positive().max(2147483647);
 const fields = {
+  foodFamily: FoodFamilySchema.nullable().default(null),
+  foodProcess: FoodProcessSchema.nullable().default(null),
   categoryId: z.uuid(),
   title: z.string().trim().min(3).max(255),
   description: z.string().trim().min(10).max(2000),
@@ -45,6 +48,7 @@ export const UpdateProductPriceSchema = ProductCommandSchema.extend({
 }).strict();
 export const ToggleProductPublishSchema = ProductCommandSchema.extend({
   isPublished: z.boolean(),
+  acceptance: FoodAcceptanceSchema.optional(),
 }).strict();
 export const ProductMediaCommandSchema = ProductCommandSchema.extend({
   mediaId: z.uuid(),
@@ -104,6 +108,7 @@ export const ProductResponseSchema = z
     storeId: z.uuid(),
     categoryName: z.string(),
     isPublished: z.boolean(),
+    foodCompliant: z.boolean().default(false),
     revision: positiveInt,
     currentPrice: ProductPriceSchema,
     media: z.array(ProductMediaSchema),
@@ -182,3 +187,4 @@ export function formatProductPrice(cents: number) {
     currency: "BRL",
   }).format(cents / 100);
 }
+

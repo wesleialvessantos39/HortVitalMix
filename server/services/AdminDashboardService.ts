@@ -24,6 +24,18 @@ type DepartmentDefinition = Omit<AdminDashboardDepartment, "metrics"> & {
 // excluded before querying, so denied departments never contribute totals.
 const departments: DepartmentDefinition[] = [
   {
+    sector:"food_legislation",
+    title:"Legislação e segurança dos alimentos",
+    description:"Regras por alimento e localidade, ensinamentos e acompanhamento sanitário.",
+    actionPath:"/admin/legislacoes",
+    sql:`(SELECT jsonb_build_object('active_rules',(SELECT count(*) FROM public.app_food_rules WHERE current_version_id IS NOT NULL AND status<>'archived'),
+      'published_materials',(SELECT count(*) FROM public.app_food_materials WHERE status='published'),
+      'pending_products',(SELECT count(*) FROM public.app_products p WHERE p.is_published AND NOT hvm_food_private.product_is_compliant(p.id)),
+      'held_products',(SELECT count(*) FROM public.app_products WHERE food_hold)))`,
+    metrics:[{key:"active_rules",label:"Regras vigentes",unit:"count"},{key:"published_materials",label:"Ensinamentos publicados",unit:"count"},
+      {key:"pending_products",label:"Produtos com confirmação pendente",unit:"count",attention:true},{key:"held_products",label:"Produtos em acompanhamento",unit:"count",attention:true}],
+  },
+  {
     sector: "account_governance",
     title: "Contas e acessos",
     description: "Cadastros, aprovações e convites administrativos.",
@@ -437,3 +449,4 @@ export const AdminDashboardService = {
     });
   },
 };
+

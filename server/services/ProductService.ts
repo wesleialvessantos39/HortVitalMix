@@ -6,6 +6,8 @@ import { dbPool } from "../db/pool.ts";
 import { supabaseAdmin } from "../supabase/client.ts";
 import { signedMediaUrls } from "../storage/signedMedia.ts";
 import { storeImageUrls } from "../storage/storeMedia.ts";
+import { recordFoodAcceptance } from "./FoodSafetyService.ts";
+import { CommerceError } from "./CommerceSupport.ts";
 import {
   HIGHLIGHTS_PAGE_SIZE,
   HighlightProductSchema,
@@ -68,25 +70,29 @@ type Row = {
   conservation_notes: string;
   is_published: boolean;
   revision: number;
+  food_family: Product["foodFamily"];
+  food_process: Product["foodProcess"];
+  food_compliant: boolean;
   price_id: string;
   price_cents: number;
   valid_from: Date;
   store_slug: string;
   store_name: string;
 };
-const selectProduct = `SELECT p.*,c.name AS category_name,s.store_slug,s.store_name,
+const selectProduct = `SELECT p.*,hvm_food_private.product_is_compliant(p.id) AS food_compliant,c.name AS category_name,s.store_slug,s.store_name,
  v.id AS price_id,v.price_cents,v.valid_from FROM public.app_products p
  JOIN public.app_categories c ON c.id=p.category_id
  JOIN public.app_producer_stores s ON s.id=p.store_id
  JOIN LATERAL (SELECT id,price_cents,valid_from FROM public.app_price_versions
    WHERE product_id=p.id ORDER BY valid_from DESC LIMIT 1) v ON true`;
-const visible = `p.is_published AND c.is_active AND hvm_store_private.store_is_visible(p.store_id)`;
+const visible = `p.is_published AND c.is_active AND hvm_store_private.store_is_visible(p.store_id) AND hvm_food_private.product_is_compliant(p.id)`;
 function pool() {
   if (!dbPool) throw new ProductError("DEPENDENCY_UNAVAILABLE", 503);
   return dbPool;
 }
 function translate(error: unknown): never {
   if (error instanceof ProductError) throw error;
+  if (error instanceof CommerceError) throw new ProductError(error.code,error.status);
   if (error instanceof z.ZodError)
     throw new ProductError("PRODUCT_VALIDATION_FAILED", 422);
   const e = error as { code?: string; message?: string };
@@ -200,6 +206,9 @@ async function responses(client: PoolClient, rows: Row[]): Promise<Product[]> {
       shelfLifeDays: row.shelf_life_days,
       conservationNotes: row.conservation_notes,
       isPublished: row.is_published,
+      foodFamily: row.food_family,
+      foodProcess: row.food_process,
+      foodCompliant: row.food_compliant,
       revision: row.revision,
       currentPrice: {
         id: row.price_id,
@@ -237,6 +246,8 @@ const fieldValues = (input: CreateProduct | UpdateProduct) => [
   input.unitType,
   input.shelfLifeDays,
   input.conservationNotes,
+  input.foodFamily,
+  input.foodProcess,
 ];
 async function bump(client: PoolClient, id: string) {
   await client.query(
@@ -271,6 +282,7 @@ async function mutate<T extends { commandId: string }>(
     .digest("hex");
   try {
     await client.query("BEGIN");
+    await client.query("SELECT pg_advisory_xact_lock_shared(76,hashtext('food-rules'))");
     await client.query("SELECT pg_advisory_xact_lock(14,hashtext($1))", [
       input.commandId,
     ]);
@@ -512,8 +524,8 @@ export const ProductService = {
         requireEligible(store);
         await activeCategory(client, input.categoryId);
         const result = await client.query<{ id: string }>(
-          `INSERT INTO public.app_products(store_id,category_id,title,description,packaging_type,net_weight_grams,unit_type,shelf_life_days,conservation_notes)
-         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
+          `INSERT INTO public.app_products(store_id,category_id,title,description,packaging_type,net_weight_grams,unit_type,shelf_life_days,conservation_notes,food_family,food_process)
+         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
           [store.id, ...fieldValues(input)],
         );
         const id = result.rows[0].id;
@@ -547,7 +559,7 @@ export const ProductService = {
         await activeCategory(client, input.categoryId);
         await client.query(
           `UPDATE public.app_products SET category_id=$2,title=$3,description=$4,packaging_type=$5,
-       net_weight_grams=$6,unit_type=$7,shelf_life_days=$8,conservation_notes=$9,revision=revision+1,updated_at=clock_timestamp() WHERE id=$1`,
+       net_weight_grams=$6,unit_type=$7,shelf_life_days=$8,conservation_notes=$9,food_family=$10,food_process=$11,revision=revision+1,updated_at=clock_timestamp() WHERE id=$1`,
           [id, ...fieldValues(input)],
         );
         return id;
@@ -632,6 +644,7 @@ export const ProductService = {
             ).rows[0]
           )
             throw new ProductError("PRODUCT_PRIMARY_MEDIA_REQUIRED", 422);
+          await recordFoodAcceptance(client,id,userId,input.acceptance,input.commandId,context);
         }
         await client.query(
           "UPDATE public.app_products SET is_published=$2,revision=revision+1,updated_at=clock_timestamp() WHERE id=$1",
@@ -837,3 +850,4 @@ export const ProductService = {
     }
   },
 };
+

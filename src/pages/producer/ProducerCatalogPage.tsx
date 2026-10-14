@@ -173,6 +173,7 @@ export default function ProducerCatalogPage({
                               (!catalog.canCreate && !product.isPublished)
                             }
                             onClick={() => {
+                              if(!product.isPublished){onNavigate(`/produtor/produtos/${product.id}/editar`);return;}
                               const body = {
                                 expectedRevision: product.revision,
                                 isPublished: !product.isPublished,
@@ -207,3 +208,4 @@ export default function ProducerCatalogPage({
     </section>
   );
 }
+

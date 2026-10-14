@@ -13,6 +13,7 @@ export const ADMIN_SECTOR_LABELS: Record<AdminSectorCode, string> = {
   subscription_management: "Assinaturas e planos",
   review_management: "Avaliações e reputação",
   refund_policy: "Política de reembolso",
+  food_legislation: "Legislação e segurança dos alimentos",
 };
 
 type Access = {
@@ -36,3 +37,4 @@ export function hasAdminPermission(
 
 export const adminSectorLabel = (code: string) =>
   ADMIN_SECTOR_LABELS[code as AdminSectorCode] ?? "Setor administrativo";
+

@@ -5,6 +5,7 @@ import { accountExperience } from "./accountExperience";
 import { useEffect, useState, type FormEvent } from "react";
 import {
   ArrowLeft,
+  BookOpen,
   Check,
   MapPin,
   ShieldCheck,
@@ -451,6 +452,9 @@ export function AccountHub({ path, session, onNavigate }: Props) {
                   </small>
                 </span>
               </button>
+              <button className="account-hub-card" onClick={()=>onNavigate("/produtor/legislacoes")}>
+                <BookOpen/><span><strong>Legislação e ensinamentos</strong><small>Aprenda com desenhos, fotos e vídeos sobre os cuidados dos alimentos</small></span>
+              </button>
               {producerApproved && (
                 <button
                   className="account-hub-card"
@@ -838,3 +842,4 @@ export function AccountHub({ path, session, onNavigate }: Props) {
     </section>
   );
 }
+

@@ -1,0 +1,43 @@
+.food-safety{max-width:1220px;margin-inline:auto;color:var(--theme-ink,#26372b);min-width:0}
+.food-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:20px 0}
+.food-heading h1{font-size:clamp(26px,3vw,36px);letter-spacing:-.8px;margin:8px 0}
+.food-heading h2,.food-heading h3{margin:0 0 8px}.food-heading p{margin:0;color:var(--theme-muted,#637067);max-width:720px;line-height:1.6}
+.food-heading>svg{flex:0 0 auto;color:var(--theme-green-ink,#1b4d2e)}
+.food-panel{padding:22px;background:var(--theme-surface,#fff);border:1px solid var(--theme-line,#dce5dd);border-radius:18px;min-width:0;margin-bottom:18px}
+.food-panel h2,.food-panel h3{color:var(--theme-green-ink,#1b4d2e);margin-top:0}.food-panel p{line-height:1.6}
+.food-safety label{display:grid;gap:7px;font-size:13px;font-weight:700;min-width:0}
+.food-safety :is(input:not([type=checkbox]),select,textarea){width:100%;min-height:44px;border:1px solid var(--theme-line,#dce5dd);border-radius:10px;background:var(--theme-surface,#fff);color:var(--theme-ink,#26372b);padding:10px 12px;font:inherit;box-sizing:border-box}
+.food-safety textarea{resize:vertical;min-height:90px}.food-safety :is(button,input,select,textarea):focus-visible{outline:3px solid var(--theme-green-line,#6aaa78);outline-offset:2px}
+.food-safety button{min-height:44px}.food-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;align-items:end;gap:12px}
+.food-learning-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:24px 0 32px}
+.food-learning-card{background:var(--theme-surface,#fff);border:1px solid var(--theme-line,#dce5dd);border-radius:18px;overflow:hidden;min-width:0}
+.food-learning-card>div:not(.food-video){padding:18px}.food-learning-card h3{font-size:18px;margin:0 0 10px;color:var(--theme-green-ink,#1b4d2e)}.food-learning-card p{font-size:14px;line-height:1.65;color:var(--theme-muted,#637067)}
+.food-learning-card>img{display:block;width:100%;height:230px;object-fit:contain;background:var(--theme-surface-alt,#f6f7f3)}
+.food-learning-card>video,.food-video iframe{display:block;width:100%;aspect-ratio:16/9;border:0;background:var(--theme-surface-alt,#f6f7f3)}
+.food-video>button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;width:100%;aspect-ratio:16/9;min-height:180px;border:0;color:var(--theme-green-ink,#1b4d2e);background:var(--theme-green-soft,#e8f3e5);cursor:pointer}.food-video small{color:var(--theme-muted,#637067)}
+.food-illustration{display:block;width:100%;height:160px;background:var(--theme-surface-alt,#f6f7f3)}
+.food-safety a,.food-consumer-information a{color:var(--theme-green-ink,#1b4d2e);text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}
+.food-safety summary,.food-consumer-information summary{cursor:pointer;padding:10px 0;font-weight:700;color:var(--theme-green-ink,#1b4d2e);min-height:44px}
+.food-sources{margin-top:12px;border-top:1px solid var(--theme-line,#dce5dd)}.food-sources ul{padding-left:20px;display:grid;gap:14px}.food-sources small{display:block;margin-top:5px;color:var(--theme-muted,#637067)}
+.food-care-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.food-care{display:flex;align-items:flex-start;gap:14px;background:var(--theme-surface-alt,#f6f7f3);padding:14px;border-radius:14px;min-width:0}.food-care>.food-illustration{width:120px;height:90px;flex:0 0 120px}.food-care p{font-size:13px;margin-bottom:0}
+.food-checklist-items{border:0;padding:0;margin:16px 0;display:grid;gap:12px;min-width:0}
+.food-check-item{display:flex;align-items:center;gap:18px;padding:14px;border:1px solid var(--theme-line,#dce5dd);border-radius:14px;background:var(--theme-surface,#fff)}
+.food-check-item.is-checked{border-color:var(--theme-green-line,#6aaa78);background:var(--theme-green-soft,#edf6ef)}
+.food-check-item>.food-illustration{flex:0 0 120px;width:120px;height:82px;border-radius:12px}.food-check-item>div{min-width:0;flex:1}
+.food-check-item label,.food-consent>label{display:flex!important;align-items:flex-start;gap:12px;min-height:44px;padding-block:8px}
+.food-safety input[type=checkbox]{width:20px;height:20px;flex:0 0 20px;accent-color:var(--brand-primary,#1b4d2e);margin:0;min-height:0!important;padding:0!important}
+.food-check-item details{margin-left:32px}.food-check-item p{font-size:14px;line-height:1.65}.food-consent{padding:16px;background:var(--theme-surface-alt,#f6f7f3);border-radius:12px}.food-consent span{line-height:1.5}.food-consent details{font-size:13px;font-weight:400}
+.food-progress{display:flex;gap:8px;align-items:center;font-weight:700;color:var(--theme-green-ink,#1b4d2e)}
+.food-notice{padding:16px;border:1px solid var(--theme-warm-line,#d6b995);border-radius:12px;background:var(--theme-warm-soft,#fff0df);color:var(--theme-warm-ink,#87421d);line-height:1.6}
+.food-scope-note{font-size:13px;line-height:1.65;color:var(--theme-muted,#637067)}.food-preserve-lines{white-space:pre-wrap;overflow-wrap:anywhere}
+.food-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}.food-tabs button{padding:10px 15px;border:1px solid var(--theme-line,#dce5dd);border-radius:10px;color:var(--theme-green-ink,#1b4d2e);background:var(--theme-surface,#fff)}.food-tabs button[aria-pressed=true]{background:var(--brand-primary,#1b4d2e);color:#fff;border-color:var(--brand-primary,#1b4d2e)}
+.food-admin-list{display:grid;gap:12px}.food-admin-list article{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:16px;border:1px solid var(--theme-line,#dce5dd);border-radius:14px;background:var(--theme-surface,#fff)}.food-admin-list article>div{min-width:0}.food-admin-list h3{margin:0 0 8px;font-size:17px}.food-admin-list p{font-size:13px;margin:4px 0}.food-admin-list small{color:var(--theme-muted,#637067)}
+.food-editor-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.food-full{grid-column:1/-1}.food-editor-group{border:1px solid var(--theme-line,#dce5dd);padding:14px;border-radius:12px;min-width:0}.food-editor-group legend{padding:0 6px;font-weight:700}.food-editor-options{display:flex;flex-wrap:wrap;gap:8px 16px}.food-editor-options label{display:flex;align-items:center;gap:7px;min-height:40px}
+.food-editor-content{border:0;padding:0;margin:0;min-width:0}
+.food-learn-link{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 16px;border:1px solid var(--theme-line,#dce5dd);border-radius:10px;text-decoration:none!important;font-weight:700}
+.food-admin-list article.food-acceptance-record{flex-wrap:wrap}.food-acceptance-details{width:100%;min-width:0}.food-acceptance-details .food-panel{margin:14px 0 0}.food-acceptance-details section{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--theme-line,#dce5dd)}
+.food-editor-row{display:grid;gap:10px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--theme-line,#dce5dd)}
+.food-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:16px}.food-consumer-information{border-top:1px solid var(--theme-line,#dce5dd);margin-top:12px;font-size:13px;line-height:1.6}.food-consumer-information div{padding:10px 0}.food-consumer-information summary{font-size:13px}
+@media(max-width:1050px){.food-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.food-learning-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.food-heading{align-items:flex-start;flex-wrap:wrap;gap:12px}.food-panel{padding:16px}.food-learning-grid,.food-care-grid,.food-editor-fields{grid-template-columns:minmax(0,1fr)}.food-full{grid-column:auto}.food-care{display:block}.food-admin-list article{align-items:flex-start;flex-wrap:wrap}.food-check-item{gap:10px;padding:12px}.food-check-item>.food-illustration{width:70px;flex-basis:70px;height:70px}.food-check-item details{margin-left:0}.food-heading>.secondary{width:100%;justify-content:center}}
+@media(max-width:380px){.food-filters{grid-template-columns:minmax(0,1fr)}.food-check-item{align-items:flex-start;flex-wrap:wrap}.food-check-item>.food-illustration{width:100%;flex-basis:100%;height:85px}}

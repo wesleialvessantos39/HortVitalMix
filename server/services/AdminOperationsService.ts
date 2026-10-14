@@ -145,7 +145,7 @@ export const AdminOperationsService = {
     const storeView = filters.view === "stores";
     const baseProducts = `SELECT p.id,p.title,p.is_published,p.updated_at,p.category_id,p.store_id,p.revision,p.admin_hidden,
       c.name AS category_name,c.is_active AS category_active,s.store_name,s.status AS store_status,
-      (p.is_published AND c.is_active AND s.is_visible) AS is_visible
+      (p.is_published AND c.is_active AND s.is_visible AND hvm_food_private.product_is_compliant(p.id)) AS is_visible
       FROM public.app_products p JOIN public.app_categories c ON c.id=p.category_id
       JOIN store_scope s ON s.id=p.store_id`;
     const filtered = productView
@@ -208,3 +208,4 @@ export const AdminOperationsService = {
     });
   },
 };
+

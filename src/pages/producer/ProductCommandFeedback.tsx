@@ -11,6 +11,10 @@ import {
 export function productErrorMessage(error: unknown) {
   const fault = error as ApiFailure;
   const messages: Record<string, string> = {
+    PRODUCT_FOOD_CHECKLIST_REQUIRED: "Confira os cuidados e aceite as responsabilidades antes de publicar.",
+    PRODUCT_FOOD_CLASSIFICATION_REQUIRED: "Informe o tipo de alimento e a forma de preparo e salve antes de publicar.",
+    PRODUCT_FOOD_RULES_CHANGED: "As orientações foram atualizadas. Recarregue o produto e confira os cuidados atuais.",
+    PRODUCT_FOOD_ON_HOLD: "A oferta está em acompanhamento. Consulte o motivo na publicação e fale com o suporte.",
     AUTH_REQUIRED: "Sua sessão expirou. Confirme sua senha para continuar.",
     RECENT_AUTH_REQUIRED: "Confirme sua senha para salvar esta alteração.",
     PRODUCT_CREATE_FORBIDDEN_UNVERIFIED_STORE:
@@ -236,3 +240,4 @@ export function ProductCommandFeedback({
     </>
   );
 }
+

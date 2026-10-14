@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 75,
+  "schemaVersion": 77,
   "migrations": [
     {
       "version": "20260919030126",
@@ -410,7 +410,17 @@
       "version": "20261012010106",
       "name": "appearance_theme_preferences",
       "file": "20261012010106_appearance_theme_preferences.sql"
+    },
+    {
+      "version": "20261014012427",
+      "name": "food_safety_department",
+      "file": "20261014012427_food_safety_department.sql"
+    },
+    {
+      "version": "20261014013603",
+      "name": "food_safety_immutable_grants",
+      "file": "20261014013603_food_safety_immutable_grants.sql"
     }
   ],
-  "migrationHistoryHash": "5f91f7ceef715e31c4ce7aefc2a68c5a409a5ca40aeb8b25519310f324e01a96"
+  "migrationHistoryHash": "7cf9d6b5e8535901779a4ec085298773f903990bfc9311df6f4c099ed3ef181a"
 }
