@@ -4,8 +4,15 @@ import { FoodSafetyService } from "../services/FoodSafetyService.ts";
 import { CommerceError } from "../services/CommerceSupport.ts";
 import { adminSessionMiddleware, requireAdminSector, requireRecentAuth } from "../middleware/adminSession.ts";
 import { originProtection } from "../security/originProtection.ts";
-import { businessQuery } from "../security/businessQuery.ts";
 export const foodSafetyRouter=Router();
+function foodQuery(req:Request) {
+  // Use the normalized URL, not Vercel's retained routing query object.
+  const params=new URL(req.url,"http://localhost").searchParams;
+  for(const key of ["path","__hvm_path","x-vercel-protection-bypass","x-vercel-set-bypass-cookie"])params.delete(key);
+  const result:Record<string,string|string[]>=Object.create(null);
+  for(const key of new Set(params.keys())){const values=params.getAll(key);result[key]=values.length===1 ? values[0] : values;}
+  return result;
+}
 foodSafetyRouter.use(["/food","/producer/food","/admin/food"],(_req,res,next)=>{res.setHeader("Cache-Control","private, no-store");next();});
 async function run(req:Request,res:Response,work:()=>Promise<unknown>) {
   try {res.json(await work());}catch(e) {
@@ -13,18 +20,18 @@ async function run(req:Request,res:Response,work:()=>Promise<unknown>) {
   }
 }
 const context=(req:Request)=>({requestId:req.requestId,ipHash:req.clientIpHash});
-foodSafetyRouter.get("/food/learning",(req,res)=>run(req,res,()=>FoodSafetyService.learning(businessQuery(req))));
+foodSafetyRouter.get("/food/learning",(req,res)=>run(req,res,()=>FoodSafetyService.learning(foodQuery(req))));
 foodSafetyRouter.get("/food/products/:id",(req,res)=>run(req,res,()=>FoodSafetyService.publicProduct(String(req.params.id))));
 foodSafetyRouter.get("/producer/food/learning",(req,res)=>{
   if(!req.actor?.roles.includes("producer")){res.status(403).json({error:"PRODUCER_REQUIRED"});return;}
-  return run(req,res,()=>FoodSafetyService.learning(businessQuery(req),req.actor!.userId));
+  return run(req,res,()=>FoodSafetyService.learning(foodQuery(req),req.actor!.userId));
 });
 foodSafetyRouter.get("/producer/food/products/:id",(req,res)=>{
   if(!req.actor?.roles.includes("producer")){res.status(403).json({error:"PRODUCER_REQUIRED"});return;}
   return run(req,res,()=>FoodSafetyService.ownerRequirements(String(req.params.id),req.actor!.userId));
 });
 foodSafetyRouter.use("/admin/food",adminSessionMiddleware,requireAdminSector("food_legislation"));
-foodSafetyRouter.get("/admin/food/overview",(req,res)=>run(req,res,()=>FoodSafetyService.overview(req.adminActor!,businessQuery(req))));
+foodSafetyRouter.get("/admin/food/overview",(req,res)=>run(req,res,()=>FoodSafetyService.overview(req.adminActor!,foodQuery(req))));
 foodSafetyRouter.get("/admin/food/acceptances/:id",(req,res)=>run(req,res,()=>FoodSafetyService.acceptanceRecord(req.adminActor!,String(req.params.id))));
 foodSafetyRouter.get("/admin/food/products/:id/history",(req,res)=>run(req,res,()=>FoodSafetyService.productHistory(req.adminActor!,String(req.params.id))));
 foodSafetyRouter.post("/admin/food/rules",originProtection,requireRecentAuth,(req,res)=>run(req,res,()=>FoodSafetyService.saveRule(req.adminActor!,req.body,context(req))));
