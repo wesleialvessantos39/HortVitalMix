@@ -131,6 +131,7 @@ export function offlineAdministrativeSector(
   if (/^(?:localities|access-blocks)(?:\/|$)/.test(p))
     return "location_management";
   if (/^(?:categories|catalog)(?:\/|$)/.test(p)) return "catalog_moderation";
+  if (/^food(?:\/|$)/.test(p)) return "food_legislation";
   if (/^finance(?:\/|$)/.test(p)) return "finance_ops";
   if (/^reviews(?:\/|$)/.test(p)) return "review_management";
   if (/^(?:subscriptions|subscription-plans)(?:\/|$)/.test(p))
@@ -154,3 +155,4 @@ export function offlineAdministrativeSector(
     return "platform_configuration";
   return null;
 }
+

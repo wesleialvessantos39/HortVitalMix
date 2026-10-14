@@ -31,7 +31,7 @@ type Owner = { id: string; session_id: string; user_id: string | null };
 type Scope = { sessionId: string; userId?: string };
 type Context = { requestId: string; ipHash: string };
 const MAX_ITEMS = 200;
-const visible = `p.is_published AND c.is_active AND hvm_store_private.store_is_visible(p.store_id)`;
+const visible = `p.is_published AND c.is_active AND hvm_store_private.store_is_visible(p.store_id) AND hvm_food_private.product_is_compliant(p.id)`;
 
 async function transaction<T>(
   run: (client: PoolClient) => Promise<T>,
@@ -407,3 +407,4 @@ export const CartService = {
     );
   },
 };
+

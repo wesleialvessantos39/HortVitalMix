@@ -27,6 +27,7 @@ import { categoryRouter } from "./routes/categoryRoutes.ts";
 import { inventoryRouter } from "./routes/inventoryRoutes.ts";
 import { deliveryRouter } from "./routes/deliveryRoutes.ts";
 import { productRouter } from "./routes/productRoutes.ts";
+import { foodSafetyRouter } from "./routes/foodSafetyRoutes.ts";
 import { discoveryRouter } from "./routes/discoveryRoutes.ts";
 import { cartRouter } from "./routes/cartRoutes.ts";
 import { checkoutRouter } from "./routes/checkoutRoutes.ts";
@@ -138,6 +139,7 @@ for (const prefix of ["/v1", "/api/v1", "/_hvm_api/v1"]) {
   app.use(prefix + "/admin", adminOperationsRouter);
   app.use(prefix, categoryRouter);
   app.use(prefix, productRouter);
+  app.use(prefix, foodSafetyRouter);
   app.use(prefix, inventoryRouter);
   app.use(prefix, deliveryRouter);
   app.use(prefix, discoveryRouter);

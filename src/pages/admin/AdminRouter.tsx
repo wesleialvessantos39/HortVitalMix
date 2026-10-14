@@ -34,6 +34,7 @@ const AdminAppDistributionPage = lazy(
 );
 const AdminFinancePage = lazy(() => import("./AdminFinancePage"));
 const AdminCatalogPage = lazy(() => import("./AdminCatalogPage"));
+const AdminFoodSafetyPage = lazy(() => import("./AdminFoodSafetyPage"));
 
 type Props = {
   path: string;
@@ -77,7 +78,9 @@ export function AdminRouter({ path, onNavigate, onSessionRefresh }: Props) {
       onNavigate={onNavigate}
       requiredRole={path === "/admin/bi" ? "platform_super_admin" : undefined}
       requiredSector={
-        path === "/admin/categorias" || path === "/admin/catalogo"
+        path === "/admin/legislacoes"
+          ? "food_legislation"
+          : path === "/admin/categorias" || path === "/admin/catalogo"
           ? "catalog_moderation"
           : path === "/admin/bi" || path === "/admin/aplicativos"
             ? "platform_configuration"
@@ -120,6 +123,10 @@ export function AdminRouter({ path, onNavigate, onSessionRefresh }: Props) {
                 id={path.slice("/admin/notificacoes/".length)}
                 onNavigate={onNavigate}
               />
+            </Suspense>
+          ) : path === "/admin/legislacoes" ? (
+            <Suspense fallback={<PageLoading label="Carregando legislação dos alimentos…" />}>
+              <AdminFoodSafetyPage access={access} onNavigate={onNavigate} />
             </Suspense>
           ) : path === "/admin/bi" ? (
             <Suspense
@@ -213,3 +220,4 @@ export function AdminRouter({ path, onNavigate, onSessionRefresh }: Props) {
     </AdminAccessGate>
   );
 }
+

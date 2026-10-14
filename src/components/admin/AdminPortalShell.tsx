@@ -48,6 +48,7 @@ const items = [
   ["/admin/financeiro", "Financeiro", WalletCards],
   ["/admin/configuracao", "Configuração", Settings],
   ["/admin/catalogo", "Catálogo", PackageSearch],
+  ["/admin/legislacoes", "Legislação dos alimentos", ShieldCheck],
   ["/admin/aplicativos", "Aplicativos", Smartphone],
   ["/admin/categorias", "Categorias", ListTree],
   ["/admin/reembolsos", "Reembolsos", ShieldCheck],
@@ -81,6 +82,7 @@ const navigationGroups = [
       "/admin/reembolsos",
       "/admin/politica-reembolso",
       "/admin/denuncias",
+      "/admin/legislacoes",
       "/admin/avaliacoes",
     ],
   },
@@ -122,6 +124,8 @@ export function AdminPortalShell({
   children,
 }: Props) {
   const visible = items.filter(([to]) => {
+    if (to === "/admin/legislacoes")
+      return hasAdminPermission(access, "food_legislation");
     if (to === "/admin/catalogo")
       return hasAdminPermission(access, "catalog_moderation");
     if (to === "/admin/financeiro")

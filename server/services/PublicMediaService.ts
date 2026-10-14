@@ -73,7 +73,7 @@ export const PublicMediaService = {
       const result =
         kind === "product"
           ? await c.query<{ media_url: string }>(
-              `SELECT m.media_url FROM public.app_product_media m JOIN public.app_products p ON p.id=m.product_id JOIN public.app_categories cat ON cat.id=p.category_id WHERE (m.id=$1 OR m.media_url LIKE $2) AND p.is_published AND cat.is_active AND hvm_store_private.store_is_visible(p.store_id) AND EXISTS(SELECT 1 FROM public.app_price_versions pv WHERE pv.product_id=p.id AND pv.valid_from<=clock_timestamp())`,
+              `SELECT m.media_url FROM public.app_product_media m JOIN public.app_products p ON p.id=m.product_id JOIN public.app_categories cat ON cat.id=p.category_id WHERE (m.id=$1 OR m.media_url LIKE $2) AND p.is_published AND cat.is_active AND hvm_store_private.store_is_visible(p.store_id) AND hvm_food_private.product_is_compliant(p.id) AND EXISTS(SELECT 1 FROM public.app_price_versions pv WHERE pv.product_id=p.id AND pv.valid_from<=clock_timestamp())`,
               [id, `%/${id}-%`],
             )
           : await c.query<{ media_url: string }>(
@@ -121,3 +121,4 @@ export const PublicMediaService = {
     }
   },
 };
+

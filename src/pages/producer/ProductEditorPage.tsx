@@ -9,6 +9,9 @@ import {
 } from "react";
 import { ArrowLeft, ImagePlus, Leaf } from "lucide-react";
 import { api } from "../../lib/api";
+import { ProductFoodChecklist } from "../../components/food/ProductFoodChecklist";
+import { FOOD_FAMILY_LABELS, FOOD_PROCESS_LABELS } from "../../../shared/foodSafety";
+import type { FoodAcceptanceInput } from "../../../shared/contracts/foodSafety";
 import { optimizeImage } from "../../lib/optimizeImage";
 import { MediaImage } from "../../components/catalog/MediaImage";
 import type { ShellSession } from "../../hooks/useSession";
@@ -35,6 +38,8 @@ import {
 import "./products.css";
 
 type Draft = {
+  foodFamily: Product["foodFamily"];
+  foodProcess: Product["foodProcess"];
   categoryId: string;
   title: string;
   description: string;
@@ -45,17 +50,21 @@ type Draft = {
   conservationNotes: string;
 };
 const empty: Draft = {
+  foodFamily: null,
+  foodProcess: null,
   categoryId: "",
   title: "",
   description: "",
   packagingType: "pote_higienizado",
   netWeightGrams: "",
   unitType: "pote",
-  shelfLifeDays: "5",
-  conservationNotes: "Manter refrigerado entre 2°C e 6°C",
+  shelfLifeDays: "",
+  conservationNotes: "",
 };
 function draftFrom(p: Product): Draft {
   return {
+    foodFamily: p.foodFamily,
+    foodProcess: p.foodProcess,
     categoryId: p.categoryId,
     title: p.title,
     description: p.description,
@@ -77,6 +86,7 @@ export default function ProductEditorPage({
   onNavigate: (path: string) => void;
 }) {
   const offlineDataRevision = useOfflineDataRevision();
+  const [acceptance,setAcceptance]=useState<FoodAcceptanceInput|null>(null);
   const [product, setProduct] = useState<Product | null>(null),
     [draft, setDraft] = useState<Draft>(empty),
     [categories, setCategories] = useState<Category[]>([]);
@@ -305,6 +315,12 @@ export default function ProductEditorPage({
                   placeholder="Conte como o alimento é preparado e higienizado."
                 />
               </label>
+              <label>Tipo de alimento<select required value={draft.foodFamily ?? ""} onChange={e=>patch("foodFamily",e.target.value as Draft["foodFamily"])}>
+                <option value="">Escolha o tipo de alimento</option>{Object.entries(FOOD_FAMILY_LABELS).map(([k,v])=><option value={k} key={k}>{v}</option>)}
+              </select></label>
+              <label>Como é preparado<select required value={draft.foodProcess ?? ""} onChange={e=>patch("foodProcess",e.target.value as Draft["foodProcess"])}>
+                <option value="">Escolha a forma de preparo</option>{Object.entries(FOOD_PROCESS_LABELS).map(([k,v])=><option value={k} key={k}>{v}</option>)}
+              </select></label>
               <label>
                 Tipo de embalagem
                 <select
@@ -370,9 +386,11 @@ export default function ProductEditorPage({
                   required
                   maxLength={255}
                   value={draft.conservationNotes}
+                  placeholder="Condições definidas para conservar este alimento"
                   onChange={(e) => patch("conservationNotes", e.target.value)}
                 />
               </label>
+              <p className="hvm-product-full food-scope-note">Defina conservação e validade com base no seu alimento e processo. Os ensinamentos ajudam a entender os cuidados; não existe uma duração ou temperatura única para todos os produtos.</p>
               {!product && (
                 <label>
                   Preço inicial (R$)
@@ -513,17 +531,20 @@ export default function ProductEditorPage({
               <section className="hvm-product-panel">
                 <h2>Publicação</h2>
                 <p>
-                  {product.isPublished
+                  {product.isPublished && product.foodCompliant
                     ? "Este produto está publicado na vitrine da sua loja."
-                    : "Este produto é um rascunho. Adicione uma foto principal para deixá-lo pronto para publicação."}
+                    : "Adicione uma foto principal e confirme os cuidados deste alimento para disponibilizá-lo na vitrine."}
                 </p>
+                {(!product.isPublished || !product.foodCompliant) && <ProductFoodChecklist productId={product.id} revision={product.revision} disabled={blocked || detailsChanged} onChange={setAcceptance} onNavigate={onNavigate}/>}
+                {detailsChanged && <p className="food-notice">Salve as informações do alimento antes de confirmar a publicação.</p>}
                 <button
-                  className={product.isPublished ? "secondary" : "primary"}
-                  disabled={blocked}
+                  className={product.isPublished && product.foodCompliant ? "secondary" : "primary"}
+                  disabled={blocked || detailsChanged || (!(product.isPublished && product.foodCompliant) && !acceptance)}
                   onClick={() => {
                     const body = {
                       expectedRevision: product.revision,
-                      isPublished: !product.isPublished,
+                      isPublished: !(product.isPublished && product.foodCompliant),
+                      ...(!(product.isPublished && product.foodCompliant) && acceptance ? {acceptance} : {}),
                     };
                     void commands.execute(
                       `/v1/producer/products/${product.id}/publish`,
@@ -534,16 +555,19 @@ export default function ProductEditorPage({
                           ...body,
                         }),
                       },
-                      product.isPublished
+                      product.isPublished && product.foodCompliant
                         ? "Produto despublicado."
                         : "Produto publicado na sua vitrine.",
                     );
                   }}
                 >
-                  {product.isPublished
+                  {product.isPublished && product.foodCompliant
                     ? "Despublicar produto"
-                    : "Publicar produto"}
+                    : "Confirmar cuidados e publicar"}
                 </button>
+                {product.isPublished && !product.foodCompliant && <button type="button" className="text-button" disabled={blocked} onClick={()=>{
+                  const body={expectedRevision:product.revision,isPublished:false};void commands.execute(`/v1/producer/products/${product.id}/publish`,{...body,commandId:commands.command({action:"unpublish",...body})},"Produto despublicado.");
+                }}>Despublicar produto</button>}
               </section>
             </>
           )}
@@ -552,3 +576,4 @@ export default function ProductEditorPage({
     </section>
   );
 }
+

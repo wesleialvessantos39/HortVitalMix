@@ -132,7 +132,8 @@
     "pwa:verify": "node --import tsx scripts/verify-pwa.ts",
     "test:pwa": "vitest run tests/unit/pwa*.test.ts tests/unit/apiUpdateGuards.test.ts",
     "test:pwa:browser": "node scripts/prepare-pwa-tests.mjs && playwright test -c playwright.pwa.config.ts",
-    "test:appearance": "node --import tsx tests/appearance.test.mjs"
+    "test:appearance": "node --import tsx tests/appearance.test.mjs",
+    "test:food-safety": "node --import tsx --test tests/food-safety.test.mjs tests/food-safety-contracts.test.mjs"
   },
   "dependencies": {
     "@capacitor/app": "8.1.2",

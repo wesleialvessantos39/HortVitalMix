@@ -9,6 +9,7 @@ import {
 } from "react";
 import {
   Leaf,
+  BookOpen,
   MapPin,
   UserRound,
   ShoppingCart,
@@ -87,6 +88,7 @@ const ProducerDeliveryAreaPage = lazy(
 const ProductEditorPage = lazy(
   () => import("./pages/producer/ProductEditorPage"),
 );
+const FoodLearningPage = lazy(() => import("./pages/producer/FoodLearningPage"));
 const ProducerStoreSettingsPage = lazy(
   () => import("./pages/producer/ProducerStoreSettingsPage"),
 );
@@ -155,6 +157,7 @@ const navigation = [
   ["/sobre", "Sobre nós", Sprout],
 ] as const;
 const producerNavigation = [
+  ["/produtor/legislacoes", "Legislação e ensinamentos", BookOpen],
   ["/produtor/produtos", "Meus produtos", Package],
   ["/produtor/loja", "Minha loja", Store],
   ["/produtor/pedidos", "Pedidos da loja", ClipboardList],
@@ -978,6 +981,10 @@ export default function App() {
                 onNavigate={go}
               />
             </Suspense>
+          ) : path === "/produtor/legislacoes" || path === "/cuidados-com-alimentos" ? (
+            <Suspense fallback={<PageLoading label="Carregando cuidados e legislação…" />}>
+              <FoodLearningPage key={shellSession?.userId ?? "public"} producer={path === "/produtor/legislacoes" && shellSession?.activeRole === "producer"} onNavigate={go}/>
+            </Suspense>
           ) : isProducerProductRoute &&
             shellSession?.activeRole === "producer" ? (
             <Suspense
@@ -1271,6 +1278,7 @@ export default function App() {
           )}
         </main>
         <footer>
+          <a href="/cuidados-com-alimentos" onClick={e=>{e.preventDefault();go("/cuidados-com-alimentos");}}>Cuidados e legislação dos alimentos</a>
           <strong>{display.platformName}</strong>
           <span>Conectando produtores e consumidores.</span>
           <span>{display.slogan}</span>

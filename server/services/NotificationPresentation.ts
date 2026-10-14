@@ -130,6 +130,7 @@ export const ADMIN_NOTIFICATION_CATEGORIES: Partial<
   subscription_management: ["subscriptions"],
   review_management: ["reviews"],
   refund_policy: ["refunds", "administration"],
+  food_legislation: ["catalog","administration"],
 };
 
 type Destination = {
@@ -268,3 +269,4 @@ export function notificationDestination(
     return null;
   return destination;
 }
+

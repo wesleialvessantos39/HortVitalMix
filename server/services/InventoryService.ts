@@ -397,9 +397,10 @@ export const InventoryService = {
       await InventoryService.releaseExpiredReservations(undefined, productId);
     return transaction<ReserveStockResult>(
       async (client) => {
+        await client.query("SELECT pg_advisory_xact_lock_shared(76,hashtext('food-rules'))");
         const product = await client.query(
           `SELECT p.id FROM public.app_products p JOIN public.app_categories c ON c.id=p.category_id
-        WHERE p.id=$1 AND p.is_published AND c.is_active AND hvm_store_private.store_is_visible(p.store_id) FOR SHARE OF p`,
+        WHERE p.id=$1 AND p.is_published AND c.is_active AND hvm_store_private.store_is_visible(p.store_id) AND hvm_food_private.product_is_compliant(p.id) FOR SHARE OF p`,
           [input.productId],
         );
         if (!product.rows.length)
@@ -537,3 +538,4 @@ export const InventoryService = {
     return new Set(rows.rows.map((r) => r.product_id));
   },
 };
+
